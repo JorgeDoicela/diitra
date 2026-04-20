@@ -1,35 +1,83 @@
 @import "tailwindcss";
 
+:root {
+  /* Default: Dark Theme (Vercel Style) */
+  --bg: #000000;
+  --fg: #ffffff;
+  --surface: #111111;
+  --surface-hover: #1c1c1c;
+  --border: #333333;
+  --text-dim: #888888;
+  --accent: #0070f3;
+  --radius: 5px;
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --fg: #000000;
+  --surface: #fafafa;
+  --surface-hover: #f0f0f0;
+  --border: #eaeaea;
+  --text-dim: #666666;
+}
+
 @theme {
-  --color-primary: #aa3bff;
-  --color-secondary: #c084fc;
-  --color-accent: #6d28d9;
-  --color-bg-dark: #08060d;
-  --color-card-bg: rgba(255, 255, 255, 0.05);
-  --color-glass-border: rgba(255, 255, 255, 0.1);
+  --color-bg-deep: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-accent-vercel: var(--accent);
+  --color-border-thin: var(--border);
+  --color-text-main: var(--fg);
+  --color-text-dim: var(--text-dim);
+  
+  --font-sans: "Inter", "Geist Sans", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", monospace;
 }
 
 :root {
-  background-color: var(--color-bg-dark);
-  color: white;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
   margin: 0;
   padding: 0;
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--bg);
 }
 
-/* Glassmorphism Utility */
-.glass {
-  background: var(--color-card-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--color-glass-border);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+/* Vercel Aesthetic Utilities */
+.bento-card {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.3s ease;
 }
 
-.sidebar-item-active {
-  background: linear-gradient(90deg, rgba(170, 59, 255, 0.2) 0%, transparent 100%);
-  border-left: 3px solid var(--color-primary);
+.bento-card:hover {
+  border-color: var(--text-dim);
+}
+
+.pill-badge {
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  transition: all 0.3s ease;
+}
+
+.font-data {
+  font-family: var(--font-mono);
+}
+
+::selection {
+  background: var(--fg);
+  color: var(--bg);
 }
