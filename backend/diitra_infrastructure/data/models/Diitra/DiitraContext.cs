@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.data.models;
 
@@ -37,6 +38,8 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvGasto>            InvGastos           { get; set; }
     public virtual DbSet<InvProducto>         InvProductos        { get; set; }
     public virtual DbSet<InvTransferencia>    InvTransferencias   { get; set; }
+    public virtual DbSet<ExternalReviewer>   ExternalReviewers   { get; set; }
+    public virtual DbSet<InvestigationInstitute> InvestigationInstitutes { get; set; }
 
     // ============================================================
     // TABLAS DE SIGAFI (solo lectura recomendada)
@@ -47,8 +50,12 @@ public partial class DiitraContext : DbContext
     // --- Actores ---
     public virtual DbSet<Profesore>    Profesores  { get; set; }   // profesores
     public virtual DbSet<Alumno>       Alumnos     { get; set; }   // alumnos
-    public virtual DbSet<Rol>          Roles       { get; set; }   // rol
-    public virtual DbSet<UsuarioRol>   UsuariosRoles { get; set; } // usuario_rol
+
+    // Identidad DIITRA | ISTPET (inv_) - Reemplaza los roles legacy
+    public virtual DbSet<Role>         Roles             { get; set; }   // inv_roles
+    public virtual DbSet<Permission>   Permissions       { get; set; }   // inv_permisos
+    public virtual DbSet<UserRole>     UserRoles         { get; set; }   // inv_usuarios_roles
+    public virtual DbSet<AccessToken>  AccessTokens      { get; set; }   // inv_tokens_acceso
 
     // --- Académico ---
     public virtual DbSet<Periodo>              Periodos           { get; set; }  // periodos
@@ -559,12 +566,49 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdRevision).HasName("PRIMARY");
             entity.ToTable("inv_revisiones").HasCharSet("utf8mb4");
             entity.Property(e => e.IdProfesorRevisor).HasMaxLength(14).HasColumnName("idProfesorRevisor");
+            entity.Property(e => e.IdRevisorExterno).HasColumnName("idRevisorExterno");
             entity.Property(e => e.Estado).HasColumnType("enum('pendiente','en_proceso','finalizado','rechazado')").HasColumnName("estado");
             entity.Property(e => e.PuntajeTotal).HasPrecision(5, 2).HasColumnName("puntajeTotal");
+            
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Revisiones)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_rev_proyecto");
+            
             entity.HasOne(d => d.IdProfesorRevisorNavigation).WithMany()
                 .HasForeignKey(d => d.IdProfesorRevisor).HasConstraintName("fk_inv_rev_profesor");
+
+            entity.HasOne(d => d.IdRevisorExternoNavigation).WithMany()
+                .HasForeignKey(d => d.IdRevisorExterno).HasConstraintName("fk_inv_rev_ext");
+        });
+
+        modelBuilder.Entity<ExternalReviewer>(entity =>
+        {
+            entity.HasKey(e => e.IdRevisorExterno);
+            entity.ToTable("inv_revisores_externos");
+            entity.Property(e => e.IdRevisorExterno).HasColumnName("idRevisorExterno");
+            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
+            entity.Property(e => e.Nombre).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Apellido).HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Email).HasMaxLength(200).IsRequired();
+
+            entity.HasOne(d => d.Institute)
+                .WithMany(p => p.ExternalReviewers)
+                .HasForeignKey(d => d.IdInstitucion)
+                .HasConstraintName("fk_inv_ext_inst");
+        });
+
+        modelBuilder.Entity<InvestigationInstitute>(entity =>
+        {
+            entity.HasKey(e => e.IdInstitucion);
+            entity.ToTable("inv_institutos");
+            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
+            entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Siglas).HasMaxLength(20);
+            entity.Property(e => e.Ruc).HasMaxLength(20);
+            entity.Property(e => e.Tipo).HasColumnType("enum('Publica', 'Privada', 'Internacional', 'Organismo')").HasDefaultValue("Publica");
+            entity.Property(e => e.Pais).HasMaxLength(100);
+            entity.Property(e => e.Ciudad).HasMaxLength(100);
+            entity.Property(e => e.SitioWeb).HasMaxLength(250);
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
         });
 
         modelBuilder.Entity<InvRubrica>(entity =>
@@ -664,6 +708,75 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ValorConvenio).HasPrecision(10, 2).HasColumnName("valorConvenio");
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Transferencias)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_trans_proy");
+        });
+
+        // ============================================================
+        // MÓDULO 7: SEGURIDAD Y ACCESOS (RBAC/PBAC)
+        // ============================================================
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.IdRol);
+            entity.ToTable("inv_roles");
+            entity.Property(e => e.IdRol).HasColumnName("idRol");
+            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Descripcion).HasMaxLength(300);
+            entity.Property(e => e.EsSistema).HasColumnType("tinyint(4)");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
+
+            entity.HasMany(d => d.Permissions)
+                .WithMany(p => p.Roles)
+                .UsingEntity<Dictionary<string, object>>(
+                    "inv_rol_permisos",
+                    l => l.HasOne<Permission>().WithMany().HasForeignKey("idPermiso").HasConstraintName("fk_inv_rp_perm"),
+                    r => r.HasOne<Role>().WithMany().HasForeignKey("idRol").HasConstraintName("fk_inv_rp_rol"),
+                    j =>
+                    {
+                        j.HasKey("idRol", "idPermiso");
+                        j.ToTable("inv_rol_permisos");
+                    });
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(e => e.IdPermiso);
+            entity.ToTable("inv_permisos");
+            entity.Property(e => e.IdPermiso).HasColumnName("idPermiso");
+            entity.Property(e => e.Modulo).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.CodigoName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Descripcion).HasMaxLength(300);
+        });
+
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.HasKey(e => e.IdUsuarioRol);
+            entity.ToTable("inv_usuarios_roles");
+            entity.Property(e => e.IdUsuarioRol).HasColumnName("idUsuarioRol");
+            entity.Property(e => e.IdReferencia).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.TipoReferencia).HasColumnType("enum('profesor', 'alumno', 'externo', 'admin')").IsRequired();
+            entity.Property(e => e.IdRol).HasColumnName("idRol");
+            entity.Property(e => e.FechaAsignacion).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
+
+            entity.HasOne(d => d.Role)
+                .WithMany(p => p.UserRoles)
+                .HasForeignKey(d => d.IdRol)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("fk_inv_ur_rol");
+        });
+
+        modelBuilder.Entity<AccessToken>(entity =>
+        {
+            entity.HasKey(e => e.IdToken);
+            entity.ToTable("inv_tokens_acceso");
+            entity.Property(e => e.IdToken).HasColumnName("idToken");
+            entity.Property(e => e.Token).HasMaxLength(256).IsRequired();
+            entity.Property(e => e.IdReferencia).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.TipoReferencia).HasColumnType("enum('profesor', 'externo')").IsRequired();
+            entity.Property(e => e.FechaCreacion).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaExpiracion).IsRequired();
+            entity.Property(e => e.Usado).HasColumnType("tinyint(4)");
+            entity.Property(e => e.Scopes).HasMaxLength(200);
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
         });
 
         OnModelCreatingPartial(modelBuilder);

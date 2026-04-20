@@ -121,11 +121,51 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_alumnos` (
 -- MÓDULO 2: EVALUACIÓN POR PARES (PEER REVIEW)
 -- ============================================================
 
+-- Catálogo de Institutos y Universidades para Investigación
+CREATE TABLE IF NOT EXISTS `inv_institutos` (
+  `idInstitucion`    INT(11) NOT NULL AUTO_INCREMENT,
+  `nombre`           VARCHAR(200) NOT NULL,
+  `siglas`           VARCHAR(20) DEFAULT NULL,
+  `ruc`              VARCHAR(20) DEFAULT NULL,
+  `tipo`             ENUM('Publica', 'Privada', 'Internacional', 'Organismo') NOT NULL DEFAULT 'Publica',
+  `pais`             VARCHAR(100) DEFAULT 'Ecuador',
+  `ciudad`           VARCHAR(100) DEFAULT NULL,
+  `sitioWeb`         VARCHAR(250) DEFAULT NULL,
+  `activo`           TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idInstitucion`),
+  UNIQUE KEY `uq_inv_inst_ruc` (`ruc`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo propio de instituciones para revisión externa y convenios';
+
+-- Precarga de datos institucionales (DML)
+INSERT IGNORE INTO `inv_institutos` (`idInstitucion`, `nombre`, `siglas`, `ruc`, `tipo`, `pais`, `ciudad`, `sitioWeb`) VALUES
+(1, 'Universidad Central del Ecuador', 'UCE', '1760001550001', 'Publica', 'Ecuador', 'Quito', 'https://www.uce.edu.ec'),
+(2, 'Escuela Politécnica Nacional', 'EPN', '1760002100001', 'Publica', 'Ecuador', 'Quito', 'https://www.epn.edu.ec'),
+(3, 'Universidad de las Fuerzas Armadas', 'ESPE', '1768025210001', 'Publica', 'Ecuador', 'Sangolquí', 'https://www.espe.edu.ec'),
+(4, 'Pontificia Universidad Católica del Ecuador', 'PUCE', '1790103748001', 'Privada', 'Ecuador', 'Quito', 'https://www.puce.edu.ec'),
+(5, 'Consejo de Educación Superior', 'CES', NULL, 'Organismo', 'Ecuador', 'Quito', 'https://www.ces.gob.ec');
+
+-- Investigadores de otras instituciones para evaluaciones por pares
+CREATE TABLE IF NOT EXISTS `inv_revisores_externos` (
+  `idRevisorExterno` INT(11) NOT NULL AUTO_INCREMENT,
+  `nombre`           VARCHAR(150) NOT NULL,
+  `apellido`         VARCHAR(150) NOT NULL,
+  `email`            VARCHAR(200) NOT NULL,
+  `idInstitucion`    INT(11) DEFAULT NULL,             -- FK a inv_institutos (Propia)
+  `tituloAcademico`  VARCHAR(200) DEFAULT NULL,
+  `especialidad`     VARCHAR(300) DEFAULT NULL,
+  `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `activo`           TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idRevisorExterno`),
+  UNIQUE KEY `uq_inv_ext_email` (`email`),
+  CONSTRAINT `fk_inv_ext_inst` FOREIGN KEY (`idInstitucion`) REFERENCES `inv_institutos` (`idInstitucion`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Investigadores externos vinculados a inv_institutos';
+
 -- Asignación de revisores a un proyecto
 CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   `idRevision`          INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesorRevisor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,           -- Referencia a profesores (SIGAFI)
+  `idProfesorRevisor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,      -- Referencia a profesores (Internos)
+  `idRevisorExterno`    INT(11) DEFAULT NULL,                                                          -- Referencia a revisores externos
   `esDoubleCiego`       TINYINT(4) DEFAULT 1,
   `estado`              ENUM('pendiente','en_proceso','finalizado','rechazado') DEFAULT 'pendiente',
   `puntajeTotal`        DECIMAL(5,2) DEFAULT NULL,
@@ -137,9 +177,11 @@ CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   PRIMARY KEY (`idRevision`),
   KEY `fk_inv_rev_proy` (`idProyecto`),
   KEY `fk_inv_rev_revisor` (`idProfesorRevisor`),
+  KEY `fk_inv_rev_revisor_ext` (`idRevisorExterno`),
   CONSTRAINT `fk_inv_rev_proyecto` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
-  CONSTRAINT `fk_inv_rev_profesor` FOREIGN KEY (`idProfesorRevisor`) REFERENCES `profesores` (`idProfesor`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Revisiones por pares de proyectos';
+  CONSTRAINT `fk_inv_rev_profesor` FOREIGN KEY (`idProfesorRevisor`) REFERENCES `profesores` (`idProfesor`),
+  CONSTRAINT `fk_inv_rev_ext`      FOREIGN KEY (`idRevisorExterno`)  REFERENCES `inv_revisores_externos` (`idRevisorExterno`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Revisiones por pares (Híbridas: Internas y Externas)';
 
 
 -- Criterios de la rúbrica de evaluación
@@ -405,3 +447,20 @@ INSERT IGNORE INTO `inv_roles` (`idRol`, `nombre`, `descripcion`, `esSistema`) V
 (4, 'Revisor Interno', 'Docentes del propio IST designados por el Director como evaluadores.', 1),
 (5, 'Revisor Externo (IST / Organismo)', 'Investigadores de otros Institutos u organismos académicos externos invitados a evaluar.', 1),
 (6, 'Administrador del Sistema', 'Personal TI del IST.', 1);
+
+-- ------------------------------------------------------------
+-- MÓDULO 8: AUTENTICACIÓN TEMPORAL (MAGIC LINKS)
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `inv_tokens_acceso` (
+  `idToken`          INT(11) NOT NULL AUTO_INCREMENT,
+  `token`            VARCHAR(256) NOT NULL,
+  `idReferencia`     VARCHAR(20) NOT NULL,             -- idProfesor o Revisor Externo
+  `tipoReferencia`   ENUM('profesor', 'externo') NOT NULL,
+  `fechaExpiracion`  DATETIME NOT NULL,
+  `usado`            TINYINT(4) DEFAULT 0,
+  `scopes`           VARCHAR(200) DEFAULT NULL,        -- Ej: "revision:12"
+  `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `activo`           TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idToken`),
+  UNIQUE KEY `uq_inv_tokens_val` (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Tokens para acceso directo sin contraseña (Magic Links)';
