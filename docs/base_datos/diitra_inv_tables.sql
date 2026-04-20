@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos` (
   `metodologia`            TEXT,
   `idCampoDetalladoUnesco` INT(11) DEFAULT NULL,       -- Referencia a campo_detallado_unesco (SIGAFI)
   `idEspacio`              INT(11) DEFAULT NULL,        -- Laboratorio/Taller donde se ejecuta (SIGAFI)
-  `idProfesorDirector`     VARCHAR(14) NOT NULL,        -- Referencia a profesores (SIGAFI)
+  `idProfesorDirector`     VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,        -- Referencia a profesores (SIGAFI)
   `estado`                 ENUM('borrador','enviado','en_revision','aprobado','en_ejecucion','finalizado','rechazado') DEFAULT 'borrador',
   `fechaInicio`            DATE DEFAULT NULL,
   `fechaFin`               DATE DEFAULT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos` (
 CREATE TABLE IF NOT EXISTS `inv_proyectos_profesores` (
   `idProyectoProfesor`  INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesor`          VARCHAR(14) NOT NULL,           -- Referencia a profesores (SIGAFI)
+  `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,           -- Referencia a profesores (SIGAFI)
   `rol`                 ENUM('director','coinvestigador','colaborador') DEFAULT 'coinvestigador',
   `horasSemanales`      DECIMAL(5,2) DEFAULT 0.00,
   `activo`              TINYINT(4) DEFAULT 1,
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_profesores` (
 CREATE TABLE IF NOT EXISTS `inv_proyectos_alumnos` (
   `idProyectoAlumno`  INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`        INT(11) NOT NULL,
-  `idAlumno`          VARCHAR(14) NOT NULL,             -- Referencia a alumnos (SIGAFI)
+  `idAlumno`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,             -- Referencia a alumnos (SIGAFI)
   `rol`               VARCHAR(100) DEFAULT 'Investigador Auxiliar',
   `activo`            TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idProyectoAlumno`),
@@ -104,14 +104,14 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_alumnos` (
 CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   `idRevision`          INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesorRevisor`   VARCHAR(14) NOT NULL,           -- Referencia a profesores (SIGAFI)
+  `idProfesorRevisor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,           -- Referencia a profesores (SIGAFI)
   `esDoubleCiego`       TINYINT(4) DEFAULT 1,
   `estado`              ENUM('pendiente','en_proceso','finalizado','rechazado') DEFAULT 'pendiente',
   `puntajeTotal`        DECIMAL(5,2) DEFAULT NULL,
   `comentarios`         TEXT DEFAULT NULL,
   `fechaAsignacion`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaLimite`         DATE DEFAULT NULL,
-  `fechaEntrega`        TIMESTAMP DEFAULT NULL,
+  `fechaEntrega`        TIMESTAMP NULL DEFAULT NULL,
   `activo`              TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idRevision`),
   KEY `fk_inv_rev_proy` (`idProyecto`),
@@ -173,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `inv_cronograma` (
 CREATE TABLE IF NOT EXISTS `inv_informes_avance` (
   `idInforme`           INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesor`          VARCHAR(14) NOT NULL,           -- Quien sube el informe (SIGAFI)
+  `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,           -- Quien sube el informe (SIGAFI)
   `titulo`              VARCHAR(200) NOT NULL,
   `descripcion`         TEXT,
   `porcentajeAvance`    TINYINT(4) DEFAULT 0,
@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS `inv_gastos` (
   `fechaGasto`      DATE NOT NULL,
   `numeroFactura`   VARCHAR(50) DEFAULT NULL,
   `rutaFactura`     VARCHAR(500) DEFAULT NULL,
-  `registradoPor`   VARCHAR(14) NOT NULL,               -- Referencia a profesores (SIGAFI)
+  `registradoPor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,               -- Referencia a profesores (SIGAFI)
   `fechaRegistro`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idGasto`),
   KEY `fk_inv_ga_proy` (`idProyecto`),
@@ -316,7 +316,7 @@ CREATE TABLE IF NOT EXISTS `inv_notificaciones` (
   `mensaje`         TEXT NOT NULL,
   `leida`           TINYINT(4) DEFAULT 0,
   `fechaEnvio`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `fechaLectura`    TIMESTAMP DEFAULT NULL,
+  `fechaLectura`    TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`idNotificacion`),
   KEY `fk_inv_notif_proy` (`idProyecto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Notificaciones automáticas del sistema';
@@ -330,4 +330,10 @@ INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `ord
 ('Viabilidad y Factibilidad', 'El cronograma y presupuesto son realistas y alcanzables en el período propuesto.', 20.00, 3),
 ('Innovación e Impacto', 'El proyecto genera un aporte significativo y transferible al sector productivo o académico.', 25.00, 4),
 ('Presentación y Forma', 'El documento cumple con las normas APA y el formato institucional requerido.', 10.00, 5);
+
+
+
+
+
+
 
