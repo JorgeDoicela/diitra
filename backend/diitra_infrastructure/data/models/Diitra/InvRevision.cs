@@ -7,7 +7,8 @@ public partial class InvRevision
 {
     public int IdRevision { get; set; }
     public int IdProyecto { get; set; }
-    public string IdProfesorRevisor { get; set; } = null!;
+    public string? IdProfesorRevisor { get; set; } // Opcional si es externo
+    public int? IdRevisorExterno { get; set; }     // Opcional si es interno
     public sbyte EsDoubleCiego { get; set; } = 1;
     public string Estado { get; set; } = "pendiente";
     public decimal? PuntajeTotal { get; set; }
@@ -18,7 +19,8 @@ public partial class InvRevision
     public sbyte Activo { get; set; } = 1;
 
     public virtual InvProyecto IdProyectoNavigation { get; set; } = null!;
-    public virtual Profesore IdProfesorRevisorNavigation { get; set; } = null!;
+    public virtual Profesore? IdProfesorRevisorNavigation { get; set; }
+    public virtual diitra_domain.Identity.Entities.ExternalReviewer? IdRevisorExternoNavigation { get; set; }
     public virtual ICollection<InvRevisionDetalle> Detalles { get; set; } = new List<InvRevisionDetalle>();
 }
 

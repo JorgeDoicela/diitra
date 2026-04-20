@@ -32,6 +32,28 @@ builder.Services.AddSignalR();
 
 // Infrastructure Services
 builder.Services.AddScoped<IFirmaElectronicaService, FirmaElectronicaService>();
+builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
+
+// Authorization Logic (PBAC)
+builder.Services.AddScoped<Microsoft.AspNetCore.Authorization.IAuthorizationHandler, PermissionHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    // Registrar automáticamente todas las constantes de Permissions como políticas
+    var permissionFields = typeof(diitra_domain.Identity.Enums.Permissions)
+        .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy)
+        .Where(f => f.IsLiteral && !f.IsInitOnly);
+
+    foreach (var field in permissionFields)
+    {
+        var permissionValue = field.GetValue(null)?.ToString();
+        if (permissionValue != null)
+        {
+            options.AddPolicy(permissionValue, policy => 
+                policy.Requirements.Add(new PermissionRequirement(permissionValue)));
+        }
+    }
+});
 
 // Application Services (Modular Monolith)
 builder.Services.AddScoped<IResearchService, ProjectService>();

@@ -1,0 +1,28 @@
+using System;
+using System.Collections.Generic;
+
+namespace diitra_domain.Identity.Entities;
+
+/// <summary>
+/// Catálogo de instituciones y universidades para procesos de investigación
+/// </summary>
+public class InvestigationInstitute
+{
+    public int IdInstitucion { get; set; }
+    public string Nombre { get; set; } = string.Empty;
+    public string? Siglas { get; set; }
+    public string? Ruc { get; set; }
+    
+    /// <summary>
+    /// Tipo de institución: Publica, Privada, Internacional, Organismo
+    /// </summary>
+    public string Tipo { get; set; } = "Publica";
+    
+    public string Pais { get; set; } = "Ecuador";
+    public string? Ciudad { get; set; }
+    public string? SitioWeb { get; set; }
+    public bool Activo { get; set; } = true;
+
+    // Relaciones
+    public virtual ICollection<ExternalReviewer> ExternalReviewers { get; set; } = new List<ExternalReviewer>();
+}

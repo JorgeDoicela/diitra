@@ -166,9 +166,5 @@ const Dashboard = () => {
     </main>
   );
 };
-      </BentoGrid>
-    </main>
-  );
-};
 
 export default Dashboard;
