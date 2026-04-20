@@ -5,6 +5,9 @@ using diitra_application.Research;
 using diitra_application.Common;
 using diitra_infrastructure.hubs;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,11 +16,45 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("Diitra_policy", policy =>
     {
-        policy.WithOrigins("http://localhost:5173", "http://192.168.7.50") // Tu PC y el servidor
+        policy.WithOrigins("http://localhost:3002", "http://localhost:3000", "http://localhost:3001", "http://localhost:5173")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Obligatorio para SignalR
     });
+});
+
+// 1.1 Configurar Autenticación JWT y Cookies
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]!);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+    
+    // Configuración para leer el JWT desde una cookie
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            context.Token = context.Request.Cookies["diitra_auth"];
+            return Task.CompletedTask;
+        }
+    };
 });
 
 // 2. Configurar JSON en snake_case
@@ -56,6 +93,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 // Application Services (Modular Monolith)
+builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infrastructure.Security.AuthService>();
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
@@ -75,17 +113,18 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+// 1. CORS debe ser lo primero, antes de cualquier redirección o autenticación
+app.UseCors("Diitra_policy");
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Desactivado temporalmente para debugging de CORS en localhost
 
-// Usar la política de CORS definida
-app.UseCors("Diitra_policy");
-
+app.UseAuthentication(); // <-- AGREGADO
 app.UseAuthorization();
 
 app.MapControllers();
