@@ -27,28 +27,16 @@ public class AuthService : IAuthService
         var username = request.Username.Trim();
         var password = request.Password.Trim();
 
-        Console.WriteLine($"[AUTH] Intento de login para usuario: {username}");
-
         // 1. Intentar buscar como Profesor (Legacy)
         var profesor = await _context.Profesores
             .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && p.Activo == 1);
 
         if (profesor != null)
         {
-            Console.WriteLine($"[AUTH] Profesor encontrado: {profesor.PrimerNombre} {profesor.PrimerApellido}");
             if (profesor.Clave != null && profesor.Clave.Trim() == password)
             {
-                Console.WriteLine("[AUTH] Login exitoso para Profesor");
                 return await GetAuthResponseAsync(profesor.IdProfesor, $"{profesor.PrimerNombre} {profesor.PrimerApellido}", "profesor");
             }
-            else 
-            {
-                Console.WriteLine("[AUTH] Error: Contraseña incorrecta para Profesor");
-            }
-        }
-        else 
-        {
-            Console.WriteLine("[AUTH] Usuario no encontrado en la tabla de profesores");
         }
 
         // 2. Intentar buscar como Alumno (Legacy)

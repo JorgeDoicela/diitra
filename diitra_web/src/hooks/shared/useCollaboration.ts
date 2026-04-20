@@ -18,14 +18,15 @@ export const useCollaboration = (projectId: string) => {
         if (connection) {
             connection.start()
                 .then(() => {
-                    console.log('Connected to Collaboration Hub');
                     connection.invoke('JoinProject', projectId);
 
                     connection.on('ReceiveDelta', (delta: string) => {
                         setLastDelta(delta);
                     });
                 })
-                .catch(e => console.log('Connection failed: ', e));
+                .catch(e => {
+                    // SILENT_ERROR: Connection to SignalR hub failed
+                });
         }
     }, [connection, projectId]);
 
