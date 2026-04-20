@@ -1,4 +1,9 @@
-import { ArrowRight, ShieldCheck, Cpu, Database, FileText, Activity, Sun, Moon, Zap, Award, BookOpen } from 'lucide-react';
+import { 
+    ArrowRight, FileText, Activity, TrendingUp, Clock, BarChart3, 
+    ShieldCheck, Sun, Moon, Plus, ArrowUpRight, Database, Cpu, 
+    Zap, Award, BookOpen, Users, Fingerprint, Scale, FileSignature, 
+    LayoutDashboard, Globe, Search, MessageSquareCode
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface LandingProps {
@@ -10,146 +15,275 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-text-main selection:text-bg-deep transition-all duration-700">
+        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg transition-all duration-500 overflow-x-hidden">
             {/* Grid Overlay */}
-            <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150" />
+            <div className="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150 z-50" />
 
-            {/* Navigation */}
-            <nav className="fixed top-0 w-full z-50 border-b border-border-thin bg-bg-deep/70 backdrop-blur-md">
+            {/* Header Navigation */}
+            <nav className="fixed top-0 w-full z-[60] border-b border-border-thin bg-bg-deep/70 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <svg width="18" height="18" viewBox="0 0 76 65" fill="none" className="text-text-main">
+                    <div className="flex items-center gap-3">
+                        <svg width="22" height="22" viewBox="0 0 76 65" fill="none" className="text-text-main">
                             <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
                         </svg>
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold tracking-[0.2em] uppercase font-mono leading-none">DIITRA</span>
-                            <span className="text-[8px] text-text-dim font-mono tracking-widest leading-none mt-1">ISTPET</span>
+                            <span className="text-xs font-bold tracking-tight uppercase leading-none">DIITRA | ISTPET</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <div className="hidden md:flex items-center gap-6 text-[10px] font-mono tracking-widest text-text-dim uppercase">
-                            <a href="#" className="hover:text-text-main transition-colors">Docs</a>
-                            <a href="#" className="hover:text-text-main transition-colors">Procesos</a>
-                            <a href="#" className="hover:text-text-main transition-colors">Normativa</a>
-                        </div>
-                        <div className="h-4 w-[1px] bg-border-thin hidden md:block" />
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={toggleTheme}
-                                className="p-1 hover:text-text-main transition-colors text-text-dim"
-                            >
-                                {currentTheme === 'dark' ? <Sun size={12} /> : <Moon size={12} />}
-                            </button>
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="btn-vercel-primary text-[10px] h-7 px-4 uppercase tracking-widest flex items-center gap-2"
-                            >
-                                Acceder
-                            </button>
-                        </div>
+                    <div className="flex items-center gap-4">
+                        <button onClick={toggleTheme} className="p-2 text-text-dim hover:text-text-main transition-colors">
+                            {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                        </button>
+                        <button 
+                            onClick={() => navigate('/login')}
+                            className="bg-text-main text-bg-deep px-4 py-1.5 rounded-md text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                        >
+                            Acceder
+                        </button>
                     </div>
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <section className="pt-48 pb-32 px-6 relative overflow-hidden">
-                <div className="max-w-5xl mx-auto relative z-10">
-                    <div className="space-y-8">
-                        <div className="inline-flex items-center gap-3 px-2 py-1 rounded border border-border-thin bg-surface/30 text-[9px] font-mono tracking-widest uppercase text-text-dim animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                            <div className="w-1.5 h-1.5 rounded-full bg-accent-vercel animate-pulse" />
-                            <span>TECNOLÓGICO TRAVERSARI - ISTPET</span>
+            {/* Main Content Space */}
+            <main className="max-w-7xl mx-auto px-6 pt-32 pb-40 space-y-32">
+                
+                {/* Hero Title Area */}
+                <section className="space-y-6 animate-fade-up">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
+                        <Activity size={10} strokeWidth={2} />
+                        <span>Departamento de Investigación e Innovación Traversari</span>
+                    </div>
+                    <h1 className="text-5xl md:text-8xl font-bold text-text-main tracking-tighter leading-[0.85]">
+                        La automatización <br />
+                        del saber.
+                    </h1>
+                    <p className="text-sm md:text-base text-text-dim max-w-2xl font-medium leading-relaxed">
+                        DIITRA es el núcleo tecnológico diseñado exclusivamente para el Tecnológico Traversari - ISTPET. 
+                        Alineado con SENESCYT, CES y CACES, transformamos la burocracia científica en excelencia operativa institucional.
+                    </p>
+                    <div className="pt-6 flex flex-col md:flex-row gap-4">
+                        <button 
+                            onClick={() => navigate('/login')}
+                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-8 py-3 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                        >
+                            Iniciar Gestión
+                            <ArrowRight size={14} />
+                        </button>
+                        <button className="flex items-center justify-center gap-2 bg-bg-deep text-text-main px-8 py-3 rounded-md border border-border-thin text-[11px] font-bold uppercase tracking-widest hover:bg-surface transition-all">
+                            Consultar Normativa IST
+                        </button>
+                    </div>
+                </section>
+
+                {/* Section: Contexto Normativo */}
+                <section className="grid grid-cols-1 md:grid-cols-3 gap-12 py-16 border-t border-border-thin animate-fade-up">
+                    <div className="space-y-4">
+                        <div className="text-accent-vercel font-mono text-[10px] uppercase font-bold tracking-[0.2em]">[ 01 ]</div>
+                        <h3 className="text-xl font-bold tracking-tight">Régimen Académico</h3>
+                        <p className="text-xs text-text-dim leading-relaxed font-medium">Cumplimiento estricto del Reglamento de Régimen Académico del CES para la validación de horas de investigación.</p>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="text-accent-vercel font-mono text-[10px] uppercase font-bold tracking-[0.2em]">[ 02 ]</div>
+                        <h3 className="text-xl font-bold tracking-tight">Estándar CACES</h3>
+                        <p className="text-xs text-text-dim leading-relaxed font-medium">Arquitectura de datos optimizada para generar las evidencias requeridas en los procesos de acreditación del ISTPET.</p>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="text-accent-vercel font-mono text-[10px] uppercase font-bold tracking-[0.2em]">[ 03 ]</div>
+                        <h3 className="text-xl font-bold tracking-tight">Impacto SENESCYT</h3>
+                        <p className="text-xs text-text-dim leading-relaxed font-medium">Categorización de proyectos y productos tecnológicos alineados a las líneas de investigación prioritarias.</p>
+                    </div>
+                </section>
+
+                {/* Section: Modulos Bento Grid */}
+                <section className="space-y-12">
+                    <div className="space-y-4">
+                        <h2 className="text-3xl font-bold tracking-tighter uppercase">Módulos Esenciales</h2>
+                        <div className="h-[1px] w-20 bg-text-main" />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        {/* A: Proyectos */}
+                        <div className="md:col-span-2 bento-card p-6 flex flex-col justify-between hover:border-text-main transition-all group">
+                            <div className="flex justify-between items-start">
+                                <div className="p-2 border border-border-thin rounded bg-bg-deep group-hover:border-text-main transition-colors">
+                                    <TrendingUp size={20} strokeWidth={1.5} className="text-text-main" />
+                                </div>
+                                <span className="text-[9px] font-mono text-text-dim px-2 py-1 border border-border-thin rounded-full uppercase">Fase_Postulación</span>
+                            </div>
+                            <div className="mt-12 space-y-3">
+                                <h4 className="text-lg font-bold tracking-tight">Gestión de Proyectos & Peer Review</h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed pr-6">
+                                    Postulación digital completa con cronogramas Gantt y presupuestos. 
+                                    Sistema de **Doble Ciego** que anonimiza documentos automáticamente para evaluadores.
+                                </p>
+                            </div>
                         </div>
 
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-[-0.05em] leading-[0.95] text-text-main animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-100">
-                            Departamento de <br />
-                            Investigación e Innovación.
-                        </h1>
-
-                        <p className="text-sm md:text-base text-text-dim max-w-lg leading-relaxed font-mono animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-200">
-                            Gestión de innovación, desarrollo tecnológico y
-                            cumplimiento normativo para investigadores y docentes.
-                        </p>
-
-                        <div className="pt-6 flex flex-col md:flex-row items-center gap-3 animate-in fade-in slide-in-from-bottom-16 duration-1000 delay-300">
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="btn-vercel-primary w-full md:w-auto h-10 px-8 text-[10px] uppercase tracking-widest"
-                            >
-                                Iniciar Sesión
-                            </button>
-                            <button className="btn-vercel-secondary w-full md:w-auto h-10 px-8 text-[10px] uppercase tracking-widest">
-                                Consultar Repositorio
-                            </button>
+                        {/* B: Seguimiento */}
+                        <div className="md:col-span-2 bento-card p-6 flex flex-col justify-between hover:border-text-main transition-all group">
+                            <div className="flex justify-between items-start">
+                                <div className="p-2 border border-border-thin rounded bg-bg-deep group-hover:border-text-main transition-colors">
+                                    <Clock size={20} strokeWidth={1.5} className="text-text-main" />
+                                </div>
+                                <span className="text-[9px] font-mono text-text-dim px-2 py-1 border border-border-thin rounded-full uppercase">Monitoreo_Control</span>
+                            </div>
+                            <div className="mt-12 space-y-3">
+                                <h4 className="text-lg font-bold tracking-tight">Control & Seguimiento Presupuestario</h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed pr-6">
+                                    Evidencias mensuales con carga de fotos y facturas. 
+                                    Alertas inteligentes de plazos y control de ejecución de fondos asignados.
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </section>
 
-            {/* Grid Display Section (The "Sober" look) */}
-            <section className="max-w-7xl mx-auto px-6 py-24 border-t border-border-thin grid grid-cols-1 md:grid-cols-3 gap-0 bg-surface/5">
-                <div className="p-8 border-r border-border-thin group hover:bg-surface/10 transition-colors">
-                    <div className="text-[10px] font-mono text-text-dim mb-10 flex items-center gap-2">
-                        <span className="text-accent-vercel">[ 01 ]</span>
-                        <span>EFICIENCIA_OPERATIVA</span>
-                    </div>
-                    <h3 className="text-xl font-bold tracking-tight mb-4">Digitalización Total</h3>
-                    <p className="text-xs text-text-dim leading-relaxed font-mono">100% de los procesos de investigación sin necesidad de formularios físicos.</p>
-                </div>
-                <div className="p-8 border-r border-border-thin group hover:bg-surface/10 transition-colors">
-                    <div className="text-[10px] font-mono text-text-dim mb-10 flex items-center gap-2">
-                        <span className="text-accent-vercel">[ 02 ]</span>
-                        <span>CUMPLIMIENTO_CACES</span>
-                    </div>
-                    <h3 className="text-xl font-bold tracking-tight mb-4">Normativa Integrada</h3>
-                    <p className="text-xs text-text-dim leading-relaxed font-mono">Motor de auditoría diseñado para cumplir los estándares de evaluación superior.</p>
-                </div>
-                <div className="p-8 group hover:bg-surface/10 transition-colors">
-                    <div className="text-[10px] font-mono text-text-dim mb-10 flex items-center gap-2">
-                        <span className="text-accent-vercel">[ 03 ]</span>
-                        <span>SEGURIDAD_AVANZADA</span>
-                    </div>
-                    <h3 className="text-xl font-bold tracking-tight mb-4">Doble Ciego</h3>
-                    <p className="text-xs text-text-dim leading-relaxed font-mono">Anonimización criptográfica para revisiones imparciales y transparentes.</p>
-                </div>
-            </section>
+                        {/* C: Innovacion */}
+                        <div className="md:col-span-2 bento-card p-6 flex flex-col justify-between hover:border-text-main transition-all group">
+                             <div className="flex justify-between items-start">
+                                <div className="p-2 border border-border-thin rounded bg-bg-deep group-hover:border-text-main transition-colors">
+                                    <Cpu size={20} strokeWidth={1.5} className="text-text-main" />
+                                </div>
+                                <span className="text-[9px] font-mono text-text-dim px-2 py-1 border border-border-thin rounded-full uppercase">Transferencia_IP</span>
+                            </div>
+                            <div className="mt-12 space-y-3">
+                                <h4 className="text-lg font-bold tracking-tight">Propiedad Intelectual & Repositorio</h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed pr-6">
+                                    Registro de patentes y software vinculados al SENADI. 
+                                    Integración automática con bibliotecas digitales para publicación institucional inmediata.
+                                </p>
+                            </div>
+                        </div>
 
-            {/* Visual Narrative Section */}
-            <section className="py-24 px-6 border-t border-border-thin">
-                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-24 items-center">
-                    <div className="space-y-6">
-                        <h3 className="text-4xl font-bold tracking-tighter leading-tight">Arquitectura para la excelencia.</h3>
-                        <p className="text-xs text-text-dim leading-relaxed font-mono">
-                            DIITRA conecta cada fase del ciclo de innovación. Desde la postulación inicial hasta la publicación institutional, bajo un entorno unificado y seguro.
-                        </p>
-                    </div>
-                    <div className="relative p-6 rounded border border-border-thin bg-surface/20 group overflow-hidden">
-                        <div className="absolute top-0 right-0 p-2 text-[8px] font-mono text-text-dim opacity-50">METRIC_VIEW_01</div>
-                        <div className="aspect-video bg-bg-deep border border-border-thin rounded flex items-center justify-center overflow-hidden">
-                            <div className="absolute inset-0 bg-[url('https://res.cloudinary.com/vercel/image/upload/v1645474324/docs-v2/frameworks/nextjs_q4ovq7.svg')] grayscale opacity-5 mix-blend-overlay scale-150 rotate-12" />
-                            <div className="text-center font-mono">
-                                <div className="text-[10px] text-accent-vercel mb-2">OPERATIONAL</div>
-                                <div className="h-[2px] w-8 bg-text-dim mx-auto" />
+                        {/* D: Calidad */}
+                        <div className="md:col-span-2 bento-card p-6 flex flex-col justify-between hover:border-text-main transition-all group">
+                             <div className="flex justify-between items-start">
+                                <div className="p-2 border border-border-thin rounded bg-bg-deep group-hover:border-text-main transition-colors">
+                                    <ShieldCheck size={20} strokeWidth={1.5} className="text-text-main" />
+                                </div>
+                                <span className="text-[9px] font-mono text-text-dim px-2 py-1 border border-border-thin rounded-full uppercase">Acreditación_CACES</span>
+                            </div>
+                            <div className="mt-12 space-y-3">
+                                <h4 className="text-lg font-bold tracking-tight">Calidad & Reportes de Acreditación</h4>
+                                <p className="text-[11px] text-text-dim leading-relaxed pr-6">
+                                    Generación de reportes operativos en formato CACES para el proceso de evaluación institucional del ISTPET. 
+                                    Dashboard de indicadores institucionales en tiempo real.
+                                </p>
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            {/* Footer */}
-            <footer className="py-20 px-6 border-t border-border-thin text-text-dim">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-10">
+                {/* Section: Roles (The Flow) */}
+                <section className="py-24 border-y border-border-thin">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
+                        <div className="space-y-6">
+                            <h2 className="text-4xl font-bold tracking-tighter leading-tight">Estructura & Roles <br /> de Trabajo.</h2>
+                            <p className="text-xs text-text-dim leading-relaxed font-mono uppercase tracking-widest">
+                                Un sistema eficiente para Ecuador requiere jerarquías claras.
+                            </p>
+                        </div>
+                        <div className="grid grid-cols-1 gap-6">
+                            {[
+                                { role: 'Investigador', desc: 'Docentes y estudiantes que gestionan proyectos y reportan evidencias.', icon: Users },
+                                { role: 'Director de Investigación', desc: 'Aprueba convocatorias y supervisa el presupuesto institucional.', icon: LayoutDashboard },
+                                { role: 'Comité de Ética / Revisores', desc: 'Evalúan la pertinencia ética y científica de las propuestas.', icon: Scale },
+                                { role: 'Administrador', desc: 'Gestión de períodos académicos y seguridad de usuarios.', icon: ShieldCheck },
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex gap-4 p-4 rounded-md border border-border-thin bg-surface/20 group hover:border-text-main transition-colors">
+                                    <div className="mt-1 flex-shrink-0">
+                                        <item.icon size={16} strokeWidth={1.5} className="text-text-dim group-hover:text-text-main transition-colors" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h5 className="text-[11px] font-bold text-text-main uppercase tracking-widest">{item.role}</h5>
+                                        <p className="text-[10px] text-text-dim leading-relaxed">{item.desc}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section: Tecnologia Contextual */}
+                <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="bento-card p-10 space-y-8">
+                        <div className="flex items-center gap-3">
+                            <FileSignature size={24} strokeWidth={1.5} />
+                            <h3 className="text-2xl font-bold tracking-tight">Firma Electrónica IST</h3>
+                        </div>
+                        <p className="text-xs text-text-dim leading-relaxed font-medium">
+                            Integración nativa con archivos **.p12**. Permite que las resoluciones y actas de aprobación tengan validez legal inmediata sin necesidad de papeles físicos, agilizando la burocracia administrativa.
+                        </p>
+                        <div className="flex items-center gap-2 text-[9px] font-mono text-accent-vercel uppercase font-bold">
+                            <Fingerprint size={12} />
+                            <span>Seguridad Nivel Gubernamental</span>
+                        </div>
+                    </div>
+                    <div className="bento-card p-10 space-y-8">
+                        <div className="flex items-center gap-3">
+                            <Cpu size={24} strokeWidth={1.5} />
+                            <h3 className="text-2xl font-bold tracking-tight">Inteligencia Artificial</h3>
+                        </div>
+                        <p className="text-xs text-text-dim leading-relaxed font-medium">
+                            Asistente normativo que verifica automáticamente si los proyectos se alinean a las líneas institucionales. 
+                            Detección de plagio preventiva y generación automática de resúmenes ejecutivos para CACES.
+                        </p>
+                         <div className="flex items-center gap-2 text-[9px] font-mono text-accent-vercel uppercase font-bold">
+                            <MessageSquareCode size={12} />
+                            <span>Automatización Predictiva</span>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Section: Interoperabilidad */}
+                <section className="text-center space-y-8 py-16">
+                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border-thin text-[10px] font-mono text-text-dim uppercase">
+                        <Globe size={10} />
+                        Interoperabilidad Total
+                    </div>
+                    <h3 className="text-3xl md:text-5xl font-bold tracking-tighter">Sincronizado con su <br /> Gestión Académica.</h3>
+                    <p className="text-sm text-text-dim max-w-xl mx-auto font-medium">
+                        DIITRA se conecta con sus bases de datos existentes para validar cronogramas, 
+                        cargas horarias de docentes y distributivos académicos en tiempo real.
+                    </p>
+                </section>
+
+            </main>
+
+            {/* Detailed Footer */}
+            <footer className="max-w-7xl mx-auto px-6 py-20 border-t border-border-thin text-text-dim">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-6">
-                        <div className="flex items-center gap-2">
-                            <svg width="20" height="20" viewBox="0 0 76 65" fill="none" className="text-text-main">
+                        <div className="flex items-center gap-3">
+                            <svg width="24" height="24" viewBox="0 0 76 65" fill="none" className="text-text-main">
                                 <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
                             </svg>
-                            <span className="text-xs font-bold tracking-tight uppercase font-mono">DIITRA</span>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-bold tracking-tight uppercase leading-none">DIITRA</span>
+                                <span className="text-[10px] tracking-widest leading-none mt-1 uppercase">Investigación ISTPET</span>
+                            </div>
                         </div>
                         <p className="text-[11px] max-w-xs leading-relaxed font-mono">
-                            Departamento de Investigación e Innovación. <br />
-                            Tecnológico Traversari, Quito. © 2026.
+                            Tecnológico Traversari, Quito - Ecuador. <br />
+                            Automatización de procesos científicos e innovación tecnológica institucional.
                         </p>
                     </div>
+                    <div className="grid grid-cols-2 gap-8 text-[10px] font-mono uppercase tracking-[0.2em] font-bold">
+                        <div className="space-y-4 flex flex-col">
+                            <span className="text-text-main">Recursos</span>
+                            <a href="#" className="hover:text-text-main transition-colors">Repositorio</a>
+                            <a href="#" className="hover:text-text-main transition-colors">Normativa</a>
+                            <a href="#" className="hover:text-text-main transition-colors">Formatos</a>
+                        </div>
+                        <div className="space-y-4 flex flex-col">
+                            <span className="text-text-main">Soporte</span>
+                            <a href="#" className="hover:text-text-main transition-colors">Help Center</a>
+                            <a href="#" className="hover:text-text-main transition-colors">Seguridad</a>
+                            <a href="#" className="hover:text-text-main transition-colors">CACES</a>
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-20 pt-10 border-t border-border-thin flex justify-between items-center text-[9px] font-mono">
+                    <span>© 2026 DIITRA. TODOS LOS DERECHOS RESERVADOS.</span>
+                    <span>DESIGNED BY ANTIGRAVITY</span>
                 </div>
             </footer>
         </div>
