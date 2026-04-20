@@ -120,10 +120,23 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Email).HasMaxLength(100).HasColumnName("email");
             entity.Property(e => e.EmailInstitucional).HasMaxLength(255).HasColumnName("emailInstitucional");
             entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
+            entity.Property(e => e.Clave).HasMaxLength(20).HasColumnName("clave");
             entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
             entity.Property(e => e.Abreviatura).HasMaxLength(5).HasColumnName("abreviatura");
+            
+            // Mapeos exactos según DESCRIBE
+            entity.Property(e => e.AbreviaturaPost).HasMaxLength(5).HasColumnName("abreviatura_post");
             entity.Property(e => e.FechaIngreso).HasColumnName("fecha_ingreso");
+            entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_nacimiento");
+            entity.Property(e => e.FechaRetiro).HasColumnName("fecha_retiro");
             entity.Property(e => e.TipoSangre).HasMaxLength(5).HasColumnName("tipoSangre");
+
+            // Ignorar los que definitivamente no usaremos o sospechosos de relaciones rotas
+            entity.Ignore(e => e.IdDiscapacidadNavigation);
+            entity.Ignore(e => e.IdEtniaNavigation);
+            entity.Ignore(e => e.ProfesoresCarrerasPeriodos);
+            entity.Ignore(e => e.ProfesoresDedicacions);
+            entity.Ignore(e => e.TitulosProfesores);
         });
 
         modelBuilder.Entity<Alumno>(entity =>
@@ -137,6 +150,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ApellidoMaterno).HasMaxLength(30).HasColumnName("apellidoMaterno");
             entity.Property(e => e.Email).HasMaxLength(40).HasColumnName("email");
             entity.Property(e => e.EmailInstitucional).HasMaxLength(100).HasColumnName("email_institucional");
+            entity.Property(e => e.UserAlumno).HasMaxLength(50).HasColumnName("User_Alumno");
+            entity.Property(e => e.Password).HasMaxLength(255).HasColumnName("Password");
             entity.Ignore(e => e.Matriculas);
         });
 
