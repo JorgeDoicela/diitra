@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Lock, User, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const Login: React.FC = () => {
     const { login } = useAuth();
@@ -29,92 +29,92 @@ const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4 bg-glow">
-            <div className="w-full max-w-md space-y-8 animate-in fade-in zoom-in duration-500">
-                <div className="text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface border border-border mb-4">
-                        <Lock className="w-8 h-8 text-accent" />
+        <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+            {/* Background Grid - Very subtle */}
+            <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150 z-10" />
+            
+            <div className="w-full max-w-[350px] space-y-10 relative z-20 animate-fade-up">
+                {/* Brand Logo & Header */}
+                <div className="flex flex-col items-center space-y-6">
+                    <svg width="40" height="40" viewBox="0 0 76 65" fill="none" className="text-text-main">
+                        <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
+                    </svg>
+                    <div className="text-center space-y-1">
+                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">Entrar a DIITRA</h1>
+                        <p className="text-[11px] text-text-dim font-medium tracking-tight">Investigación e Innovación ISTPET</p>
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight">DIITRA</h1>
-                    <p className="text-text-dim mt-2">Sistema de Gestión de Investigación e Innovación</p>
                 </div>
 
-                <div className="bento-card p-8 space-y-6">
+                {/* Login Form Card */}
+                <div className="space-y-6">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="username">
-                                Usuario (Cédula)
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim ml-1" htmlFor="username">
+                                Usuario
                             </label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-2.5 h-4 w-4 text-text-dim" />
-                                <input
-                                    {...register('username', { required: 'Usuario es requerido' })}
-                                    className="flex h-10 w-full rounded-md border border-border bg-transparent px-10 py-2 text-sm ring-offset-bg file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-dim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Ingrese su cédula"
-                                />
-                            </div>
-                            {errors.username && <p className="text-xs text-red-500">{(errors.username as any).message}</p>}
+                            <input
+                                {...register('username', { required: 'Usuario es requerido' })}
+                                className="flex h-11 w-full rounded-md border border-border-thin bg-surface/40 px-4 py-2 text-sm text-text-main placeholder:text-text-dim focus:border-text-main focus:outline-none transition-all duration-200"
+                                placeholder="Cédula de identidad"
+                                autoComplete="username"
+                            />
+                            {errors.username && <p className="text-[10px] text-red-500 font-mono mt-1 ml-1">{(errors.username as any).message}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
-                                Contraseña
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-2.5 h-4 w-4 text-text-dim" />
-                                <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    {...register('password', { required: 'Contraseña es requerida' })}
-                                    className="flex h-10 w-full rounded-md border border-border bg-transparent px-10 py-12 text-sm ring-offset-bg file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-dim focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="••••••••"
-                                />
-                                <button
+                            <div className="flex justify-between items-center px-1">
+                                <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim" htmlFor="password">
+                                    Contraseña
+                                </label>
+                                <button 
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-2.5 text-text-dim hover:text-fg transition-colors"
+                                    className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium"
                                 >
-                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                    {showPassword ? 'Ocultar' : 'Mostrar'}
                                 </button>
                             </div>
-                            {errors.password && <p className="text-xs text-red-500">{(errors.password as any).message}</p>}
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                {...register('password', { required: 'Contraseña es requerida' })}
+                                className="flex h-11 w-full rounded-md border border-border-thin bg-surface/40 px-4 py-2 text-sm text-text-main placeholder:text-text-dim focus:border-text-main focus:outline-none transition-all duration-200"
+                                placeholder="Contraseña de SIGAFI"
+                                autoComplete="current-password"
+                            />
+                            {errors.password && <p className="text-[10px] text-red-500 font-mono mt-1 ml-1">{(errors.password as any).message}</p>}
                         </div>
 
                         {error && (
-                            <div className="p-3 rounded-md bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
+                            <div className="p-3 rounded-md bg-red-500/5 border border-red-500/20 text-red-500 text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
                                 {error}
                             </div>
                         )}
 
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="btn-vercel-primary w-full flex items-center justify-center gap-2"
-                        >
-                            {isSubmitting ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <>
-                                    Entrar
-                                    <ArrowRight className="h-4 w-4" />
-                                </>
-                            )}
-                        </button>
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="bg-text-main text-bg-deep w-full h-11 flex items-center justify-center gap-2 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50"
+                            >
+                                {isSubmitting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    'Continuar'
+                                )}
+                            </button>
+                        </div>
                     </form>
 
-                    <div className="relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <span className="w-full border-t border-border" />
+                    <div className="text-center pt-4">
+                        <p className="text-[10px] text-text-dim font-medium tracking-tight mb-8">
+                            ¿No tienes acceso? Contacta a la Dirección de Investigación.
+                        </p>
+                        
+                        <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
+                            <button onClick={() => navigate('/')} className="hover:text-text-main transition-colors">Inicio</button>
+                            <span>/</span>
+                            <a href="#" className="hover:text-text-main transition-colors">Ayuda</a>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-surface px-2 text-text-dim">
-                                Acceso Institucional
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="text-center text-xs text-text-dim">
-                        <p>Plataforma exclusiva para personal de investigación.</p>
-                        <p className="mt-1">© 2024 Departamento de Investigación e Innovación</p>
                     </div>
                 </div>
             </div>

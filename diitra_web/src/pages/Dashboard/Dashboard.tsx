@@ -3,11 +3,11 @@ import { BentoGrid, BentoCard } from '../../components/Common/BentoGrid';
 
 const Dashboard = () => {
   return (
-    <main className="flex-1 bg-bg-deep p-10 overflow-y-auto selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
-      <header className="flex justify-between items-end mb-16 px-2">
+    <main className="flex-1 bg-bg-deep p-10 overflow-y-auto selection:bg-selection-bg selection:text-selection-fg transition-colors duration-300">
+      <header className="flex justify-between items-end mb-16 px-2 animate-fade-up">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-            <Activity size={10} className="text-text-main" />
+            <Activity size={10} strokeWidth={2} className="text-text-main" />
             <span>Operacional - ISTPET</span>
           </div>
           <h2 className="text-4xl font-bold text-text-main tracking-tighter">Investigación Traversari</h2>
@@ -15,23 +15,23 @@ const Dashboard = () => {
         </div>
         
         <div className="flex gap-4">
-            <button className="flex items-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-5 py-2 rounded-md border border-border-thin text-xs font-bold transition-all">
-                <FileText size={14} className="text-text-dim" />
+            <button className="flex items-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-5 py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all">
+                <FileText size={14} strokeWidth={1.5} className="text-text-dim" />
                 <span>Reportes</span>
             </button>
-            <button className="flex items-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-6 py-2 rounded-md text-xs font-bold transition-all">
-                <Plus size={16} />
+            <button className="flex items-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-6 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all">
+                <Plus size={16} strokeWidth={2.5} />
                 <span>Nuevo Proyecto</span>
             </button>
         </div>
       </header>
 
-      <BentoGrid className="px-2">
+      <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms]">
         {/* Performance Graph Card */}
         <BentoCard 
           title="Rendimiento de Producción" 
           description="Producción institucional vs pronóstico"
-          icon={<TrendingUp size={14} />}
+          icon={<TrendingUp size={14} strokeWidth={1.5} />}
           className="md:col-span-3 md:row-span-2 relative overflow-hidden"
         >
           <div className="absolute inset-0 top-16 opacity-20 grayscale pointer-events-none group-hover:opacity-30 transition-opacity invert-[var(--invert-img,0)]">
@@ -48,7 +48,7 @@ const Dashboard = () => {
             </div>
             <div className="text-right space-y-1">
                 <div className="flex items-center gap-2 px-2 py-1 bg-text-main text-bg-deep text-[10px] font-bold rounded-sm mb-2">
-                    <TrendingUp size={10} />
+                    <TrendingUp size={10} strokeWidth={2.5} />
                     <span>+12.4%</span>
                 </div>
                 <p className="text-[10px] text-text-dim font-mono uppercase">hash: 0x4f2d</p>
@@ -60,13 +60,14 @@ const Dashboard = () => {
         <BentoCard 
             title="Carga de Trabajo" 
             description="Horas de investigación asignadas" 
-            icon={<Clock size={14} />}
+            icon={<Clock size={14} strokeWidth={1.5} />}
             className="md:col-span-1"
         >
             <div className="mt-4">
                 <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">32.5h</p>
-                <div className="w-full h-[2px] bg-border-thin mt-5 rounded-full overflow-hidden text-transparent">.</div>
-                <div className="w-full h-[2px] bg-text-main -mt-[2px] w-[81%] rounded-full relative z-10" />
+                <div className="w-full h-[1px] bg-border-thin mt-6 rounded-full overflow-hidden">
+                    <div className="h-full bg-text-main w-[81%] transition-all duration-1000 ease-out" />
+                </div>
                 <div className="flex justify-between mt-3 text-[10px] font-mono text-text-dim uppercase">
                     <span>Utilización</span>
                     <span>81.25%</span>
@@ -78,12 +79,12 @@ const Dashboard = () => {
         <BentoCard 
             title="Activos" 
             description="Productos de investigación validados"
-            icon={<BarChart3 size={14} />}
+            icon={<BarChart3 size={14} strokeWidth={1.5} />}
             className="md:col-span-1"
         >
             <div className="mt-2 flex items-center justify-between">
                 <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">04</p>
-                <ArrowUpRight size={18} className="text-text-main" />
+                <ArrowUpRight size={18} className="text-text-main" strokeWidth={1.5} />
             </div>
             <div className="mt-6 space-y-2.5">
                 <div className="flex justify-between items-center text-[10px] font-mono">
@@ -125,7 +126,7 @@ const Dashboard = () => {
         <BentoCard 
             title="Registro" 
             description="Registro detallado de revisiones por pares"
-            icon={<ShieldCheck size={14} />}
+            icon={<ShieldCheck size={14} strokeWidth={1.5} />}
             className="md:col-span-2"
         >
              <div className="mt-4 overflow-hidden rounded-md border border-border-thin bg-bg-deep">
