@@ -9,9 +9,10 @@ interface ProjectFormData {
 
 const ProjectForm = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<ProjectFormData>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const onSubmit = (data: ProjectFormData) => {
-    console.log('Enviando postulación:', data);
+    setIsSubmitting(true);
     alert('Postulación enviada correctamente (Simulado)');
   };
 
