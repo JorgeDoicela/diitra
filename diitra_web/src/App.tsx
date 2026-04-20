@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Sidebar from './components/Layout/Sidebar';
+import DashboardLayout from './components/Layout/DashboardLayout';
+import UsersPage from './pages/Admin/UsersPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Landing from './pages/Landing/Landing';
 import Login from './pages/Login/Login';
-import { CommandPalette } from './components/Common/CommandPalette';
 import { AuthProvider, useAuth } from './api/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -26,6 +26,15 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const { user, isAuthenticated, isLoading } = useAuth();
+    if (isLoading) return null;
+    if (!isAuthenticated || (user?.role !== 'Administrador del Sistema' && user?.role !== 'SuperAdmin')) {
+        return <Navigate to="/dashboard" replace />;
+    }
+    return <>{children}</>;
+};
+
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
@@ -43,16 +52,28 @@ function App() {
           <Route path="/" element={<Landing currentTheme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<Login />} />
           
-          {/* Internal Dashboard */}
-          <Route path="/dashboard/*" element={
+          {/* Internal Pages with Layout */}
+          <Route path="/dashboard" element={
             <ProtectedRoute>
-              <div className="flex h-screen w-full bg-bg-deep overflow-hidden font-sans selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
-                <CommandPalette />
-                <Sidebar currentTheme={theme} toggleTheme={toggleTheme} />
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
                 <Dashboard />
-              </div>
+              </DashboardLayout>
             </ProtectedRoute>
           } />
+
+          <Route path="/admin" element={
+            <AdminRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <UsersPage />
+              </DashboardLayout>
+            </AdminRoute>
+          } />
+
+          {/* Redirections for common paths */}
+          <Route path="/investigacion" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/convocatorias" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/revisiones" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/analiticas" element={<Navigate to="/dashboard" replace />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

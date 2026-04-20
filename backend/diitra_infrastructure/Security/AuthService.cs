@@ -64,12 +64,14 @@ public class AuthService : IAuthService
 
         if (!userRoles.Any() && tipoUsuario == "profesor")
         {
-            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == "Docente Investigador");
+            var defaultRoleName = idReferencia.Trim() == "0302144159" ? "Administrador del Sistema" : "Docente Investigador";
+            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == defaultRoleName);
+            
             if (defaultRole != null)
             {
                 var newUserRole = new UserRole
                 {
-                    IdReferencia = idReferencia,
+                    IdReferencia = idReferencia.Trim(),
                     TipoReferencia = "profesor",
                     IdRol = defaultRole.IdRol,
                     Activo = true,
@@ -81,7 +83,32 @@ public class AuthService : IAuthService
                 userRoles = await _context.UserRoles
                     .Include(ur => ur.Role)
                     .ThenInclude(r => r.Permissions)
-                    .Where(ur => ur.IdReferencia == idReferencia && ur.TipoReferencia == tipoUsuario && ur.Activo)
+                    .Where(ur => ur.IdReferencia == idReferencia.Trim() && ur.TipoReferencia == tipoUsuario && ur.Activo)
+                    .ToListAsync();
+            }
+        }
+        else if (idReferencia.Trim() == "0302144159" && !userRoles.Any(ur => ur.Role.Nombre == "Administrador del Sistema"))
+        {
+            // Caso especial: El SuperAdmin ya tiene un rol (ej: Docente) pero le falta el de Admin
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == "Administrador del Sistema");
+            if (adminRole != null)
+            {
+                var newUserRole = new UserRole
+                {
+                    IdReferencia = idReferencia.Trim(),
+                    TipoReferencia = "profesor",
+                    IdRol = adminRole.IdRol,
+                    Activo = true,
+                    FechaAsignacion = DateTime.UtcNow
+                };
+                _context.UserRoles.Add(newUserRole);
+                await _context.SaveChangesAsync();
+                
+                // Recargar roles
+                userRoles = await _context.UserRoles
+                    .Include(ur => ur.Role)
+                    .ThenInclude(r => r.Permissions)
+                    .Where(ur => ur.IdReferencia == idReferencia.Trim() && ur.TipoReferencia == tipoUsuario && ur.Activo)
                     .ToListAsync();
             }
         }
