@@ -94,6 +94,7 @@ builder.Services.AddAuthorization(options =>
 
 // Application Services (Modular Monolith)
 builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infrastructure.Security.AuthService>();
+builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_infrastructure.Security.AdminService>();
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
