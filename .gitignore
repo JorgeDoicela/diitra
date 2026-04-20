@@ -1,2 +1,46 @@
+﻿# ==============================
+# Raíz (General)
+# ==============================
 .tmp.drivedownload
 .tmp.driveupload
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# ==============================
+# Editores y Entornos ESP / IDEs
+# ==============================
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.sln.docstates
+.idea/
+*.suo
+
+# ==============================
+# Backend (.NET C#)
+# ==============================
+[Bb]in/
+[Oo]bj/
+[Tt]est[Rr]esults/
+*.vsconfig
+*.log
+
+# No ignorar el código nativo de infra
+!backend/
+
+# ==============================
+# Node / Frontend (React / Vite / Expo)
+# ==============================
+node_modules/
+dist/
+dist-ssr/
+build/
+.expo/
+web-build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*

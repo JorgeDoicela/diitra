@@ -1,4 +1,4 @@
--- ============================================================
+﻿-- ============================================================
 -- DIITRA: Tablas nuevas del Sistema de Investigación e Innovación
 -- Base de datos: sigafi_es
 -- Prefijo: inv_ (para distinguir de las tablas legacy de SIGAFI)
@@ -7,6 +7,25 @@
 -- ============================================================
 -- MÓDULO 1: CONVOCATORIAS Y PROYECTOS
 -- ============================================================
+
+-- L�neas de investigaci�n aprobadas institucionalmente
+CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
+  `idLinea`            INT(11) NOT NULL AUTO_INCREMENT,
+  `nombreLinea`        VARCHAR(300) NOT NULL,
+  `descripcion`        TEXT,
+  `resolucionAprobacion` VARCHAR(100) DEFAULT NULL,
+  `activo`             TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idLinea`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='L�neas de investigaci�n institucionales (Reglamento R�gimen Acad�mico)';
+-- Líneas de investigación aprobadas institucionalmente
+CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
+  `idLinea`            INT(11) NOT NULL AUTO_INCREMENT,
+  `nombreLinea`        VARCHAR(300) NOT NULL,
+  `descripcion`        TEXT,
+  `resolucionAprobacion` VARCHAR(100) DEFAULT NULL,
+  `activo`             TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idLinea`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Líneas de investigación institucionales (Reglamento Régimen Académico)';
 
 -- Convocatorias abiertas por el Director de Investigación
 CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
@@ -18,7 +37,7 @@ CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
   `fechaCierre`        DATE NOT NULL,
   `estado`             ENUM('borrador','abierta','en_revision','cerrada') DEFAULT 'borrador',
   `maximoProyectos`    INT(11) DEFAULT NULL,
-  `lineaInvestigacion` VARCHAR(300) DEFAULT NULL,
+  `idLineaInvestigacion` INT(11) DEFAULT NULL,
   `presupuestoTotal`   DECIMAL(10,2) DEFAULT 0.00,
   `usuarioCreo`        VARCHAR(20) NOT NULL,
   `fechaRegistro`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -26,7 +45,8 @@ CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
   `activo`             TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idConvocatoria`),
   KEY `fk_inv_convocatorias_periodos` (`idPeriodo`),
-  CONSTRAINT `fk_inv_conv_periodos` FOREIGN KEY (`idPeriodo`) REFERENCES `periodos` (`idPeriodo`)
+  CONSTRAINT `fk_inv_conv_periodos` FOREIGN KEY (`idPeriodo`) REFERENCES `periodos` (`idPeriodo`),
+  CONSTRAINT `fk_inv_conv_linea` FOREIGN KEY (`idLineaInvestigacion`) REFERENCES `inv_lineas_investigacion` (`idLinea`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Convocatorias de investigación por período académico';
 
 
@@ -51,6 +71,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos` (
   `esAnonimizado`          TINYINT(4) DEFAULT 0,        -- Para doble ciego
   `rutaProtocolo`          VARCHAR(500) DEFAULT NULL,   -- Archivo PDF del protocolo
   `rutaCronograma`         VARCHAR(500) DEFAULT NULL,   -- Archivo Gantt
+  `rutaResolucion`         VARCHAR(500) DEFAULT NULL,   -- Archivo PDF firmado electrónicamente (.p12)
   `fechaRegistro`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaModificacion`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `activo`                 TINYINT(4) DEFAULT 1,
@@ -330,6 +351,8 @@ INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `ord
 ('Viabilidad y Factibilidad', 'El cronograma y presupuesto son realistas y alcanzables en el período propuesto.', 20.00, 3),
 ('Innovación e Impacto', 'El proyecto genera un aporte significativo y transferible al sector productivo o académico.', 25.00, 4),
 ('Presentación y Forma', 'El documento cumple con las normas APA y el formato institucional requerido.', 10.00, 5);
+
+
 
 
 

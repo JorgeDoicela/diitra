@@ -25,6 +25,8 @@ public partial class InvProyecto
     public sbyte EsAnonimizado { get; set; }
     public string? RutaProtocolo { get; set; }
     public string? RutaCronograma { get; set; }
+
+    public string? RutaResolucion { get; set; }
     public DateTime FechaRegistro { get; set; }
     public DateTime FechaModificacion { get; set; }
     public sbyte Activo { get; set; } = 1;
@@ -48,4 +50,5 @@ public partial class InvProyecto
     public virtual ICollection<InvProyectoHistorial> Historial { get; set; } = new List<InvProyectoHistorial>();
     public virtual ICollection<InvNotificacion> Notificaciones { get; set; } = new List<InvNotificacion>();
 }
+
 
