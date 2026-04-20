@@ -1,4 +1,4 @@
-﻿-- ============================================================
+-- ============================================================
 -- DIITRA: Tablas nuevas del Sistema de Investigación e Innovación
 -- Base de datos: sigafi_es
 -- Prefijo: inv_ (para distinguir de las tablas legacy de SIGAFI)
@@ -352,11 +352,56 @@ INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `ord
 ('Innovación e Impacto', 'El proyecto genera un aporte significativo y transferible al sector productivo o académico.', 25.00, 4),
 ('Presentación y Forma', 'El documento cumple con las normas APA y el formato institucional requerido.', 10.00, 5);
 
+-- ============================================================
+-- MÓDULO 7: SEGURIDAD Y ACCESOS (RBAC)
+-- ============================================================
 
+CREATE TABLE IF NOT EXISTS `inv_roles` (
+  `idRol`        INT(11) NOT NULL AUTO_INCREMENT,
+  `nombre`       VARCHAR(100) NOT NULL,
+  `descripcion`  VARCHAR(300) DEFAULT NULL,
+  `esSistema`    TINYINT(4) DEFAULT 0,
+  `activo`       TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idRol`),
+  UNIQUE KEY `uq_inv_roles_nombre` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Roles del sistema DIITRA';
 
+CREATE TABLE IF NOT EXISTS `inv_permisos` (
+  `idPermiso`    INT(11) NOT NULL AUTO_INCREMENT,
+  `modulo`       VARCHAR(100) NOT NULL,
+  `codigoName`   VARCHAR(100) NOT NULL,
+  `descripcion`  VARCHAR(300) DEFAULT NULL,
+  PRIMARY KEY (`idPermiso`),
+  UNIQUE KEY `uq_inv_permisos_codigo` (`codigoName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo de permisos por módulo';
 
+CREATE TABLE IF NOT EXISTS `inv_rol_permisos` (
+  `idRol`        INT(11) NOT NULL,
+  `idPermiso`    INT(11) NOT NULL,
+  PRIMARY KEY (`idRol`, `idPermiso`),
+  CONSTRAINT `fk_inv_rp_rol` FOREIGN KEY (`idRol`) REFERENCES `inv_roles` (`idRol`) ON DELETE CASCADE,
+  CONSTRAINT `fk_inv_rp_perm` FOREIGN KEY (`idPermiso`) REFERENCES `inv_permisos` (`idPermiso`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Relación intermedia Roles - Permisos';
 
+CREATE TABLE IF NOT EXISTS `inv_usuarios_roles` (
+  `idUsuarioRol`     INT(11) NOT NULL AUTO_INCREMENT,
+  `idReferencia`     VARCHAR(20) NOT NULL,
+  `tipoReferencia`   ENUM('profesor', 'alumno', 'externo', 'admin') NOT NULL,
+  `idRol`            INT(11) NOT NULL,
+  `fechaAsignacion`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `activo`           TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idUsuarioRol`),
+  UNIQUE KEY `uq_inv_usu_rol` (`idReferencia`, `tipoReferencia`, `idRol`),
+  CONSTRAINT `fk_inv_ur_rol` FOREIGN KEY (`idRol`) REFERENCES `inv_roles` (`idRol`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Asignación polimórfica de roles a usuarios';
 
-
-
-
+-- ------------------------------------------------------------
+-- INSUMOS DE ROLES BASE (DML)
+-- ------------------------------------------------------------
+INSERT IGNORE INTO `inv_roles` (`idRol`, `nombre`, `descripcion`, `esSistema`) VALUES
+(1, 'Docente Investigador', 'Docentes con horas de investigación asignadas en el distributivo.', 1),
+(2, 'Estudiante Colaborador', 'Estudiantes matriculados asignados por el docente a un proyecto activo.', 1),
+(3, 'Director de Investigación', 'Director del Departamento DIITRA.', 1),
+(4, 'Revisor Interno', 'Docentes del propio IST designados por el Director como evaluadores.', 1),
+(5, 'Revisor Externo (IST / Organismo)', 'Investigadores de otros Institutos u organismos académicos externos invitados a evaluar.', 1),
+(6, 'Administrador del Sistema', 'Personal TI del IST.', 1);
