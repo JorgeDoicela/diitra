@@ -460,6 +460,16 @@ public partial class DiitraContext : DbContext
         // ============================================================
         // TABLAS Diitra (inv_) - misma configuración que SigafiEsContext
         // ============================================================
+                modelBuilder.Entity<InvLineaInvestigacion>(entity =>
+        {
+            entity.HasKey(e => e.IdLinea).HasName("PRIMARY");
+            entity.ToTable("inv_lineas_investigacion");
+            entity.Property(e => e.IdLinea).HasColumnType("int(11)").HasColumnName("idLinea");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasDefaultValueSql("'1'").HasColumnName("activo");
+            entity.Property(e => e.Descripcion).HasColumnType("text").HasColumnName("descripcion");
+            entity.Property(e => e.NombreLinea).HasMaxLength(300).HasColumnName("nombreLinea");
+            entity.Property(e => e.ResolucionAprobacion).HasMaxLength(100).HasColumnName("resolucionAprobacion");
+        });
         modelBuilder.Entity<InvConvocatoria>(entity =>
         {
             entity.HasKey(e => e.IdConvocatoria).HasName("PRIMARY");
@@ -661,6 +671,7 @@ public partial class DiitraContext : DbContext
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }
+
 
 
 

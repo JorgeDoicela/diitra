@@ -14,7 +14,9 @@ public partial class InvConvocatoria
     public DateOnly FechaCierre { get; set; }
     public string Estado { get; set; } = "borrador";
     public int? MaximoProyectos { get; set; }
-    public string? LineaInvestigacion { get; set; }
+    public int? IdLineaInvestigacion { get; set; }
+
+    public virtual InvLineaInvestigacion? IdLineaInvestigacionNavigation { get; set; }
     public decimal PresupuestoTotal { get; set; }
     public string UsuarioCreo { get; set; } = null!;
     public DateTime FechaRegistro { get; set; }
@@ -25,4 +27,5 @@ public partial class InvConvocatoria
     public virtual Periodo IdPeriodoNavigation { get; set; } = null!;
     public virtual ICollection<InvProyecto> Proyectos { get; set; } = new List<InvProyecto>();
 }
+
 
