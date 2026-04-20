@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "diitra_domain/1.0.0": {
+        "runtime": {
+          "diitra_domain.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "diitra_domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

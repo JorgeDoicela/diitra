@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="diitra_api/diitra_api.csproj" />
+  <Project Path="diitra_application/diitra_application.csproj" />
+  <Project Path="diitra_domain/diitra_domain.csproj" />
+  <Project Path="diitra_infrastructure/diitra_infrastructure.csproj" />
+</Solution>
