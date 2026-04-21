@@ -5,6 +5,7 @@ import UsersPage from './pages/Admin/UsersPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Landing from './pages/Landing/Landing';
 import Login from './pages/Login/Login';
+import CollaborationDemo from './pages/CollaborationDemo';
 import { AuthProvider, useAuth } from './api/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -53,6 +54,7 @@ function App() {
           {/* Public Landing Page */}
           <Route path="/" element={<Landing currentTheme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/demo-colaboracion" element={<CollaborationDemo />} />
           
           {/* Internal Pages with Layout */}
           <Route path="/dashboard" element={
