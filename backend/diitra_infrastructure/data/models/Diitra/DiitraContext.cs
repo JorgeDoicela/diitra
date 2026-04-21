@@ -923,7 +923,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             
-            entity.HasOne(d => d.User).WithOne()
+            entity.HasOne(d => d.User).WithOne(u => u.InvUsuarioMetadata)
                 .HasPrincipalKey<User>(u => u.IdUsuario)
                 .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
                 .HasConstraintName("fk_inv_meta_usuario");
