@@ -57,11 +57,11 @@ public partial class Profesore
 
     public sbyte? Activo { get; set; }
 
-    public int IdEtnia { get; set; }
+    public int? IdEtnia { get; set; }
 
-    public int IdNacionalidad { get; set; }
+    public int? IdNacionalidad { get; set; }
 
-    public int IdParroquiaNacimiento { get; set; }
+    public int? IdParroquiaNacimiento { get; set; }
 
     public string? EmailInstitucional { get; set; }
 
@@ -71,13 +71,13 @@ public partial class Profesore
 
     public DateOnly? FechaRetiro { get; set; }
 
-    public int IdParroquiaResidencia { get; set; }
+    public int? IdParroquiaResidencia { get; set; }
 
-    public string TipoSangre { get; set; } = null!;
+    public string? TipoSangre { get; set; } = null!;
 
     public string? CodigoPostal { get; set; }
 
-    public int IdDiscapacidad { get; set; }
+    public int? IdDiscapacidad { get; set; }
 
     public int? PorcentajeDiscapacidad { get; set; }
 
