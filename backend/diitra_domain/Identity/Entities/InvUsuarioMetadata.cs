@@ -10,7 +10,7 @@ namespace diitra_domain.Identity.Entities;
 public partial class InvUsuarioMetadata
 {
     public int IdMetadata { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdUsuario { get; set; }
     
     // JSON para configuraciones dinámicas (UI, temas, etc)

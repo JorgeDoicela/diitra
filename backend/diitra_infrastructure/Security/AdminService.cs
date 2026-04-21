@@ -49,8 +49,8 @@ public class AdminService : IAdminService
             {
                 IdProfesor = p.IdProfesor.Trim(),
                 NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
-                Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : p.Email,
-                UserUuid = userMeta?.Uuid ?? string.Empty,
+                Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : (p.Email ?? string.Empty),
+                UserUuid = userMeta?.Uuid.ToString() ?? string.Empty,
                 Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
                 RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList()
             };
@@ -69,7 +69,7 @@ public class AdminService : IAdminService
         // Aseguramos que el usuario esté centralizado (Soporta ID o UUID)
         var user = await _context.Users
             .Include(u => u.InvUsuarioMetadata)
-            .FirstOrDefaultAsync(u => u.Usuario == idProfesor || (u.InvUsuarioMetadata != null && u.InvUsuarioMetadata.Uuid == idProfesor));
+            .FirstOrDefaultAsync(u => u.Usuario == idProfesor || (u.InvUsuarioMetadata != null && u.InvUsuarioMetadata.Uuid.ToString() == idProfesor));
         if (user == null)
         {
             var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idProfesor);
@@ -91,7 +91,7 @@ public class AdminService : IAdminService
                 var metadata = new InvUsuarioMetadata
                 {
                     IdUsuario = user.IdUsuario,
-                    Uuid = Guid.NewGuid().ToString(),
+                    Uuid = Guid.NewGuid(),
                     Version = 1
                 };
                 _context.InvUsuariosMetadata.Add(metadata);
@@ -137,7 +137,7 @@ public class AdminService : IAdminService
         var existing = await _context.UserRoles
             .Include(ur => ur.User)
                 .ThenInclude(u => u.InvUsuarioMetadata)
-            .FirstOrDefaultAsync(ur => (ur.User.Usuario == idProfesor || (ur.User.InvUsuarioMetadata != null && ur.User.InvUsuarioMetadata.Uuid == idProfesor)) && ur.IdRol == role.IdRol);
+            .FirstOrDefaultAsync(ur => (ur.User.Usuario == idProfesor || (ur.User.InvUsuarioMetadata != null && ur.User.InvUsuarioMetadata.Uuid.ToString() == idProfesor)) && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {
