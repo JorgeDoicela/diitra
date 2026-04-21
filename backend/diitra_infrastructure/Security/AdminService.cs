@@ -37,22 +37,23 @@ public class AdminService : IAdminService
         var userRoles = await _context.UserRoles
             .Include(ur => ur.Role)
             .Include(ur => ur.User)
+                .ThenInclude(u => u.InvUsuarioMetadata) // Necesitamos el UUID
             .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
             .ToListAsync();
 
-        return professors.Select(p => new UserManagementDto
-        {
-            IdProfesor = p.IdProfesor.Trim(),
-            NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
-            Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : p.Email,
-            Roles = userRoles
-                .Where(ur => ur.User.Usuario == p.IdProfesor.Trim())
-                .Select(ur => ur.Role.Nombre)
-                .ToList(),
-            RoleCodes = userRoles
-                .Where(ur => ur.User.Usuario == p.IdProfesor.Trim())
-                .Select(ur => ur.Role.CodigoRol)
-                .ToList()
+        return professors.Select(p => {
+            var roleInfo = userRoles.Where(ur => ur.User.Usuario == p.IdProfesor.Trim()).ToList();
+            var userMeta = roleInfo.FirstOrDefault()?.User?.InvUsuarioMetadata;
+
+            return new UserManagementDto
+            {
+                IdProfesor = p.IdProfesor.Trim(),
+                NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
+                Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : p.Email,
+                UserUuid = userMeta?.Uuid ?? string.Empty,
+                Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
+                RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList()
+            };
         }).ToList();
     }
 
@@ -65,8 +66,10 @@ public class AdminService : IAdminService
 
         if (role == null) return false;
 
-        // Aseguramos que el usuario esté centralizado (On-demand en Admin)
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == idProfesor);
+        // Aseguramos que el usuario esté centralizado (Soporta ID o UUID)
+        var user = await _context.Users
+            .Include(u => u.InvUsuarioMetadata)
+            .FirstOrDefaultAsync(u => u.Usuario == idProfesor || (u.InvUsuarioMetadata != null && u.InvUsuarioMetadata.Uuid == idProfesor));
         if (user == null)
         {
             var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idProfesor);
@@ -83,6 +86,16 @@ public class AdminService : IAdminService
                 };
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync(); // Importante: Guardar para generar IdUsuario
+
+                // PROVISIÓN DE METADATA (Shielding)
+                var metadata = new InvUsuarioMetadata
+                {
+                    IdUsuario = user.IdUsuario,
+                    Uuid = Guid.NewGuid().ToString(),
+                    Version = 1
+                };
+                _context.InvUsuariosMetadata.Add(metadata);
+                await _context.SaveChangesAsync();
             }
         }
 
@@ -123,7 +136,8 @@ public class AdminService : IAdminService
 
         var existing = await _context.UserRoles
             .Include(ur => ur.User)
-            .FirstOrDefaultAsync(ur => ur.User.Usuario == idProfesor && ur.IdRol == role.IdRol);
+                .ThenInclude(u => u.InvUsuarioMetadata)
+            .FirstOrDefaultAsync(ur => (ur.User.Usuario == idProfesor || (ur.User.InvUsuarioMetadata != null && ur.User.InvUsuarioMetadata.Uuid == idProfesor)) && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {

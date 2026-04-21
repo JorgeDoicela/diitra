@@ -1,7 +1,6 @@
 using System;
-using diitra_domain.Identity.Entities;
 
-namespace diitra_infrastructure.data.models;
+namespace diitra_domain.Identity.Entities;
 
 /// <summary>
 /// Metadata adicional para usuarios de DIITRA (Shadow Profile)

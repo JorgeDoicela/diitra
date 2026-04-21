@@ -33,4 +33,10 @@ public class ProjectService : IResearchService
     {
         return await Task.FromResult<InvestigacionProyecto?>(null);
     }
+
+    public async Task<InvestigacionProyecto?> GetProposalByUuidAsync(string uuid)
+    {
+        // Reinforcement: Support lookup by UUID
+        return await Task.FromResult<InvestigacionProyecto?>(null);
+    }
 }

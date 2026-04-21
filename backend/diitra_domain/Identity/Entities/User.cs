@@ -15,5 +15,6 @@ public class User
     public string? IdSigafi { get; set; } // Reference to legacy idProfesor/idAlumno
 
     // Relaciones
+    public virtual InvUsuarioMetadata? InvUsuarioMetadata { get; set; }
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }
