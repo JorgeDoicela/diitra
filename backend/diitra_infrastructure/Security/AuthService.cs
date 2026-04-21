@@ -121,7 +121,7 @@ public class AuthService : IAuthService
                 user = new User
                 {
                     Usuario = username,
-                    Nombre = $"{alumno.PrimerNombre} {alumno.ApellidoPaterno}",
+                    Nombre = $"{(alumno.PrimerNombre ?? "").Trim()} {(alumno.ApellidoPaterno ?? "").Trim()}",
                     Contrasenia = password,
                     Activo = true,
                     TipoUsuario = "alumno",
@@ -242,24 +242,33 @@ public class AuthService : IAuthService
             .Distinct()
             .ToList();
 
-        var response = new AuthResponse
+        try
         {
-            IdReferencia = user.Usuario.Trim(),
-            IdUsuario = user.IdUsuario,
-            Usuario = user.Usuario,
-            NombreCompleto = user.Nombre,
-            Role = primaryRole,
-            Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
-            RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),
-            TipoUsuario = user.TipoUsuario,
-            Permissions = permissions,
-            Administrador = (cleanId == MASTER_ADMIN_ID) || (user.Administrador ?? false)
-        };
+            var response = new AuthResponse
+            {
+                IdReferencia = user.Usuario.Trim(),
+                IdUsuario = user.IdUsuario,
+                Usuario = user.Usuario,
+                NombreCompleto = user.Nombre,
+                Role = primaryRole,
+                Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
+                RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),
+                TipoUsuario = user.TipoUsuario,
+                Permissions = permissions,
+                Administrador = (cleanId == MASTER_ADMIN_ID) || (user.Administrador ?? false)
+            };
 
-        // Generar el token y asignarlo
-        response.Token = GenerateToken(response);
-        
-        return response;
+            // Generar el token y asignarlo
+            response.Token = GenerateToken(response);
+            
+            return response;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[FATAL ERROR] GetAuthResponseAsync failed: {ex.Message}");
+            if (ex.InnerException != null) Console.WriteLine($"[INNER] {ex.InnerException.Message}");
+            return null;
+        }
     }
 
     public string GenerateToken(AuthResponse user)

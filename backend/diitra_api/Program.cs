@@ -112,10 +112,7 @@ if (!string.IsNullOrEmpty(connectionString))
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-try 
-{
-    Console.WriteLine("[STARTUP] Building application...");
-    var app = builder.Build();
+var app = builder.Build();
 
     Console.WriteLine("[STARTUP] Configuring middleware...");
     // 1. CORS debe ser lo primero, antes de cualquier redirección o autenticación
@@ -135,17 +132,5 @@ try
     // SignalR Hubs (Unificado)
     app.MapHub<DocumentHub>("/hubs/document");
 
-    Console.WriteLine("[DIITRA] Server ONLINE on http://localhost:5175");
-    Console.WriteLine("[DIITRA] Press Ctrl+C to stop.");
-    app.Run();
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"[CRITICAL ERROR] Application failed to start: {ex.Message}");
-    if (ex.InnerException != null)
-    {
-        Console.WriteLine($"[INNER EXCEPTION] {ex.InnerException.Message}");
-    }
-    throw;
-}
+app.Run();
 

@@ -23,11 +23,11 @@ public class AdminService : IAdminService
         {
             searchTerm = searchTerm.ToLower();
             query = query.Where(p => 
-                p.IdProfesor.Contains(searchTerm) || 
-                p.PrimerNombre.ToLower().Contains(searchTerm) || 
-                p.PrimerApellido.ToLower().Contains(searchTerm) ||
-                p.Email.ToLower().Contains(searchTerm) ||
-                p.EmailInstitucional.ToLower().Contains(searchTerm));
+                (p.IdProfesor ?? "").Contains(searchTerm) || 
+                (p.PrimerNombre ?? "").ToLower().Contains(searchTerm) || 
+                (p.PrimerApellido ?? "").ToLower().Contains(searchTerm) ||
+                (p.Email ?? "").ToLower().Contains(searchTerm) ||
+                (p.EmailInstitucional ?? "").ToLower().Contains(searchTerm));
         }
 
         var professors = await query.Take(20).ToListAsync();
