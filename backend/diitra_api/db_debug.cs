@@ -42,16 +42,25 @@ class Program
                 Console.WriteLine($"- {r.IdRol}: {r.Nombre}");
             }
 
-            var userRoles = context.UserRoles
-                .Where(ur => ur.IdReferencia.Contains(targetId))
-                .ToList();
+            var user = context.Users.FirstOrDefault(u => u.Usuario.Contains(targetId));
             
             Console.WriteLine($"\nRoles for {targetId}:");
-            if (!userRoles.Any()) Console.WriteLine("NONE");
-            foreach (var ur in userRoles)
+            if (user == null)
             {
-                var roleName = roles.FirstOrDefault(r => r.IdRol == ur.IdRol)?.Nombre ?? "Unknown";
-                Console.WriteLine($"- Role ID: {ur.IdRol} ({roleName}), Active: {ur.Activo}");
+                Console.WriteLine("User not provisioned in 'usuarios' table yet.");
+            }
+            else
+            {
+                var userRoles = context.UserRoles
+                    .Where(ur => ur.IdUsuario == user.IdUsuario)
+                    .ToList();
+                
+                if (!userRoles.Any()) Console.WriteLine("NONE");
+                foreach (var ur in userRoles)
+                {
+                    var roleName = roles.FirstOrDefault(r => r.IdRol == ur.IdRol)?.Nombre ?? "Unknown";
+                    Console.WriteLine($"- Role ID: {ur.IdRol} ({roleName}), Active: {ur.EsActivo}");
+                }
             }
         }
     }

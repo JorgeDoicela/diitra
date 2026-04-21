@@ -15,7 +15,7 @@ public class IdentityModule
     public int IdModulos { get; set; }
     public int IdSistema { get; set; }
     public string Nombre { get; set; } = string.Empty;
-    public bool EsActivo { get; set; } = true;
+    public bool? EsActivo { get; set; } = true;
 
     public SystemEntity Sistema { get; set; } = null!;
     public ICollection<ModuleOperation> ModuloOperations { get; set; } = new List<ModuleOperation>();
@@ -35,7 +35,7 @@ public class ModuleOperation
     public int IdOperaciones { get; set; }
     public DateTime? FechaCreacion { get; set; }
     public DateTime? FechaModificacion { get; set; }
-    public bool EsActivo { get; set; } = true;
+    public bool? EsActivo { get; set; } = true;
 
     public IdentityModule Module { get; set; } = null!;
     public IdentityOperation Operation { get; set; } = null!;
@@ -50,7 +50,7 @@ public class RoleModuleOperation
     public DateTime? FechaAsignacion { get; set; }
     public DateTime? FechaModificacion { get; set; }
     public DateTime? FechaDesactivacion { get; set; }
-    public bool EsActivo { get; set; } = true;
+    public bool? EsActivo { get; set; } = true;
     public string? UsuarioAsigno { get; set; }
     public string? UsuarioDesactivo { get; set; }
 

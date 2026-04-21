@@ -3,33 +3,23 @@
 -- Basado en el esquema institucional para SSO
 -- ============================================================
 
----- Limpieza preventiva de tablas de identidad y seguridad
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS `rol_modulo_operacion`;
-DROP TABLE IF EXISTS `modulos_operacion`;
-DROP TABLE IF EXISTS `operaciones`;
-DROP TABLE IF EXISTS `modulos`;
-DROP TABLE IF EXISTS `sistema`;
-DROP TABLE IF EXISTS `usuario_rol`;
-DROP TABLE IF EXISTS `rol`;
-DROP TABLE IF EXISTS `usuarios`;
-SET FOREIGN_KEY_CHECKS = 1;
-
 -- 1. Tabla de Usuarios
-CREATE TABLE `usuarios` (
+CREATE TABLE IF NOT EXISTS `usuarios` (
+  `idUsuario`      INT(11) NOT NULL AUTO_INCREMENT,
   `usuario`        VARCHAR(50) NOT NULL,
   `nombre`         VARCHAR(200) NOT NULL,
-  `clave`          VARCHAR(100) NOT NULL,
+  `contrasenia`    VARCHAR(250) NOT NULL, -- Renombrado de clave
   `activo`         TINYINT(4) DEFAULT 1,
   `administrador`  TINYINT(4) DEFAULT 0,
-  `tipo_usuario`   ENUM('profesor', 'alumno', 'externo', 'admin') DEFAULT 'profesor',
+  `tipoUsuario`    ENUM('alumno', 'profesor', 'otros') DEFAULT 'profesor',
   `idSigafi`       VARCHAR(14) DEFAULT NULL,
-  PRIMARY KEY (`usuario`),
+  PRIMARY KEY (`idUsuario`),
+  UNIQUE KEY `uq_usuario_unique` (`usuario`),
   UNIQUE KEY `uq_id_sigafi` (`idSigafi`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- 2. Tabla de Roles Institucionales
-CREATE TABLE `rol` (
+CREATE TABLE IF NOT EXISTS `rol` (
   `idRol`        INT(11) NOT NULL AUTO_INCREMENT,
   `Nombre`       VARCHAR(255) NOT NULL,
   `codigo_rol`   VARCHAR(50) NOT NULL,
@@ -41,13 +31,13 @@ CREATE TABLE `rol` (
 -- 3. Tabla de Usuario-Rol (Mapping Centralizado)
 CREATE TABLE IF NOT EXISTS `usuario_rol` (
   `idUsuarioRol`       INT(11) NOT NULL AUTO_INCREMENT,
-  `usuario`            VARCHAR(50) NOT NULL,
+  `idUsuario`          INT(11) NOT NULL, -- Ahora apunta a idUsuario
   `idRol`              INT(11) NOT NULL,
   `fecha_creacion`     DATE DEFAULT NULL,
   `fecha_modificacion` DATE DEFAULT NULL,
   `esActivo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idUsuarioRol`),
-  CONSTRAINT `fk_ur_usuario` FOREIGN KEY (`usuario`) REFERENCES `usuarios` (`usuario`),
+  CONSTRAINT `fk_ur_usuario` FOREIGN KEY (`idUsuario`) REFERENCES `usuarios` (`idUsuario`),
   CONSTRAINT `fk_ur_rol` FOREIGN KEY (`idRol`) REFERENCES `rol` (`idRol`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -73,7 +63,7 @@ CREATE TABLE IF NOT EXISTS `operaciones` (
   PRIMARY KEY (`idOperaciones`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `modulos_operacion` (
+CREATE TABLE IF NOT EXISTS `modulos_operacion` (
   `idModulosOperaciones` INT(11) NOT NULL AUTO_INCREMENT,
   `idModulos`            INT(11) NOT NULL,
   `idOperaciones`        INT(11) NOT NULL,
@@ -85,7 +75,7 @@ CREATE TABLE `modulos_operacion` (
   CONSTRAINT `fk_mo_oper` FOREIGN KEY (`idOperaciones`) REFERENCES `operaciones` (`idOperaciones`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `rol_modulo_operacion` (
+CREATE TABLE IF NOT EXISTS `rol_modulo_operacion` (
   `idRolModuloOperacion` INT(11) NOT NULL AUTO_INCREMENT,
   `idModulosOperaciones` INT(11) NOT NULL,
   `idRol`                INT(11) NOT NULL,
@@ -106,7 +96,7 @@ CREATE TABLE `rol_modulo_operacion` (
 -- ============================================================
 
 -- Roles Base Institucionales
-INSERT INTO `rol` (`Nombre`, `codigo_rol`) VALUES 
+INSERT IGNORE INTO `rol` (`Nombre`, `codigo_rol`) VALUES 
 ('Administrador del Sistema', 'ADMIN_SISTEMA'),
 ('Docente Investigador', 'DOCENTE_INV'),
 ('Director de Investigación', 'DIRECTOR_INV'),
@@ -116,7 +106,7 @@ INSERT INTO `rol` (`Nombre`, `codigo_rol`) VALUES
 INSERT IGNORE INTO `sistema` (`idSistema`, `detalle`) VALUES (1, 'DIITRA - Investigación');
 
 -- Operaciones Base (Sincronizadas con Permissions.cs)
-INSERT INTO `operaciones` (`idOperaciones`, `NombreOperacion`) VALUES 
+INSERT IGNORE INTO `operaciones` (`idOperaciones`, `NombreOperacion`) VALUES 
 (1, 'VER'), 
 (2, 'CREAR'), 
 (3, 'EDITAR'), 
@@ -128,11 +118,11 @@ INSERT INTO `operaciones` (`idOperaciones`, `NombreOperacion`) VALUES
 (9, 'ASIGNAR');
 
 -- Módulos de DIITRA
-INSERT INTO `modulos` (`idModulos`, `id_sistema`, `Nombre`) VALUES 
+INSERT IGNORE INTO `modulos` (`idModulos`, `id_sistema`, `Nombre`) VALUES 
 (1, 1, 'PROYECTOS'), (2, 1, 'CONVOCATORIAS'), (3, 1, 'USUARIOS'), (4, 1, 'CONFIGURACION');
 
 -- Enlace Modular Defecto: Mapear todas las operaciones a todos los módulos de DIITRA
-INSERT INTO `modulos_operacion` (`idModulos`, `idOperaciones`, `fecha_creacion`, `esActivo`)
+INSERT IGNORE INTO `modulos_operacion` (`idModulos`, `idOperaciones`, `fecha_creacion`, `esActivo`)
 SELECT m.idModulos, o.idOperaciones, CURDATE(), 1 FROM `modulos` m, `operaciones` o WHERE m.id_sistema = 1;
 
 -- ============================================================

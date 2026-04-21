@@ -44,6 +44,10 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[FATAL ERROR] AuthController: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
+            if (ex.InnerException != null) Console.WriteLine($"[INNER] {ex.InnerException.Message}");
+
             return StatusCode(500, new 
             { 
                 message = "Error interno del servidor", 

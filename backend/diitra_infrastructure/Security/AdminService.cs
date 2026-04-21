@@ -36,7 +36,8 @@ public class AdminService : IAdminService
         // Buscar roles enganchados al Usuario centralizado (que coincide con la cédula/idProfesor)
         var userRoles = await _context.UserRoles
             .Include(ur => ur.Role)
-            .Where(ur => ids.Contains(ur.Usuario) && ur.EsActivo)
+            .Include(ur => ur.User)
+            .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
             .ToListAsync();
 
         return professors.Select(p => new UserManagementDto
@@ -45,11 +46,11 @@ public class AdminService : IAdminService
             NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
             Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : p.Email,
             Roles = userRoles
-                .Where(ur => ur.Usuario == p.IdProfesor.Trim())
+                .Where(ur => ur.User.Usuario == p.IdProfesor.Trim())
                 .Select(ur => ur.Role.Nombre)
                 .ToList(),
             RoleCodes = userRoles
-                .Where(ur => ur.Usuario == p.IdProfesor.Trim())
+                .Where(ur => ur.User.Usuario == p.IdProfesor.Trim())
                 .Select(ur => ur.Role.CodigoRol)
                 .ToList()
         }).ToList();
@@ -75,21 +76,24 @@ public class AdminService : IAdminService
                 {
                     Usuario = idProfesor,
                     Nombre = $"{p.PrimerNombre} {p.PrimerApellido}",
-                    Clave = p.Clave ?? "cambiame",
+                    Contrasenia = p.Clave ?? "cambiame",
                     Activo = true,
                     TipoUsuario = "profesor",
                     IdSigafi = p.IdProfesor
                 };
                 _context.Users.Add(user);
+                await _context.SaveChangesAsync(); // Importante: Guardar para generar IdUsuario
             }
         }
 
+        if (user == null) return false;
+
         var existing = await _context.UserRoles
-            .FirstOrDefaultAsync(ur => ur.Usuario == idProfesor && ur.IdRol == role.IdRol);
+            .FirstOrDefaultAsync(ur => ur.IdUsuario == user.IdUsuario && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {
-            if (existing.EsActivo) return true;
+            if (existing.EsActivo ?? true) return true;
             existing.EsActivo = true;
             existing.FechaModificacion = DateTime.UtcNow;
         }
@@ -97,7 +101,7 @@ public class AdminService : IAdminService
         {
             _context.UserRoles.Add(new UserRole
             {
-                Usuario = idProfesor,
+                IdUsuario = user.IdUsuario,
                 IdRol = role.IdRol,
                 EsActivo = true,
                 FechaCreacion = DateTime.UtcNow
@@ -118,7 +122,8 @@ public class AdminService : IAdminService
         if (role == null) return false;
 
         var existing = await _context.UserRoles
-            .FirstOrDefaultAsync(ur => ur.Usuario == idProfesor && ur.IdRol == role.IdRol);
+            .Include(ur => ur.User)
+            .FirstOrDefaultAsync(ur => ur.User.Usuario == idProfesor && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {

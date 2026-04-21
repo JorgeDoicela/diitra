@@ -160,28 +160,6 @@ public partial class DiitraContext : DbContext
             entity.Ignore(e => e.Matriculas);
         });
 
-        modelBuilder.Entity<Rol>(entity =>
-        {
-            entity.HasKey(e => e.IdRol).HasName("PRIMARY");
-            entity.ToTable("rol");
-            entity.Property(e => e.IdRol).HasColumnType("int(11)").HasColumnName("idRol");
-            entity.Property(e => e.CodigoRol).HasMaxLength(10).HasColumnName("codigo_rol");
-            entity.Property(e => e.Nombre).HasMaxLength(255);
-            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
-            entity.Ignore(e => e.UsuarioRols);
-        });
-
-        modelBuilder.Entity<UsuarioRol>(entity =>
-        {
-            entity.HasKey(e => e.IdUsuarioRol).HasName("PRIMARY");
-            entity.ToTable("usuario_rol");
-            entity.Property(e => e.IdUsuarioRol).HasColumnType("int(11)").HasColumnName("idUsuarioRol");
-            entity.Property(e => e.Usuario).HasMaxLength(20).HasColumnName("usuario");
-            entity.Property(e => e.IdRol).HasColumnType("int(11)").HasColumnName("idRol");
-            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
-            entity.HasOne(d => d.IdRolNavigation).WithMany()
-                .HasForeignKey(d => d.IdRol).HasConstraintName("fk_usuario_rol_rol1");
-        });
 
         modelBuilder.Entity<Periodo>(entity =>
         {
@@ -736,14 +714,22 @@ public partial class DiitraContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Usuario);
             entity.ToTable("usuarios");
-            entity.Property(e => e.Usuario).HasMaxLength(50);
-            entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Clave).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
-            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)");
-            entity.Property(e => e.TipoUsuario).HasColumnType("enum('profesor','alumno','externo','admin')").HasColumnName("tipo_usuario");
+
+            // LLAVE COMPUESTA: idUsuario + usuario (Alineación exacta con ERD v2.0)
+            entity.HasKey(e => new { e.IdUsuario, e.Usuario });
+
+            // LLAVE ALTERNA: Fundamental para que las FKs a idUsuario funcionen en EF Core
+            entity.HasAlternateKey(e => e.IdUsuario);
+
+            entity.HasIndex(e => e.IdSigafi, "idSigafi_UNIQUE").IsUnique();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").ValueGeneratedOnAdd();
+            entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("usuario");
+            entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired().HasColumnName("nombre");
+            entity.Property(e => e.Contrasenia).HasMaxLength(250).IsRequired().HasColumnName("contrasenia");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
+            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador");
+            entity.Property(e => e.TipoUsuario).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tipoUsuario");
             entity.Property(e => e.IdSigafi).HasMaxLength(14).HasColumnName("idSigafi");
         });
 
@@ -762,14 +748,15 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdUsuarioRol);
             entity.ToTable("usuario_rol");
             entity.Property(e => e.IdUsuarioRol).HasColumnName("idUsuarioRol");
-            entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("usuario");
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
             entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion");
             entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion");
 
             entity.HasOne(d => d.User).WithMany(p => p.UserRoles)
-                .HasForeignKey(d => d.Usuario).HasConstraintName("fk_ur_usuario");
+                .HasPrincipalKey(u => u.IdUsuario)
+                .HasForeignKey(d => d.IdUsuario).HasConstraintName("fk_ur_usuario");
             entity.HasOne(d => d.Role).WithMany(p => p.UserRoles)
                 .HasForeignKey(d => d.IdRol).HasConstraintName("fk_ur_rol");
         });
