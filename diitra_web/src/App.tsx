@@ -54,7 +54,7 @@ function App() {
           {/* Public Landing Page */}
           <Route path="/" element={<Landing currentTheme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/demo-colaboracion" element={<CollaborationDemo />} />
+          <Route path="/demo-colaboracion" element={<CollaborationDemo theme={theme} toggleTheme={toggleTheme} />} />
           
           {/* Internal Pages with Layout */}
           <Route path="/dashboard" element={
