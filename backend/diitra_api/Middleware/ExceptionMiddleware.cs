@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Middleware;
 
@@ -21,6 +22,21 @@ public class ExceptionMiddleware
         try
         {
             await _next(context);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger.LogWarning(ex, "Conflict detected: Data has been modified by another user.");
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+
+            var response = new 
+            { 
+                statusCode = context.Response.StatusCode, 
+                message = "Conflicto de edición: El registro ha sido modificado por otro usuario. Por favor, recarga los datos e intenta de nuevo." 
+            };
+
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response, options));
         }
         catch (Exception ex)
         {
