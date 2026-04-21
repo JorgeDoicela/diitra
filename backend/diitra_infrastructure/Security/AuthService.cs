@@ -15,6 +15,7 @@ public class AuthService : IAuthService
 {
     private readonly DiitraContext _context;
     private readonly IConfiguration _configuration;
+    private const string MASTER_ADMIN_ID = "0302144159";
 
     public AuthService(DiitraContext context, IConfiguration configuration)
     {
@@ -39,6 +40,14 @@ public class AuthService : IAuthService
             // Validamos contra la clave centralizada (o legacy si se sincronizó)
             if (user.Contrasenia == password)
             {
+                // LOGICA DE REFUERZO: Si es el Master Admin, asegurar que tenga el flag de administrador activo
+                if (username == MASTER_ADMIN_ID && !(user.Administrador ?? false))
+                {
+                    Console.WriteLine("[SECURITY] Master Admin detected. Forcing 'Administrador = true' in DB...");
+                    user.Administrador = true;
+                    await _context.SaveChangesAsync();
+                }
+
                 return await GetAuthResponseAsync(user, user.TipoUsuario);
             }
         }
@@ -82,7 +91,6 @@ public class AuthService : IAuthService
 
             // Asignar rol por defecto
             Console.WriteLine($"[STEP 6] Assigning default role...");
-            const string MASTER_ADMIN_ID = "0302144159";
             var defaultRoleCodigo = username == MASTER_ADMIN_ID ? "ADMIN_SIST" : "DOCENTE_IN";
             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == defaultRoleCodigo);
 
@@ -148,12 +156,36 @@ public class AuthService : IAuthService
         
         Console.WriteLine($"[DEBUG] Roles found: {userRoles.Count}");
 
+        // LOGICA DE REFUERZO: Si es el Master Admin, asegurar que tenga el rol ADMIN_SIST
+        if (cleanId == MASTER_ADMIN_ID && !userRoles.Any(ur => ur.Role.CodigoRol == "ADMIN_SIST"))
+        {
+            Console.WriteLine("[SECURITY] Master Admin missing ADMIN_SIST role. Forcing assignment...");
+            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == "ADMIN_SIST");
+            if (adminRole != null)
+            {
+                _context.UserRoles.Add(new UserRole
+                {
+                    IdUsuario = user.IdUsuario,
+                    IdRol = adminRole.IdRol,
+                    EsActivo = true,
+                    FechaCreacion = DateTime.UtcNow
+                });
+                await _context.SaveChangesAsync();
+                
+                // Recargar roles
+                userRoles = await _context.UserRoles
+                    .Include(ur => ur.Role).ThenInclude(r => r.RoleModuleOperations).ThenInclude(rmo => rmo.ModuleOperation).ThenInclude(mo => mo.Module)
+                    .Include(ur => ur.Role).ThenInclude(r => r.RoleModuleOperations).ThenInclude(rmo => rmo.ModuleOperation).ThenInclude(mo => mo.Operation)
+                    .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
+                    .ToListAsync();
+            }
+        }
+
         // LOGICA DE BOOTSTRAP: Asignar rol inicial si es nuevo en DIITRA
         if (!userRoles.Any() && tipoUsuario == "profesor")
         {
             Console.WriteLine("[DEBUG] No roles found, executing bootstrap assignment...");
             // MASTER ADMIN BLINDADO EN CÓDIGO
-            const string MASTER_ADMIN_ID = "0302144159";
             var defaultRoleCodigo = cleanId == MASTER_ADMIN_ID ? "ADMIN_SIST" : "DOCENTE_IN";
             
             Console.WriteLine($"[DEBUG] Searching for default role: {defaultRoleCodigo}");
@@ -195,7 +227,7 @@ public class AuthService : IAuthService
             }
         }
 
-        // Determinar Rol Primario para el JWT legado
+        // Determinar Rol Primario (para compatibilidad legada)
         var primaryRole = userRoles
             .OrderByDescending(ur => ur.Role.CodigoRol == "ADMIN_SIST")
             .ThenBy(ur => ur.IdRol)
@@ -210,14 +242,24 @@ public class AuthService : IAuthService
             .Distinct()
             .ToList();
 
-        return new AuthResponse
+        var response = new AuthResponse
         {
             IdReferencia = user.Usuario.Trim(),
+            IdUsuario = user.IdUsuario,
+            Usuario = user.Usuario,
             NombreCompleto = user.Nombre,
             Role = primaryRole,
-            TipoUsuario = tipoUsuario,
-            Permissions = permissions
+            Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
+            RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),
+            TipoUsuario = user.TipoUsuario,
+            Permissions = permissions,
+            Administrador = (cleanId == MASTER_ADMIN_ID) || (user.Administrador ?? false)
         };
+
+        // Generar el token y asignarlo
+        response.Token = GenerateToken(response);
+        
+        return response;
     }
 
     public string GenerateToken(AuthResponse user)
@@ -230,8 +272,15 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.IdReferencia),
             new Claim(ClaimTypes.Name, user.NombreCompleto),
             new Claim(ClaimTypes.Role, user.Role),
-            new Claim("tipo_usuario", user.TipoUsuario)
+            new Claim("tipo_usuario", user.TipoUsuario),
+            new Claim("es_admin", user.Administrador.ToString().ToLower())
         };
+
+        // Incluir todos los códigos de rol como claims de Role para mayor compatibilidad
+        foreach (var roleCode in user.RoleCodes)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, roleCode));
+        }
 
         foreach (var permission in user.Permissions)
         {
@@ -249,7 +298,9 @@ public class AuthService : IAuthService
 
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
+        var tokenString = tokenHandler.WriteToken(token);
 
-        return tokenHandler.WriteToken(token);
+        Console.WriteLine($"[DEBUG] Token generated successfully for: {user.NombreCompleto}");
+        return tokenString;
     }
 }

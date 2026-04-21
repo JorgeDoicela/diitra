@@ -20,8 +20,8 @@ const Sidebar = ({ currentTheme, toggleTheme }: SidebarProps) => {
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas' },
   ];
 
-  // Agregar Administración si tiene permiso para gestionar usuarios
-  if (hasPermission('USUARIOS', 'VER')) {
+  // Agregar Administración si tiene permiso para gestionar usuarios O es administrador global
+  if (user?.administrador || hasPermission('USUARIOS', 'VER')) {
     menuItems.push({ name: 'Administración', icon: Users, path: '/admin' });
   }
 

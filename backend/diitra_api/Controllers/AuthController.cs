@@ -72,15 +72,23 @@ public class AuthController : ControllerBase
         {
             var idReferencia = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             var nombre = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
-            var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+            var roles = User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
             var tipo = User.FindFirst("tipo_usuario")?.Value;
+            var isAdmin = User.FindFirst("es_admin")?.Value == "true";
+            var permissions = User.FindAll("permission").Select(c => c.Value).ToList();
 
             return Ok(new
             {
                 id_referencia = idReferencia,
+                idReferencia = idReferencia, // Doble mapeo por seguridad
                 nombre_completo = nombre,
-                role = role,
-                tipo_usuario = tipo
+                nombreCompleto = nombre,
+                role = roles.FirstOrDefault(),
+                roles = roles,
+                role_codes = roles,
+                tipo_usuario = tipo,
+                administrador = isAdmin,
+                permissions = permissions
             });
         }
 

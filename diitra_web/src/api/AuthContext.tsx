@@ -6,7 +6,11 @@ interface User {
     nombre_completo: string;
     role: string;
     tipo_usuario: string;
-    permissions: string[]; // ['PROYECTOS:VER', 'PROYECTOS:CREAR', ...]
+    permissions: string[];
+    administrador: boolean; 
+    role_codes?: string[];
+    usuario?: string;
+    id_usuario?: number;
 }
 
 interface AuthContextType {
