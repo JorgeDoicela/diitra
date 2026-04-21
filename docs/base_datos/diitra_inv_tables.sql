@@ -1,22 +1,144 @@
 -- ============================================================
--- DIITRA: Tablas nuevas del Sistema de Investigación e Innovación
--- Base de datos: sigafi_es
--- Prefijo: inv_ (para distinguir de las tablas legacy de SIGAFI)
+-- SIGAFI: Centralización de Identidad y Permisos Modulares Core
+-- Basado en el esquema institucional para SSO
 -- ============================================================
 
+---- Limpieza preventiva de tablas de identidad y seguridad
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `rol_modulo_operacion`;
+DROP TABLE IF EXISTS `modulos_operacion`;
+DROP TABLE IF EXISTS `operaciones`;
+DROP TABLE IF EXISTS `modulos`;
+DROP TABLE IF EXISTS `sistema`;
+DROP TABLE IF EXISTS `usuario_rol`;
+DROP TABLE IF EXISTS `rol`;
+DROP TABLE IF EXISTS `usuarios`;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 1. Tabla de Usuarios
+CREATE TABLE `usuarios` (
+  `usuario`        VARCHAR(50) NOT NULL,
+  `nombre`         VARCHAR(200) NOT NULL,
+  `clave`          VARCHAR(100) NOT NULL,
+  `activo`         TINYINT(4) DEFAULT 1,
+  `administrador`  TINYINT(4) DEFAULT 0,
+  `tipo_usuario`   ENUM('profesor', 'alumno', 'externo', 'admin') DEFAULT 'profesor',
+  `idSigafi`       VARCHAR(14) DEFAULT NULL,
+  PRIMARY KEY (`usuario`),
+  UNIQUE KEY `uq_id_sigafi` (`idSigafi`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2. Tabla de Roles Institucionales
+CREATE TABLE `rol` (
+  `idRol`        INT(11) NOT NULL AUTO_INCREMENT,
+  `Nombre`       VARCHAR(255) NOT NULL,
+  `codigo_rol`   VARCHAR(50) NOT NULL,
+  `esActivo`     TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idRol`),
+  UNIQUE KEY `uq_inv_roles_codigo` (`codigo_rol`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3. Tabla de Usuario-Rol (Mapping Centralizado)
+CREATE TABLE IF NOT EXISTS `usuario_rol` (
+  `idUsuarioRol`       INT(11) NOT NULL AUTO_INCREMENT,
+  `usuario`            VARCHAR(50) NOT NULL,
+  `idRol`              INT(11) NOT NULL,
+  `fecha_creacion`     DATE DEFAULT NULL,
+  `fecha_modificacion` DATE DEFAULT NULL,
+  `esActivo`           TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idUsuarioRol`),
+  CONSTRAINT `fk_ur_usuario` FOREIGN KEY (`usuario`) REFERENCES `usuarios` (`usuario`),
+  CONSTRAINT `fk_ur_rol` FOREIGN KEY (`idRol`) REFERENCES `rol` (`idRol`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4. Estructura de Permisos Modulares
+CREATE TABLE IF NOT EXISTS `sistema` (
+  `idSistema` INT(11) NOT NULL AUTO_INCREMENT,
+  `detalle`   VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`idSistema`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `modulos` (
+  `idModulos`  INT(11) NOT NULL AUTO_INCREMENT,
+  `id_sistema` INT(11) NOT NULL,
+  `Nombre`     VARCHAR(255) NOT NULL,
+  `esActivo`   TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idModulos`),
+  CONSTRAINT `fk_mod_sistema` FOREIGN KEY (`id_sistema`) REFERENCES `sistema` (`idSistema`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `operaciones` (
+  `idOperaciones`   INT(11) NOT NULL AUTO_INCREMENT,
+  `NombreOperacion` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`idOperaciones`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `modulos_operacion` (
+  `idModulosOperaciones` INT(11) NOT NULL AUTO_INCREMENT,
+  `idModulos`            INT(11) NOT NULL,
+  `idOperaciones`        INT(11) NOT NULL,
+  `fecha_creacion`       DATE DEFAULT NULL,
+  `fecha_modificacion`    DATE DEFAULT NULL,
+  `esActivo`             TINYINT(4) DEFAULT 1,
+  PRIMARY KEY (`idModulosOperaciones`),
+  CONSTRAINT `fk_mo_mod` FOREIGN KEY (`idModulos`) REFERENCES `modulos` (`idModulos`),
+  CONSTRAINT `fk_mo_oper` FOREIGN KEY (`idOperaciones`) REFERENCES `operaciones` (`idOperaciones`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `rol_modulo_operacion` (
+  `idRolModuloOperacion` INT(11) NOT NULL AUTO_INCREMENT,
+  `idModulosOperaciones` INT(11) NOT NULL,
+  `idRol`                INT(11) NOT NULL,
+  `fecha_asignacion`     DATE DEFAULT NULL,
+  `fecha_modificacion`   DATE DEFAULT NULL,
+  `fecha_desactivacion`  DATE DEFAULT NULL, -- Nuevo de ERD
+  `esActivo`             TINYINT(4) DEFAULT 1,
+  `usuario_asigno`       VARCHAR(150) DEFAULT NULL,
+  `usuario_desactivo`    VARCHAR(150) DEFAULT NULL, -- Nuevo de ERD
+  PRIMARY KEY (`idRolModuloOperacion`),
+  CONSTRAINT `fk_rmo_mo` FOREIGN KEY (`idModulosOperaciones`) REFERENCES `modulos_operacion` (`idModulosOperaciones`),
+  CONSTRAINT `fk_rmo_rol` FOREIGN KEY (`idRol`) REFERENCES `rol` (`idRol`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 -- ============================================================
--- MÓDULO 1: CONVOCATORIAS Y PROYECTOS
+-- BOOTSTRAP DE DATOS INICIALES (Configuración de DIITRA)
 -- ============================================================
 
--- L�neas de investigaci�n aprobadas institucionalmente
-CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
-  `idLinea`            INT(11) NOT NULL AUTO_INCREMENT,
-  `nombreLinea`        VARCHAR(300) NOT NULL,
-  `descripcion`        TEXT,
-  `resolucionAprobacion` VARCHAR(100) DEFAULT NULL,
-  `activo`             TINYINT(4) DEFAULT 1,
-  PRIMARY KEY (`idLinea`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='L�neas de investigaci�n institucionales (Reglamento R�gimen Acad�mico)';
+-- Roles Base Institucionales
+INSERT INTO `rol` (`Nombre`, `codigo_rol`) VALUES 
+('Administrador del Sistema', 'ADMIN_SISTEMA'),
+('Docente Investigador', 'DOCENTE_INV'),
+('Director de Investigación', 'DIRECTOR_INV'),
+('Revisor Externo', 'REVISOR_EXT');
+
+-- DIITRA como Sistema
+INSERT IGNORE INTO `sistema` (`idSistema`, `detalle`) VALUES (1, 'DIITRA - Investigación');
+
+-- Operaciones Base (Sincronizadas con Permissions.cs)
+INSERT INTO `operaciones` (`idOperaciones`, `NombreOperacion`) VALUES 
+(1, 'VER'), 
+(2, 'CREAR'), 
+(3, 'EDITAR'), 
+(4, 'ELIMINAR'), 
+(5, 'APROBAR'),
+(6, 'POSTULAR'),
+(7, 'GESTIONAR'),
+(8, 'REPORTES'),
+(9, 'ASIGNAR');
+
+-- Módulos de DIITRA
+INSERT INTO `modulos` (`idModulos`, `id_sistema`, `Nombre`) VALUES 
+(1, 1, 'PROYECTOS'), (2, 1, 'CONVOCATORIAS'), (3, 1, 'USUARIOS'), (4, 1, 'CONFIGURACION');
+
+-- Enlace Modular Defecto: Mapear todas las operaciones a todos los módulos de DIITRA
+INSERT INTO `modulos_operacion` (`idModulos`, `idOperaciones`, `fecha_creacion`, `esActivo`)
+SELECT m.idModulos, o.idOperaciones, CURDATE(), 1 FROM `modulos` m, `operaciones` o WHERE m.id_sistema = 1;
+
+-- ============================================================
+-- MÓDULOS DE INVESTIGACIÓN (Tablas inv_)
+-- ============================================================
+
 -- Líneas de investigación aprobadas institucionalmente
 CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
   `idLinea`            INT(11) NOT NULL AUTO_INCREMENT,
@@ -393,60 +515,6 @@ INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `ord
 ('Viabilidad y Factibilidad', 'El cronograma y presupuesto son realistas y alcanzables en el período propuesto.', 20.00, 3),
 ('Innovación e Impacto', 'El proyecto genera un aporte significativo y transferible al sector productivo o académico.', 25.00, 4),
 ('Presentación y Forma', 'El documento cumple con las normas APA y el formato institucional requerido.', 10.00, 5);
-
--- ============================================================
--- MÓDULO 7: SEGURIDAD Y ACCESOS (RBAC)
--- ============================================================
-
-CREATE TABLE IF NOT EXISTS `inv_roles` (
-  `idRol`        INT(11) NOT NULL AUTO_INCREMENT,
-  `nombre`       VARCHAR(100) NOT NULL,
-  `descripcion`  VARCHAR(300) DEFAULT NULL,
-  `esSistema`    TINYINT(4) DEFAULT 0,
-  `activo`       TINYINT(4) DEFAULT 1,
-  PRIMARY KEY (`idRol`),
-  UNIQUE KEY `uq_inv_roles_nombre` (`nombre`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Roles del sistema DIITRA';
-
-CREATE TABLE IF NOT EXISTS `inv_permisos` (
-  `idPermiso`    INT(11) NOT NULL AUTO_INCREMENT,
-  `modulo`       VARCHAR(100) NOT NULL,
-  `codigoName`   VARCHAR(100) NOT NULL,
-  `descripcion`  VARCHAR(300) DEFAULT NULL,
-  PRIMARY KEY (`idPermiso`),
-  UNIQUE KEY `uq_inv_permisos_codigo` (`codigoName`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo de permisos por módulo';
-
-CREATE TABLE IF NOT EXISTS `inv_rol_permisos` (
-  `idRol`        INT(11) NOT NULL,
-  `idPermiso`    INT(11) NOT NULL,
-  PRIMARY KEY (`idRol`, `idPermiso`),
-  CONSTRAINT `fk_inv_rp_rol` FOREIGN KEY (`idRol`) REFERENCES `inv_roles` (`idRol`) ON DELETE CASCADE,
-  CONSTRAINT `fk_inv_rp_perm` FOREIGN KEY (`idPermiso`) REFERENCES `inv_permisos` (`idPermiso`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Relación intermedia Roles - Permisos';
-
-CREATE TABLE IF NOT EXISTS `inv_usuarios_roles` (
-  `idUsuarioRol`     INT(11) NOT NULL AUTO_INCREMENT,
-  `idReferencia`     VARCHAR(20) NOT NULL,
-  `tipoReferencia`   ENUM('profesor', 'alumno', 'externo', 'admin') NOT NULL,
-  `idRol`            INT(11) NOT NULL,
-  `fechaAsignacion`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `activo`           TINYINT(4) DEFAULT 1,
-  PRIMARY KEY (`idUsuarioRol`),
-  UNIQUE KEY `uq_inv_usu_rol` (`idReferencia`, `tipoReferencia`, `idRol`),
-  CONSTRAINT `fk_inv_ur_rol` FOREIGN KEY (`idRol`) REFERENCES `inv_roles` (`idRol`) ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Asignación polimórfica de roles a usuarios';
-
--- ------------------------------------------------------------
--- INSUMOS DE ROLES BASE (DML)
--- ------------------------------------------------------------
-INSERT IGNORE INTO `inv_roles` (`idRol`, `nombre`, `descripcion`, `esSistema`) VALUES
-(1, 'Docente Investigador', 'Docentes con horas de investigación asignadas en el distributivo.', 1),
-(2, 'Estudiante Colaborador', 'Estudiantes matriculados asignados por el docente a un proyecto activo.', 1),
-(3, 'Director de Investigación', 'Director del Departamento DIITRA.', 1),
-(4, 'Revisor Interno', 'Docentes del propio IST designados por el Director como evaluadores.', 1),
-(5, 'Revisor Externo (IST / Organismo)', 'Investigadores de otros Institutos u organismos académicos externos invitados a evaluar.', 1),
-(6, 'Administrador del Sistema', 'Personal TI del IST.', 1);
 
 -- ------------------------------------------------------------
 -- MÓDULO 8: AUTENTICACIÓN TEMPORAL (MAGIC LINKS)

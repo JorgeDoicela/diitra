@@ -27,103 +27,138 @@ public class AuthService : IAuthService
         var username = request.Username.Trim();
         var password = request.Password.Trim();
 
-        // 1. Intentar buscar como Profesor (Legacy)
-        var profesor = await _context.Profesores
-            .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && p.Activo == 1);
+        // 1. Intentar buscar en la tabla centralizada (Usuarios)
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Usuario.Trim() == username && u.Activo);
 
-        if (profesor != null)
+        if (user != null)
         {
-            if (profesor.Clave != null && profesor.Clave.Trim() == password)
+            // Validamos contra la clave centralizada (o legacy si se sincronizó)
+            if (user.Clave == password)
             {
-                return await GetAuthResponseAsync(profesor.IdProfesor, $"{profesor.PrimerNombre} {profesor.PrimerApellido}", "profesor");
+                return await GetAuthResponseAsync(user.Usuario, user.Nombre, user.TipoUsuario);
             }
         }
 
-        // 2. Intentar buscar como Alumno (Legacy)
+        // 2. PROVISIÓN BAJO DEMANDA: Buscar como Profesor (Legacy) si no está centralizado o falló la clave central
+        var profesor = await _context.Profesores
+            .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && p.Activo == 1);
+
+        if (profesor != null && profesor.Clave?.Trim() == password)
+        {
+            // SI EXISTE EN LEGACY: Asegurar que esté en la tabla centralizada
+            if (user == null)
+            {
+                user = new User
+                {
+                    Usuario = username,
+                    Nombre = $"{profesor.PrimerNombre} {profesor.PrimerApellido}",
+                    Clave = password, // Sincronizamos la clave inicial
+                    Activo = true,
+                    TipoUsuario = "profesor",
+                    IdSigafi = profesor.IdProfesor
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+            return await GetAuthResponseAsync(profesor.IdProfesor, user.Nombre, "profesor");
+        }
+
+        // 3. PROVISIÓN BAJO DEMANDA: Buscar como Alumno (Legacy)
         var alumno = await _context.Alumnos
-            .FirstOrDefaultAsync(a => a.UserAlumno == request.Username);
+            .FirstOrDefaultAsync(a => a.UserAlumno == username && a.Password == password);
 
         if (alumno != null)
         {
-             if (alumno.Password == request.Password)
+            if (user == null)
             {
-                return await GetAuthResponseAsync(alumno.IdAlumno, $"{alumno.PrimerNombre} {alumno.ApellidoPaterno}", "alumno");
+                user = new User
+                {
+                    Usuario = username,
+                    Nombre = $"{alumno.PrimerNombre} {alumno.ApellidoPaterno}",
+                    Clave = password,
+                    Activo = true,
+                    TipoUsuario = "alumno",
+                    IdSigafi = alumno.IdAlumno
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
             }
+            return await GetAuthResponseAsync(alumno.IdAlumno, user.Nombre, "alumno");
         }
 
         return null;
     }
 
-    private async Task<AuthResponse> GetAuthResponseAsync(string idReferencia, string nombreCompleto, string tipoUsuario)
+    private async Task<AuthResponse> GetAuthResponseAsync(string username, string nombreCompleto, string tipoUsuario)
     {
+        var cleanId = username.Trim();
+        var masterAdminId = _configuration["Security:MasterAdminId"] ?? string.Empty;
+
+        // Cargar Roles y sus configuraciones modulares
         var userRoles = await _context.UserRoles
             .Include(ur => ur.Role)
-            .ThenInclude(r => r.Permissions)
-            .Where(ur => ur.IdReferencia == idReferencia && ur.TipoReferencia == tipoUsuario && ur.Activo)
+                .ThenInclude(r => r.RoleModuleOperations)
+                    .ThenInclude(rmo => rmo.ModuleOperation)
+                        .ThenInclude(mo => mo.Module)
+            .Include(ur => ur.Role)
+                .ThenInclude(r => r.RoleModuleOperations)
+                    .ThenInclude(rmo => rmo.ModuleOperation)
+                        .ThenInclude(mo => mo.Operation)
+            .Where(ur => ur.Usuario.Trim() == cleanId && ur.EsActivo)
             .ToListAsync();
 
+        // LOGICA DE BOOTSTRAP: Asignar rol inicial si es nuevo en DIITRA
         if (!userRoles.Any() && tipoUsuario == "profesor")
         {
-            var defaultRoleName = idReferencia.Trim() == "0302144159" ? "Administrador del Sistema" : "Docente Investigador";
-            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == defaultRoleName);
+            var defaultRoleCodigo = cleanId == masterAdminId ? "ADMIN_SISTEMA" : "DOCENTE_INV";
+            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == defaultRoleCodigo);
             
             if (defaultRole != null)
             {
                 var newUserRole = new UserRole
                 {
-                    IdReferencia = idReferencia.Trim(),
-                    TipoReferencia = "profesor",
+                    Usuario = cleanId,
                     IdRol = defaultRole.IdRol,
-                    Activo = true,
-                    FechaAsignacion = DateTime.UtcNow
+                    EsActivo = true,
+                    FechaCreacion = DateTime.UtcNow
                 };
                 _context.UserRoles.Add(newUserRole);
                 await _context.SaveChangesAsync();
 
+                // Recargar
                 userRoles = await _context.UserRoles
                     .Include(ur => ur.Role)
-                    .ThenInclude(r => r.Permissions)
-                    .Where(ur => ur.IdReferencia == idReferencia.Trim() && ur.TipoReferencia == tipoUsuario && ur.Activo)
-                    .ToListAsync();
-            }
-        }
-        else if (idReferencia.Trim() == "0302144159" && !userRoles.Any(ur => ur.Role.Nombre == "Administrador del Sistema"))
-        {
-            // Caso especial: El SuperAdmin ya tiene un rol (ej: Docente) pero le falta el de Admin
-            var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == "Administrador del Sistema");
-            if (adminRole != null)
-            {
-                var newUserRole = new UserRole
-                {
-                    IdReferencia = idReferencia.Trim(),
-                    TipoReferencia = "profesor",
-                    IdRol = adminRole.IdRol,
-                    Activo = true,
-                    FechaAsignacion = DateTime.UtcNow
-                };
-                _context.UserRoles.Add(newUserRole);
-                await _context.SaveChangesAsync();
-                
-                // Recargar roles
-                userRoles = await _context.UserRoles
+                        .ThenInclude(r => r.RoleModuleOperations)
+                            .ThenInclude(rmo => rmo.ModuleOperation)
+                                .ThenInclude(mo => mo.Module)
                     .Include(ur => ur.Role)
-                    .ThenInclude(r => r.Permissions)
-                    .Where(ur => ur.IdReferencia == idReferencia.Trim() && ur.TipoReferencia == tipoUsuario && ur.Activo)
+                        .ThenInclude(r => r.RoleModuleOperations)
+                            .ThenInclude(rmo => rmo.ModuleOperation)
+                                .ThenInclude(mo => mo.Operation)
+                    .Where(ur => ur.Usuario.Trim() == cleanId && ur.EsActivo)
                     .ToListAsync();
             }
         }
 
-        var primaryRole = userRoles.FirstOrDefault()?.Role?.Nombre ?? (tipoUsuario == "alumno" ? "Estudiante" : "Sin Rol");
+        // Determinar Rol Primario para el JWT legado
+        var primaryRole = userRoles
+            .OrderByDescending(ur => ur.Role.CodigoRol == "ADMIN_SISTEMA")
+            .ThenBy(ur => ur.IdRol)
+            .FirstOrDefault()?.Role?.Nombre 
+            ?? (tipoUsuario == "alumno" ? "Estudiante" : "Sin Rol");
         
+        // Carga de Permisos Modulares (Formato MODULE:OPERATION)
         var permissions = userRoles
-            .SelectMany(ur => ur.Role.Permissions)
-            .Select(p => p.CodigoName)
+            .SelectMany(ur => ur.Role.RoleModuleOperations)
+            .Where(rmo => rmo.EsActivo && rmo.ModuleOperation != null && rmo.ModuleOperation.EsActivo)
+            .Select(rmo => $"{rmo.ModuleOperation.Module.Nombre}:{rmo.ModuleOperation.Operation.NombreOperacion}".ToUpper())
             .Distinct()
             .ToList();
 
         return new AuthResponse
         {
-            IdReferencia = idReferencia,
+            IdReferencia = cleanId,
             NombreCompleto = nombreCompleto,
             Role = primaryRole,
             TipoUsuario = tipoUsuario,

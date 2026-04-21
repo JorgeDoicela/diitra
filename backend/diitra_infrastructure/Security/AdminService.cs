@@ -33,9 +33,10 @@ public class AdminService : IAdminService
         var professors = await query.Take(20).ToListAsync();
         var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
 
+        // Buscar roles enganchados al Usuario centralizado (que coincide con la cédula/idProfesor)
         var userRoles = await _context.UserRoles
             .Include(ur => ur.Role)
-            .Where(ur => ids.Contains(ur.IdReferencia) && ur.TipoReferencia == "profesor" && ur.Activo)
+            .Where(ur => ids.Contains(ur.Usuario) && ur.EsActivo)
             .ToListAsync();
 
         return professors.Select(p => new UserManagementDto
@@ -44,34 +45,62 @@ public class AdminService : IAdminService
             NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
             Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : p.Email,
             Roles = userRoles
-                .Where(ur => ur.IdReferencia == p.IdProfesor.Trim())
+                .Where(ur => ur.Usuario == p.IdProfesor.Trim())
                 .Select(ur => ur.Role.Nombre)
+                .ToList(),
+            RoleCodes = userRoles
+                .Where(ur => ur.Usuario == p.IdProfesor.Trim())
+                .Select(ur => ur.Role.CodigoRol)
                 .ToList()
         }).ToList();
     }
 
-    public async Task<bool> AssignRoleAsync(string idProfesor, string roleName)
+    public async Task<bool> AssignRoleAsync(string idProfesor, string roleCode)
     {
-        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == roleName);
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode);
+        
+        if (role == null)
+            role = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == roleCode);
+
         if (role == null) return false;
 
+        // Aseguramos que el usuario esté centralizado (On-demand en Admin)
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == idProfesor);
+        if (user == null)
+        {
+            var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idProfesor);
+            if (p != null)
+            {
+                user = new User
+                {
+                    Usuario = idProfesor,
+                    Nombre = $"{p.PrimerNombre} {p.PrimerApellido}",
+                    Clave = p.Clave ?? "cambiame",
+                    Activo = true,
+                    TipoUsuario = "profesor",
+                    IdSigafi = p.IdProfesor
+                };
+                _context.Users.Add(user);
+            }
+        }
+
         var existing = await _context.UserRoles
-            .FirstOrDefaultAsync(ur => ur.IdReferencia == idProfesor && ur.IdRol == role.IdRol && ur.TipoReferencia == "profesor");
+            .FirstOrDefaultAsync(ur => ur.Usuario == idProfesor && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {
-            if (existing.Activo) return true;
-            existing.Activo = true;
+            if (existing.EsActivo) return true;
+            existing.EsActivo = true;
+            existing.FechaModificacion = DateTime.UtcNow;
         }
         else
         {
             _context.UserRoles.Add(new UserRole
             {
-                IdReferencia = idProfesor,
-                TipoReferencia = "profesor",
+                Usuario = idProfesor,
                 IdRol = role.IdRol,
-                Activo = true,
-                FechaAsignacion = DateTime.UtcNow
+                EsActivo = true,
+                FechaCreacion = DateTime.UtcNow
             });
         }
 
@@ -79,17 +108,22 @@ public class AdminService : IAdminService
         return true;
     }
 
-    public async Task<bool> RevokeRoleAsync(string idProfesor, string roleName)
+    public async Task<bool> RevokeRoleAsync(string idProfesor, string roleCode)
     {
-        var role = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == roleName);
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode);
+        
+        if (role == null)
+            role = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == roleCode);
+
         if (role == null) return false;
 
         var existing = await _context.UserRoles
-            .FirstOrDefaultAsync(ur => ur.IdReferencia == idProfesor && ur.IdRol == role.IdRol && ur.TipoReferencia == "profesor");
+            .FirstOrDefaultAsync(ur => ur.Usuario == idProfesor && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {
-            existing.Activo = false;
+            existing.EsActivo = false;
+            existing.FechaModificacion = DateTime.UtcNow;
             await _context.SaveChangesAsync();
         }
 
