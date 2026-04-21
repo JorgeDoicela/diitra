@@ -40,6 +40,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvTransferencia>    InvTransferencias   { get; set; }
     public virtual DbSet<ExternalReviewer>   ExternalReviewers   { get; set; }
     public virtual DbSet<InvestigationInstitute> InvestigationInstitutes { get; set; }
+    public virtual DbSet<InvUsuarioMetadata> InvUsuariosMetadata { get; set; }
 
     // ============================================================
     // TABLAS DE SIGAFI (solo lectura recomendada)
@@ -155,8 +156,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ApellidoMaterno).HasMaxLength(30).HasColumnName("apellidoMaterno");
             entity.Property(e => e.Email).HasMaxLength(40).HasColumnName("email");
             entity.Property(e => e.EmailInstitucional).HasMaxLength(100).HasColumnName("email_institucional");
-            entity.Property(e => e.UserAlumno).HasMaxLength(50).HasColumnName("User_Alumno");
-            entity.Property(e => e.Password).HasMaxLength(255).HasColumnName("Password");
+            entity.Property(e => e.UserAlumno).HasMaxLength(20).HasColumnName("user_alumno");
+            entity.Property(e => e.Password).HasMaxLength(20).HasColumnName("password");
             entity.Ignore(e => e.Matriculas);
         });
 
@@ -235,7 +236,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<FechasHorario>(entity =>
         {
             entity.HasKey(e => e.IdFecha).HasName("PRIMARY");
-            entity.ToTable("fechas_horario");
+            entity.ToTable("fechas_horarios");
             entity.Property(e => e.IdFecha).HasColumnType("int(11)").HasColumnName("idFecha");
             entity.Property(e => e.Fecha).HasColumnName("fecha");
             entity.Property(e => e.Finsemana).HasColumnType("tinyint(4)").HasColumnName("finsemana");
@@ -279,9 +280,9 @@ public partial class DiitraContext : DbContext
             entity.ToTable("titulos_profesores");
             entity.Property(e => e.IdTitulosProfesor).HasColumnType("int(11)").HasColumnName("idTitulosProfesor");
             entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
-            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("Titulo");
-            entity.Property(e => e.CodigoSenescyt).HasMaxLength(50).HasColumnName("codigoSenescyt");
-            entity.Property(e => e.FechaObtencion).HasColumnName("fecha_Obtencion");
+            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
+            entity.Property(e => e.CodigoSenescyt).HasMaxLength(90).HasColumnName("codigo_senescyt");
+            entity.Property(e => e.FechaObtencion).HasColumnName("fecha_obtencion");
             entity.Ignore(e => e.IdCampoDetalladoUnescoNavigation);
             entity.Ignore(e => e.IdGradoAcademicoNavigation);
             entity.Ignore(e => e.IdUniversidadNavigation);
@@ -411,12 +412,12 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdInstitucionesInstituto).HasName("PRIMARY");
             entity.ToTable("instituciones_instituto");
-            entity.Property(e => e.IdInstitucionesInstituto).HasColumnType("int(11)").HasColumnName("idInstituciones_Instituto");
-            entity.Property(e => e.Nombre).HasMaxLength(100).HasColumnName("Nombre");
-            entity.Property(e => e.Ruc).HasMaxLength(20).HasColumnName("RUC");
-            entity.Property(e => e.Representante).HasMaxLength(100).HasColumnName("Representante");
-            entity.Property(e => e.CedulaRepresentante).HasMaxLength(15).HasColumnName("cedula_representante");
-            entity.Property(e => e.Ubicado).HasMaxLength(150).HasColumnName("ubicado");
+            entity.Property(e => e.IdInstitucionesInstituto).HasColumnType("int(11)").HasColumnName("idInstitucionesInstituto");
+            entity.Property(e => e.Nombre).HasMaxLength(255).HasColumnName("nombre");
+            entity.Property(e => e.Ruc).HasMaxLength(15).HasColumnName("ruc");
+            entity.Property(e => e.Representante).HasMaxLength(90).HasColumnName("representante");
+            entity.Property(e => e.CedulaRepresentante).HasMaxLength(14).HasColumnName("cedula_representante");
+            entity.Property(e => e.Ubicado).HasMaxLength(255).HasColumnName("ubicado");
         });
 
         modelBuilder.Entity<HorasAcademica>(entity =>
@@ -470,21 +471,35 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdLinea).HasName("PRIMARY");
             entity.ToTable("inv_lineas_investigacion");
             entity.Property(e => e.IdLinea).HasColumnType("int(11)").HasColumnName("idLinea");
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasDefaultValueSql("'1'").HasColumnName("activo");
-            entity.Property(e => e.Descripcion).HasColumnType("text").HasColumnName("descripcion");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.CodigoLinea).HasColumnName("codigoLinea").HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.CodigoLinea).IsUnique();
             entity.Property(e => e.NombreLinea).HasMaxLength(300).HasColumnName("nombreLinea");
+            entity.Property(e => e.Descripcion).HasColumnType("text").HasColumnName("descripcion");
             entity.Property(e => e.ResolucionAprobacion).HasMaxLength(100).HasColumnName("resolucionAprobacion");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasDefaultValueSql("'1'").HasColumnName("activo");
         });
         modelBuilder.Entity<InvConvocatoria>(entity =>
         {
             entity.HasKey(e => e.IdConvocatoria).HasName("PRIMARY");
             entity.ToTable("inv_convocatorias").HasCharSet("utf8mb4");
             entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria").HasColumnType("int(11)");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.CodigoConvocatoria).HasColumnName("codigoConvocatoria").HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.CodigoConvocatoria).IsUnique();
             entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
             entity.Property(e => e.IdPeriodo).HasMaxLength(7).IsFixedLength().HasColumnName("idPeriodo");
             entity.Property(e => e.Estado).HasColumnType("enum('borrador','abierta','en_revision','cerrada')").HasColumnName("estado");
             entity.Property(e => e.PresupuestoTotal).HasPrecision(10, 2).HasColumnName("presupuestoTotal");
             entity.Property(e => e.UsuarioCreo).HasMaxLength(20).HasColumnName("usuarioCreo");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
             entity.HasOne(d => d.IdPeriodoNavigation).WithMany()
                 .HasForeignKey(d => d.IdPeriodo).HasConstraintName("fk_inv_conv_periodos");
@@ -495,6 +510,8 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdProyecto).HasName("PRIMARY");
             entity.ToTable("inv_proyectos").HasCharSet("utf8mb4");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto").HasColumnType("int(11)");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria").HasColumnType("int(11)");
             entity.Property(e => e.CodigoInstitucional).HasMaxLength(30).HasColumnName("codigoInstitucional");
             entity.Property(e => e.Titulo).HasMaxLength(400).HasColumnName("titulo");
@@ -504,6 +521,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.PresupuestoAprobado).HasPrecision(10, 2).HasColumnName("presupuestoAprobado");
             entity.Property(e => e.PuntajeEvaluacion).HasPrecision(5, 2).HasColumnName("puntajeEvaluacion");
             entity.Property(e => e.EsAnonimizado).HasColumnType("tinyint(4)").HasColumnName("esAnonimizado");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
             entity.HasOne(d => d.IdConvocatoriaNavigation).WithMany(p => p.Proyectos)
                 .HasForeignKey(d => d.IdConvocatoria).HasConstraintName("fk_inv_proy_conv");
@@ -520,9 +540,12 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdProyectoProfesor).HasName("PRIMARY");
             entity.ToTable("inv_proyectos_profesores").HasCharSet("utf8mb4");
             entity.HasIndex(e => new { e.IdProyecto, e.IdProfesor }).IsUnique().HasDatabaseName("uq_proyecto_profesor");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
             entity.Property(e => e.Rol).HasColumnType("enum('director','coinvestigador','colaborador')").HasColumnName("rol");
             entity.Property(e => e.HorasSemanales).HasPrecision(5, 2).HasColumnName("horasSemanales");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Profesores)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_pp_proy");
             entity.HasOne(d => d.IdProfesorNavigation).WithMany()
@@ -534,7 +557,10 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdProyectoAlumno).HasName("PRIMARY");
             entity.ToTable("inv_proyectos_alumnos").HasCharSet("utf8mb4");
             entity.HasIndex(e => new { e.IdProyecto, e.IdAlumno }).IsUnique().HasDatabaseName("uq_proyecto_alumno");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdAlumno).HasMaxLength(14).HasColumnName("idAlumno");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Alumnos)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_pa_proy");
             entity.HasOne(d => d.IdAlumnoNavigation).WithMany()
@@ -545,6 +571,8 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdHistorial).HasName("PRIMARY");
             entity.ToTable("inv_proyectos_historial").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.EstadoNuevo).HasMaxLength(50).HasColumnName("estadoNuevo");
             entity.Property(e => e.UsuarioCambio).HasMaxLength(20).HasColumnName("usuarioCambio");
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Historial)
@@ -555,18 +583,24 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdNotificacion).HasName("PRIMARY");
             entity.ToTable("inv_notificaciones").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Destinatario).HasMaxLength(14).HasColumnName("destinatario");
             entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
         });
 
         modelBuilder.Entity<InvRevision>(entity =>
         {
             entity.HasKey(e => e.IdRevision).HasName("PRIMARY");
             entity.ToTable("inv_revisiones").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdProfesorRevisor).HasMaxLength(14).HasColumnName("idProfesorRevisor");
             entity.Property(e => e.IdRevisorExterno).HasColumnName("idRevisorExterno");
             entity.Property(e => e.Estado).HasColumnType("enum('pendiente','en_proceso','finalizado','rechazado')").HasColumnName("estado");
             entity.Property(e => e.PuntajeTotal).HasPrecision(5, 2).HasColumnName("puntajeTotal");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Revisiones)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_rev_proyecto");
@@ -583,10 +617,13 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdRevisorExterno);
             entity.ToTable("inv_revisores_externos");
             entity.Property(e => e.IdRevisorExterno).HasColumnName("idRevisorExterno");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
             entity.Property(e => e.Nombre).HasMaxLength(150).IsRequired();
             entity.Property(e => e.Apellido).HasMaxLength(150).IsRequired();
             entity.Property(e => e.Email).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
 
             entity.HasOne(d => d.Institute)
                 .WithMany(p => p.ExternalReviewers)
@@ -598,6 +635,10 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdInstitucion);
             entity.ToTable("inv_institutos");
+            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
             entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired();
             entity.Property(e => e.Siglas).HasMaxLength(20);
@@ -613,8 +654,11 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdRubrica).HasName("PRIMARY");
             entity.ToTable("inv_rubricas").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Criterio).HasMaxLength(200).HasColumnName("criterio");
             entity.Property(e => e.PuntajeMax).HasPrecision(5, 2).HasColumnName("puntajeMax");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
         });
 
         modelBuilder.Entity<InvRevisionDetalle>(entity =>
@@ -622,7 +666,10 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdDetalleRevision).HasName("PRIMARY");
             entity.ToTable("inv_revisiones_detalle").HasCharSet("utf8mb4");
             entity.HasIndex(e => new { e.IdRevision, e.IdRubrica }).IsUnique().HasDatabaseName("uq_revision_rubrica");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Puntaje).HasPrecision(5, 2).HasColumnName("puntaje");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdRevisionNavigation).WithMany(p => p.Detalles)
                 .HasForeignKey(d => d.IdRevision).HasConstraintName("fk_inv_rd_rev");
             entity.HasOne(d => d.IdRubricaNavigation).WithMany(p => p.Detalles)
@@ -633,7 +680,10 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdTarea).HasName("PRIMARY");
             entity.ToTable("inv_cronograma").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.NombreTarea).HasMaxLength(300).HasColumnName("nombreTarea");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Cronograma)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_cron_proyecto");
         });
@@ -642,9 +692,12 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdInforme).HasName("PRIMARY");
             entity.ToTable("inv_informes_avance").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
             entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
             entity.Property(e => e.Estado).HasColumnType("enum('borrador','enviado','revisado','aprobado')").HasColumnName("estado");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Informes)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_ia_proyecto");
             entity.HasOne(d => d.IdProfesorNavigation).WithMany()
@@ -655,9 +708,12 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdEvidencia).HasName("PRIMARY");
             entity.ToTable("inv_evidencias").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.NombreArchivo).HasMaxLength(300).HasColumnName("nombreArchivo");
             entity.Property(e => e.RutaArchivo).HasMaxLength(500).HasColumnName("rutaArchivo");
             entity.Property(e => e.TipoEvidencia).HasColumnType("enum('foto','factura','bitacora','otro')").HasColumnName("tipoEvidencia");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdInformeNavigation).WithMany(p => p.Evidencias)
                 .HasForeignKey(d => d.IdInforme).HasConstraintName("fk_inv_ev_inf");
         });
@@ -666,10 +722,13 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdItem).HasName("PRIMARY");
             entity.ToTable("inv_presupuesto_items").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Categoria).HasColumnType("enum('materiales','equipos','servicios','viajes','publicacion','otro')").HasColumnName("categoria");
             entity.Property(e => e.Cantidad).HasPrecision(10, 2).HasColumnName("cantidad");
             entity.Property(e => e.ValorUnitario).HasPrecision(10, 2).HasColumnName("valorUnitario");
             entity.Property(e => e.ValorTotal).HasPrecision(10, 2).HasColumnName("valorTotal");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.PresupuestoItems)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_pi_proy");
         });
@@ -678,8 +737,11 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdGasto).HasName("PRIMARY");
             entity.ToTable("inv_gastos").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Monto).HasPrecision(10, 2).HasColumnName("monto");
             entity.Property(e => e.RegistradoPor).HasMaxLength(14).HasColumnName("registradoPor");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Gastos)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_ga_proyecto");
             entity.HasOne(d => d.IdItemNavigation).WithMany(p => p.Gastos)
@@ -692,8 +754,11 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdProducto).HasName("PRIMARY");
             entity.ToTable("inv_productos").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Titulo).HasMaxLength(500).HasColumnName("titulo");
             entity.Property(e => e.IssnIsbn).HasMaxLength(50).HasColumnName("issn_isbn");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Productos)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_prod_proy");
         });
@@ -702,8 +767,11 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdTransferencia).HasName("PRIMARY");
             entity.ToTable("inv_transferencias").HasCharSet("utf8mb4");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.EmpresaBeneficiaria).HasMaxLength(300).HasColumnName("empresaBeneficiaria");
             entity.Property(e => e.ValorConvenio).HasPrecision(10, 2).HasColumnName("valorConvenio");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Transferencias)
                 .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_trans_proy");
         });
@@ -832,6 +900,8 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdToken);
             entity.ToTable("inv_tokens_acceso");
             entity.Property(e => e.IdToken).HasColumnName("idToken");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Token).HasMaxLength(256).IsRequired();
             entity.Property(e => e.IdReferencia).HasMaxLength(20).IsRequired();
             entity.Property(e => e.TipoReferencia).HasColumnType("enum('profesor', 'externo')").IsRequired();
@@ -839,7 +909,24 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaExpiracion).IsRequired();
             entity.Property(e => e.Usado).HasColumnType("tinyint(4)");
             entity.Property(e => e.Scopes).HasMaxLength(200);
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
             entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
+        });
+        
+        modelBuilder.Entity<InvUsuarioMetadata>(entity =>
+        {
+            entity.HasKey(e => e.IdMetadata).HasName("PRIMARY");
+            entity.ToTable("inv_usuarios_metadata");
+            entity.Property(e => e.IdMetadata).HasColumnName("idMetadata");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
+            
+            entity.HasOne(d => d.User).WithOne()
+                .HasPrincipalKey<User>(u => u.IdUsuario)
+                .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
+                .HasConstraintName("fk_inv_meta_usuario");
         });
 
         OnModelCreatingPartial(modelBuilder);

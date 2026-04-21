@@ -7,6 +7,8 @@ namespace diitra_infrastructure.data.models;
 public partial class InvConvocatoria
 {
     public int IdConvocatoria { get; set; }
+    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public string CodigoConvocatoria { get; set; } = null!;
     public string Titulo { get; set; } = null!;
     public string? Descripcion { get; set; }
     public string IdPeriodo { get; set; } = null!;
@@ -19,13 +21,12 @@ public partial class InvConvocatoria
     public virtual InvLineaInvestigacion? IdLineaInvestigacionNavigation { get; set; }
     public decimal PresupuestoTotal { get; set; }
     public string UsuarioCreo { get; set; } = null!;
-    public DateTime FechaRegistro { get; set; }
-    public DateTime FechaModificacion { get; set; }
+    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+    public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
+    public int Version { get; set; } = 1;
     public sbyte Activo { get; set; } = 1;
 
     // Navegación
     public virtual Periodo IdPeriodoNavigation { get; set; } = null!;
     public virtual ICollection<InvProyecto> Proyectos { get; set; } = new List<InvProyecto>();
 }
-
-

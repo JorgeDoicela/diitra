@@ -7,11 +7,21 @@ public partial class InvLineaInvestigacion
 {
     public int IdLinea { get; set; }
 
+    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+
+    public string CodigoLinea { get; set; } = null!;
+
     public string NombreLinea { get; set; } = null!;
 
     public string? Descripcion { get; set; }
 
     public string? ResolucionAprobacion { get; set; }
+
+    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+
+    public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
+
+    public int Version { get; set; } = 1;
 
     public sbyte? Activo { get; set; }
 

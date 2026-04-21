@@ -24,7 +24,8 @@ public class ExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, ex.Message);
+            _logger.LogError(ex, "An unhandled exception occurred during request: {Path} [{Method}]. Error: {Message}", 
+                context.Request.Path, context.Request.Method, ex.Message);
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 

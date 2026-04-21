@@ -3,6 +3,15 @@ import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import { Lock, User, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const loginSchema = z.object({
+    username: z.string().min(3, 'El usuario debe tener al menos 3 caracteres'),
+    password: z.string().min(4, 'La contraseña debe tener al menos 4 caracteres')
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 const Login: React.FC = () => {
     const { login } = useAuth();
@@ -12,10 +21,12 @@ const Login: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+        resolver: zodResolver(loginSchema)
+    });
     const from = (location.state as any)?.from?.pathname || '/dashboard';
 
-    const onSubmit = async (data: any) => {
+    const onSubmit = async (data: LoginFormValues) => {
         setIsSubmitting(true);
         setError(null);
         try {
@@ -53,7 +64,7 @@ const Login: React.FC = () => {
                                 Usuario
                             </label>
                             <input
-                                {...register('username', { required: 'Usuario es requerido' })}
+                                {...register('username')}
                                 className="flex h-11 w-full rounded-md border border-border-thin bg-surface/40 px-4 py-2 text-sm text-text-main placeholder:text-text-dim focus:border-text-main focus:outline-none transition-all duration-200"
                                 placeholder="Cédula de identidad"
                                 autoComplete="username"
@@ -76,7 +87,7 @@ const Login: React.FC = () => {
                             </div>
                             <input
                                 type={showPassword ? 'text' : 'password'}
-                                {...register('password', { required: 'Contraseña es requerida' })}
+                                {...register('password')}
                                 className="flex h-11 w-full rounded-md border border-border-thin bg-surface/40 px-4 py-2 text-sm text-text-main placeholder:text-text-dim focus:border-text-main focus:outline-none transition-all duration-200"
                                 placeholder="Contraseña de SIGAFI"
                                 autoComplete="current-password"
