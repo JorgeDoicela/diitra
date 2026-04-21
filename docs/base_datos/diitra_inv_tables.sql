@@ -95,35 +95,62 @@ CREATE TABLE IF NOT EXISTS `rol_modulo_operacion` (
 -- BOOTSTRAP DE DATOS INICIALES (Configuración de DIITRA)
 -- ============================================================
 
--- Roles Base Institucionales
-INSERT IGNORE INTO `rol` (`Nombre`, `codigo_rol`) VALUES 
-('Administrador del Sistema', 'ADMIN_SISTEMA'),
-('Docente Investigador', 'DOCENTE_INV'),
-('Director de Investigación', 'DIRECTOR_INV'),
-('Revisor Externo', 'REVISOR_EXT');
+-- 1. Roles Base Institucionales
+-- IMPORTANTE: Los codigo_rol deben coincidir EXACTAMENTE con las constantes de AuthService.cs
+INSERT IGNORE INTO `rol` (`Nombre`, `codigo_rol`, `esActivo`) VALUES
+('Administrador del Sistema', 'ADMIN_SIST',   1),
+('Docente Investigador',      'DOCENTE_IN',   1),
+('Director de Investigación', 'DIRECTOR_INV', 1),
+('Revisor Externo',           'REVISOR_EXT',  1);
 
--- DIITRA como Sistema
-INSERT IGNORE INTO `sistema` (`idSistema`, `detalle`) VALUES (1, 'DIITRA - Investigación');
+-- 2. DIITRA como Sistema
+INSERT IGNORE INTO `sistema` (`detalle`) VALUES ('DIITRA - Investigación');
 
--- Operaciones Base (Sincronizadas con Permissions.cs)
-INSERT IGNORE INTO `operaciones` (`idOperaciones`, `NombreOperacion`) VALUES 
-(1, 'VER'), 
-(2, 'CREAR'), 
-(3, 'EDITAR'), 
-(4, 'ELIMINAR'), 
-(5, 'APROBAR'),
-(6, 'POSTULAR'),
-(7, 'GESTIONAR'),
-(8, 'REPORTES'),
-(9, 'ASIGNAR');
+-- 3. Operaciones Base (Sincronizadas con Permissions.cs)
+INSERT IGNORE INTO `operaciones` (`NombreOperacion`) VALUES
+('VER'), ('CREAR'), ('EDITAR'), ('ELIMINAR'), ('APROBAR'),
+('POSTULAR'), ('GESTIONAR'), ('REPORTES'), ('ASIGNAR');
 
--- Módulos de DIITRA
-INSERT IGNORE INTO `modulos` (`idModulos`, `id_sistema`, `Nombre`) VALUES 
-(1, 1, 'PROYECTOS'), (2, 1, 'CONVOCATORIAS'), (3, 1, 'USUARIOS'), (4, 1, 'CONFIGURACION');
+-- 4. Módulos de DIITRA (Enlazados dinámicamente al sistema)
+INSERT IGNORE INTO `modulos` (`id_sistema`, `Nombre`, `esActivo`)
+SELECT idSistema, 'PROYECTOS', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación'
+UNION ALL
+SELECT idSistema, 'CONVOCATORIAS', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación'
+UNION ALL
+SELECT idSistema, 'USUARIOS', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación'
+UNION ALL
+SELECT idSistema, 'CONFIGURACION', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación';
 
--- Enlace Modular Defecto: Mapear todas las operaciones a todos los módulos de DIITRA
+-- 5. Enlace Modular (Mapear todas las operaciones a todos los módulos de DIITRA)
 INSERT IGNORE INTO `modulos_operacion` (`idModulos`, `idOperaciones`, `fecha_creacion`, `esActivo`)
-SELECT m.idModulos, o.idOperaciones, CURDATE(), 1 FROM `modulos` m, `operaciones` o WHERE m.id_sistema = 1;
+SELECT m.idModulos, o.idOperaciones, CURDATE(), 1 
+FROM `modulos` m
+JOIN `sistema` s ON m.id_sistema = s.idSistema
+CROSS JOIN `operaciones` o
+WHERE s.detalle = 'DIITRA - Investigación';
+
+-- 6. ASIGNACIÓN DE PERMISOS AL ADMIN (Resiliente)
+-- Busca el ID del rol ADMIN_SIST y lo vincula con todas las operaciones de los módulos de Diitra
+INSERT IGNORE INTO `rol_modulo_operacion` (`idModulosOperaciones`, `idRol`, `fecha_asignacion`, `esActivo`)
+SELECT mo.idModulosOperaciones, r.idRol, CURDATE(), 1
+FROM `modulos_operacion` mo
+JOIN `modulos` m ON mo.idModulos = m.idModulos
+JOIN `sistema` s ON m.id_sistema = s.idSistema
+CROSS JOIN `rol` r
+WHERE s.detalle = 'DIITRA - Investigación'
+  AND r.codigo_rol = 'ADMIN_SIST';
+
+-- 7. ASIGNACIÓN DEL ROL ADMIN AL USUARIO MAESTRO (Resiliente)
+-- Si el usuario 0302144159 ya existe (de otro sistema), le aseguramos el rol ADMIN_SIST de Diitra
+INSERT IGNORE INTO `usuario_rol` (`idUsuario`, `idRol`, `fecha_creacion`, `esActivo`)
+SELECT u.idUsuario, r.idRol, CURDATE(), 1
+FROM `usuarios` u
+CROSS JOIN `rol` r
+WHERE u.usuario = '0302144159'
+  AND r.codigo_rol = 'ADMIN_SIST';
+
+-- Asegurar flag de administrador para el usuario maestro
+UPDATE `usuarios` SET `administrador` = 1 WHERE `usuario` = '0302144159';
 
 -- ============================================================
 -- MÓDULOS DE INVESTIGACIÓN (Tablas inv_)

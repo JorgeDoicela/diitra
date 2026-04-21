@@ -112,29 +112,40 @@ if (!string.IsNullOrEmpty(connectionString))
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-var app = builder.Build();
-
-// 1. CORS debe ser lo primero, antes de cualquier redirección o autenticación
-app.UseCors("Diitra_policy");
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+try 
 {
-    app.MapOpenApi();
+    Console.WriteLine("[STARTUP] Building application...");
+    var app = builder.Build();
+
+    Console.WriteLine("[STARTUP] Configuring middleware...");
+    // 1. CORS debe ser lo primero, antes de cualquier redirección o autenticación
+    app.UseCors("Diitra_policy");
+
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        Console.WriteLine("[STARTUP] Enabling OpenAPI for Development.");
+        app.MapOpenApi();
+    }
+
+    app.UseAuthentication(); 
+    app.UseAuthorization();
+    app.MapControllers();
+
+    // SignalR Hubs (Unificado)
+    app.MapHub<DocumentHub>("/hubs/document");
+
+    Console.WriteLine("[DIITRA] Server ONLINE on http://localhost:5175");
+    Console.WriteLine("[DIITRA] Press Ctrl+C to stop.");
+    app.Run();
 }
-
-// app.UseHttpsRedirection(); // Desactivado temporalmente para debugging de CORS en localhost
-
-app.UseAuthentication(); // <-- AGREGADO
-app.UseAuthorization();
-
-app.MapControllers();
-
-// 4. Mapear el Hub de colaboración
-app.MapHub<document_hub>("/hubs/documento");
-
-// Mantener el anterior temporalmente si es necesario (opcional)
-app.MapHub<DocumentHub>("/hubs/document");
-
-app.Run();
+catch (Exception ex)
+{
+    Console.WriteLine($"[CRITICAL ERROR] Application failed to start: {ex.Message}");
+    if (ex.InnerException != null)
+    {
+        Console.WriteLine($"[INNER EXCEPTION] {ex.InnerException.Message}");
+    }
+    throw;
+}
 

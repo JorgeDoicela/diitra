@@ -27,11 +27,11 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-    const { isAuthenticated, isLoading, hasPermission } = useAuth();
+    const { user, isAuthenticated, isLoading, hasPermission } = useAuth();
     if (isLoading) return null;
     
-    // Validar permiso modular para administración de usuarios
-    if (!isAuthenticated || !hasPermission('USUARIOS', 'VER')) {
+    // Validar permiso modular O flag de administrador global
+    if (!isAuthenticated || (!user?.administrador && !hasPermission('USUARIOS', 'VER'))) {
         return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;
