@@ -7,7 +7,7 @@
 
 ---
 
-## 📑 Tabla de Contenidos Automática
+## Tabla de Contenidos Automática
 1. [Panorama del Sistema](#panorama-del-sistema)
 2. [Arquitectura Tecnológica High-Level](#arquitectura-tecnológica-high-level)
 3. [Mapeo de Dominios Core](#mapeo-de-dominios-core)
@@ -16,25 +16,25 @@
 
 ---
 
-## 📈 Panorama del Sistema
+## Panorama del Sistema
 DIITRA implementa altos y modernos estándares de la industria del software. Mediante la centralización estricta bajo dominios de datos interconectados y una fuerte adherencia a metodologías ágiles, la plataforma garantiza:
 
 - **Full Auditability**: Cada cambio de estado genera un rastro inmutable requerido para CACES y Contraloría General del Estado.
 - **Doble Ciego (Peer Review)**: Capacidad intrínseca de protección de perfiles inter-institucionales.
 - **Observabilidad Proactiva**: Soporte embebido y conectividad total para telemetría organizacional.
 
-## 🏢 Arquitectura Tecnológica High-Level
+## Arquitectura Tecnológica High-Level
 
 El ecosistema transaccional se compone de tres nodos cardinales:
 
 ```mermaid
 graph TD
-    UI_WEB[💻 Diitra Web App\nReact SPA]
-    UI_MOB[📱 Diitra Mobile App\nReact Native / Expo]
-    GW[⚙️ API Gateway / Core (.NET 9)]
-    DB[(🗄️ Master Database\nMySQL 8.0+ Enterprise)]
-    AI[🧠 AI Assistant Service]
-    AUTH[🔐 Auth & Signing Subsystem]
+    UI_WEB[Diitra Web App\nReact SPA]
+    UI_MOB[Diitra Mobile App\nReact Native / Expo]
+    GW[API Gateway / Core (.NET 9)]
+    DB[(Master Database\nMySQL 8.0+ Enterprise)]
+    AI[AI Assistant Service]
+    AUTH[Auth & Signing Subsystem]
     
     UI_WEB <-->|REST + wss:// SignalR| GW
     UI_MOB <-->|REST + wss:// SignalR| GW
@@ -44,7 +44,7 @@ graph TD
     GW --- AUTH
 ```
 
-## 🧩 Mapeo de Dominios Core
+## Mapeo de Dominios Core
 
 | Dominio                   | Descripción Corta                                                                 | SLA Target |
 |---------------------------|-----------------------------------------------------------------------------------|------------|
@@ -52,25 +52,25 @@ graph TD
 | **Innovation & Analytics**| Registro de intangibles (patentes), transferencia tecnológica.                    | 99.5%      |
 | **Security & Identity**   | Zero-Trust model, Magic Links, y gestión dinámica mediante PBAC.                  | 99.99%     |
 
-## 🗂️ Documentación Técnica (Tiers)
+## Documentación Técnica (Tiers)
 
 Esta documentación ha sido sectorizada para simplificar el onboarding de equipos *DevOps*, *SecOps* y *Frontend/Backend Engineers*:
 
 ### » Nivel Arquitectura & Infraestructura
-- 📘 [01 - System Design & C4 Architecture](./docs/01_arquitectura.md)
-- 📘 [02 - Data Governance & Database Modeling](./docs/02_base_datos.md)
+- [01 - System Design & C4 Architecture](./docs/01_arquitectura.md)
+- [02 - Data Governance & Database Modeling](./docs/02_base_datos.md)
 
 ### » Nivel Capas de Aplicación
-- 📗 [03 - Backend Enterprise API (C#, .NET)](./docs/03_backend.md)
-- 📗 [04 - Frontend Web App (React) Performance](./docs/04_frontend_web.md)
-- 📗 [05 - Frontend Mobile App (Expo) Lifecycle](./docs/05_frontend_mobile.md)
+- [03 - Backend Enterprise API (C#, .NET)](./docs/03_backend.md)
+- [04 - Frontend Web App (React) Performance](./docs/04_frontend_web.md)
+- [05 - Frontend Mobile App (Expo) Lifecycle](./docs/05_frontend_mobile.md)
 
 ### » Nivel Procesos de Negocio
-- 📙 [06 - Flujos de Trabajo Transaccionales & Secuencias](./docs/06_flujos_trabajo.md)
+- [06 - Flujos de Trabajo Transaccionales & Secuencias](./docs/06_flujos_trabajo.md)
 
 ---
 
-## 🚀 Guía de Despliegue Empresarial
+## Guía de Despliegue Empresarial
 
 ### CI/CD Pipeline (Overview)
 Se recomienda estructurar repositorios con integración hacia **GitHub Actions** o **Azure DevOps**. El *trunk-based development* rige en `main` que lanza pipelines automatizados para compilación en la imagen Docker.
