@@ -51,11 +51,16 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<Profesore>    Profesores  { get; set; }   // profesores
     public virtual DbSet<Alumno>       Alumnos     { get; set; }   // alumnos
 
-    // Identidad DIITRA | ISTPET (inv_) - Reemplaza los roles legacy
-    public virtual DbSet<Role>         Roles             { get; set; }   // inv_roles
-    public virtual DbSet<Permission>   Permissions       { get; set; }   // inv_permisos
-    public virtual DbSet<UserRole>     UserRoles         { get; set; }   // inv_usuarios_roles
-    public virtual DbSet<AccessToken>  AccessTokens      { get; set; }   // inv_tokens_acceso
+    // Core de Identidad Centralizado (SIGAFI Centralization)
+    public virtual DbSet<User>                Users                 { get; set; }   // usuarios
+    public virtual DbSet<Role>                Roles                 { get; set; }   // rol
+    public virtual DbSet<UserRole>            UserRoles             { get; set; }   // usuario_rol
+    public virtual DbSet<SystemEntity>        Systems               { get; set; }   // sistema
+    public virtual DbSet<IdentityModule>      Modules               { get; set; }   // modulos
+    public virtual DbSet<IdentityOperation>   Operations            { get; set; }   // operaciones
+    public virtual DbSet<ModuleOperation>     ModuleOperations      { get; set; }   // modulos_operacion
+    public virtual DbSet<RoleModuleOperation> RoleModuleOperations  { get; set; }   // rol_modulo_operacion
+    public virtual DbSet<AccessToken>         AccessTokens          { get; set; }   // inv_tokens_acceso
 
     // --- Académico ---
     public virtual DbSet<Periodo>              Periodos           { get; set; }  // periodos
@@ -726,57 +731,113 @@ public partial class DiitraContext : DbContext
         });
 
         // ============================================================
-        // MÓDULO 7: SEGURIDAD Y ACCESOS (RBAC/PBAC)
+        // MÓDULO: IDENTIDAD CENTRALIZADA (SIGAFI CORE)
         // ============================================================
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Usuario);
+            entity.ToTable("usuarios");
+            entity.Property(e => e.Usuario).HasMaxLength(50);
+            entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Clave).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
+            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)");
+            entity.Property(e => e.TipoUsuario).HasColumnType("enum('profesor','alumno','externo','admin')").HasColumnName("tipo_usuario");
+            entity.Property(e => e.IdSigafi).HasMaxLength(14).HasColumnName("idSigafi");
+        });
+
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.IdRol);
-            entity.ToTable("inv_roles");
+            entity.ToTable("rol");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
-            entity.Property(e => e.Nombre).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Descripcion).HasMaxLength(300);
-            entity.Property(e => e.EsSistema).HasColumnType("tinyint(4)");
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
-
-            entity.HasMany(d => d.Permissions)
-                .WithMany(p => p.Roles)
-                .UsingEntity<Dictionary<string, object>>(
-                    "inv_rol_permisos",
-                    l => l.HasOne<Permission>().WithMany().HasForeignKey("idPermiso").HasConstraintName("fk_inv_rp_perm"),
-                    r => r.HasOne<Role>().WithMany().HasForeignKey("idRol").HasConstraintName("fk_inv_rp_rol"),
-                    j =>
-                    {
-                        j.HasKey("idRol", "idPermiso");
-                        j.ToTable("inv_rol_permisos");
-                    });
-        });
-
-        modelBuilder.Entity<Permission>(entity =>
-        {
-            entity.HasKey(e => e.IdPermiso);
-            entity.ToTable("inv_permisos");
-            entity.Property(e => e.IdPermiso).HasColumnName("idPermiso");
-            entity.Property(e => e.Modulo).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.CodigoName).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.Descripcion).HasMaxLength(300);
+            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.CodigoRol).HasMaxLength(50).HasColumnName("codigo_rol").IsRequired();
+            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
         });
 
         modelBuilder.Entity<UserRole>(entity =>
         {
             entity.HasKey(e => e.IdUsuarioRol);
-            entity.ToTable("inv_usuarios_roles");
+            entity.ToTable("usuario_rol");
             entity.Property(e => e.IdUsuarioRol).HasColumnName("idUsuarioRol");
-            entity.Property(e => e.IdReferencia).HasMaxLength(20).IsRequired();
-            entity.Property(e => e.TipoReferencia).HasColumnType("enum('profesor', 'alumno', 'externo', 'admin')").IsRequired();
+            entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("usuario");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
-            entity.Property(e => e.FechaAsignacion).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
+            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion");
 
-            entity.HasOne(d => d.Role)
-                .WithMany(p => p.UserRoles)
-                .HasForeignKey(d => d.IdRol)
-                .OnDelete(DeleteBehavior.Restrict)
-                .HasConstraintName("fk_inv_ur_rol");
+            entity.HasOne(d => d.User).WithMany(p => p.UserRoles)
+                .HasForeignKey(d => d.Usuario).HasConstraintName("fk_ur_usuario");
+            entity.HasOne(d => d.Role).WithMany(p => p.UserRoles)
+                .HasForeignKey(d => d.IdRol).HasConstraintName("fk_ur_rol");
+        });
+
+        modelBuilder.Entity<SystemEntity>(entity =>
+        {
+            entity.HasKey(e => e.IdSistema);
+            entity.ToTable("sistema");
+            entity.Property(e => e.IdSistema).HasColumnName("idSistema");
+            entity.Property(e => e.Detalle).HasMaxLength(50).IsRequired();
+        });
+
+        modelBuilder.Entity<IdentityModule>(entity =>
+        {
+            entity.HasKey(e => e.IdModulos);
+            entity.ToTable("modulos");
+            entity.Property(e => e.IdModulos).HasColumnName("idModulos");
+            entity.Property(e => e.IdSistema).HasColumnName("id_sistema");
+            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
+
+            entity.HasOne(d => d.Sistema).WithMany(p => p.Modulos)
+                .HasForeignKey(d => d.IdSistema).HasConstraintName("fk_mod_sistema");
+        });
+
+        modelBuilder.Entity<IdentityOperation>(entity =>
+        {
+            entity.HasKey(e => e.IdOperaciones);
+            entity.ToTable("operaciones");
+            entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
+            entity.Property(e => e.NombreOperacion).HasMaxLength(100).IsRequired();
+        });
+
+        modelBuilder.Entity<ModuleOperation>(entity =>
+        {
+            entity.HasKey(e => e.IdModulosOperaciones);
+            entity.ToTable("modulos_operacion");
+            entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
+            entity.Property(e => e.IdModulos).HasColumnName("idModulos");
+            entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion");
+            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
+
+            entity.HasOne(d => d.Module).WithMany(p => p.ModuloOperations)
+                .HasForeignKey(d => d.IdModulos).HasConstraintName("fk_mo_mod");
+            entity.HasOne(d => d.Operation).WithMany(p => p.ModuloOperations)
+                .HasForeignKey(d => d.IdOperaciones).HasConstraintName("fk_mo_oper");
+        });
+
+        modelBuilder.Entity<RoleModuleOperation>(entity =>
+        {
+            entity.HasKey(e => e.IdRolModuloOperacion);
+            entity.ToTable("rol_modulo_operacion");
+            entity.Property(e => e.IdRolModuloOperacion).HasColumnName("idRolModuloOperacion");
+            entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
+            entity.Property(e => e.IdRol).HasColumnName("idRol");
+            entity.Property(e => e.FechaAsignacion).HasColumnName("fecha_asignacion");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion");
+            entity.Property(e => e.FechaDesactivacion).HasColumnName("fecha_desactivacion");
+            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
+            entity.Property(e => e.UsuarioAsigno).HasMaxLength(150).HasColumnName("usuario_asigno");
+            entity.Property(e => e.UsuarioDesactivo).HasMaxLength(150).HasColumnName("usuario_desactivo");
+
+            entity.HasOne(d => d.ModuleOperation).WithMany(p => p.RoleModuleOperations)
+                .HasForeignKey(d => d.IdModulosOperaciones).HasConstraintName("fk_rmo_mo");
+            entity.HasOne(d => d.Role).WithMany(p => p.RoleModuleOperations)
+                .HasForeignKey(d => d.IdRol).HasConstraintName("fk_rmo_rol");
         });
 
         modelBuilder.Entity<AccessToken>(entity =>

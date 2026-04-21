@@ -20,19 +20,26 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
     {
         if (context.User == null) return;
 
-        // El ID del usuario en SIGAFI/DIITRA suele ser el 'Name' o un claim personalizado
-        var userId = context.User.Identity?.Name ?? 
-                     context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var username = context.User.Identity?.Name ?? 
+                      context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userId)) return;
+        if (string.IsNullOrEmpty(username)) return;
 
-        // Verificar si el usuario tiene algún rol que contenga el permiso solicitado
-        // Consultamos la jerarquía: UsuariosRoles -> Roles -> Permissions
+        // Validar Permiso Modular: Buscamos si existe la relación modular para el usuario
         var hasPermission = await _context.UserRoles
-            .Where(ur => ur.IdReferencia == userId && ur.Activo)
-            .Select(ur => ur.Role)
-            .SelectMany(r => r.Permissions)
-            .AnyAsync(p => p.CodigoName == requirement.Permission);
+            .Include(ur => ur.Role)
+                .ThenInclude(r => r.RoleModuleOperations)
+                    .ThenInclude(rmo => rmo.ModuleOperation)
+                        .ThenInclude(mo => mo.Module)
+            .Include(ur => ur.Role)
+                .ThenInclude(r => r.RoleModuleOperations)
+                    .ThenInclude(rmo => rmo.ModuleOperation)
+                        .ThenInclude(mo => mo.Operation)
+            .Where(ur => ur.Usuario == username && ur.EsActivo)
+            .SelectMany(ur => ur.Role.RoleModuleOperations)
+            .Where(rmo => rmo.EsActivo && rmo.ModuleOperation.EsActivo)
+            .AnyAsync(rmo => 
+                (rmo.ModuleOperation.Module.Nombre + ":" + rmo.ModuleOperation.Operation.NombreOperacion).ToUpper() == requirement.Permission.ToUpper());
 
         if (hasPermission)
         {

@@ -6,6 +6,7 @@ interface User {
     nombre_completo: string;
     role: string;
     tipo_usuario: string;
+    permissions: string[]; // ['PROYECTOS:VER', 'PROYECTOS:CREAR', ...]
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
     login: (credentials: any) => Promise<void>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
+    hasPermission: (module: string, operation: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,8 +50,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
     };
 
+    const hasPermission = useCallback((module: string, operation: string): boolean => {
+        if (!user || !user.permissions) return false;
+        const target = `${module}:${operation}`.toUpperCase();
+        return user.permissions.includes(target);
+    }, [user]);
+
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, refreshUser }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            isAuthenticated: !!user, 
+            isLoading, 
+            login, 
+            logout, 
+            refreshUser,
+            hasPermission 
+        }}>
             {children}
         </AuthContext.Provider>
     );

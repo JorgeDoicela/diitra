@@ -7,6 +7,7 @@ interface ManagedUser {
     nombre_completo: string;
     email: string;
     roles: string[];
+    role_codes: string[];
 }
 
 const UsersPage = () => {
@@ -34,13 +35,13 @@ const UsersPage = () => {
         return () => clearTimeout(timer);
     }, [search]);
 
-    const toggleRole = async (userId: string, roleName: string, hasRole: boolean) => {
-        setUpdating(`${userId}-${roleName}`);
+    const toggleRole = async (userId: string, roleCode: string, hasRole: boolean) => {
+        setUpdating(`${userId}-${roleCode}`);
         try {
             if (hasRole) {
-                await api.post('/Admin/roles/revoke', { id_profesor: userId, role_name: roleName });
+                await api.post('/Admin/roles/revoke', { id_profesor: userId, role_code: roleCode });
             } else {
-                await api.post('/Admin/roles/assign', { id_profesor: userId, role_name: roleName });
+                await api.post('/Admin/roles/assign', { id_profesor: userId, role_code: roleCode });
             }
             await fetchUsers(); // Refresh
         } catch (error) {
@@ -123,17 +124,17 @@ const UsersPage = () => {
                                         {/* Toggle Admin Role */}
                                         <RoleToggleButton 
                                             label="Administrador"
-                                            isActive={u.roles.includes('Administrador del Sistema')}
-                                            loading={updating === `${u.id_profesor}-Administrador del Sistema`}
-                                            onClick={() => toggleRole(u.id_profesor, 'Administrador del Sistema', u.roles.includes('Administrador del Sistema'))}
+                                            isActive={u.role_codes?.includes('ADMIN_SISTEMA')}
+                                            loading={updating === `${u.id_profesor}-ADMIN_SISTEMA`}
+                                            onClick={() => toggleRole(u.id_profesor, 'ADMIN_SISTEMA', u.role_codes?.includes('ADMIN_SISTEMA'))}
                                         />
                                         {/* Toggle Director Role */}
                                         <RoleToggleButton 
                                             label="Director"
                                             variant="secondary"
-                                            isActive={u.roles.includes('Director de Investigación')}
-                                            loading={updating === `${u.id_profesor}-Director de Investigación`}
-                                            onClick={() => toggleRole(u.id_profesor, 'Director de Investigación', u.roles.includes('Director de Investigación'))}
+                                            isActive={u.role_codes?.includes('DIRECTOR_INV')}
+                                            loading={updating === `${u.id_profesor}-DIRECTOR_INV`}
+                                            onClick={() => toggleRole(u.id_profesor, 'DIRECTOR_INV', u.role_codes?.includes('DIRECTOR_INV'))}
                                         />
                                     </div>
                                 </td>

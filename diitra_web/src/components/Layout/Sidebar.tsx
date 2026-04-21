@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -8,11 +8,9 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ currentTheme, toggleTheme }: SidebarProps) => {
-  const { user } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const isAdmin = user?.role === 'Administrador del Sistema';
 
   const menuItems = [
     { name: 'Tablero', icon: Home, path: '/dashboard' },
@@ -22,8 +20,8 @@ const Sidebar = ({ currentTheme, toggleTheme }: SidebarProps) => {
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas' },
   ];
 
-  // Agregar Administración si es admin
-  if (isAdmin) {
+  // Agregar Administración si tiene permiso para gestionar usuarios
+  if (hasPermission('USUARIOS', 'VER')) {
     menuItems.push({ name: 'Administración', icon: Users, path: '/admin' });
   }
 
@@ -100,7 +98,7 @@ const Sidebar = ({ currentTheme, toggleTheme }: SidebarProps) => {
           }}
           className="flex items-center gap-3 px-3 py-2 text-text-dim cursor-pointer hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all group"
         >
-          <X size={16} strokeWidth={1.5} className="group-hover:text-red-500 transition-colors" />
+          <LogOut size={16} strokeWidth={1.5} className="group-hover:text-red-500 transition-colors" />
           <span className="text-sm font-medium transition-colors">Cerrar Sesión</span>
         </div>
       </div>
