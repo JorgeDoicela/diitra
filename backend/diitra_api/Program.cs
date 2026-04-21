@@ -114,14 +114,15 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
-    Console.WriteLine("[STARTUP] Configuring middleware...");
+    // Use Global Exception Middleware
+    app.UseMiddleware<diitra_api.Middleware.ExceptionMiddleware>();
+
     // 1. CORS debe ser lo primero, antes de cualquier redirección o autenticación
     app.UseCors("Diitra_policy");
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
     {
-        Console.WriteLine("[STARTUP] Enabling OpenAPI for Development.");
         app.MapOpenApi();
     }
 

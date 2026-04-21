@@ -736,7 +736,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.IdRol);
-            entity.ToTable("rol");
+            entity.ToTable("roles");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
             entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired();
             entity.Property(e => e.CodigoRol).HasMaxLength(50).HasColumnName("codigo_rol").IsRequired();
@@ -746,7 +746,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<UserRole>(entity =>
         {
             entity.HasKey(e => e.IdUsuarioRol);
-            entity.ToTable("usuario_rol");
+            entity.ToTable("usuarios_roles");
             entity.Property(e => e.IdUsuarioRol).HasColumnName("idUsuarioRol");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
@@ -764,7 +764,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<SystemEntity>(entity =>
         {
             entity.HasKey(e => e.IdSistema);
-            entity.ToTable("sistema");
+            entity.ToTable("sistemas");
             entity.Property(e => e.IdSistema).HasColumnName("idSistema");
             entity.Property(e => e.Detalle).HasMaxLength(50).IsRequired();
         });
@@ -793,7 +793,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<ModuleOperation>(entity =>
         {
             entity.HasKey(e => e.IdModulosOperaciones);
-            entity.ToTable("modulos_operacion");
+            entity.ToTable("modulos_operaciones");
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdModulos).HasColumnName("idModulos");
             entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
@@ -810,7 +810,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<RoleModuleOperation>(entity =>
         {
             entity.HasKey(e => e.IdRolModuloOperacion);
-            entity.ToTable("rol_modulo_operacion");
+            entity.ToTable("roles_modulos_operaciones");
             entity.Property(e => e.IdRolModuloOperacion).HasColumnName("idRolModuloOperacion");
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
