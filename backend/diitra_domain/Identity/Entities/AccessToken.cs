@@ -8,7 +8,7 @@ namespace diitra_domain.Identity.Entities;
 public class AccessToken
 {
     public int IdToken { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public string Token { get; set; } = string.Empty;
     public string IdReferencia { get; set; } = string.Empty; // idProfesor o Revisor Externo
     public string TipoReferencia { get; set; } = string.Empty; // 'profesor', 'externo'

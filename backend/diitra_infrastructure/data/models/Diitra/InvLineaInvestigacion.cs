@@ -7,7 +7,7 @@ public partial class InvLineaInvestigacion
 {
     public int IdLinea { get; set; }
 
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
 
     public string CodigoLinea { get; set; } = null!;
 

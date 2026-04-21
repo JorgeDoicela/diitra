@@ -6,7 +6,7 @@ namespace diitra_infrastructure.data.models;
 public partial class InvRevision
 {
     public int IdRevision { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string? IdProfesorRevisor { get; set; } // Opcional si es externo
     public int? IdRevisorExterno { get; set; }     // Opcional si es interno
@@ -30,7 +30,7 @@ public partial class InvRevision
 public partial class InvRubrica
 {
     public int IdRubrica { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public string Criterio { get; set; } = null!;
     public string? Descripcion { get; set; }
     public decimal PuntajeMax { get; set; } = 10.00m;
@@ -45,7 +45,7 @@ public partial class InvRubrica
 public partial class InvRevisionDetalle
 {
     public int IdDetalleRevision { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdRevision { get; set; }
     public int IdRubrica { get; set; }
     public decimal Puntaje { get; set; }

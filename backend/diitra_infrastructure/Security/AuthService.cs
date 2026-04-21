@@ -265,7 +265,7 @@ public class AuthService : IAuthService
             metadata = new InvUsuarioMetadata
             {
                 IdUsuario = user.IdUsuario,
-                Uuid = Guid.NewGuid().ToString(),
+                Uuid = Guid.NewGuid(),
                 FechaRegistro = DateTime.UtcNow,
                 FechaUltimoAcceso = DateTime.UtcNow,
                 Version = 1
@@ -285,7 +285,7 @@ public class AuthService : IAuthService
             {
                 IdReferencia = user.Usuario.Trim(),
                 IdUsuario = user.IdUsuario,
-                UserUuid = metadata.Uuid,
+                UserUuid = metadata.Uuid.ToString(),
                 Usuario = user.Usuario,
                 NombreCompleto = user.Nombre,
                 Role = primaryRole,
@@ -305,7 +305,7 @@ public class AuthService : IAuthService
         {
             Console.WriteLine($"[FATAL ERROR] GetAuthResponseAsync failed: {ex.Message}");
             if (ex.InnerException != null) Console.WriteLine($"[INNER] {ex.InnerException.Message}");
-            return null;
+            return null!;
         }
     }
 

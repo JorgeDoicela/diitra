@@ -9,7 +9,7 @@ namespace diitra_domain.Identity.Entities;
 public class ExternalReviewer
 {
     public int IdRevisorExterno { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public string Nombre { get; set; } = string.Empty;
     public string Apellido { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

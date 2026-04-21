@@ -108,23 +108,52 @@ builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 
-// Register Database Context
-var connectionString = builder.Configuration.GetConnectionString("default_connection");
-if (!string.IsNullOrEmpty(connectionString))
+// 3. LÓGICA DE CONEXIÓN INTELIGENTE (Auto-Detección Oficina/Casa)
+var connectionString = builder.Configuration.GetConnectionString("default_connection") ?? "";
+bool isOffice = false;
+
+try
 {
-    // DiitraContext: Contexto LIMPIO con solo las tablas que Diitra necesita.
-    // USAR ESTE en todos los servicios y controladores nuevos.
-    builder.Services.AddDbContext<diitra_infrastructure.data.models.DiitraContext>(options =>
-        options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    using (var tcpClient = new System.Net.Sockets.TcpClient())
+    {
+        // Intentamos conectar con un timeout real
+        var task = tcpClient.ConnectAsync("192.168.7.50", 3307);
+        if (task.Wait(TimeSpan.FromMilliseconds(1500))) // Esperamos 1.5s
+        {
+            isOffice = tcpClient.Connected;
+        }
+    }
+}
+catch { isOffice = false; }
+
+if (!isOffice)
+{
+    Console.WriteLine(">>> [DIITRA-AUTO] Servidor institucional NO detectado. Usando configuración de CASA (Localhost)...");
+    connectionString = builder.Configuration.GetConnectionString("local_connection") 
+                       ?? "Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=root;";
+}
+else
+{
+    Console.WriteLine(">>> [DIITRA-AUTO] Conectado al servidor INSTITUCIONAL.");
 }
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+if (!string.IsNullOrEmpty(connectionString))
+{
+    // Usamos una versión fija para evitar que AutoDetect falle si la red parpadea
+    var serverVersion = new MySqlServerVersion(new Version(8, 0, 31)); 
+    builder.Services.AddDbContext<diitra_infrastructure.data.models.DiitraContext>(options =>
+        options.UseMySql(connectionString, serverVersion));
+}
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddSwaggerGen(c =>
 {
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
+    if (File.Exists(xmlPath))
+    {
+        c.IncludeXmlComments(xmlPath);
+    }
 });
 
 var app = builder.Build();
@@ -136,9 +165,10 @@ var app = builder.Build();
     app.UseCors("Diitra_policy");
 
     // Configure the HTTP request pipeline.
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || true) // Habilitar Swagger siempre por ahora
     {
-        app.MapOpenApi();
+        app.UseSwagger();
+        app.UseSwaggerUI();
     }
 
     app.UseAuthentication(); 

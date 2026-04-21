@@ -7,7 +7,7 @@ namespace diitra_infrastructure.data.models;
 public partial class InvConvocatoria
 {
     public int IdConvocatoria { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public string CodigoConvocatoria { get; set; } = null!;
     public string Titulo { get; set; } = null!;
     public string? Descripcion { get; set; }

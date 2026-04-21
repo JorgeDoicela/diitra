@@ -5,7 +5,7 @@ namespace diitra_infrastructure.data.models;
 
 public partial class InvProyectoProfesor {
     public int IdProyectoProfesor { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string IdProfesor { get; set; } = null!;
     public string Rol { get; set; } = null!;
@@ -19,7 +19,7 @@ public partial class InvProyectoProfesor {
 
 public partial class InvProyectoAlumno {
     public int IdProyectoAlumno { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string IdAlumno { get; set; } = null!;
     public string Rol { get; set; } = "Investigador Auxiliar";
@@ -32,7 +32,7 @@ public partial class InvProyectoAlumno {
 
 public partial class InvProyectoHistorial {
     public int IdHistorial { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string? EstadoAnterior { get; set; }
     public string EstadoNuevo { get; set; } = null!;
@@ -44,7 +44,7 @@ public partial class InvProyectoHistorial {
 
 public partial class InvNotificacion {
     public int IdNotificacion { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int? IdProyecto { get; set; }
     public string Destinatario { get; set; } = null!;
     public string TipoDestinatario { get; set; } = "profesor";
@@ -59,7 +59,7 @@ public partial class InvNotificacion {
 
 public partial class InvCronogramaTarea {
     public int IdTarea { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string NombreTarea { get; set; } = null!;
     public string? Descripcion { get; set; }
@@ -76,7 +76,7 @@ public partial class InvCronogramaTarea {
 
 public partial class InvInformeAvance {
     public int IdInforme { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string IdProfesor { get; set; } = null!;
     public string Titulo { get; set; } = null!;
@@ -98,7 +98,7 @@ public partial class InvInformeAvance {
 
 public partial class InvEvidencia {
     public int IdEvidencia { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdInforme { get; set; }
     public string NombreArchivo { get; set; } = null!;
     public string RutaArchivo { get; set; } = null!;
@@ -113,7 +113,7 @@ public partial class InvEvidencia {
 
 public partial class InvPresupuestoItem {
     public int IdItem { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string Categoria { get; set; } = "otro";
     public string? Descripcion { get; set; }
@@ -129,7 +129,7 @@ public partial class InvPresupuestoItem {
 
 public partial class InvGasto {
     public int IdGasto { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public int? IdItem { get; set; }
     public string Descripcion { get; set; } = null!;
@@ -147,7 +147,7 @@ public partial class InvGasto {
 
 public partial class InvProducto {
     public int IdProducto { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string Tipo { get; set; } = null!;
     public string Titulo { get; set; } = null!;
@@ -167,7 +167,7 @@ public partial class InvProducto {
 
 public partial class InvTransferencia {
     public int IdTransferencia { get; set; }
-    public string Uuid { get; set; } = Guid.NewGuid().ToString();
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdProyecto { get; set; }
     public string EmpresaBeneficiaria { get; set; } = null!;
     public string TipoTransferencia { get; set; } = "otro";
