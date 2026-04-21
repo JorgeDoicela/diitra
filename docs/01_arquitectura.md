@@ -2,7 +2,7 @@
 
 DIITRA implementa una variante pulida del patrón **Monolito Modular** diseñado con **Clean Architecture**. Esta directriz permite una escalabilidad predictiva en empresas de alto nivel de demanda con mínima disrupción.
 
-## 🏗️ Modelo C4: Nivel Contexto & Contenedores (Nivel 1 y 2)
+## Modelo C4: Nivel Contexto & Contenedores (Nivel 1 y 2)
 
 El Modelo C4 ayuda al equipo corporativo a visualizar la arquitectura desde una perspectiva estandarizada. 
 
@@ -26,7 +26,7 @@ C4Context
   Rel(diitra, firma, "Firma de actas (Resoluciones)", "Local/REST")
 ```
 
-## 🧩 Clean Architecture: Desglose de Inversión de Dependencias (DI)
+## Clean Architecture: Desglose de Inversión de Dependencias (DI)
 
 El Backend de DIITRA desacopla rigurosamente sus librerías de clase asegurando mantenibilidad corporativa superior:
 
@@ -35,7 +35,7 @@ El Backend de DIITRA desacopla rigurosamente sus librerías de clase asegurando 
 - **diitra_infrastructure (Frameworks & Web)**: Capa de cruce contra Entity Framework Core y servicios perimetrales estables (`AIAssistantService`, implementaciones de Redis o SMTP).
 - **diitra_api (Presentation Layer)**: Endpoints REST, WebSockets, mapeos de Middleware, Controladores puros (`Controllers/`).
 
-## ⚡ Patrones de Computación y Abstracciones Nivel Enterprise
+## Patrones de Computación y Abstracciones Nivel Enterprise
 
 ### 1. Unit of Work (Transaccionalidad Atómica)
 Se evita la fuga de datos transaccionales forzando el commit general al final de la manipulación de entidades (`DiitraContext`). Si un proyecto aprueba pero falla la creación asíncrona de las notificaciones, interviene el rollback.

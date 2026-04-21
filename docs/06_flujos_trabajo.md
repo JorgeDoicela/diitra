@@ -2,7 +2,7 @@
 
 En ecosistemas complejos, detallar textualmente no es suficiente. El sistema procesa los modelos de dominio según secuencias predefinidas de actor/validación.
 
-## 🔄 Sequence: Ejecución "Double Blind Peer Review"
+## Sequence: Ejecución "Double Blind Peer Review"
 
 El componente más crítico académicamente. Exige validación, seguridad asincrónica vía "Magic Token" y resolución de estados.
 
@@ -39,7 +39,7 @@ sequenceDiagram
     end
 ```
 
-## 📈 Trazabilidad del Proyecto (Diagrama de Estados FSM)
+## Trazabilidad del Proyecto (Diagrama de Estados FSM)
 
 Todo el avance burocrático de un *Proyecto de Innovación* puede resumirse en la máquina de estados gestionada y blindada por backend en su historia.
 
