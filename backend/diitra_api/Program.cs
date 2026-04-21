@@ -3,7 +3,6 @@ using diitra_infrastructure.Collaboration;
 using diitra_infrastructure.Security;
 using diitra_application.Research;
 using diitra_application.Common;
-using diitra_infrastructure.hubs;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -176,7 +175,7 @@ var app = builder.Build();
     app.MapControllers();
 
     // SignalR Hubs (Unificado)
-    app.MapHub<DocumentHub>("/hubs/document");
+    app.MapHub<CollaborationHub>("/hubs/collaboration");
 
 app.Run();
 
