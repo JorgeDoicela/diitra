@@ -15,7 +15,16 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    /// <summary>
+    /// Autentica a un usuario y genera una cookie HttpOnly con el JWT.
+    /// </summary>
+    /// <param name="request">Credenciales del usuario (usuario y contraseña).</param>
+    /// <returns>Información del usuario autenticado y sus permisos.</returns>
+    /// <response code="200">Login exitoso.</response>
+    /// <response code="401">Credenciales incorrectas.</response>
     [HttpPost("login")]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
+    [ProducesResponseType(401)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var response = await _authService.LoginAsync(request);

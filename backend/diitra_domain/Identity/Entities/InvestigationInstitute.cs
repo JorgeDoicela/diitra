@@ -9,6 +9,7 @@ namespace diitra_domain.Identity.Entities;
 public class InvestigationInstitute
 {
     public int IdInstitucion { get; set; }
+    public string Uuid { get; set; } = Guid.NewGuid().ToString();
     public string Nombre { get; set; } = string.Empty;
     public string? Siglas { get; set; }
     public string? Ruc { get; set; }
@@ -21,6 +22,8 @@ public class InvestigationInstitute
     public string Pais { get; set; } = "Ecuador";
     public string? Ciudad { get; set; }
     public string? SitioWeb { get; set; }
+    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
+    public int Version { get; set; } = 1;
     public bool Activo { get; set; } = true;
 
     // Relaciones

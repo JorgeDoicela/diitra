@@ -18,5 +18,6 @@ public class AuthResponse
     public string Token { get; set; } = null!;
     public bool Administrador { get; set; }
     public int IdUsuario { get; set; }
+    public string UserUuid { get; set; } = null!;
     public string Usuario { get; set; } = null!;
 }

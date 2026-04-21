@@ -37,13 +37,28 @@ public class AuthService : IAuthService
 
         if (user != null)
         {
-            // Validamos contra la clave centralizada (o legacy si se sincronizó)
-            if (user.Contrasenia == password)
+            // Validamos contra la clave. Soporta tanto Hash como Texto Plano (para transición)
+            bool isPasswordValid = false;
+            
+            try {
+                isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.Contrasenia);
+            } catch {
+                // Fallback: Si no es un hash válido, comparar como texto plano (Legacy)
+                isPasswordValid = (user.Contrasenia == password);
+                
+                // MEJORA: Si entró con texto plano, actualizar a Hash automáticamente
+                if (isPasswordValid)
+                {
+                    user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(password);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            if (isPasswordValid)
             {
                 // LOGICA DE REFUERZO: Si es el Master Admin, asegurar que tenga el flag de administrador activo
                 if (username == MASTER_ADMIN_ID && !(user.Administrador ?? false))
                 {
-                    Console.WriteLine("[SECURITY] Master Admin detected. Forcing 'Administrador = true' in DB...");
                     user.Administrador = true;
                     await _context.SaveChangesAsync();
                 }
@@ -70,7 +85,7 @@ public class AuthService : IAuthService
             {
                 Usuario = username,
                 Nombre = $"{profesor.PrimerNombre} {profesor.PrimerApellido}",
-                Contrasenia = password, // En producción usar Hash
+                Contrasenia = BCrypt.Net.BCrypt.HashPassword(password),
                 Activo = true,
                 Administrador = false,
                 TipoUsuario = "profesor",
@@ -122,7 +137,7 @@ public class AuthService : IAuthService
                 {
                     Usuario = username,
                     Nombre = $"{(alumno.PrimerNombre ?? "").Trim()} {(alumno.ApellidoPaterno ?? "").Trim()}",
-                    Contrasenia = password,
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(password),
                     Activo = true,
                     TipoUsuario = "alumno",
                     IdSigafi = alumno.IdAlumno
@@ -242,12 +257,35 @@ public class AuthService : IAuthService
             .Distinct()
             .ToList();
 
+        // 3. LOGICA DE SHADOW PROFILE: Asegurar que el usuario tenga su metadata/uuid en DIITRA
+        var metadata = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == user.IdUsuario);
+        if (metadata == null)
+        {
+            Console.WriteLine($"[SECURITY] Provisioning DIITRA metadata for User: {user.Usuario}");
+            metadata = new InvUsuarioMetadata
+            {
+                IdUsuario = user.IdUsuario,
+                Uuid = Guid.NewGuid().ToString(),
+                FechaRegistro = DateTime.UtcNow,
+                FechaUltimoAcceso = DateTime.UtcNow,
+                Version = 1
+            };
+            _context.InvUsuariosMetadata.Add(metadata);
+            await _context.SaveChangesAsync();
+        }
+        else
+        {
+            metadata.FechaUltimoAcceso = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+        }
+
         try
         {
             var response = new AuthResponse
             {
                 IdReferencia = user.Usuario.Trim(),
                 IdUsuario = user.IdUsuario,
+                UserUuid = metadata.Uuid,
                 Usuario = user.Usuario,
                 NombreCompleto = user.Nombre,
                 Role = primaryRole,
@@ -281,6 +319,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.IdReferencia),
             new Claim(ClaimTypes.Name, user.NombreCompleto),
             new Claim(ClaimTypes.Role, user.Role),
+            new Claim("user_uuid", user.UserUuid),
             new Claim("tipo_usuario", user.TipoUsuario),
             new Claim("es_admin", user.Administrador.ToString().ToLower())
         };

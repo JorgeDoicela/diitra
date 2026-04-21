@@ -147,15 +147,22 @@ UPDATE `usuarios` SET `administrador` = 1 WHERE `usuario` = '0302144159';
 
 CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
   `idLinea`            INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`               CHAR(36) NOT NULL UNIQUE,
+  `codigoLinea`        VARCHAR(50) NOT NULL UNIQUE,
   `nombreLinea`        VARCHAR(300) NOT NULL,
   `descripcion`        TEXT,
   `resolucionAprobacion` VARCHAR(100) DEFAULT NULL,
+  `fechaRegistro`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `fechaModificacion`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version`            INT(11) DEFAULT 1,
   `activo`             TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idLinea`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
   `idConvocatoria`     INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`               CHAR(36) NOT NULL UNIQUE,
+  `codigoConvocatoria` VARCHAR(50) NOT NULL UNIQUE,
   `titulo`             VARCHAR(200) NOT NULL,
   `descripcion`        TEXT,
   `idPeriodo` CHAR(7) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
@@ -168,6 +175,7 @@ CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
   `usuarioCreo`        VARCHAR(20) NOT NULL,
   `fechaRegistro`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaModificacion`  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version`            INT(11) DEFAULT 1,
   `activo`             TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idConvocatoria`),
   KEY `fk_inv_convocatorias_periodos` (`idPeriodo`),
@@ -177,6 +185,7 @@ CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
 
 CREATE TABLE IF NOT EXISTS `inv_proyectos` (
   `idProyecto`             INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`                   CHAR(36) NOT NULL UNIQUE,
   `idConvocatoria`         INT(11) NOT NULL,
   `codigoInstitucional`    VARCHAR(30) DEFAULT NULL,
   `titulo`                 VARCHAR(400) NOT NULL,
@@ -198,6 +207,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos` (
   `rutaResolucion`         VARCHAR(500) DEFAULT NULL,
   `fechaRegistro`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaModificacion`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version`                INT(11) DEFAULT 1,
   `activo`                 TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idProyecto`),
   KEY `fk_inv_proyectos_convocatoria` (`idConvocatoria`),
@@ -212,10 +222,13 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos` (
 
 CREATE TABLE IF NOT EXISTS `inv_proyectos_profesores` (
   `idProyectoProfesor`  INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`                CHAR(36) NOT NULL UNIQUE,
   `idProyecto`          INT(11) NOT NULL,
   `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `rol`                 ENUM('director','coinvestigador','colaborador') DEFAULT 'coinvestigador',
   `horasSemanales`      DECIMAL(5,2) DEFAULT 0.00,
+  `fechaRegistro`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`             INT(11) DEFAULT 1,
   `activo`              TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idProyectoProfesor`),
   UNIQUE KEY `uq_proyecto_profesor` (`idProyecto`, `idProfesor`),
@@ -226,9 +239,12 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_profesores` (
 
 CREATE TABLE IF NOT EXISTS `inv_proyectos_alumnos` (
   `idProyectoAlumno`  INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`              CHAR(36) NOT NULL UNIQUE,
   `idProyecto`        INT(11) NOT NULL,
   `idAlumno`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `rol`               VARCHAR(100) DEFAULT 'Investigador Auxiliar',
+  `fechaRegistro`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`           INT(11) DEFAULT 1,
   `activo`            TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idProyectoAlumno`),
   UNIQUE KEY `uq_proyecto_alumno` (`idProyecto`, `idAlumno`),
@@ -238,6 +254,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_alumnos` (
 
 CREATE TABLE IF NOT EXISTS `inv_institutos` (
   `idInstitucion`    INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`             CHAR(36) NOT NULL UNIQUE,
   `nombre`           VARCHAR(200) NOT NULL,
   `siglas`           VARCHAR(20) DEFAULT NULL,
   `ruc`              VARCHAR(20) DEFAULT NULL,
@@ -245,6 +262,8 @@ CREATE TABLE IF NOT EXISTS `inv_institutos` (
   `pais`             VARCHAR(100) DEFAULT 'Ecuador',
   `ciudad`           VARCHAR(100) DEFAULT NULL,
   `sitioWeb`         VARCHAR(250) DEFAULT NULL,
+  `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`          INT(11) DEFAULT 1,
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idInstitucion`),
   UNIQUE KEY `uq_inv_inst_ruc` (`ruc`)
@@ -259,6 +278,7 @@ INSERT IGNORE INTO `inv_institutos` (`idInstitucion`, `nombre`, `siglas`, `ruc`,
 
 CREATE TABLE IF NOT EXISTS `inv_revisores_externos` (
   `idRevisorExterno` INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`             CHAR(36) NOT NULL UNIQUE,
   `nombre`           VARCHAR(150) NOT NULL,
   `apellido`         VARCHAR(150) NOT NULL,
   `email`            VARCHAR(200) NOT NULL,
@@ -266,6 +286,8 @@ CREATE TABLE IF NOT EXISTS `inv_revisores_externos` (
   `tituloAcademico`  VARCHAR(200) DEFAULT NULL,
   `especialidad`     VARCHAR(300) DEFAULT NULL,
   `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `fechaModificacion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version`          INT(11) DEFAULT 1,
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idRevisorExterno`),
   UNIQUE KEY `uq_inv_ext_email` (`email`),
@@ -274,6 +296,7 @@ CREATE TABLE IF NOT EXISTS `inv_revisores_externos` (
 
 CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   `idRevision`          INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`                CHAR(36) NOT NULL UNIQUE,
   `idProyecto`          INT(11) NOT NULL,
   `idProfesorRevisor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
   `idRevisorExterno`    INT(11) DEFAULT NULL,
@@ -284,6 +307,8 @@ CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   `fechaAsignacion`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaLimite`         DATE DEFAULT NULL,
   `fechaEntrega`        TIMESTAMP NULL DEFAULT NULL,
+  `fechaModificacion`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version`             INT(11) DEFAULT 1,
   `activo`              TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idRevision`),
   KEY `fk_inv_rev_proy` (`idProyecto`),
@@ -296,20 +321,25 @@ CREATE TABLE IF NOT EXISTS `inv_revisiones` (
 
 CREATE TABLE IF NOT EXISTS `inv_rubricas` (
   `idRubrica`    INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`         CHAR(36) NOT NULL UNIQUE,
   `criterio`     VARCHAR(200) NOT NULL,
   `descripcion`  TEXT,
   `puntajeMax`   DECIMAL(5,2) NOT NULL DEFAULT 10.00,
   `orden`        INT(11) DEFAULT 0,
+  `fechaRegistro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`      INT(11) DEFAULT 1,
   `activo`       TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idRubrica`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `inv_revisiones_detalle` (
   `idDetalleRevision` INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`              CHAR(36) NOT NULL UNIQUE,
   `idRevision`        INT(11) NOT NULL,
   `idRubrica`         INT(11) NOT NULL,
   `puntaje`           DECIMAL(5,2) DEFAULT 0.00,
   `observacion`       TEXT DEFAULT NULL,
+  `version`           INT(11) DEFAULT 1,
   PRIMARY KEY (`idDetalleRevision`),
   UNIQUE KEY `uq_revision_rubrica` (`idRevision`, `idRubrica`),
   CONSTRAINT `fk_inv_rd_rev` FOREIGN KEY (`idRevision`) REFERENCES `inv_revisiones` (`idRevision`),
@@ -318,6 +348,7 @@ CREATE TABLE IF NOT EXISTS `inv_revisiones_detalle` (
 
 CREATE TABLE IF NOT EXISTS `inv_cronograma` (
   `idTarea`           INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`              CHAR(36) NOT NULL UNIQUE,
   `idProyecto`        INT(11) NOT NULL,
   `nombreTarea`       VARCHAR(300) NOT NULL,
   `descripcion`       TEXT,
@@ -326,6 +357,8 @@ CREATE TABLE IF NOT EXISTS `inv_cronograma` (
   `porcentajeAvance`  TINYINT(4) DEFAULT 0,
   `esHito`            TINYINT(4) DEFAULT 0,
   `orden`             INT(11) DEFAULT 0,
+  `fechaRegistro`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`           INT(11) DEFAULT 1,
   `activo`            TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idTarea`),
   KEY `fk_inv_cron_proy` (`idProyecto`),
@@ -334,6 +367,7 @@ CREATE TABLE IF NOT EXISTS `inv_cronograma` (
 
 CREATE TABLE IF NOT EXISTS `inv_informes_avance` (
   `idInforme`           INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`                CHAR(36) NOT NULL UNIQUE,
   `idProyecto`          INT(11) NOT NULL,
   `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `titulo`              VARCHAR(200) NOT NULL,
@@ -344,7 +378,9 @@ CREATE TABLE IF NOT EXISTS `inv_informes_avance` (
   `estado`              ENUM('borrador','enviado','revisado','aprobado') DEFAULT 'borrador',
   `observacionDirector` TEXT DEFAULT NULL,
   `fechaRegistro`       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `fechaModificacion`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `fechaEntrega`        DATE DEFAULT NULL,
+  `version`             INT(11) DEFAULT 1,
   `activo`              TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idInforme`),
   KEY `fk_inv_ia_proy` (`idProyecto`),
@@ -354,6 +390,7 @@ CREATE TABLE IF NOT EXISTS `inv_informes_avance` (
 
 CREATE TABLE IF NOT EXISTS `inv_evidencias` (
   `idEvidencia`   INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`          CHAR(36) NOT NULL UNIQUE,
   `idInforme`     INT(11) NOT NULL,
   `tipoEvidencia` ENUM('foto','factura','bitacora','otro') DEFAULT 'otro',
   `nombreArchivo` VARCHAR(300) NOT NULL,
@@ -362,6 +399,7 @@ CREATE TABLE IF NOT EXISTS `inv_evidencias` (
   `tamanioBytes`  INT(11) DEFAULT NULL,
   `descripcion`   VARCHAR(500) DEFAULT NULL,
   `fechaSubida`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`       INT(11) DEFAULT 1,
   PRIMARY KEY (`idEvidencia`),
   KEY `fk_inv_ev_informe` (`idInforme`),
   CONSTRAINT `fk_inv_ev_inf` FOREIGN KEY (`idInforme`) REFERENCES `inv_informes_avance` (`idInforme`)
@@ -369,12 +407,15 @@ CREATE TABLE IF NOT EXISTS `inv_evidencias` (
 
 CREATE TABLE IF NOT EXISTS `inv_presupuesto_items` (
   `idItem`       INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`         CHAR(36) NOT NULL UNIQUE,
   `idProyecto`   INT(11) NOT NULL,
   `categoria`    ENUM('materiales','equipos','servicios','viajes','publicacion','otro') DEFAULT 'otro',
   `descripcion`  VARCHAR(500) NOT NULL,
   `cantidad`     DECIMAL(10,2) DEFAULT 1.00,
   `valorUnitario` DECIMAL(10,2) DEFAULT 0.00,
   `valorTotal`   DECIMAL(10,2) DEFAULT 0.00,
+  `fechaRegistro` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`      INT(11) DEFAULT 1,
   `activo`       TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idItem`),
   CONSTRAINT `fk_inv_pi_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
@@ -382,6 +423,7 @@ CREATE TABLE IF NOT EXISTS `inv_presupuesto_items` (
 
 CREATE TABLE IF NOT EXISTS `inv_gastos` (
   `idGasto`         INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`            CHAR(36) NOT NULL UNIQUE,
   `idProyecto`      INT(11) NOT NULL,
   `idItem`          INT(11) DEFAULT NULL,
   `descripcion`     VARCHAR(500) NOT NULL,
@@ -391,14 +433,17 @@ CREATE TABLE IF NOT EXISTS `inv_gastos` (
   `rutaFactura`     VARCHAR(500) DEFAULT NULL,
   `registradoPor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `fechaRegistro`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`         INT(11) DEFAULT 1,
   PRIMARY KEY (`idGasto`),
   KEY `fk_inv_ga_proy` (`idProyecto`),
   CONSTRAINT `fk_inv_ga_proyecto` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
-  CONSTRAINT `fk_inv_ga_item` FOREIGN KEY (`idItem`) REFERENCES `inv_presupuesto_items` (`idItem`)
+  CONSTRAINT `fk_inv_ga_item` FOREIGN KEY (`idItem`) REFERENCES `inv_presupuesto_items` (`idItem`),
+  CONSTRAINT `fk_inv_ga_registro` FOREIGN KEY (`registradoPor`) REFERENCES `profesores` (`idProfesor`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `inv_productos` (
   `idProducto`       INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`             CHAR(36) NOT NULL UNIQUE,
   `idProyecto`       INT(11) NOT NULL,
   `tipo`             ENUM('articulo_indexado','articulo_no_indexado','libro','capitulo_libro','ponencia','patente','software','prototipo','otro') NOT NULL,
   `titulo`           VARCHAR(500) NOT NULL,
@@ -410,14 +455,16 @@ CREATE TABLE IF NOT EXISTS `inv_productos` (
   `fechaPublicacion` DATE DEFAULT NULL,
   `rutaArchivo`      VARCHAR(500) DEFAULT NULL,
   `numeroRegistro`   VARCHAR(100) DEFAULT NULL,
-  `activo`           TINYINT(4) DEFAULT 1,
   `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`          INT(11) DEFAULT 1,
+  `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idProducto`),
   CONSTRAINT `fk_inv_prod_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `inv_transferencias` (
   `idTransferencia`  INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`             CHAR(36) NOT NULL UNIQUE,
   `idProyecto`       INT(11) NOT NULL,
   `empresaBeneficiaria` VARCHAR(300) NOT NULL,
   `tipoTransferencia` ENUM('licencia','cesion','consultoria','otro') DEFAULT 'otro',
@@ -425,6 +472,8 @@ CREATE TABLE IF NOT EXISTS `inv_transferencias` (
   `valorConvenio`    DECIMAL(10,2) DEFAULT 0.00,
   `fechaConvenio`    DATE DEFAULT NULL,
   `rutaConvenio`     VARCHAR(500) DEFAULT NULL,
+  `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`          INT(11) DEFAULT 1,
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idTransferencia`),
   CONSTRAINT `fk_inv_trans_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
@@ -432,6 +481,7 @@ CREATE TABLE IF NOT EXISTS `inv_transferencias` (
 
 CREATE TABLE IF NOT EXISTS `inv_proyectos_historial` (
   `idHistorial`   INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`          CHAR(36) NOT NULL UNIQUE,
   `idProyecto`    INT(11) NOT NULL,
   `estadoAnterior` VARCHAR(50) DEFAULT NULL,
   `estadoNuevo`   VARCHAR(50) NOT NULL,
@@ -444,6 +494,7 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_historial` (
 
 CREATE TABLE IF NOT EXISTS `inv_notificaciones` (
   `idNotificacion`  INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`            CHAR(36) NOT NULL UNIQUE,
   `idProyecto`      INT(11) DEFAULT NULL,
   `destinatario`    VARCHAR(14) NOT NULL,
   `tipoDestinatario` ENUM('profesor','alumno') DEFAULT 'profesor',
@@ -453,6 +504,7 @@ CREATE TABLE IF NOT EXISTS `inv_notificaciones` (
   `leida`           TINYINT(4) DEFAULT 0,
   `fechaEnvio`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaLectura`    TIMESTAMP NULL DEFAULT NULL,
+  `version`         INT(11) DEFAULT 1,
   PRIMARY KEY (`idNotificacion`),
   KEY `fk_inv_notif_proy` (`idProyecto`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -466,6 +518,7 @@ INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `ord
 
 CREATE TABLE IF NOT EXISTS `inv_tokens_acceso` (
   `idToken`          INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`             CHAR(36) NOT NULL UNIQUE,
   `token`            VARCHAR(256) NOT NULL,
   `idReferencia`     VARCHAR(20) NOT NULL,
   `tipoReferencia`   ENUM('profesor', 'externo') NOT NULL,
@@ -473,7 +526,24 @@ CREATE TABLE IF NOT EXISTS `inv_tokens_acceso` (
   `usado`            TINYINT(4) DEFAULT 0,
   `scopes`           VARCHAR(200) DEFAULT NULL,
   `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`          INT(11) DEFAULT 1,
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idToken`),
   UNIQUE KEY `uq_inv_tokens_val` (`token`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- TABLA DE METADATA DE USUARIOS (SHADOW PROFILE)
+-- Para blindar la tabla 'usuarios' centralizada de SIGAFI
+-- ============================================================
+CREATE TABLE IF NOT EXISTS `inv_usuarios_metadata` (
+  `idMetadata`      INT(11) NOT NULL AUTO_INCREMENT,
+  `uuid`            CHAR(36) NOT NULL UNIQUE,
+  `idUsuario`       INT(11) NOT NULL UNIQUE,
+  `configuracion`   JSON DEFAULT NULL,
+  `fechaRegistro`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `fechaUltimoAcceso` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `version`         INT(11) DEFAULT 1,
+  PRIMARY KEY (`idMetadata`),
+  CONSTRAINT `fk_inv_meta_usuario` FOREIGN KEY (`idUsuario`) REFERENCES `usuarios` (`idUsuario`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

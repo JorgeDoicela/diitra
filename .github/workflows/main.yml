@@ -1,0 +1,40 @@
+name: DIITRA CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 10.0.x
+    - name: Restore dependencies
+      run: dotnet restore backend/diitra.slnx
+    - name: Build
+      run: dotnet build backend/diitra.slnx --no-restore
+    - name: Test
+      run: dotnet test backend/diitra_tests/diitra_tests.csproj --no-build --verbosity normal
+
+  frontend-web-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+    - name: Install dependencies
+      run: |
+        cd diitra_web
+        npm install
+    - name: Build
+      run: |
+        cd diitra_web
+        npm run build
