@@ -27,6 +27,7 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
 
         // Validar Permiso Modular: Buscamos si existe la relación modular para el usuario
         var hasPermission = await _context.UserRoles
+            .Include(ur => ur.User)
             .Include(ur => ur.Role)
                 .ThenInclude(r => r.RoleModuleOperations)
                     .ThenInclude(rmo => rmo.ModuleOperation)
@@ -35,9 +36,9 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
                 .ThenInclude(r => r.RoleModuleOperations)
                     .ThenInclude(rmo => rmo.ModuleOperation)
                         .ThenInclude(mo => mo.Operation)
-            .Where(ur => ur.Usuario == username && ur.EsActivo)
+            .Where(ur => ur.User.Usuario == username && (ur.EsActivo ?? true))
             .SelectMany(ur => ur.Role.RoleModuleOperations)
-            .Where(rmo => rmo.EsActivo && rmo.ModuleOperation.EsActivo)
+            .Where(rmo => (rmo.EsActivo ?? true) && rmo.ModuleOperation != null && (rmo.ModuleOperation.EsActivo ?? true))
             .AnyAsync(rmo => 
                 (rmo.ModuleOperation.Module.Nombre + ":" + rmo.ModuleOperation.Operation.NombreOperacion).ToUpper() == requirement.Permission.ToUpper());
 

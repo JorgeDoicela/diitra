@@ -27,41 +27,79 @@ public class AuthService : IAuthService
         var username = request.Username.Trim();
         var password = request.Password.Trim();
 
+        Console.WriteLine($"[DEBUG] Login attempt for user: {username}");
         // 1. Intentar buscar en la tabla centralizada (Usuarios)
         var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Usuario.Trim() == username && u.Activo);
+            .FirstOrDefaultAsync(u => u.Usuario.Trim() == username && (u.Activo ?? true));
+        
+        Console.WriteLine($"[DEBUG] User find result: {(user != null ? "FOUND" : "NOT FOUND")}");
 
         if (user != null)
         {
             // Validamos contra la clave centralizada (o legacy si se sincronizó)
-            if (user.Clave == password)
+            if (user.Contrasenia == password)
             {
-                return await GetAuthResponseAsync(user.Usuario, user.Nombre, user.TipoUsuario);
+                return await GetAuthResponseAsync(user, user.TipoUsuario);
             }
         }
 
-        // 2. PROVISIÓN BAJO DEMANDA: Buscar como Profesor (Legacy) si no está centralizado o falló la clave central
-        var profesor = await _context.Profesores
-            .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && p.Activo == 1);
-
-        if (profesor != null && profesor.Clave?.Trim() == password)
+        // 2. PROVISIÓN BAJO DEMANDA: Buscar como Profesor (Legacy) si no está centralizado
+        if (user == null)
         {
-            // SI EXISTE EN LEGACY: Asegurar que esté en la tabla centralizada
-            if (user == null)
+            Console.WriteLine($"[STEP 1] User not found. Checking if it's a teacher for provisioning...");
+            var profesor = await _context.Profesores
+                .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && (p.Activo == 1 || p.Activo == null));
+
+            if (profesor == null)
             {
-                user = new User
-                {
-                    Usuario = username,
-                    Nombre = $"{profesor.PrimerNombre} {profesor.PrimerApellido}",
-                    Clave = password, // Sincronizamos la clave inicial
-                    Activo = true,
-                    TipoUsuario = "profesor",
-                    IdSigafi = profesor.IdProfesor
-                };
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+                Console.WriteLine($"[DEBUG] Professor not found with ID: {username}");
+                return null;
             }
-            return await GetAuthResponseAsync(profesor.IdProfesor, user.Nombre, "profesor");
+
+            Console.WriteLine($"[STEP 2] Creating new user for: {profesor.PrimerNombre} {profesor.PrimerApellido}");
+            user = new User
+            {
+                Usuario = username,
+                Nombre = $"{profesor.PrimerNombre} {profesor.PrimerApellido}",
+                Contrasenia = password, // En producción usar Hash
+                Activo = true,
+                Administrador = false,
+                TipoUsuario = "profesor",
+                IdSigafi = username
+            };
+
+            try {
+                Console.WriteLine($"[STEP 3] Adding user to DB tracker...");
+                _context.Users.Add(user);
+                Console.WriteLine($"[STEP 4] Saving changes (User creation)...");
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[STEP 5] User created with ID: {user.IdUsuario}");
+            } catch (Exception ex) {
+                Console.WriteLine($"[ERROR STEP 4/5] Failed to create user: {ex.Message}");
+                if (ex.InnerException != null) Console.WriteLine($"[INNER] {ex.InnerException.Message}");
+                throw;
+            }
+
+            // Asignar rol por defecto
+            Console.WriteLine($"[STEP 6] Assigning default role...");
+            const string MASTER_ADMIN_ID = "0302144159";
+            var defaultRoleCodigo = username == MASTER_ADMIN_ID ? "ADMIN_SIST" : "DOCENTE_IN";
+            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == defaultRoleCodigo);
+
+            if (defaultRole != null)
+            {
+                var newUserRole = new UserRole
+                {
+                    IdUsuario = user.IdUsuario,
+                    IdRol = defaultRole.IdRol,
+                    EsActivo = true,
+                    FechaCreacion = DateTime.Now
+                };
+                _context.UserRoles.Add(newUserRole);
+                await _context.SaveChangesAsync();
+                Console.WriteLine($"[STEP 7] Role assigned: {defaultRoleCodigo}");
+            }
+            return await GetAuthResponseAsync(user, "profesor");
         }
 
         // 3. PROVISIÓN BAJO DEMANDA: Buscar como Alumno (Legacy)
@@ -76,7 +114,7 @@ public class AuthService : IAuthService
                 {
                     Usuario = username,
                     Nombre = $"{alumno.PrimerNombre} {alumno.ApellidoPaterno}",
-                    Clave = password,
+                    Contrasenia = password,
                     Activo = true,
                     TipoUsuario = "alumno",
                     IdSigafi = alumno.IdAlumno
@@ -84,17 +122,17 @@ public class AuthService : IAuthService
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
             }
-            return await GetAuthResponseAsync(alumno.IdAlumno, user.Nombre, "alumno");
+            return await GetAuthResponseAsync(user, "alumno");
         }
 
         return null;
     }
 
-    private async Task<AuthResponse> GetAuthResponseAsync(string username, string nombreCompleto, string tipoUsuario)
+    private async Task<AuthResponse> GetAuthResponseAsync(User user, string tipoUsuario)
     {
-        var cleanId = username.Trim();
-        var masterAdminId = _configuration["Security:MasterAdminId"] ?? string.Empty;
+        var cleanId = user.Usuario.Trim();
 
+        Console.WriteLine($"[DEBUG] Loading roles for IdUsuario: {user.IdUsuario}");
         // Cargar Roles y sus configuraciones modulares
         var userRoles = await _context.UserRoles
             .Include(ur => ur.Role)
@@ -105,45 +143,61 @@ public class AuthService : IAuthService
                 .ThenInclude(r => r.RoleModuleOperations)
                     .ThenInclude(rmo => rmo.ModuleOperation)
                         .ThenInclude(mo => mo.Operation)
-            .Where(ur => ur.Usuario.Trim() == cleanId && ur.EsActivo)
+            .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
             .ToListAsync();
+        
+        Console.WriteLine($"[DEBUG] Roles found: {userRoles.Count}");
 
         // LOGICA DE BOOTSTRAP: Asignar rol inicial si es nuevo en DIITRA
         if (!userRoles.Any() && tipoUsuario == "profesor")
         {
-            var defaultRoleCodigo = cleanId == masterAdminId ? "ADMIN_SISTEMA" : "DOCENTE_INV";
+            Console.WriteLine("[DEBUG] No roles found, executing bootstrap assignment...");
+            // MASTER ADMIN BLINDADO EN CÓDIGO
+            const string MASTER_ADMIN_ID = "0302144159";
+            var defaultRoleCodigo = cleanId == MASTER_ADMIN_ID ? "ADMIN_SIST" : "DOCENTE_IN";
+            
+            Console.WriteLine($"[DEBUG] Searching for default role: {defaultRoleCodigo}");
             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == defaultRoleCodigo);
             
             if (defaultRole != null)
             {
-                var newUserRole = new UserRole
-                {
-                    Usuario = cleanId,
-                    IdRol = defaultRole.IdRol,
-                    EsActivo = true,
-                    FechaCreacion = DateTime.UtcNow
-                };
-                _context.UserRoles.Add(newUserRole);
-                await _context.SaveChangesAsync();
+                try {
+                    Console.WriteLine($"[DEBUG] Assigning role: {defaultRole.Nombre} (ID: {defaultRole.IdRol})");
+                    var newUserRole = new UserRole
+                    {
+                        IdUsuario = user.IdUsuario,
+                        IdRol = defaultRole.IdRol,
+                        EsActivo = true,
+                        FechaCreacion = DateTime.UtcNow
+                    };
+                    _context.UserRoles.Add(newUserRole);
+                    await _context.SaveChangesAsync();
+                    Console.WriteLine("[DEBUG] Role assigned successfully.");
 
-                // Recargar
-                userRoles = await _context.UserRoles
-                    .Include(ur => ur.Role)
-                        .ThenInclude(r => r.RoleModuleOperations)
-                            .ThenInclude(rmo => rmo.ModuleOperation)
-                                .ThenInclude(mo => mo.Module)
-                    .Include(ur => ur.Role)
-                        .ThenInclude(r => r.RoleModuleOperations)
-                            .ThenInclude(rmo => rmo.ModuleOperation)
-                                .ThenInclude(mo => mo.Operation)
-                    .Where(ur => ur.Usuario.Trim() == cleanId && ur.EsActivo)
-                    .ToListAsync();
+                    // Recargar
+                    userRoles = await _context.UserRoles
+                        .Include(ur => ur.Role)
+                            .ThenInclude(r => r.RoleModuleOperations)
+                                .ThenInclude(rmo => rmo.ModuleOperation)
+                                    .ThenInclude(mo => mo.Module)
+                        .Include(ur => ur.Role)
+                            .ThenInclude(r => r.RoleModuleOperations)
+                                .ThenInclude(rmo => rmo.ModuleOperation)
+                                    .ThenInclude(mo => mo.Operation)
+                        .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
+                        .ToListAsync();
+                } catch (Exception ex) {
+                    Console.WriteLine($"[ERROR] Bootstrap role assignment failed: {ex.Message}");
+                    throw;
+                }
+            } else {
+                Console.WriteLine($"[WARNING] Default role {defaultRoleCodigo} NOT found in database!");
             }
         }
 
         // Determinar Rol Primario para el JWT legado
         var primaryRole = userRoles
-            .OrderByDescending(ur => ur.Role.CodigoRol == "ADMIN_SISTEMA")
+            .OrderByDescending(ur => ur.Role.CodigoRol == "ADMIN_SIST")
             .ThenBy(ur => ur.IdRol)
             .FirstOrDefault()?.Role?.Nombre 
             ?? (tipoUsuario == "alumno" ? "Estudiante" : "Sin Rol");
@@ -151,15 +205,15 @@ public class AuthService : IAuthService
         // Carga de Permisos Modulares (Formato MODULE:OPERATION)
         var permissions = userRoles
             .SelectMany(ur => ur.Role.RoleModuleOperations)
-            .Where(rmo => rmo.EsActivo && rmo.ModuleOperation != null && rmo.ModuleOperation.EsActivo)
+            .Where(rmo => (rmo.EsActivo ?? true) && rmo.ModuleOperation != null && (rmo.ModuleOperation.EsActivo ?? true))
             .Select(rmo => $"{rmo.ModuleOperation.Module.Nombre}:{rmo.ModuleOperation.Operation.NombreOperacion}".ToUpper())
             .Distinct()
             .ToList();
 
         return new AuthResponse
         {
-            IdReferencia = cleanId,
-            NombreCompleto = nombreCompleto,
+            IdReferencia = user.Usuario.Trim(),
+            NombreCompleto = user.Nombre,
             Role = primaryRole,
             TipoUsuario = tipoUsuario,
             Permissions = permissions
