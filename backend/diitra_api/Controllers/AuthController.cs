@@ -18,44 +18,27 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        try
+        var response = await _authService.LoginAsync(request);
+
+        if (response == null)
         {
-            var response = await _authService.LoginAsync(request);
-
-            if (response == null)
-            {
-                return Unauthorized(new { message = "Credenciales incorrectas" });
-            }
-
-            var token = _authService.GenerateToken(response);
-
-            // Guardar el JWT en una cookie HttpOnly
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = false, // En localhost lo dejamos en false si no hay SSL
-                SameSite = SameSiteMode.Strict,
-                Expires = DateTime.UtcNow.AddHours(12)
-            };
-
-            Response.Cookies.Append("diitra_auth", token, cookieOptions);
-
-            return Ok(response);
+            return Unauthorized(new { message = "Credenciales incorrectas" });
         }
-        catch (Exception ex)
+
+        var token = _authService.GenerateToken(response);
+
+        // Guardar el JWT en una cookie HttpOnly
+        var cookieOptions = new CookieOptions
         {
-            Console.WriteLine($"[FATAL ERROR] AuthController: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
-            if (ex.InnerException != null) Console.WriteLine($"[INNER] {ex.InnerException.Message}");
+            HttpOnly = true,
+            Secure = false, // En localhost lo dejamos en false si no hay SSL
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(12)
+        };
 
-            return StatusCode(500, new 
-            { 
-                message = "Error interno del servidor", 
-                detail = ex.Message,
-                inner = ex.InnerException?.Message,
-                stack = ex.StackTrace 
-            });
-        }
+        Response.Cookies.Append("diitra_auth", token, cookieOptions);
+
+        return Ok(response);
     }
 
     [HttpPost("logout")]
@@ -80,12 +63,9 @@ public class AuthController : ControllerBase
             return Ok(new
             {
                 id_referencia = idReferencia,
-                idReferencia = idReferencia, // Doble mapeo por seguridad
                 nombre_completo = nombre,
-                nombreCompleto = nombre,
                 role = roles.FirstOrDefault(),
                 roles = roles,
-                role_codes = roles,
                 tipo_usuario = tipo,
                 administrador = isAdmin,
                 permissions = permissions

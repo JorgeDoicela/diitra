@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
   `idUsuario`      INT(11) NOT NULL AUTO_INCREMENT,
   `usuario`        VARCHAR(50) NOT NULL,
   `nombre`         VARCHAR(200) NOT NULL,
-  `contrasenia`    VARCHAR(250) NOT NULL, -- Renombrado de clave
+  `contrasenia`    VARCHAR(250) NOT NULL,
   `activo`         TINYINT(4) DEFAULT 1,
   `administrador`  TINYINT(4) DEFAULT 0,
   `tipoUsuario`    ENUM('alumno', 'profesor', 'otros') DEFAULT 'profesor',
@@ -16,37 +16,37 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
   PRIMARY KEY (`idUsuario`),
   UNIQUE KEY `uq_usuario_unique` (`usuario`),
   UNIQUE KEY `uq_id_sigafi` (`idSigafi`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. Tabla de Roles Institucionales
-CREATE TABLE IF NOT EXISTS `rol` (
+CREATE TABLE IF NOT EXISTS `roles` (
   `idRol`        INT(11) NOT NULL AUTO_INCREMENT,
   `Nombre`       VARCHAR(255) NOT NULL,
   `codigo_rol`   VARCHAR(50) NOT NULL,
   `esActivo`     TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idRol`),
   UNIQUE KEY `uq_inv_roles_codigo` (`codigo_rol`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Tabla de Usuario-Rol (Mapping Centralizado)
-CREATE TABLE IF NOT EXISTS `usuario_rol` (
+-- 3. Tabla de Usuario-Rol
+CREATE TABLE IF NOT EXISTS `usuarios_roles` (
   `idUsuarioRol`       INT(11) NOT NULL AUTO_INCREMENT,
-  `idUsuario`          INT(11) NOT NULL, -- Ahora apunta a idUsuario
+  `idUsuario`          INT(11) NOT NULL,
   `idRol`              INT(11) NOT NULL,
   `fecha_creacion`     DATE DEFAULT NULL,
   `fecha_modificacion` DATE DEFAULT NULL,
   `esActivo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idUsuarioRol`),
   CONSTRAINT `fk_ur_usuario` FOREIGN KEY (`idUsuario`) REFERENCES `usuarios` (`idUsuario`),
-  CONSTRAINT `fk_ur_rol` FOREIGN KEY (`idRol`) REFERENCES `rol` (`idRol`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  CONSTRAINT `fk_ur_rol` FOREIGN KEY (`idRol`) REFERENCES `roles` (`idRol`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Estructura de Permisos Modulares
-CREATE TABLE IF NOT EXISTS `sistema` (
+CREATE TABLE IF NOT EXISTS `sistemas` (
   `idSistema` INT(11) NOT NULL AUTO_INCREMENT,
   `detalle`   VARCHAR(50) NOT NULL,
   PRIMARY KEY (`idSistema`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `modulos` (
   `idModulos`  INT(11) NOT NULL AUTO_INCREMENT,
@@ -54,16 +54,16 @@ CREATE TABLE IF NOT EXISTS `modulos` (
   `Nombre`     VARCHAR(255) NOT NULL,
   `esActivo`   TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idModulos`),
-  CONSTRAINT `fk_mod_sistema` FOREIGN KEY (`id_sistema`) REFERENCES `sistema` (`idSistema`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  CONSTRAINT `fk_mod_sistema` FOREIGN KEY (`id_sistema`) REFERENCES `sistemas` (`idSistema`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `operaciones` (
   `idOperaciones`   INT(11) NOT NULL AUTO_INCREMENT,
   `NombreOperacion` VARCHAR(100) NOT NULL,
   PRIMARY KEY (`idOperaciones`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `modulos_operacion` (
+CREATE TABLE IF NOT EXISTS `modulos_operaciones` (
   `idModulosOperaciones` INT(11) NOT NULL AUTO_INCREMENT,
   `idModulos`            INT(11) NOT NULL,
   `idOperaciones`        INT(11) NOT NULL,
@@ -73,90 +73,78 @@ CREATE TABLE IF NOT EXISTS `modulos_operacion` (
   PRIMARY KEY (`idModulosOperaciones`),
   CONSTRAINT `fk_mo_mod` FOREIGN KEY (`idModulos`) REFERENCES `modulos` (`idModulos`),
   CONSTRAINT `fk_mo_oper` FOREIGN KEY (`idOperaciones`) REFERENCES `operaciones` (`idOperaciones`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `rol_modulo_operacion` (
+CREATE TABLE IF NOT EXISTS `roles_modulos_operaciones` (
   `idRolModuloOperacion` INT(11) NOT NULL AUTO_INCREMENT,
   `idModulosOperaciones` INT(11) NOT NULL,
   `idRol`                INT(11) NOT NULL,
   `fecha_asignacion`     DATE DEFAULT NULL,
   `fecha_modificacion`   DATE DEFAULT NULL,
-  `fecha_desactivacion`  DATE DEFAULT NULL, -- Nuevo de ERD
+  `fecha_desactivacion`  DATE DEFAULT NULL,
   `esActivo`             TINYINT(4) DEFAULT 1,
   `usuario_asigno`       VARCHAR(150) DEFAULT NULL,
-  `usuario_desactivo`    VARCHAR(150) DEFAULT NULL, -- Nuevo de ERD
+  `usuario_desactivo`    VARCHAR(150) DEFAULT NULL,
   PRIMARY KEY (`idRolModuloOperacion`),
-  CONSTRAINT `fk_rmo_mo` FOREIGN KEY (`idModulosOperaciones`) REFERENCES `modulos_operacion` (`idModulosOperaciones`),
-  CONSTRAINT `fk_rmo_rol` FOREIGN KEY (`idRol`) REFERENCES `rol` (`idRol`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  CONSTRAINT `fk_rmo_mo` FOREIGN KEY (`idModulosOperaciones`) REFERENCES `modulos_operaciones` (`idModulosOperaciones`),
+  CONSTRAINT `fk_rmo_rol` FOREIGN KEY (`idRol`) REFERENCES `roles` (`idRol`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================
 -- BOOTSTRAP DE DATOS INICIALES (Configuración de DIITRA)
 -- ============================================================
 
--- 1. Roles Base Institucionales
--- IMPORTANTE: Los codigo_rol deben coincidir EXACTAMENTE con las constantes de AuthService.cs
-INSERT IGNORE INTO `rol` (`Nombre`, `codigo_rol`, `esActivo`) VALUES
+INSERT IGNORE INTO `roles` (`Nombre`, `codigo_rol`, `esActivo`) VALUES
 ('Administrador del Sistema', 'ADMIN_SIST',   1),
 ('Docente Investigador',      'DOCENTE_IN',   1),
 ('Director de Investigación', 'DIRECTOR_INV', 1),
 ('Revisor Externo',           'REVISOR_EXT',  1);
 
--- 2. DIITRA como Sistema
-INSERT IGNORE INTO `sistema` (`detalle`) VALUES ('DIITRA - Investigación');
+INSERT IGNORE INTO `sistemas` (`detalle`) VALUES ('DIITRA - Investigación');
 
--- 3. Operaciones Base (Sincronizadas con Permissions.cs)
 INSERT IGNORE INTO `operaciones` (`NombreOperacion`) VALUES
 ('VER'), ('CREAR'), ('EDITAR'), ('ELIMINAR'), ('APROBAR'),
 ('POSTULAR'), ('GESTIONAR'), ('REPORTES'), ('ASIGNAR');
 
--- 4. Módulos de DIITRA (Enlazados dinámicamente al sistema)
 INSERT IGNORE INTO `modulos` (`id_sistema`, `Nombre`, `esActivo`)
-SELECT idSistema, 'PROYECTOS', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación'
+SELECT idSistema, 'PROYECTOS', 1 FROM `sistemas` WHERE `detalle` = 'DIITRA - Investigación'
 UNION ALL
-SELECT idSistema, 'CONVOCATORIAS', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación'
+SELECT idSistema, 'CONVOCATORIAS', 1 FROM `sistemas` WHERE `detalle` = 'DIITRA - Investigación'
 UNION ALL
-SELECT idSistema, 'USUARIOS', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación'
+SELECT idSistema, 'USUARIOS', 1 FROM `sistemas` WHERE `detalle` = 'DIITRA - Investigación'
 UNION ALL
-SELECT idSistema, 'CONFIGURACION', 1 FROM `sistema` WHERE `detalle` = 'DIITRA - Investigación';
+SELECT idSistema, 'CONFIGURACION', 1 FROM `sistemas` WHERE `detalle` = 'DIITRA - Investigación';
 
--- 5. Enlace Modular (Mapear todas las operaciones a todos los módulos de DIITRA)
-INSERT IGNORE INTO `modulos_operacion` (`idModulos`, `idOperaciones`, `fecha_creacion`, `esActivo`)
+INSERT IGNORE INTO `modulos_operaciones` (`idModulos`, `idOperaciones`, `fecha_creacion`, `esActivo`)
 SELECT m.idModulos, o.idOperaciones, CURDATE(), 1 
 FROM `modulos` m
-JOIN `sistema` s ON m.id_sistema = s.idSistema
+JOIN `sistemas` s ON m.id_sistema = s.idSistema
 CROSS JOIN `operaciones` o
 WHERE s.detalle = 'DIITRA - Investigación';
 
--- 6. ASIGNACIÓN DE PERMISOS AL ADMIN (Resiliente)
--- Busca el ID del rol ADMIN_SIST y lo vincula con todas las operaciones de los módulos de Diitra
-INSERT IGNORE INTO `rol_modulo_operacion` (`idModulosOperaciones`, `idRol`, `fecha_asignacion`, `esActivo`)
+INSERT IGNORE INTO `roles_modulos_operaciones` (`idModulosOperaciones`, `idRol`, `fecha_asignacion`, `esActivo`)
 SELECT mo.idModulosOperaciones, r.idRol, CURDATE(), 1
-FROM `modulos_operacion` mo
+FROM `modulos_operaciones` mo
 JOIN `modulos` m ON mo.idModulos = m.idModulos
-JOIN `sistema` s ON m.id_sistema = s.idSistema
-CROSS JOIN `rol` r
+JOIN `sistemas` s ON m.id_sistema = s.idSistema
+CROSS JOIN `roles` r
 WHERE s.detalle = 'DIITRA - Investigación'
   AND r.codigo_rol = 'ADMIN_SIST';
 
--- 7. ASIGNACIÓN DEL ROL ADMIN AL USUARIO MAESTRO (Resiliente)
--- Si el usuario 0302144159 ya existe (de otro sistema), le aseguramos el rol ADMIN_SIST de Diitra
-INSERT IGNORE INTO `usuario_rol` (`idUsuario`, `idRol`, `fecha_creacion`, `esActivo`)
+INSERT IGNORE INTO `usuarios_roles` (`idUsuario`, `idRol`, `fecha_creacion`, `esActivo`)
 SELECT u.idUsuario, r.idRol, CURDATE(), 1
 FROM `usuarios` u
-CROSS JOIN `rol` r
+CROSS JOIN `roles` r
 WHERE u.usuario = '0302144159'
   AND r.codigo_rol = 'ADMIN_SIST';
 
--- Asegurar flag de administrador para el usuario maestro
 UPDATE `usuarios` SET `administrador` = 1 WHERE `usuario` = '0302144159';
 
 -- ============================================================
 -- MÓDULOS DE INVESTIGACIÓN (Tablas inv_)
 -- ============================================================
 
--- Líneas de investigación aprobadas institucionalmente
 CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
   `idLinea`            INT(11) NOT NULL AUTO_INCREMENT,
   `nombreLinea`        VARCHAR(300) NOT NULL,
@@ -164,14 +152,13 @@ CREATE TABLE IF NOT EXISTS `inv_lineas_investigacion` (
   `resolucionAprobacion` VARCHAR(100) DEFAULT NULL,
   `activo`             TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idLinea`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Líneas de investigación institucionales (Reglamento Régimen Académico)';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Convocatorias abiertas por el Director de Investigación
 CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
   `idConvocatoria`     INT(11) NOT NULL AUTO_INCREMENT,
   `titulo`             VARCHAR(200) NOT NULL,
   `descripcion`        TEXT,
-  `idPeriodo` CHAR(7) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,              -- Referencia a periodos (SIGAFI)
+  `idPeriodo` CHAR(7) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `fechaApertura`      DATE NOT NULL,
   `fechaCierre`        DATE NOT NULL,
   `estado`             ENUM('borrador','abierta','en_revision','cerrada') DEFAULT 'borrador',
@@ -186,31 +173,29 @@ CREATE TABLE IF NOT EXISTS `inv_convocatorias` (
   KEY `fk_inv_convocatorias_periodos` (`idPeriodo`),
   CONSTRAINT `fk_inv_conv_periodos` FOREIGN KEY (`idPeriodo`) REFERENCES `periodos` (`idPeriodo`),
   CONSTRAINT `fk_inv_conv_linea` FOREIGN KEY (`idLineaInvestigacion`) REFERENCES `inv_lineas_investigacion` (`idLinea`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Convocatorias de investigación por período académico';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Proyectos de Investigación (el núcleo del sistema)
 CREATE TABLE IF NOT EXISTS `inv_proyectos` (
   `idProyecto`             INT(11) NOT NULL AUTO_INCREMENT,
   `idConvocatoria`         INT(11) NOT NULL,
-  `codigoInstitucional`    VARCHAR(30) DEFAULT NULL,   -- Generado al aprobar
+  `codigoInstitucional`    VARCHAR(30) DEFAULT NULL,
   `titulo`                 VARCHAR(400) NOT NULL,
   `resumen`                TEXT,
   `justificacion`          TEXT,
   `metodologia`            TEXT,
-  `idCampoDetalladoUnesco` INT(11) DEFAULT NULL,       -- Referencia a campo_detallado_unesco (SIGAFI)
-  `idEspacio`              INT(11) DEFAULT NULL,        -- Laboratorio/Taller donde se ejecuta (SIGAFI)
-  `idProfesorDirector`     VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,        -- Referencia a profesores (SIGAFI)
+  `idCampoDetalladoUnesco` INT(11) DEFAULT NULL,
+  `idEspacio`              INT(11) DEFAULT NULL,
+  `idProfesorDirector`     VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `estado`                 ENUM('borrador','enviado','en_revision','aprobado','en_ejecucion','finalizado','rechazado') DEFAULT 'borrador',
   `fechaInicio`            DATE DEFAULT NULL,
   `fechaFin`               DATE DEFAULT NULL,
   `presupuestoSolicitado`  DECIMAL(10,2) DEFAULT 0.00,
   `presupuestoAprobado`    DECIMAL(10,2) DEFAULT 0.00,
-  `puntajeEvaluacion`      DECIMAL(5,2) DEFAULT NULL,  -- Promedio de los revisores
-  `esAnonimizado`          TINYINT(4) DEFAULT 0,        -- Para doble ciego
-  `rutaProtocolo`          VARCHAR(500) DEFAULT NULL,   -- Archivo PDF del protocolo
-  `rutaCronograma`         VARCHAR(500) DEFAULT NULL,   -- Archivo Gantt
-  `rutaResolucion`         VARCHAR(500) DEFAULT NULL,   -- Archivo PDF firmado electrónicamente (.p12)
+  `puntajeEvaluacion`      DECIMAL(5,2) DEFAULT NULL,
+  `esAnonimizado`          TINYINT(4) DEFAULT 0,
+  `rutaProtocolo`          VARCHAR(500) DEFAULT NULL,
+  `rutaCronograma`         VARCHAR(500) DEFAULT NULL,
+  `rutaResolucion`         VARCHAR(500) DEFAULT NULL,
   `fechaRegistro`          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `fechaModificacion`      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `activo`                 TINYINT(4) DEFAULT 1,
@@ -223,14 +208,12 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos` (
   CONSTRAINT `fk_inv_proy_director` FOREIGN KEY (`idProfesorDirector`) REFERENCES `profesores` (`idProfesor`),
   CONSTRAINT `fk_inv_proy_unesco` FOREIGN KEY (`idCampoDetalladoUnesco`) REFERENCES `campo_detallado_unesco` (`idCampoDetalladoUnesco`),
   CONSTRAINT `fk_inv_proy_espacio` FOREIGN KEY (`idEspacio`) REFERENCES `espacios` (`idEspacio`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Proyectos de investigación e innovación';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Integrantes del equipo de investigación (profesores)
 CREATE TABLE IF NOT EXISTS `inv_proyectos_profesores` (
   `idProyectoProfesor`  INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,           -- Referencia a profesores (SIGAFI)
+  `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `rol`                 ENUM('director','coinvestigador','colaborador') DEFAULT 'coinvestigador',
   `horasSemanales`      DECIMAL(5,2) DEFAULT 0.00,
   `activo`              TINYINT(4) DEFAULT 1,
@@ -239,28 +222,20 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_profesores` (
   KEY `fk_inv_pp_profesor` (`idProfesor`),
   CONSTRAINT `fk_inv_pp_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
   CONSTRAINT `fk_inv_pp_prof` FOREIGN KEY (`idProfesor`) REFERENCES `profesores` (`idProfesor`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Profesores integrantes de un proyecto';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Estudiantes que participan en el proyecto
 CREATE TABLE IF NOT EXISTS `inv_proyectos_alumnos` (
   `idProyectoAlumno`  INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`        INT(11) NOT NULL,
-  `idAlumno`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,             -- Referencia a alumnos (SIGAFI)
+  `idAlumno`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `rol`               VARCHAR(100) DEFAULT 'Investigador Auxiliar',
   `activo`            TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idProyectoAlumno`),
   UNIQUE KEY `uq_proyecto_alumno` (`idProyecto`, `idAlumno`),
   CONSTRAINT `fk_inv_pa_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
   CONSTRAINT `fk_inv_pa_alum` FOREIGN KEY (`idAlumno`) REFERENCES `alumnos` (`idAlumno`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Alumnos participantes de un proyecto';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- MÓDULO 2: EVALUACIÓN POR PARES (PEER REVIEW)
--- ============================================================
-
--- Catálogo de Institutos y Universidades para Investigación
 CREATE TABLE IF NOT EXISTS `inv_institutos` (
   `idInstitucion`    INT(11) NOT NULL AUTO_INCREMENT,
   `nombre`           VARCHAR(200) NOT NULL,
@@ -273,9 +248,8 @@ CREATE TABLE IF NOT EXISTS `inv_institutos` (
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idInstitucion`),
   UNIQUE KEY `uq_inv_inst_ruc` (`ruc`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo propio de instituciones para revisión externa y convenios';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Precarga de datos institucionales (DML)
 INSERT IGNORE INTO `inv_institutos` (`idInstitucion`, `nombre`, `siglas`, `ruc`, `tipo`, `pais`, `ciudad`, `sitioWeb`) VALUES
 (1, 'Universidad Central del Ecuador', 'UCE', '1760001550001', 'Publica', 'Ecuador', 'Quito', 'https://www.uce.edu.ec'),
 (2, 'Escuela Politécnica Nacional', 'EPN', '1760002100001', 'Publica', 'Ecuador', 'Quito', 'https://www.epn.edu.ec'),
@@ -283,13 +257,12 @@ INSERT IGNORE INTO `inv_institutos` (`idInstitucion`, `nombre`, `siglas`, `ruc`,
 (4, 'Pontificia Universidad Católica del Ecuador', 'PUCE', '1790103748001', 'Privada', 'Ecuador', 'Quito', 'https://www.puce.edu.ec'),
 (5, 'Consejo de Educación Superior', 'CES', NULL, 'Organismo', 'Ecuador', 'Quito', 'https://www.ces.gob.ec');
 
--- Investigadores de otras instituciones para evaluaciones por pares
 CREATE TABLE IF NOT EXISTS `inv_revisores_externos` (
   `idRevisorExterno` INT(11) NOT NULL AUTO_INCREMENT,
   `nombre`           VARCHAR(150) NOT NULL,
   `apellido`         VARCHAR(150) NOT NULL,
   `email`            VARCHAR(200) NOT NULL,
-  `idInstitucion`    INT(11) DEFAULT NULL,             -- FK a inv_institutos (Propia)
+  `idInstitucion`    INT(11) DEFAULT NULL,
   `tituloAcademico`  VARCHAR(200) DEFAULT NULL,
   `especialidad`     VARCHAR(300) DEFAULT NULL,
   `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -297,14 +270,13 @@ CREATE TABLE IF NOT EXISTS `inv_revisores_externos` (
   PRIMARY KEY (`idRevisorExterno`),
   UNIQUE KEY `uq_inv_ext_email` (`email`),
   CONSTRAINT `fk_inv_ext_inst` FOREIGN KEY (`idInstitucion`) REFERENCES `inv_institutos` (`idInstitucion`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Investigadores externos vinculados a inv_institutos';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Asignación de revisores a un proyecto
 CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   `idRevision`          INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesorRevisor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,      -- Referencia a profesores (Internos)
-  `idRevisorExterno`    INT(11) DEFAULT NULL,                                                          -- Referencia a revisores externos
+  `idProfesorRevisor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci DEFAULT NULL,
+  `idRevisorExterno`    INT(11) DEFAULT NULL,
   `esDoubleCiego`       TINYINT(4) DEFAULT 1,
   `estado`              ENUM('pendiente','en_proceso','finalizado','rechazado') DEFAULT 'pendiente',
   `puntajeTotal`        DECIMAL(5,2) DEFAULT NULL,
@@ -320,10 +292,8 @@ CREATE TABLE IF NOT EXISTS `inv_revisiones` (
   CONSTRAINT `fk_inv_rev_proyecto` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
   CONSTRAINT `fk_inv_rev_profesor` FOREIGN KEY (`idProfesorRevisor`) REFERENCES `profesores` (`idProfesor`),
   CONSTRAINT `fk_inv_rev_ext`      FOREIGN KEY (`idRevisorExterno`)  REFERENCES `inv_revisores_externos` (`idRevisorExterno`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Revisiones por pares (Híbridas: Internas y Externas)';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Criterios de la rúbrica de evaluación
 CREATE TABLE IF NOT EXISTS `inv_rubricas` (
   `idRubrica`    INT(11) NOT NULL AUTO_INCREMENT,
   `criterio`     VARCHAR(200) NOT NULL,
@@ -332,10 +302,8 @@ CREATE TABLE IF NOT EXISTS `inv_rubricas` (
   `orden`        INT(11) DEFAULT 0,
   `activo`       TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idRubrica`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Criterios de evaluación para proyectos';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Detalle de puntajes por criterio de rúbrica
 CREATE TABLE IF NOT EXISTS `inv_revisiones_detalle` (
   `idDetalleRevision` INT(11) NOT NULL AUTO_INCREMENT,
   `idRevision`        INT(11) NOT NULL,
@@ -346,14 +314,8 @@ CREATE TABLE IF NOT EXISTS `inv_revisiones_detalle` (
   UNIQUE KEY `uq_revision_rubrica` (`idRevision`, `idRubrica`),
   CONSTRAINT `fk_inv_rd_rev` FOREIGN KEY (`idRevision`) REFERENCES `inv_revisiones` (`idRevision`),
   CONSTRAINT `fk_inv_rd_rub` FOREIGN KEY (`idRubrica`) REFERENCES `inv_rubricas` (`idRubrica`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Puntajes por criterio de cada revisión';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- MÓDULO 3: CRONOGRAMA Y SEGUIMIENTO
--- ============================================================
-
--- Tareas del cronograma (Gantt)
 CREATE TABLE IF NOT EXISTS `inv_cronograma` (
   `idTarea`           INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`        INT(11) NOT NULL,
@@ -368,18 +330,16 @@ CREATE TABLE IF NOT EXISTS `inv_cronograma` (
   PRIMARY KEY (`idTarea`),
   KEY `fk_inv_cron_proy` (`idProyecto`),
   CONSTRAINT `fk_inv_cron_proyecto` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Cronograma de tareas por proyecto';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Informes de Avance (mensuales/trimestrales)
 CREATE TABLE IF NOT EXISTS `inv_informes_avance` (
   `idInforme`           INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`          INT(11) NOT NULL,
-  `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,           -- Quien sube el informe (SIGAFI)
+  `idProfesor`          VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `titulo`              VARCHAR(200) NOT NULL,
   `descripcion`         TEXT,
   `porcentajeAvance`    TINYINT(4) DEFAULT 0,
-  `periodoReporte`      VARCHAR(50) DEFAULT NULL,       -- Ej: "Trimestre 1 - 2024"
+  `periodoReporte`      VARCHAR(50) DEFAULT NULL,
   `rutaArchivo`         VARCHAR(500) DEFAULT NULL,
   `estado`              ENUM('borrador','enviado','revisado','aprobado') DEFAULT 'borrador',
   `observacionDirector` TEXT DEFAULT NULL,
@@ -390,10 +350,8 @@ CREATE TABLE IF NOT EXISTS `inv_informes_avance` (
   KEY `fk_inv_ia_proy` (`idProyecto`),
   CONSTRAINT `fk_inv_ia_proyecto` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
   CONSTRAINT `fk_inv_ia_profesor` FOREIGN KEY (`idProfesor`) REFERENCES `profesores` (`idProfesor`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Informes de avance mensuales o trimestrales';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Evidencias adjuntas a un informe (fotos, facturas, bitácoras)
 CREATE TABLE IF NOT EXISTS `inv_evidencias` (
   `idEvidencia`   INT(11) NOT NULL AUTO_INCREMENT,
   `idInforme`     INT(11) NOT NULL,
@@ -407,14 +365,8 @@ CREATE TABLE IF NOT EXISTS `inv_evidencias` (
   PRIMARY KEY (`idEvidencia`),
   KEY `fk_inv_ev_informe` (`idInforme`),
   CONSTRAINT `fk_inv_ev_inf` FOREIGN KEY (`idInforme`) REFERENCES `inv_informes_avance` (`idInforme`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Evidencias adjuntas a informes de avance';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- MÓDULO 4: PRESUPUESTO Y GASTOS
--- ============================================================
-
--- Ítems del presupuesto aprobado
 CREATE TABLE IF NOT EXISTS `inv_presupuesto_items` (
   `idItem`       INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`   INT(11) NOT NULL,
@@ -426,33 +378,25 @@ CREATE TABLE IF NOT EXISTS `inv_presupuesto_items` (
   `activo`       TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idItem`),
   CONSTRAINT `fk_inv_pi_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Ítems del presupuesto de un proyecto';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Gastos reales ejecutados
 CREATE TABLE IF NOT EXISTS `inv_gastos` (
   `idGasto`         INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`      INT(11) NOT NULL,
-  `idItem`          INT(11) DEFAULT NULL,               -- Ítem del presupuesto al que aplica
+  `idItem`          INT(11) DEFAULT NULL,
   `descripcion`     VARCHAR(500) NOT NULL,
   `monto`           DECIMAL(10,2) DEFAULT 0.00,
   `fechaGasto`      DATE NOT NULL,
   `numeroFactura`   VARCHAR(50) DEFAULT NULL,
   `rutaFactura`     VARCHAR(500) DEFAULT NULL,
-  `registradoPor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,               -- Referencia a profesores (SIGAFI)
+  `registradoPor`   VARCHAR(14) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `fechaRegistro`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idGasto`),
   KEY `fk_inv_ga_proy` (`idProyecto`),
   CONSTRAINT `fk_inv_ga_proyecto` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`),
   CONSTRAINT `fk_inv_ga_item` FOREIGN KEY (`idItem`) REFERENCES `inv_presupuesto_items` (`idItem`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Gastos ejecutados del presupuesto del proyecto';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- MÓDULO 5: INNOVACIÓN Y PROPIEDAD INTELECTUAL
--- ============================================================
-
--- Productos de investigación (artículos, patentes, software, prototipos)
 CREATE TABLE IF NOT EXISTS `inv_productos` (
   `idProducto`       INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`       INT(11) NOT NULL,
@@ -462,18 +406,16 @@ CREATE TABLE IF NOT EXISTS `inv_productos` (
   `issn_isbn`        VARCHAR(50) DEFAULT NULL,
   `urlPublicacion`   VARCHAR(500) DEFAULT NULL,
   `nombreRevista`    VARCHAR(300) DEFAULT NULL,
-  `indice`           VARCHAR(100) DEFAULT NULL,         -- Ej: Scopus, Web of Science, Latindex
+  `indice`           VARCHAR(100) DEFAULT NULL,
   `fechaPublicacion` DATE DEFAULT NULL,
   `rutaArchivo`      VARCHAR(500) DEFAULT NULL,
-  `numeroRegistro`   VARCHAR(100) DEFAULT NULL,         -- Registro SENADI o DOI
+  `numeroRegistro`   VARCHAR(100) DEFAULT NULL,
   `activo`           TINYINT(4) DEFAULT 1,
   `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idProducto`),
   CONSTRAINT `fk_inv_prod_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Productos de investigación: artículos, patentes, prototipos';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Convenios de Transferencia Tecnológica
 CREATE TABLE IF NOT EXISTS `inv_transferencias` (
   `idTransferencia`  INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`       INT(11) NOT NULL,
@@ -486,14 +428,8 @@ CREATE TABLE IF NOT EXISTS `inv_transferencias` (
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idTransferencia`),
   CONSTRAINT `fk_inv_trans_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Convenios de transferencia y propiedad intelectual';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================
--- MÓDULO 6: CONFIGURACIÓN Y AUDITORÍA
--- ============================================================
-
--- Historial de estados de un proyecto (trazabilidad)
 CREATE TABLE IF NOT EXISTS `inv_proyectos_historial` (
   `idHistorial`   INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`    INT(11) NOT NULL,
@@ -504,14 +440,12 @@ CREATE TABLE IF NOT EXISTS `inv_proyectos_historial` (
   `fechaCambio`   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idHistorial`),
   CONSTRAINT `fk_inv_hist_proy` FOREIGN KEY (`idProyecto`) REFERENCES `inv_proyectos` (`idProyecto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Historial de cambios de estado de proyectos';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- Notificaciones del sistema
 CREATE TABLE IF NOT EXISTS `inv_notificaciones` (
   `idNotificacion`  INT(11) NOT NULL AUTO_INCREMENT,
   `idProyecto`      INT(11) DEFAULT NULL,
-  `destinatario`    VARCHAR(14) NOT NULL,               -- idProfesor o idAlumno (SIGAFI)
+  `destinatario`    VARCHAR(14) NOT NULL,
   `tipoDestinatario` ENUM('profesor','alumno') DEFAULT 'profesor',
   `tipo`            ENUM('alerta_plazo','aprobacion','rechazo','revision','informe','otro') DEFAULT 'otro',
   `titulo`          VARCHAR(200) NOT NULL,
@@ -521,11 +455,8 @@ CREATE TABLE IF NOT EXISTS `inv_notificaciones` (
   `fechaLectura`    TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`idNotificacion`),
   KEY `fk_inv_notif_proy` (`idProyecto`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Notificaciones automáticas del sistema';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- DATOS INICIALES (Catálogo de rúbricas base)
--- ============================================================
 INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `orden`) VALUES
 ('Pertinencia y Coherencia', 'El proyecto responde a las necesidades del contexto y las líneas institucionales de investigación.', 20.00, 1),
 ('Marco Teórico y Metodología', 'El sustento teórico y los métodos propuestos son apropiados y rigurosos.', 25.00, 2),
@@ -533,19 +464,16 @@ INSERT IGNORE INTO `inv_rubricas` (`criterio`, `descripcion`, `puntajeMax`, `ord
 ('Innovación e Impacto', 'El proyecto genera un aporte significativo y transferible al sector productivo o académico.', 25.00, 4),
 ('Presentación y Forma', 'El documento cumple con las normas APA y el formato institucional requerido.', 10.00, 5);
 
--- ------------------------------------------------------------
--- MÓDULO 8: AUTENTICACIÓN TEMPORAL (MAGIC LINKS)
--- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `inv_tokens_acceso` (
   `idToken`          INT(11) NOT NULL AUTO_INCREMENT,
   `token`            VARCHAR(256) NOT NULL,
-  `idReferencia`     VARCHAR(20) NOT NULL,             -- idProfesor o Revisor Externo
+  `idReferencia`     VARCHAR(20) NOT NULL,
   `tipoReferencia`   ENUM('profesor', 'externo') NOT NULL,
   `fechaExpiracion`  DATETIME NOT NULL,
   `usado`            TINYINT(4) DEFAULT 0,
-  `scopes`           VARCHAR(200) DEFAULT NULL,        -- Ej: "revision:12"
+  `scopes`           VARCHAR(200) DEFAULT NULL,
   `fechaRegistro`    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `activo`           TINYINT(4) DEFAULT 1,
   PRIMARY KEY (`idToken`),
   UNIQUE KEY `uq_inv_tokens_val` (`token`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Tokens para acceso directo sin contraseña (Magic Links)';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
