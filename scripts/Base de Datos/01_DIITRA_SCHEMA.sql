@@ -3,6 +3,12 @@
 --  MySQL 5.7 compatible
 --  ISTPET — Quito, Ecuador
 --  Normativa: SENESCYT / CES / CACES
+--  -----------------------------------------------------------------------------
+--  ESTE ESQUEMA HA SIDO DISEÑADO PARA CUMPLIR CON:
+--  1. Reglamento de Régimen Académico (Horas de investigación, vinculación).
+--  2. Modelo de Evaluación del CACES (Indicadores de producción y pertinencia).
+--  3. Normativa de la SENESCYT (Líneas de investigación y programas).
+--  4. Requerimientos de Innovación y Transferencia (SENADI / Propiedad Intelectual).
 -- =============================================================================
 
 USE sigafi_es;
@@ -110,13 +116,15 @@ DROP TABLE IF EXISTS
     inv_usuarios_metadata;
 
 -- =============================================================================
--- GRUPO A: CATÁLOGOS INDEPENDIENTES
+-- GRUPO A: CATÁLOGOS INSTITUCIONALES (NORMATIVA SENESCYT)
+-- Estos catálogos aseguran que toda investigación esté alineada a los dominios
+-- y líneas aprobadas por el instituto, requisito legal para la acreditación.
 -- =============================================================================
 
 -- A.1  Líneas de investigación institucionales
 CREATE TABLE inv_lineas_investigacion (
     idLinea              INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid                 CHAR(36)      NOT NULL,
+    uuid                 CHAR(36)      NOT NULL, -- Identificador único global (SaaS-Ready / Seguridad)
     codigoLinea          VARCHAR(30)   NOT NULL UNIQUE,
     nombreLinea          VARCHAR(255)  NOT NULL,
     descripcion          TEXT,
@@ -124,7 +132,7 @@ CREATE TABLE inv_lineas_investigacion (
     activo               TINYINT(1)    DEFAULT 1,
     fechaRegistro        TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     fechaModificacion    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    version              INT           DEFAULT 1,
+    version              INT           DEFAULT 1, -- Control de concurrencia (Optimistic Locking)
     UNIQUE KEY uq_lineas_uuid (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Líneas de investigación institucionales aprobadas';
 
@@ -318,7 +326,9 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 DELIMITER ;
 
 -- =============================================================================
--- GRUPO B: NÚCLEO — CONVOCATORIAS Y PROYECTOS
+-- GRUPO B: NÚCLEO — GESTIÓN DE CONVOCATORIAS Y PROYECTOS
+-- Módulo central que automatiza la postulación digital y el ciclo de vida 
+-- del proyecto desde su envío hasta su cierre.
 -- =============================================================================
 
 -- B.1  Convocatorias
@@ -516,7 +526,9 @@ BEFORE INSERT ON inv_notificaciones FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
--- B.7  Productos de investigación
+-- B.7  Productos de investigación (INDICADORES CACES)
+-- Crucial para capturar artículos, prototipos y patentes que el CACES evalúa.
+-- Incluye integración con repositorios (DSpace) y registro ante el SENADI.
 CREATE TABLE inv_productos (
     idProducto       INT  AUTO_INCREMENT PRIMARY KEY,
     uuid             CHAR(36)     NOT NULL,
@@ -541,9 +553,9 @@ CREATE TABLE inv_productos (
     fechaPublicacion DATE,
     rutaArchivo      VARCHAR(512),
     numeroRegistro   VARCHAR(100),
-    enviadoRepositorio   TINYINT(1)   DEFAULT 0,
-    handleRepositorio    VARCHAR(255),
-    fechaExpiracionRegistro DATE,
+    enviadoRepositorio   TINYINT(1)   DEFAULT 0, -- Automatización con DSpace/Kohala
+    handleRepositorio    VARCHAR(255),           -- Identificador único en el repositorio digital
+    fechaExpiracionRegistro DATE,                -- Alerta para renovación de patentes/marcas (SENADI)
     activo           TINYINT(1)   DEFAULT 1,
     fechaRegistro    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     version          INT          DEFAULT 1,
@@ -623,7 +635,9 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 DELIMITER ;
 
 -- =============================================================================
--- GRUPO C: EVALUACIÓN POR PARES (PEER REVIEW)
+-- GRUPO C: EVALUACIÓN POR PARES (PEER REVIEW - DOBLE CIEGO)
+-- Automatiza la revisión científica para asegurar la calidad académica.
+-- Incluye la generación de oficios con soporte para FIRMA ELECTRÓNICA.
 -- =============================================================================
 
 -- C.1  Revisores externos
@@ -713,8 +727,8 @@ CREATE TABLE inv_aprobaciones_oficiales (
     idDestinatario    VARCHAR(14) CHARACTER SET latin1 NULL,
     idFirmante        VARCHAR(14) CHARACTER SET latin1 NULL,
     rutaOficioFirmado VARCHAR(512),
-    firmaHash            VARCHAR(255),
-    fechaFirmaElectronica DATETIME,
+    firmaHash            VARCHAR(255),           -- Huella digital para validación de integridad (Firma .p12)
+    fechaFirmaElectronica DATETIME,              -- Fecha legal de la firma digital
     activo            TINYINT(1)   DEFAULT 1,
     fechaRegistro     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fechaModificacion TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -732,7 +746,9 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 DELIMITER ;
 
 -- =============================================================================
--- GRUPO D: EJECUCIÓN Y SEGUIMIENTO
+-- GRUPO D: EJECUCIÓN, SEGUIMIENTO Y PRESUPUESTO
+-- Control mensual de avances y ejecución presupuestaria. 
+-- Evita "cuellos de botella" administrativos para los investigadores.
 -- =============================================================================
 
 -- D.1  Cronograma del proyecto
@@ -1211,7 +1227,9 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 DELIMITER ;
 
 -- =============================================================================
--- GRUPO H: ODS E IMPACTOS
+-- GRUPO H: IMPACTO SOCIAL (ODS) E INTELIGENCIA ARTIFICIAL
+-- Permite medir cómo los proyectos contribuyen a la Agenda 2030 (ODS)
+-- e integra análisis de IA para verificación de coherencia y resúmenes.
 -- =============================================================================
 
 CREATE TABLE inv_proyectos_ods (
@@ -1261,9 +1279,9 @@ CREATE TABLE inv_ia_analisis (
     uuid            CHAR(36)     NOT NULL,
     idReferencia    INT          NOT NULL,
     tipoReferencia  ENUM('Proyecto', 'Informe', 'Producto') NOT NULL,
-    resultadoJson   JSON,
-    scoreCoherencia DECIMAL(5,2),
-    sugerencias     TEXT,
+    resultadoJson   JSON,                    -- Reporte estructurado del análisis (IA)
+    scoreCoherencia DECIMAL(5,2),           -- Evaluación cuantitativa de la propuesta
+    sugerencias     TEXT,                    -- Recomendaciones automáticas para el docente
     fechaAnalisis   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uq_ia_analisis_uuid (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Análisis automáticos generados por el Asistente de IA';
@@ -1360,7 +1378,9 @@ CREATE INDEX idx_sublineas_linea          ON inv_sublineas(idLinea);
 CREATE INDEX idx_notif_destinatario       ON inv_notificaciones(destinatario);
 
 -- =============================================================================
--- GRUPO K: VISTAS PARA REPORTES CACES
+-- GRUPO K: REPORTES AUTOMATIZADOS (CACES / AUDITORÍA)
+-- Vistas diseñadas para extraer la información exacta que requieren los
+-- evaluadores externos sin intervención manual.
 -- =============================================================================
 
 -- v4.2: incluye carrera en el resumen de proyectos
