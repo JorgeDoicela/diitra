@@ -1,6 +1,7 @@
 # Gobernanza y Modelado de la Base de Datos
 
-DIITRA utiliza un modelo de persistencia relacional en un RDBMS **MySQL 8.0+**. Está optimizado para la velocidad en cargas de escritura concurrentes con transaccionalidad ACID probada.
+DIITRA utiliza un modelo de persistencia relacional compatible con **MySQL 5.7 y 8.0+**. Está diseñado para garantizar la integridad mediante triggers de generación automática de UUIDs.
+
 
 ## Arquitectura de Persistencia y Gobernanza
 Dado que el ecosistema maneja datos del presupuesto y procesos gubernamentales auditables a nivel estatal (Ej: Transferencias de Inv. y Resoluciones), la directriz obedece a políticas estrictas de data governance.

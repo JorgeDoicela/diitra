@@ -67,6 +67,7 @@ Esta documentación ha sido sectorizada para simplificar el onboarding de equipo
 
 ### » Nivel Procesos de Negocio
 - [06 - Flujos de Trabajo Transaccionales & Secuencias](./docs/06_flujos_trabajo.md)
+- [07 - Detalle de Arquitecturas Técnicas](./docs/07_arquitecturas_detalle.md)
 
 ---
 

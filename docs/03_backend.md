@@ -1,6 +1,7 @@
-# Backend Enterprise API (.NET 9)
+# Backend Enterprise API (.NET 8.0)
 
-El ecosistema transaccional se fundamente en la fiabilidad industrial de **.NET 9/8**. Centralizando la lógica bajo el paradigma *Modular Monolith*.
+El ecosistema transaccional se fundamenta en la fiabilidad industrial de **.NET 8.0 (LTS)**. Centralizando la lógica bajo el paradigma *Modular Monolith* y optimizado para un arranque instantáneo eliminando dependencias de red síncronas en el inicio.
+
 
 ## Seguridad y Mitigaciones OWASP
 
