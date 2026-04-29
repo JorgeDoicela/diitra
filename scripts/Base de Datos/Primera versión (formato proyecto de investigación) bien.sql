@@ -31,7 +31,6 @@ DROP TABLE IF EXISTS
     inv_impactos_proyecto,
     inv_cat_impactos,
     inv_proyectos_ods,
-    inv_ods_metas,
     inv_ods,
     inv_ods_ejes,
     inv_financiamientos,
@@ -45,6 +44,8 @@ DROP TABLE IF EXISTS
     inv_proyectos_dominios,
     inv_proyectos,
     inv_convocatorias,
+    inv_tipos_convocatoria,
+    inv_agendas_zonales,
     inv_sublineas,
     inv_lineas_investigacion,
     inv_programas,
@@ -116,6 +117,33 @@ CREATE TABLE inv_grupos_investigacion (
     activo        TINYINT(1)   DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- #############################################################################
+-- CATALOGOS DE CONVOCATORIA (EXCELENCIA 2026)
+-- #############################################################################
+
+CREATE TABLE inv_tipos_convocatoria (
+    idTipoConvocatoria INT AUTO_INCREMENT PRIMARY KEY,
+    nombre             VARCHAR(100) NOT NULL,
+    descripcion        VARCHAR(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES 
+('Investigación Aplicada', 'Desarrollo de prototipos y soluciones técnicas'),
+('Innovación', 'Proyectos con alto impacto en el mercado o sociedad'),
+('Semilleros', 'Iniciación a la investigación con estudiantes'),
+('Vinculación e Investigación', 'Proyectos integrados con la comunidad');
+
+CREATE TABLE inv_agendas_zonales (
+    idAgendaZonal INT AUTO_INCREMENT PRIMARY KEY,
+    nombre        VARCHAR(150) NOT NULL,
+    descripcion   VARCHAR(255)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES 
+('Zona 9 - Software y TI', 'Agenda prioritaria para el Distrito Metropolitano de Quito'),
+('Zona 9 - Eficiencia Energética', 'Proyectos de energías renovables y ahorro'),
+('Zona 9 - Inclusión Social', 'Desarrollo social y educación');
+
 CREATE TABLE inv_convocatorias (
     idConvocatoria     INT           AUTO_INCREMENT PRIMARY KEY,
     uuid               CHAR(36)      NOT NULL UNIQUE,
@@ -124,8 +152,20 @@ CREATE TABLE inv_convocatorias (
     idPeriodo          CHAR(7) CHARACTER SET latin1 NOT NULL,
     fechaApertura      DATE          NOT NULL,
     fechaCierre        DATE          NOT NULL,
+    anio               INT           NOT NULL,
+    descripcion        TEXT,
+    presupuestoTotal   DECIMAL(12,2),
+    montoMaximoProyecto DECIMAL(12,2),
+    urlBases           VARCHAR(512),
+    requisitosMinimos  TEXT,
+    idTipoConvocatoria INT           NULL,
+    idAgendaZonal      INT           NULL,
+    financiamientoExt  TINYINT(1)    DEFAULT 0,
+    metaProduccion     VARCHAR(255),
     estado             ENUM('Borrador','Abierta','Cerrada','Anulada') DEFAULT 'Borrador',
-    FOREIGN KEY (idPeriodo) REFERENCES periodos(idPeriodo)
+    FOREIGN KEY (idPeriodo) REFERENCES periodos(idPeriodo),
+    FOREIGN KEY (idTipoConvocatoria) REFERENCES inv_tipos_convocatoria(idTipoConvocatoria),
+    FOREIGN KEY (idAgendaZonal) REFERENCES inv_agendas_zonales(idAgendaZonal)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################

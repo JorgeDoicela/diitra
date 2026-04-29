@@ -12,6 +12,16 @@ public partial class InvConvocatoria
     public string IdPeriodo { get; set; } = null!;
     public DateOnly FechaApertura { get; set; }
     public DateOnly FechaCierre { get; set; }
+    public int Anio { get; set; }
+    public string? Descripcion { get; set; }
+    public decimal? PresupuestoTotal { get; set; }
+    public decimal? MontoMaximoProyecto { get; set; }
+    public string? UrlBases { get; set; }
+    public string? RequisitosMinimos { get; set; }
+    public int? IdTipoConvocatoria { get; set; }
+    public int? IdAgendaZonal { get; set; }
+    public bool FinanciamientoExt { get; set; }
+    public string? MetaProduccion { get; set; }
     public string Estado { get; set; } = "Borrador";
 
     public virtual Periodo IdPeriodoNavigation { get; set; } = null!;
