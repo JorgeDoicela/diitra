@@ -63,7 +63,7 @@ public class AuthService : IAuthService
                     await _context.SaveChangesAsync();
                 }
 
-                return await GetAuthResponseAsync(user, user.TipoUsuario);
+                return await GetAuthResponseAsync(user, user.TablaSigafi);
             }
         }
 
@@ -88,7 +88,7 @@ public class AuthService : IAuthService
                 Contrasenia = BCrypt.Net.BCrypt.HashPassword(password),
                 Activo = true,
                 Administrador = false,
-                TipoUsuario = "profesor",
+                TablaSigafi = "profesor",
                 IdSigafi = username
             };
 
@@ -139,7 +139,7 @@ public class AuthService : IAuthService
                     Nombre = $"{(alumno.PrimerNombre ?? "").Trim()} {(alumno.ApellidoPaterno ?? "").Trim()}",
                     Contrasenia = BCrypt.Net.BCrypt.HashPassword(password),
                     Activo = true,
-                    TipoUsuario = "alumno",
+                    TablaSigafi = "alumno",
                     IdSigafi = alumno.IdAlumno
                 };
                 _context.Users.Add(user);
@@ -291,7 +291,7 @@ public class AuthService : IAuthService
                 Role = primaryRole,
                 Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
                 RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),
-                TipoUsuario = user.TipoUsuario,
+                TipoUsuario = user.TablaSigafi,
                 Permissions = permissions,
                 Administrador = (cleanId == MASTER_ADMIN_ID) || (user.Administrador ?? false)
             };

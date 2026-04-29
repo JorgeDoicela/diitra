@@ -81,7 +81,7 @@ public class AdminService : IAdminService
                     Nombre = $"{p.PrimerNombre} {p.PrimerApellido}",
                     Contrasenia = p.Clave ?? "cambiame",
                     Activo = true,
-                    TipoUsuario = "profesor",
+                    TablaSigafi = "profesor",
                     IdSigafi = p.IdProfesor
                 };
                 _context.Users.Add(user);

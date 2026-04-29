@@ -11,7 +11,7 @@ public class User
     public string Contrasenia { get; set; } = string.Empty;
     public bool? Activo { get; set; } = true;
     public bool? Administrador { get; set; }
-    public string TipoUsuario { get; set; } = "profesor"; // profesor, alumno, externo, admin
+    public string TablaSigafi { get; set; } = "profesor"; // profesor, alumno, externo, admin
     public string? IdSigafi { get; set; } // Reference to legacy idProfesor/idAlumno
 
     // Relaciones
