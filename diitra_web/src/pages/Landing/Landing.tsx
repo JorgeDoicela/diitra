@@ -17,7 +17,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
     return (
         <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg transition-all duration-500 overflow-x-hidden">
             {/* Grid Overlay */}
-            <div className="fixed inset-0 pointer-events-none opacity-[0.02] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150 z-50" />
+
 
             {/* Header Navigation */}
             <nav className="fixed top-0 w-full z-[60] border-b border-border-thin bg-bg-deep/70 backdrop-blur-md">

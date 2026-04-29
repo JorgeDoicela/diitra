@@ -42,7 +42,7 @@ const Login: React.FC = () => {
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
             {/* Background Grid - Very subtle */}
-            <div className="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150 z-10" />
+
             
             <div className="w-full max-w-[350px] space-y-10 relative z-20 animate-fade-up">
                 {/* Brand Logo & Header */}
