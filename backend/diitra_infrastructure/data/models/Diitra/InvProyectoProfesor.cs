@@ -8,7 +8,7 @@ public partial class InvProyectoProfesor
     public int IdProyectoProfesor { get; set; }
     public int IdProyecto { get; set; }
     public string IdProfesor { get; set; } = null!;
-    public sbyte? EsDirector { get; set; }
+    public bool? EsDirector { get; set; }
     public string? Rol { get; set; }
     public string? NivelAcademico { get; set; }
     public string? Telefono { get; set; }

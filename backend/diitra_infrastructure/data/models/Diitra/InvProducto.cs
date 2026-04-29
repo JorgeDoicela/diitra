@@ -9,7 +9,7 @@ public partial class InvProducto
     public int IdProyecto { get; set; }
     public string Tipo { get; set; } = null!;
     public int Cantidad { get; set; }
-    public sbyte? EsPatente { get; set; }
+    public bool? EsPatente { get; set; }
     public string? NumeroRegistro { get; set; }
     public DateOnly? FechaExpiracion { get; set; }
 

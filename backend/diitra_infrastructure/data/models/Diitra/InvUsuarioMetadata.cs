@@ -20,7 +20,7 @@ public partial class InvUsuarioMetadata
     
     // Configuración de Firma Electrónica (.p12)
     public string? RutaFirmaP12 { get; set; }
-    public sbyte FirmaHabilitada { get; set; } = 0;
+    public bool FirmaHabilitada { get; set; } = false;
     
     // Preferencias y UI (JSON)
     public string? Configuracion { get; set; }

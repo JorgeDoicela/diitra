@@ -28,7 +28,7 @@ public partial class InvNotificacion
     // URL a la que el sistema redirigirá al usuario cuando haga clic
     public string? UrlAccion { get; set; }
     
-    public sbyte Leido { get; set; } = 0;
+    public bool Leido { get; set; } = false;
     public DateTime FechaEnvio { get; set; } = DateTime.UtcNow;
     public DateTime? FechaLectura { get; set; }
     public int Version { get; set; } = 1;
