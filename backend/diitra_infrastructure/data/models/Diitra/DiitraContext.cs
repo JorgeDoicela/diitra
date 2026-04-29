@@ -793,28 +793,28 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.IdSigafi, "idSigafi_UNIQUE").IsUnique();
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").ValueGeneratedOnAdd();
             entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("usuario");
-            entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired().HasColumnName("nombre");
+            entity.Property(e => e.Nombre).HasMaxLength(200).HasColumnName("nombre"); // Opcional en BD
             entity.Property(e => e.Contrasenia).HasMaxLength(250).IsRequired().HasColumnName("contrasenia");
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
-            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador");
-            entity.Property(e => e.TipoUsuario).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tipoUsuario");
-            entity.Property(e => e.IdSigafi).HasMaxLength(14).HasColumnName("idSigafi");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador").HasDefaultValueSql("'0'");
+            entity.Property(e => e.TablaSigafi).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tablaSigafi");
+            entity.Property(e => e.IdSigafi).HasMaxLength(20).HasColumnName("idSigafi");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.IdRol);
-            entity.ToTable("roles");
+            entity.ToTable("rol");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
             entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired();
-            entity.Property(e => e.CodigoRol).HasMaxLength(50).HasColumnName("codigo_rol").IsRequired();
+            entity.Property(e => e.CodigoRol).HasMaxLength(25).HasColumnName("codigo_rol").IsRequired();
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
         });
 
         modelBuilder.Entity<UserRole>(entity =>
         {
             entity.HasKey(e => e.IdUsuarioRol);
-            entity.ToTable("usuarios_roles");
+            entity.ToTable("usuario_rol");
             entity.Property(e => e.IdUsuarioRol).HasColumnName("idUsuarioRol");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
@@ -832,7 +832,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<SystemEntity>(entity =>
         {
             entity.HasKey(e => e.IdSistema);
-            entity.ToTable("sistemas");
+            entity.ToTable("sistema");
             entity.Property(e => e.IdSistema).HasColumnName("idSistema");
             entity.Property(e => e.Detalle).HasMaxLength(50).IsRequired();
         });
@@ -878,7 +878,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<RoleModuleOperation>(entity =>
         {
             entity.HasKey(e => e.IdRolModuloOperacion);
-            entity.ToTable("roles_modulos_operaciones");
+            entity.ToTable("rol_modulo_operacion");
             entity.Property(e => e.IdRolModuloOperacion).HasColumnName("idRolModuloOperacion");
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
