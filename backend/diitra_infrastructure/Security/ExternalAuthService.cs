@@ -30,7 +30,8 @@ public class ExternalAuthService : IExternalAuthService
             Scopes = scopes,
             FechaExpiracion = DateTime.UtcNow.AddHours(hoursValid),
             Activo = 1,
-            Usado = 0,
+            UsosActuales = 0,
+            MaxUsos = 1,
             Version = 1
         };
 
@@ -43,7 +44,7 @@ public class ExternalAuthService : IExternalAuthService
     public async Task<AccessToken?> ValidateTokenAsync(string token)
     {
         var accessToken = await _context.InvTokensAcceso
-            .FirstOrDefaultAsync(t => t.Token == token && t.Activo == 1 && t.Usado == 0 && (t.FechaExpiracion == null || t.FechaExpiracion > DateTime.UtcNow));
+            .FirstOrDefaultAsync(t => t.Token == token && t.Activo == 1 && t.UsosActuales < t.MaxUsos && (t.FechaExpiracion == null || t.FechaExpiracion > DateTime.UtcNow));
 
         return accessToken;
     }
@@ -51,9 +52,9 @@ public class ExternalAuthService : IExternalAuthService
     public async Task<bool> MarkTokenAsUsedAsync(string token)
     {
         var accessToken = await _context.InvTokensAcceso.FirstOrDefaultAsync(t => t.Token == token);
-        if (accessToken != null)
+        if (accessToken != null && accessToken.UsosActuales < accessToken.MaxUsos)
         {
-            accessToken.Usado = 1;
+            accessToken.UsosActuales++;
             await _context.SaveChangesAsync();
             return true;
         }

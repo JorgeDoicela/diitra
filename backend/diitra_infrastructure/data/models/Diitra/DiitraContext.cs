@@ -1101,7 +1101,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaUltimoAcceso).HasColumnName("fechaUltimoAcceso");
             entity.Property(e => e.Version).HasColumnName("version").HasDefaultValueSql("'1'");
 
-            entity.HasOne(d => d.User).WithOne(u => u.InvUsuarioMetadata)
+            entity.HasOne(d => d.User).WithOne()
                 .HasPrincipalKey<User>(u => u.IdUsuario)
                 .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
                 .HasConstraintName("fk_usermeta_usuario");
