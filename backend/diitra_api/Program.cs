@@ -107,34 +107,9 @@ builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 
-// 3. LÓGICA DE CONEXIÓN INTELIGENTE (Auto-Detección Oficina/Casa)
-var connectionString = builder.Configuration.GetConnectionString("default_connection") ?? "";
-bool isOffice = false;
+// 3. DATABASE CONNECTION
+var connectionString = builder.Configuration.GetConnectionString("default_connection");
 
-try
-{
-    using (var tcpClient = new System.Net.Sockets.TcpClient())
-    {
-        // Intentamos conectar con un timeout real
-        var task = tcpClient.ConnectAsync("192.168.7.50", 3307);
-        if (task.Wait(TimeSpan.FromMilliseconds(1500))) // Esperamos 1.5s
-        {
-            isOffice = tcpClient.Connected;
-        }
-    }
-}
-catch { isOffice = false; }
-
-if (!isOffice)
-{
-    Console.WriteLine(">>> [DIITRA-AUTO] Servidor institucional NO detectado. Usando configuración de CASA (Localhost)...");
-    connectionString = builder.Configuration.GetConnectionString("local_connection") 
-                       ?? "Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=root;";
-}
-else
-{
-    Console.WriteLine(">>> [DIITRA-AUTO] Conectado al servidor INSTITUCIONAL.");
-}
 
 if (!string.IsNullOrEmpty(connectionString))
 {

@@ -3,4 +3,5 @@
   <Project Path="diitra_application/diitra_application.csproj" />
   <Project Path="diitra_domain/diitra_domain.csproj" />
   <Project Path="diitra_infrastructure/diitra_infrastructure.csproj" />
+  <Project Path="diitra_tests/diitra_tests.csproj" />
 </Solution>
