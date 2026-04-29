@@ -3,14 +3,18 @@ using System.Collections.Generic;
 
 namespace diitra_infrastructure.data.models;
 
+/// <summary>
+/// [SISTEMA] Evidencias documentales y fotográficas vinculadas a informes de avance
+/// </summary>
 public partial class InvEvidencia
 {
     public int IdEvidencia { get; set; }
+    public Guid Uuid { get; set; } = Guid.NewGuid();
     public int IdInforme { get; set; }
-    public string NombreArchivo { get; set; } = null!;
+    public string Tipo { get; set; } = "Imagen"; // Imagen, Documento, Factura, Asistencia, Otros
+    public string? Descripcion { get; set; }
     public string RutaArchivo { get; set; } = null!;
-    public string? TipoEvidencia { get; set; }
-    public DateTime? FechaSubida { get; set; }
+    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
     public virtual InvInformeAvance IdInformeNavigation { get; set; } = null!;
 }
