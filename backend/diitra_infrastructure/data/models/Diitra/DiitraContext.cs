@@ -74,7 +74,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<SystemEntity>        Systems               { get; set; }   // sistema
     public virtual DbSet<IdentityModule>      Modules               { get; set; }   // modulos
     public virtual DbSet<IdentityOperation>   Operations            { get; set; }   // operaciones
-    public virtual DbSet<ModuleOperation>     ModuleOperations      { get; set; }   // modulos_operacion
+    public virtual DbSet<ModuleOperation>     ModuleOperations      { get; set; }   // modulos_operaciones
     public virtual DbSet<RoleModuleOperation> RoleModuleOperations  { get; set; }   // rol_modulo_operacion
 
     // --- Académico ---
@@ -348,6 +348,9 @@ public partial class DiitraContext : DbContext
             entity.ToTable("subcategorias_actividades");
             entity.Property(e => e.IdSubcategoria).HasColumnType("int(11)").HasColumnName("idSubcategoria");
             entity.Property(e => e.Subcategoria).HasMaxLength(100).HasColumnName("subcategoria");
+            entity.Property(e => e.IdCategoria).HasColumnName("idCategoria");
+            entity.Property(e => e.EsDocencia).HasColumnName("esDocencia");
+            entity.Property(e => e.Activa).HasColumnName("activa");
             entity.Ignore(e => e.ProfesoresActividades);
         });
 
@@ -359,6 +362,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
             entity.Property(e => e.IdPeriodo).HasMaxLength(7).IsFixedLength().HasColumnName("idPeriodo");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
+            entity.Property(e => e.IdDedicacionCategorias).HasColumnName("idDedicacionCategorias");
             entity.Ignore(e => e.IdPeriodoNavigation);
             entity.Ignore(e => e.IdProfesorNavigation);
         });
@@ -998,7 +1002,7 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdSistema);
             entity.ToTable("sistema");
             entity.Property(e => e.IdSistema).HasColumnName("idSistema");
-            entity.Property(e => e.Detalle).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Detalle).HasMaxLength(50).IsRequired().HasColumnName("detalle");
         });
 
         modelBuilder.Entity<IdentityModule>(entity =>
@@ -1007,7 +1011,7 @@ public partial class DiitraContext : DbContext
             entity.ToTable("modulos");
             entity.Property(e => e.IdModulos).HasColumnName("idModulos");
             entity.Property(e => e.IdSistema).HasColumnName("id_sistema");
-            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired().HasColumnName("Nombre");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
 
             entity.HasOne(d => d.Sistema).WithMany(p => p.Modulos)
