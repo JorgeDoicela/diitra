@@ -1,9 +1,9 @@
-# DIITRA Enterprise Ecosystem
-**Dirección de Investigación e Innovación Tecnológica**
+# DIITRA
+**Departamento de Investigación e Innovación Traversari**
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen) ![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen) ![Security Rating](https://img.shields.io/badge/security-A+-blue) ![Code Quality](https://img.shields.io/badge/code_quality-A-blue) ![License](https://img.shields.io/badge/license-Private-red)
 
-> **DIITRA** es un sistema corporativo centralizado para la administración del ciclo de vida integral de proyectos de investigación. Automatiza los flujos institucionales desde la captación del proponente, hasta la protección final de la Propiedad Intelectual.
+> **DIITRA** es un sistema para la administración del ciclo de vida integral de proyectos de investigación. Automatiza los flujos institucionales desde la captación del proponente, hasta la protección final de la Propiedad Intelectual.
 
 ---
 
@@ -35,10 +35,10 @@ graph TD
     DB[("Master Database\nMySQL 8.0 Enterprise")]
     AI["AI Assistant Service"]
     AUTH["Auth & Signing Subsystem"]
-    
+
     UI_WEB <-->|REST + wss:// SignalR| GW
     UI_MOB <-->|REST + wss:// SignalR| GW
-    
+
     GW --- DB
     GW --- AI
     GW --- AUTH
@@ -84,7 +84,7 @@ Se recomienda estructurar repositorios con integración hacia **GitHub Actions**
 ```bash
 # 1. API Services
 cd backend/diitra_api
-dotnet restore 
+dotnet restore
 dotnet run --launch-profile "diitra_api"
 
 # 2. Web Client Dashboard
