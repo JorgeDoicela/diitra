@@ -29,12 +29,12 @@ El ecosistema transaccional se compone de tres nodos cardinales:
 
 ```mermaid
 graph TD
-    UI_WEB[Diitra Web App\nReact SPA]
-    UI_MOB[Diitra Mobile App\nReact Native / Expo]
-    GW[API Gateway / Core (.NET 9)]
-    DB[(Master Database\nMySQL 8.0+ Enterprise)]
-    AI[AI Assistant Service]
-    AUTH[Auth & Signing Subsystem]
+    UI_WEB["Diitra Web App\nReact SPA"]
+    UI_MOB["Diitra Mobile App\nReact Native / Expo"]
+    GW["API Gateway / Core (.NET 8.0)"]
+    DB[("Master Database\nMySQL 8.0 Enterprise")]
+    AI["AI Assistant Service"]
+    AUTH["Auth & Signing Subsystem"]
     
     UI_WEB <-->|REST + wss:// SignalR| GW
     UI_MOB <-->|REST + wss:// SignalR| GW
