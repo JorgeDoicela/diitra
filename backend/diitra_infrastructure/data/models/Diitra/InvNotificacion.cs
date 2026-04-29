@@ -1,7 +1,9 @@
 using System;
 using diitra_infrastructure.data.models;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.data.models;
+
 
 /// <summary>
 /// [SISTEMA] Notificaciones dinámicas con soporte para flujos de trabajo (workflow)

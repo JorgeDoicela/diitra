@@ -37,13 +37,16 @@ public class AdminService : IAdminService
         var userRoles = await _context.UserRoles
             .Include(ur => ur.Role)
             .Include(ur => ur.User)
-                .ThenInclude(u => u.InvUsuarioMetadata) // Necesitamos el UUID
             .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
             .ToListAsync();
 
+        var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
+        var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
+
         return professors.Select(p => {
             var roleInfo = userRoles.Where(ur => ur.User.Usuario == p.IdProfesor.Trim()).ToList();
-            var userMeta = roleInfo.FirstOrDefault()?.User?.InvUsuarioMetadata;
+            var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
+            var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
             return new UserManagementDto
             {
@@ -67,9 +70,9 @@ public class AdminService : IAdminService
         if (role == null) return false;
 
         // Aseguramos que el usuario esté centralizado (Soporta ID o UUID)
+        var metadataQuery = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.Uuid.ToString() == idProfesor);
         var user = await _context.Users
-            .Include(u => u.InvUsuarioMetadata)
-            .FirstOrDefaultAsync(u => u.Usuario == idProfesor || (u.InvUsuarioMetadata != null && u.InvUsuarioMetadata.Uuid.ToString() == idProfesor));
+            .FirstOrDefaultAsync(u => u.Usuario == idProfesor || (metadataQuery != null && u.IdUsuario == metadataQuery.IdUsuario));
         if (user == null)
         {
             var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idProfesor);
@@ -134,10 +137,10 @@ public class AdminService : IAdminService
 
         if (role == null) return false;
 
+        var metadataQuery = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.Uuid.ToString() == idProfesor);
         var existing = await _context.UserRoles
             .Include(ur => ur.User)
-                .ThenInclude(u => u.InvUsuarioMetadata)
-            .FirstOrDefaultAsync(ur => (ur.User.Usuario == idProfesor || (ur.User.InvUsuarioMetadata != null && ur.User.InvUsuarioMetadata.Uuid.ToString() == idProfesor)) && ur.IdRol == role.IdRol);
+            .FirstOrDefaultAsync(ur => (ur.User.Usuario == idProfesor || (metadataQuery != null && ur.IdUsuario == metadataQuery.IdUsuario)) && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {

@@ -1,6 +1,8 @@
 using System;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.data.models;
+
 
 /// <summary>
 /// [SISTEMA] Perfil extendido del investigador y configuraciones de firma/seguridad
