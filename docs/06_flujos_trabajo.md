@@ -10,8 +10,8 @@ El componente más crítico académicamente. Exige validación, seguridad asincr
 sequenceDiagram
     autonumber
     actor DR as Director
-    participant GW as API Gateway (.NET)
-    participant DB as MariaDB/MySQL
+    participant GW as "API Gateway (.NET)"
+    participant DB as "MariaDB/MySQL"
     actor RE as Revisor Externo
     
     rect rgb(200, 230, 240)
