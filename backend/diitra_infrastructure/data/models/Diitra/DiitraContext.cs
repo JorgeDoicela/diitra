@@ -784,21 +784,21 @@ public partial class DiitraContext : DbContext
         {
             entity.ToTable("usuarios");
 
-            // LLAVE COMPUESTA: idUsuario + usuario (Alineación exacta con ERD v2.0)
-            entity.HasKey(e => new { e.IdUsuario, e.Usuario });
-
-            // LLAVE ALTERNA: Fundamental para que las FKs a idUsuario funcionen en EF Core
-            entity.HasAlternateKey(e => e.IdUsuario);
-
-            entity.HasIndex(e => e.IdSigafi, "idSigafi_UNIQUE").IsUnique();
+            // LLAVE PRIMARIA: idUsuario (INT AUTO_INCREMENT)
+            entity.HasKey(e => e.IdUsuario);
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").ValueGeneratedOnAdd();
-            entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("usuario");
-            entity.Property(e => e.Nombre).HasMaxLength(200).HasColumnName("nombre"); // Opcional en BD
+
+            // MAPEO: La propiedad Usuario en C# (login) apunta a la columna idSigafi en la BD (donde está la cédula)
+            entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("idSigafi");
+            
+            entity.Property(e => e.Nombre).HasMaxLength(200).HasColumnName("nombre");
             entity.Property(e => e.Contrasenia).HasMaxLength(250).IsRequired().HasColumnName("contrasenia");
             entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo").HasDefaultValueSql("'1'");
             entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador").HasDefaultValueSql("'0'");
             entity.Property(e => e.TablaSigafi).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tablaSigafi");
-            entity.Property(e => e.IdSigafi).HasMaxLength(20).HasColumnName("idSigafi");
+            
+            // Ignoramos IdSigafi en el mapeo porque ya usamos la propiedad Usuario para la misma columna
+            entity.Ignore(e => e.IdSigafi);
         });
 
         modelBuilder.Entity<Role>(entity =>
