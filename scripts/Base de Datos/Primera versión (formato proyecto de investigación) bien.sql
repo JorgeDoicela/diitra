@@ -15,6 +15,11 @@ SET SQL_MODE = 'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVIS
 -- =============================================================================
 
 DROP TABLE IF EXISTS
+    -- Grupo K (Seguridad y Notificaciones)
+    inv_notificaciones,
+    inv_tokens_acceso,
+    inv_usuarios_metadata,
+    
     -- Núcleo V3 (Secciones 1-9)
     inv_transferencias,
     inv_gastos,
@@ -470,6 +475,81 @@ CREATE INDEX idx_objetivos_proyecto         ON inv_objetivos_proyecto(idProyecto
 CREATE INDEX idx_cronograma_proyecto        ON inv_cronograma(idProyecto);
 CREATE INDEX idx_gastos_proyecto            ON inv_gastos(idProyecto);
 CREATE INDEX idx_informesav_proyecto        ON inv_informes_avance(idProyecto);
+
+-- =============================================================================
+-- GRUPO K: NOTIFICACIONES, SEGURIDAD Y METADATA
+-- =============================================================================
+
+CREATE TABLE inv_notificaciones (
+    idNotificacion   INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid             CHAR(36)     NOT NULL UNIQUE,
+    idProyecto       INT          NULL,
+    destinatario     INT(11)      NOT NULL,
+    tipoDestinatario ENUM('Usuario','Profesor','Alumno') DEFAULT 'Usuario',
+    categoria        VARCHAR(50)  DEFAULT 'SISTEMA',
+    prioridad        VARCHAR(20)  DEFAULT 'NORMAL',
+    titulo           VARCHAR(255) NOT NULL,
+    mensaje          TEXT,
+    urlAccion        VARCHAR(255) NULL,
+    leido            TINYINT(1)   DEFAULT 0,
+    fechaEnvio       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    fechaLectura     TIMESTAMP    NULL,
+    version          INT          DEFAULT 1,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE SET NULL,
+    FOREIGN KEY (destinatario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Notificaciones con prioridad y redirección (Deep Linking)';
+
+DELIMITER $$
+CREATE TRIGGER trg_notif_uuid
+BEFORE INSERT ON inv_notificaciones FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+DELIMITER ;
+
+CREATE TABLE inv_tokens_acceso (
+    idToken         INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid            CHAR(36)     NOT NULL UNIQUE,
+    idProyecto      INT          NULL,
+    token           VARCHAR(255) NOT NULL UNIQUE,
+    idReferencia    INT          NOT NULL,
+    tipoReferencia  VARCHAR(50)  NOT NULL DEFAULT 'Externo',
+    scopes          VARCHAR(255),
+    maxUsos         INT          DEFAULT 1,
+    usosActuales    INT          DEFAULT 0,
+    ipOrigen        VARCHAR(50)  NULL,
+    activo          TINYINT(1)   DEFAULT 1,
+    fechaRegistro   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    fechaExpiracion TIMESTAMP    NULL,
+    version         INT          DEFAULT 1,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Seguridad para Pares Ciegos (Control de IPs y usos)';
+
+DELIMITER $$
+CREATE TRIGGER trg_tokens_uuid
+BEFORE INSERT ON inv_tokens_acceso FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+DELIMITER ;
+
+CREATE TABLE inv_usuarios_metadata (
+    idMetadata           INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid                 CHAR(36)     NOT NULL UNIQUE,
+    idUsuario            INT(11)      NOT NULL UNIQUE,
+    orcidId              VARCHAR(20)  NULL,
+    especialidad         TEXT         NULL,
+    gradoAcademicoMaximo VARCHAR(100) NULL,
+    rutaFirmaP12         VARCHAR(255) NULL,
+    firmaHabilitada      TINYINT(1)   DEFAULT 0,
+    configuracion        JSON         NULL,
+    fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    fechaUltimoAcceso    TIMESTAMP    NULL,
+    version              INT          DEFAULT 1,
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Perfil CACES, SENESCYT y configuración de Firma Electrónica';
+
+DELIMITER $$
+CREATE TRIGGER trg_usermeta_uuid
+BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+DELIMITER ;
 
 -- CIERRE DE SEGURIDAD PARA EL NÚCLEO V3
 SET FOREIGN_KEY_CHECKS = 1;

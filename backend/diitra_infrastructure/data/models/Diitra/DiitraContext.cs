@@ -19,28 +19,43 @@ public partial class DiitraContext : DbContext
     public DiitraContext(DbContextOptions<DiitraContext> options) : base(options) { }
 
     // ============================================================
-    // TABLAS NUEVAS Diitra (inv_)
-    // Estas son las tuyas, las puedes modificar libremente
+    // TABLAS NUEVAS Diitra (inv_) - V3 Core Schema
     // ============================================================
-    public virtual DbSet<InvConvocatoria>     InvConvocatorias    { get; set; }
-    public virtual DbSet<InvProyecto>         InvProyectos        { get; set; }
-    public virtual DbSet<InvProyectoProfesor> InvProyectosProfesores { get; set; }
-    public virtual DbSet<InvProyectoAlumno>   InvProyectosAlumnos { get; set; }
-    public virtual DbSet<InvProyectoHistorial>InvProyectosHistorial { get; set; }
-    public virtual DbSet<InvNotificacion>     InvNotificaciones   { get; set; }
-    public virtual DbSet<InvRevision>         InvRevisiones       { get; set; }
-    public virtual DbSet<InvRubrica>          InvRubricas         { get; set; }
-    public virtual DbSet<InvRevisionDetalle>  InvRevisionesDetalle { get; set; }
-    public virtual DbSet<InvCronogramaTarea>  InvCronograma       { get; set; }
-    public virtual DbSet<InvInformeAvance>    InvInformesAvance   { get; set; }
-    public virtual DbSet<InvEvidencia>        InvEvidencias       { get; set; }
-    public virtual DbSet<InvPresupuestoItem>  InvPresupuestoItems { get; set; }
-    public virtual DbSet<InvGasto>            InvGastos           { get; set; }
-    public virtual DbSet<InvProducto>         InvProductos        { get; set; }
-    public virtual DbSet<InvTransferencia>    InvTransferencias   { get; set; }
-    public virtual DbSet<ExternalReviewer>   ExternalReviewers   { get; set; }
-    public virtual DbSet<InvestigationInstitute> InvestigationInstitutes { get; set; }
-    public virtual DbSet<InvUsuarioMetadata> InvUsuariosMetadata { get; set; }
+    public virtual DbSet<InvLineaInvestigacion> InvLineasInvestigacion { get; set; }
+    public virtual DbSet<InvPrograma>           InvProgramas           { get; set; }
+    public virtual DbSet<InvDominio>            InvDominios            { get; set; }
+    public virtual DbSet<InvDominioCarrera>     InvDominiosCarrera     { get; set; }
+    public virtual DbSet<InvSublinea>           InvSublineas           { get; set; }
+    public virtual DbSet<InvTipoInvestigacion>  InvTiposInvestigacion  { get; set; }
+    public virtual DbSet<InvGrupoInvestigacion> InvGruposInvestigacion { get; set; }
+    public virtual DbSet<InvConvocatoria>       InvConvocatorias       { get; set; }
+    public virtual DbSet<InvProyecto>           InvProyectos           { get; set; }
+    public virtual DbSet<InvProyectoCarrera>    InvProyectosCarreras    { get; set; }
+    public virtual DbSet<InvProyectoDominio>    InvProyectosDominios    { get; set; }
+    public virtual DbSet<InvProyectoProfesor>   InvProyectosProfesores { get; set; }
+    public virtual DbSet<InvProyectoAlumno>     InvProyectosAlumnos     { get; set; }
+    public virtual DbSet<InvObjetivoProyecto>   InvObjetivosProyecto   { get; set; }
+    public virtual DbSet<InvOdsEje>             InvOdsEjes             { get; set; }
+    public virtual DbSet<InvOds>                InvOds                 { get; set; }
+    public virtual DbSet<InvProyectoOds>        InvProyectosOds        { get; set; }
+    public virtual DbSet<InvRecursoDisponible>  InvRecursosDisponibles { get; set; }
+    public virtual DbSet<InvPresupuestoItem>    InvPresupuestoItems    { get; set; }
+    public virtual DbSet<InvFinanciamiento>     InvFinanciamientos     { get; set; }
+    public virtual DbSet<InvProducto>           InvProductos           { get; set; }
+    public virtual DbSet<InvCatImpacto>         InvCatImpactos         { get; set; }
+    public virtual DbSet<InvImpactoProyecto>    InvImpactosProyecto    { get; set; }
+    public virtual DbSet<InvCronograma>         InvCronograma          { get; set; }
+    public virtual DbSet<InvCronogramaSemana>   InvCronogramaSemanas   { get; set; }
+    public virtual DbSet<InvBibliografiaProyecto> InvBibliografiasProyecto { get; set; }
+    public virtual DbSet<InvInformeAvance>      InvInformesAvance      { get; set; }
+    public virtual DbSet<InvEvidencia>          InvEvidencias          { get; set; }
+    public virtual DbSet<InvGasto>              InvGastos              { get; set; }
+    public virtual DbSet<InvTransferencia>      InvTransferencias      { get; set; }
+
+    // --- Sistema y Seguridad ---
+    public virtual DbSet<InvNotificacion>       InvNotificaciones      { get; set; }
+    public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
+    public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
 
     // ============================================================
     // TABLAS DE SIGAFI (solo lectura recomendada)
@@ -61,7 +76,6 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<IdentityOperation>   Operations            { get; set; }   // operaciones
     public virtual DbSet<ModuleOperation>     ModuleOperations      { get; set; }   // modulos_operacion
     public virtual DbSet<RoleModuleOperation> RoleModuleOperations  { get; set; }   // rol_modulo_operacion
-    public virtual DbSet<AccessToken>         AccessTokens          { get; set; }   // inv_tokens_acceso
 
     // --- Académico ---
     public virtual DbSet<Periodo>              Periodos           { get; set; }  // periodos
@@ -464,316 +478,441 @@ public partial class DiitraContext : DbContext
         });
 
         // ============================================================
-        // TABLAS Diitra (inv_) - misma configuración que SigafiEsContext
+        // TABLAS Diitra (inv_) - V3 Core Schema
         // ============================================================
-                modelBuilder.Entity<InvLineaInvestigacion>(entity =>
+
+        modelBuilder.Entity<InvLineaInvestigacion>(entity =>
         {
             entity.HasKey(e => e.IdLinea).HasName("PRIMARY");
             entity.ToTable("inv_lineas_investigacion");
-            entity.Property(e => e.IdLinea).HasColumnType("int(11)").HasColumnName("idLinea");
+            entity.Property(e => e.IdLinea).HasColumnName("idLinea");
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.CodigoLinea).HasColumnName("codigoLinea").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.CodigoLinea).HasColumnName("codigoLinea").HasMaxLength(30).IsRequired();
             entity.HasIndex(e => e.CodigoLinea).IsUnique();
-            entity.Property(e => e.NombreLinea).HasMaxLength(300).HasColumnName("nombreLinea");
-            entity.Property(e => e.Descripcion).HasColumnType("text").HasColumnName("descripcion");
-            entity.Property(e => e.ResolucionAprobacion).HasMaxLength(100).HasColumnName("resolucionAprobacion");
+            entity.Property(e => e.NombreLinea).HasColumnName("nombreLinea").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasDefaultValueSql("'1'").HasColumnName("activo");
         });
+
+        modelBuilder.Entity<InvPrograma>(entity =>
+        {
+            entity.HasKey(e => e.IdPrograma).HasName("PRIMARY");
+            entity.ToTable("inv_programas");
+            entity.Property(e => e.IdPrograma).HasColumnName("idPrograma");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<InvDominio>(entity =>
+        {
+            entity.HasKey(e => e.IdDominio).HasName("PRIMARY");
+            entity.ToTable("inv_dominios");
+            entity.Property(e => e.IdDominio).HasColumnName("idDominio");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<InvDominioCarrera>(entity =>
+        {
+            entity.HasKey(e => e.IdDominioCarrera).HasName("PRIMARY");
+            entity.ToTable("inv_dominios_carrera");
+            entity.Property(e => e.IdDominioCarrera).HasColumnName("idDominioCarrera");
+            entity.Property(e => e.IdDominio).HasColumnName("idDominio");
+            entity.Property(e => e.IdCarrera).HasColumnName("idCarrera");
+
+            entity.HasOne(d => d.IdDominioNavigation).WithMany(p => p.InvDominiosCarreras)
+                .HasForeignKey(d => d.IdDominio).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_idc_dominio");
+            entity.HasOne(d => d.IdCarreraNavigation).WithMany()
+                .HasForeignKey(d => d.IdCarrera).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_idc_carrera");
+        });
+
+        modelBuilder.Entity<InvSublinea>(entity =>
+        {
+            entity.HasKey(e => e.IdSublinea).HasName("PRIMARY");
+            entity.ToTable("inv_sublineas");
+            entity.Property(e => e.IdSublinea).HasColumnName("idSublinea");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdLinea).HasColumnName("idLinea");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+
+            entity.HasOne(d => d.IdLineaNavigation).WithMany(p => p.InvSublineas)
+                .HasForeignKey(d => d.IdLinea).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_sub_linea");
+        });
+
+        modelBuilder.Entity<InvTipoInvestigacion>(entity =>
+        {
+            entity.HasKey(e => e.IdTipo).HasName("PRIMARY");
+            entity.ToTable("inv_tipos_investigacion");
+            entity.Property(e => e.IdTipo).HasColumnName("idTipo");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.IdTipoPadre).HasColumnName("idTipoPadre");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+
+            entity.HasOne(d => d.IdTipoPadreNavigation).WithMany(p => p.InverseIdTipoPadreNavigation)
+                .HasForeignKey(d => d.IdTipoPadre).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_tipo_padre");
+        });
+
+        modelBuilder.Entity<InvGrupoInvestigacion>(entity =>
+        {
+            entity.HasKey(e => e.IdGrupo).HasName("PRIMARY");
+            entity.ToTable("inv_grupos_investigacion");
+            entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+        });
+
         modelBuilder.Entity<InvConvocatoria>(entity =>
         {
             entity.HasKey(e => e.IdConvocatoria).HasName("PRIMARY");
-            entity.ToTable("inv_convocatorias").HasCharSet("utf8mb4");
-            entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria").HasColumnType("int(11)");
+            entity.ToTable("inv_convocatorias");
+            entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria");
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.CodigoConvocatoria).HasColumnName("codigoConvocatoria").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.CodigoConvocatoria).HasColumnName("codigoConvocatoria").HasMaxLength(30).IsRequired();
             entity.HasIndex(e => e.CodigoConvocatoria).IsUnique();
-            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
-            entity.Property(e => e.IdPeriodo).HasMaxLength(7).IsFixedLength().HasColumnName("idPeriodo");
-            entity.Property(e => e.Estado).HasColumnType("enum('borrador','abierta','en_revision','cerrada')").HasColumnName("estado");
-            entity.Property(e => e.PresupuestoTotal).HasPrecision(10, 2).HasColumnName("presupuestoTotal");
-            entity.Property(e => e.UsuarioCreo).HasMaxLength(20).HasColumnName("usuarioCreo");
-            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
-            entity.HasOne(d => d.IdPeriodoNavigation).WithMany()
-                .HasForeignKey(d => d.IdPeriodo).HasConstraintName("fk_inv_conv_periodos");
+            entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.IdPeriodo).HasColumnName("idPeriodo").HasMaxLength(7).IsFixedLength().IsRequired();
+            entity.Property(e => e.FechaApertura).HasColumnName("fechaApertura");
+            entity.Property(e => e.FechaCierre).HasColumnName("fechaCierre");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Abierta','Cerrada','Anulada')").HasDefaultValueSql("'Borrador'");
+
+            entity.HasOne(d => d.IdPeriodoNavigation).WithMany().HasForeignKey(d => d.IdPeriodo).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_conv_periodo");
         });
 
         modelBuilder.Entity<InvProyecto>(entity =>
         {
             entity.HasKey(e => e.IdProyecto).HasName("PRIMARY");
-            entity.ToTable("inv_proyectos").HasCharSet("utf8mb4");
-            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto").HasColumnType("int(11)");
+            entity.ToTable("inv_proyectos");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria").HasColumnType("int(11)");
-            entity.Property(e => e.CodigoInstitucional).HasMaxLength(30).HasColumnName("codigoInstitucional");
-            entity.Property(e => e.Titulo).HasMaxLength(400).HasColumnName("titulo");
-            entity.Property(e => e.IdProfesorDirector).HasMaxLength(14).HasColumnName("idProfesorDirector");
-            entity.Property(e => e.Estado).HasColumnType("enum('borrador','enviado','en_revision','aprobado','en_ejecucion','finalizado','rechazado')").HasColumnName("estado");
-            entity.Property(e => e.PresupuestoSolicitado).HasPrecision(10, 2).HasColumnName("presupuestoSolicitado");
-            entity.Property(e => e.PresupuestoAprobado).HasPrecision(10, 2).HasColumnName("presupuestoAprobado");
-            entity.Property(e => e.PuntajeEvaluacion).HasPrecision(5, 2).HasColumnName("puntajeEvaluacion");
-            entity.Property(e => e.EsAnonimizado).HasColumnType("tinyint(4)").HasColumnName("esAnonimizado");
+            entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria");
+            entity.Property(e => e.CodigoInstitucional).HasColumnName("codigoInstitucional").HasMaxLength(50);
+            entity.HasIndex(e => e.CodigoInstitucional).IsUnique();
+            entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(500).IsRequired();
+            entity.Property(e => e.DescripcionProyecto).HasColumnName("descripcionProyecto").HasColumnType("text");
+            entity.Property(e => e.Antecedentes).HasColumnName("antecedentes").HasColumnType("text");
+            entity.Property(e => e.Justificacion).HasColumnName("justificacion").HasColumnType("text");
+            entity.Property(e => e.MarcoTeorico).HasColumnName("marcoTeorico").HasColumnType("text");
+            entity.Property(e => e.Metodologia).HasColumnName("metodologia").HasColumnType("text");
+            entity.Property(e => e.MetodoEvaluacion).HasColumnName("metodoEvaluacion").HasColumnType("text");
+            entity.Property(e => e.IdSublinea).HasColumnName("idSublinea");
+            entity.Property(e => e.IdPrograma).HasColumnName("idPrograma");
+            entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
+            entity.Property(e => e.TieneGrupo).HasColumnName("tieneGrupo").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.IdTipo).HasColumnName("idTipo");
+            entity.Property(e => e.FechaPresentacion).HasColumnName("fechaPresentacion");
+            entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
+            entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
+            entity.Property(e => e.TiempoEjecucion).HasColumnName("tiempoEjecucion").HasMaxLength(100);
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado')").HasDefaultValueSql("'Borrador'");
+            entity.Property(e => e.PuntajeEvaluacion).HasColumnName("puntajeEvaluacion").HasPrecision(5, 2);
+            entity.Property(e => e.ValorEjecucion).HasColumnName("valorEjecucion").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
-            entity.HasOne(d => d.IdConvocatoriaNavigation).WithMany(p => p.Proyectos)
-                .HasForeignKey(d => d.IdConvocatoria).HasConstraintName("fk_inv_proy_conv");
-            entity.HasOne(d => d.IdProfesorDirectorNavigation).WithMany()
-                .HasForeignKey(d => d.IdProfesorDirector).HasConstraintName("fk_inv_proy_director");
-            entity.HasOne(d => d.IdCampoDetalladoUnescoNavigation).WithMany()
-                .HasForeignKey(d => d.IdCampoDetalladoUnesco).HasConstraintName("fk_inv_proy_unesco");
-            entity.HasOne(d => d.IdEspacioNavigation).WithMany()
-                .HasForeignKey(d => d.IdEspacio).HasConstraintName("fk_inv_proy_espacio");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
+
+            entity.HasOne(d => d.IdConvocatoriaNavigation).WithMany(p => p.Proyectos).HasForeignKey(d => d.IdConvocatoria).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_conv");
+            entity.HasOne(d => d.IdSublineaNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdSublinea).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_sublinea");
+            entity.HasOne(d => d.IdProgramaNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdPrograma).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_programa");
+            entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_grupo");
+            entity.HasOne(d => d.IdTipoNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdTipo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_tipo");
+        });
+
+        modelBuilder.Entity<InvProyectoCarrera>(entity =>
+        {
+            entity.HasKey(e => e.IdProyectoCarrera).HasName("PRIMARY");
+            entity.ToTable("inv_proyectos_carreras");
+            entity.Property(e => e.IdProyectoCarrera).HasColumnName("idProyectoCarrera");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdCarrera).HasColumnName("idCarrera");
+            entity.Property(e => e.Modalidad).HasColumnName("modalidad").HasMaxLength(100);
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosCarreras).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pc_proyecto");
+            entity.HasOne(d => d.IdCarreraNavigation).WithMany().HasForeignKey(d => d.IdCarrera).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pc_carrera");
+        });
+
+        modelBuilder.Entity<InvProyectoDominio>(entity =>
+        {
+            entity.HasKey(e => e.IdProyectoDominio).HasName("PRIMARY");
+            entity.ToTable("inv_proyectos_dominios");
+            entity.Property(e => e.IdProyectoDominio).HasColumnName("idProyectoDominio");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdDominio).HasColumnName("idDominio");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosDominios).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pd_proyecto");
+            entity.HasOne(d => d.IdDominioNavigation).WithMany(p => p.InvProyectosDominios).HasForeignKey(d => d.IdDominio).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pd_dominio");
         });
 
         modelBuilder.Entity<InvProyectoProfesor>(entity =>
         {
             entity.HasKey(e => e.IdProyectoProfesor).HasName("PRIMARY");
-            entity.ToTable("inv_proyectos_profesores").HasCharSet("utf8mb4");
-            entity.HasIndex(e => new { e.IdProyecto, e.IdProfesor }).IsUnique().HasDatabaseName("uq_proyecto_profesor");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
-            entity.Property(e => e.Rol).HasColumnType("enum('director','coinvestigador','colaborador')").HasColumnName("rol");
-            entity.Property(e => e.HorasSemanales).HasPrecision(5, 2).HasColumnName("horasSemanales");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Profesores)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_pp_proy");
-            entity.HasOne(d => d.IdProfesorNavigation).WithMany()
-                .HasForeignKey(d => d.IdProfesor).HasConstraintName("fk_inv_pp_prof");
+            entity.ToTable("inv_proyectos_profesores");
+            entity.Property(e => e.IdProyectoProfesor).HasColumnName("idProyectoProfesor");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdProfesor).HasColumnName("idProfesor").HasMaxLength(14).IsRequired();
+            entity.Property(e => e.EsDirector).HasColumnName("esDirector").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
+            entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
+            entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
+            entity.Property(e => e.HorasSemanales).HasColumnName("horasSemanales").HasPrecision(4, 1);
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosProfesores).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pp_proyecto");
+            entity.HasOne(d => d.IdProfesorNavigation).WithMany().HasForeignKey(d => d.IdProfesor).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pp_profesor");
         });
 
         modelBuilder.Entity<InvProyectoAlumno>(entity =>
         {
             entity.HasKey(e => e.IdProyectoAlumno).HasName("PRIMARY");
-            entity.ToTable("inv_proyectos_alumnos").HasCharSet("utf8mb4");
-            entity.HasIndex(e => new { e.IdProyecto, e.IdAlumno }).IsUnique().HasDatabaseName("uq_proyecto_alumno");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdAlumno).HasMaxLength(14).HasColumnName("idAlumno");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Alumnos)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_pa_proy");
-            entity.HasOne(d => d.IdAlumnoNavigation).WithMany()
-                .HasForeignKey(d => d.IdAlumno).HasConstraintName("fk_inv_pa_alum");
+            entity.ToTable("inv_proyectos_alumnos");
+            entity.Property(e => e.IdProyectoAlumno).HasColumnName("idProyectoAlumno");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno").HasMaxLength(14).IsRequired();
+            entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
+            entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
+            entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosAlumnos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pa_proyecto");
+            entity.HasOne(d => d.IdAlumnoNavigation).WithMany().HasForeignKey(d => d.IdAlumno).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pa_alumno");
         });
 
-        modelBuilder.Entity<InvProyectoHistorial>(entity =>
+        modelBuilder.Entity<InvObjetivoProyecto>(entity =>
         {
-            entity.HasKey(e => e.IdHistorial).HasName("PRIMARY");
-            entity.ToTable("inv_proyectos_historial").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.EstadoNuevo).HasMaxLength(50).HasColumnName("estadoNuevo");
-            entity.Property(e => e.UsuarioCambio).HasMaxLength(20).HasColumnName("usuarioCambio");
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Historial)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_hist_proy");
+            entity.HasKey(e => e.IdObjetivo).HasName("PRIMARY");
+            entity.ToTable("inv_objetivos_proyecto");
+            entity.Property(e => e.IdObjetivo).HasColumnName("idObjetivo");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.EsGeneral).HasColumnName("esGeneral").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text").IsRequired();
+            entity.Property(e => e.Orden).HasColumnName("orden");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvObjetivosProyecto).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_obj_proyecto");
         });
 
-        modelBuilder.Entity<InvNotificacion>(entity =>
+        modelBuilder.Entity<InvOdsEje>(entity =>
         {
-            entity.HasKey(e => e.IdNotificacion).HasName("PRIMARY");
-            entity.ToTable("inv_notificaciones").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Destinatario).HasMaxLength(14).HasColumnName("destinatario");
-            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
+            entity.HasKey(e => e.IdEje).HasName("PRIMARY");
+            entity.ToTable("inv_ods_ejes");
+            entity.Property(e => e.IdEje).HasColumnName("idEje");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100).IsRequired();
         });
 
-        modelBuilder.Entity<InvRevision>(entity =>
+        modelBuilder.Entity<InvOds>(entity =>
         {
-            entity.HasKey(e => e.IdRevision).HasName("PRIMARY");
-            entity.ToTable("inv_revisiones").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdProfesorRevisor).HasMaxLength(14).HasColumnName("idProfesorRevisor");
-            entity.Property(e => e.IdRevisorExterno).HasColumnName("idRevisorExterno");
-            entity.Property(e => e.Estado).HasColumnType("enum('pendiente','en_proceso','finalizado','rechazado')").HasColumnName("estado");
-            entity.Property(e => e.PuntajeTotal).HasPrecision(5, 2).HasColumnName("puntajeTotal");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Revisiones)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_rev_proyecto");
-            
-            entity.HasOne(d => d.IdProfesorRevisorNavigation).WithMany()
-                .HasForeignKey(d => d.IdProfesorRevisor).HasConstraintName("fk_inv_rev_profesor");
+            entity.HasKey(e => e.IdOds).HasName("PRIMARY");
+            entity.ToTable("inv_ods");
+            entity.Property(e => e.IdOds).HasColumnName("idOds");
+            entity.Property(e => e.IdEje).HasColumnName("idEje");
+            entity.Property(e => e.NumeroOds).HasColumnName("numeroOds");
+            entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
 
-            entity.HasOne(d => d.IdRevisorExternoNavigation).WithMany()
-                .HasForeignKey(d => d.IdRevisorExterno).HasConstraintName("fk_inv_rev_ext");
+            entity.HasOne(d => d.IdEjeNavigation).WithMany(p => p.InvOds).HasForeignKey(d => d.IdEje).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_ods_eje");
         });
 
-        modelBuilder.Entity<ExternalReviewer>(entity =>
+        modelBuilder.Entity<InvProyectoOds>(entity =>
         {
-            entity.HasKey(e => e.IdRevisorExterno);
-            entity.ToTable("inv_revisores_externos");
-            entity.Property(e => e.IdRevisorExterno).HasColumnName("idRevisorExterno");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
-            entity.Property(e => e.Nombre).HasMaxLength(150).IsRequired();
-            entity.Property(e => e.Apellido).HasMaxLength(150).IsRequired();
-            entity.Property(e => e.Email).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
+            entity.HasKey(e => e.IdProyectoOds).HasName("PRIMARY");
+            entity.ToTable("inv_proyectos_ods");
+            entity.Property(e => e.IdProyectoOds).HasColumnName("idProyectoOds");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdOds).HasColumnName("idOds");
+            entity.Property(e => e.ObjetivoEspecificoODS).HasColumnName("objetivoEspecificoODS").HasColumnType("text").IsRequired();
 
-            entity.HasOne(d => d.Institute)
-                .WithMany(p => p.ExternalReviewers)
-                .HasForeignKey(d => d.IdInstitucion)
-                .HasConstraintName("fk_inv_ext_inst");
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosOds).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pods_proyecto");
+            entity.HasOne(d => d.IdOdsNavigation).WithMany(p => p.InvProyectosOds).HasForeignKey(d => d.IdOds).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pods_ods");
         });
 
-        modelBuilder.Entity<InvestigationInstitute>(entity =>
+        modelBuilder.Entity<InvRecursoDisponible>(entity =>
         {
-            entity.HasKey(e => e.IdInstitucion);
-            entity.ToTable("inv_institutos");
-            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
-            entity.Property(e => e.Nombre).HasMaxLength(200).IsRequired();
-            entity.Property(e => e.Siglas).HasMaxLength(20);
-            entity.Property(e => e.Ruc).HasMaxLength(20);
-            entity.Property(e => e.Tipo).HasColumnType("enum('Publica', 'Privada', 'Internacional', 'Organismo')").HasDefaultValue("Publica");
-            entity.Property(e => e.Pais).HasMaxLength(100);
-            entity.Property(e => e.Ciudad).HasMaxLength(100);
-            entity.Property(e => e.SitioWeb).HasMaxLength(250);
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
-        });
+            entity.HasKey(e => e.IdRecurso).HasName("PRIMARY");
+            entity.ToTable("inv_recursos_disponibles");
+            entity.Property(e => e.IdRecurso).HasColumnName("idRecurso");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Detalle).HasColumnName("detalle").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasPrecision(10, 2).IsRequired();
+            entity.Property(e => e.Fuente).HasColumnName("fuente").HasMaxLength(150);
 
-        modelBuilder.Entity<InvRubrica>(entity =>
-        {
-            entity.HasKey(e => e.IdRubrica).HasName("PRIMARY");
-            entity.ToTable("inv_rubricas").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Criterio).HasMaxLength(200).HasColumnName("criterio");
-            entity.Property(e => e.PuntajeMax).HasPrecision(5, 2).HasColumnName("puntajeMax");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-        });
-
-        modelBuilder.Entity<InvRevisionDetalle>(entity =>
-        {
-            entity.HasKey(e => e.IdDetalleRevision).HasName("PRIMARY");
-            entity.ToTable("inv_revisiones_detalle").HasCharSet("utf8mb4");
-            entity.HasIndex(e => new { e.IdRevision, e.IdRubrica }).IsUnique().HasDatabaseName("uq_revision_rubrica");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Puntaje).HasPrecision(5, 2).HasColumnName("puntaje");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdRevisionNavigation).WithMany(p => p.Detalles)
-                .HasForeignKey(d => d.IdRevision).HasConstraintName("fk_inv_rd_rev");
-            entity.HasOne(d => d.IdRubricaNavigation).WithMany(p => p.Detalles)
-                .HasForeignKey(d => d.IdRubrica).HasConstraintName("fk_inv_rd_rub");
-        });
-
-        modelBuilder.Entity<InvCronogramaTarea>(entity =>
-        {
-            entity.HasKey(e => e.IdTarea).HasName("PRIMARY");
-            entity.ToTable("inv_cronograma").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.NombreTarea).HasMaxLength(300).HasColumnName("nombreTarea");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Cronograma)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_cron_proyecto");
-        });
-
-        modelBuilder.Entity<InvInformeAvance>(entity =>
-        {
-            entity.HasKey(e => e.IdInforme).HasName("PRIMARY");
-            entity.ToTable("inv_informes_avance").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
-            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
-            entity.Property(e => e.Estado).HasColumnType("enum('borrador','enviado','revisado','aprobado')").HasColumnName("estado");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Informes)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_ia_proyecto");
-            entity.HasOne(d => d.IdProfesorNavigation).WithMany()
-                .HasForeignKey(d => d.IdProfesor).HasConstraintName("fk_inv_ia_profesor");
-        });
-
-        modelBuilder.Entity<InvEvidencia>(entity =>
-        {
-            entity.HasKey(e => e.IdEvidencia).HasName("PRIMARY");
-            entity.ToTable("inv_evidencias").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.NombreArchivo).HasMaxLength(300).HasColumnName("nombreArchivo");
-            entity.Property(e => e.RutaArchivo).HasMaxLength(500).HasColumnName("rutaArchivo");
-            entity.Property(e => e.TipoEvidencia).HasColumnType("enum('foto','factura','bitacora','otro')").HasColumnName("tipoEvidencia");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdInformeNavigation).WithMany(p => p.Evidencias)
-                .HasForeignKey(d => d.IdInforme).HasConstraintName("fk_inv_ev_inf");
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvRecursosDisponibles).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_rec_proyecto");
         });
 
         modelBuilder.Entity<InvPresupuestoItem>(entity =>
         {
             entity.HasKey(e => e.IdItem).HasName("PRIMARY");
-            entity.ToTable("inv_presupuesto_items").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Categoria).HasColumnType("enum('materiales','equipos','servicios','viajes','publicacion','otro')").HasColumnName("categoria");
-            entity.Property(e => e.Cantidad).HasPrecision(10, 2).HasColumnName("cantidad");
-            entity.Property(e => e.ValorUnitario).HasPrecision(10, 2).HasColumnName("valorUnitario");
-            entity.Property(e => e.ValorTotal).HasPrecision(10, 2).HasColumnName("valorTotal");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.PresupuestoItems)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_pi_proy");
+            entity.ToTable("inv_presupuesto_items");
+            entity.Property(e => e.IdItem).HasColumnName("idItem");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Categoria).HasColumnName("categoria").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Detalle).HasColumnName("detalle").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasPrecision(10, 2).IsRequired();
+            entity.Property(e => e.ValorUnitario).HasColumnName("valorUnitario").HasPrecision(10, 2).IsRequired();
+            entity.Property(e => e.ValorTotal).HasColumnName("valorTotal").HasPrecision(10, 2).IsRequired();
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvPresupuestoItems).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pres_proyecto");
         });
 
-        modelBuilder.Entity<InvGasto>(entity =>
+        modelBuilder.Entity<InvFinanciamiento>(entity =>
         {
-            entity.HasKey(e => e.IdGasto).HasName("PRIMARY");
-            entity.ToTable("inv_gastos").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Monto).HasPrecision(10, 2).HasColumnName("monto");
-            entity.Property(e => e.RegistradoPor).HasMaxLength(14).HasColumnName("registradoPor");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Gastos)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_ga_proyecto");
-            entity.HasOne(d => d.IdItemNavigation).WithMany(p => p.Gastos)
-                .HasForeignKey(d => d.IdItem).HasConstraintName("fk_inv_ga_item");
-            entity.HasOne(d => d.RegistradoPorNavigation).WithMany()
-                .HasForeignKey(d => d.RegistradoPor).HasConstraintName("fk_inv_ga_registro");
+            entity.HasKey(e => e.IdFinanciamiento).HasName("PRIMARY");
+            entity.ToTable("inv_financiamientos");
+            entity.Property(e => e.IdFinanciamiento).HasColumnName("idFinanciamiento");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.EsIstpet).HasColumnName("esIstpet").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.NombreEmpresa).HasColumnName("nombreEmpresa").HasMaxLength(255);
+            entity.Property(e => e.OtrasFuentes).HasColumnName("otrasFuentes").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Monto).HasColumnName("monto").HasPrecision(12, 2);
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvFinanciamientos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_fin_proyecto");
         });
 
         modelBuilder.Entity<InvProducto>(entity =>
         {
             entity.HasKey(e => e.IdProducto).HasName("PRIMARY");
-            entity.ToTable("inv_productos").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Titulo).HasMaxLength(500).HasColumnName("titulo");
-            entity.Property(e => e.IssnIsbn).HasMaxLength(50).HasColumnName("issn_isbn");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Productos)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_prod_proy");
+            entity.ToTable("inv_productos");
+            entity.Property(e => e.IdProducto).HasColumnName("idProducto");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Tipo).HasColumnName("tipo").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasDefaultValueSql("'1'");
+            entity.Property(e => e.EsPatente).HasColumnName("esPatente").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.NumeroRegistro).HasColumnName("numeroRegistro").HasMaxLength(100);
+            entity.Property(e => e.FechaExpiracion).HasColumnName("fechaExpiracion");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProductos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_prod_proyecto");
+        });
+
+        modelBuilder.Entity<InvCatImpacto>(entity =>
+        {
+            entity.HasKey(e => e.IdCatImpacto).HasName("PRIMARY");
+            entity.ToTable("inv_cat_impactos");
+            entity.Property(e => e.IdCatImpacto).HasColumnName("idCatImpacto");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100).IsRequired();
+        });
+
+        modelBuilder.Entity<InvImpactoProyecto>(entity =>
+        {
+            entity.HasKey(e => e.IdImpactoProyecto).HasName("PRIMARY");
+            entity.ToTable("inv_impactos_proyecto");
+            entity.Property(e => e.IdImpactoProyecto).HasColumnName("idImpactoProyecto");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdCatImpacto).HasColumnName("idCatImpacto");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text").IsRequired();
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvImpactosProyecto).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_imp_proyecto");
+            entity.HasOne(d => d.IdCatImpactoNavigation).WithMany(p => p.InvImpactosProyecto).HasForeignKey(d => d.IdCatImpacto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_imp_categoria");
+        });
+
+        modelBuilder.Entity<InvCronograma>(entity =>
+        {
+            entity.HasKey(e => e.IdTarea).HasName("PRIMARY");
+            entity.ToTable("inv_cronograma");
+            entity.Property(e => e.IdTarea).HasColumnName("idTarea");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdObjetivo).HasColumnName("idObjetivo");
+            entity.Property(e => e.NombreTarea).HasColumnName("nombreTarea").HasMaxLength(300).IsRequired();
+            entity.Property(e => e.Entregable).HasColumnName("entregable").HasMaxLength(255);
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvCronogramas).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_cron_proyecto");
+            entity.HasOne(d => d.IdObjetivoNavigation).WithMany(p => p.InvCronogramas).HasForeignKey(d => d.IdObjetivo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_cron_objetivo");
+        });
+
+        modelBuilder.Entity<InvCronogramaSemana>(entity =>
+        {
+            entity.HasKey(e => e.IdSemana).HasName("PRIMARY");
+            entity.ToTable("inv_cronograma_semanas");
+            entity.Property(e => e.IdSemana).HasColumnName("idSemana");
+            entity.Property(e => e.IdTarea).HasColumnName("idTarea");
+            entity.Property(e => e.NumeroSemana).HasColumnName("numeroSemana");
+            entity.Property(e => e.Planificado).HasColumnName("planificado").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Ejecutado).HasColumnName("ejecutado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+
+            entity.HasOne(d => d.IdTareaNavigation).WithMany(p => p.InvCronogramaSemanas).HasForeignKey(d => d.IdTarea).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_sem_tarea");
+        });
+
+        modelBuilder.Entity<InvBibliografiaProyecto>(entity =>
+        {
+            entity.HasKey(e => e.IdBibliografia).HasName("PRIMARY");
+            entity.ToTable("inv_bibliografia_proyecto");
+            entity.Property(e => e.IdBibliografia).HasColumnName("idBibliografia");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text").IsRequired();
+            entity.Property(e => e.Orden).HasColumnName("orden");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvBibliografiasProyecto).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_bib_proyecto");
+        });
+
+        modelBuilder.Entity<InvInformeAvance>(entity =>
+        {
+            entity.HasKey(e => e.IdInforme).HasName("PRIMARY");
+            entity.ToTable("inv_informes_avance");
+            entity.Property(e => e.IdInforme).HasColumnName("idInforme");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.NumeroInforme).HasColumnName("numeroInforme").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.FechaInforme).HasColumnName("fechaInforme");
+            entity.Property(e => e.ResumenActividades).HasColumnName("resumenActividades").HasColumnType("text");
+            entity.Property(e => e.PorcentajeAvance).HasColumnName("porcentajeAvance").HasPrecision(5, 2);
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Enviado','Revisado','Aprobado')").HasDefaultValueSql("'Borrador'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvInformesAvance).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_inf_proyecto");
+        });
+
+        modelBuilder.Entity<InvEvidencia>(entity =>
+        {
+            entity.HasKey(e => e.IdEvidencia).HasName("PRIMARY");
+            entity.ToTable("inv_evidencias");
+            entity.Property(e => e.IdEvidencia).HasColumnName("idEvidencia");
+            entity.Property(e => e.IdInforme).HasColumnName("idInforme");
+            entity.Property(e => e.NombreArchivo).HasColumnName("nombreArchivo").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.RutaArchivo).HasColumnName("rutaArchivo").HasMaxLength(500).IsRequired();
+            entity.Property(e => e.TipoEvidencia).HasColumnName("tipoEvidencia").HasMaxLength(100);
+            entity.Property(e => e.FechaSubida).HasColumnName("fechaSubida").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.IdInformeNavigation).WithMany(p => p.InvEvidencias).HasForeignKey(d => d.IdInforme).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_ev_informe");
+        });
+
+        modelBuilder.Entity<InvGasto>(entity =>
+        {
+            entity.HasKey(e => e.IdGasto).HasName("PRIMARY");
+            entity.ToTable("inv_gastos");
+            entity.Property(e => e.IdGasto).HasColumnName("idGasto");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdItem).HasColumnName("idItem");
+            entity.Property(e => e.FechaGasto).HasColumnName("fechaGasto");
+            entity.Property(e => e.Monto).HasColumnName("monto").HasPrecision(10, 2).IsRequired();
+            entity.Property(e => e.NumeroFactura).HasColumnName("numeroFactura").HasMaxLength(50);
+            entity.Property(e => e.Proveedor).HasColumnName("proveedor").HasMaxLength(255);
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasMaxLength(500);
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvGastos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_gast_proyecto");
+            entity.HasOne(d => d.IdItemNavigation).WithMany(p => p.InvGastos).HasForeignKey(d => d.IdItem).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_gast_item");
         });
 
         modelBuilder.Entity<InvTransferencia>(entity =>
         {
             entity.HasKey(e => e.IdTransferencia).HasName("PRIMARY");
-            entity.ToTable("inv_transferencias").HasCharSet("utf8mb4");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.EmpresaBeneficiaria).HasMaxLength(300).HasColumnName("empresaBeneficiaria");
-            entity.Property(e => e.ValorConvenio).HasPrecision(10, 2).HasColumnName("valorConvenio");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.Transferencias)
-                .HasForeignKey(d => d.IdProyecto).HasConstraintName("fk_inv_trans_proy");
+            entity.ToTable("inv_transferencias");
+            entity.Property(e => e.IdTransferencia).HasColumnName("idTransferencia");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Tipo).HasColumnName("tipo").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Entidad).HasColumnName("entidad").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Monto).HasColumnName("monto").HasPrecision(12, 2).IsRequired();
+            entity.Property(e => e.NumeroComprobante).HasColumnName("numeroComprobante").HasMaxLength(50);
+            entity.Property(e => e.Fecha).HasColumnName("fecha");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvTransferencias).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_trans_proyecto");
         });
 
         // ============================================================
@@ -895,38 +1034,77 @@ public partial class DiitraContext : DbContext
                 .HasForeignKey(d => d.IdRol).HasConstraintName("fk_rmo_rol");
         });
 
+        
+        modelBuilder.Entity<InvNotificacion>(entity =>
+        {
+            entity.HasKey(e => e.IdNotificacion).HasName("PRIMARY");
+            entity.ToTable("inv_notificaciones");
+            entity.Property(e => e.IdNotificacion).HasColumnName("idNotificacion");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique().HasDatabaseName("uq_notif_uuid");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Destinatario).HasColumnName("destinatario");
+            entity.Property(e => e.TipoDestinatario).HasColumnName("tipoDestinatario").HasColumnType("enum('Usuario','Profesor','Alumno')").HasDefaultValueSql("'Usuario'");
+            entity.Property(e => e.Categoria).HasColumnName("categoria").HasMaxLength(50).HasDefaultValueSql("'SISTEMA'");
+            entity.Property(e => e.Prioridad).HasColumnName("prioridad").HasMaxLength(20).HasDefaultValueSql("'NORMAL'");
+            entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Mensaje).HasColumnName("mensaje").HasColumnType("text");
+            entity.Property(e => e.UrlAccion).HasColumnName("urlAccion").HasMaxLength(255);
+            entity.Property(e => e.Leido).HasColumnName("leido").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaLectura).HasColumnName("fechaLectura");
+            entity.Property(e => e.Version).HasColumnName("version").HasDefaultValueSql("'1'");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany().HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_notif_proyecto");
+            entity.HasOne(d => d.DestinatarioNavigation).WithMany().HasForeignKey(d => d.Destinatario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_notif_usuario");
+        });
+
         modelBuilder.Entity<AccessToken>(entity =>
         {
-            entity.HasKey(e => e.IdToken);
+            entity.HasKey(e => e.IdToken).HasName("PRIMARY");
             entity.ToTable("inv_tokens_acceso");
             entity.Property(e => e.IdToken).HasColumnName("idToken");
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.Token).HasMaxLength(256).IsRequired();
-            entity.Property(e => e.IdReferencia).HasMaxLength(20).IsRequired();
-            entity.Property(e => e.TipoReferencia).HasColumnType("enum('profesor', 'externo')").IsRequired();
-            entity.Property(e => e.FechaCreacion).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.FechaExpiracion).IsRequired();
-            entity.Property(e => e.Usado).HasColumnType("tinyint(4)");
-            entity.Property(e => e.Scopes).HasMaxLength(200);
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)");
+            entity.HasIndex(e => e.Uuid).IsUnique().HasDatabaseName("uq_tokens_uuid");
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.Token).HasColumnName("token").HasMaxLength(255).IsRequired();
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.Property(e => e.IdReferencia).HasColumnName("idReferencia");
+            entity.Property(e => e.TipoReferencia).HasColumnName("tipoReferencia").HasMaxLength(50).HasDefaultValueSql("'Externo'");
+            entity.Property(e => e.Scopes).HasColumnName("scopes").HasMaxLength(255);
+            entity.Property(e => e.MaxUsos).HasColumnName("maxUsos").HasDefaultValueSql("'1'");
+            entity.Property(e => e.UsosActuales).HasColumnName("usosActuales").HasDefaultValueSql("'0'");
+            entity.Property(e => e.IpOrigen).HasColumnName("ipOrigen").HasMaxLength(50);
+            entity.Property(e => e.Activo).HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaExpiracion).HasColumnName("fechaExpiracion");
+            entity.Property(e => e.Version).HasColumnName("version").HasDefaultValueSql("'1'");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany().HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_token_proyecto");
         });
-        
+
         modelBuilder.Entity<InvUsuarioMetadata>(entity =>
         {
             entity.HasKey(e => e.IdMetadata).HasName("PRIMARY");
             entity.ToTable("inv_usuarios_metadata");
             entity.Property(e => e.IdMetadata).HasColumnName("idMetadata");
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
-            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.HasIndex(e => e.Uuid).IsUnique().HasDatabaseName("uq_usermeta_uuid");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
-            entity.Property(e => e.Version).HasColumnName("version").IsConcurrencyToken();
-            
+            entity.Property(e => e.OrcidId).HasColumnName("orcidId").HasMaxLength(20);
+            entity.Property(e => e.Especialidad).HasColumnName("especialidad").HasColumnType("text");
+            entity.Property(e => e.GradoAcademicoMaximo).HasColumnName("gradoAcademicoMaximo").HasMaxLength(100);
+            entity.Property(e => e.RutaFirmaP12).HasColumnName("rutaFirmaP12").HasMaxLength(255);
+            entity.Property(e => e.FirmaHabilitada).HasColumnName("firmaHabilitada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Configuracion).HasColumnName("configuracion").HasColumnType("json");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaUltimoAcceso).HasColumnName("fechaUltimoAcceso");
+            entity.Property(e => e.Version).HasColumnName("version").HasDefaultValueSql("'1'");
+
             entity.HasOne(d => d.User).WithOne(u => u.InvUsuarioMetadata)
                 .HasPrincipalKey<User>(u => u.IdUsuario)
                 .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
-                .HasConstraintName("fk_inv_meta_usuario");
+                .HasConstraintName("fk_usermeta_usuario");
         });
 
         OnModelCreatingPartial(modelBuilder);

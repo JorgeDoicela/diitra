@@ -3,52 +3,55 @@ using System.Collections.Generic;
 
 namespace diitra_infrastructure.data.models;
 
-/// <summary>Proyecto de Investigación e Innovación</summary>
 public partial class InvProyecto
 {
     public int IdProyecto { get; set; }
-    public Guid Uuid { get; set; } = Guid.NewGuid();
-    public int IdConvocatoria { get; set; }
+    public string Uuid { get; set; } = null!;
+    public int? IdConvocatoria { get; set; }
     public string? CodigoInstitucional { get; set; }
     public string Titulo { get; set; } = null!;
-    public string? Resumen { get; set; }
+    public string? DescripcionProyecto { get; set; }
+    public string? Antecedentes { get; set; }
     public string? Justificacion { get; set; }
+    public string? MarcoTeorico { get; set; }
     public string? Metodologia { get; set; }
-    public int? IdCampoDetalladoUnesco { get; set; }
-    public int? IdEspacio { get; set; }
-    public string IdProfesorDirector { get; set; } = null!;
-    public string Estado { get; set; } = "borrador";
+    public string? MetodoEvaluacion { get; set; }
+    public int? IdSublinea { get; set; }
+    public int? IdPrograma { get; set; }
+    public int? IdGrupo { get; set; }
+    public sbyte? TieneGrupo { get; set; }
+    public int? IdTipo { get; set; }
+    public DateOnly? FechaPresentacion { get; set; }
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
-    public decimal PresupuestoSolicitado { get; set; }
-    public decimal PresupuestoAprobado { get; set; }
+    public string? TiempoEjecucion { get; set; }
+    public string Estado { get; set; } = "Borrador";
     public decimal? PuntajeEvaluacion { get; set; }
-    public sbyte EsAnonimizado { get; set; }
-    public string? RutaProtocolo { get; set; }
-    public string? RutaCronograma { get; set; }
+    public decimal? ValorEjecucion { get; set; }
+    public sbyte? Activo { get; set; }
+    public DateTime? FechaRegistro { get; set; }
+    public DateTime? FechaModificacion { get; set; }
 
-    public string? RutaResolucion { get; set; }
-    public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
-    public DateTime FechaModificacion { get; set; } = DateTime.UtcNow;
-    public int Version { get; set; } = 1;
-    public sbyte Activo { get; set; } = 1;
+    public virtual InvConvocatoria? IdConvocatoriaNavigation { get; set; }
+    public virtual InvSublinea? IdSublineaNavigation { get; set; }
+    public virtual InvPrograma? IdProgramaNavigation { get; set; }
+    public virtual InvGrupoInvestigacion? IdGrupoNavigation { get; set; }
+    public virtual InvTipoInvestigacion? IdTipoNavigation { get; set; }
 
-    // Navegación hacia tablas de SIGAFI
-    public virtual InvConvocatoria IdConvocatoriaNavigation { get; set; } = null!;
-    public virtual Profesore IdProfesorDirectorNavigation { get; set; } = null!;
-    public virtual CampoDetalladoUnesco? IdCampoDetalladoUnescoNavigation { get; set; }
-    public virtual Espacio? IdEspacioNavigation { get; set; }
-
-    // Navegación hacia tablas nuevas Diitra
-    public virtual ICollection<InvProyectoProfesor> Profesores { get; set; } = new List<InvProyectoProfesor>();
-    public virtual ICollection<InvProyectoAlumno> Alumnos { get; set; } = new List<InvProyectoAlumno>();
-    public virtual ICollection<InvRevision> Revisiones { get; set; } = new List<InvRevision>();
-    public virtual ICollection<InvCronogramaTarea> Cronograma { get; set; } = new List<InvCronogramaTarea>();
-    public virtual ICollection<InvInformeAvance> Informes { get; set; } = new List<InvInformeAvance>();
-    public virtual ICollection<InvPresupuestoItem> PresupuestoItems { get; set; } = new List<InvPresupuestoItem>();
-    public virtual ICollection<InvGasto> Gastos { get; set; } = new List<InvGasto>();
-    public virtual ICollection<InvProducto> Productos { get; set; } = new List<InvProducto>();
-    public virtual ICollection<InvTransferencia> Transferencias { get; set; } = new List<InvTransferencia>();
-    public virtual ICollection<InvProyectoHistorial> Historial { get; set; } = new List<InvProyectoHistorial>();
-    public virtual ICollection<InvNotificacion> Notificaciones { get; set; } = new List<InvNotificacion>();
+    public virtual ICollection<InvProyectoCarrera> InvProyectosCarreras { get; set; } = new List<InvProyectoCarrera>();
+    public virtual ICollection<InvProyectoDominio> InvProyectosDominios { get; set; } = new List<InvProyectoDominio>();
+    public virtual ICollection<InvProyectoProfesor> InvProyectosProfesores { get; set; } = new List<InvProyectoProfesor>();
+    public virtual ICollection<InvProyectoAlumno> InvProyectosAlumnos { get; set; } = new List<InvProyectoAlumno>();
+    public virtual ICollection<InvObjetivoProyecto> InvObjetivosProyecto { get; set; } = new List<InvObjetivoProyecto>();
+    public virtual ICollection<InvProyectoOds> InvProyectosOds { get; set; } = new List<InvProyectoOds>();
+    public virtual ICollection<InvRecursoDisponible> InvRecursosDisponibles { get; set; } = new List<InvRecursoDisponible>();
+    public virtual ICollection<InvPresupuestoItem> InvPresupuestoItems { get; set; } = new List<InvPresupuestoItem>();
+    public virtual ICollection<InvFinanciamiento> InvFinanciamientos { get; set; } = new List<InvFinanciamiento>();
+    public virtual ICollection<InvProducto> InvProductos { get; set; } = new List<InvProducto>();
+    public virtual ICollection<InvImpactoProyecto> InvImpactosProyecto { get; set; } = new List<InvImpactoProyecto>();
+    public virtual ICollection<InvCronograma> InvCronogramas { get; set; } = new List<InvCronograma>();
+    public virtual ICollection<InvBibliografiaProyecto> InvBibliografiasProyecto { get; set; } = new List<InvBibliografiaProyecto>();
+    public virtual ICollection<InvInformeAvance> InvInformesAvance { get; set; } = new List<InvInformeAvance>();
+    public virtual ICollection<InvGasto> InvGastos { get; set; } = new List<InvGasto>();
+    public virtual ICollection<InvTransferencia> InvTransferencias { get; set; } = new List<InvTransferencia>();
 }
