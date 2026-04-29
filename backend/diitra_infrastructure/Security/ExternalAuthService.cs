@@ -1,17 +1,13 @@
-using System;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using diitra_domain.Identity.Entities;
 using diitra_infrastructure.data.models;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.Security;
 
 public interface IExternalAuthService
 {
-    Task<string> GenerateMagicLinkAsync(string idReferencia, string tipoReferencia, string? scopes = null, int hoursValid = 24);
+    Task<string> CreateAccessTokenAsync(int idReferencia, string tipoReferencia, string? scopes = null, int hoursValid = 24);
     Task<AccessToken?> ValidateTokenAsync(string token);
-    Task MarkTokenAsUsedAsync(string token);
 }
 
 public class ExternalAuthService : IExternalAuthService
@@ -23,10 +19,9 @@ public class ExternalAuthService : IExternalAuthService
         _context = context;
     }
 
-    public async Task<string> GenerateMagicLinkAsync(string idReferencia, string tipoReferencia, string? scopes = null, int hoursValid = 24)
+    public async Task<string> CreateAccessTokenAsync(int idReferencia, string tipoReferencia, string? scopes = null, int hoursValid = 24)
     {
-        var token = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)); // 64 caracteres hex
-        
+        var token = Guid.NewGuid().ToString("N");
         var accessToken = new AccessToken
         {
             Token = token,
@@ -34,11 +29,12 @@ public class ExternalAuthService : IExternalAuthService
             TipoReferencia = tipoReferencia,
             Scopes = scopes,
             FechaExpiracion = DateTime.UtcNow.AddHours(hoursValid),
-            Usado = false,
-            Activo = true
+            Activo = 1,
+            Usado = 0,
+            Version = 1
         };
 
-        _context.AccessTokens.Add(accessToken);
+        _context.InvTokensAcceso.Add(accessToken);
         await _context.SaveChangesAsync();
 
         return token;
@@ -46,22 +42,21 @@ public class ExternalAuthService : IExternalAuthService
 
     public async Task<AccessToken?> ValidateTokenAsync(string token)
     {
-        var accessToken = await _context.AccessTokens
-            .FirstOrDefaultAsync(t => t.Token == token && t.Activo && !t.Usado);
-
-        if (accessToken == null || accessToken.IsExpired)
-            return null;
+        var accessToken = await _context.InvTokensAcceso
+            .FirstOrDefaultAsync(t => t.Token == token && t.Activo == 1 && t.Usado == 0 && (t.FechaExpiracion == null || t.FechaExpiracion > DateTime.UtcNow));
 
         return accessToken;
     }
 
-    public async Task MarkTokenAsUsedAsync(string token)
+    public async Task<bool> MarkTokenAsUsedAsync(string token)
     {
-        var accessToken = await _context.AccessTokens.FirstOrDefaultAsync(t => t.Token == token);
+        var accessToken = await _context.InvTokensAcceso.FirstOrDefaultAsync(t => t.Token == token);
         if (accessToken != null)
         {
-            accessToken.Usado = true;
+            accessToken.Usado = 1;
             await _context.SaveChangesAsync();
+            return true;
         }
+        return false;
     }
 }
