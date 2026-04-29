@@ -19,7 +19,7 @@ public partial class InvProyecto
     public int? IdSublinea { get; set; }
     public int? IdPrograma { get; set; }
     public int? IdGrupo { get; set; }
-    public sbyte? TieneGrupo { get; set; }
+    public bool? TieneGrupo { get; set; }
     public int? IdTipo { get; set; }
     public DateOnly? FechaPresentacion { get; set; }
     public DateOnly? FechaInicio { get; set; }
@@ -28,7 +28,7 @@ public partial class InvProyecto
     public string Estado { get; set; } = "Borrador";
     public decimal? PuntajeEvaluacion { get; set; }
     public decimal? ValorEjecucion { get; set; }
-    public sbyte? Activo { get; set; }
+    public bool? Activo { get; set; }
     public DateTime? FechaRegistro { get; set; }
     public DateTime? FechaModificacion { get; set; }
 

@@ -10,7 +10,7 @@ public partial class InvLineaInvestigacion
     public string CodigoLinea { get; set; } = null!;
     public string NombreLinea { get; set; } = null!;
     public string? Descripcion { get; set; }
-    public sbyte? Activo { get; set; }
+    public bool? Activo { get; set; }
     public DateTime? FechaRegistro { get; set; }
 
     public virtual ICollection<InvSublinea> InvSublineas { get; set; } = new List<InvSublinea>();

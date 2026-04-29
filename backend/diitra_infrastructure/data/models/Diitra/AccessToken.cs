@@ -24,7 +24,7 @@ public partial class AccessToken
     public int UsosActuales { get; set; } = 0;
     public string? IpOrigen { get; set; } 
     
-    public sbyte Activo { get; set; } = 1;
+    public bool Activo { get; set; } = true;
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
     public DateTime? FechaExpiracion { get; set; }
     public int Version { get; set; } = 1;

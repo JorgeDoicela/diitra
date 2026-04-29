@@ -7,7 +7,7 @@ public partial class InvObjetivoProyecto
 {
     public int IdObjetivo { get; set; }
     public int IdProyecto { get; set; }
-    public sbyte EsGeneral { get; set; }
+    public bool EsGeneral { get; set; }
     public string Descripcion { get; set; } = null!;
     public int? Orden { get; set; }
 

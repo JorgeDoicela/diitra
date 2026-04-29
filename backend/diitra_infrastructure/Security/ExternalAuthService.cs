@@ -29,7 +29,7 @@ public class ExternalAuthService : IExternalAuthService
             TipoReferencia = tipoReferencia,
             Scopes = scopes,
             FechaExpiracion = DateTime.UtcNow.AddHours(hoursValid),
-            Activo = 1,
+            Activo = true,
             UsosActuales = 0,
             MaxUsos = 1,
             Version = 1
@@ -44,7 +44,7 @@ public class ExternalAuthService : IExternalAuthService
     public async Task<AccessToken?> ValidateTokenAsync(string token)
     {
         var accessToken = await _context.InvTokensAcceso
-            .FirstOrDefaultAsync(t => t.Token == token && t.Activo == 1 && t.UsosActuales < t.MaxUsos && (t.FechaExpiracion == null || t.FechaExpiracion > DateTime.UtcNow));
+            .FirstOrDefaultAsync(t => t.Token == token && t.Activo && t.UsosActuales < t.MaxUsos && (t.FechaExpiracion == null || t.FechaExpiracion > DateTime.UtcNow));
 
         return accessToken;
     }

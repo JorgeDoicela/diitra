@@ -8,7 +8,7 @@ public partial class InvDominio
     public int IdDominio { get; set; }
     public string Uuid { get; set; } = null!;
     public string Nombre { get; set; } = null!;
-    public sbyte? Activo { get; set; }
+    public bool? Activo { get; set; }
     public DateTime? FechaRegistro { get; set; }
 
     public virtual ICollection<InvDominioCarrera> InvDominiosCarreras { get; set; } = new List<InvDominioCarrera>();
