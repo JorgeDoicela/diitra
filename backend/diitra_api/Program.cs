@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.Collaboration;
 using diitra_infrastructure.Security;
 using diitra_application.Research;
+using diitra_infrastructure.Research;
 using diitra_application.Common;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -105,6 +106,7 @@ builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infr
 builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_infrastructure.Security.AdminService>();
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
+builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 
 // 3. DATABASE CONNECTION

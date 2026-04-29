@@ -28,6 +28,8 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvSublinea>           InvSublineas           { get; set; }
     public virtual DbSet<InvTipoInvestigacion>  InvTiposInvestigacion  { get; set; }
     public virtual DbSet<InvGrupoInvestigacion> InvGruposInvestigacion { get; set; }
+    public virtual DbSet<InvTipoConvocatoria>   InvTiposConvocatoria   { get; set; }
+    public virtual DbSet<InvAgendaZonal>        InvAgendasZonales      { get; set; }
     public virtual DbSet<InvConvocatoria>       InvConvocatorias       { get; set; }
     public virtual DbSet<InvProyecto>           InvProyectos           { get; set; }
     public virtual DbSet<InvProyectoCarrera>    InvProyectosCarreras    { get; set; }
@@ -592,9 +594,37 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdPeriodo).HasColumnName("idPeriodo").HasMaxLength(7).IsFixedLength().IsRequired();
             entity.Property(e => e.FechaApertura).HasColumnName("fechaApertura");
             entity.Property(e => e.FechaCierre).HasColumnName("fechaCierre");
+            entity.Property(e => e.Anio).HasColumnName("anio");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.PresupuestoTotal).HasColumnName("presupuestoTotal").HasPrecision(12, 2);
+            entity.Property(e => e.MontoMaximoProyecto).HasColumnName("montoMaximoProyecto").HasPrecision(12, 2);
+            entity.Property(e => e.UrlBases).HasColumnName("urlBases").HasMaxLength(512);
+            entity.Property(e => e.RequisitosMinimos).HasColumnName("requisitosMinimos").HasColumnType("text");
+            entity.Property(e => e.IdTipoConvocatoria).HasColumnName("idTipoConvocatoria");
+            entity.Property(e => e.IdAgendaZonal).HasColumnName("idAgendaZonal");
+            entity.Property(e => e.FinanciamientoExt).HasColumnName("financiamientoExt").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.MetaProduccion).HasColumnName("metaProduccion").HasMaxLength(255);
             entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Abierta','Cerrada','Anulada')").HasDefaultValueSql("'Borrador'");
 
             entity.HasOne(d => d.IdPeriodoNavigation).WithMany().HasForeignKey(d => d.IdPeriodo).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_conv_periodo");
+        });
+
+        modelBuilder.Entity<InvTipoConvocatoria>(entity =>
+        {
+            entity.HasKey(e => e.IdTipoConvocatoria).HasName("PRIMARY");
+            entity.ToTable("inv_tipos_convocatoria");
+            entity.Property(e => e.IdTipoConvocatoria).HasColumnName("idTipoConvocatoria");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<InvAgendaZonal>(entity =>
+        {
+            entity.HasKey(e => e.IdAgendaZonal).HasName("PRIMARY");
+            entity.ToTable("inv_agendas_zonales");
+            entity.Property(e => e.IdAgendaZonal).HasColumnName("idAgendaZonal");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
         });
 
         modelBuilder.Entity<InvProyecto>(entity =>

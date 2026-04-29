@@ -7,6 +7,7 @@ import Landing from './pages/Landing/Landing';
 import Login from './pages/Login/Login';
 import CollaborationDemo from './pages/CollaborationDemo';
 import { AuthProvider, useAuth } from './api/AuthContext';
+import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -75,7 +76,13 @@ function App() {
 
           {/* Redirections for common paths */}
           <Route path="/investigacion" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/convocatorias" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/convocatorias" element={
+            <ProtectedRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <ConvocatoriasPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/revisiones" element={<Navigate to="/dashboard" replace />} />
           <Route path="/analiticas" element={<Navigate to="/dashboard" replace />} />
 
