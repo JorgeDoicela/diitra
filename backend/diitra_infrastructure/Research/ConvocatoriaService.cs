@@ -112,7 +112,7 @@ public class ConvocatoriaService : IConvocatoriaService
 
         if (dto.LineasIds != null && dto.LineasIds.Any())
         {
-            var lineas = await _context.InvLineasInvestigacions
+            var lineas = await _context.InvLineasInvestigacion
                 .Where(l => dto.LineasIds.Contains(l.IdLinea))
                 .ToListAsync();
             foreach (var linea in lineas)
@@ -155,7 +155,7 @@ public class ConvocatoriaService : IConvocatoriaService
         conv.Lineas.Clear();
         if (dto.LineasIds != null && dto.LineasIds.Any())
         {
-            var lineas = await _context.InvLineasInvestigacions
+            var lineas = await _context.InvLineasInvestigacion
                 .Where(l => dto.LineasIds.Contains(l.IdLinea))
                 .ToListAsync();
             foreach (var linea in lineas)
@@ -190,14 +190,16 @@ public class ConvocatoriaService : IConvocatoriaService
 
     public async Task<IEnumerable<PeriodoDto>> GetActivePeriodsAsync()
     {
+        // Eliminamos el filtro de esInstituto porque en tu DB todos están en 0.
+        // Ahora mostrará cualquier periodo que esté marcado como activo (global o del instituto).
         return await _context.Periodos
-            .Where(p => p.Activo == true)
+            .Where(p => p.Activo == true || p.Periodoactivoinstituto == 1)
             .OrderByDescending(p => p.IdPeriodo)
             .Select(p => new PeriodoDto
             {
                 IdPeriodo = p.IdPeriodo,
                 Detalle = p.Detalle,
-                Activo = p.Activo ?? false
+                Activo = p.Activo == true || p.Periodoactivoinstituto == 1
             })
             .ToListAsync();
     }
@@ -226,8 +228,8 @@ public class ConvocatoriaService : IConvocatoriaService
 
     public async Task<IEnumerable<object>> GetCatalogosLineasAsync()
     {
-        return await _context.InvLineasInvestigacions
-            .Where(l => l.Activo == 1)
+        return await _context.InvLineasInvestigacion
+            .Where(l => l.Activo == true)
             .Select(l => new { id = l.IdLinea, nombre = l.NombreLinea })
             .ToListAsync();
     }
