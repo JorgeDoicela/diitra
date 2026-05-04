@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Plus, Calendar, DollarSign, FileText, CheckCircle, 
-    Clock, Trash2, Edit2, ExternalLink, Activity, 
-    FileSignature, AlertCircle, RefreshCw, MoreVertical,
+    Clock, Trash2, Edit2, Activity, 
+    AlertCircle, RefreshCw,
     ChevronRight, CalendarDays, X, Save, ShieldCheck,
-    Target, BookOpen, Layers
+    BookOpen, Layers
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 
@@ -25,7 +25,7 @@ interface Convocatoria {
     id_rubrica?: number;
     rubrica_nombre?: string;
     puntaje_minimo_aprobacion: number;
-    financiamiento_ext: bool;
+    financiamiento_ext: boolean;
     meta_produccion?: string;
     fecha_apertura: string;
     fecha_cierre: string;
