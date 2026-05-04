@@ -89,10 +89,10 @@ public class PeerReviewService : IPeerReviewService
             
             // Auto-approval logic
             var convocatoria = await _context.InvConvocatorias.FindAsync(project.IdConvocatoria);
-            if (convocatoria != null && totalScore >= (convocatoria.PuntajeMinimoAprobacion ?? 70))
+            if (convocatoria != null && totalScore >= convocatoria.PuntajeMinimoAprobacion)
             {
                 project.Estado = "Aprobado";
-                project.FechaAprobacion = DateTime.Now;
+                project.FechaModificacion = DateTime.Now;
             }
             else
             {

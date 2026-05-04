@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
     ClipboardList, Plus, Search, FileText, 
     MoreVertical, ExternalLink, MessageCircle,
-    ArrowRight, Target, Users, DollarSign, Calendar
+    ArrowRight, Target, Users, DollarSign, Calendar, Filter
 } from 'lucide-react';
 import api from '../../../api/axios_config';
+import ProjectWorkspace from './Wizard/ProjectWizard';
 
 interface Proyecto {
     uuid: string;
@@ -18,6 +19,8 @@ interface Proyecto {
 const ResearchProjectsPage = () => {
     const [proyectos, setProyectos] = useState<Proyecto[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [showWizard, setShowWizard] = useState(false);
 
     useEffect(() => {
         const fetchProyectos = async () => {
@@ -50,6 +53,7 @@ const ResearchProjectsPage = () => {
                 </div>
 
                 <button 
+                    onClick={() => setShowWizard(true)}
                     className="flex items-center gap-2 bg-text-main text-bg-deep px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
                 >
                     <Plus size={14} strokeWidth={3} />
@@ -112,6 +116,8 @@ const ResearchProjectsPage = () => {
                     <p className="text-[10px] text-text-dim/60 uppercase tracking-tight mt-1">Las postulaciones enviadas aparecerán aquí.</p>
                 </div>
             </div>
+
+            {showWizard && <ProjectWorkspace onClose={() => setShowWizard(false)} />}
         </main>
     );
 };
