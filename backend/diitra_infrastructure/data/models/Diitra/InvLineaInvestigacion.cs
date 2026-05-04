@@ -14,4 +14,5 @@ public partial class InvLineaInvestigacion
     public DateTime? FechaRegistro { get; set; }
 
     public virtual ICollection<InvSublinea> InvSublineas { get; set; } = new List<InvSublinea>();
+    public virtual ICollection<InvConvocatoria> Convocatorias { get; set; } = new List<InvConvocatoria>();
 }

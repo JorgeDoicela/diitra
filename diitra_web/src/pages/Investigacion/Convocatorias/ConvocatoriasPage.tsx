@@ -3,7 +3,8 @@ import {
     Plus, Calendar, DollarSign, FileText, CheckCircle, 
     Clock, Trash2, Edit2, ExternalLink, Activity, 
     FileSignature, AlertCircle, RefreshCw, MoreVertical,
-    ChevronRight, CalendarDays, X, Save, ShieldCheck
+    ChevronRight, CalendarDays, X, Save, ShieldCheck,
+    Target, BookOpen, Layers
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 
@@ -21,11 +22,15 @@ interface Convocatoria {
     requisitos_minimos: string;
     id_tipo_convocatoria?: number;
     id_agenda_zonal?: number;
-    financiamiento_ext: boolean;
+    id_rubrica?: number;
+    rubrica_nombre?: string;
+    puntaje_minimo_aprobacion: number;
+    financiamiento_ext: bool;
     meta_produccion?: string;
     fecha_apertura: string;
     fecha_cierre: string;
     estado: 'Borrador' | 'Abierta' | 'Cerrada' | 'Anulada';
+    lineas_ids: number[];
 }
 
 interface Periodo {
@@ -43,10 +48,14 @@ const ConvocatoriasPage = () => {
     const [periodos, setPeriodos] = useState<Periodo[]>([]);
     const [tiposConv, setTiposConv] = useState<Catalogo[]>([]);
     const [agendas, setAgendas] = useState<Catalogo[]>([]);
+    const [rubricas, setRubricas] = useState<Catalogo[]>([]);
+    const [lineas, setLineas] = useState<Catalogo[]>([]);
+    
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
     
     // Form State
     const [formData, setFormData] = useState({
@@ -61,10 +70,13 @@ const ConvocatoriasPage = () => {
         requisitos_minimos: '',
         id_tipo_convocatoria: undefined as number | undefined,
         id_agenda_zonal: undefined as number | undefined,
+        id_rubrica: undefined as number | undefined,
+        puntaje_minimo_aprobacion: 70.00,
         financiamiento_ext: false,
         meta_produccion: '',
         fecha_apertura: '',
-        fecha_cierre: ''
+        fecha_cierre: '',
+        lineas_ids: [] as number[]
     });
 
     const fetchConvocatorias = async () => {
@@ -81,14 +93,18 @@ const ConvocatoriasPage = () => {
 
     const fetchCatalogos = async () => {
         try {
-            const [pRes, tRes, aRes] = await Promise.all([
+            const [pRes, tRes, aRes, rRes, lRes] = await Promise.all([
                 api.get('/Convocatorias/periodos'),
                 api.get('/Convocatorias/catalogos/tipos'),
-                api.get('/Convocatorias/catalogos/agendas')
+                api.get('/Convocatorias/catalogos/agendas'),
+                api.get('/Convocatorias/catalogos/rubricas'),
+                api.get('/Convocatorias/catalogos/lineas')
             ]);
             setPeriodos(pRes.data);
             setTiposConv(tRes.data);
             setAgendas(aRes.data);
+            setRubricas(rRes.data);
+            setLineas(lRes.data);
             
             if (pRes.data.length > 0 && !formData.id_periodo) {
                 setFormData(prev => ({ ...prev, id_periodo: pRes.data[0].id_periodo }));
@@ -106,8 +122,8 @@ const ConvocatoriasPage = () => {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (isEditing) {
-                // await api.put(`/Convocatorias/${selectedUuid}`, formData);
+            if (isEditing && selectedUuid) {
+                await api.put(`/Convocatorias/${selectedUuid}`, formData);
             } else {
                 await api.post('/Convocatorias', formData);
             }
@@ -116,6 +132,51 @@ const ConvocatoriasPage = () => {
             resetForm();
         } catch (error) {
             console.error('Error saving convocatoria:', error);
+        }
+    };
+
+    const handleEdit = (conv: Convocatoria) => {
+        setIsEditing(true);
+        setSelectedUuid(conv.uuid);
+        setFormData({
+            codigo_convocatoria: conv.codigo_convocatoria,
+            titulo: conv.titulo,
+            id_periodo: conv.id_periodo,
+            anio: conv.anio,
+            descripcion: conv.descripcion || '',
+            presupuesto_total: conv.presupuesto_total || 0,
+            monto_maximo_proyecto: conv.monto_maximo_proyecto || 0,
+            url_bases: conv.url_bases || '',
+            requisitos_minimos: conv.requisitos_minimos || '',
+            id_tipo_convocatoria: conv.id_tipo_convocatoria,
+            id_agenda_zonal: conv.id_agenda_zonal,
+            id_rubrica: conv.id_rubrica,
+            puntaje_minimo_aprobacion: conv.puntaje_minimo_aprobacion || 70,
+            financiamiento_ext: conv.financiamiento_ext,
+            meta_produccion: conv.meta_produccion || '',
+            fecha_apertura: conv.fecha_apertura,
+            fecha_cierre: conv.fecha_cierre,
+            lineas_ids: conv.lineas_ids || []
+        });
+        setShowModal(true);
+    };
+
+    const handleDelete = async (uuid: string) => {
+        if (!window.confirm('¿Estás seguro de eliminar esta convocatoria?')) return;
+        try {
+            await api.delete(`/Convocatorias/${uuid}`);
+            fetchConvocatorias();
+        } catch (error) {
+            console.error('Error deleting convocatoria:', error);
+        }
+    };
+
+    const handleStatusChange = async (uuid: string, newStatus: string) => {
+        try {
+            await api.patch(`/Convocatorias/${uuid}/status?status=${newStatus}`);
+            fetchConvocatorias();
+        } catch (error) {
+            console.error('Error changing status:', error);
         }
     };
 
@@ -132,13 +193,26 @@ const ConvocatoriasPage = () => {
             requisitos_minimos: '',
             id_tipo_convocatoria: undefined,
             id_agenda_zonal: undefined,
+            id_rubrica: undefined,
+            puntaje_minimo_aprobacion: 70.00,
             financiamiento_ext: false,
             meta_produccion: '',
             fecha_apertura: '',
-            fecha_cierre: ''
+            fecha_cierre: '',
+            lineas_ids: []
         });
         setIsEditing(false);
+        setSelectedUuid(null);
         setShowAdvanced(false);
+    };
+
+    const toggleLinea = (id: number) => {
+        setFormData(prev => ({
+            ...prev,
+            lineas_ids: prev.lineas_ids.includes(id) 
+                ? prev.lineas_ids.filter(lineaId => lineaId !== id)
+                : [...prev.lineas_ids, id]
+        }));
     };
 
     const getStatusColor = (estado: string) => {
@@ -194,7 +268,7 @@ const ConvocatoriasPage = () => {
             {/* List View */}
             <div className="space-y-4 animate-fade-up [animation-delay:200ms]">
                 {convocatorias.map((conv) => (
-                    <div key={conv.uuid} className="bento-card p-6 flex flex-col md:flex-row justify-between items-center group hover:border-text-main transition-all cursor-pointer">
+                    <div key={conv.uuid} className="bento-card p-6 flex flex-col md:flex-row justify-between items-center group hover:border-text-main transition-all">
                         <div className="flex items-center gap-6 flex-1">
                             <div className="p-3 rounded-lg bg-surface border border-border-thin group-hover:border-text-main transition-colors text-text-dim group-hover:text-text-main">
                                 <FileText size={20} strokeWidth={1.5} />
@@ -211,18 +285,41 @@ const ConvocatoriasPage = () => {
                                     <span className="flex items-center gap-1"><Calendar size={12} /> {conv.anio}</span>
                                     <span className="flex items-center gap-1"><ShieldCheck size={12} /> {conv.periodo_nombre || conv.id_periodo}</span>
                                     <span className="flex items-center gap-1 text-text-main"><DollarSign size={12} /> Max: ${conv.monto_maximo_proyecto?.toLocaleString()}</span>
+                                    {conv.rubrica_nombre && <span className="flex items-center gap-1"><Layers size={12} /> {conv.rubrica_nombre}</span>}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-6 mt-4 md:mt-0">
-                            <div className="text-right hidden md:block">
+                        <div className="flex items-center gap-3 mt-4 md:mt-0">
+                            <div className="text-right hidden md:block mr-4">
                                 <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Cierre</p>
                                 <p className="text-xs font-mono text-text-main">{conv.fecha_cierre}</p>
                             </div>
-                            <div className="h-8 w-[1px] bg-border-thin mx-2" />
-                            <button className="p-2 text-text-dim hover:text-text-main transition-colors">
-                                <ChevronRight size={20} />
+                            
+                            {conv.estado === 'Borrador' && (
+                                <button 
+                                    onClick={() => handleStatusChange(conv.uuid, 'Abierta')}
+                                    className="p-2 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                                    title="Publicar Convocatoria"
+                                >
+                                    <CheckCircle size={18} />
+                                </button>
+                            )}
+                            
+                            <button 
+                                onClick={() => handleEdit(conv)}
+                                className="p-2 text-text-dim hover:text-text-main hover:bg-surface rounded transition-colors"
+                                title="Editar"
+                            >
+                                <Edit2 size={18} />
+                            </button>
+                            
+                            <button 
+                                onClick={() => handleDelete(conv.uuid)}
+                                className="p-2 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                title="Eliminar"
+                            >
+                                <Trash2 size={18} />
                             </button>
                         </div>
                     </div>
@@ -247,7 +344,9 @@ const ConvocatoriasPage = () => {
                     <div className="bg-bg-deep border border-border-thin w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                         <header className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30 shrink-0">
                             <div>
-                                <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">Nueva Convocatoria</h3>
+                                <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
+                                    {isEditing ? 'Editar Convocatoria' : 'Nueva Convocatoria'}
+                                </h3>
                                 <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest">Registro de Ciclo de Investigación</p>
                             </div>
                             <button onClick={() => setShowModal(false)} className="p-2 text-text-dim hover:text-text-main transition-colors">
@@ -340,6 +439,29 @@ const ConvocatoriasPage = () => {
                                 </div>
                             </div>
 
+                            {/* Section: Líneas de Investigación */}
+                            <div className="space-y-3">
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                    <BookOpen size={12} /> Líneas de Investigación Habilitadas
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {lineas.map(l => (
+                                        <button
+                                            key={l.id}
+                                            type="button"
+                                            onClick={() => toggleLinea(l.id)}
+                                            className={`text-left px-3 py-2 rounded border text-[11px] transition-all ${
+                                                formData.lineas_ids.includes(l.id)
+                                                    ? 'bg-text-main/10 border-text-main text-text-main font-bold'
+                                                    : 'bg-surface border-border-thin text-text-dim hover:border-text-main'
+                                            }`}
+                                        >
+                                            {l.nombre}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Advanced Section Toggle */}
                             <div className="pt-4 border-t border-border-thin">
                                 <button 
@@ -354,6 +476,31 @@ const ConvocatoriasPage = () => {
 
                             {showAdvanced && (
                                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-200">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Rúbrica de Evaluación</label>
+                                            <select 
+                                                className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all appearance-none"
+                                                value={formData.id_rubrica || ''}
+                                                onChange={e => setFormData({...formData, id_rubrica: e.target.value ? parseInt(e.target.value) : undefined})}
+                                            >
+                                                <option value="">Seleccionar Rúbrica...</option>
+                                                {rubricas.map(r => (
+                                                    <option key={r.id} value={r.id}>{r.nombre}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Puntaje Mínimo (Aprobación)</label>
+                                            <input 
+                                                type="number"
+                                                className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                                value={formData.puntaje_minimo_aprobacion}
+                                                onChange={e => setFormData({...formData, puntaje_minimo_aprobacion: parseFloat(e.target.value)})}
+                                            />
+                                        </div>
+                                    </div>
+
                                     <div className="grid grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
@@ -421,7 +568,7 @@ const ConvocatoriasPage = () => {
                                     className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2"
                                 >
                                     <Save size={14} />
-                                    Guardar Convocatoria
+                                    {isEditing ? 'Actualizar Convocatoria' : 'Guardar Convocatoria'}
                                 </button>
                             </div>
                         </form>
