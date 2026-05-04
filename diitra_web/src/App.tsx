@@ -8,6 +8,8 @@ import Login from './pages/Login/Login';
 import CollaborationDemo from './pages/CollaborationDemo';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
+import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
+import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -75,7 +77,13 @@ function App() {
           } />
 
           {/* Redirections for common paths */}
-          <Route path="/investigacion" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/investigacion" element={
+            <ProtectedRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <ResearchProjectsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/convocatorias" element={
             <ProtectedRoute>
               <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
@@ -83,7 +91,13 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           } />
-          <Route path="/revisiones" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/revisiones" element={
+            <ProtectedRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <PeerReviewPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
           <Route path="/analiticas" element={<Navigate to="/dashboard" replace />} />
 
           {/* Fallback */}

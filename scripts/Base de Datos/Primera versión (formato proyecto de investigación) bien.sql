@@ -56,7 +56,9 @@ DROP TABLE IF EXISTS
     inv_grupos_investigacion,
     inv_dominios_carrera,
     inv_dominios,
-    inv_tipos_investigacion;
+    inv_tipos_investigacion,
+    inv_revisiones_pares,
+    inv_evaluaciones_detalle;
 
 -- #############################################################################
 -- SECCIÓN 1: CATÁLOGOS BASE
@@ -232,7 +234,12 @@ CREATE TABLE inv_proyectos (
     FOREIGN KEY (idSublinea)     REFERENCES inv_sublineas(idSublinea),
     FOREIGN KEY (idPrograma)     REFERENCES inv_programas(idPrograma),
     FOREIGN KEY (idGrupo)        REFERENCES inv_grupos_investigacion(idGrupo),
-    FOREIGN KEY (idTipo)         REFERENCES inv_tipos_investigacion(idTipo)
+    FOREIGN KEY (idTipo)         REFERENCES inv_tipos_investigacion(idTipo),
+    -- Extensiones CACES
+    hashActaAprobacion   TEXT NULL,
+    fechaAprobacion      TIMESTAMP NULL,
+    firmadoPor           INT(11) NULL,
+    FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyectos_carreras (
@@ -485,6 +492,33 @@ CREATE TABLE inv_transferencias (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################
+-- SECCIÓN 10: EVALUACIÓN POR PARES (DOBLE CIEGO)
+-- #############################################################################
+
+CREATE TABLE inv_revisiones_pares (
+    idRevision        INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid              CHAR(36)      NOT NULL UNIQUE,
+    idProyecto        INT           NOT NULL,
+    idRevisor         INT(11)       NOT NULL, -- ID del Usuario/Profesor
+    fechaAsignacion   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    fechaLimite       DATE          NOT NULL,
+    estado            ENUM('Pendiente', 'Completada', 'Rechazada', 'Expirada') DEFAULT 'Pendiente',
+    esExterno         TINYINT(1)    DEFAULT 0,
+    observacionesGral TEXT,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
+    FOREIGN KEY (idRevisor)  REFERENCES usuarios(idUsuario)      ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_evaluaciones_detalle (
+    idDetalle         INT           AUTO_INCREMENT PRIMARY KEY,
+    idRevision        INT           NOT NULL,
+    criterio          VARCHAR(255)  NOT NULL,
+    puntaje           DECIMAL(5,2)  NOT NULL,
+    observaciones     TEXT,
+    FOREIGN KEY (idRevision) REFERENCES inv_revisiones_pares(idRevision) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- #############################################################################
 -- TRIGGERS PARA UUID
 -- #############################################################################
 
@@ -504,6 +538,8 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 CREATE TRIGGER trg_evidencia_uuid BEFORE INSERT ON inv_evidencias FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_gasto_uuid BEFORE INSERT ON inv_gastos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_revisiones_uuid BEFORE INSERT ON inv_revisiones_pares FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
