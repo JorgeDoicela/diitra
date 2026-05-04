@@ -6,12 +6,16 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.1.0" />
+    <PackageReference Include="itext7" Version="9.6.0" />
+    <PackageReference Include="itext7.bouncy-castle-adapter" Version="9.6.0" />
+    <PackageReference Include="itext7.pdfhtml" Version="6.3.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="QuestPDF" Version="2026.2.4" />
   </ItemGroup>
 
   <PropertyGroup>

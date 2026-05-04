@@ -242,6 +242,20 @@ CREATE TABLE inv_proyectos (
     FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Trazabilidad de Estados para Auditoría (CACES)
+CREATE TABLE inv_trazabilidad_proyectos (
+    idTrazabilidad  INT AUTO_INCREMENT PRIMARY KEY,
+    uuid            CHAR(36) NOT NULL UNIQUE,
+    idProyecto      INT NOT NULL,
+    idUsuario       INT(11) NOT NULL,
+    estadoAnterior  VARCHAR(50) NOT NULL,
+    estadoNuevo     VARCHAR(50) NOT NULL,
+    observacion     TEXT,
+    fechaTransicion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE inv_proyectos_carreras (
     idProyectoCarrera INT          AUTO_INCREMENT PRIMARY KEY,
     idProyecto        INT          NOT NULL,

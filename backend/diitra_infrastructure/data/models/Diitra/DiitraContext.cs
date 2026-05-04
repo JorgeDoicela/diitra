@@ -54,6 +54,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvEvidencia>          InvEvidencias          { get; set; }
     public virtual DbSet<InvGasto>              InvGastos              { get; set; }
     public virtual DbSet<InvTransferencia>      InvTransferencias      { get; set; }
+    public virtual DbSet<InvTrazabilidadProyecto> InvTrazabilidadProyectos { get; set; }
 
     // --- Sistema y Seguridad ---
     public virtual DbSet<InvNotificacion>       InvNotificaciones      { get; set; }
@@ -694,6 +695,23 @@ public partial class DiitraContext : DbContext
             entity.HasOne(d => d.IdProgramaNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdPrograma).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_programa");
             entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_grupo");
             entity.HasOne(d => d.IdTipoNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdTipo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_tipo");
+        });
+
+        modelBuilder.Entity<InvTrazabilidadProyecto>(entity =>
+        {
+            entity.HasKey(e => e.IdTrazabilidad).HasName("PRIMARY");
+            entity.ToTable("inv_trazabilidad_proyectos");
+            entity.Property(e => e.IdTrazabilidad).HasColumnName("idTrazabilidad");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+            entity.Property(e => e.EstadoAnterior).HasColumnName("estadoAnterior").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.EstadoNuevo).HasColumnName("estadoNuevo").HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Observacion).HasColumnName("observacion").HasColumnType("text");
+            entity.Property(e => e.FechaTransicion).HasColumnName("fechaTransicion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.IdProyectoNavigation).WithMany().HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_trazabilidad_proyecto");
         });
 
         modelBuilder.Entity<InvProyectoCarrera>(entity =>
