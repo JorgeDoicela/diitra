@@ -620,3 +620,66 @@ DELIMITER ;
 
 -- CIERRE DE SEGURIDAD PARA EL NÚCLEO V3
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- ============================================================
+-- SECCIÓN: CATÁLOGOS INICIALES (SEED DATA)
+-- ============================================================
+
+-- 1. Tipos de Convocatoria
+INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES 
+('Interna (IST)', 'Proyectos financiados con fondos propios del Instituto.'),
+('Externa (SENESCYT)', 'Proyectos con financiamiento de entes gubernamentales.'),
+('Interinstitucional', 'Convenios entre el IST y otras Universidades o Institutos.'),
+('Vinculación-Investigación', 'Proyectos que integran ambas funciones sustantivas.');
+
+-- 2. Agendas Zonales (Planificación Nacional)
+INSERT INTO inv_agendas_zonales (nombre, zona) VALUES 
+('Zona 1: Norte', 'Imbabura, Esmeraldas, Carchi, Sucumbíos'),
+('Zona 2: Centro Norte', 'Pichincha (excepto Quito), Napo, Orellana'),
+('Zona 3: Centro', 'Cotopaxi, Tungurahua, Chimborazo, Pastaza'),
+('Zona 4: Pacífico', 'Manabí, Santo Domingo'),
+('Zona 5: Litoral', 'Guayas (excepto Guayaquil), Santa Elena, Bolívar, Los Ríos'),
+('Zona 6: Austro', 'Azuay, Cañar, Morona Santiago'),
+('Zona 7: Sur', 'Loja, El Oro, Zamora Chinchipe'),
+('Zona 8: Guayaquil', 'Guayaquil, Samborondón, Durán'),
+('Zona 9: Distrito Metropolitano de Quito', 'Quito');
+
+-- 3. Líneas de Investigación (Base IST)
+INSERT INTO inv_lineas_investigacion (uuid, codigoLinea, nombreLinea, descripcion, activo) VALUES 
+(UUID(), 'LIN-SOFT', 'Innovación Tecnológica y Desarrollo de Software', 'Desarrollo de aplicaciones, IA y sistemas embebidos.', 1),
+(UUID(), 'LIN-ADM', 'Gestión Administrativa y Productividad', 'Optimización de procesos y modelos de negocio.', 1),
+(UUID(), 'LIN-RED', 'Redes y Telecomunicaciones', 'Infraestructura, seguridad informática y conectividad.', 1),
+(UUID(), 'LIN-ENE', 'Energías Renovables y Eficiencia Energética', 'Sostenibilidad y nuevas matrices energéticas.', 1),
+(UUID(), 'LIN-EDU', 'Educación y Tecnologías de la Información', 'E-learning y herramientas digitales.', 1);
+
+-- 4. Rúbricas de Evaluación (Base)
+INSERT INTO inv_rubricas (nombre, descripcion, version, activo) VALUES 
+('Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1),
+('Rúbrica para Proyectos de Vinculación', 'Enfoque en el impacto social y beneficiarios externos.', '1.0', 1);
+
+-- 5. Tipos de Investigación (Estándar Frascati / CACES)
+INSERT INTO inv_tipo_investigacion (nombre, descripcion) VALUES 
+('Investigación Básica', 'Trabajos experimentales o teóricos para obtener nuevos conocimientos.'),
+('Investigación Aplicada', 'Trabajos originales para adquirir conocimientos con un objetivo práctico específico.'),
+('Desarrollo Tecnológico', 'Trabajos sistemáticos basados en conocimientos existentes para crear nuevos productos o procesos.');
+
+-- 6. Objetivos de Desarrollo Sostenible (ODS - ONU)
+INSERT INTO inv_ods (nombre, descripcion) VALUES 
+('ODS 4: Educación de Calidad', 'Garantizar una educación inclusiva, equitativa y de calidad.'),
+('ODS 7: Energía Asequible y No Contaminante', 'Garantizar el acceso a una energía asequible, segura y sostenible.'),
+('ODS 8: Trabajo Decente y Crecimiento Económico', 'Promover el crecimiento económico sostenido e inclusivo.'),
+('ODS 9: Industria, Innovación e Infraestructura', 'Construir infraestructuras resilientes y fomentar la innovación.'),
+('ODS 11: Ciudades y Comunidades Sostenibles', 'Lograr que las ciudades sean inclusivas y sostenibles.'),
+('ODS 13: Acción por el Clima', 'Adoptar medidas urgentes para combatir el cambio climático.');
+
+-- 7. Programas de Investigación (Ejemplos Institucionales)
+INSERT INTO inv_programas (nombre, descripcion, activo) VALUES 
+('Programa de Transformación Digital', 'Fomento de la digitalización en sectores productivos de Quito.', 1),
+('Programa de Sostenibilidad Urbana', 'Estudios sobre eficiencia energética y movilidad.', 1),
+('Programa de Innovación Social', 'Investigación sobre el impacto educativo en sectores vulnerables.', 1);
+
+-- 8. Dominios Académicos
+INSERT INTO inv_dominios (nombre, descripcion) VALUES 
+('Tecnologías de la Información y Comunicación', 'Dominio centrado en el desarrollo y gestión de TICs.'),
+('Energía y Producción Industrial', 'Dominio enfocado en procesos productivos y matrices energéticas.'),
+('Gestión Empresarial y Servicios', 'Dominio sobre modelos de negocio y administración pública.');

@@ -189,6 +189,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaFinal).HasColumnName("fecha_final");
             entity.Property(e => e.Activo).HasColumnName("activo");
             entity.Property(e => e.EsInstituto).HasColumnType("tinyint(4)").HasColumnName("esInstituto");
+            entity.Property(e => e.Periodoactivoinstituto).HasColumnType("tinyint(4)").HasColumnName("periodoactivoinstituto");
+            entity.Property(e => e.PeriodoPlanificacion).HasColumnType("tinyint(4)").HasColumnName("periodoPlanificacion");
         });
 
         modelBuilder.Entity<Carrera>(entity =>
