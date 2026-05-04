@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace diitra_application.Research.Dtos;
 
@@ -18,8 +19,12 @@ public class ConvocatoriaDto
     public string? RequisitosMinimos { get; set; }
     public int? IdTipoConvocatoria { get; set; }
     public int? IdAgendaZonal { get; set; }
+    public int? IdRubrica { get; set; }
+    public string? RubricaNombre { get; set; }
+    public decimal PuntajeMinimoAprobacion { get; set; } = 70.00m;
     public bool FinanciamientoExt { get; set; }
     public string? MetaProduccion { get; set; }
+    public List<int> LineasIds { get; set; } = new();
     public DateOnly FechaApertura { get; set; }
     public DateOnly FechaCierre { get; set; }
     public string Estado { get; set; } = "Borrador";
@@ -45,8 +50,11 @@ public class CreateConvocatoriaDto
     public string? RequisitosMinimos { get; set; }
     public int? IdTipoConvocatoria { get; set; }
     public int? IdAgendaZonal { get; set; }
+    public int? IdRubrica { get; set; }
+    public decimal PuntajeMinimoAprobacion { get; set; } = 70.00m;
     public bool FinanciamientoExt { get; set; }
     public string? MetaProduccion { get; set; }
+    public List<int> LineasIds { get; set; } = new();
     public DateOnly FechaApertura { get; set; }
     public DateOnly FechaCierre { get; set; }
 }

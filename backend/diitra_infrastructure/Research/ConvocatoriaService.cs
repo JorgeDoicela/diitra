@@ -18,6 +18,7 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         return await _context.InvConvocatorias
             .Include(c => c.IdPeriodoNavigation)
+            .Include(c => c.IdRubricaNavigation)
             .OrderByDescending(c => c.Anio)
             .Select(c => new ConvocatoriaDto
             {
@@ -35,11 +36,15 @@ public class ConvocatoriaService : IConvocatoriaService
                 RequisitosMinimos = c.RequisitosMinimos,
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
                 IdAgendaZonal = c.IdAgendaZonal,
+                IdRubrica = c.IdRubrica,
+                RubricaNombre = c.IdRubricaNavigation != null ? c.IdRubricaNavigation.Nombre : null,
+                PuntajeMinimoAprobacion = c.PuntajeMinimoAprobacion,
                 FinanciamientoExt = c.FinanciamientoExt,
                 MetaProduccion = c.MetaProduccion,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
-                Estado = c.Estado
+                Estado = c.Estado,
+                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList()
             })
             .ToListAsync();
     }
@@ -48,6 +53,8 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         return await _context.InvConvocatorias
             .Include(c => c.IdPeriodoNavigation)
+            .Include(c => c.IdRubricaNavigation)
+            .Include(c => c.Lineas)
             .Where(c => c.Uuid == uuid)
             .Select(c => new ConvocatoriaDto
             {
@@ -65,11 +72,15 @@ public class ConvocatoriaService : IConvocatoriaService
                 RequisitosMinimos = c.RequisitosMinimos,
                 IdTipoConvocatoria = c.IdTipoConvocatoria,
                 IdAgendaZonal = c.IdAgendaZonal,
+                IdRubrica = c.IdRubrica,
+                RubricaNombre = c.IdRubricaNavigation != null ? c.IdRubricaNavigation.Nombre : null,
+                PuntajeMinimoAprobacion = c.PuntajeMinimoAprobacion,
                 FinanciamientoExt = c.FinanciamientoExt,
                 MetaProduccion = c.MetaProduccion,
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
-                Estado = c.Estado
+                Estado = c.Estado,
+                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList()
             })
             .FirstOrDefaultAsync();
     }
@@ -90,12 +101,25 @@ public class ConvocatoriaService : IConvocatoriaService
             RequisitosMinimos = dto.RequisitosMinimos,
             IdTipoConvocatoria = dto.IdTipoConvocatoria,
             IdAgendaZonal = dto.IdAgendaZonal,
+            IdRubrica = dto.IdRubrica,
+            PuntajeMinimoAprobacion = dto.PuntajeMinimoAprobacion,
             FinanciamientoExt = dto.FinanciamientoExt,
             MetaProduccion = dto.MetaProduccion,
             FechaApertura = dto.FechaApertura,
             FechaCierre = dto.FechaCierre,
             Estado = "Borrador"
         };
+
+        if (dto.LineasIds != null && dto.LineasIds.Any())
+        {
+            var lineas = await _context.InvLineasInvestigacions
+                .Where(l => dto.LineasIds.Contains(l.IdLinea))
+                .ToListAsync();
+            foreach (var linea in lineas)
+            {
+                convocatoria.Lineas.Add(linea);
+            }
+        }
 
         _context.InvConvocatorias.Add(convocatoria);
         await _context.SaveChangesAsync();
@@ -104,7 +128,9 @@ public class ConvocatoriaService : IConvocatoriaService
 
     public async Task<bool> UpdateAsync(string uuid, CreateConvocatoriaDto dto)
     {
-        var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
+        var conv = await _context.InvConvocatorias
+            .Include(c => c.Lineas)
+            .FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
         conv.CodigoConvocatoria = dto.CodigoConvocatoria;
@@ -118,10 +144,25 @@ public class ConvocatoriaService : IConvocatoriaService
         conv.RequisitosMinimos = dto.RequisitosMinimos;
         conv.IdTipoConvocatoria = dto.IdTipoConvocatoria;
         conv.IdAgendaZonal = dto.IdAgendaZonal;
+        conv.IdRubrica = dto.IdRubrica;
+        conv.PuntajeMinimoAprobacion = dto.PuntajeMinimoAprobacion;
         conv.FinanciamientoExt = dto.FinanciamientoExt;
         conv.MetaProduccion = dto.MetaProduccion;
         conv.FechaApertura = dto.FechaApertura;
         conv.FechaCierre = dto.FechaCierre;
+
+        // Update Lineas
+        conv.Lineas.Clear();
+        if (dto.LineasIds != null && dto.LineasIds.Any())
+        {
+            var lineas = await _context.InvLineasInvestigacions
+                .Where(l => dto.LineasIds.Contains(l.IdLinea))
+                .ToListAsync();
+            foreach (var linea in lineas)
+            {
+                conv.Lineas.Add(linea);
+            }
+        }
 
         await _context.SaveChangesAsync();
         return true;
@@ -172,6 +213,22 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         return await _context.InvAgendasZonales
             .Select(a => new { id = a.IdAgendaZonal, nombre = a.Nombre })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<object>> GetCatalogosRubricasAsync()
+    {
+        return await _context.Set<InvRubrica>()
+            .Where(r => r.Activo)
+            .Select(r => new { id = r.IdRubrica, nombre = r.Nombre })
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<object>> GetCatalogosLineasAsync()
+    {
+        return await _context.InvLineasInvestigacions
+            .Where(l => l.Activo == 1)
+            .Select(l => new { id = l.IdLinea, nombre = l.NombreLinea })
             .ToListAsync();
     }
 }

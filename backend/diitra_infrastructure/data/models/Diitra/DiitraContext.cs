@@ -30,6 +30,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvGrupoInvestigacion> InvGruposInvestigacion { get; set; }
     public virtual DbSet<InvTipoConvocatoria>   InvTiposConvocatoria   { get; set; }
     public virtual DbSet<InvAgendaZonal>        InvAgendasZonales      { get; set; }
+    public virtual DbSet<InvRubrica>             InvRubricas            { get; set; }
     public virtual DbSet<InvConvocatoria>       InvConvocatorias       { get; set; }
     public virtual DbSet<InvProyecto>           InvProyectos           { get; set; }
     public virtual DbSet<InvProyectoCarrera>    InvProyectosCarreras    { get; set; }
@@ -602,11 +603,37 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.RequisitosMinimos).HasColumnName("requisitosMinimos").HasColumnType("text");
             entity.Property(e => e.IdTipoConvocatoria).HasColumnName("idTipoConvocatoria");
             entity.Property(e => e.IdAgendaZonal).HasColumnName("idAgendaZonal");
+            entity.Property(e => e.IdRubrica).HasColumnName("idRubrica");
+            entity.Property(e => e.PuntajeMinimoAprobacion).HasColumnName("puntajeMinimoAprobacion").HasPrecision(5, 2).HasDefaultValueSql("'70.00'");
             entity.Property(e => e.FinanciamientoExt).HasColumnName("financiamientoExt").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
             entity.Property(e => e.MetaProduccion).HasColumnName("metaProduccion").HasMaxLength(255);
             entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Abierta','Cerrada','Anulada')").HasDefaultValueSql("'Borrador'");
 
             entity.HasOne(d => d.IdPeriodoNavigation).WithMany().HasForeignKey(d => d.IdPeriodo).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_conv_periodo");
+            entity.HasOne(d => d.IdRubricaNavigation).WithMany(p => p.Convocatorias).HasForeignKey(d => d.IdRubrica).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_conv_rubrica");
+
+            entity.HasMany(d => d.Lineas).WithMany(p => p.Convocatorias)
+                .UsingEntity<Dictionary<string, object>>(
+                    "inv_convocatorias_lineas",
+                    r => r.HasOne<InvLineaInvestigacion>().WithMany().HasForeignKey("idLinea").OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne<InvConvocatoria>().WithMany().HasForeignKey("idConvocatoria").OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("idConvocatoria", "idLinea");
+                        j.ToTable("inv_convocatorias_lineas");
+                    });
+        });
+
+        modelBuilder.Entity<InvRubrica>(entity =>
+        {
+            entity.HasKey(e => e.IdRubrica).HasName("PRIMARY");
+            entity.ToTable("inv_rubricas");
+            entity.Property(e => e.IdRubrica).HasColumnName("idRubrica");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.Version).HasColumnName("version").HasMaxLength(20).HasDefaultValueSql("'1.0'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
         modelBuilder.Entity<InvTipoConvocatoria>(entity =>

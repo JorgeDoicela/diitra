@@ -43,7 +43,9 @@ DROP TABLE IF EXISTS
     inv_proyectos_carreras,
     inv_proyectos_dominios,
     inv_proyectos,
+    inv_convocatorias_lineas,
     inv_convocatorias,
+    inv_rubricas,
     inv_tipos_convocatoria,
     inv_agendas_zonales,
     inv_sublineas,
@@ -144,6 +146,20 @@ INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
 ('Zona 9 - Eficiencia Energética', 'Proyectos de energías renovables y ahorro'),
 ('Zona 9 - Inclusión Social', 'Desarrollo social y educación');
 
+CREATE TABLE inv_rubricas (
+    idRubrica    INT          AUTO_INCREMENT PRIMARY KEY,
+    nombre       VARCHAR(255) NOT NULL,
+    descripcion  TEXT,
+    version      VARCHAR(20)  DEFAULT '1.0',
+    activo       TINYINT(1)   DEFAULT 1,
+    fechaRegistro TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO inv_rubricas (nombre, descripcion) VALUES 
+('Rúbrica Estándar I+D', 'Evaluación general para proyectos de investigación y desarrollo'),
+('Rúbrica de Innovación Tecnológica', 'Enfocada en prototipado y transferencia tecnológica'),
+('Rúbrica de Semilleros', 'Evaluación simplificada para proyectos estudiantiles');
+
 CREATE TABLE inv_convocatorias (
     idConvocatoria     INT           AUTO_INCREMENT PRIMARY KEY,
     uuid               CHAR(36)      NOT NULL UNIQUE,
@@ -160,12 +176,23 @@ CREATE TABLE inv_convocatorias (
     requisitosMinimos  TEXT,
     idTipoConvocatoria INT           NULL,
     idAgendaZonal      INT           NULL,
+    idRubrica          INT           NULL,
+    puntajeMinimoAprobacion DECIMAL(5,2) DEFAULT 70.00,
     financiamientoExt  TINYINT(1)    DEFAULT 0,
     metaProduccion     VARCHAR(255),
     estado             ENUM('Borrador','Abierta','Cerrada','Anulada') DEFAULT 'Borrador',
     FOREIGN KEY (idPeriodo) REFERENCES periodos(idPeriodo),
     FOREIGN KEY (idTipoConvocatoria) REFERENCES inv_tipos_convocatoria(idTipoConvocatoria),
-    FOREIGN KEY (idAgendaZonal) REFERENCES inv_agendas_zonales(idAgendaZonal)
+    FOREIGN KEY (idAgendaZonal) REFERENCES inv_agendas_zonales(idAgendaZonal),
+    FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_convocatorias_lineas (
+    idConvocatoria INT NOT NULL,
+    idLinea        INT NOT NULL,
+    PRIMARY KEY (idConvocatoria, idLinea),
+    FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria) ON DELETE CASCADE,
+    FOREIGN KEY (idLinea)        REFERENCES inv_lineas_investigacion(idLinea) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################

@@ -53,6 +53,20 @@ public class ConvocatoriasController : ControllerBase
         return Ok(result);
     }
 
+    [HttpGet("catalogos/rubricas")]
+    public async Task<IActionResult> GetCatalogosRubricas()
+    {
+        var result = await _convocatoriaService.GetCatalogosRubricasAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("catalogos/lineas")]
+    public async Task<IActionResult> GetCatalogosLineas()
+    {
+        var result = await _convocatoriaService.GetCatalogosLineasAsync();
+        return Ok(result);
+    }
+
     [HttpPost]
     // [Authorize(Roles = "ADMIN_SISTEMA,DIRECTOR_INV")] 
     public async Task<IActionResult> Create([FromBody] CreateConvocatoriaDto dto)

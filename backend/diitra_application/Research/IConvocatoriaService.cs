@@ -13,4 +13,6 @@ public interface IConvocatoriaService
     Task<IEnumerable<PeriodoDto>> GetActivePeriodsAsync();
     Task<IEnumerable<object>> GetCatalogosTiposAsync();
     Task<IEnumerable<object>> GetCatalogosAgendasAsync();
+    Task<IEnumerable<object>> GetCatalogosRubricasAsync();
+    Task<IEnumerable<object>> GetCatalogosLineasAsync();
 }
