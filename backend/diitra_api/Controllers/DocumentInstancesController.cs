@@ -10,6 +10,7 @@ namespace diitra_api.Controllers
     [Authorize]
     public class DocumentInstancesController : ControllerBase
     {
+        private readonly IDocumentInstanceService _instanceService;
         private readonly IDocumentEngine _documentEngine;
         private readonly IDocumentDataOrchestrator _orchestrator;
 

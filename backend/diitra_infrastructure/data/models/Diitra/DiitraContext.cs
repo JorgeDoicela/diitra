@@ -1260,14 +1260,33 @@ public partial class DiitraContext : DbContext
         // ============================================================
         // DIITRA Document Engine Tables
         // ============================================================
+        modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentInstance>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("inv_documentos_instancias");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.TemplateCode).HasColumnName("template_code").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.TemplateVersion).HasColumnName("template_version").IsRequired();
+            entity.Property(e => e.EntityUuid).HasColumnName("entity_uuid").HasMaxLength(36).IsRequired();
+            entity.Property(e => e.Title).HasColumnName("titulo_instancia").HasMaxLength(255);
+            entity.Property(e => e.State).HasColumnName("estado").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").IsRequired();
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.FinalPdfPath).HasColumnName("final_pdf_path").HasMaxLength(512);
+            entity.Property(e => e.FileHash).HasColumnName("file_hash").HasMaxLength(100);
+            entity.Property(e => e.TraceabilityCode).HasColumnName("traceability_code").HasMaxLength(100);
+        });
+
         modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentTemplate>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.ToTable("doc_templates");
-            entity.Property(e => e.Code).HasMaxLength(100).IsRequired();
+            entity.ToTable("inv_document_templates");
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(100).IsRequired();
             entity.HasIndex(e => e.Code).IsUnique();
-            entity.Property(e => e.HtmlContent).HasColumnType("longtext");
-            entity.Property(e => e.CustomCss).HasColumnType("longtext");
+            entity.Property(e => e.HtmlContent).HasColumnName("html_content").HasColumnType("longtext");
+            entity.Property(e => e.CustomCss).HasColumnName("custom_css").HasColumnType("longtext");
         });
 
         modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentAuditEntry>(entity =>

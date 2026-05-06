@@ -36,7 +36,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdAlumnoNavigation)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
-                .Include(p => p.InvCronograma)
+                .Include(p => p.InvCronogramas)
                 .FirstOrDefaultAsync(p => p.Uuid == instance.EntityUuid, ct)
                 ?? throw new KeyNotFoundException($"El documento {documentInstanceUuid} no tiene un Proyecto válido asociado.");
 
@@ -65,7 +65,7 @@ namespace Diitra.Infrastructure.Common.Documents
                     proyecto.Estado,
                     proyecto.FechaPresentacion,
                     Convocatoria = proyecto.IdConvocatoriaNavigation?.Titulo ?? "N/A",
-                    Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector)?.IdProfesorNavigation?.PrimerApellido ?? "No asignado",
+                    Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true)?.IdProfesorNavigation?.PrimerApellido ?? "No asignado",
                     
                     // Listas para tablas en el PDF
                     EquipoDocente = proyecto.InvProyectosProfesores.Select(p => new {
@@ -88,7 +88,7 @@ namespace Diitra.Infrastructure.Common.Documents
                         i.ValorUnitario,
                         i.ValorTotal
                     }),
-                    Cronograma = proyecto.InvCronograma.OrderBy(c => c.NumeroActividad).Select(c => new {
+                    Cronograma = proyecto.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new {
                         c.NumeroActividad,
                         c.Descripcion,
                         c.FechaInicioPrevista,

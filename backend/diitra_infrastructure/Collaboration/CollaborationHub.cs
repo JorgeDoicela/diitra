@@ -44,7 +44,7 @@ namespace diitra_infrastructure.Collaboration
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
 
-            if (instance != null && instance.State >= 3)
+            if (instance != null && (int)instance.State >= 3)
             {
                 throw new HubException("Este documento está FINALIZADO Y FIRMADO. No se permiten más ediciones.");
             }
@@ -103,7 +103,7 @@ namespace diitra_infrastructure.Collaboration
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
 
-            if (instance != null && instance.State >= 3) return;
+            if (instance != null && (int)instance.State >= 3) return;
 
             // 1. Difusión inmediata a otros colaboradores
             await Clients.OthersInGroup(documentId).SendAsync("ReceiveYjsUpdate", updateBase64);
