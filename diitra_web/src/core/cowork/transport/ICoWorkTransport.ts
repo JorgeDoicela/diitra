@@ -60,4 +60,12 @@ export interface ICoWorkTransport {
      * Solo debe llamarse una vez durante la inicialización.
      */
     onAwarenessUpdate(handler: (updateBase64: string) => void): void;
+
+    /**
+     * Recibe el estado COMPLETO del documento al unirse a la sala.
+     * El servidor envía esto solo al cliente que acaba de conectarse,
+     * permitiéndole sincronizarse con todo el trabajo previo del equipo.
+     * Sin esto, un usuario que llega tarde vería el editor vacío.
+     */
+    onFullState(handler: (stateBase64: string) => void): void;
 }

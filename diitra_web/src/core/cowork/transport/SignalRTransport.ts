@@ -96,4 +96,8 @@ export class SignalRTransport implements ICoWorkTransport {
     onAwarenessUpdate(handler: (updateBase64: string) => void): void {
         this.connection.on('ReceiveAwarenessUpdate', handler);
     }
+
+    onFullState(handler: (stateBase64: string) => void): void {
+        this.connection.on('ReceiveFullState', handler);
+    }
 }

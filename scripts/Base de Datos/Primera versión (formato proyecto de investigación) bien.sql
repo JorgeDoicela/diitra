@@ -21,7 +21,11 @@ DROP TABLE IF EXISTS
     inv_notificaciones,
     inv_tokens_acceso,
     inv_usuarios_metadata,
-    
+
+    -- DIITRA CoWork (Persistencia de Sesiones Colaborativas)
+    inv_cowork_sesiones,
+    inv_cowork_documentos,
+
     -- Núcleo V3 (Secciones 1-9)
     inv_transferencias,
     inv_gastos,
@@ -755,3 +759,46 @@ INSERT INTO inv_dominios (uuid, nombre, activo) VALUES
 (UUID(), 'Tecnologías de la Información y Comunicación', 1),
 (UUID(), 'Energía y Producción Industrial', 1),
 (UUID(), 'Gestión Empresarial y Servicios', 1);
+
+-- =============================================================================
+-- SECCIÓN: DIITRA CoWork — Persistencia de Colaboración en Tiempo Real
+-- Módulo: Motor DIITRA CoWork (Yjs + SignalR)
+-- Propósito: Almacena el estado binario Yjs de cada documento colaborativo.
+--            Garantiza que:
+--              1. Los usuarios que se conectan tarde reciben el documento completo.
+--              2. El contenido NO se pierde si el servidor se reinicia.
+--              3. El historial de quién editó qué queda registrado.
+-- Normativa: LOPDP Art. 26 — Registro de acceso a datos sensibles (PI).
+-- =============================================================================
+
+-- Documento colaborativo: una entrada por cada documento abierto en CoWork.
+-- El campo yjs_state guarda el snapshot binario completo del Yjs Doc.
+CREATE TABLE inv_cowork_documentos (
+    idDocumento       INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid              CHAR(36)      NOT NULL UNIQUE COMMENT 'UUID público del documento (= UUID del proyecto en inv_proyectos)',
+    entidadTipo       VARCHAR(50)   NOT NULL        COMMENT 'Tipo de entidad origen: PROYECTO, INFORME_AVANCE, INFORME_FINAL, etc.',
+    entidadUuid       CHAR(36)      NOT NULL        COMMENT 'UUID de la entidad a la que pertenece este documento',
+    campoNombre       VARCHAR(100)  NOT NULL        COMMENT 'Campo específico del formulario: antecedentes, metodologia, etc.',
+    yjsState          LONGBLOB      NULL            COMMENT 'Snapshot binario del Yjs Doc (Base64). NULL si nunca fue editado.',
+    version           INT           NOT NULL DEFAULT 0 COMMENT 'Contador de actualizaciones para detectar conflictos',
+    creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    actualizadoEn     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_entidad_campo (entidadUuid, campoNombre)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='DIITRA CoWork — Estado persistente de documentos colaborativos Yjs';
+
+-- Registro de sesiones: quién se conectó a qué documento y cuándo.
+-- Cumple con LOPDP: trazabilidad de acceso a documentos con propiedad intelectual.
+CREATE TABLE inv_cowork_sesiones (
+    idSesion          INT           AUTO_INCREMENT PRIMARY KEY,
+    documentoUuid     CHAR(36)      NOT NULL        COMMENT 'UUID del documento en inv_cowork_documentos',
+    usuarioUuid       CHAR(36)      NOT NULL        COMMENT 'UUID del usuario (de inv_usuarios_metadata)',
+    nombreUsuario     VARCHAR(255)  NOT NULL        COMMENT 'Nombre completo del colaborador (snapshot para auditoría)',
+    rolUsuario        VARCHAR(100)  NOT NULL        COMMENT 'Rol en el momento de la sesión (Investigador, Director, etc.)',
+    signalrConId      VARCHAR(255)  NULL            COMMENT 'ID de conexión SignalR (para debug)',
+    conectadoEn       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    desconectadoEn    TIMESTAMP     NULL            COMMENT 'NULL si la sesión sigue activa',
+    INDEX idx_documento (documentoUuid),
+    INDEX idx_usuario   (usuarioUuid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='DIITRA CoWork — Auditoría LOPDP de acceso a documentos colaborativos';

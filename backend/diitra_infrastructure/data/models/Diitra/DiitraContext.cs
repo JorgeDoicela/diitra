@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using diitra_domain.Identity.Entities;
+using diitra_infrastructure.data.models.Cowork;
 
 namespace diitra_infrastructure.data.models;
 
@@ -64,6 +65,10 @@ public partial class DiitraContext : DbContext
     // --- DIITRA Document Engine (Persistence & Audit) ---
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentTemplate> DocumentTemplates { get; set; }
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentAuditEntry> DocumentAuditEntries { get; set; }
+
+    // --- DIITRA CoWork (Persistencia Colaborativa) ---
+    public virtual DbSet<InvCoworkDocumento> InvCoworkDocumentos { get; set; }
+    public virtual DbSet<InvCoworkSesion>    InvCoworkSesiones   { get; set; }
 
     // ============================================================
     // TABLAS DE SIGAFI (solo lectura recomendada)
