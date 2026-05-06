@@ -20,7 +20,7 @@ namespace diitra_infrastructure.data.models.Cowork
         public int IdDocumento { get; set; }
 
         /// <summary>UUID público del documento (generalmente = UUID del proyecto).</summary>
-        [Column("uuid")]
+        [Column("uuid", TypeName = "varchar(36)")]
         [Required, MaxLength(36)]
         public string Uuid { get; set; } = string.Empty;
 
@@ -30,7 +30,7 @@ namespace diitra_infrastructure.data.models.Cowork
         public string EntidadTipo { get; set; } = "PROYECTO";
 
         /// <summary>UUID de la entidad padre (el proyecto, el informe, etc.).</summary>
-        [Column("entidadUuid")]
+        [Column("entidadUuid", TypeName = "varchar(36)")]
         [Required, MaxLength(36)]
         public string EntidadUuid { get; set; } = string.Empty;
 
@@ -70,11 +70,11 @@ namespace diitra_infrastructure.data.models.Cowork
         [Column("idSesion")]
         public int IdSesion { get; set; }
 
-        [Column("documentoUuid")]
+        [Column("documentoUuid", TypeName = "varchar(36)")]
         [Required, MaxLength(36)]
         public string DocumentoUuid { get; set; } = string.Empty;
 
-        [Column("usuarioUuid")]
+        [Column("usuarioUuid", TypeName = "varchar(36)")]
         [Required, MaxLength(36)]
         public string UsuarioUuid { get; set; } = string.Empty;
 

@@ -15,6 +15,7 @@ import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
 import type { CoWorkHandle, CoWorkUser } from '../types';
+import { RemoteCursors } from './RemoteCursors';
 import { CheckCircle2, Loader2, Users, Wifi, WifiOff } from 'lucide-react';
 
 interface CoWorkEditorProps {
@@ -50,6 +51,12 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
             attributes: {
                 class: 'focus:outline-none',
             },
+        },
+        // Sincronizar selección completa (posición y resaltado)
+        onSelectionUpdate: ({ editor }) => {
+            const { anchor, head } = editor.state.selection;
+            cowork.awareness.setLocalStateField('anchor', anchor);
+            cowork.awareness.setLocalStateField('head', head);
         },
     }, [extensions]); // Re-inicializar si las extensiones cambian críticamente
 
@@ -132,12 +139,18 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
 
             {/* ── Área del Editor ── */}
             <div className="flex-1 overflow-y-auto p-8 bg-bg-deep">
-                <div className="max-w-4xl mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin">
+                <div className="max-w-4xl mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
                     {editor && (
-                        <EditorContent
-                            editor={editor}
-                            className="cowork-editor-content"
-                        />
+                        <>
+                            <EditorContent
+                                editor={editor}
+                                className="cowork-editor-content"
+                            />
+                            <RemoteCursors 
+                                editor={editor} 
+                                awareness={cowork.awareness} 
+                            />
+                        </>
                     )}
                 </div>
             </div>
@@ -157,7 +170,7 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
                 .cowork-editor-content .ProseMirror h2 { font-size: 1.25rem; font-weight: 700; margin: 1.25rem 0 0.5rem; }
                 .cowork-editor-content .ProseMirror h3 { font-size: 1.1rem; font-weight: 600; margin: 1rem 0 0.5rem; }
                 .cowork-editor-content .ProseMirror p { margin-bottom: 0.75rem; }
-                .cowork-editor-content .ProseMirror ul, 
+                .cowork-editor-content .ProseMirror ul,
                 .cowork-editor-content .ProseMirror ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
                 .cowork-editor-content .ProseMirror strong { font-weight: 700; }
                 .cowork-editor-content .ProseMirror em { font-style: italic; }
@@ -171,32 +184,6 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
                     float: left;
                     height: 0;
                     font-style: italic;
-                }
-
-                /* Cursores remotos de colaboradores */
-                .collaboration-cursor__caret {
-                    border-left: 2px solid;
-                    border-right: 2px solid;
-                    margin-left: -1px;
-                    margin-right: -1px;
-                    pointer-events: none;
-                    position: relative;
-                    word-break: normal;
-                }
-                .collaboration-cursor__label {
-                    border-radius: 3px 3px 3px 0;
-                    color: #fff;
-                    font-size: 10px;
-                    font-weight: 600;
-                    left: -1px;
-                    line-height: 1;
-                    padding: 2px 5px;
-                    position: absolute;
-                    top: -1.4em;
-                    user-select: none;
-                    white-space: nowrap;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
                 }
             `}</style>
         </div>

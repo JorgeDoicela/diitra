@@ -62,10 +62,9 @@ export interface ICoWorkTransport {
     onAwarenessUpdate(handler: (updateBase64: string) => void): void;
 
     /**
-     * Recibe el estado COMPLETO del documento al unirse a la sala.
-     * El servidor envía esto solo al cliente que acaba de conectarse,
-     * permitiéndole sincronizarse con todo el trabajo previo del equipo.
-     * Sin esto, un usuario que llega tarde vería el editor vacío.
+     * Recibe el HISTORIAL de actualizaciones del documento al unirse.
+     * El servidor envía un array de updates (un snapshot + deltas posteriores).
+     * Esto garantiza que el cliente se sincronice exactamente con el estado actual.
      */
-    onFullState(handler: (stateBase64: string) => void): void;
+    onUpdateHistory(handler: (updatesBase64: string[]) => void): void;
 }

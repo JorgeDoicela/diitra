@@ -843,9 +843,9 @@ CREATE TABLE inv_document_audit (
 -- El campo yjs_state guarda el snapshot binario completo del Yjs Doc.
 CREATE TABLE inv_cowork_documentos (
     idDocumento       INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid              CHAR(36)      NOT NULL UNIQUE COMMENT 'UUID público del documento (= UUID del proyecto en inv_proyectos)',
+    uuid              VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público del documento (= UUID del proyecto en inv_proyectos)',
     entidadTipo       VARCHAR(50)   NOT NULL        COMMENT 'Tipo de entidad origen: PROYECTO, INFORME_AVANCE, INFORME_FINAL, etc.',
-    entidadUuid       CHAR(36)      NOT NULL        COMMENT 'UUID de la entidad a la que pertenece este documento',
+    entidadUuid       VARCHAR(36)   NOT NULL        COMMENT 'UUID de la entidad a la que pertenece este documento',
     campoNombre       VARCHAR(100)  NOT NULL        COMMENT 'Campo específico del formulario: antecedentes, metodologia, etc.',
     yjsState          LONGBLOB      NULL            COMMENT 'Snapshot binario del Yjs Doc (Base64). NULL si nunca fue editado.',
     version           INT           NOT NULL DEFAULT 0 COMMENT 'Contador de actualizaciones para detectar conflictos',
@@ -859,8 +859,8 @@ CREATE TABLE inv_cowork_documentos (
 -- Cumple con LOPDP: trazabilidad de acceso a documentos con propiedad intelectual.
 CREATE TABLE inv_cowork_sesiones (
     idSesion          INT           AUTO_INCREMENT PRIMARY KEY,
-    documentoUuid     CHAR(36)      NOT NULL        COMMENT 'UUID del documento en inv_cowork_documentos',
-    usuarioUuid       CHAR(36)      NOT NULL        COMMENT 'UUID del usuario (de inv_usuarios_metadata)',
+    documentoUuid     VARCHAR(36)   NOT NULL        COMMENT 'UUID del documento en inv_cowork_documentos',
+    usuarioUuid       VARCHAR(36)   NOT NULL        COMMENT 'UUID del usuario (de inv_usuarios_metadata)',
     nombreUsuario     VARCHAR(255)  NOT NULL        COMMENT 'Nombre completo del colaborador (snapshot para auditoría)',
     rolUsuario        VARCHAR(100)  NOT NULL        COMMENT 'Rol en el momento de la sesión (Investigador, Director, etc.)',
     signalrConId      VARCHAR(255)  NULL            COMMENT 'ID de conexión SignalR (para debug)',

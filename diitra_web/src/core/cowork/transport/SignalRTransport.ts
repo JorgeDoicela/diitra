@@ -17,22 +17,28 @@ export class SignalRTransport implements ICoWorkTransport {
     private _isConnected = false;
 
     constructor(hubUrl?: string) {
+        // Logger personalizado para silenciar ruidos de aborto esperados en React
+        const customLogger = {
+            log: (logLevel: signalR.LogLevel, message: string) => {
+                if (message.includes('Failed to start the HttpConnection before stop() was called')) {
+                    return; // Silencio total para este error de ciclo de vida
+                }
+                if (logLevel >= signalR.LogLevel.Warning) {
+                    console.warn(`[SignalR] ${message}`);
+                }
+            }
+        };
+
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl ?? COWORK_CONFIG.SIGNALR_HUB_URL, {
                 skipNegotiation: true,
                 transport: signalR.HttpTransportType.WebSockets,
-                /**
-                 * Inyecta el JWT del usuario autenticado en DIITRA.
-                 * El backend (CollaborationHub) podrá verificar la identidad
-                 * del usuario sin necesidad de pasar parámetros adicionales.
-                 * Busca el token en el lugar donde DIITRA lo almacena.
-                 */
                 accessTokenFactory: () => {
                     return localStorage.getItem('diitra_token') ?? '';
                 },
             })
             .withAutomaticReconnect(COWORK_CONFIG.RECONNECT_DELAYS)
-            .configureLogging(signalR.LogLevel.Warning)
+            .configureLogging(customLogger)
             .build();
 
         // Manejar eventos del ciclo de vida de la conexión
@@ -56,17 +62,70 @@ export class SignalRTransport implements ICoWorkTransport {
         return this._isConnected;
     }
 
+    private startPromise: Promise<void> | null = null;
+
     async connect(documentId: string, user: CoWorkUser): Promise<void> {
-        await this.connection.start();
-        this._isConnected = true;
-        // Pasar los 4 parámetros que el Hub ahora requiere para auditoría LOPDP
-        await this.connection.invoke('JoinDocument', documentId, user.name, user.id, user.role);
-        console.info(`[DIITRA CoWork] ${user.name} (${user.role}) conectado al documento ${documentId}`);
+        // Si ya estamos conectados, no hacer nada
+        if (this.connection.state === signalR.HubConnectionState.Connected) {
+            this._isConnected = true;
+            return;
+        }
+
+        // Si ya hay un intento de conexión en curso, retornar la promesa existente
+        if (this.startPromise) {
+            return this.startPromise;
+        }
+
+        // Crear un nuevo proceso de conexión
+        this.startPromise = (async () => {
+            try {
+                // Esperar a que cualquier desconexión previa termine
+                while (this.connection.state === signalR.HubConnectionState.Disconnecting) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+
+                if (this.connection.state === signalR.HubConnectionState.Connected) {
+                    this._isConnected = true;
+                    return;
+                }
+
+                if (this.connection.state !== signalR.HubConnectionState.Disconnected) {
+                    return;
+                }
+
+                await this.connection.start();
+                this._isConnected = true;
+                
+                await this.connection.invoke('JoinDocument', documentId, user.name, user.id, user.role);
+                console.info(`[DIITRA CoWork] Sesión establecida para ${user.name}`);
+            } catch (err: any) {
+                // El error ya es silenciado por el customLogger si es un aborto
+                if (err?.name === 'AbortError' || err?.message?.includes('stop() was called')) {
+                    return;
+                }
+
+                console.error('[DIITRA CoWork] Error crítico de conexión:', err);
+                this._isConnected = false;
+                throw err;
+            } finally {
+                this.startPromise = null;
+            }
+        })();
+
+        return this.startPromise;
     }
 
     async disconnect(): Promise<void> {
-        if (this.connection.state !== signalR.HubConnectionState.Disconnected) {
-            await this.connection.stop();
+        const state = this.connection.state;
+        
+        // Solo intentar detener si no estamos ya desconectados o desconectando
+        if (state !== signalR.HubConnectionState.Disconnected && state !== signalR.HubConnectionState.Disconnecting) {
+            try {
+                await this.connection.stop();
+            } catch (err) {
+                // Ignorar errores al cerrar si el arranque fue abortado o ya estaba cerrándose
+                console.debug('[DIITRA CoWork] Intento de cierre ignorado:', err);
+            }
         }
         this._isConnected = false;
     }
@@ -97,7 +156,7 @@ export class SignalRTransport implements ICoWorkTransport {
         this.connection.on('ReceiveAwarenessUpdate', handler);
     }
 
-    onFullState(handler: (stateBase64: string) => void): void {
-        this.connection.on('ReceiveFullState', handler);
+    onUpdateHistory(handler: (updatesBase64: string[]) => void): void {
+        this.connection.on('ReceiveUpdateHistory', handler);
     }
 }
