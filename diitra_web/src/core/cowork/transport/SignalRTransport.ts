@@ -1,10 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA CoWork — SignalR Transport
-// Implementación del transporte usando Microsoft SignalR (WebSockets)
-//
-// Este es el transporte por defecto para DIITRA CoWork.
-// Si el instituto necesita una red local sin internet, se puede crear
-// un WebRTCTransport que implemente la misma ICoWorkTransport.
+// DIITRA CoWork — SignalR Transport (v3.2 - Normalización Total)
 // ═══════════════════════════════════════════════════════════════════
 
 import * as signalR from '@microsoft/signalr';
@@ -17,15 +12,10 @@ export class SignalRTransport implements ICoWorkTransport {
     private _isConnected = false;
 
     constructor(hubUrl?: string) {
-        // Logger personalizado para silenciar ruidos de aborto esperados en React
         const customLogger = {
             log: (logLevel: signalR.LogLevel, message: string) => {
-                if (message.includes('Failed to start the HttpConnection before stop() was called')) {
-                    return; // Silencio total para este error de ciclo de vida
-                }
-                if (logLevel >= signalR.LogLevel.Warning) {
-                    console.warn(`[SignalR] ${message}`);
-                }
+                if (message.includes('Failed to start the HttpConnection before stop() was called')) return;
+                if (logLevel >= signalR.LogLevel.Warning) console.warn(`[SignalR] ${message}`);
             }
         };
 
@@ -33,78 +23,50 @@ export class SignalRTransport implements ICoWorkTransport {
             .withUrl(hubUrl ?? COWORK_CONFIG.SIGNALR_HUB_URL, {
                 skipNegotiation: true,
                 transport: signalR.HttpTransportType.WebSockets,
-                accessTokenFactory: () => {
-                    return localStorage.getItem('diitra_token') ?? '';
-                },
+                accessTokenFactory: () => localStorage.getItem('diitra_token') ?? '',
             })
             .withAutomaticReconnect(COWORK_CONFIG.RECONNECT_DELAYS)
             .configureLogging(customLogger)
             .build();
 
-        // Manejar eventos del ciclo de vida de la conexión
-        this.connection.onreconnecting(() => {
-            this._isConnected = false;
-            console.info('[DIITRA CoWork] Conexión perdida. Reconectando...');
-        });
+        // Evitar ruidos de métodos no registrados
+        this.connection.on('ReceiveYjsUpdate', () => {});
+        this.connection.on('ReceiveAwarenessUpdate', () => {});
+        this.connection.on('ReceiveUpdateHistory', () => {});
+        this.connection.on('UserJoined', () => {});
 
-        this.connection.onreconnected(() => {
-            this._isConnected = true;
-            console.info('[DIITRA CoWork] Reconexión exitosa.');
-        });
-
-        this.connection.onclose(() => {
-            this._isConnected = false;
-            console.warn('[DIITRA CoWork] Conexión cerrada.');
-        });
+        this.connection.onreconnecting(() => { this._isConnected = false; });
+        this.connection.onreconnected(() => { this._isConnected = true; });
+        this.connection.onclose(() => { this._isConnected = false; });
     }
 
-    get isConnected(): boolean {
-        return this._isConnected;
-    }
+    get isConnected(): boolean { return this._isConnected; }
 
     private startPromise: Promise<void> | null = null;
 
     async connect(documentId: string, user: CoWorkUser): Promise<void> {
-        // Si ya estamos conectados, no hacer nada
-        if (this.connection.state === signalR.HubConnectionState.Connected) {
-            this._isConnected = true;
-            return;
-        }
+        if (this.startPromise) return this.startPromise;
 
-        // Si ya hay un intento de conexión en curso, retornar la promesa existente
-        if (this.startPromise) {
-            return this.startPromise;
-        }
+        const normalizedId = documentId.toLowerCase().trim();
 
-        // Crear un nuevo proceso de conexión
         this.startPromise = (async () => {
             try {
-                // Esperar a que cualquier desconexión previa termine
                 while (this.connection.state === signalR.HubConnectionState.Disconnecting) {
                     await new Promise(resolve => setTimeout(resolve, 50));
                 }
 
-                if (this.connection.state === signalR.HubConnectionState.Connected) {
-                    this._isConnected = true;
-                    return;
+                if (this.connection.state === signalR.HubConnectionState.Disconnected) {
+                    await this.connection.start();
                 }
 
-                if (this.connection.state !== signalR.HubConnectionState.Disconnected) {
-                    return;
-                }
-
-                await this.connection.start();
-                this._isConnected = true;
+                // NORMALIZACIÓN CRÍTICA: Sala en minúsculas para coincidir con el Hub
+                await this.connection.invoke('JoinDocument', normalizedId, user.name, user.id, user.role);
                 
-                await this.connection.invoke('JoinDocument', documentId, user.name, user.id, user.role);
-                console.info(`[DIITRA CoWork] Sesión establecida para ${user.name}`);
+                this._isConnected = true;
+                console.info(`[DIITRA CoWork] Conectado con éxito a: ${normalizedId}`);
             } catch (err: any) {
-                // El error ya es silenciado por el customLogger si es un aborto
-                if (err?.name === 'AbortError' || err?.message?.includes('stop() was called')) {
-                    return;
-                }
-
-                console.error('[DIITRA CoWork] Error crítico de conexión:', err);
+                if (err?.name === 'AbortError' || err?.message?.includes('stop() was called')) return;
+                console.error('[DIITRA CoWork] Fallo al unirse a la sala:', err);
                 this._isConnected = false;
                 throw err;
             } finally {
@@ -116,16 +78,10 @@ export class SignalRTransport implements ICoWorkTransport {
     }
 
     async disconnect(): Promise<void> {
-        const state = this.connection.state;
-        
-        // Solo intentar detener si no estamos ya desconectados o desconectando
-        if (state !== signalR.HubConnectionState.Disconnected && state !== signalR.HubConnectionState.Disconnecting) {
+        if (this.connection.state !== signalR.HubConnectionState.Disconnected) {
             try {
                 await this.connection.stop();
-            } catch (err) {
-                // Ignorar errores al cerrar si el arranque fue abortado o ya estaba cerrándose
-                console.debug('[DIITRA CoWork] Intento de cierre ignorado:', err);
-            }
+            } catch (err) {}
         }
         this._isConnected = false;
     }
@@ -133,48 +89,45 @@ export class SignalRTransport implements ICoWorkTransport {
     async sendYjsUpdate(documentId: string, updateBase64: string): Promise<void> {
         if (!this._isConnected) return;
         try {
-            await this.connection.invoke('SendYjsUpdate', documentId, updateBase64);
-        } catch (err) {
-            console.warn('[DIITRA CoWork] Error enviando update Yjs:', err);
+            await this.connection.invoke('SendYjsUpdate', documentId.toLowerCase().trim(), updateBase64);
+        } catch (error) {
+            console.error('[DIITRA CoWork] Error en relay Yjs:', error);
         }
     }
 
     async sendAwarenessUpdate(documentId: string, updateBase64: string): Promise<void> {
         if (!this._isConnected) return;
         try {
-            await this.connection.invoke('SendAwarenessUpdate', documentId, updateBase64);
-        } catch (err) {
-            console.warn('[DIITRA CoWork] Error enviando awareness update:', err);
-        }
+            await this.connection.invoke('SendAwarenessUpdate', documentId.toLowerCase().trim(), updateBase64);
+        } catch (err) {}
     }
 
     onYjsUpdate(handler: (updateBase64: string) => void): void {
+        this.connection.off('ReceiveYjsUpdate');
         this.connection.on('ReceiveYjsUpdate', handler);
     }
 
     onAwarenessUpdate(handler: (updateBase64: string) => void): void {
+        this.connection.off('ReceiveAwarenessUpdate');
         this.connection.on('ReceiveAwarenessUpdate', handler);
     }
 
     onUpdateHistory(handler: (updatesBase64: string[]) => void): void {
+        this.connection.off('ReceiveUpdateHistory');
         this.connection.on('ReceiveUpdateHistory', handler);
     }
 
     async submitFinalContent(documentId: string, html: string, json: string): Promise<void> {
         if (!this._isConnected) return;
         try {
-            await this.connection.invoke('SubmitFinalContent', documentId, html, json);
-        } catch (err) {
-            console.warn('[DIITRA CoWork] Error enviando contenido final:', err);
-        }
+            await this.connection.invoke('SubmitFinalContent', documentId.toLowerCase().trim(), html, json);
+        } catch (err) {}
     }
 
     async submitFullSnapshot(documentId: string, snapshotBase64: string): Promise<void> {
         if (!this._isConnected) return;
         try {
-            await this.connection.invoke('SubmitFullSnapshot', documentId, snapshotBase64);
-        } catch (err) {
-            console.warn('[DIITRA CoWork] Error enviando snapshot de compactación:', err);
-        }
+            await this.connection.invoke('SubmitFullSnapshot', documentId.toLowerCase().trim(), snapshotBase64);
+        } catch (err) {}
     }
 }

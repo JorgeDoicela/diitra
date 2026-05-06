@@ -37,6 +37,7 @@ namespace diitra_infrastructure.Collaboration
         public async Task JoinDocument(string documentId, string userName, string userUuid, string userRole)
         {
             documentId = documentId.ToLower().Trim();
+            
             // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
             var instanceUuid = documentId.Split('_')[0];
 
@@ -100,6 +101,7 @@ namespace diitra_infrastructure.Collaboration
         public async Task SendYjsUpdate(string documentId, string updateBase64)
         {
             documentId = documentId.ToLower().Trim();
+            
             var instanceUuid = documentId.Split('_')[0];
             var instance = await _db.DocumentInstances
                 .AsNoTracking()

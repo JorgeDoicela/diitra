@@ -177,7 +177,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     if (isMounted) {
                         setSession(s => ({
                             ...s,
-                            connectedUsers: Array.from(new Map(users.map(u => [u.id, u])).values()),
+                            connectedUsers: users,
                         }));
                     }
                 }, 0);
