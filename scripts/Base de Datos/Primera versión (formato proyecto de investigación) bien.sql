@@ -856,7 +856,7 @@ CREATE TABLE inv_cowork_documentos (
 -- Cumple con LOPDP: trazabilidad de acceso a documentos con propiedad intelectual.
 CREATE TABLE inv_cowork_sesiones (
     idSesion          INT           AUTO_INCREMENT PRIMARY KEY,
-    documentoUuid     VARCHAR(36)   NOT NULL        COMMENT 'UUID del documento en inv_cowork_documentos',
+    documentoUuid     VARCHAR(100)  NOT NULL        COMMENT 'UUID del documento en inv_cowork_documentos',
     usuarioUuid       VARCHAR(36)   NOT NULL        COMMENT 'UUID del usuario (de inv_usuarios_metadata)',
     nombreUsuario     VARCHAR(255)  NOT NULL        COMMENT 'Nombre completo del colaborador (snapshot para auditoría)',
     rolUsuario        VARCHAR(100)  NOT NULL        COMMENT 'Rol en el momento de la sesión (Investigador, Director, etc.)',
@@ -871,7 +871,7 @@ CREATE TABLE inv_cowork_sesiones (
 -- Registro de deltas binarios (Estrategia Append-Only para integridad)
 CREATE TABLE inv_cowork_updates (
     idUpdate          INT           AUTO_INCREMENT PRIMARY KEY,
-    documentoUuid     VARCHAR(36)   NOT NULL,
+    documentoUuid     VARCHAR(100)  NOT NULL,
     updateData        LONGBLOB      NOT NULL COMMENT 'Delta binario generado por Yjs',
     creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_doc_upd (documentoUuid)
