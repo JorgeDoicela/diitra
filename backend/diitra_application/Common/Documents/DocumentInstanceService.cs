@@ -11,16 +11,19 @@ namespace Diitra.Application.Common.Documents
     {
         Task<DocumentInstance> CreateAsync(string templateCode, string entityUuid, string createdBy, string? title = null, CancellationToken ct = default);
         Task<DocumentInstance?> GetByUuidAsync(string uuid, CancellationToken ct = default);
-        Task<DocumentInstance> FinalizeAsync(string uuid, string pdfPath, string hash, string traceabilityCode, CancellationToken ct = default);
+        Task<System.Collections.Generic.IEnumerable<DocumentInstance>> GetByEntityAsync(string entityUuid, CancellationToken ct = default);
+        Task<DocumentInstance> FinalizeAsync(string uuid, byte[] pdfContent, string fileName, string hash, string traceabilityCode, CancellationToken ct = default);
     }
 
     public class DocumentInstanceService : IDocumentInstanceService
     {
         private readonly DiitraContext _context;
+        private readonly Diitra.Infrastructure.Common.Storage.IFileStorageService _storageService;
 
-        public DocumentInstanceService(DiitraContext context)
+        public DocumentInstanceService(DiitraContext context, Diitra.Infrastructure.Common.Storage.IFileStorageService storageService)
         {
             _context = context;
+            _storageService = storageService;
         }
 
         public async Task<DocumentInstance> CreateAsync(string templateCode, string entityUuid, string createdBy, string? title = null, CancellationToken ct = default)
@@ -45,7 +48,15 @@ namespace Diitra.Application.Common.Documents
                 .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
         }
 
-        public async Task<DocumentInstance> FinalizeAsync(string uuid, string pdfPath, string hash, string traceabilityCode, CancellationToken ct = default)
+        public async Task<System.Collections.Generic.IEnumerable<DocumentInstance>> GetByEntityAsync(string entityUuid, CancellationToken ct = default)
+        {
+            return await _context.DocumentInstances
+                .Where(i => i.EntityUuid == entityUuid)
+                .OrderByDescending(i => i.CreatedAt)
+                .ToListAsync(ct);
+        }
+
+        public async Task<DocumentInstance> FinalizeAsync(string uuid, byte[] pdfContent, string fileName, string hash, string traceabilityCode, CancellationToken ct = default)
         {
             var instance = await _context.DocumentInstances
                 .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
@@ -53,7 +64,11 @@ namespace Diitra.Application.Common.Documents
             if (instance == null)
                 throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
 
-            instance.Finalize(pdfPath, hash, traceabilityCode);
+            // 1. Guardar el archivo físico usando el servicio de almacenamiento
+            var relativePath = await _storageService.SaveFileAsync(fileName, pdfContent);
+
+            // 2. Finalizar la instancia en la base de datos
+            instance.Finalize(relativePath, hash, traceabilityCode);
             
             await _context.SaveChangesAsync(ct);
             return instance;
