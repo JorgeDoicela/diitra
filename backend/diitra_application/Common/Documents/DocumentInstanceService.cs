@@ -1,0 +1,62 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using Diitra.Domain.Common.Documents;
+using Diitra.Infrastructure.data.models.Diitra;
+using Microsoft.EntityFrameworkCore;
+
+namespace Diitra.Application.Common.Documents
+{
+    public interface IDocumentInstanceService
+    {
+        Task<DocumentInstance> CreateAsync(string templateCode, string entityUuid, string createdBy, string? title = null, CancellationToken ct = default);
+        Task<DocumentInstance?> GetByUuidAsync(string uuid, CancellationToken ct = default);
+        Task<DocumentInstance> FinalizeAsync(string uuid, string pdfPath, string hash, string traceabilityCode, CancellationToken ct = default);
+    }
+
+    public class DocumentInstanceService : IDocumentInstanceService
+    {
+        private readonly DiitraContext _context;
+
+        public DocumentInstanceService(DiitraContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<DocumentInstance> CreateAsync(string templateCode, string entityUuid, string createdBy, string? title = null, CancellationToken ct = default)
+        {
+            var template = await _context.DocumentTemplates
+                .FirstOrDefaultAsync(t => t.Code == templateCode && t.IsActive, ct);
+
+            if (template == null)
+                throw new KeyNotFoundException($"La plantilla '{templateCode}' no existe o no está activa.");
+
+            var instance = DocumentInstance.Create(templateCode, template.Version, entityUuid, createdBy, title);
+            
+            _context.DocumentInstances.Add(instance);
+            await _context.SaveChangesAsync(ct);
+            
+            return instance;
+        }
+
+        public async Task<DocumentInstance?> GetByUuidAsync(string uuid, CancellationToken ct = default)
+        {
+            return await _context.DocumentInstances
+                .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
+        }
+
+        public async Task<DocumentInstance> FinalizeAsync(string uuid, string pdfPath, string hash, string traceabilityCode, CancellationToken ct = default)
+        {
+            var instance = await _context.DocumentInstances
+                .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
+
+            if (instance == null)
+                throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
+
+            instance.Finalize(pdfPath, hash, traceabilityCode);
+            
+            await _context.SaveChangesAsync(ct);
+            return instance;
+        }
+    }
+}

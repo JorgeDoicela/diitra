@@ -110,6 +110,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
 builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
+builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstanceService, Diitra.Application.Common.Documents.DocumentInstanceService>();
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Application Services (Modular Monolith)

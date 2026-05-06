@@ -29,7 +29,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresLopdp: true,
                 supportsBlind: false,
                 requiresTraceability: true,
-                requiresSignature: true);
+                requiresSignature: true,
+                collaborativeFields: "[\"antecedentes\", \"justificacion\", \"objetivos\", \"metodologia\", \"marco_teorico\"]");
 
             yield return DocumentTemplate.Create(
                 code: "ACTA_APROBACION_PROYECTO",
@@ -51,7 +52,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresLopdp: true,
                 supportsBlind: true,
                 requiresTraceability: true,
-                requiresSignature: false);
+                requiresSignature: false,
+                collaborativeFields: "[\"comentario_evaluador\"]");
 
             yield return DocumentTemplate.Create(
                 code: "INFORME_AVANCE",
@@ -62,7 +64,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresLopdp: true,
                 supportsBlind: false,
                 requiresTraceability: true,
-                requiresSignature: true);
+                requiresSignature: true,
+                collaborativeFields: "[\"resumen_actividades\", \"conclusiones_tecnicas\", \"recomendaciones\"]");
 
             yield return DocumentTemplate.Create(
                 code: "CONSENTIMIENTO_INFORMADO",

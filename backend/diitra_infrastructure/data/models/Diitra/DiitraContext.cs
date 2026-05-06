@@ -64,6 +64,7 @@ public partial class DiitraContext : DbContext
 
     // --- DIITRA Document Engine (Persistence & Audit) ---
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentTemplate> DocumentTemplates { get; set; }
+    public virtual DbSet<Diitra.Domain.Common.Documents.DocumentInstance> DocumentInstances { get; set; }
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentAuditEntry> DocumentAuditEntries { get; set; }
 
     // --- DIITRA CoWork (Persistencia Colaborativa) ---
