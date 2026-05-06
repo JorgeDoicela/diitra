@@ -70,9 +70,9 @@ namespace Diitra.Application.Common.Documents
     }
 
     /// <summary>
-    /// Contrato principal del Motor de Documentos Empresarial DIITRA.
+    /// Contrato principal de DIITRA Builder (Motor de Documentos Empresarial).
     /// Desacoplado de cualquier módulo específico (Investigación, CACES, Ética, etc.)
-    /// Cualquier servicio puede inyectar esta interfaz y generar documentos institucionales.
+    /// Permite orquestar la generación de documentos y la integración con DIITRA CoWork.
     /// </summary>
     public interface IDocumentEngine
     {

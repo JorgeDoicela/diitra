@@ -6,7 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace Diitra.Infrastructure.Common.Documents
 {
     /// <summary>
-    /// Motor Orquestador Principal del Sistema de Documentos DIITRA.
+    /// Implementación de DIITRA Builder.
+    /// Orquestador encargado de transformar datos colaborativos en documentos legales.
     /// 
     /// Implementa IDocumentEngine y coordina todos los sub-componentes del motor:
     ///   1. ScribanTemplateEngine   → Inyecta datos en el HTML de la plantilla

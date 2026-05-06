@@ -9,12 +9,10 @@ using System.Collections.Generic;
 namespace Diitra.Infrastructure.Common.Documents.Engine
 {
     /// <summary>
-    /// Motor de renderizado de plantillas usando Handlebars.Net.
+    /// Motor de renderizado de DIITRA Builder (usando Handlebars.Net).
     /// Sintaxis: {{ variable_en_snake_case }} — compatible con el estándar Handlebars/Mustache.
-    /// Handlebars.Net es la elección enterprise estándar: sin vulnerabilidades conocidas,
-    /// ampliamente usado en sistemas de facturación, legales y educativos.
     /// </summary>
-    public class ScribanTemplateEngine   // Nombre interno mantenido para no romper dependencias
+    public class ScribanTemplateEngine   // Nombre interno mantenido por compatibilidad
     {
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
