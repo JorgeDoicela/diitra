@@ -172,10 +172,15 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 if (state.user) users.push(state.user as CoWorkUser);
             });
             if (isMounted) {
-                setSession(s => ({
-                    ...s,
-                    connectedUsers: Array.from(new Map(users.map(u => [u.id, u])).values()),
-                }));
+                // Deferimos la actualización para evitar el warning "Cannot update a component while rendering another"
+                setTimeout(() => {
+                    if (isMounted) {
+                        setSession(s => ({
+                            ...s,
+                            connectedUsers: Array.from(new Map(users.map(u => [u.id, u])).values()),
+                        }));
+                    }
+                }, 0);
             }
         };
 

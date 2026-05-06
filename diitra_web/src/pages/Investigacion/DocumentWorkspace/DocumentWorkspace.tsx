@@ -19,7 +19,7 @@ interface TemplateMetadata {
     code: string;
     name: string;
     description: string;
-    collaborativeFieldsJson: string | null;
+    collaborative_fields_json: string | null;
 }
 
 const DocumentWorkspace: React.FC = () => {
@@ -41,12 +41,12 @@ const DocumentWorkspace: React.FC = () => {
                 const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
                 setInstance(instanceRes.data);
 
-                // 2. Obtener la plantilla asociada
-                const templateRes = await api.get(`/admin/templates/${instanceRes.data.templateCode}`);
+                // 2. Obtener la plantilla asociada (usando snake_case del API)
+                const templateRes = await api.get(`/admin/templates/${instanceRes.data.template_code}`);
                 setTemplate(templateRes.data);
                 
-                if (templateRes.data.collaborativeFieldsJson) {
-                    const fields = JSON.parse(templateRes.data.collaborativeFieldsJson);
+                if (templateRes.data.collaborative_fields_json) {
+                    const fields = JSON.parse(templateRes.data.collaborative_fields_json);
                     setSections(fields);
                     if (fields.length > 0) setActiveSection(fields[0]);
                 }
