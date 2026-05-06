@@ -37,6 +37,7 @@ namespace diitra_infrastructure.Collaboration
         public async Task JoinDocument(string documentId, string userName, string userUuid, string userRole)
         {
             documentId = documentId.ToLower().Trim();
+            _logger.LogInformation("[HUB] User {User} joining: {Room}", userName, documentId);
             
             // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
             var instanceUuid = documentId.Split('_')[0];
@@ -91,6 +92,7 @@ namespace diitra_infrastructure.Collaboration
             
             updatesToSend.AddRange(deltas);
 
+            _logger.LogInformation("[HUB] Sending {Count} history updates to {User}", updatesToSend.Count, userName);
             await Clients.Caller.SendAsync("ReceiveUpdateHistory", updatesToSend);
         }
 

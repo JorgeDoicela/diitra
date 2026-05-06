@@ -67,8 +67,9 @@ const DocumentWorkspace: React.FC = () => {
 
     // Inicializar CoWork para la sección activa
     const cowork = useCoWork({
-        documentId: `${documentUuid}_${activeSection}`.toLowerCase().trim(), 
-        readOnly: instance?.state === 3, // Bloquear si el estado es 'Signed' (3)
+        documentId: activeSection ? `${documentUuid}_${activeSection}`.toLowerCase().trim() : '', 
+        enabled: !!activeSection && !!documentUuid, // Freno de mano hasta tener sección
+        readOnly: instance?.state === 3,
         user: {
             id: user?.id || 'anon',
             name: user?.nombreCompleto || 'Usuario',

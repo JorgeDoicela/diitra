@@ -1,26 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA CoWork — Main Hook: useCoWork
-//
-// Este es el ÚNICO punto de entrada para usar DIITRA CoWork.
-// Encapsula TODA la lógica de colaboración:
-//   - Gestión del ciclo de vida de la conexión (connect/disconnect/reconnect)
-//   - Sincronización del estado Yjs con todos los participantes
-//   - Presencia de usuarios (cursores, avatares, awareness)
-//   - Identidad real del usuario desde JWT (no aleatorio)
-//   - Resiliencia ante desconexiones de red
-//
-// Uso básico:
-// ────────────
-// const { session, ydoc, awareness } = useCoWork({
-//   documentId: proyecto.uuid,
-//   user: coworkUserFromAuth(auth),  // ← identidad real del JWT
-// });
-//
-// El hook gestiona AUTOMÁTICAMENTE:
-//   ✓ Conectar al montar el componente
-//   ✓ Desconectar al desmontar el componente (sin memory leaks)
-//   ✓ Reintentar si se cae la red del IST
-//   ✓ Sincronizar documentos con múltiples colaboradores simultáneos
+// DIITRA CoWork — Main Hook: useCoWork (v3.6 - Estabilidad Final)
 // ═══════════════════════════════════════════════════════════════════
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -41,164 +20,81 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         error: null,
     });
 
-    // Yjs Doc: el "libro de verdad" del documento colaborativo
+    // Mantener referencias estables para evitar ciclos de renderizado
     const ydocRef = useRef<Y.Doc>(new Y.Doc());
+    const awarenessRef = useRef<awarenessProtocol.Awareness>(new awarenessProtocol.Awareness(ydocRef.current));
+    const transportRef = useRef<ICoWorkTransport>(new SignalRTransport());
 
-    // Awareness: el "tablero de presencia" (quién está conectado, posición de cursores)
-    const awarenessRef = useRef<awarenessProtocol.Awareness>(
-        new awarenessProtocol.Awareness(ydocRef.current)
-    );
-
-    // Transport: el canal de red (por defecto SignalR, reemplazable por cualquier ICoWorkTransport)
-    const transportRef = useRef<ICoWorkTransport>(
-        new SignalRTransport(config.transportUrl)
-    );
-
-    const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const updateCounterRef = useRef(0);
-
-    /**
-     * Fuerza una compactación manual del historial de cambios.
-     */
     const compact = useCallback(async () => {
-        const fullState = Y.encodeStateAsUpdate(ydocRef.current);
-        const fullB64 = btoa(String.fromCharCode(...fullState));
-        await transportRef.current.submitFullSnapshot(config.documentId, fullB64);
-        updateCounterRef.current = 0;
+        const update = Y.encodeStateAsUpdate(ydocRef.current);
+        const base64 = btoa(String.fromCharCode(...update));
+        await transportRef.current.submitFullSnapshot(config.documentId, base64);
     }, [config.documentId]);
 
-    /**
-     * Desconecta manualmente la sesión.
-     * También se llama automáticamente al desmontar el componente.
-     */
-    const disconnect = useCallback(async () => {
-        await transportRef.current.disconnect();
-        setSession(s => ({ ...s, isConnected: false }));
+    const submitFinalContent = useCallback(async (html: string, json: string) => {
+        await transportRef.current.submitFinalContent(config.documentId, html, json);
+    }, [config.documentId]);
+
+    const disconnect = useCallback(() => {
+        transportRef.current.disconnect();
     }, []);
 
     useEffect(() => {
+        let isMounted = true;
         const ydoc = ydocRef.current;
         const awareness = awarenessRef.current;
         const transport = transportRef.current;
-        let isMounted = true;
 
-        // ─────────────────────────────────────────────────────────────
-        // PASO 1: Registrar handlers de ENTRADA (servidor → este cliente)
-        // ─────────────────────────────────────────────────────────────
+        // Logging de diagnóstico
+        if (config.enabled) {
+            console.log(`[useCoWork] 🚀 Motor activado para sala: ${config.documentId}`);
+        } else {
+            console.log(`[useCoWork] 💤 Motor en espera de sección...`);
+        }
 
-        // Historial de actualizaciones al unirse (sincronización inicial robusta)
-        transport.onUpdateHistory((updatesBase64: string[]) => {
-            try {
-                ydoc.transact(() => {
-                    updatesBase64.forEach(b64 => {
-                        const update = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-                        Y.applyUpdate(ydoc, update, 'history-sync');
-                    });
-                }, 'history-sync');
-                console.info(`[DIITRA CoWork] Sincronización inicial exitosa: ${updatesBase64.length} actualizaciones aplicadas.`);
-            } catch (err) {
-                console.warn('[DIITRA CoWork] Error aplicando historial de actualizaciones:', err);
+        const onYdocUpdate = (update: Uint8Array, origin: any) => {
+            if (origin !== 'remote') {
+                const base64 = btoa(String.fromCharCode(...update));
+                transport.sendYjsUpdate(config.documentId, base64);
             }
+        };
+
+        const onAwarenessUpdate = () => {
+            const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [ydoc.clientID]);
+            const base64 = btoa(String.fromCharCode(...update));
+            transport.sendAwarenessUpdate(config.documentId, base64);
+        };
+
+        // Suscribir eventos de transporte
+        transport.onYjsUpdate((updateBase64) => {
+            const update = Uint8Array.from(atob(updateBase64), c => c.charCodeAt(0));
+            Y.applyUpdate(ydoc, update, 'remote');
         });
 
-        transport.onYjsUpdate((updateBase64: string) => {
-            try {
-                const update = Uint8Array.from(atob(updateBase64), c => c.charCodeAt(0));
-                // Aplicar con origen 'remote' para no re-enviar al servidor (evitar loop)
+        transport.onAwarenessUpdate((updateBase64) => {
+            const update = Uint8Array.from(atob(updateBase64), c => c.charCodeAt(0));
+            awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
+        });
+
+        transport.onUpdateHistory((updatesBase64) => {
+            console.log(`[useCoWork] 📚 Historial cargado: ${updatesBase64.length} actualizaciones`);
+            updatesBase64.forEach(base64 => {
+                const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
                 Y.applyUpdate(ydoc, update, 'remote');
-            } catch (err) {
-                console.warn('[DIITRA CoWork] Error aplicando Yjs update:', err);
-            }
-        });
-
-        transport.onAwarenessUpdate((updateBase64: string) => {
-            try {
-                const update = Uint8Array.from(atob(updateBase64), c => c.charCodeAt(0));
-                awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
-            } catch (err) {
-                console.warn('[DIITRA CoWork] Error aplicando awareness update:', err);
-            }
-        });
-
-        // ─────────────────────────────────────────────────────────────
-        // PASO 2: Registrar handlers de SALIDA (este cliente → servidor)
-        // ─────────────────────────────────────────────────────────────
-
-        const onYdocUpdate = (update: Uint8Array, origin: unknown) => {
-            // Solo enviar si el cambio vino de este usuario (no de uno remoto)
-            if (origin !== 'remote' && transport.isConnected) {
-                const b64 = btoa(String.fromCharCode(...update));
-                transport.sendYjsUpdate(config.documentId, b64);
-
-                // ESTRATEGIA PLATINUM: Compactación Automática
-                // Cada 50 cambios locales, enviamos el documento completo para limpiar deltas en el servidor.
-                updateCounterRef.current++;
-                if (updateCounterRef.current >= 50) {
-                    const fullState = Y.encodeStateAsUpdate(ydoc);
-                    const fullB64 = btoa(String.fromCharCode(...fullState));
-                    transport.submitFullSnapshot(config.documentId, fullB64);
-                    updateCounterRef.current = 0;
-                    console.debug(`[DIITRA CoWork] Compactación automática ejecutada para ${config.documentId}`);
-                }
-
-                if (isMounted) {
-                    setSession(s => ({ ...s, isSyncing: true, lastSyncedAt: new Date() }));
-                    // Ocultar el indicador de "guardando" después de un breve delay visual
-                    if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
-                    syncTimeoutRef.current = setTimeout(() => {
-                        if (isMounted) setSession(s => ({ ...s, isSyncing: false }));
-                    }, 600);
-                }
-            }
-        };
-
-        const onAwarenessUpdate = (
-            { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
-            origin: unknown
-        ) => {
-            // Sincronizar el estado de presencia con el servidor
-            if (origin !== 'remote' && transport.isConnected) {
-                const changedIds = [...added, ...updated, ...removed];
-                const update = awarenessProtocol.encodeAwarenessUpdate(awareness, changedIds);
-                transport.sendAwarenessUpdate(
-                    config.documentId,
-                    btoa(String.fromCharCode(...update))
-                );
-            }
-
-            // Actualizar la lista de usuarios conectados en el estado local
-            const users: CoWorkUser[] = [];
-            awareness.getStates().forEach((state: Record<string, unknown>) => {
-                if (state.user) users.push(state.user as CoWorkUser);
             });
-            if (isMounted) {
-                // Deferimos la actualización para evitar el warning "Cannot update a component while rendering another"
-                setTimeout(() => {
-                    if (isMounted) {
-                        setSession(s => ({
-                            ...s,
-                            connectedUsers: users,
-                        }));
-                    }
-                }, 0);
-            }
-        };
+            setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
+        });
 
-        ydoc.on('update', onYdocUpdate);
-        awareness.on('update', onAwarenessUpdate);
+        const init = async () => {
+            if (!config.enabled) return;
 
-        // ─────────────────────────────────────────────────────────────
-        // PASO 3: Conectar y registrar la identidad REAL del usuario
-        // ─────────────────────────────────────────────────────────────
-
-        transport
-            .connect(config.documentId, config.user)
-            .then(() => {
+            try {
+                await transport.connect(config.documentId, config.user);
                 if (!isMounted) return;
 
                 setSession(s => ({ ...s, isConnected: true, error: null }));
+                console.info(`[useCoWork] ✅ Conectado con éxito.`);
 
-                // Registrar presencia con datos reales del JWT, no con Math.random()
                 const coworkUser: CoWorkUser = {
                     id: config.user.id,
                     name: config.user.name,
@@ -208,46 +104,30 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 };
                 awareness.setLocalStateField('user', coworkUser);
                 config.onSynced?.();
-            })
-            .catch((err: any) => {
+            } catch (err: any) {
                 if (!isMounted) return;
-                
-                // Ignorar errores de aborto causados por el ciclo de vida de React 19 en desarrollo
-                if (err?.name === 'AbortError' || err?.message?.includes('stop()')) {
-                    return;
-                }
+                if (err?.name === 'AbortError' || err?.message?.includes('stop()')) return;
 
-                const errorMsg = `[DIITRA CoWork] No se pudo conectar: ${err?.message ?? 'Error desconocido'}`;
-                console.error(errorMsg);
-                setSession(s => ({ ...s, isConnected: false, error: errorMsg }));
-                config.onError?.(errorMsg);
-            });
-
-        // ─────────────────────────────────────────────────────────────
-        // PASO 4: Limpieza al desmontar (sin memory leaks)
-        // ─────────────────────────────────────────────────────────────
-        const handleUnload = () => {
-            transport.disconnect();
+                console.error("[useCoWork] ❌ Fallo en conexión:", err);
+                setSession(s => ({ ...s, isConnected: false, error: err.message }));
+                config.onError?.(err.message);
+            }
         };
 
-        window.addEventListener('beforeunload', handleUnload);
+        init();
+
+        ydoc.on('update', onYdocUpdate);
+        awareness.on('update', onAwarenessUpdate);
 
         return () => {
             isMounted = false;
-            window.removeEventListener('beforeunload', handleUnload);
-            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
             ydoc.off('update', onYdocUpdate);
             awareness.off('update', onAwarenessUpdate);
             transport.disconnect();
+            console.log(`[useCoWork] 🛑 Cleanup sala: ${config.documentId}`);
         };
-
-        // El effect solo se re-ejecuta si cambia el documento o el usuario
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [config.documentId, config.user.id]);
-
-    const submitFinalContent = useCallback(async (html: string, json: string) => {
-        await transportRef.current.submitFinalContent(config.documentId, html, json);
-    }, [config.documentId]);
+    }, [config.documentId, config.user.id, config.enabled]);
 
     return {
         session,
