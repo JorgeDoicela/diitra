@@ -37,6 +37,7 @@ export interface CoWorkConfig {
     user: CoWorkUser;
     transportUrl?: string;       // URL del hub SignalR (opcional, usa la default)
     readonly?: boolean;          // Modo solo lectura (para revisores en doble ciego)
+    enabled?: boolean;           // ¿Debe conectarse automáticamente? (Default: true)
     onSynced?: () => void;       // Callback: documento sincronizado con el servidor
     onError?: (msg: string) => void;  // Callback: error de conexión
 }
