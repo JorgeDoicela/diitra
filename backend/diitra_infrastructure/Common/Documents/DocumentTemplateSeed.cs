@@ -1,4 +1,5 @@
 using Diitra.Domain.Common.Documents;
+using System.Collections.Generic;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -136,53 +137,53 @@ namespace Diitra.Infrastructure.Common.Documents
 
         private static string GetProtocoloHtml() => @"
 <div class=""doc-title"">PROTOCOLO DE PROYECTO DE INVESTIGACIÓN</div>
-<div class=""doc-subtitle"">Convocatoria: {{ convocatoria | default: 'No Especificada' }}</div>
+<div class=""doc-subtitle"">Convocatoria: {{default convocatoria 'No Especificada'}}</div>
 
 <div class=""section-title"">1. Identificación General</div>
 <table class=""info-table"">
-    <tr><td>Código Institucional:</td><td>{{ codigo_institucional | default: 'Por Asignar' }}</td></tr>
+    <tr><td>Código Institucional:</td><td>{{default codigo_institucional 'Por Asignar'}}</td></tr>
     <tr><td>Título del Proyecto:</td><td><strong>{{ titulo }}</strong></td></tr>
-    <tr><td>Línea de Investigación:</td><td>{{ linea_investigacion | default: 'N/A' }}</td></tr>
-    <tr><td>Tipo de Investigación:</td><td>{{ tipo_investigacion | default: 'N/A' }}</td></tr>
-    <tr><td>ODS Asociado:</td><td>{{ ods | default: 'N/A' }}</td></tr>
-    <tr><td>Tiempo de Ejecución:</td><td>{{ tiempo_ejecucion | default: 'N/A' }}</td></tr>
+    <tr><td>Línea de Investigación:</td><td>{{default linea_investigacion 'N/A'}}</td></tr>
+    <tr><td>Tipo de Investigación:</td><td>{{default tipo_investigacion 'N/A'}}</td></tr>
+    <tr><td>ODS Asociado:</td><td>{{default ods 'N/A'}}</td></tr>
+    <tr><td>Tiempo de Ejecución:</td><td>{{default tiempo_ejecucion 'N/A'}}</td></tr>
     <tr><td>Fecha de Registro:</td><td>{{ fecha_emision }}</td></tr>
 </table>
 
 <div class=""section-title"">2. Descripción Técnica</div>
 <div class=""field-label"">Antecedentes:</div>
-<div class=""text-field"">{{ antecedentes | default: 'No proporcionado' }}</div>
+<div class=""text-field"">{{default antecedentes 'No proporcionado'}}</div>
 
 <div class=""field-label"">Descripción del Proyecto:</div>
-<div class=""text-field"">{{ descripcion_proyecto | default: 'No proporcionado' }}</div>
+<div class=""text-field"">{{default descripcion_proyecto 'No proporcionado'}}</div>
 
 <div class=""field-label"">Justificación:</div>
-<div class=""text-field"">{{ justificacion | default: 'No proporcionado' }}</div>
+<div class=""text-field"">{{default justificacion 'No proporcionado'}}</div>
 
 <div class=""section-title"">3. Fundamentación Científica</div>
 <div class=""field-label"">Marco Teórico:</div>
-<div class=""text-field"">{{ marco_teorico | default: 'No proporcionado' }}</div>
+<div class=""text-field"">{{default marco_teorico 'No proporcionado'}}</div>
 
 <div class=""field-label"">Metodología:</div>
-<div class=""text-field"">{{ metodologia | default: 'No proporcionado' }}</div>
+<div class=""text-field"">{{default metodologia 'No proporcionado'}}</div>
 
 <div class=""section-title"">4. Firmas de Responsabilidad</div>
 <div class=""firmas-row"">
     <div class=""firma-ec-block"">
         <div class=""firma-label"">Espacio reservado para Firma Electrónica (FirmaEC)</div>
-        <div class=""firma-name"">{{ nombre_investigador | default: '____________________________' }}</div>
+        <div class=""firma-name"">{{default nombre_investigador '____________________________'}}</div>
         <div class=""firma-role"">Docente Investigador Principal</div>
     </div>
     <div class=""firma-ec-block"">
         <div class=""firma-label"">Espacio reservado para Firma Electrónica (FirmaEC)</div>
-        <div class=""firma-name"">{{ nombre_director | default: '____________________________' }}</div>
+        <div class=""firma-name"">{{default nombre_director '____________________________'}}</div>
         <div class=""firma-role"">Director de Investigación e Innovación</div>
     </div>
 </div>";
 
         private static string GetActaAprobacionHtml() => @"
 <div class=""doc-title"">ACTA DE APROBACIÓN DE PROYECTO DE INVESTIGACIÓN</div>
-<div class=""doc-subtitle"">Resolución N.° {{ numero_resolucion | default: 'DIITRA-RES-' + fecha_emision_corta }}</div>
+<div class=""doc-subtitle"">Resolución N.° {{default numero_resolucion 'DIITRA-RES-AUTOGENERADA'}}</div>
 
 <p>En la ciudad de {{ ciudad }}, a los {{ fecha_emision }}, reunido el Comité Institucional de Investigación e Innovación, 
 <strong>RESUELVE:</strong></p>
@@ -192,10 +193,10 @@ namespace Diitra.Infrastructure.Common.Documents
     <tr><td>Código Institucional:</td><td><strong>{{ codigo_institucional }}</strong></td></tr>
     <tr><td>Título:</td><td>{{ titulo }}</td></tr>
     <tr><td>Investigador Principal:</td><td>{{ nombre_investigador }}</td></tr>
-    <tr><td>Puntaje de Evaluación:</td><td>{{ puntaje_evaluacion | default: 'N/A' }} / 100</td></tr>
-    <tr><td>Fecha de Inicio:</td><td>{{ fecha_inicio | default: 'Por definir' }}</td></tr>
-    <tr><td>Fecha de Fin:</td><td>{{ fecha_fin | default: 'Por definir' }}</td></tr>
-    <tr><td>Presupuesto Aprobado:</td><td>$ {{ presupuesto_aprobado | default: '0.00' }}</td></tr>
+    <tr><td>Puntaje de Evaluación:</td><td>{{default puntaje_evaluacion 'N/A'}} / 100</td></tr>
+    <tr><td>Fecha de Inicio:</td><td>{{default fecha_inicio 'Por definir'}}</td></tr>
+    <tr><td>Fecha de Fin:</td><td>{{default fecha_fin 'Por definir'}}</td></tr>
+    <tr><td>Presupuesto Aprobado:</td><td>$ {{default presupuesto_aprobado '0.00'}}</td></tr>
 </table>
 
 <div class=""section-title"">2. Resolución</div>
@@ -207,41 +208,41 @@ avance según el Reglamento de Régimen Académico del CES.</p>
 <div class=""firmas-row"">
     <div class=""firma-ec-block"">
         <div class=""firma-label"">Firma Electrónica (FirmaEC)</div>
-        <div class=""firma-name"">{{ nombre_director | default: '____________________________' }}</div>
+        <div class=""firma-name"">{{default nombre_director '____________________________'}}</div>
         <div class=""firma-role"">Director de Investigación e Innovación</div>
     </div>
     <div class=""firma-ec-block"">
         <div class=""firma-label"">Firma Electrónica (FirmaEC)</div>
-        <div class=""firma-name"">{{ nombre_rector | default: '____________________________' }}</div>
+        <div class=""firma-name"">{{default nombre_rector '____________________________'}}</div>
         <div class=""firma-role"">Rector / Vicerrector Académico</div>
     </div>
 </div>";
 
         private static string GetInformeAvanceHtml() => @"
 <div class=""doc-title"">INFORME DE AVANCE DE INVESTIGACIÓN</div>
-<div class=""doc-subtitle"">Período: {{ periodo | default: 'No especificado' }} — Corte: {{ fecha_emision }}</div>
+<div class=""doc-subtitle"">Período: {{default periodo 'No especificado'}} — Corte: {{ fecha_emision }}</div>
 
 <div class=""section-title"">1. Identificación</div>
 <table class=""info-table"">
     <tr><td>Código del Proyecto:</td><td>{{ codigo_institucional }}</td></tr>
     <tr><td>Título:</td><td>{{ titulo }}</td></tr>
     <tr><td>Investigador:</td><td>{{ nombre_investigador }}</td></tr>
-    <tr><td>N.° de Informe:</td><td>{{ numero_informe | default: '1' }}</td></tr>
+    <tr><td>N.° de Informe:</td><td>{{default numero_informe '1'}}</td></tr>
 </table>
 
 <div class=""section-title"">2. Actividades Ejecutadas</div>
-<div class=""text-field"">{{ actividades_ejecutadas | default: 'Sin información registrada.' }}</div>
+<div class=""text-field"">{{default actividades_ejecutadas 'Sin información registrada.'}}</div>
 
 <div class=""section-title"">3. Ejecución Presupuestaria</div>
 <table class=""data-table"">
     <thead><tr><th>Rubro</th><th>Presupuesto</th><th>Ejecutado</th><th>Saldo</th></tr></thead>
     <tbody>
-        <tr><td>Total del Período</td><td>$ {{ presupuesto_periodo | default: '0.00' }}</td><td>$ {{ ejecutado_periodo | default: '0.00' }}</td><td>$ {{ saldo_periodo | default: '0.00' }}</td></tr>
+        <tr><td>Total del Período</td><td>$ {{default presupuesto_periodo '0.00'}}</td><td>$ {{default ejecutado_periodo '0.00'}}</td><td>$ {{default saldo_periodo '0.00'}}</td></tr>
     </tbody>
 </table>
 
 <div class=""section-title"">4. Problemas y Ajustes Solicitados</div>
-<div class=""text-field"">{{ problemas_ajustes | default: 'Sin novedades.' }}</div>
+<div class=""text-field"">{{default problemas_ajustes 'Sin novedades.'}}</div>
 
 <div class=""section-title"">5. Firma del Investigador</div>
 <div class=""firma-ec-block"" style=""max-width:300px"">
@@ -264,8 +265,8 @@ avance según el Reglamento de Régimen Académico del CES.</p>
     <tr><td>Institución:</td><td>Instituto Superior Tecnológico — DIITRA</td></tr>
 </table>
 
-<div class=""section-title"">2. Propósito y Procedimientos</div>
-<div class=""text-field"">{{ descripcion_estudio | default: 'Ver hoja adjunta de información al participante.' }}</div>
+<div class=""field-label"">Propósito y Procedimientos:</div>
+<div class=""text-field"">{{default descripcion_estudio 'Ver hoja adjunta de información al participante.'}}</div>
 
 <div class=""section-title"">3. Declaración de Consentimiento (LOPDP)</div>
 <p>Conforme a la <strong>Ley Orgánica de Protección de Datos Personales (R.O. N.° 459, 26/05/2021)</strong>, 
@@ -294,16 +295,16 @@ CERTIFICA la conformación oficial del semillero:</p>
 <div class=""section-title"">1. Datos del Semillero</div>
 <table class=""info-table"">
     <tr><td>Nombre del Semillero:</td><td>{{ nombre_semillero }}</td></tr>
-    <tr><td>Línea de Investigación:</td><td>{{ linea_investigacion | default: 'N/A' }}</td></tr>
+    <tr><td>Línea de Investigación:</td><td>{{default linea_investigacion 'N/A'}}</td></tr>
     <tr><td>Docente Tutor:</td><td>{{ nombre_tutor }}</td></tr>
-    <tr><td>Proyecto Vinculado:</td><td>{{ codigo_proyecto | default: 'Sin proyecto asignado' }}</td></tr>
+    <tr><td>Proyecto Vinculado:</td><td>{{default codigo_proyecto 'Sin proyecto asignado'}}</td></tr>
 </table>
 
 <div class=""section-title"">2. Integrantes</div>
 <table class=""data-table"">
     <thead><tr><th>#</th><th>Nombres y Apellidos</th><th>Cédula</th><th>Carrera</th><th>Rol</th></tr></thead>
     <tbody>
-        <tr><td colspan=""5"" style=""text-align:center;font-style:italic;"">Ver listado adjunto en sistema DIITRA (Código: {{ traceability_code | default: 'N/A' }})</td></tr>
+        <tr><td colspan=""5"" style=""text-align:center;font-style:italic;"">Ver listado adjunto en sistema DIITRA (Código: {{default traceability_code 'N/A'}})</td></tr>
     </tbody>
 </table>
 
@@ -329,7 +330,7 @@ CERTIFICA la conformación oficial del semillero:</p>
 <p style=""text-align:center; font-size:10pt;""><strong>CERTIFICA</strong></p>
 <p style=""text-align:justify; margin:15px 0;"">
     Que <strong>{{ nombre_participante }}</strong>, con cédula <strong>{{ cedula }}</strong>, 
-    en calidad de <strong>{{ rol | default: 'Investigador' }}</strong>, participó activamente 
+    en calidad de <strong>{{default rol 'Investigador'}}</strong>, participó activamente 
     en el proyecto de investigación:
 </p>
 
@@ -339,7 +340,7 @@ CERTIFICA la conformación oficial del semillero:</p>
 </div>
 
 <p style=""text-align:justify;"">
-    Aportando un total de <strong>{{ horas_participacion | default: 'N/A' }} horas</strong> 
+    Aportando un total de <strong>{{default horas_participacion 'N/A'}} horas</strong> 
     de trabajo de investigación. El presente certificado es válido para los fines académicos 
     y profesionales que el portador estime convenientes.
 </p>
@@ -359,9 +360,9 @@ C.I. {{ cedula_autor }} (CEDENTE), se suscribe el presente contrato:</p>
 
 <div class=""section-title"">1. Objeto de la Cesión</div>
 <table class=""info-table"">
-    <tr><td>Tipo de Obra:</td><td>{{ tipo_obra | default: 'Artículo Científico' }}</td></tr>
+    <tr><td>Tipo de Obra:</td><td>{{default tipo_obra 'Artículo Científico'}}</td></tr>
     <tr><td>Título de la Obra:</td><td>{{ titulo_obra }}</td></tr>
-    <tr><td>ISBN/ISSN:</td><td>{{ isbn_issn | default: 'Pendiente de asignación' }}</td></tr>
+    <tr><td>ISBN/ISSN:</td><td>{{default isbn_issn 'Pendiente de asignación'}}</td></tr>
     <tr><td>Proyecto de Origen:</td><td>{{ codigo_proyecto }}</td></tr>
 </table>
 
@@ -391,19 +392,19 @@ Conocimiento, Creatividad e Innovación (INGENIOS).</p>
 <div class=""section-title"">1. Datos del Proceso</div>
 <table class=""info-table"">
     <tr><td>Proyecto de Investigación:</td><td>{{ codigo_institucional }} — {{ titulo }}</td></tr>
-    <tr><td>Tipo de Contratación:</td><td>{{ tipo_contratacion | default: 'Ínfima Cuantía' }}</td></tr>
-    <tr><td>Monto Estimado:</td><td>$ {{ monto_estimado | default: '0.00' }}</td></tr>
-    <tr><td>Partida Presupuestaria:</td><td>{{ partida_presupuestaria | default: 'Ver POA Institucional' }}</td></tr>
+    <tr><td>Tipo de Contratación:</td><td>{{default tipo_contratacion 'Ínfima Cuantía'}}</td></tr>
+    <tr><td>Monto Estimado:</td><td>$ {{default monto_estimado '0.00'}}</td></tr>
+    <tr><td>Partida Presupuestaria:</td><td>{{default partida_presupuestaria 'Ver POA Institucional'}}</td></tr>
 </table>
 
 <div class=""section-title"">2. Objeto de la Contratación</div>
-<div class=""text-field"">{{ objeto_contratacion | default: 'No especificado' }}</div>
+<div class=""text-field"">{{default objeto_contratacion 'No especificado'}}</div>
 
 <div class=""section-title"">3. Especificaciones Técnicas Mínimas</div>
-<div class=""text-field"">{{ especificaciones_tecnicas | default: 'Ver Anexo Técnico' }}</div>
+<div class=""text-field"">{{default especificaciones_tecnicas 'Ver Anexo Técnico'}}</div>
 
 <div class=""section-title"">4. Forma de Pago y Obligaciones</div>
-<div class=""text-field"">{{ condiciones_pago | default: 'Conforme al Reglamento de Contratación Pública vigente.' }}</div>
+<div class=""text-field"">{{default condiciones_pago 'Conforme al Reglamento de Contratación Pública vigente.'}}</div>
 
 <div class=""firma-ec-block"" style=""max-width:300px; margin-top:30px;"">
     <div class=""firma-label"">Firma Electrónica (FirmaEC)</div>
@@ -443,8 +444,8 @@ Conocimiento, Creatividad e Innovación (INGENIOS).</p>
     </tbody>
 </table>
 
-<div class=""section-title"">3. Observaciones</div>
-<div class=""text-field"">{{ observaciones | default: 'Sin observaciones.' }}</div>
+<div class=""field-label"">Observaciones:</div>
+<div class=""text-field"">{{default observaciones 'Sin observaciones.'}}</div>
 
 <div class=""firma-ec-block"" style=""max-width:300px; margin-top:30px;"">
     <div class=""firma-label"">Firma Electrónica (FirmaEC)</div>
