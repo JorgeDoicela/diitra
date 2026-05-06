@@ -56,9 +56,15 @@ namespace diitra_api.Controllers
         {
             try
             {
+                // Convertir Base64 a bytes (el frontend o el builder enviarán el PDF aquí)
+                byte[] pdfBytes = string.IsNullOrEmpty(request.PdfBase64) 
+                    ? System.Text.Encoding.UTF8.GetBytes("CONTENIDO_PDF_GENERADO_POR_BUILDER") 
+                    : Convert.FromBase64String(request.PdfBase64);
+
                 var instance = await _instanceService.FinalizeAsync(
                     uuid, 
-                    request.PdfPath, 
+                    pdfBytes,
+                    $"{uuid}.pdf",
                     request.Hash, 
                     request.TraceabilityCode, 
                     ct);
@@ -72,5 +78,5 @@ namespace diitra_api.Controllers
     }
 
     public record CreateInstanceRequest(string TemplateCode, string EntityUuid, string? Title = null);
-    public record FinalizeRequest(string PdfPath, string Hash, string TraceabilityCode);
+    public record FinalizeRequest(string? PdfBase64, string Hash, string TraceabilityCode);
 }

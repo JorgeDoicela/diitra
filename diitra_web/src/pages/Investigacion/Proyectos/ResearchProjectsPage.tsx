@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import ProjectWorkspace from './Wizard/ProjectWizard';
+import DocumentTray from '../DocumentWorkspace/DocumentTray';
 
 interface Proyecto {
     uuid: string;
@@ -94,6 +95,23 @@ const ResearchProjectsPage = () => {
                             Gestionar productos <ArrowRight size={14} />
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* Lista de Proyectos / Bandeja de Documentos */}
+            <div className="grid grid-cols-1 gap-10 animate-fade-up [animation-delay:200ms]">
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between px-2">
+                        <h3 className="text-xs font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
+                            <Calendar size={14} /> Gestión de Expedientes Activos
+                        </h3>
+                    </div>
+                    
+                    {/* Ejemplo de Integración de la Bandeja Universal */}
+                    <DocumentTray 
+                        entityUuid="proyecto-actual-001" 
+                        title="Expediente: Energía Eólica en el Azuay"
+                    />
                 </div>
             </div>
 
