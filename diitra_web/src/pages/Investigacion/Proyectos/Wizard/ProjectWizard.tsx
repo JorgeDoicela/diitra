@@ -198,7 +198,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 <div className="flex-1 grid grid-cols-2 gap-8">
                                     <div className="flex flex-col justify-center items-center text-center p-8 border border-border-thin rounded bg-surface">
                                         <FileText size={48} className="text-text-main mb-4" />
-                                        <p className="text-sm text-text-dim mb-6">El motor de QuestPDF compilará el trabajo de todos los autores en el formato institucional.</p>
+                                        <p className="text-sm text-text-dim mb-6">El motor Enterprise DIITRA generará el protocolo oficial inyectando sus datos en el formato SENESCYT/ISTPET.</p>
                                         <button onClick={handleGeneratePdf} className="bg-text-main text-bg-deep px-6 py-2 rounded text-xs font-bold uppercase tracking-widest hover:opacity-90">
                                             Congelar y Generar PDF
                                         </button>
