@@ -2,6 +2,9 @@ using HandlebarsDotNet;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Globalization;
+using System.Linq;
+using Diitra.Domain.Common.Documents;
+using System.Collections.Generic;
 
 namespace Diitra.Infrastructure.Common.Documents.Engine
 {
@@ -51,6 +54,22 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     output.WriteSafeString($"${amount:N2}");
                 else
                     output.WriteSafeString(arguments.ElementAtOrDefault(0)?.ToString() ?? "$0.00");
+            });
+
+            // Helper: comparación de igualdad (útil para condicionales {{#if (eq a b)}})
+            _handlebars.RegisterHelper("eq", (context, arguments) =>
+            {
+                var a = arguments.ElementAtOrDefault(0);
+                var b = arguments.ElementAtOrDefault(1);
+                return a?.ToString() == b?.ToString();
+            });
+
+            // Helper: negación
+            _handlebars.RegisterHelper("not", (context, arguments) =>
+            {
+                var val = arguments.ElementAtOrDefault(0);
+                if (val is bool b) return !b;
+                return val == null;
             });
         }
 
