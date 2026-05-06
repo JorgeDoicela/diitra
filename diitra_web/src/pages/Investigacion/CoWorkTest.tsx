@@ -80,7 +80,7 @@ const CoWorkTestPage: React.FC = () => {
                                     </div>
                                     <div className="flex -space-x-2">
                                         {cowork.session.connectedUsers.map(u => (
-                                            <div 
+                                            <div
                                                 key={u.id}
                                                 className="w-8 h-8 rounded-full border-2 border-surface flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
                                                 style={{ backgroundColor: u.color }}
@@ -105,11 +105,11 @@ const CoWorkTestPage: React.FC = () => {
                     {/* Editor Principal */}
                     <div className="col-span-3">
                         <div className="h-[750px] shadow-2xl relative">
-                            <CoWorkEditor 
-                                cowork={cowork} 
-                                placeholder="Empieza a escribir aquí para probar la persistencia..." 
+                            <CoWorkEditor
+                                cowork={cowork}
+                                placeholder="Empieza a escribir aquí para probar la persistencia..."
                             />
-                            
+
                             {/* Marca de Agua de Núcleo */}
                             <div className="absolute bottom-6 right-8 pointer-events-none opacity-20 flex flex-col items-end">
                                 <span className="text-[10px] font-black italic tracking-widest text-text-main uppercase">DIITRA CoWork Engine</span>

@@ -75,13 +75,18 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         // PASO 1: Registrar handlers de ENTRADA (servidor → este cliente)
         // ─────────────────────────────────────────────────────────────
 
-        // Estado COMPLETO al unirse (sincronización inicial para el recién llegado)
-        transport.onFullState((stateBase64: string) => {
+        // Historial de actualizaciones al unirse (sincronización inicial robusta)
+        transport.onUpdateHistory((updatesBase64: string[]) => {
             try {
-                const state = Uint8Array.from(atob(stateBase64), c => c.charCodeAt(0));
-                Y.applyUpdate(ydoc, state, 'full-sync');
+                ydoc.transact(() => {
+                    updatesBase64.forEach(b64 => {
+                        const update = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                        Y.applyUpdate(ydoc, update, 'history-sync');
+                    });
+                }, 'history-sync');
+                console.info(`[DIITRA CoWork] Sincronización inicial exitosa: ${updatesBase64.length} actualizaciones aplicadas.`);
             } catch (err) {
-                console.warn('[DIITRA CoWork] Error aplicando estado inicial:', err);
+                console.warn('[DIITRA CoWork] Error aplicando historial de actualizaciones:', err);
             }
         });
 
@@ -177,8 +182,14 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 awareness.setLocalStateField('user', coworkUser);
                 config.onSynced?.();
             })
-            .catch((err: Error) => {
+            .catch((err: any) => {
                 if (!isMounted) return;
+                
+                // Ignorar errores de aborto causados por el ciclo de vida de React 19 en desarrollo
+                if (err?.name === 'AbortError' || err?.message?.includes('stop()')) {
+                    return;
+                }
+
                 const errorMsg = `[DIITRA CoWork] No se pudo conectar: ${err?.message ?? 'Error desconocido'}`;
                 console.error(errorMsg);
                 setSession(s => ({ ...s, isConnected: false, error: errorMsg }));
@@ -188,8 +199,15 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         // ─────────────────────────────────────────────────────────────
         // PASO 4: Limpieza al desmontar (sin memory leaks)
         // ─────────────────────────────────────────────────────────────
+        const handleUnload = () => {
+            transport.disconnect();
+        };
+
+        window.addEventListener('beforeunload', handleUnload);
+
         return () => {
             isMounted = false;
+            window.removeEventListener('beforeunload', handleUnload);
             if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
             ydoc.off('update', onYdocUpdate);
             awareness.off('update', onAwarenessUpdate);

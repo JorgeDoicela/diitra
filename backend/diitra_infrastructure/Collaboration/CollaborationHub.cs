@@ -12,6 +12,7 @@
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Buffers.Binary;
 using diitra_infrastructure.data.models;
 using diitra_infrastructure.data.models.Cowork;
 
@@ -19,6 +20,11 @@ namespace diitra_infrastructure.Collaboration
 {
     public class CollaborationHub : Hub
     {
+        private const string YjsLogMagic = "DYLG1";
+        private static readonly byte[] YjsLogMagicBytes = System.Text.Encoding.ASCII.GetBytes(YjsLogMagic);
+        private const byte FrameTypeDelta = 0x00;
+        private const byte FrameTypeSnapshot = 0x01;
+
         private readonly ILogger<CollaborationHub> _logger;
         private readonly DiitraContext _db;
 
@@ -62,12 +68,22 @@ namespace diitra_infrastructure.Collaboration
 
             if (docState?.YjsState != null && docState.YjsState.Length > 0)
             {
-                var stateBase64 = Convert.ToBase64String(docState.YjsState);
-                // Enviar SOLO al cliente que acaba de entrar, no al grupo
-                await Clients.Caller.SendAsync("ReceiveFullState", stateBase64);
-                _logger.LogInformation(
-                    "[DIITRA CoWork] Estado sincronizado ({Bytes} bytes) enviado a {User}",
-                    docState.YjsState.Length, userName);
+                // Soporta dos formatos:
+                // 1) Legado: yjsState contiene 1 bloque binario.
+                // 2) Nuevo: yjsState contiene un log enmarcado de updates append-only.
+                var updatesForSync = DecodeSyncUpdates(docState.YjsState);
+                if (updatesForSync.Count > 0)
+                {
+                    var updatesBase64 = updatesForSync
+                        .Select(Convert.ToBase64String)
+                        .ToArray();
+
+                    // Enviar SOLO al cliente que acaba de entrar, no al grupo
+                    await Clients.Caller.SendAsync("ReceiveUpdateHistory", updatesBase64);
+                    _logger.LogInformation(
+                        "[DIITRA CoWork] Historial sincronizado ({Updates} updates, {Bytes} bytes) enviado a {User}",
+                        updatesForSync.Count, docState.YjsState.Length, userName);
+                }
             }
         }
 
@@ -136,18 +152,18 @@ namespace diitra_infrastructure.Collaboration
                         EntidadTipo = "PROYECTO",
                         EntidadUuid = documentId,
                         CampoNombre = "contenido_principal",
-                        YjsState = updateBytes,
+                        YjsState = CreateLogWithSingleDelta(updateBytes),
                         Version = 1
                     };
                     _db.InvCoworkDocumentos.Add(doc);
                 }
                 else
                 {
-                    // Fusionar el nuevo update con el estado existente
-                    // En una implementación completa, aquí se usaría Y.mergeUpdates()
-                    // Por ahora guardamos el último snapshot completo que el cliente envía
-                    doc.YjsState = updateBytes;
+                    // Persistencia append-only: nunca sobrescribe el estado previo.
+                    // Si hay estado legado, se preserva como snapshot base.
+                    doc.YjsState = AppendDeltaToLog(doc.YjsState, updateBytes);
                     doc.Version++;
+                    doc.ActualizadoEn = DateTime.UtcNow;
                 }
 
                 await _db.SaveChangesAsync();
@@ -159,6 +175,134 @@ namespace diitra_infrastructure.Collaboration
                     documentId, ex.Message);
                 // El fallo de persistencia NO interrumpe la colaboración en curso
             }
+        }
+
+        private static List<byte[]> DecodeSyncUpdates(byte[] persistedBytes)
+        {
+            // Formato legado: tratar como un único estado base.
+            if (!IsFramedLog(persistedBytes))
+            {
+                return new List<byte[]> { persistedBytes };
+            }
+
+            var frames = ReadFrames(persistedBytes);
+            if (frames.Count == 0) return new List<byte[]>();
+
+            // Si existe snapshot, usar el más reciente y solo los deltas posteriores.
+            var lastSnapshotIndex = frames.FindLastIndex(f => f.FrameType == FrameTypeSnapshot);
+            if (lastSnapshotIndex >= 0)
+            {
+                var result = new List<byte[]> { frames[lastSnapshotIndex].Payload };
+                for (var i = lastSnapshotIndex + 1; i < frames.Count; i++)
+                {
+                    if (frames[i].FrameType == FrameTypeDelta)
+                        result.Add(frames[i].Payload);
+                }
+                return result;
+            }
+
+            // Si no hay snapshot, reenviar todos los deltas en orden.
+            return frames
+                .Where(f => f.FrameType == FrameTypeDelta)
+                .Select(f => f.Payload)
+                .ToList();
+        }
+
+        private static byte[] CreateLogWithSingleDelta(byte[] delta)
+        {
+            return BuildLog(new List<(byte FrameType, byte[] Payload)>
+            {
+                (FrameTypeDelta, delta)
+            });
+        }
+
+        private static byte[] AppendDeltaToLog(byte[]? existing, byte[] delta)
+        {
+            // Sin estado previo: nuevo log.
+            if (existing == null || existing.Length == 0)
+                return CreateLogWithSingleDelta(delta);
+
+            // Estado legado: migrar a log preservando el blob previo como snapshot.
+            if (!IsFramedLog(existing))
+            {
+                return BuildLog(new List<(byte FrameType, byte[] Payload)>
+                {
+                    (FrameTypeSnapshot, existing),
+                    (FrameTypeDelta, delta)
+                });
+            }
+
+            // Estado en formato log: anexar nuevo frame delta.
+            var deltaFrame = BuildFrame(FrameTypeDelta, delta);
+            var merged = new byte[existing.Length + deltaFrame.Length];
+            Buffer.BlockCopy(existing, 0, merged, 0, existing.Length);
+            Buffer.BlockCopy(deltaFrame, 0, merged, existing.Length, deltaFrame.Length);
+            return merged;
+        }
+
+        private static bool IsFramedLog(byte[] data)
+        {
+            if (data.Length < YjsLogMagicBytes.Length) return false;
+            for (var i = 0; i < YjsLogMagicBytes.Length; i++)
+            {
+                if (data[i] != YjsLogMagicBytes[i]) return false;
+            }
+            return true;
+        }
+
+        private static byte[] BuildLog(List<(byte FrameType, byte[] Payload)> frames)
+        {
+            var totalLength = YjsLogMagicBytes.Length + frames.Sum(f => 1 + 4 + f.Payload.Length);
+            var result = new byte[totalLength];
+            var offset = 0;
+            Buffer.BlockCopy(YjsLogMagicBytes, 0, result, offset, YjsLogMagicBytes.Length);
+            offset += YjsLogMagicBytes.Length;
+
+            foreach (var frame in frames)
+            {
+                result[offset] = frame.FrameType;
+                offset += 1;
+                BinaryPrimitives.WriteInt32LittleEndian(result.AsSpan(offset, 4), frame.Payload.Length);
+                offset += 4;
+                Buffer.BlockCopy(frame.Payload, 0, result, offset, frame.Payload.Length);
+                offset += frame.Payload.Length;
+            }
+            return result;
+        }
+
+        private static byte[] BuildFrame(byte frameType, byte[] payload)
+        {
+            var frame = new byte[1 + 4 + payload.Length];
+            frame[0] = frameType;
+            BinaryPrimitives.WriteInt32LittleEndian(frame.AsSpan(1, 4), payload.Length);
+            Buffer.BlockCopy(payload, 0, frame, 5, payload.Length);
+            return frame;
+        }
+
+        private static List<(byte FrameType, byte[] Payload)> ReadFrames(byte[] framedLog)
+        {
+            var frames = new List<(byte FrameType, byte[] Payload)>();
+            if (!IsFramedLog(framedLog)) return frames;
+
+            var offset = YjsLogMagicBytes.Length;
+            while (offset + 5 <= framedLog.Length)
+            {
+                var frameType = framedLog[offset];
+                offset += 1;
+
+                var payloadLength = BinaryPrimitives.ReadInt32LittleEndian(framedLog.AsSpan(offset, 4));
+                offset += 4;
+
+                if (payloadLength < 0 || offset + payloadLength > framedLog.Length)
+                    break;
+
+                var payload = new byte[payloadLength];
+                Buffer.BlockCopy(framedLog, offset, payload, 0, payloadLength);
+                offset += payloadLength;
+                frames.Add((frameType, payload));
+            }
+
+            return frames;
         }
     }
 }
