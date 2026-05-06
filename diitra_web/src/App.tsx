@@ -5,12 +5,10 @@ import UsersPage from './pages/Admin/UsersPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Landing from './pages/Landing/Landing';
 import Login from './pages/Login/Login';
-import CollaborationDemo from './pages/CollaborationDemo';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
-import CoWorkTestPage from './pages/Investigacion/CoWorkTest';
 import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -59,7 +57,6 @@ function App() {
           {/* Public Landing Page */}
           <Route path="/" element={<Landing currentTheme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/demo-colaboracion" element={<CollaborationDemo theme={theme} toggleTheme={toggleTheme} />} />
           
           {/* Internal Pages with Layout */}
           <Route path="/dashboard" element={
@@ -101,12 +98,6 @@ function App() {
             </ProtectedRoute>
           } />
           
-          <Route path="/cowork-test" element={
-            <ProtectedRoute>
-                <CoWorkTestPage />
-            </ProtectedRoute>
-          } />
-
           <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
             <ProtectedRoute>
                 <DocumentWorkspace />
