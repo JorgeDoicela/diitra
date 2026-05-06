@@ -155,9 +155,9 @@ const DocumentWorkspace: React.FC = () => {
                 <div className="flex items-center gap-4">
                     {/* Indicador de Usuarios Conectados */}
                     <div className="flex -space-x-2 mr-4">
-                        {cowork.session.connectedUsers.map(u => (
+                        {cowork.session.connectedUsers.map((u, idx) => (
                             <div 
-                                key={u.id}
+                                key={`${u.id}-${idx}`}
                                 className="w-7 h-7 rounded-full border-2 border-surface bg-bg-deep flex items-center justify-center text-[9px] font-bold text-white shadow-sm transition-transform hover:scale-110"
                                 style={{ backgroundColor: u.color }}
                                 title={`${u.name} (${u.role})`}

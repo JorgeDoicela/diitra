@@ -121,9 +121,9 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
                     {session.connectedUsers.length > 0 && (
                         <div className="flex items-center gap-2">
                             <div className="flex -space-x-2">
-                                {session.connectedUsers.slice(0, 5).map((user: CoWorkUser) => (
+                                {session.connectedUsers.slice(0, 5).map((user: CoWorkUser, idx: number) => (
                                     <div
-                                        key={user.id}
+                                        key={`${user.id}-${idx}`}
                                         className="w-6 h-6 rounded-full border border-bg-deep flex items-center justify-center text-[9px] font-bold text-white transition-transform hover:-translate-y-0.5 cursor-help"
                                         style={{ backgroundColor: user.color }}
                                         title={`${user.name} (${user.role})`}
