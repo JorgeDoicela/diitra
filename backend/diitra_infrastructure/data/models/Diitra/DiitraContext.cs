@@ -61,6 +61,10 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
 
+    // --- DIITRA Document Engine (Persistence & Audit) ---
+    public virtual DbSet<Diitra.Domain.Common.Documents.DocumentTemplate> DocumentTemplates { get; set; }
+    public virtual DbSet<Diitra.Domain.Common.Documents.DocumentAuditEntry> DocumentAuditEntries { get; set; }
+
     // ============================================================
     // TABLAS DE SIGAFI (solo lectura recomendada)
     // Los investigadores, alumnos, periodos, horarios y carreras 
@@ -1211,6 +1215,27 @@ public partial class DiitraContext : DbContext
                 .HasPrincipalKey<User>(u => u.IdUsuario)
                 .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
                 .HasConstraintName("fk_usermeta_usuario");
+        });
+
+        // ============================================================
+        // DIITRA Document Engine Tables
+        // ============================================================
+        modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentTemplate>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("doc_templates");
+            entity.Property(e => e.Code).HasMaxLength(100).IsRequired();
+            entity.HasIndex(e => e.Code).IsUnique();
+            entity.Property(e => e.HtmlContent).HasColumnType("longtext");
+            entity.Property(e => e.CustomCss).HasColumnType("longtext");
+        });
+
+        modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentAuditEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.ToTable("doc_audit_entries");
+            entity.Property(e => e.TraceabilityCode).HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.TraceabilityCode).IsUnique();
         });
 
         OnModelCreatingPartial(modelBuilder);

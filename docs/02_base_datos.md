@@ -52,3 +52,48 @@ erDiagram
 A nivel empresarial, al manipular bases de datos tan unificadas:
 1. **Replicación Maestro/Esclavo**: DIITRA debería leer metadatos pesados de `inv_productos` desde nodos réplica de solo lectura para evitar sobrecargar la base escribiente principal.
 2. **Encriptación At-Rest**: Los campos de autenticación se confían pero los P12 generados (paths) deben residir sobre blobs cifrados o ubicaciones fuera del storage relacional por buena práctica.
+
+---
+
+## Tablas del Motor de Documentos (Migración: `AddDocumentEngineTables`)
+
+Añadidas el 06/05/2026 mediante EF Core migration. No llevan prefijo `inv_` ya que son parte del núcleo transversal de DIITRA, no del módulo de investigación específico.
+
+### `doc_templates`
+Almacena las plantillas HTML editables. La fuente de verdad para todos los documentos generados.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `Id` | `int AUTO_INCREMENT` | PK |
+| `Code` | `varchar(100) UNIQUE` | Identificador único. Ej: `PROTOCOLO_INVESTIGACION` |
+| `Name` | `longtext` | Nombre legible |
+| `Description` | `longtext NULL` | Descripción del uso |
+| `HtmlContent` | `longtext` | HTML con variables Handlebars `{{variable}}` |
+| `Version` | `int` | Versión actual (incrementa en cada edición) |
+| `Category` | `int` | Enum: Protocolo, ActaAprobacion, InformeAvance... |
+| `RequiresLopdpClause` | `tinyint(1)` | Auto-inyecta pie legal LOPDP |
+| `SupportsBlindMode` | `tinyint(1)` | Soporta anonimización doble ciego |
+| `RequiresTraceabilityCode` | `tinyint(1)` | Genera código único de trazabilidad |
+| `RequiresElectronicSignature` | `tinyint(1)` | Reserva espacio para FirmaEC |
+| `CustomCss` | `longtext NULL` | CSS adicional por plantilla |
+| `IsActive` | `tinyint(1)` | Soft delete |
+| `CreatedAt` | `datetime(6)` | Fecha de creación |
+| `UpdatedAt` | `datetime(6)` | Fecha de última edición |
+| `UpdatedBy` | `longtext NULL` | Email del administrador que editó |
+
+### `doc_audit_entries`
+Log inmutable de cada documento generado. Cumple exigencias de trazabilidad LOPDP.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `Id` | `int AUTO_INCREMENT` | PK |
+| `TraceabilityCode` | `varchar(50) UNIQUE` | Código único del documento emitido |
+| `TemplateCode` | `longtext` | Code de la plantilla usada |
+| `TemplateVersion` | `int` | Versión de la plantilla en el momento de emisión |
+| `Category` | `int` | Categoría del documento |
+| `GeneratedBy` | `longtext NULL` | Usuario que solicitó el documento |
+| `GeneratedAt` | `datetime(6)` | Timestamp UTC de generación |
+| `WasBlindMode` | `tinyint(1)` | Si fue emitido en modo doble ciego |
+
+> [!NOTE]
+> La tabla `doc_audit_entries` es de escritura única (append-only). Nunca se actualiza ni elimina un registro, garantizando la integridad del log de auditoría.

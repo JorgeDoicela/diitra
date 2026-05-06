@@ -19,6 +19,9 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         tipoInvestigacion: '',
         ods: '',
         antecedentes: '',
+        descripcionProyecto: '',
+        justificacion: '',
+        marcoTeorico: '',
         metodologia: ''
     });
 
@@ -90,13 +93,16 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                 <div className="flex flex-1 overflow-hidden">
                     {/* Sidebar Tabs */}
                     <div className="w-64 border-r border-border-thin bg-surface p-4 space-y-2">
-                        <button onClick={() => setActiveTab('general')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest ${activeTab === 'general' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
+                        <button onClick={() => setActiveTab('general')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'general' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
                             <BookOpen size={16} /> Identificación
                         </button>
-                        <button onClick={() => setActiveTab('especificacion')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest ${activeTab === 'especificacion' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
+                        <button onClick={() => setActiveTab('especificacion')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'especificacion' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
                             <Target size={16} /> Especificación
                         </button>
-                        <button onClick={() => setActiveTab('cierre')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest ${activeTab === 'cierre' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
+                        <button onClick={() => setActiveTab('fundamentacion')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'fundamentacion' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
+                            <Users size={16} /> Fundamentación
+                        </button>
+                        <button onClick={() => setActiveTab('cierre')} className={`w-full flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === 'cierre' ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:bg-bg-deep'}`}>
                             <FileText size={16} /> Bandeja de Cierre
                         </button>
                     </div>
@@ -153,16 +159,35 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                         {activeTab === 'especificacion' && (
                             <div className="space-y-6 max-w-3xl animate-fade-in">
                                 <h3 className="text-sm font-bold text-text-main uppercase tracking-widest border-b border-border-thin pb-2 flex justify-between">
-                                    Especificación Científica
-                                    <span className="text-[10px] text-orange-400 font-normal normal-case flex items-center gap-1"><Users size={12}/> El Director está editando el presupuesto</span>
+                                    Especificación Técnica
                                 </h3>
                                 <div>
                                     <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Antecedentes</label>
-                                    <textarea name="antecedentes" value={formData.antecedentes} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
+                                    <textarea name="antecedentes" value={formData.antecedentes} onChange={handleChange} className="w-full h-32 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Descripción del Proyecto</label>
+                                    <textarea name="descripcionProyecto" value={formData.descripcionProyecto} onChange={handleChange} className="w-full h-32 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Justificación</label>
+                                    <textarea name="justificacion" value={formData.justificacion} onChange={handleChange} className="w-full h-32 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'fundamentacion' && (
+                            <div className="space-y-6 max-w-3xl animate-fade-in">
+                                <h3 className="text-sm font-bold text-text-main uppercase tracking-widest border-b border-border-thin pb-2">
+                                    Fundamentación Científica
+                                </h3>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Marco Teórico</label>
+                                    <textarea name="marcoTeorico" value={formData.marcoTeorico} onChange={handleChange} className="w-full h-48 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Metodología</label>
-                                    <textarea name="metodologia" value={formData.metodologia} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
+                                    <textarea name="metodologia" value={formData.metodologia} onChange={handleChange} className="w-full h-48 bg-surface border border-border-thin rounded px-4 py-3 text-sm text-text-main focus:border-text-main outline-none" />
                                 </div>
                             </div>
                         )}
@@ -201,5 +226,6 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         </div>
     );
 };
+
 
 export default ProjectWorkspace;
