@@ -53,6 +53,7 @@ DROP TABLE IF EXISTS
     inv_proyectos_profesores,
     inv_proyectos_carreras,
     inv_proyectos_dominios,
+    inv_trazabilidad_proyectos,
     inv_proyectos,
     inv_convocatorias_lineas,
     inv_convocatorias,

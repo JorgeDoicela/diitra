@@ -24,6 +24,12 @@ const CoWorkTestPage: React.FC = () => {
         }
     });
 
+    console.log('[CoWorkTest] Cowork handle:', {
+        hasSession: !!cowork.session,
+        hasYdoc: !!cowork.ydoc,
+        hasAwareness: !!cowork.awareness
+    });
+
     return (
         <div className="min-h-screen bg-bg-deep p-8">
             <div className="max-w-6xl mx-auto">

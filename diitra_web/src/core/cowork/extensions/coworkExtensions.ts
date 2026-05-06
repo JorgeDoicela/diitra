@@ -8,10 +8,50 @@
 
 import StarterKit from '@tiptap/starter-kit';
 import Collaboration from '@tiptap/extension-collaboration';
-import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Placeholder from '@tiptap/extension-placeholder';
+import { Extension } from '@tiptap/core';
+import { yCursorPlugin } from 'y-prosemirror';
 import type * as Y from 'yjs';
 import type * as awarenessProtocol from 'y-protocols/awareness';
+
+/**
+ * Custom Collaboration Cursor Extension
+ * 
+ * Bypasses the standard Tiptap extension which has issues with v2/v3 mismatches
+ * and provider detection. Directly uses the ProseMirror yCursorPlugin.
+ */
+const CustomCollaborationCursor = Extension.create({
+    name: 'collaborationCursor',
+
+    addOptions() {
+        return {
+            awareness: null as awarenessProtocol.Awareness | null,
+            render: undefined,
+            selectionRender: undefined,
+        }
+    },
+
+    addProseMirrorPlugins() {
+        console.log('[DIITRA CoWork] CustomCollaborationCursor - options.awareness:', this.options.awareness);
+        if (this.options.awareness) {
+            console.log('[DIITRA CoWork] awareness.doc:', (this.options.awareness as any).doc);
+            console.log('[DIITRA CoWork] awareness instanceof Awareness:', this.options.awareness instanceof awarenessProtocol.Awareness);
+        }
+
+        if (!this.options.awareness || !(this.options.awareness as any).doc) {
+            console.warn('[DIITRA CoWork] CollaborationCursor initialized without awareness or missing doc');
+            return [];
+        }
+
+        return [
+            yCursorPlugin(this.options.awareness, {
+                cursorBuilder: this.options.render,
+                cursorStateField: 'user',
+                getSelection: this.options.selectionRender,
+            }),
+        ];
+    },
+});
 
 export interface CoWorkExtensionsConfig {
     ydoc: Y.Doc;
@@ -21,18 +61,10 @@ export interface CoWorkExtensionsConfig {
 
 /**
  * Construye el array de extensiones Tiptap listas para la colaboración.
- * 
- * Incluye:
- *   - StarterKit: negrita, cursiva, listas, encabezados, párrafos
- *   - Collaboration: sincroniza el contenido del editor vía Yjs
- *   - CollaborationCursor: muestra cursores de otros usuarios en tiempo real
- *   - Placeholder: texto de guía cuando el editor está vacío
  */
 export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
     return [
         StarterKit.configure({
-            // Desactivar el historial nativo de Tiptap:
-            // Yjs maneja su propio undo/redo distribuido y colaborativo.
             history: false,
         }),
 
@@ -40,12 +72,10 @@ export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
             document: config.ydoc,
         }),
 
-        CollaborationCursor.configure({
-            provider: {
-                awareness: config.awareness,
-            },
+        CustomCollaborationCursor.configure({
+            awareness: config.awareness,
         }),
-
+        
         Placeholder.configure({
             placeholder: config.placeholder ?? 'Comienza a escribir tu propuesta académica...',
             emptyEditorClass: 'is-editor-empty',
