@@ -22,6 +22,11 @@ DROP TABLE IF EXISTS
     inv_tokens_acceso,
     inv_usuarios_metadata,
 
+    -- DIITRA Document Engine (Plantillas y Auditoría)
+    inv_document_audit,
+    inv_documentos_instancias,
+    inv_document_templates,
+
     -- DIITRA CoWork (Persistencia de Sesiones Colaborativas)
     inv_cowork_sesiones,
     inv_cowork_documentos,
@@ -759,6 +764,68 @@ INSERT INTO inv_dominios (uuid, nombre, activo) VALUES
 (UUID(), 'Tecnologías de la Información y Comunicación', 1),
 (UUID(), 'Energía y Producción Industrial', 1),
 (UUID(), 'Gestión Empresarial y Servicios', 1);
+
+-- #############################################################################
+-- SECCIÓN: DIITRA Document Engine — Plantillas y Auditoría Documental
+-- #############################################################################
+
+CREATE TABLE inv_document_templates (
+    id                      INT           AUTO_INCREMENT PRIMARY KEY,
+    code                    VARCHAR(100)  NOT NULL UNIQUE COMMENT 'Código único (ej: PROTOCOLO_INVESTIGACION)',
+    name                    VARCHAR(255)  NOT NULL,
+    description             TEXT,
+    html_content            LONGTEXT      NOT NULL,
+    custom_css              TEXT,
+    collaborative_fields_json TEXT          NULL COMMENT 'JSON con los campos que usan CoWork (ej: ["antecedentes", "justificacion"])',
+    version                 INT           NOT NULL DEFAULT 1,
+    category                INT           NOT NULL COMMENT 'Enum DocumentCategory',
+    requires_lopdp          TINYINT(1)    NOT NULL DEFAULT 1,
+    supports_blind_mode     TINYINT(1)    NOT NULL DEFAULT 0,
+    requires_traceability   TINYINT(1)    NOT NULL DEFAULT 1,
+    requires_signature      TINYINT(1)    NOT NULL DEFAULT 0,
+    is_active               TINYINT(1)    NOT NULL DEFAULT 1,
+    created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_by              VARCHAR(100)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE inv_documentos_instancias (
+    id                      INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid                    CHAR(36)      NOT NULL UNIQUE,
+    template_code           VARCHAR(100)  NOT NULL,
+    template_version        INT           NOT NULL,
+    entity_uuid             CHAR(36)      NOT NULL COMMENT 'UUID del Proyecto, Convocatoria o Persona dueña del doc',
+    titulo_instancia        VARCHAR(255)  NULL COMMENT 'Nombre descriptivo (ej: Informe de Avance Mayo)',
+    estado                  ENUM('Borrador', 'En_Revision', 'Firmado', 'Archivado', 'Anulado') NOT NULL DEFAULT 'Borrador',
+    created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by              VARCHAR(100)  NOT NULL,
+    
+    -- Datos del Archivo Final (Inmutabilidad)
+    final_pdf_path          VARCHAR(512)  NULL,
+    file_hash               VARCHAR(100)  NULL COMMENT 'Hash SHA-256 del PDF final',
+    traceability_code       VARCHAR(100)  NULL UNIQUE COMMENT 'Código único DIITRA-TR',
+    
+    FOREIGN KEY (template_code) REFERENCES inv_document_templates(code),
+    INDEX idx_entity (entity_uuid),
+    INDEX idx_state (estado)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE inv_document_audit (
+    id                      INT           AUTO_INCREMENT PRIMARY KEY,
+    traceability_code       VARCHAR(100)  NOT NULL UNIQUE,
+    template_code           VARCHAR(100)  NOT NULL,
+    template_version        INT           NOT NULL,
+    project_uuid            CHAR(36)      NULL,
+    entity_uuid             CHAR(36)      NULL COMMENT 'UUID de la entidad origen (Proyecto, Informe, etc)',
+    generated_by            VARCHAR(255)  NOT NULL,
+    generated_at            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    was_blind_mode          TINYINT(1)    NOT NULL DEFAULT 0,
+    file_name               VARCHAR(255)  NOT NULL,
+    file_hash               VARCHAR(100)  NULL COMMENT 'Hash SHA-256 para verificación de integridad',
+    INDEX idx_entity (entity_uuid),
+    INDEX idx_trace (traceability_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
 -- SECCIÓN: DIITRA CoWork — Persistencia de Colaboración en Tiempo Real

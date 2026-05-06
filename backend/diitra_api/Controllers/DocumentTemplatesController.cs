@@ -44,6 +44,34 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// Obtiene el detalle de una plantilla por su código único.
+        /// </summary>
+        [HttpGet("{code}")]
+        public async Task<IActionResult> GetByCode(string code, CancellationToken ct)
+        {
+            var templates = await _documentEngine.GetAvailableTemplatesAsync(ct);
+            var template = templates.FirstOrDefault(t => t.Code == code);
+
+            if (template == null)
+                return NotFound(new { error = $"Plantilla '{code}' no encontrada." });
+
+            return Ok(new
+            {
+                template.Id,
+                template.Code,
+                template.Name,
+                template.Description,
+                template.Category,
+                template.Version,
+                template.IsActive,
+                template.RequiresLopdpClause,
+                template.SupportsBlindMode,
+                template.CollaborativeFieldsJson,
+                template.UpdatedAt
+            });
+        }
+
+        /// <summary>
         /// Actualiza el HTML de una plantilla existente en base de datos.
         /// El cambio aplica inmediatamente en el siguiente documento generado.
         /// </summary>

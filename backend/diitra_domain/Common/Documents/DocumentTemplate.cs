@@ -50,6 +50,12 @@ namespace Diitra.Domain.Common.Documents
         /// </summary>
         public string? CustomCss { get; private set; }
 
+        /// <summary>
+        /// JSON que define los campos colaborativos de esta plantilla.
+        /// Ej: ["antecedentes", "justificacion", "metodologia"]
+        /// </summary>
+        public string? CollaborativeFieldsJson { get; private set; }
+
         public bool IsActive { get; private set; } = true;
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;
@@ -62,7 +68,8 @@ namespace Diitra.Domain.Common.Documents
             string code, string name, string htmlContent,
             DocumentCategory category, string? description = null,
             bool requiresLopdp = true, bool supportsBlind = false,
-            bool requiresTraceability = true, bool requiresSignature = false)
+            bool requiresTraceability = true, bool requiresSignature = false,
+            string? collaborativeFields = null)
         {
             return new DocumentTemplate
             {
@@ -74,7 +81,8 @@ namespace Diitra.Domain.Common.Documents
                 RequiresLopdpClause = requiresLopdp,
                 SupportsBlindMode = supportsBlind,
                 RequiresTraceabilityCode = requiresTraceability,
-                RequiresElectronicSignature = requiresSignature
+                RequiresElectronicSignature = requiresSignature,
+                CollaborativeFieldsJson = collaborativeFields
             };
         }
 

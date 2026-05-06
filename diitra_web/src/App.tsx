@@ -10,6 +10,8 @@ import { AuthProvider, useAuth } from './api/AuthContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
+import CoWorkTestPage from './pages/Investigacion/CoWorkTest';
+import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -98,6 +100,19 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           } />
+          
+          <Route path="/cowork-test" element={
+            <ProtectedRoute>
+                <CoWorkTestPage />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
+            <ProtectedRoute>
+                <DocumentWorkspace />
+            </ProtectedRoute>
+          } />
+
           <Route path="/analiticas" element={<Navigate to="/dashboard" replace />} />
 
           {/* Fallback */}
