@@ -34,16 +34,22 @@ namespace diitra_infrastructure.Collaboration
             _db = db;
         }
 
-        /// <summary>
-        /// El cliente se une a la sala del documento.
-        /// Si el documento ya tiene estado Yjs en BD, lo envía al recién llegado
-        /// para que se sincronice con el trabajo anterior.
-        /// </summary>
         public async Task JoinDocument(string documentId, string userName, string userUuid, string userRole)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, documentId);
+            // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
+            var instanceUuid = documentId.Split('_')[0];
 
-            // Registrar la sesión para auditoría LOPDP
+            // 2. Seguridad Enterprise: Verificar si el documento ya está finalizado/firmado
+            var instance = await _db.DocumentInstances
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
+
+            if (instance != null && instance.State >= 3)
+            {
+                throw new HubException("Este documento está FINALIZADO Y FIRMADO. No se permiten más ediciones.");
+            }
+
+            // 3. Registrar auditoría de acceso (LOPDP)
             var sesion = new InvCoworkSesion
             {
                 DocumentoUuid = documentId,
@@ -56,49 +62,115 @@ namespace diitra_infrastructure.Collaboration
             _db.InvCoworkSesiones.Add(sesion);
             await _db.SaveChangesAsync();
 
-            _logger.LogInformation(
-                "[DIITRA CoWork] {User} ({Role}) se unió al documento {DocumentId}",
-                userName, userRole, documentId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, documentId);
+            await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
 
-            // Enviar el estado actual del documento al recién llegado
-            // (vacío si nadie ha escrito nada aún)
-            var docState = await _db.InvCoworkDocumentos
-                .Where(d => d.Uuid == documentId)
-                .FirstOrDefaultAsync();
+            // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas (Historial Reciente)
+            // Esto garantiza que el cliente siempre reconstruya el documento exacto.
+            var updatesToSend = new List<string>();
 
-            if (docState?.YjsState != null && docState.YjsState.Length > 0)
+            // 4.1 Cargar el Snapshot (Estado Canónico fusionado)
+            var docSnapshot = await _db.InvCoworkDocumentos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.Uuid == documentId);
+            
+            if (docSnapshot?.YjsState != null)
             {
-                // Soporta dos formatos:
-                // 1) Legado: yjsState contiene 1 bloque binario.
-                // 2) Nuevo: yjsState contiene un log enmarcado de updates append-only.
-                var updatesForSync = DecodeSyncUpdates(docState.YjsState);
-                if (updatesForSync.Count > 0)
-                {
-                    var updatesBase64 = updatesForSync
-                        .Select(Convert.ToBase64String)
-                        .ToArray();
-
-                    // Enviar SOLO al cliente que acaba de entrar, no al grupo
-                    await Clients.Caller.SendAsync("ReceiveUpdateHistory", updatesBase64);
-                    _logger.LogInformation(
-                        "[DIITRA CoWork] Historial sincronizado ({Updates} updates, {Bytes} bytes) enviado a {User}",
-                        updatesForSync.Count, docState.YjsState.Length, userName);
-                }
+                updatesToSend.Add(Convert.ToBase64String(docSnapshot.YjsState));
             }
+
+            // 4.2 Cargar los Deltas acumulados desde el último snapshot
+            var deltas = await _db.InvCoworkUpdates
+                .AsNoTracking()
+                .Where(u => u.DocumentoUuid == documentId)
+                .OrderBy(u => u.IdUpdate)
+                .Select(u => Convert.ToBase64String(u.UpdateData))
+                .ToListAsync();
+            
+            updatesToSend.AddRange(deltas);
+
+            await Clients.Caller.SendAsync("ReceiveUpdateHistory", updatesToSend);
         }
 
         /// <summary>
-        /// Retransmite un update Yjs y lo persiste en BD.
-        /// El guardado es asíncrono y no bloquea la retransmisión.
+        /// Recibe una actualización incremental (Delta) de Yjs.
+        /// Estrategia: Append-only en la tabla de updates para evitar colisiones.
         /// </summary>
         public async Task SendYjsUpdate(string documentId, string updateBase64)
         {
-            // 1. Retransmitir inmediatamente (no esperar el guardado en BD)
-            await Clients.OthersInGroup(documentId)
-                         .SendAsync("ReceiveYjsUpdate", updateBase64);
+            var instanceUuid = documentId.Split('_')[0];
+            var instance = await _db.DocumentInstances
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
 
-            // 2. Persistir el update fusionándolo con el estado actual en BD
-            _ = PersistYjsUpdateAsync(documentId, updateBase64);
+            if (instance != null && instance.State >= 3) return;
+
+            // 1. Difusión inmediata a otros colaboradores
+            await Clients.OthersInGroup(documentId).SendAsync("ReceiveYjsUpdate", updateBase64);
+
+            // 2. Persistencia Append-Only (Profesional)
+            var newUpdate = new InvCoworkUpdate
+            {
+                DocumentoUuid = documentId,
+                UpdateData = Convert.FromBase64String(updateBase64)
+            };
+            
+            _db.InvCoworkUpdates.Add(newUpdate);
+            await _db.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// ESTRATEGIA DE COMPACTACIÓN (Nivel Platinum): 
+        /// El cliente envía el estado completo ya fusionado. El servidor reemplaza el snapshot
+        /// y limpia el historial de deltas para mantener la base de datos esbelta y rápida.
+        /// </summary>
+        public async Task SubmitFullSnapshot(string documentId, string snapshotBase64)
+        {
+            var snapshotBytes = Convert.FromBase64String(snapshotBase64);
+
+            // 1. Actualizar el estado canónico en el documento principal
+            var doc = await _db.InvCoworkDocumentos.FirstOrDefaultAsync(d => d.Uuid == documentId);
+            if (doc == null)
+            {
+                doc = new InvCoworkDocumento { 
+                    Uuid = documentId, 
+                    EntidadUuid = documentId.Split('_')[0],
+                    CampoNombre = documentId.Contains('_') ? documentId.Split('_')[1] : "contenido"
+                };
+                _db.InvCoworkDocumentos.Add(doc);
+            }
+            doc.YjsState = snapshotBytes;
+            doc.ActualizadoEn = DateTime.UtcNow;
+
+            // 2. COMPACTACIÓN: Eliminar todos los deltas previos ya que están incluidos en el snapshot
+            var oldUpdates = _db.InvCoworkUpdates.Where(u => u.DocumentoUuid == documentId);
+            _db.InvCoworkUpdates.RemoveRange(oldUpdates);
+
+            await _db.SaveChangesAsync();
+            _logger.LogInformation("[DIITRA CoWork] Compactación exitosa para {DocumentId}. Historial de deltas reiniciado.", documentId);
+        }
+
+        /// <summary>
+        /// Recibe el contenido final (HTML/JSON) renderizado por el cliente.
+        /// Esto es vital para que el Motor de Documentos (Builder) pueda generar
+        /// el PDF oficial sin necesidad de un parser Yjs en el servidor.
+        /// </summary>
+        public async Task SubmitFinalContent(string documentId, string html, string json)
+        {
+            var doc = await _db.InvCoworkDocumentos
+                .FirstOrDefaultAsync(d => d.Uuid == documentId);
+
+            if (doc != null)
+            {
+                doc.ContentHtml = html;
+                doc.ContentJson = json;
+                doc.ActualizadoEn = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation(
+                    "[DIITRA CoWork] Snapshot de contenido guardado para {DocumentId} ({Bytes} chars)",
+                    documentId, html.Length);
+            }
         }
 
         /// <summary>

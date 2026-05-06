@@ -47,6 +47,21 @@ namespace diitra_infrastructure.data.models.Cowork
         [Column("yjsState")]
         public byte[]? YjsState { get; set; }
 
+        /// <summary>
+        /// Versión en HTML puro del contenido (Snapshot).
+        /// Se actualiza cuando el cliente lo envía explícitamente o al finalizar.
+        /// El DIITRA Builder usa este campo para generar los PDF oficiales.
+        /// </summary>
+        [Column("contentHtml")]
+        public string? ContentHtml { get; set; }
+
+        /// <summary>
+        /// Versión en JSON (Tiptap) del contenido.
+        /// Útil para análisis de datos por el IA Assistant.
+        /// </summary>
+        [Column("contentJson")]
+        public string? ContentJson { get; set; }
+
         /// <summary>Versión del documento (incrementa en cada update).</summary>
         [Column("version")]
         public int Version { get; set; } = 0;
@@ -96,5 +111,29 @@ namespace diitra_infrastructure.data.models.Cowork
         /// <summary>NULL mientras la sesión esté activa.</summary>
         [Column("desconectadoEn")]
         public DateTime? DesconectadoEn { get; set; }
+    }
+
+    /// <summary>
+    /// Almacena los deltas (actualizaciones incrementales) de Yjs.
+    /// Estrategia Append-Only para evitar corrupción de datos.
+    /// </summary>
+    [Table("inv_cowork_updates")]
+    public class InvCoworkUpdate
+    {
+        [Key]
+        [Column("idUpdate")]
+        public int IdUpdate { get; set; }
+
+        [Column("documentoUuid", TypeName = "varchar(36)")]
+        [Required, MaxLength(36)]
+        public string DocumentoUuid { get; set; } = string.Empty;
+
+        /// <summary>El delta binario generado por Yjs.</summary>
+        [Column("updateData")]
+        [Required]
+        public byte[] UpdateData { get; set; } = Array.Empty<byte>();
+
+        [Column("creadoEn")]
+        public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
     }
 }
