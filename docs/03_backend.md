@@ -15,9 +15,15 @@ Para adherirse a estándares de seguridad Enterprise (ISO 27001), la configuraci
 
 ```csharp
 // Modular Monolith Injection Structure
-builder.Services.AddScoped<IAuthService, AuthService>();      // Auth Module
-builder.Services.AddScoped<IAdminService, AdminService>();    // Admin Module
-builder.Services.AddScoped<IResearchService, ProjectService>();// Research Module
+builder.Services.AddScoped<IAuthService, AuthService>();       // Auth Module
+builder.Services.AddScoped<IAdminService, AdminService>();     // Admin Module
+builder.Services.AddScoped<IResearchService, ProjectService>(); // Research Module
+
+// Motor Enterprise de Documentos (Document Engine)
+builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
+builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
+builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
+
 // Servicios Híbridos Inyectables
 builder.Services.AddScoped<IFirmaElectronicaService, FirmaElectronicaService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
@@ -28,3 +34,13 @@ Las dependencias de infraestructura se manejan mediante el ciclo de vida `AddSco
 ## WebSockets: The SignalR Bus
 En un entorno colaborativo donde la firma de una resolución o edición de un sub-título de cronograma puede suceder mientras otro usuario co-edita (Idéntico al estilo GSuite), SignalR expone el `DocumentHub`.
 Este Hub empuja _streams_ binarios ligeros (MsgPack o fallback a JSON) directo hacia Axios/Fetch, minimizando el I/O blocking request del servidor.
+
+## Motor Enterprise de Documentos
+
+Todo documento institucional (PDF) se genera a través del `IDocumentEngine`. Esto garantiza:
+- **Desacoplamiento total**: los controladores no saben cómo se genera el PDF
+- **Plantillas editables**: el HTML vive en BD (`doc_templates`), editable sin redespliegue
+- **Cumplimiento LOPDP**: pie legal inyectado automáticamente en cada documento
+- **Auditoría**: cada PDF generado queda registrado en `doc_audit_entries`
+
+Ver documentación completa en [`08_motor_documentos.md`](./08_motor_documentos.md).

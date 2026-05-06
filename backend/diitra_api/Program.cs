@@ -11,6 +11,10 @@ using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using QuestPDF.Infrastructure;
+// DIITRA Document Engine
+using Diitra.Application.Common.Documents;
+using Diitra.Infrastructure.Common.Documents;
+using Diitra.Infrastructure.Common.Documents.Engine;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -103,6 +107,15 @@ builder.Services.AddAuthorization(options =>
         }
     }
 });
+
+// ── DIITRA Enterprise Document Engine ──────────────────────────────────────
+// Motor principal: genera, combina y audita todos los documentos institucionales
+builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
+builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
+builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
+// Motor legado QuestPDF (mantenido para compatibilidad con reportes estadísticos)
+builder.Services.AddScoped<Diitra.Application.Common.IDocumentGenerator, Diitra.Infrastructure.Common.DocumentGenerator>();
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Application Services (Modular Monolith)
 builder.Services.AddScoped<diitra_application.Security.IAuthService, diitra_infrastructure.Security.AuthService>();

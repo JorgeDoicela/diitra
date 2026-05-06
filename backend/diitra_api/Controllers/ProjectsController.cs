@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
+using Diitra.Application.Common.Documents;
 
 namespace diitra_api.Controllers
 {
@@ -9,20 +10,48 @@ namespace diitra_api.Controllers
     [Route("api/projects")]
     public class ProjectsController : ControllerBase
     {
-        private readonly IPdfGeneratorService _pdfService;
+        private readonly IDocumentEngine _documentEngine;
 
-        public ProjectsController(IPdfGeneratorService pdfService)
+        public ProjectsController(IDocumentEngine documentEngine)
         {
-            _pdfService = pdfService;
+            _documentEngine = documentEngine;
         }
 
+        /// <summary>
+        /// Genera el PDF del protocolo de investigación usando el motor Enterprise DIITRA.
+        /// El template "PROTOCOLO_INVESTIGACION" vive en BD y puede editarse sin redespliegue.
+        /// </summary>
         [HttpPost("generate-pdf")]
         public async Task<IActionResult> GeneratePdf([FromBody] ProyectoDto dto)
         {
-            // Genera el PDF con los datos enviados usando QuestPDF
-            var pdfBytes = await _pdfService.GenerateProjectPdfAsync(dto);
-            
-            return File(pdfBytes, "application/pdf", $"Proyecto_{dto.Titulo ?? "SinTitulo"}.pdf");
+            var request = new DocumentRequest
+            {
+                TemplateCode = "PROTOCOLO_INVESTIGACION",
+                Data = dto,
+                RequestedBy = User.Identity?.Name ?? "sistema"
+            };
+
+            var result = await _documentEngine.GenerateAsync(request);
+            return File(result.PdfBytes, "application/pdf", result.FileName);
+        }
+
+        /// <summary>
+        /// Genera el PDF del protocolo en modo Doble Ciego para Peer Review.
+        /// Los datos de identidad son enmascarados automáticamente por el motor.
+        /// </summary>
+        [HttpPost("generate-pdf/blind-review")]
+        public async Task<IActionResult> GeneratePdfBlindReview([FromBody] ProyectoDto dto)
+        {
+            var request = new DocumentRequest
+            {
+                TemplateCode = "PROTOCOLO_PEER_REVIEW",
+                Data = dto,
+                IsBlindMode = true,
+                RequestedBy = User.Identity?.Name ?? "sistema"
+            };
+
+            var result = await _documentEngine.GenerateAsync(request);
+            return File(result.PdfBytes, "application/pdf", result.FileName);
         }
 
         // --- Endpoints Colaborativos (Workspace) ---
@@ -30,7 +59,6 @@ namespace diitra_api.Controllers
         [HttpPost("draft")]
         public IActionResult CreateDraft([FromBody] ProyectoDto dto)
         {
-            // Simulamos la creación de un borrador en la BD
             dto.Uuid = System.Guid.NewGuid().ToString();
             dto.Estado = "Borrador";
             return Ok(new { message = "Workspace Borrador Creado", proyectoId = dto.Uuid });
@@ -39,8 +67,6 @@ namespace diitra_api.Controllers
         [HttpPatch("{id}/section")]
         public IActionResult UpdateSection(string id, [FromBody] System.Collections.Generic.Dictionary<string, object> sectionData)
         {
-            // Aquí el sistema hace un guardado parcial (ej. {"metodologia": "Nuevo texto..."})
-            // Evita sobreescribir el trabajo de otro autor en una sección diferente.
             return Ok(new { message = "Sección guardada correctamente", projectId = id });
         }
 
@@ -49,12 +75,9 @@ namespace diitra_api.Controllers
         {
             try
             {
-                // TODO: Obtener idUsuario del Token JWT. Usamos 1 por defecto para pruebas.
-                int idUsuarioSimulado = 1; 
+                int idUsuarioSimulado = 1;
                 var success = await workflowEngine.TransicionarEstadoAsync(id, newState, idUsuarioSimulado, observation);
-                
                 if (!success) return NotFound("Proyecto no encontrado");
-                
                 return Ok(new { message = $"Proyecto transitado exitosamente a {newState}" });
             }
             catch (System.Exception ex)

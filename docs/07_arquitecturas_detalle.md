@@ -59,3 +59,41 @@ MySQL 5.7/8.0 no solo almacena, sino que protege la integridad de la investigaci
 *   **Rendimiento:** Se eliminó la lógica de detección de red síncrona en el arranque del backend para garantizar una respuesta inmediata.
 *   **Entornos:** Se utilizan perfiles de lanzamiento (`launchSettings.json`) para diferenciar configuraciones de "Casa" y "Oficina" sin ensuciar el código con condicionales.
 *   **CI/CD:** GitHub Actions automatizado para validar compilaciones en .NET 8 y Web.
+
+---
+
+## 6. Motor Enterprise de Documentos — Pipeline Architecture
+
+El Document Engine opera como una **tubería de transformación** (Pipeline Pattern) donde cada paso tiene una única responsabilidad y puede reemplazarse de forma independiente.
+
+```mermaid
+flowchart TD
+    A["fa:fa-user Controlador\nDocumentRequest { TemplateCode, Data }"] --> B
+
+    B["fa:fa-database Paso 1: Repository\nBusca plantilla en doc_templates\npor Code único"] --> C
+
+    C["fa:fa-shield Paso 2: LegalComplianceInjector\nInyecta pie LOPDP\nAviso doble ciego si aplica"] --> D
+
+    D["fa:fa-code Paso 3: ScribanTemplateEngine\nHandlebars.Net → reemplaza\n{{variables}} con datos del DTO"] --> E
+
+    E["fa:fa-file-pdf Paso 4: ITextHtmlPdfRenderer\niText7 pdfHTML → HTML+CSS\n→ PDF binario A4"] --> F
+
+    F["fa:fa-history Paso 5: AuditRepository\nRegistra en doc_audit_entries\nTraceabilityCode único LOPDP"] --> G
+
+    G["fa:fa-check DocumentResult\n{ PdfBytes, FileName, TraceabilityCode }"]
+
+    style A fill:#1a3a6b,color:#fff
+    style G fill:#2d6a2d,color:#fff
+```
+
+### Capas y su intercambiabilidad
+
+| Capa | Implementación actual | Alternativa posible |
+|---|---|---|
+| Motor de plantillas | Handlebars.Net | Fluid, Razor |
+| Renderizador PDF | iText7 + pdfHTML | PuppeteerSharp (MIT), DinkToPdf |
+| Persistencia | EF Core + MySQL | Dapper, MongoDB |
+| Compliance | `LegalComplianceInjector.cs` | Extensible via Strategy Pattern |
+
+> [!TIP]
+> El contrato `IDocumentEngine` garantiza que **ningún controlador del sistema cambia** si se reemplaza cualquiera de las implementaciones internas. El código de llamada siempre es el mismo 3 líneas.
