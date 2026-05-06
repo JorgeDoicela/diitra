@@ -59,9 +59,9 @@ export class SignalRTransport implements ICoWorkTransport {
     async connect(documentId: string, user: CoWorkUser): Promise<void> {
         await this.connection.start();
         this._isConnected = true;
-        // Notificar al servidor que este usuario se unió a la sala del documento
-        await this.connection.invoke('JoinDocument', documentId, user.name);
-        console.info(`[DIITRA CoWork] ${user.name} conectado al documento ${documentId}`);
+        // Pasar los 4 parámetros que el Hub ahora requiere para auditoría LOPDP
+        await this.connection.invoke('JoinDocument', documentId, user.name, user.id, user.role);
+        console.info(`[DIITRA CoWork] ${user.name} (${user.role}) conectado al documento ${documentId}`);
     }
 
     async disconnect(): Promise<void> {
