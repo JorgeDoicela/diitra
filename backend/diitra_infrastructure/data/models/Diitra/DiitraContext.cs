@@ -1285,16 +1285,37 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_document_templates");
             entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(100).IsRequired();
             entity.HasIndex(e => e.Code).IsUnique();
-            entity.Property(e => e.HtmlContent).HasColumnName("html_content").HasColumnType("longtext");
+            entity.Property(e => e.Name).HasColumnName("name").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Description).HasColumnName("description");
+            entity.Property(e => e.HtmlContent).HasColumnName("html_content").HasColumnType("longtext").IsRequired();
             entity.Property(e => e.CustomCss).HasColumnName("custom_css").HasColumnType("longtext");
+            entity.Property(e => e.Version).HasColumnName("version").IsRequired();
+            entity.Property(e => e.Category).HasColumnName("category").IsRequired();
+            entity.Property(e => e.RequiresLopdpClause).HasColumnName("requires_lopdp").IsRequired();
+            entity.Property(e => e.SupportsBlindMode).HasColumnName("supports_blind_mode").IsRequired();
+            entity.Property(e => e.RequiresTraceabilityCode).HasColumnName("requires_traceability").IsRequired();
+            entity.Property(e => e.RequiresElectronicSignature).HasColumnName("requires_signature").IsRequired();
+            entity.Property(e => e.CollaborativeFieldsJson).HasColumnName("collaborative_fields_json");
+            entity.Property(e => e.IsActive).HasColumnName("is_active").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();
+            entity.Property(e => e.UpdatedAt).HasColumnName("updated_at").IsRequired();
+            entity.Property(e => e.UpdatedBy).HasColumnName("updated_by").HasMaxLength(100);
         });
 
         modelBuilder.Entity<Diitra.Domain.Common.Documents.DocumentAuditEntry>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.ToTable("doc_audit_entries");
-            entity.Property(e => e.TraceabilityCode).HasMaxLength(50).IsRequired();
+            entity.ToTable("inv_document_audit");
+            entity.Property(e => e.TraceabilityCode).HasColumnName("traceability_code").HasMaxLength(100).IsRequired();
             entity.HasIndex(e => e.TraceabilityCode).IsUnique();
+            entity.Property(e => e.TemplateCode).HasColumnName("template_code").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.TemplateVersion).HasColumnName("template_version").IsRequired();
+            entity.Property(e => e.GeneratedBy).HasColumnName("generated_by").HasMaxLength(255);
+            entity.Property(e => e.GeneratedAt).HasColumnName("generated_at").IsRequired();
+            entity.Property(e => e.WasBlindMode).HasColumnName("was_blind_mode").IsRequired();
+            
+            // Nota: Category no está en el script SQL actual, así que la ignoramos o la mapeamos a una columna extra
+            entity.Ignore(e => e.Category); 
         });
 
         OnModelCreatingPartial(modelBuilder);

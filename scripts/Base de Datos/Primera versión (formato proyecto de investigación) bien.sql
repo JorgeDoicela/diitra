@@ -28,6 +28,7 @@ DROP TABLE IF EXISTS
     inv_document_templates,
 
     -- DIITRA CoWork (Persistencia de Sesiones Colaborativas)
+    inv_cowork_updates,
     inv_cowork_sesiones,
     inv_cowork_documentos,
 
@@ -792,12 +793,12 @@ CREATE TABLE inv_document_templates (
 
 CREATE TABLE inv_documentos_instancias (
     id                      INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid                    CHAR(36)      NOT NULL UNIQUE,
+    uuid                    VARCHAR(36)   NOT NULL UNIQUE,
     template_code           VARCHAR(100)  NOT NULL,
     template_version        INT           NOT NULL,
-    entity_uuid             CHAR(36)      NOT NULL COMMENT 'UUID del Proyecto, Convocatoria o Persona dueña del doc',
+    entity_uuid             VARCHAR(36)   NOT NULL COMMENT 'UUID del Proyecto, Convocatoria o Persona dueña del doc',
     titulo_instancia        VARCHAR(255)  NULL COMMENT 'Nombre descriptivo (ej: Informe de Avance Mayo)',
-    estado                  ENUM('Borrador', 'En_Revision', 'Firmado', 'Archivado', 'Anulado') NOT NULL DEFAULT 'Borrador',
+    estado                  INT           NOT NULL DEFAULT 1,
     created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by              VARCHAR(100)  NOT NULL,
@@ -817,8 +818,8 @@ CREATE TABLE inv_document_audit (
     traceability_code       VARCHAR(100)  NOT NULL UNIQUE,
     template_code           VARCHAR(100)  NOT NULL,
     template_version        INT           NOT NULL,
-    project_uuid            CHAR(36)      NULL,
-    entity_uuid             CHAR(36)      NULL COMMENT 'UUID de la entidad origen (Proyecto, Informe, etc)',
+    project_uuid            VARCHAR(36)   NULL,
+    entity_uuid             VARCHAR(36)   NULL COMMENT 'UUID de la entidad origen (Proyecto, Informe, etc)',
     generated_by            VARCHAR(255)  NOT NULL,
     generated_at            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     was_blind_mode          TINYINT(1)    NOT NULL DEFAULT 0,
@@ -870,3 +871,13 @@ CREATE TABLE inv_cowork_sesiones (
     INDEX idx_usuario   (usuarioUuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='DIITRA CoWork — Auditoría LOPDP de acceso a documentos colaborativos';
+
+-- Registro de deltas binarios (Estrategia Append-Only para integridad)
+CREATE TABLE inv_cowork_updates (
+    idUpdate          INT           AUTO_INCREMENT PRIMARY KEY,
+    documentoUuid     VARCHAR(36)   NOT NULL,
+    updateData        LONGBLOB      NOT NULL COMMENT 'Delta binario generado por Yjs',
+    creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_doc_upd (documentoUuid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='DIITRA CoWork — Historial de cambios para sincronización en tiempo real';
