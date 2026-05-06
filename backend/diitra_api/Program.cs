@@ -10,13 +10,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
-using QuestPDF.Infrastructure;
 // DIITRA Document Engine
 using Diitra.Application.Common.Documents;
 using Diitra.Infrastructure.Common.Documents;
 using Diitra.Infrastructure.Common.Documents.Engine;
-
-QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -113,8 +110,6 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
 builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
-// Motor legado QuestPDF (mantenido para compatibilidad con reportes estadísticos)
-builder.Services.AddScoped<Diitra.Application.Common.IDocumentGenerator, Diitra.Infrastructure.Common.DocumentGenerator>();
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Application Services (Modular Monolith)
@@ -125,7 +120,6 @@ builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 builder.Services.AddScoped<Diitra.Application.Research.IWorkflowEngineService, Diitra.Infrastructure.Research.WorkflowEngineService>();
-builder.Services.AddScoped<Diitra.Application.Research.IPdfGeneratorService, Diitra.Infrastructure.Research.PdfGeneratorService>();
 
 // 3. DATABASE CONNECTION
 var connectionString = builder.Configuration.GetConnectionString("default_connection");

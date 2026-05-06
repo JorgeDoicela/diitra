@@ -15,7 +15,6 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.0" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
-    <PackageReference Include="QuestPDF" Version="2026.2.4" />
     <PackageReference Include="Handlebars.Net" Version="2.1.6" />
   </ItemGroup>
 
