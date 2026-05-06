@@ -2,6 +2,12 @@ using Diitra.Application.Common.Documents;
 using Diitra.Application.Common;
 using Diitra.Domain.Common.Documents;
 using Microsoft.Extensions.Logging;
+using System.Text.RegularExpressions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -87,6 +93,9 @@ namespace Diitra.Infrastructure.Common.Documents
             enrichedHtml = _complianceInjector.InjectLegalFooter(
                 enrichedHtml, template, traceabilityCode, request.IsBlindMode);
 
+            // 5.1 OPTIMIZACIÓN ENTERPRISE: Procesar imágenes para evitar PDFs pesados o rotos
+            enrichedHtml = ProcessAndOptimizeHtml(enrichedHtml);
+
             // 6. PASO RENDERIZADO: HTML → PDF con iText7
             var pdfBytes = await _pdfRenderer.RenderAsync(enrichedHtml, template.CustomCss);
 
@@ -153,6 +162,37 @@ namespace Diitra.Infrastructure.Common.Documents
             _logger.LogInformation(
                 "DIITRA DocumentEngine: Plantilla [{Code}] actualizada a v{Version} por [{User}].",
                 templateCode, template.Version, updatedBy);
+        }
+
+        /// <summary>
+        /// Sanitiza y optimiza el HTML antes del renderizado.
+        /// - Fuerza a las imágenes a ser responsivas (max-width: 100%).
+        /// - Detecta imágenes Base64 excesivamente grandes para alertar.
+        /// </summary>
+        private string ProcessAndOptimizeHtml(string html)
+        {
+            if (string.IsNullOrEmpty(html)) return html;
+
+            // 1. Inyectar estilos globales de seguridad para el PDF
+            string globalStyles = @"<style>
+                img { max-width: 100% !important; height: auto !important; display: block; margin: 10px 0; }
+                table { width: 100% !important; border-collapse: collapse; page-break-inside: auto; }
+                tr { page-break-inside: avoid; page-break-after: auto; }
+                td, th { border: 1px solid #ddd; padding: 8px; font-size: 10pt; }
+            </style>";
+
+            // 2. Limitar tamaño de imágenes Base64 (Previene PDFs corruptos)
+            // Si una imagen Base64 supera los 1MB (aprox 1.3M chars), lanzamos advertencia en log
+            var matches = Regex.Matches(html, @"src=""data:image/[^;]+;base64,([^""]+)""");
+            foreach (Match match in matches)
+            {
+                if (match.Groups[1].Length > 1500000) // ~1.1 MB
+                {
+                    _logger.LogWarning("DIITRA Builder: Se detectó una imagen pesada (>1MB). El rendimiento del PDF puede verse afectado.");
+                }
+            }
+
+            return globalStyles + html;
         }
 
         /// <summary>

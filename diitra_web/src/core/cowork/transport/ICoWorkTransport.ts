@@ -67,4 +67,16 @@ export interface ICoWorkTransport {
      * Esto garantiza que el cliente se sincronice exactamente con el estado actual.
      */
     onUpdateHistory(handler: (updatesBase64: string[]) => void): void;
+
+    /**
+     * Envía una versión renderizada (HTML y JSON) del documento para persistencia estática.
+     * Esto es fundamental para que el DIITRA Builder pueda generar el PDF sin un parser Yjs.
+     */
+    submitFinalContent(documentId: string, html: string, json: string): Promise<void>;
+
+    /**
+     * Envía el estado COMPLETO y FUSIONADO del documento Yjs (Snapshot).
+     * El servidor reemplazará el estado base y limpiará el historial de deltas (Compactación).
+     */
+    submitFullSnapshot(documentId: string, snapshotBase64: string): Promise<void>;
 }

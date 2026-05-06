@@ -159,4 +159,22 @@ export class SignalRTransport implements ICoWorkTransport {
     onUpdateHistory(handler: (updatesBase64: string[]) => void): void {
         this.connection.on('ReceiveUpdateHistory', handler);
     }
+
+    async submitFinalContent(documentId: string, html: string, json: string): Promise<void> {
+        if (!this._isConnected) return;
+        try {
+            await this.connection.invoke('SubmitFinalContent', documentId, html, json);
+        } catch (err) {
+            console.warn('[DIITRA CoWork] Error enviando contenido final:', err);
+        }
+    }
+
+    async submitFullSnapshot(documentId: string, snapshotBase64: string): Promise<void> {
+        if (!this._isConnected) return;
+        try {
+            await this.connection.invoke('SubmitFullSnapshot', documentId, snapshotBase64);
+        } catch (err) {
+            console.warn('[DIITRA CoWork] Error enviando snapshot de compactación:', err);
+        }
+    }
 }

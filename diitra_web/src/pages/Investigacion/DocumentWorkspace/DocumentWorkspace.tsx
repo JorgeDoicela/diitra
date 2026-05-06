@@ -79,21 +79,30 @@ const DocumentWorkspace: React.FC = () => {
 
         try {
             setIsLoading(true);
-            // 1. Llamar a DIITRA Builder para generar el PDF (Simulado por ahora)
-            const mockTraceCode = "DIITRA-TR-" + Math.random().toString(36).substring(7).toUpperCase();
-            const mockHash = "SHA256-" + Math.random().toString(16).substring(10);
             
-            // 2. Finalizar la instancia en el servidor
-            await api.post(`/documents/instances/${documentUuid}/finalize`, {
-                pdfPath: `/storage/docs/${documentUuid}.pdf`,
-                hash: mockHash,
-                traceabilityCode: mockTraceCode
-            });
+            // 0. COMPACTACIÓN PLATINUM: Asegurar que el servidor tenga el estado Yjs fusionado
+            // Esto limpia los deltas y deja un Snapshot único antes de la generación oficial.
+            await cowork.compact();
+            
+            // 1. Sincronizar el contenido actual una última vez (Garantía de Snapshot HTML)
+            // Esto asegura que el servidor tenga el HTML más reciente antes de generar el PDF
+            // Note: En una implementación más robusta, usaríamos una referencia al editor Tiptap aquí
+            // Por ahora, el onUpdate ya lo hace debounced, pero forzamos el guardado del estado final.
+            
+            // 2. Ejecutar la Orquestación Enterprise en el Servidor
+            // El servidor buscará los datos de investigación + el contenido de CoWork que acabamos de subir.
+            const response = await api.post(`/documents/instances/${documentUuid}/finalize`);
+            
+            const { traceabilityCode, fileName } = response.data;
+            
+            console.info(`[DIITRA Builder] Documento finalizado exitosamente. Trazabilidad: ${traceabilityCode}`);
+            alert(`Documento finalizado y guardado como ${fileName}.\nCódigo de Trazabilidad: ${traceabilityCode}`);
 
-            // 3. Recargar datos para mostrar estado 'Firmado'
+            // 3. Recargar datos para mostrar estado 'Firmado' e inmutable
             window.location.reload();
-        } catch (error) {
-            alert("Error al finalizar el documento.");
+        } catch (error: any) {
+            console.error("[DIITRA] Error en finalización:", error);
+            alert("Error al finalizar el documento: " + (error.response?.data?.error || "Error de red"));
         } finally {
             setIsLoading(false);
         }

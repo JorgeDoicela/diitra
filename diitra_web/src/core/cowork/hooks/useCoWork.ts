@@ -55,6 +55,17 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     );
 
     const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const updateCounterRef = useRef(0);
+
+    /**
+     * Fuerza una compactación manual del historial de cambios.
+     */
+    const compact = useCallback(async () => {
+        const fullState = Y.encodeStateAsUpdate(ydocRef.current);
+        const fullB64 = btoa(String.fromCharCode(...fullState));
+        await transportRef.current.submitFullSnapshot(config.documentId, fullB64);
+        updateCounterRef.current = 0;
+    }, [config.documentId]);
 
     /**
      * Desconecta manualmente la sesión.
@@ -118,6 +129,17 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             if (origin !== 'remote' && transport.isConnected) {
                 const b64 = btoa(String.fromCharCode(...update));
                 transport.sendYjsUpdate(config.documentId, b64);
+
+                // ESTRATEGIA PLATINUM: Compactación Automática
+                // Cada 50 cambios locales, enviamos el documento completo para limpiar deltas en el servidor.
+                updateCounterRef.current++;
+                if (updateCounterRef.current >= 50) {
+                    const fullState = Y.encodeStateAsUpdate(ydoc);
+                    const fullB64 = btoa(String.fromCharCode(...fullState));
+                    transport.submitFullSnapshot(config.documentId, fullB64);
+                    updateCounterRef.current = 0;
+                    console.debug(`[DIITRA CoWork] Compactación automática ejecutada para ${config.documentId}`);
+                }
 
                 if (isMounted) {
                     setSession(s => ({ ...s, isSyncing: true, lastSyncedAt: new Date() }));
@@ -218,10 +240,16 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [config.documentId, config.user.id]);
 
+    const submitFinalContent = useCallback(async (html: string, json: string) => {
+        await transportRef.current.submitFinalContent(config.documentId, html, json);
+    }, [config.documentId]);
+
     return {
         session,
         ydoc: ydocRef.current,
         awareness: awarenessRef.current,
         disconnect,
+        submitFinalContent,
+        compact,
     };
 }

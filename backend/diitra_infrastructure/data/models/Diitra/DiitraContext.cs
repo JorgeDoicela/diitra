@@ -71,6 +71,7 @@ public partial class DiitraContext : DbContext
 
     // --- DIITRA CoWork (Persistencia Colaborativa) ---
     public virtual DbSet<InvCoworkDocumento> InvCoworkDocumentos { get; set; }
+    public virtual DbSet<InvCoworkUpdate>    InvCoworkUpdates    { get; set; }
     public virtual DbSet<InvCoworkSesion>    InvCoworkSesiones   { get; set; }
 
     // ============================================================

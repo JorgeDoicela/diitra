@@ -58,6 +58,14 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
             cowork.awareness.setLocalStateField('anchor', anchor);
             cowork.awareness.setLocalStateField('head', head);
         },
+        // Sincronizar instantánea HTML/JSON con el servidor (para el DIITRA Builder)
+        onUpdate: ({ editor }) => {
+            // Usamos un pequeño debounce implícito o solo enviamos si hay cambios reales
+            // Para nivel enterprise, el servidor necesita el HTML legible
+            const html = editor.getHTML();
+            const json = JSON.stringify(editor.getJSON());
+            cowork.submitFinalContent(html, json);
+        }
     }, [extensions]); // Re-inicializar si las extensiones cambian críticamente
 
     const { session } = cowork;

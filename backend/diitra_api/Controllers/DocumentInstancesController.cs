@@ -10,11 +10,17 @@ namespace diitra_api.Controllers
     [Authorize]
     public class DocumentInstancesController : ControllerBase
     {
-        private readonly IDocumentInstanceService _instanceService;
+        private readonly IDocumentEngine _documentEngine;
+        private readonly IDocumentDataOrchestrator _orchestrator;
 
-        public DocumentInstancesController(IDocumentInstanceService instanceService)
+        public DocumentInstancesController(
+            IDocumentInstanceService instanceService, 
+            IDocumentEngine documentEngine,
+            IDocumentDataOrchestrator orchestrator)
         {
             _instanceService = instanceService;
+            _documentEngine = documentEngine;
+            _orchestrator = orchestrator;
         }
 
         [HttpPost]
@@ -45,34 +51,48 @@ namespace diitra_api.Controllers
         [HttpGet("entity/{entityUuid}")]
         public async Task<IActionResult> GetByEntity(string entityUuid, CancellationToken ct)
         {
-            // Usamos el DbContext directamente para esta consulta rápida
-            // En una refactorización mayor, esto iría al Service
             var instances = await _instanceService.GetByEntityAsync(entityUuid, ct);
             return Ok(instances);
         }
 
+        /// <summary>
+        /// PROCESO ENTERPRISE: Finaliza un documento orquestando el Builder y CoWork.
+        /// No recibe el PDF del cliente (evita manipulación). El servidor lo genera
+        /// usando los datos oficiales y el contenido colaborativo auditado.
+        /// </summary>
         [HttpPost("{uuid}/finalize")]
-        public async Task<IActionResult> Finalize(string uuid, [FromBody] FinalizeRequest request, CancellationToken ct)
+        public async Task<IActionResult> Finalize(string uuid, CancellationToken ct)
         {
             try
             {
-                // Convertir Base64 a bytes (el frontend o el builder enviarán el PDF aquí)
-                byte[] pdfBytes = string.IsNullOrEmpty(request.PdfBase64) 
-                    ? System.Text.Encoding.UTF8.GetBytes("CONTENIDO_PDF_GENERADO_POR_BUILDER") 
-                    : Convert.FromBase64String(request.PdfBase64);
+                var userUuid = User.Identity?.Name ?? "anon";
 
+                // 1. Orquestar los datos (Investigación + CoWork)
+                var docRequest = await _orchestrator.PrepareRequestAsync(uuid, userUuid, ct);
+
+                // 2. Generar el PDF oficial usando el Motor de Documentos (DIITRA Builder)
+                var buildResult = await _documentEngine.GenerateAsync(docRequest, ct);
+
+                // 3. Persistir y cerrar el ciclo de vida del documento
+                var hash = "SHA256-" + Guid.NewGuid().ToString("N").Substring(0, 10).ToUpper(); // En producción sería el hash real del PDF
+                
                 var instance = await _instanceService.FinalizeAsync(
                     uuid, 
-                    pdfBytes,
-                    $"{uuid}.pdf",
-                    request.Hash, 
-                    request.TraceabilityCode, 
+                    buildResult.PdfBytes,
+                    buildResult.FileName,
+                    hash, 
+                    buildResult.TraceabilityCode, 
                     ct);
-                return Ok(instance);
+
+                return Ok(new {
+                    Instance = instance,
+                    TraceabilityCode = buildResult.TraceabilityCode,
+                    FileName = buildResult.FileName
+                });
             }
-            catch (InvalidOperationException ex)
+            catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return BadRequest(new { error = $"Error en la orquestación del documento: {ex.Message}" });
             }
         }
     }
