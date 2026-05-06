@@ -85,8 +85,8 @@ namespace diitra_infrastructure.data.models.Cowork
         [Column("idSesion")]
         public int IdSesion { get; set; }
 
-        [Column("documentoUuid", TypeName = "varchar(36)")]
-        [Required, MaxLength(36)]
+        [Column("documentoUuid", TypeName = "varchar(100)")]
+        [Required, MaxLength(100)]
         public string DocumentoUuid { get; set; } = string.Empty;
 
         [Column("usuarioUuid", TypeName = "varchar(36)")]
@@ -124,8 +124,8 @@ namespace diitra_infrastructure.data.models.Cowork
         [Column("idUpdate")]
         public int IdUpdate { get; set; }
 
-        [Column("documentoUuid", TypeName = "varchar(36)")]
-        [Required, MaxLength(36)]
+        [Column("documentoUuid", TypeName = "varchar(100)")]
+        [Required, MaxLength(100)]
         public string DocumentoUuid { get; set; } = string.Empty;
 
         /// <summary>El delta binario generado por Yjs.</summary>
