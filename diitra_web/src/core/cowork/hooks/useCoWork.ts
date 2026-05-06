@@ -75,6 +75,16 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         // PASO 1: Registrar handlers de ENTRADA (servidor → este cliente)
         // ─────────────────────────────────────────────────────────────
 
+        // Estado COMPLETO al unirse (sincronización inicial para el recién llegado)
+        transport.onFullState((stateBase64: string) => {
+            try {
+                const state = Uint8Array.from(atob(stateBase64), c => c.charCodeAt(0));
+                Y.applyUpdate(ydoc, state, 'full-sync');
+            } catch (err) {
+                console.warn('[DIITRA CoWork] Error aplicando estado inicial:', err);
+            }
+        });
+
         transport.onYjsUpdate((updateBase64: string) => {
             try {
                 const update = Uint8Array.from(atob(updateBase64), c => c.charCodeAt(0));

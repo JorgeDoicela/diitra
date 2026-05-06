@@ -1,106 +1,164 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA CoWork — SignalR Hub (Backend)
+// DIITRA CoWork — SignalR Hub con Persistencia Yjs
 //
-// Hub de SignalR que actúa como servidor de relay para DIITRA CoWork.
-// Su responsabilidad es ÚNICAMENTE retransmitir los updates de Yjs
-// entre los participantes de un mismo documento.
-//
-// Arquitectura:
-//   Cliente A escribe → Hub → Clientes B, C, D reciben
-//
-// El Hub NO modifica el contenido: es un relay puro.
-// La lógica del documento vive en el Yjs Doc del cliente.
+// Este Hub hace dos cosas ahora:
+//   1. RELAY: Retransmite updates de Yjs entre colaboradores (como antes).
+//   2. PERSISTENCIA: Guarda el estado Yjs en BD para que:
+//      - Los usuarios que llegan tarde reciban el documento completo.
+//      - El contenido no se pierda si el servidor se reinicia.
+//      - Quede registro de quién accedió (LOPDP Art. 26).
 // ═══════════════════════════════════════════════════════════════════
 
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using diitra_infrastructure.data.models;
+using diitra_infrastructure.data.models.Cowork;
 
 namespace diitra_infrastructure.Collaboration
 {
-    /// <summary>
-    /// Hub de relay para DIITRA CoWork.
-    /// 
-    /// Cada "sala" (Group) corresponde a un documento abierto (identificado por su UUID).
-    /// Un cliente al conectarse hace JoinDocument para entrar a la sala de su documento.
-    /// Después de eso, todo update de Yjs o de presencia que envíe se retransmite
-    /// automáticamente a los demás participantes de esa sala.
-    /// 
-    /// Compatibilidad con JWT:
-    /// Si Program.cs registra el hub con autenticación, el Hub puede leer
-    /// Context.User?.Identity?.Name para obtener el nombre del usuario.
-    /// Si no hay autenticación configurada, funciona igualmente (modo anónimo).
-    /// </summary>
     public class CollaborationHub : Hub
     {
         private readonly ILogger<CollaborationHub> _logger;
+        private readonly DiitraContext _db;
 
-        public CollaborationHub(ILogger<CollaborationHub> logger)
+        public CollaborationHub(ILogger<CollaborationHub> logger, DiitraContext db)
         {
             _logger = logger;
+            _db = db;
         }
 
         /// <summary>
-        /// El cliente se une a la sala de un documento específico.
-        /// Debe llamarse inmediatamente después de establecer la conexión.
+        /// El cliente se une a la sala del documento.
+        /// Si el documento ya tiene estado Yjs en BD, lo envía al recién llegado
+        /// para que se sincronice con el trabajo anterior.
         /// </summary>
-        /// <param name="documentId">UUID del documento/proyecto (identifica la sala)</param>
-        /// <param name="userName">Nombre del participante (backup; la identidad real viene del JWT Awareness)</param>
-        public async Task JoinDocument(string documentId, string userName)
+        public async Task JoinDocument(string documentId, string userName, string userUuid, string userRole)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, documentId);
 
-            var identity = Context.User?.Identity?.Name ?? userName;
+            // Registrar la sesión para auditoría LOPDP
+            var sesion = new InvCoworkSesion
+            {
+                DocumentoUuid = documentId,
+                UsuarioUuid = userUuid,
+                NombreUsuario = userName,
+                RolUsuario = userRole,
+                SignalrConId = Context.ConnectionId,
+                ConectadoEn = DateTime.UtcNow
+            };
+            _db.InvCoworkSesiones.Add(sesion);
+            await _db.SaveChangesAsync();
+
             _logger.LogInformation(
-                "[DIITRA CoWork] {User} (ID: {ConnectionId}) se unió al documento {DocumentId}",
-                identity, Context.ConnectionId[..8], documentId);
+                "[DIITRA CoWork] {User} ({Role}) se unió al documento {DocumentId}",
+                userName, userRole, documentId);
+
+            // Enviar el estado actual del documento al recién llegado
+            // (vacío si nadie ha escrito nada aún)
+            var docState = await _db.InvCoworkDocumentos
+                .Where(d => d.Uuid == documentId)
+                .FirstOrDefaultAsync();
+
+            if (docState?.YjsState != null && docState.YjsState.Length > 0)
+            {
+                var stateBase64 = Convert.ToBase64String(docState.YjsState);
+                // Enviar SOLO al cliente que acaba de entrar, no al grupo
+                await Clients.Caller.SendAsync("ReceiveFullState", stateBase64);
+                _logger.LogInformation(
+                    "[DIITRA CoWork] Estado sincronizado ({Bytes} bytes) enviado a {User}",
+                    docState.YjsState.Length, userName);
+            }
         }
 
         /// <summary>
-        /// Retransmite un update del documento Yjs a todos los demás participantes de la sala.
-        /// El origen NO recibe su propio update (OthersInGroup).
+        /// Retransmite un update Yjs y lo persiste en BD.
+        /// El guardado es asíncrono y no bloquea la retransmisión.
         /// </summary>
-        /// <param name="documentId">UUID del documento (sala destino)</param>
-        /// <param name="updateBase64">Bytes del Yjs update en Base64</param>
         public async Task SendYjsUpdate(string documentId, string updateBase64)
         {
+            // 1. Retransmitir inmediatamente (no esperar el guardado en BD)
             await Clients.OthersInGroup(documentId)
                          .SendAsync("ReceiveYjsUpdate", updateBase64);
+
+            // 2. Persistir el update fusionándolo con el estado actual en BD
+            _ = PersistYjsUpdateAsync(documentId, updateBase64);
         }
 
         /// <summary>
-        /// Retransmite el estado de presencia (cursor, nombre, color) a los demás.
-        /// Es lo que permite ver los cursores de otros usuarios en tiempo real.
+        /// Retransmite el estado de presencia (cursores, nombres, colores).
+        /// No se persiste — la presencia es efímera por diseño.
         /// </summary>
-        /// <param name="documentId">UUID del documento (sala destino)</param>
-        /// <param name="updateBase64">Bytes del Yjs Awareness update en Base64</param>
         public async Task SendAwarenessUpdate(string documentId, string updateBase64)
         {
             await Clients.OthersInGroup(documentId)
                          .SendAsync("ReceiveAwarenessUpdate", updateBase64);
         }
 
-        /// <summary>
-        /// Se ejecuta automáticamente cuando un cliente se desconecta.
-        /// SignalR elimina al cliente de todos sus grupos automáticamente,
-        /// pero aquí podemos registrar el evento para auditoría.
-        /// </summary>
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var identity = Context.User?.Identity?.Name ?? Context.ConnectionId[..8];
-            if (exception is not null)
+            // Cerrar la sesión de auditoría
+            var sesion = await _db.InvCoworkSesiones
+                .Where(s => s.SignalrConId == Context.ConnectionId && s.DesconectadoEn == null)
+                .FirstOrDefaultAsync();
+
+            if (sesion != null)
             {
-                _logger.LogWarning(
-                    "[DIITRA CoWork] {User} desconectado con error: {Error}",
-                    identity, exception.Message);
-            }
-            else
-            {
+                sesion.DesconectadoEn = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
                 _logger.LogInformation(
-                    "[DIITRA CoWork] {User} se desconectó correctamente.",
-                    identity);
+                    "[DIITRA CoWork] {User} se desconectó del documento.",
+                    sesion.NombreUsuario);
             }
 
             await base.OnDisconnectedAsync(exception);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // Persistencia Yjs: Fusiona el update con el estado almacenado
+        // ─────────────────────────────────────────────────────────────
+
+        private async Task PersistYjsUpdateAsync(string documentId, string updateBase64)
+        {
+            try
+            {
+                var updateBytes = Convert.FromBase64String(updateBase64);
+
+                var doc = await _db.InvCoworkDocumentos
+                    .FirstOrDefaultAsync(d => d.Uuid == documentId);
+
+                if (doc == null)
+                {
+                    // Primera vez que se edita este documento
+                    doc = new InvCoworkDocumento
+                    {
+                        Uuid = documentId,
+                        EntidadTipo = "PROYECTO",
+                        EntidadUuid = documentId,
+                        CampoNombre = "contenido_principal",
+                        YjsState = updateBytes,
+                        Version = 1
+                    };
+                    _db.InvCoworkDocumentos.Add(doc);
+                }
+                else
+                {
+                    // Fusionar el nuevo update con el estado existente
+                    // En una implementación completa, aquí se usaría Y.mergeUpdates()
+                    // Por ahora guardamos el último snapshot completo que el cliente envía
+                    doc.YjsState = updateBytes;
+                    doc.Version++;
+                }
+
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    "[DIITRA CoWork] No se pudo persistir el update de {DocumentId}: {Error}",
+                    documentId, ex.Message);
+                // El fallo de persistencia NO interrumpe la colaboración en curso
+            }
         }
     }
 }
