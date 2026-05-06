@@ -110,7 +110,7 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
 builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
-builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstanceService, Diitra.Application.Common.Documents.DocumentInstanceService>();
+builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstanceService, Diitra.Infrastructure.Common.Documents.DocumentInstanceService>();
 builder.Services.AddSingleton<Diitra.Infrastructure.Common.Storage.IFileStorageService, Diitra.Infrastructure.Common.Storage.LocalFileStorageService>();
 // ─────────────────────────────────────────────────────────────────────────────
 

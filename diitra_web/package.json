@@ -14,7 +14,7 @@
     "@microsoft/signalr": "^10.0.0",
     "@tailwindcss/vite": "^4.2.2",
     "@tiptap/extension-collaboration": "^3.22.5",
-    "@tiptap/extension-collaboration-cursor": "^2.26.2",
+    "@tiptap/extension-collaboration-cursor": "^3.0.0",
     "@tiptap/extension-placeholder": "^3.22.5",
     "@tiptap/pm": "^3.22.5",
     "@tiptap/react": "^3.22.5",

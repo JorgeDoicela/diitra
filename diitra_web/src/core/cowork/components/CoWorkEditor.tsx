@@ -34,19 +34,24 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
     readonly = false,
     className = '',
 }) => {
-    const editor = useEditor({
-        extensions: buildCoWorkExtensions({
+    // Memorizar las extensiones para evitar re-creaciones del editor innecesarias
+    const extensions = React.useMemo(() => {
+        return buildCoWorkExtensions({
             ydoc: cowork.ydoc,
             awareness: cowork.awareness,
             placeholder,
-        }),
+        });
+    }, [cowork.ydoc, cowork.awareness, placeholder]);
+
+    const editor = useEditor({
+        extensions,
         editable: !readonly,
         editorProps: {
             attributes: {
                 class: 'focus:outline-none',
             },
         },
-    });
+    }, [extensions]); // Re-inicializar si las extensiones cambian críticamente
 
     const { session } = cowork;
 

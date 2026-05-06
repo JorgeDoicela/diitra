@@ -11,5 +11,12 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true
+  },
+  resolve: {
+    dedupe: ['yjs', 'y-prosemirror']
+  },
+  optimizeDeps: {
+    include: ['yjs', 'y-prosemirror'],
+    exclude: ['@tiptap/pm']
   }
 })
