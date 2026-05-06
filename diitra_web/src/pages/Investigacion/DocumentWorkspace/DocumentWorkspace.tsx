@@ -49,6 +49,10 @@ const DocumentWorkspace: React.FC = () => {
                     const fields = JSON.parse(templateRes.data.collaborative_fields_json);
                     setSections(fields);
                     if (fields.length > 0) setActiveSection(fields[0]);
+                    else setActiveSection('contenido_general');
+                } else {
+                    setSections(['contenido_general']);
+                    setActiveSection('contenido_general');
                 }
             } catch (error) {
                 console.error("[DIITRA] Error cargando workspace:", error);
@@ -230,10 +234,17 @@ const DocumentWorkspace: React.FC = () => {
                         </div>
 
                         <div className="bg-surface rounded-2xl border border-border-thin shadow-2xl overflow-hidden min-h-[600px] transition-all focus-within:border-primary/30">
-                            <CoWorkEditor 
-                                cowork={cowork}
-                                placeholder={`Empiece a redactar la sección de ${activeSection.replace(/_/g, ' ')}...`}
-                            />
+                            {activeSection ? (
+                                <CoWorkEditor 
+                                    cowork={cowork}
+                                    placeholder={`Empiece a redactar la sección de ${activeSection.replace(/_/g, ' ')}...`}
+                                />
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-[600px] text-text-dim gap-4">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
+                                    <p className="text-sm font-medium">Preparando entorno colaborativo...</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer del Editor */}

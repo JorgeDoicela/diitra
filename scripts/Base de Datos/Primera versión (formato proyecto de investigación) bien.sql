@@ -2,7 +2,7 @@
 --  ADVERTENCIA DE SEGURIDAD - AMBIENTE DE PRODUCCIÓN
 --  Este script está diseñado para el despliegue del módulo de INVESTIGACIÓN.
 --  SOLO AFECTA A TABLAS CON PREFIJO 'inv_'.
---  NO MODIFICA, ELIMINA NI ALTERA TABLAS INSTITUCIONALES (periodos, carreras, 
+--  NO MODIFICA, ELIMINA NI ALTERA TABLAS INSTITUCIONALES (periodos, carreras,
 --  profesores, alumnos, etc.).
 --  Uso: Instalación inicial o reinicio del módulo de investigación.
 -- =============================================================================
@@ -144,7 +144,7 @@ CREATE TABLE inv_tipos_convocatoria (
     descripcion        VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES 
+INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES
 ('Investigación Aplicada', 'Desarrollo de prototipos y soluciones técnicas'),
 ('Innovación', 'Proyectos con alto impacto en el mercado o sociedad'),
 ('Semilleros', 'Iniciación a la investigación con estudiantes'),
@@ -156,7 +156,7 @@ CREATE TABLE inv_agendas_zonales (
     descripcion   VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES 
+INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
 ('Zona 9 - Software y TI', 'Agenda prioritaria para el Distrito Metropolitano de Quito'),
 ('Zona 9 - Eficiencia Energética', 'Proyectos de energías renovables y ahorro'),
 ('Zona 9 - Inclusión Social', 'Desarrollo social y educación');
@@ -170,7 +170,7 @@ CREATE TABLE inv_rubricas (
     fechaRegistro TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO inv_rubricas (nombre, descripcion) VALUES 
+INSERT INTO inv_rubricas (nombre, descripcion) VALUES
 ('Rúbrica Estándar I+D', 'Evaluación general para proyectos de investigación y desarrollo'),
 ('Rúbrica de Innovación Tecnológica', 'Enfocada en prototipado y transferencia tecnológica'),
 ('Rúbrica de Semilleros', 'Evaluación simplificada para proyectos estudiantiles');
@@ -707,14 +707,14 @@ SET SQL_SAFE_UPDATES = 1;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- 1. Tipos de Convocatoria
-INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES 
+INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES
 ('Investigación Aplicada', 'Desarrollo de prototipos y soluciones técnicas'),
 ('Innovación', 'Proyectos con alto impacto en el mercado o sociedad'),
 ('Semilleros', 'Iniciación a la investigación con estudiantes'),
 ('Vinculación e Investigación', 'Proyectos integrados con la comunidad');
 
 -- 2. Agendas Zonales (Planificación Nacional)
-INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES 
+INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
 ('Zona 1: Norte', 'Imbabura, Esmeraldas, Carchi, Sucumbíos'),
 ('Zona 2: Centro Norte', 'Pichincha (excepto Quito), Napo, Orellana'),
 ('Zona 3: Centro', 'Cotopaxi, Tungurahua, Chimborazo, Pastaza'),
@@ -726,7 +726,7 @@ INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
 ('Zona 9: Distrito Metropolitano de Quito', 'Quito');
 
 -- 3. Líneas de Investigación (Base IST)
-INSERT INTO inv_lineas_investigacion (uuid, codigoLinea, nombreLinea, descripcion, activo) VALUES 
+INSERT INTO inv_lineas_investigacion (uuid, codigoLinea, nombreLinea, descripcion, activo) VALUES
 (UUID(), 'LIN-SOFT', 'Innovación Tecnológica y Desarrollo de Software', 'Desarrollo de aplicaciones, IA y sistemas embebidos.', 1),
 (UUID(), 'LIN-ADM', 'Gestión Administrativa y Productividad', 'Optimización de procesos y modelos de negocio.', 1),
 (UUID(), 'LIN-RED', 'Redes y Telecomunicaciones', 'Infraestructura, seguridad informática y conectividad.', 1),
@@ -734,12 +734,12 @@ INSERT INTO inv_lineas_investigacion (uuid, codigoLinea, nombreLinea, descripcio
 (UUID(), 'LIN-EDU', 'Educación y Tecnologías de la Información', 'E-learning y herramientas digitales.', 1);
 
 -- 4. Rúbricas de Evaluación (Base)
-INSERT INTO inv_rubricas (nombre, descripcion, version, activo) VALUES 
+INSERT INTO inv_rubricas (nombre, descripcion, version, activo) VALUES
 ('Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1),
 ('Rúbrica para Proyectos de Vinculación', 'Enfoque en el impacto social y beneficiarios externos.', '1.0', 1);
 
 -- 5. Tipos de Investigación (Estándar Frascati / CACES)
-INSERT INTO inv_tipos_investigacion (uuid, nombre, activo) VALUES 
+INSERT INTO inv_tipos_investigacion (uuid, nombre, activo) VALUES
 (UUID(), 'Investigación Básica', 1),
 (UUID(), 'Investigación Aplicada', 1),
 (UUID(), 'Desarrollo Tecnológico', 1);
@@ -747,7 +747,7 @@ INSERT INTO inv_tipos_investigacion (uuid, nombre, activo) VALUES
 -- 6. ODS (Ejes y Objetivos)
 INSERT INTO inv_ods_ejes (nombre) VALUES ('Eje Social'), ('Eje Ambiental'), ('Eje Económico'), ('Eje Institucional');
 
-INSERT INTO inv_ods (idEje, numeroOds, titulo) VALUES 
+INSERT INTO inv_ods (idEje, numeroOds, titulo) VALUES
 (1, 4, 'Educación de Calidad'),
 (2, 7, 'Energía Asequible y No Contaminante'),
 (3, 8, 'Trabajo Decente y Crecimiento Económico'),
@@ -756,13 +756,13 @@ INSERT INTO inv_ods (idEje, numeroOds, titulo) VALUES
 (2, 13, 'Acción por el Clima');
 
 -- 7. Programas de Investigación (Ejemplos Institucionales)
-INSERT INTO inv_programas (uuid, nombre, activo) VALUES 
+INSERT INTO inv_programas (uuid, nombre, activo) VALUES
 (UUID(), 'Programa de Transformación Digital', 1),
 (UUID(), 'Programa de Sostenibilidad Urbana', 1),
 (UUID(), 'Programa de Innovación Social', 1);
 
 -- 8. Dominios Académicos
-INSERT INTO inv_dominios (uuid, nombre, activo) VALUES 
+INSERT INTO inv_dominios (uuid, nombre, activo) VALUES
 (UUID(), 'Tecnologías de la Información y Comunicación', 1),
 (UUID(), 'Energía y Producción Industrial', 1),
 (UUID(), 'Gestión Empresarial y Servicios', 1);
@@ -793,24 +793,20 @@ CREATE TABLE inv_document_templates (
 
 CREATE TABLE inv_documentos_instancias (
     id                      INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid                    VARCHAR(36)   NOT NULL UNIQUE,
+    uuid                    VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público de la instancia',
     template_code           VARCHAR(100)  NOT NULL,
     template_version        INT           NOT NULL,
-    entity_uuid             VARCHAR(36)   NOT NULL COMMENT 'UUID del Proyecto, Convocatoria o Persona dueña del doc',
-    titulo_instancia        VARCHAR(255)  NULL COMMENT 'Nombre descriptivo (ej: Informe de Avance Mayo)',
-    estado                  INT           NOT NULL DEFAULT 1,
+    entity_uuid             VARCHAR(36)   NOT NULL        COMMENT 'UUID de la entidad a la que pertenece (Proyecto, Informe, etc)',
+    titulo_instancia        VARCHAR(255)  NULL            COMMENT 'Título descriptivo para el usuario',
+    estado                  INT           NOT NULL DEFAULT 1 COMMENT '1=Borrador, 2=EnRevision, 3=Finalizado, 4=Firmado',
     created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by              VARCHAR(100)  NOT NULL,
-    
-    -- Datos del Archivo Final (Inmutabilidad)
-    final_pdf_path          VARCHAR(512)  NULL,
-    file_hash               VARCHAR(100)  NULL COMMENT 'Hash SHA-256 del PDF final',
-    traceability_code       VARCHAR(100)  NULL UNIQUE COMMENT 'Código único DIITRA-TR',
-    
-    FOREIGN KEY (template_code) REFERENCES inv_document_templates(code),
+    final_pdf_path          VARCHAR(512)  NULL            COMMENT 'Ruta al PDF generado físicamente',
+    file_hash               VARCHAR(100)  NULL            COMMENT 'Hash SHA-256 del PDF final',
+    traceability_code       VARCHAR(100)  NULL            COMMENT 'Código impreso en el PDF para validación externa',
     INDEX idx_entity (entity_uuid),
-    INDEX idx_state (estado)
+    CONSTRAINT fk_instancia_template FOREIGN KEY (template_code) REFERENCES inv_document_templates(code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE inv_document_audit (
@@ -840,15 +836,15 @@ CREATE TABLE inv_document_audit (
 -- Normativa: LOPDP Art. 26 — Registro de acceso a datos sensibles (PI).
 -- =============================================================================
 
--- Documento colaborativo: una entrada por cada documento abierto en CoWork.
--- El campo yjs_state guarda el snapshot binario completo del Yjs Doc.
 CREATE TABLE inv_cowork_documentos (
     idDocumento       INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid              VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público del documento (= UUID del proyecto en inv_proyectos)',
-    entidadTipo       VARCHAR(50)   NOT NULL        COMMENT 'Tipo de entidad origen: PROYECTO, INFORME_AVANCE, INFORME_FINAL, etc.',
+    uuid              VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público del documento',
+    entidadTipo       VARCHAR(50)   NOT NULL DEFAULT 'PROYECTO',
     entidadUuid       VARCHAR(36)   NOT NULL        COMMENT 'UUID de la entidad a la que pertenece este documento',
     campoNombre       VARCHAR(100)  NOT NULL        COMMENT 'Campo específico del formulario: antecedentes, metodologia, etc.',
     yjsState          LONGBLOB      NULL            COMMENT 'Snapshot binario del Yjs Doc (Base64). NULL si nunca fue editado.',
+    contentHtml       LONGTEXT      NULL            COMMENT 'Snapshot en HTML para el motor de PDFs',
+    contentJson       LONGTEXT      NULL            COMMENT 'Snapshot en JSON para el motor de búsqueda/IA',
     version           INT           NOT NULL DEFAULT 0 COMMENT 'Contador de actualizaciones para detectar conflictos',
     creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizadoEn     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
