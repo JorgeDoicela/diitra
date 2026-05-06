@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Diitra.Application.Research;
+using Microsoft.Extensions.Logging;
 
 namespace Diitra.Infrastructure.Research
 {
@@ -58,6 +59,5 @@ namespace Diitra.Infrastructure.Research
         public string EntidadEmisora { get; set; } = string.Empty;
         public DateTime FechaFirma { get; set; }
         public bool EsCertificadoAutorizado { get; set; }
-    }
     }
 }
