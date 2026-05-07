@@ -192,13 +192,23 @@ namespace diitra_api.Controllers
         {
             var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
             
-            // Buscamos si ya existe el proyecto de prueba o creamos uno nuevo
-            var project = await context.InvProyectos.OrderByDescending(p => p.IdProyecto).FirstOrDefaultAsync();
+            // Buscamos por UUID si está presente, sino tomamos el último (para pruebas rápidas)
+            diitra_infrastructure.data.models.InvProyecto? project = null;
+            
+            if (!string.IsNullOrEmpty(dto.Uuid))
+            {
+                project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == dto.Uuid);
+            }
+
+            if (project == null)
+            {
+                project = await context.InvProyectos.OrderByDescending(p => p.IdProyecto).FirstOrDefaultAsync();
+            }
             
             if (project == null)
             {
                 project = new diitra_infrastructure.data.models.InvProyecto {
-                    Uuid = Guid.NewGuid().ToString(),
+                    Uuid = dto.Uuid ?? Guid.NewGuid().ToString(),
                     FechaRegistro = DateTime.Now
                 };
                 context.InvProyectos.Add(project);

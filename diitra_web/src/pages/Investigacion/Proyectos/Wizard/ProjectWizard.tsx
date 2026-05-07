@@ -18,6 +18,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
     const [auditLogs, setAuditLogs] = useState<{msg: string, type: string}[]>([]);
 
     const [formData, setFormData] = useState({
+        Uuid: '',
         Titulo: '',
         TiempoEjecucion: '',
         LineaInvestigacion: '',
@@ -61,8 +62,14 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         setIsSaving(true);
         addAudit("Sincronizando con el servidor central...");
         try {
-            // En una app real usaríamos el ID del proyecto, aquí creamos/actualizamos
-            await api.post('/projects/save-preview-data', formData);
+            // Enviamos los datos actuales
+            const response = await api.post('/projects/save-preview-data', formData);
+            
+            // Si el servidor nos devuelve un UUID y no teníamos uno, lo guardamos
+            if (response.data.uuid && !formData.Uuid) {
+                setFormData(prev => ({ ...prev, Uuid: response.data.uuid }));
+            }
+
             setLastSaved(new Date().toLocaleTimeString());
             addAudit("Proyecto persistido exitosamente en inv_proyectos", "success");
         } catch (e) {
@@ -316,17 +323,17 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                             <Clock size={14} /> Cronograma de Hitos e Indicadores CACES
                                         </h4>
                                         <div className="grid grid-cols-1 gap-3">
-                                            {formData.cronograma.map((c, i) => (
+                                            {formData.Cronograma.map((c: any, i: number) => (
                                                 <div key={i} className="bg-surface border border-border-thin p-4 rounded-lg flex justify-between items-center">
                                                     <div className="flex gap-4 items-center">
-                                                        <div className="w-8 h-8 bg-bg-deep rounded-full flex items-center justify-center font-bold text-[10px]">{c.numero}</div>
+                                                        <div className="w-8 h-8 bg-bg-deep rounded-full flex items-center justify-center font-bold text-[10px]">{c.Numero}</div>
                                                         <div>
-                                                            <p className="text-xs font-bold text-text-main">{c.actividad}</p>
-                                                            <p className="text-[9px] text-text-dim uppercase tracking-widest">Peso: {c.ponderacion}% | {c.esEntregableCaces ? '✓ Evidencia CACES' : 'Actividad Interna'}</p>
+                                                            <p className="text-xs font-bold text-text-main">{c.Actividad}</p>
+                                                            <p className="text-[9px] text-text-dim uppercase tracking-widest">Peso: {c.Ponderacion}% | {c.EsEntregableCaces ? '✓ Evidencia CACES' : 'Actividad Interna'}</p>
                                                         </div>
                                                     </div>
                                                     <div className="w-32 h-1.5 bg-bg-deep rounded-full overflow-hidden">
-                                                        <div className="h-full bg-green-500" style={{width: `${c.progreso}%`}} />
+                                                        <div className="h-full bg-green-500" style={{width: `${c.Progreso}%`}} />
                                                     </div>
                                                 </div>
                                             ))}
