@@ -11,9 +11,10 @@ using System.Text;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 // DIITRA Document Engine
-using Diitra.Application.Common.Documents;
-using Diitra.Infrastructure.Common.Documents;
 using Diitra.Infrastructure.Common.Documents.Engine;
+using Diitra.Infrastructure.Common.Documents.Providers;
+using Diitra.Application.Common.Repositories;
+using Diitra.Infrastructure.Common.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -112,6 +113,8 @@ builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateReposito
 builder.Services.AddScoped<IDocumentAuditRepository, DocumentAuditRepository>();
 builder.Services.AddScoped<Diitra.Application.Common.Documents.IDocumentInstanceService, Diitra.Infrastructure.Common.Documents.DocumentInstanceService>();
 builder.Services.AddScoped<IDocumentDataOrchestrator, DocumentDataOrchestrator>();
+builder.Services.AddScoped<IDocumentDataProvider, ProjectDocumentDataProvider>();
+builder.Services.AddHttpClient<IRepositoryConnector, DSpaceRepositoryConnector>();
 builder.Services.AddSingleton<Diitra.Infrastructure.Common.Storage.IFileStorageService, Diitra.Infrastructure.Common.Storage.LocalFileStorageService>();
 // ─────────────────────────────────────────────────────────────────────────────
 

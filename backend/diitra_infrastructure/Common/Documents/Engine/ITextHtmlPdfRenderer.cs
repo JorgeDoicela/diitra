@@ -226,19 +226,33 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
         public async Task<byte[]> RenderAsync(string htmlContent, string? customCss = null)
         {
+            return await RenderWithMetadataAsync(htmlContent, new DocumentRenderingMetadata { 
+                TraceabilityCode = "PENDIENTE",
+                IsDraft = true 
+            }, customCss);
+        }
+
+        public async Task<byte[]> RenderWithMetadataAsync(
+            string htmlContent, 
+            DocumentRenderingMetadata metadata, 
+            string? customCss = null)
+        {
             var fullHtml = WrapInFullHtmlDocument(htmlContent, customCss);
 
             using var outputStream = new MemoryStream();
             using var pdfWriter = new PdfWriter(outputStream);
             using var pdfDocument = new PdfDocument(pdfWriter);
 
-            var converterProperties = new ConverterProperties();
+            // ── NUEVO: Registro de Eventos Globales (Encabezados/Pies/Marcas de Agua) ──
+            var handler = new DocumentEventHandler(
+                metadata.TraceabilityCode,
+                isDraft: metadata.IsDraft
+            );
+            pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
-            // Configurar fuentes embebidas para que el PDF sea autónomo
+            var converterProperties = new ConverterProperties();
             var fontProvider = new DefaultFontProvider(true, true, false);
             converterProperties.SetFontProvider(fontProvider);
-
-            // Resolver recursos relativos (imágenes base64 dentro del HTML)
             converterProperties.SetBaseUri("data://");
 
             HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, converterProperties);
@@ -259,9 +273,19 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
     </style>
 </head>
 <body>
-    {bodyContent}
+    <div class=""document-body"">
+        {bodyContent}
+    </div>
 </body>
 </html>";
         }
+    }
+
+    public class DocumentRenderingMetadata
+    {
+        public string TraceabilityCode { get; set; } = string.Empty;
+        public bool IsDraft { get; set; } = false;
+        public string? InstitutionName { get; set; }
+        public string? LopdpClause { get; set; }
     }
 }

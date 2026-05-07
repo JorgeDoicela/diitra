@@ -26,6 +26,12 @@ namespace Diitra.Application.Common.Documents
         /// Solo válido si la plantilla tiene SupportsBlindMode = true.
         /// </summary>
         public bool IsBlindMode { get; init; } = false;
+        
+        /// <summary>
+        /// Si true, el motor añade una marca de agua de "BORRADOR" en todas las páginas.
+        /// Útil para documentos en revisión que no deben usarse como definitivos.
+        /// </summary>
+        public bool IsDraftMode { get; init; } = false;
 
         /// <summary>
         /// Metadatos adicionales que se inyectan como variables en la plantilla.

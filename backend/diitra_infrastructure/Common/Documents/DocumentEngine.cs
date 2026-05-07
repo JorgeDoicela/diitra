@@ -59,8 +59,8 @@ namespace Diitra.Infrastructure.Common.Documents
             CancellationToken cancellationToken = default)
         {
             _logger.LogInformation(
-                "DIITRA DocumentEngine: Generando [{TemplateCode}] por [{User}] BlindMode={Blind}",
-                request.TemplateCode, request.RequestedBy ?? "system", request.IsBlindMode);
+                "DIITRA DocumentEngine: Generando [{TemplateCode}] por [{User}] BlindMode={Blind}, DraftMode={Draft}",
+                request.TemplateCode, request.RequestedBy ?? "system", request.IsBlindMode, request.IsDraftMode);
 
             // 1. Obtener la plantilla desde la base de datos
             var template = await _templateRepository.FindByCodeAsync(
@@ -68,14 +68,11 @@ namespace Diitra.Infrastructure.Common.Documents
 
             if (template is null || !template.IsActive)
                 throw new KeyNotFoundException(
-                    $"Plantilla '{request.TemplateCode}' no encontrada o inactiva en el motor DIITRA. " +
-                    "Verifique que el Code sea correcto o active la plantilla desde el panel de administración.");
+                    $"Plantilla '{request.TemplateCode}' no encontrada o inactiva en el motor DIITRA.");
 
             // 2. Validar modo doble ciego
             if (request.IsBlindMode && !template.SupportsBlindMode)
-                throw new InvalidOperationException(
-                    $"La plantilla '{template.Name}' no soporta el modo Doble Ciego. " +
-                    "Active SupportsBlindMode en la configuración de la plantilla.");
+                throw new InvalidOperationException($"La plantilla '{template.Name}' no soporta el modo Doble Ciego.");
 
             // 3. Generar código de trazabilidad único
             var traceabilityCode = GenerateTraceabilityCode(template.Category);
@@ -87,30 +84,37 @@ namespace Diitra.Infrastructure.Common.Documents
                 request.ExtraVariables,
                 request.IsBlindMode);
 
-            // 5. PASO CUMPLIMIENTO LEGAL: Añadir encabezado institucional + pie LOPDP + trazabilidad
-            var header = _complianceInjector.BuildInstitutionalHeader(template.Name);
-            var enrichedHtml = header + renderedHtml;
-            enrichedHtml = _complianceInjector.InjectLegalFooter(
-                enrichedHtml, template, traceabilityCode, request.IsBlindMode);
+            // 5. PASO CUMPLIMIENTO LEGAL: Añadir encabezado institucional + pie LOPDP
+            // (Nota: El header institucional se inyecta aquí para que sea parte del flujo iText)
+            var enrichedHtml = renderedHtml;
+            if (!request.IsBlindMode) 
+            {
+                var header = _complianceInjector.BuildInstitutionalHeader(template.Name);
+                enrichedHtml = header + renderedHtml;
+            }
 
-            // 5.1 OPTIMIZACIÓN ENTERPRISE: Procesar imágenes para evitar PDFs pesados o rotos
+            // 5.1 OPTIMIZACIÓN ENTERPRISE: Procesar imágenes
             enrichedHtml = ProcessAndOptimizeHtml(enrichedHtml);
 
-            // 6. PASO RENDERIZADO: HTML → PDF con iText7
-            var pdfBytes = await _pdfRenderer.RenderAsync(enrichedHtml, template.CustomCss);
+            // 6. PASO RENDERIZADO: HTML → PDF con iText7 + Metadatos (Traza, Borrador)
+            var renderingMetadata = new Engine.DocumentRenderingMetadata
+            {
+                TraceabilityCode = traceabilityCode,
+                IsDraft = request.IsDraftMode,
+                InstitutionName = "IST TRAVERSARI - DIITRA"
+            };
 
-            // 7. PASO ENSAMBLADO: Si hay anexos, combinar el PDF con ellos (paquetes CACES)
+            var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(enrichedHtml, renderingMetadata, template.CustomCss);
+
+            // 7. PASO ENSAMBLADO: Si hay anexos, combinar el PDF con ellos
             if (request.AttachmentsToMerge is { Count: > 0 })
             {
                 var allDocs = new List<byte[]> { pdfBytes };
                 allDocs.AddRange(request.AttachmentsToMerge);
                 pdfBytes = await _mergerService.MergeAsync(allDocs);
-                _logger.LogInformation(
-                    "DIITRA DocumentEngine: [{Code}] ensamblado con {Count} anexo(s).",
-                    request.TemplateCode, request.AttachmentsToMerge.Count);
             }
 
-            // 8. AUDITORÍA: Registrar la emisión del documento (obligatorio LOPDP)
+            // 8. AUDITORÍA
             var auditEntry = DocumentAuditEntry.Create(
                 traceabilityCode,
                 template.Code,
@@ -120,10 +124,6 @@ namespace Diitra.Infrastructure.Common.Documents
                 request.IsBlindMode);
 
             await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
-
-            _logger.LogInformation(
-                "DIITRA DocumentEngine: [{Code}] generado exitosamente. Traza: [{Trace}]",
-                request.TemplateCode, traceabilityCode);
 
             return new DocumentResult
             {
