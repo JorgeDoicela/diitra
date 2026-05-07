@@ -1,5 +1,9 @@
 using iText.Signatures;
 using iText.Kernel.Pdf;
+using iText.Kernel.Crypto;
+using iText.Bouncycastleconnector;
+using iText.Bouncycastle.Crypto;
+using iText.Commons.Bouncycastle.Crypto;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using System.IO;
@@ -54,8 +58,8 @@ public class FirmaElectronicaService : IFirmaElectronicaService
         X509CertificateEntry[] chainEntries = pkcs12.GetCertificateChain(alias);
         iText.Commons.Bouncycastle.Cert.IX509Certificate[] chain = new iText.Commons.Bouncycastle.Cert.IX509Certificate[chainEntries.Length];
         
-        // Adaptación para iText7 (BouncyCastle adapter)
-        var factory = new iText.Bouncycastle.BouncycastleFactory();
+        // Adaptación para iText 9 (BouncyCastle adapter via Creator)
+        var factory = BouncyCastleFactoryCreator.GetFactory();
         for (int i = 0; i < chainEntries.Length; i++)
         {
             chain[i] = factory.CreateX509Certificate(chainEntries[i].Certificate);
@@ -65,14 +69,16 @@ public class FirmaElectronicaService : IFirmaElectronicaService
         var pdfReader = new PdfReader(readerStream);
         var signer = new PdfSigner(pdfReader, outputStream, new StampingProperties());
 
-        // Apariencia visual (opcional - por ahora invisible o básica)
-        var appearance = signer.GetSignatureAppearance();
-        appearance.SetReason(reason)
-                  .SetLocation(location)
-                  .SetReuseAppearance(false);
+        // Configuración de metadatos de firma (iText 9 style)
+        SignerProperties signerProperties = new SignerProperties()
+            .SetReason(reason)
+            .SetLocation(location);
+        
+        signer.SetSignerProperties(signerProperties);
 
         // Algoritmo de firma (SHA-256 es el estándar en Ecuador)
-        IExternalSignature pks = new PrivateKeySignature(factory.CreatePrivateKey(key), DigestAlgorithms.SHA256);
+        IPrivateKey pk = new PrivateKeyBC(key);
+        IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256);
         
         signer.SignDetached(pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CMS);
 

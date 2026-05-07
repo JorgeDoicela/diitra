@@ -22,13 +22,20 @@ namespace diitra_api.Controllers
         /// El template "PROTOCOLO_INVESTIGACION" vive en BD y puede editarse sin redespliegue.
         /// </summary>
         [HttpPost("generate-pdf")]
-        public async Task<IActionResult> GeneratePdf([FromBody] ProyectoDto dto)
+        public async Task<IActionResult> GeneratePdf(
+            [FromBody] ProyectoDto dto, 
+            [FromQuery] bool isDraft = true, 
+            [FromQuery] bool isBlind = false)
         {
             var request = new DocumentRequest
             {
-                TemplateCode = "PROTOCOLO_INVESTIGACION",
+                TemplateCode = isBlind ? "PROTOCOLO_PEER_REVIEW" : "PROTOCOLO_INVESTIGACION",
                 Data = dto,
-                RequestedBy = User.Identity?.Name ?? "sistema"
+                IsDraftMode = isDraft,
+                IsBlindMode = isBlind,
+                RequestedBy = User.Identity?.Name ?? "sistema",
+                ProjectUuid = dto.Uuid,
+                EntityUuid = dto.Uuid
             };
 
             var result = await _documentEngine.GenerateAsync(request);
@@ -62,6 +69,35 @@ namespace diitra_api.Controllers
             dto.Uuid = System.Guid.NewGuid().ToString();
             dto.Estado = "Borrador";
             return Ok(new { message = "Workspace Borrador Creado", proyectoId = dto.Uuid });
+        }
+
+        /// <summary>
+        /// Simulación de firma electrónica PAdES usando el motor DIITRA.
+        /// </summary>
+        [HttpPost("sign")]
+        public async Task<IActionResult> SignDocument(
+            [FromQuery] string password, 
+            [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService)
+        {
+            // 1. Generar un PDF base para la prueba
+            var request = new DocumentRequest { 
+                TemplateCode = "PROTOCOLO_INVESTIGACION", 
+                Data = new { Titulo = "Prueba de Firma Profesional" } 
+            };
+            var genResult = await _documentEngine.GenerateAsync(request);
+
+            // 2. Firmar usando el servicio profesional
+            // Nota: Usamos un certificado dummy o el del usuario si estuviera en BD
+            byte[] dummyCert = new byte[10]; // Placeholder
+            try 
+            {
+                var signedPdf = firmaService.SignPdf(genResult.PdfBytes, dummyCert, password);
+                return File(signedPdf, "application/pdf", "DIITRA_Firmado.pdf");
+            }
+            catch (System.Exception ex)
+            {
+                return BadRequest(new { error = "Firma fallida: " + ex.Message });
+            }
         }
 
         [HttpPatch("{id}/section")]

@@ -1310,10 +1310,14 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.TraceabilityCode).IsUnique();
             entity.Property(e => e.TemplateCode).HasColumnName("template_code").HasMaxLength(100).IsRequired();
             entity.Property(e => e.TemplateVersion).HasColumnName("template_version").IsRequired();
-            entity.Property(e => e.GeneratedBy).HasColumnName("generated_by").HasMaxLength(255);
+            entity.Ignore(e => e.Category); 
+            entity.Property(e => e.ProjectUuid).HasColumnName("project_uuid").HasMaxLength(36);
+            entity.Property(e => e.EntityUuid).HasColumnName("entity_uuid").HasMaxLength(36);
+            entity.Property(e => e.GeneratedBy).HasColumnName("generated_by").HasMaxLength(255).IsRequired();
             entity.Property(e => e.GeneratedAt).HasColumnName("generated_at").IsRequired();
             entity.Property(e => e.WasBlindMode).HasColumnName("was_blind_mode").IsRequired();
-            entity.Ignore(e => e.Category); 
+            entity.Property(e => e.FileName).HasColumnName("file_name").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.FileHash).HasColumnName("file_hash").HasMaxLength(100);
         });
 
         // --- DIITRA CoWork Tables ---

@@ -18,6 +18,9 @@ namespace Diitra.Infrastructure.Common.Documents
     /// </summary>
     public static class DocumentTemplateSeed
     {
+        public static DocumentTemplate? GetByCode(string code) => 
+            GetSeedTemplates().FirstOrDefault(t => t.Code == code);
+
         public static IEnumerable<DocumentTemplate> GetSeedTemplates()
         {
             yield return DocumentTemplate.Create(
@@ -30,7 +33,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 supportsBlind: false,
                 requiresTraceability: true,
                 requiresSignature: true,
-                collaborativeFields: "[\"antecedentes\", \"justificacion\", \"objetivos\", \"metodologia\", \"marco_teorico\"]");
+                collaborativeFields: "[\"antecedentes\", \"justificacion\", \"objetivos\", \"metodologia\", \"marco_teorico\"]",
+                version: 3);
 
             yield return DocumentTemplate.Create(
                 code: "ACTA_APROBACION_PROYECTO",
@@ -172,16 +176,22 @@ namespace Diitra.Infrastructure.Common.Documents
 
 <div class=""section-title"">4. Firmas de Responsabilidad</div>
 <div class=""firmas-row"">
-    <div class=""firma-ec-block"">
-        <div class=""firma-label"">Espacio reservado para Firma Electrónica (FirmaEC)</div>
-        <div class=""firma-name"">{{default nombre_investigador '____________________________'}}</div>
-        <div class=""firma-role"">Docente Investigador Principal</div>
-    </div>
-    <div class=""firma-ec-block"">
-        <div class=""firma-label"">Espacio reservado para Firma Electrónica (FirmaEC)</div>
-        <div class=""firma-name"">{{default nombre_director '____________________________'}}</div>
-        <div class=""firma-role"">Director de Investigación e Innovación</div>
-    </div>
+    <table class=""firma-table"">
+        <tr>
+            <td class=""signature-box"">
+                <div class=""firma-placeholder"">Espacio reservado para Firma Electrónica (FirmaEC)</div>
+                <div class=""firma-line""></div>
+                <div class=""firma-name"">{{ default nombre_investigador '[ NOMBRE DEL INVESTIGADOR ]' }}</div>
+                <div class=""firma-role"">Docente Investigador Principal</div>
+            </td>
+            <td class=""signature-box"">
+                <div class=""firma-placeholder"">Espacio reservado para Firma Electrónica (FirmaEC)</div>
+                <div class=""firma-line""></div>
+                <div class=""firma-name"">{{ default nombre_director '[ NOMBRE DEL DIRECTOR I+D+i ]' }}</div>
+                <div class=""firma-role"">Director de Investigación e Innovación</div>
+            </td>
+        </tr>
+    </table>
 </div>";
 
         private static string GetActaAprobacionHtml() => @"

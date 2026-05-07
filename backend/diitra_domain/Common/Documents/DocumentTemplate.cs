@@ -69,7 +69,7 @@ namespace Diitra.Domain.Common.Documents
             DocumentCategory category, string? description = null,
             bool requiresLopdp = true, bool supportsBlind = false,
             bool requiresTraceability = true, bool requiresSignature = false,
-            string? collaborativeFields = null)
+            string? collaborativeFields = null, int version = 1)
         {
             return new DocumentTemplate
             {
@@ -82,7 +82,8 @@ namespace Diitra.Domain.Common.Documents
                 SupportsBlindMode = supportsBlind,
                 RequiresTraceabilityCode = requiresTraceability,
                 RequiresElectronicSignature = requiresSignature,
-                CollaborativeFieldsJson = collaborativeFields
+                CollaborativeFieldsJson = collaborativeFields,
+                Version = version
             };
         }
 
@@ -93,6 +94,17 @@ namespace Diitra.Domain.Common.Documents
             Version++;
             UpdatedAt = DateTime.UtcNow;
             UpdatedBy = updatedBy;
+        }
+
+        public void SyncWithSeed(DocumentTemplate seed)
+        {
+            HtmlContent = seed.HtmlContent;
+            Version = seed.Version;
+            RequiresLopdpClause = seed.RequiresLopdpClause;
+            SupportsBlindMode = seed.SupportsBlindMode;
+            RequiresElectronicSignature = seed.RequiresElectronicSignature;
+            UpdatedAt = DateTime.UtcNow;
+            UpdatedBy = "SYSTEM_SYNC";
         }
 
         public void Deactivate() => IsActive = false;

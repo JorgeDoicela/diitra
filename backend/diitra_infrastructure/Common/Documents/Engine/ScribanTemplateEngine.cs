@@ -103,9 +103,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             Dictionary<string, object>? extraVariables,
             bool isBlindMode)
         {
-            // Serializar el DTO a snake_case y convertir a diccionario para Handlebars
+            // 1. Serializar el DTO a JSON
             var json = JsonSerializer.Serialize(data, _jsonOptions);
-            var dict = JsonSerializer.Deserialize<Dictionary<string, object?>>(json, _jsonOptions)
+            
+            // 2. Parsear a JsonDocument para navegar recursivamente
+            using var doc = JsonDocument.Parse(json);
+            var dict = ToNativeType(doc.RootElement) as Dictionary<string, object?> 
                        ?? new Dictionary<string, object?>();
 
             // Enmascarar datos personales en modo doble ciego (LOPDP + Peer Review)
@@ -129,6 +132,50 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     dict[kv.Key] = kv.Value;
 
             return dict;
+        }
+
+        /// <summary>
+        /// Convierte recursivamente un JsonElement a tipos nativos de C# (Dictionary, List, string, etc.)
+        /// Esto es CRÍTICO porque Handlebars.Net no sabe navegar objetos JsonElement directamente.
+        /// </summary>
+        private static object? ToNativeType(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var dict = new Dictionary<string, object?>();
+                    foreach (var prop in element.EnumerateObject())
+                    {
+                        dict[prop.Name] = ToNativeType(prop.Value);
+                    }
+                    return dict;
+
+                case JsonValueKind.Array:
+                    var list = new List<object?>();
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        list.Add(ToNativeType(item));
+                    }
+                    return list;
+
+                case JsonValueKind.String:
+                    return element.GetString();
+
+                case JsonValueKind.Number:
+                    if (element.TryGetInt64(out long l)) return l;
+                    if (element.TryGetDouble(out double d)) return d;
+                    return element.GetDecimal();
+
+                case JsonValueKind.True:
+                    return true;
+
+                case JsonValueKind.False:
+                    return false;
+
+                case JsonValueKind.Null:
+                default:
+                    return null;
+            }
         }
 
         /// <summary>

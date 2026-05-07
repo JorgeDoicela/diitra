@@ -49,6 +49,16 @@ namespace Diitra.Application.Common.Documents
         /// Identidad del usuario que solicita el documento (para auditoría LOPDP).
         /// </summary>
         public string? RequestedBy { get; init; }
+
+        /// <summary>
+        /// UUID del proyecto relacionado (opcional, para auditoría).
+        /// </summary>
+        public string? ProjectUuid { get; init; }
+
+        /// <summary>
+        /// UUID de la entidad origen (opcional, para auditoría).
+        /// </summary>
+        public string? EntityUuid { get; init; }
     }
 
     /// <summary>
@@ -73,6 +83,9 @@ namespace Diitra.Application.Common.Documents
 
         /// <summary>Si el documento fue generado en modo doble ciego.</summary>
         public bool WasBlindMode { get; init; }
+
+        /// <summary>Hash SHA-256 de integridad del documento.</summary>
+        public string? FileHash { get; init; }
     }
 
     /// <summary>

@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Collections.Concurrent;
+using Diitra.Infrastructure.Common.Documents.Engine;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -34,10 +37,10 @@ namespace Diitra.Infrastructure.Common.Documents
     {
         private readonly IDocumentTemplateRepository _templateRepository;
         private readonly IDocumentAuditRepository _auditRepository;
-        private readonly Engine.ScribanTemplateEngine _scribanEngine;
-        private readonly Engine.ITextHtmlPdfRenderer _pdfRenderer;
-        private readonly Engine.PdfMergerService _mergerService;
-        private readonly Engine.LegalComplianceInjector _complianceInjector;
+        private readonly ScribanTemplateEngine _scribanEngine;
+        private readonly ITextHtmlPdfRenderer _pdfRenderer;
+        private readonly PdfMergerService _mergerService;
+        private readonly LegalComplianceInjector _complianceInjector;
         private readonly ILogger<DocumentEngine> _logger;
 
         public DocumentEngine(
@@ -47,10 +50,10 @@ namespace Diitra.Infrastructure.Common.Documents
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
-            _scribanEngine = new Engine.ScribanTemplateEngine();
-            _pdfRenderer = new Engine.ITextHtmlPdfRenderer();
-            _mergerService = new Engine.PdfMergerService();
-            _complianceInjector = new Engine.LegalComplianceInjector();
+            _scribanEngine = new ScribanTemplateEngine();
+            _pdfRenderer = new ITextHtmlPdfRenderer();
+            _mergerService = new PdfMergerService();
+            _complianceInjector = new LegalComplianceInjector();
             _logger = logger;
         }
 
@@ -58,81 +61,86 @@ namespace Diitra.Infrastructure.Common.Documents
             DocumentRequest request,
             CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation(
-                "DIITRA DocumentEngine: Generando [{TemplateCode}] por [{User}] BlindMode={Blind}, DraftMode={Draft}",
-                request.TemplateCode, request.RequestedBy ?? "system", request.IsBlindMode, request.IsDraftMode);
-
-            // 1. Obtener la plantilla desde la base de datos
-            var template = await _templateRepository.FindByCodeAsync(
-                request.TemplateCode, cancellationToken);
-
-            if (template is null || !template.IsActive)
-                throw new KeyNotFoundException(
-                    $"Plantilla '{request.TemplateCode}' no encontrada o inactiva en el motor DIITRA.");
-
-            // 2. Validar modo doble ciego
-            if (request.IsBlindMode && !template.SupportsBlindMode)
-                throw new InvalidOperationException($"La plantilla '{template.Name}' no soporta el modo Doble Ciego.");
-
-            // 3. Generar código de trazabilidad único
-            var traceabilityCode = GenerateTraceabilityCode(template.Category);
-
-            // 4. PASO SCRIBAN: Inyectar datos del DTO en el HTML
-            var renderedHtml = await _scribanEngine.RenderAsync(
-                template.HtmlContent,
-                request.Data,
-                request.ExtraVariables,
-                request.IsBlindMode);
-
-            // 5. PASO CUMPLIMIENTO LEGAL: Añadir encabezado institucional + pie LOPDP
-            // (Nota: El header institucional se inyecta aquí para que sea parte del flujo iText)
-            var enrichedHtml = renderedHtml;
-            if (!request.IsBlindMode) 
+            try 
             {
-                var header = _complianceInjector.BuildInstitutionalHeader(template.Name);
-                enrichedHtml = header + renderedHtml;
+                _logger.LogInformation(
+                    "DIITRA DocumentEngine: Generando [{TemplateCode}] por [{User}] BlindMode={Blind}, DraftMode={Draft}",
+                    request.TemplateCode, request.RequestedBy ?? "system", request.IsBlindMode, request.IsDraftMode);
+
+                // 1. Obtener y Sincronizar Plantilla
+                var template = await _templateRepository.FindByCodeAsync(request.TemplateCode, cancellationToken);
+                if (template == null || !template.IsActive)
+                {
+                    var seed = DocumentTemplateSeed.GetByCode(request.TemplateCode);
+                    if (seed != null)
+                    {
+                        _logger.LogWarning("DIITRA DocumentEngine: Plantilla '{Code}' no encontrada. Restaurando...", request.TemplateCode);
+                        await _templateRepository.SaveAsync(seed, cancellationToken);
+                        template = seed;
+                    }
+                    else throw new KeyNotFoundException($"Plantilla '{request.TemplateCode}' no disponible.");
+                }
+                else
+                {
+                    var seed = DocumentTemplateSeed.GetByCode(request.TemplateCode);
+                    if (seed != null && seed.Version > template.Version)
+                    {
+                        _logger.LogInformation("DIITRA DocumentEngine: Sincronizando v{SeedVersion} de '{Code}'...", seed.Version, request.TemplateCode);
+                        template.SyncWithSeed(seed);
+                        await _templateRepository.SaveAsync(template, cancellationToken);
+                    }
+                }
+
+                // 2. Validaciones
+                if (request.IsBlindMode && !template.SupportsBlindMode)
+                    throw new InvalidOperationException($"La plantilla '{template.Name}' no soporta Doble Ciego.");
+
+                var traceabilityCode = GenerateTraceabilityCode(template.Category);
+
+                // 3. Orquestar Datos
+                var data = await _scribanEngine.RenderAsync(template.HtmlContent, request.Data, null, request.IsBlindMode);
+                
+                // 4. Inyectar Cumplimiento Legal
+                var finalHtml = _complianceInjector.InjectLegalFooter(data, template, traceabilityCode, request.IsBlindMode);
+
+                // 5. Renderizado a PDF
+                var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
+                {
+                    TraceabilityCode = traceabilityCode,
+                    IsDraft = request.IsDraftMode
+                }, template.CustomCss);
+
+                // 6. Sello de Integridad (SHA-256)
+                var fileHash = CalculateHash(pdfBytes);
+
+                // 7. Auditoría
+                var fileName = $"DIITRA_{template.Code}_v{template.Version}_{DateTime.Now:yyyyMMdd-HHmm}.pdf";
+                try 
+                {
+                    var auditEntry = DocumentAuditEntry.Create(
+                        traceabilityCode, template.Code, template.Version, template.Category,
+                        request.RequestedBy ?? "sistema", request.IsBlindMode, fileName,
+                        request.ProjectUuid, request.EntityUuid, fileHash);
+
+                    await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
+                }
+                catch (Exception ex) { _logger.LogError(ex, "DIITRA DocumentEngine: Error en auditoría."); }
+
+                return new DocumentResult
+                {
+                    PdfBytes = pdfBytes,
+                    FileName = fileName,
+                    TraceabilityCode = traceabilityCode,
+                    TemplateVersion = template.Version,
+                    WasBlindMode = request.IsBlindMode,
+                    FileHash = fileHash
+                };
             }
-
-            // 5.1 OPTIMIZACIÓN ENTERPRISE: Procesar imágenes
-            enrichedHtml = ProcessAndOptimizeHtml(enrichedHtml);
-
-            // 6. PASO RENDERIZADO: HTML → PDF con iText7 + Metadatos (Traza, Borrador)
-            var renderingMetadata = new Engine.DocumentRenderingMetadata
+            catch (Exception ex)
             {
-                TraceabilityCode = traceabilityCode,
-                IsDraft = request.IsDraftMode,
-                InstitutionName = "IST TRAVERSARI - DIITRA"
-            };
-
-            var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(enrichedHtml, renderingMetadata, template.CustomCss);
-
-            // 7. PASO ENSAMBLADO: Si hay anexos, combinar el PDF con ellos
-            if (request.AttachmentsToMerge is { Count: > 0 })
-            {
-                var allDocs = new List<byte[]> { pdfBytes };
-                allDocs.AddRange(request.AttachmentsToMerge);
-                pdfBytes = await _mergerService.MergeAsync(allDocs);
+                _logger.LogError(ex, "DIITRA DocumentEngine FAILURE.");
+                throw;
             }
-
-            // 8. AUDITORÍA
-            var auditEntry = DocumentAuditEntry.Create(
-                traceabilityCode,
-                template.Code,
-                template.Version,
-                template.Category,
-                request.RequestedBy,
-                request.IsBlindMode);
-
-            await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
-
-            return new DocumentResult
-            {
-                PdfBytes = pdfBytes,
-                FileName = $"DIITRA_{template.Code}_v{template.Version}_{DateTime.Now:yyyyMMdd-HHmm}.pdf",
-                TraceabilityCode = traceabilityCode,
-                TemplateVersion = template.Version,
-                WasBlindMode = request.IsBlindMode
-            };
         }
 
         public async Task<byte[]> MergeDocumentsAsync(
@@ -221,6 +229,13 @@ namespace Diitra.Infrastructure.Common.Documents
 
             var guid = Guid.NewGuid().ToString("N")[..8].ToUpper();
             return $"DIITRA-{categoryPrefix}-{DateTime.Now.Year}-{guid}";
+        }
+        
+        private static string CalculateHash(byte[] content)
+        {
+            using var sha256 = SHA256.Create();
+            var hash = sha256.ComputeHash(content);
+            return Convert.ToHexString(hash).ToLower();
         }
     }
 }

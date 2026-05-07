@@ -1,4 +1,5 @@
-using iText.Kernel.Events;
+using iText.Commons.Actions;
+using iText.Kernel.Pdf.Event;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -15,10 +16,10 @@ using System;
 namespace Diitra.Infrastructure.Common.Documents.Engine
 {
     /// <summary>
-    /// Manejador de eventos para iText7 (Nivel Platinum).
+    /// Manejador de eventos para iText9 (Nivel Platinum).
     /// Inyecta encabezados, pies de página, marcas de agua y Códigos QR de Verificación.
     /// </summary>
-    public class DocumentEventHandler : IEventHandler
+    public class DocumentEventHandler : AbstractPdfDocumentEventHandler
     {
         private readonly string _traceabilityCode;
         private readonly string _institutionName;
@@ -37,7 +38,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _isDraft = isDraft;
         }
 
-        public void HandleEvent(Event @event)
+        protected override void OnAcceptedEvent(AbstractPdfDocumentEvent @event)
         {
             PdfDocumentEvent docEvent = (PdfDocumentEvent)@event;
             PdfDocument pdfDoc = docEvent.GetDocument();
@@ -50,7 +51,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // 1. Marca de agua (Watermark) si es borrador
             if (_isDraft)
             {
-                PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA_BOLD);
+                PdfFont font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
                 Paragraph p = new Paragraph("BORRADOR / DRAFT")
                     .SetFont(font)
                     .SetFontSize(60)
