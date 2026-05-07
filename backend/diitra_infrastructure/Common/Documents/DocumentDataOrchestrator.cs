@@ -16,10 +16,12 @@ namespace Diitra.Infrastructure.Common.Documents
     public class DocumentDataOrchestrator : IDocumentDataOrchestrator
     {
         private readonly DiitraContext _db;
+        private readonly IEnumerable<IDocumentDataProvider> _providers;
 
-        public DocumentDataOrchestrator(DiitraContext db)
+        public DocumentDataOrchestrator(DiitraContext db, IEnumerable<IDocumentDataProvider> providers)
         {
             _db = db;
+            _providers = providers;
         }
 
         public async Task<DocumentRequest> PrepareRequestAsync(string documentInstanceUuid, string requestedBy, CancellationToken ct = default)
@@ -27,94 +29,50 @@ namespace Diitra.Infrastructure.Common.Documents
             // 1. Obtener la instancia del documento
             var instance = await _db.DocumentInstances
                 .FirstOrDefaultAsync(i => i.Uuid == documentInstanceUuid, ct)
-                ?? throw new KeyNotFoundException($"No se encontró la instancia de documento: {documentInstanceUuid}");
+                ?? throw new KeyNotFoundException($"No se encontró la instancia: {documentInstanceUuid}");
 
-            // 2. Obtener el Proyecto asociado (Entidad Padre)
-            var proyecto = await _db.InvProyectos
-                .Include(p => p.IdConvocatoriaNavigation)
-                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdProfesorNavigation)
-                .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdAlumnoNavigation)
-                .Include(p => p.InvObjetivosProyecto)
-                .Include(p => p.InvPresupuestoItems)
-                .Include(p => p.InvCronogramas)
-                .FirstOrDefaultAsync(p => p.Uuid == instance.EntityUuid, ct)
-                ?? throw new KeyNotFoundException($"El documento {documentInstanceUuid} no tiene un Proyecto válido asociado.");
+            // 2. Identificar el tipo de entidad (por ahora basado en la lógica del sistema)
+            // En el futuro, DocumentInstance podría tener un EntityType explicito.
+            string entityType = "Proyecto"; // Por defecto para este sistema
 
-            // 3. Obtener el contenido colaborativo de CoWork para este proyecto
-            // El Builder necesita el HTML resultante de la edición colaborativa.
+            // 3. Buscar el proveedor adecuado
+            var provider = _providers.FirstOrDefault(p => p.CanHandle(entityType))
+                ?? throw new InvalidOperationException($"No hay un proveedor de datos para el tipo: {entityType}");
+
+            // 4. Obtener los datos base de la entidad
+            var entityData = await provider.GetDocumentDataAsync(instance.EntityUuid, ct);
+
+            // 5. Obtener contenido colaborativo (CoWork)
             var coworkDocs = await _db.InvCoworkDocumentos
-                .Where(d => d.EntidadUuid == proyecto.Uuid)
+                .Where(d => d.EntidadUuid == instance.EntityUuid)
                 .ToListAsync(ct);
 
-            // Mapeamos los campos de CoWork a un diccionario de contenido
-            // Ej: { "antecedentes": "<html>...", "metodologia": "<html>..." }
             var collaborativeContent = coworkDocs.ToDictionary(
                 d => d.CampoNombre, 
-                d => d.ContentHtml ?? "<p class='empty-field'>[Sección no redactada]</p>"
+                d => d.ContentHtml ?? string.Empty
             );
 
-            // 4. Construir el DTO Maestro que se pasará a Scriban
-            // Este objeto es lo que el diseñador de plantillas verá como 'data'
+            // 6. Construir DTO Maestro
             var masterData = new
             {
-                Proyecto = new
-                {
-                    proyecto.Uuid,
-                    proyecto.Titulo,
-                    proyecto.CodigoInstitucional,
-                    proyecto.Estado,
-                    proyecto.FechaPresentacion,
-                    Convocatoria = proyecto.IdConvocatoriaNavigation?.Titulo ?? "N/A",
-                    Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true)?.IdProfesorNavigation?.PrimerApellido ?? "No asignado",
-                    
-                    // Listas para tablas en el PDF
-                    EquipoDocente = proyecto.InvProyectosProfesores.Select(p => new {
-                        Nombre = $"{p.IdProfesorNavigation.PrimerNombre} {p.IdProfesorNavigation.PrimerApellido}",
-                        p.Rol,
-                        p.HorasSemanales
-                    }),
-                    EquipoEstudiantes = proyecto.InvProyectosAlumnos.Select(a => new {
-                        Nombre = $"{a.IdAlumnoNavigation.PrimerNombre} {a.IdAlumnoNavigation.ApellidoPaterno}",
-                        a.Rol
-                    }),
-                    Objetivos = proyecto.InvObjetivosProyecto.OrderBy(o => o.Orden).Select(o => new {
-                        o.Descripcion,
-                        Tipo = o.EsGeneral ? "General" : "Específico"
-                    }),
-                    Presupuesto = proyecto.InvPresupuestoItems.Select(i => new {
-                        i.Categoria,
-                        i.Detalle,
-                        i.Cantidad,
-                        i.ValorUnitario,
-                        i.ValorTotal
-                    }),
-                    Cronograma = proyecto.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new {
-                        c.NumeroActividad,
-                        c.Descripcion,
-                        c.FechaInicioPrevista,
-                        c.FechaFinPrevista,
-                        c.Progreso
-                    })
-                },
-                // Aquí inyectamos el contenido que viene de CoWork
+                Data = entityData,
                 ContenidoColaborativo = collaborativeContent,
-                
-                // Metadatos del sistema
                 Emision = new
                 {
                     Fecha = DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
                     Usuario = requestedBy,
-                    SelloDigital = Guid.NewGuid().ToString("N").ToUpper()
+                    TraceCode = instance.TraceabilityCode ?? "BORRADOR"
                 }
             };
 
-            // 5. Devolver el Request listo para el Motor
+            // 7. Devolver Request con bandera de Draft Mode si no ha sido finalizado
             return new DocumentRequest
             {
                 TemplateCode = instance.TemplateCode,
                 Data = masterData,
                 RequestedBy = requestedBy,
-                IsBlindMode = false // Por defecto, se puede sobreescribir si es para Peer Review
+                IsDraftMode = instance.State != DocumentState.Signed,
+                IsBlindMode = false 
             };
         }
     }

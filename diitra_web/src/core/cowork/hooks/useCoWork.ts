@@ -48,8 +48,22 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         await getTransport().submitFullSnapshot(config.documentId, base64);
     }, [config.documentId]);
 
-    const submitFinalContent = useCallback(async (html: string, json: string) => {
-        await getTransport().submitFinalContent(config.documentId, html, json);
+    // OPTIMIZACIÓN: Debounce para evitar saturar el servidor con cada pulsación de tecla
+    const submitTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    const submitFinalContent = useCallback((html: string, json: string) => {
+        if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
+        
+        submitTimerRef.current = setTimeout(async () => {
+            try {
+                setSession(s => ({ ...s, isSyncing: true }));
+                await getTransport().submitFinalContent(config.documentId, html, json);
+                setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
+            } catch (err) {
+                console.error("[useCoWork] Error al guardar:", err);
+                setSession(s => ({ ...s, isSyncing: false }));
+            }
+        }, 1500); // Guardar después de 1.5s de inactividad
     }, [config.documentId]);
 
     const disconnect = useCallback(() => {
@@ -59,22 +73,26 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     // 4. Ciclo de vida de la colaboración
     useEffect(() => {
         let isMounted = true;
+        let connectionPromise: Promise<void> | null = null;
+        
         const ydoc = getYdoc();
         const awareness = getAwareness();
         const transport = getTransport();
 
         if (config.enabled) {
-            console.log(`[useCoWork] 🚀 Motor activado: ${config.documentId}`);
+            console.log(`[useCoWork] Motor activado: ${config.documentId}`);
         }
 
         const onYdocUpdate = (update: Uint8Array, origin: any) => {
-            if (origin !== 'remote') {
+            if (origin !== 'remote' && isMounted) {
                 const base64 = btoa(String.fromCharCode(...update));
                 transport.sendYjsUpdate(config.documentId, base64);
             }
         };
 
         const handleAwarenessUpdate = (_: any, origin: any) => {
+            if (!isMounted) return;
+
             if (origin !== 'remote') {
                 const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [ydoc.clientID]);
                 const base64 = btoa(String.fromCharCode(...update));
@@ -89,7 +107,6 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }
             });
 
-            // Diferir para evitar "Cannot update a component while rendering"
             setTimeout(() => {
                 if (isMounted) {
                     setSession(s => ({ ...s, connectedUsers: Array.from(usersMap.values()) }));
@@ -98,17 +115,20 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         };
 
         transport.onYjsUpdate((base64) => {
+            if (!isMounted) return;
             const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
             Y.applyUpdate(ydoc, update, 'remote');
         });
 
         transport.onAwarenessUpdate((base64) => {
+            if (!isMounted) return;
             const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
             awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
         });
 
         transport.onUpdateHistory((updates) => {
-            console.log(`[useCoWork] 📚 Historial: ${updates.length} deltas`);
+            if (!isMounted) return;
+            console.log(`[useCoWork] Historial: ${updates.length} deltas`);
             updates.forEach(base64 => {
                 Y.applyUpdate(ydoc, Uint8Array.from(atob(base64), c => c.charCodeAt(0)), 'remote');
             });
@@ -116,10 +136,15 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         });
 
         const init = async () => {
-            if (!config.enabled) return;
+            if (!config.enabled || !isMounted) return;
             try {
-                await transport.connect(config.documentId, config.user);
-                if (!isMounted) return;
+                connectionPromise = transport.connect(config.documentId, config.user);
+                await connectionPromise;
+                
+                if (!isMounted) {
+                    transport.disconnect();
+                    return;
+                }
 
                 setSession(s => ({ ...s, isConnected: true, error: null }));
                 
@@ -141,10 +166,11 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
         return () => {
             isMounted = false;
+            if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
             ydoc.off('update', onYdocUpdate);
             awareness.off('update', handleAwarenessUpdate);
             transport.disconnect();
-            console.log(`[useCoWork] 🛑 Cleanup: ${config.documentId}`);
+            console.log(`[useCoWork] Cleanup: ${config.documentId}`);
         };
     }, [config.documentId, config.user.id, config.enabled]);
 
