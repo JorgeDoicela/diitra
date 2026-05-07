@@ -20,12 +20,19 @@ export interface ICoWorkTransport {
     /** Estado actual de la conexión */
     readonly isConnected: boolean;
 
+    /** 
+     * Registra un handler para cambios en el estado de la conexión.
+     * Útil para mostrar indicadores de "Reconectando" o "Sin Conexión".
+     */
+    onStatusChange(handler: (isConnected: boolean) => void): void;
+
     /**
      * Establece la conexión con el servidor y se une a la sala del documento.
      * @param documentId - UUID del documento/proyecto
      * @param user - Datos del usuario autenticado (del JWT de DIITRA)
+     * @returns Promesa con los metadatos de configuración del servidor (Handshake)
      */
-    connect(documentId: string, user: CoWorkUser): Promise<void>;
+    connect(documentId: string, user: CoWorkUser): Promise<import('../types').HandshakeResponse>;
 
     /**
      * Cierra la conexión de forma limpia, liberando los recursos del servidor.

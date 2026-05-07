@@ -46,7 +46,7 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
 
     const editor = useEditor({
         extensions,
-        editable: !readonly,
+        editable: !readonly && !cowork.session.readOnly,
         editorProps: {
             attributes: {
                 class: 'focus:outline-none',
@@ -55,8 +55,13 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
         // Sincronizar selección completa (posición y resaltado)
         onSelectionUpdate: ({ editor }) => {
             const { anchor, head } = editor.state.selection;
-            cowork.awareness.setLocalStateField('anchor', anchor);
-            cowork.awareness.setLocalStateField('head', head);
+            // Usar setTimeout para evitar el error "Cannot update a component while rendering"
+            setTimeout(() => {
+                if (cowork.awareness) {
+                    cowork.awareness.setLocalStateField('anchor', anchor);
+                    cowork.awareness.setLocalStateField('head', head);
+                }
+            }, 0);
         },
         // Sincronizar instantánea HTML/JSON con el servidor (para el DIITRA Builder)
         onUpdate: ({ editor }) => {
@@ -148,7 +153,7 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
             {/* ── Área del Editor ── */}
             <div className="flex-1 overflow-y-auto p-8 bg-bg-deep">
                 <div className="max-w-4xl mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
-                    {editor && (
+                    {editor && cowork.awareness && (
                         <>
                             <EditorContent
                                 editor={editor}

@@ -9,7 +9,9 @@ import {
     CheckCircle, 
     ArrowLeft,
     Clock,
-    Eye
+    Eye,
+    Sun,
+    Moon
 } from 'lucide-react';
 import { useCoWork, CoWorkEditor } from '../../../core/cowork';
 import api from '../../../api/axios_config';
@@ -32,6 +34,15 @@ const DocumentWorkspace: React.FC = () => {
     const [sections, setSections] = useState<string[]>([]);
     const [activeSection, setActiveSection] = useState<string>('');
     const [isLoading, setIsLoading] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        return document.documentElement.getAttribute('data-theme') !== 'light';
+    });
+
+    const toggleTheme = () => {
+        const nextMode = !isDarkMode;
+        setIsDarkMode(nextMode);
+        document.documentElement.setAttribute('data-theme', nextMode ? 'dark' : 'light');
+    };
 
     // Cargar metadatos de la instancia y la plantilla
     useEffect(() => {
@@ -120,21 +131,21 @@ const DocumentWorkspace: React.FC = () => {
     );
 
     return (
-        <div className="min-h-screen bg-bg-deep flex flex-col selection:bg-primary/20">
+        <div className="min-h-screen bg-bg-deep flex flex-col selection:bg-primary/20 transition-colors duration-300">
             {/* Header Superior - Premium */}
-            <header className="h-16 bg-surface border-b border-border-thin flex items-center justify-between px-6 sticky top-0 z-30">
+            <header className="h-16 bg-surface border-b border-border-thin flex items-center justify-between px-6 sticky top-0 z-30 shadow-sm transition-colors duration-300">
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => navigate(-1)}
-                        className="p-2 hover:bg-bg-deep rounded-lg text-text-dim transition-colors"
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-bg-deep rounded-lg text-gray-500 dark:text-text-dim transition-colors"
                     >
                         <ArrowLeft size={18} />
                     </button>
-                    <div className="h-8 w-[1px] bg-border-thin mx-1"></div>
+                    <div className="h-8 w-[1px] bg-gray-200 dark:bg-border-thin mx-1"></div>
                     <div>
                         <div className="flex items-center gap-2">
                             <FileText size={16} className="text-primary" />
-                            <h1 className="text-sm font-bold text-text-main tracking-tight uppercase">
+                            <h1 className="text-sm font-bold text-gray-900 dark:text-text-main tracking-tight uppercase">
                                 {template?.name || 'Documento'}
                             </h1>
                             {instance?.state === 3 && (
@@ -143,9 +154,9 @@ const DocumentWorkspace: React.FC = () => {
                                 </div>
                             )}
                         </div>
-                        <div className="text-[10px] text-text-dim font-medium flex items-center gap-2">
+                        <div className="text-[10px] text-gray-400 dark:text-text-dim font-medium flex items-center gap-2">
                             <span>ID: {documentUuid?.substring(0, 8)}...</span>
-                            <span className="w-1 h-1 rounded-full bg-border-thin"></span>
+                            <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-border-thin"></span>
                             <span className="flex items-center gap-1">
                                 <Clock size={10} /> Editado recientemente
                             </span>
@@ -159,7 +170,7 @@ const DocumentWorkspace: React.FC = () => {
                         {cowork.session.connectedUsers.map((u, idx) => (
                             <div 
                                 key={`${u.id}-${idx}`}
-                                className="w-7 h-7 rounded-full border-2 border-surface bg-bg-deep flex items-center justify-center text-[9px] font-bold text-white shadow-sm transition-transform hover:scale-110"
+                                className="w-7 h-7 rounded-full border-2 border-white dark:border-surface bg-gray-200 dark:bg-bg-deep flex items-center justify-center text-[9px] font-bold text-white shadow-sm transition-transform hover:scale-110"
                                 style={{ backgroundColor: u.color }}
                                 title={`${u.name} (${u.role})`}
                             >
@@ -168,9 +179,18 @@ const DocumentWorkspace: React.FC = () => {
                         ))}
                     </div>
 
+                    {/* Selector de Tema (Sun/Moon) */}
+                    <button 
+                        onClick={toggleTheme}
+                        className="p-2 mr-2 hover:bg-gray-100 dark:hover:bg-bg-deep rounded-full text-gray-500 dark:text-text-dim transition-all active:scale-90"
+                        title={isDarkMode ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                    >
+                        {isDarkMode ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-gray-600" />}
+                    </button>
+
                     <button 
                         onClick={() => navigate(`/preview/${documentUuid}`)}
-                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-text-main hover:bg-bg-deep rounded-lg transition-all"
+                        className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-gray-700 dark:text-text-main hover:bg-gray-100 dark:hover:bg-bg-deep rounded-lg transition-all"
                     >
                         <Eye size={14} /> Vista Previa
                     </button>
@@ -186,9 +206,9 @@ const DocumentWorkspace: React.FC = () => {
 
             <div className="flex flex-1 overflow-hidden">
                 {/* Sidebar Izquierdo - Secciones Dinámicas */}
-                <aside className="w-64 bg-surface border-r border-border-thin flex flex-col p-4">
+                <aside className="w-64 bg-surface border-r border-border-thin flex flex-col p-4 shadow-sm z-20 transition-colors duration-300">
                     <div className="mb-6 px-2">
-                        <span className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Secciones del Documento</span>
+                        <span className="text-[10px] font-black text-gray-400 dark:text-text-dim uppercase tracking-[0.2em]">Secciones del Documento</span>
                     </div>
                     <nav className="space-y-1 flex-1">
                         {sections.map(section => (
@@ -198,7 +218,7 @@ const DocumentWorkspace: React.FC = () => {
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all ${
                                     activeSection === section 
                                     ? 'bg-primary/10 text-primary shadow-sm border border-primary/20' 
-                                    : 'text-text-dim hover:bg-bg-deep hover:text-text-main'
+                                    : 'text-gray-500 dark:text-text-dim hover:bg-gray-50 dark:hover:bg-bg-deep hover:text-gray-900 dark:hover:text-text-main'
                                 }`}
                             >
                                 <div className={`w-1.5 h-1.5 rounded-full ${activeSection === section ? 'bg-primary' : 'bg-transparent'}`}></div>
@@ -207,18 +227,18 @@ const DocumentWorkspace: React.FC = () => {
                         ))}
                     </nav>
 
-                    <div className="mt-auto p-4 bg-bg-deep rounded-xl border border-border-thin">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-text-main mb-2">
+                    <div className="mt-auto p-4 bg-gray-50 dark:bg-bg-deep rounded-xl border border-gray-100 dark:border-border-thin">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-900 dark:text-text-main mb-2">
                             <Shield size={12} className="text-green-500" /> CUMPLIMIENTO LOPDP
                         </div>
-                        <p className="text-[9px] text-text-dim leading-relaxed">
+                        <p className="text-[9px] text-gray-400 dark:text-text-dim leading-relaxed">
                             Este documento está siendo auditado en tiempo real según el Art. 26 de la LOPDP.
                         </p>
                     </div>
                 </aside>
 
                 {/* Área Principal - El Editor CoWork */}
-                <main className="flex-1 bg-bg-deep p-8 overflow-y-auto">
+                <main className="flex-1 bg-bg-deep p-8 overflow-y-auto transition-colors duration-300">
                     <div className="max-w-4xl mx-auto">
                         <div className="mb-8 flex justify-between items-end">
                             <div>
@@ -229,7 +249,7 @@ const DocumentWorkspace: React.FC = () => {
                                     Redacción colaborativa para el campo oficial del documento.
                                 </p>
                             </div>
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-text-dim bg-surface px-3 py-1.5 rounded-full border border-border-thin">
+                            <div className="flex items-center gap-2 text-[10px] font-mono text-text-dim bg-surface px-3 py-1.5 rounded-full border border-border-thin shadow-sm">
                                 <Users size={12} /> {cowork.session.connectedUsers.length} editando ahora
                             </div>
                         </div>
@@ -237,11 +257,12 @@ const DocumentWorkspace: React.FC = () => {
                         <div className="bg-surface rounded-2xl border border-border-thin shadow-2xl overflow-hidden min-h-[600px] transition-all focus-within:border-primary/30">
                             {activeSection ? (
                                 <CoWorkEditor 
+                                    key={activeSection}
                                     cowork={cowork}
                                     placeholder={`Empiece a redactar la sección de ${activeSection.replace(/_/g, ' ')}...`}
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-[600px] text-text-dim gap-4">
+                                <div className="flex flex-col items-center justify-center h-[600px] text-gray-400 gap-4">
                                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
                                     <p className="text-sm font-medium">Preparando entorno colaborativo...</p>
                                 </div>
@@ -249,7 +270,7 @@ const DocumentWorkspace: React.FC = () => {
                         </div>
 
                         {/* Footer del Editor */}
-                        <div className="mt-6 flex items-center justify-between text-[10px] text-text-dim font-medium italic">
+                        <div className="mt-6 flex items-center justify-between text-[10px] text-gray-400 dark:text-text-dim font-medium italic">
                             <div className="flex items-center gap-2">
                                 <History size={12} /> Auto-guardado en base de datos habilitado
                             </div>

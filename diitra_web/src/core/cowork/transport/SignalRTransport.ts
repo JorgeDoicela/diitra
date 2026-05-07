@@ -10,7 +10,8 @@ import { COWORK_CONFIG } from '../config';
 export class SignalRTransport implements ICoWorkTransport {
     private connection: signalR.HubConnection;
     private _isConnected = false;
-    private _startPromise: Promise<void> | null = null;
+    private _startPromise: Promise<import('../types').HandshakeResponse> | null = null;
+    private _statusListeners: ((isConnected: boolean) => void)[] = [];
 
     constructor(...args: any[]) {
         const hubUrl = typeof args[0] === 'string' && args[0].startsWith('http') ? args[0] : COWORK_CONFIG.SIGNALR_HUB_URL;
@@ -34,20 +35,35 @@ export class SignalRTransport implements ICoWorkTransport {
         this.connection.onreconnecting(() => { 
             console.warn("[SignalR] Reconectando...");
             this._isConnected = false; 
+            this.notifyStatusChange(false);
         });
         this.connection.onreconnected(() => { 
             console.info("[SignalR] Conexión recuperada.");
             this._isConnected = true; 
+            this.notifyStatusChange(true);
         });
-        this.connection.onclose(() => { 
-            console.error("[SignalR] Conexión cerrada definitivamente.");
+        this.connection.onclose((error) => { 
+            if (error) {
+                console.error("[SignalR] Conexión cerrada por error:", error);
+            } else {
+                console.info("[SignalR] Conexión cerrada de forma limpia.");
+            }
             this._isConnected = false; 
+            this.notifyStatusChange(false);
         });
+    }
+
+    private notifyStatusChange(isConnected: boolean) {
+        this._statusListeners.forEach(h => h(isConnected));
+    }
+
+    onStatusChange(handler: (isConnected: boolean) => void): void {
+        this._statusListeners.push(handler);
     }
 
     get isConnected(): boolean { return this._isConnected; }
 
-    async connect(documentId: string, user: CoWorkUser): Promise<void> {
+    async connect(documentId: string, user: CoWorkUser): Promise<import('../types').HandshakeResponse> {
         if (this._startPromise) {
             console.log("[SignalR] Ya hay una conexión en curso, esperando...");
             return this._startPromise;
@@ -65,19 +81,41 @@ export class SignalRTransport implements ICoWorkTransport {
 
                 if (this.connection.state === signalR.HubConnectionState.Disconnected) {
                     console.log("[SignalR] Iniciando conexión física...");
-                    await this.connection.start();
-                    console.info("[SignalR] Conexión física establecida.");
+                    try {
+                        await this.connection.start();
+                        console.info("[SignalR] Conexión física establecida.");
+                    } catch (startErr: any) {
+                        if (startErr.message?.includes('stop()')) {
+                            console.warn("[SignalR] Intento de inicio cancelado por stop() concurrente.");
+                            return { isBlindMode: false, readOnly: false, serverTimestamp: '', deltaCount: 0 };
+                        }
+                        throw startErr;
+                    }
                 }
 
                 console.log(`[SignalR] Invocando JoinDocument para sala: ${normalizedId}`);
-                await this.connection.invoke('JoinDocument', normalizedId, user.name, user.id, user.role);
+                const response = await this.connection.invoke<import('../types').HandshakeResponse>(
+                    'JoinDocument', 
+                    normalizedId, 
+                    user.name, 
+                    user.id, 
+                    user.role
+                );
                 
+                console.log("[SignalR] Respuesta Handshake:", response);
+
                 this._isConnected = true;
+                this.notifyStatusChange(true);
                 console.info(`[SignalR] Handshake completado para: ${normalizedId}`);
+                return response;
             } catch (err: any) {
-                if (err?.name === 'AbortError' || err?.message?.includes('stop()')) return;
+                if (err?.name === 'AbortError' || err?.message?.includes('stop()')) {
+                     // Retornar dummy si se abortó
+                     return { isBlindMode: false, readOnly: false, serverTimestamp: '', deltaCount: 0 };
+                }
                 console.error('[SignalR] Error en connect():', err);
                 this._isConnected = false;
+                this.notifyStatusChange(false);
                 throw err;
             } finally {
                 this._startPromise = null;
