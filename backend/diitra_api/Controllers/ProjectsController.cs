@@ -12,10 +12,12 @@ namespace diitra_api.Controllers
     public class ProjectsController : ControllerBase
     {
         private readonly IDocumentEngine _documentEngine;
+        private readonly IDocumentInstanceService _documentInstanceService;
 
-        public ProjectsController(IDocumentEngine documentEngine)
+        public ProjectsController(IDocumentEngine documentEngine, IDocumentInstanceService documentInstanceService)
         {
             _documentEngine = documentEngine;
+            _documentInstanceService = documentInstanceService;
         }
 
         /// <summary>
@@ -34,12 +36,29 @@ namespace diitra_api.Controllers
                 Data = dto,
                 IsDraftMode = isDraft,
                 IsBlindMode = isBlind,
-                RequestedBy = User.Identity?.Name ?? "sistema",
+                RequestedBy = User.Identity?.Name ?? "investigador_demo",
                 ProjectUuid = dto.Uuid,
-                EntityUuid = dto.Uuid
+                EntityUuid = dto.Uuid // En producción siempre usamos el UUID real del proyecto
             };
 
             var result = await _documentEngine.GenerateAsync(request);
+
+            // AUTO-TRAZABILIDAD: Registramos esta emisión en la bandeja de instancias
+            try 
+            {
+                await _documentInstanceService.CreateAsync(
+                    request.TemplateCode,
+                    request.EntityUuid,
+                    request.RequestedBy,
+                    $"Preview Oficial: {dto.Titulo ?? "Sin Título"}",
+                    "Proyecto"
+                );
+            }
+            catch (Exception ex) 
+            { 
+                Console.WriteLine($"[DIITRA DEBUG] Error al registrar instancia: {ex.Message}"); 
+            }
+
             return File(result.PdfBytes, "application/pdf", result.FileName);
         }
 
@@ -187,6 +206,13 @@ namespace diitra_api.Controllers
             var history = await workflowEngine.GetTrazabilidadAsync(id);
             return Ok(history);
         }
+        /// <summary>
+        /// Sincroniza los datos del Wizard con la base de datos de investigación.
+        /// NOTA ARQUITECTÓNICA: Este controlador es específico para la entidad 'Proyecto'.
+        /// El NÚCLEO DIITRA Builder es universal; cuando implementemos otros documentos
+        /// (como Informes o Actas), crearemos sus propios controladores, pero todos
+        /// usarán el mismo DocumentEngine para generar los PDFs.
+        /// </summary>
         [HttpPost("save-preview-data")]
         public async Task<IActionResult> SavePreviewData([FromBody] Diitra.Application.Research.Dtos.ProyectoDto dto)
         {
@@ -218,21 +244,27 @@ namespace diitra_api.Controllers
             Console.WriteLine($"[DIITRA DEBUG] Recibido Título: '{dto.Titulo}'");
             Console.WriteLine($"[DIITRA DEBUG] Recibido Antecedentes: '{dto.Antecedentes?.Length ?? 0} chars'");
 
-            // Mapeamos los datos de la web a la base de datos
+            // Mapeamos los datos de la web a la base de datos (Mapeo Completo para Builder)
             project.Titulo = dto.Titulo ?? "PROYECTO SIN TÍTULO";
-            project.Antecedentes = dto.Antecedentes;
+            project.CodigoInstitucional = dto.CodigoInstitucional;
             project.DescripcionProyecto = dto.DescripcionProyecto;
+            project.Antecedentes = dto.Antecedentes;
             project.Justificacion = dto.Justificacion;
-            project.Metodologia = dto.Metodologia;
             project.MarcoTeorico = dto.MarcoTeorico;
-            project.Estado = "Borrador"; 
+            project.Metodologia = dto.Metodologia;
+            project.MetodoEvaluacion = dto.Evaluacion; // Homologación DTO -> SQL
+            project.TiempoEjecucion = dto.TiempoEjecucion;
+            
+            // Fechas (Conversión explícita a DateOnly para el modelo)
+            if (DateTime.TryParse(dto.FechaInicioEstimada, out var fInicio)) project.FechaInicio = DateOnly.FromDateTime(fInicio);
+            if (DateTime.TryParse(dto.FechaFinEstimada, out var fFin)) project.FechaFin = DateOnly.FromDateTime(fFin);
+            if (DateTime.TryParse(dto.FechaPresentacion, out var fPres)) project.FechaPresentacion = DateOnly.FromDateTime(fPres);
+
+            project.Estado = dto.Estado ?? "Borrador"; 
             project.FechaModificacion = DateTime.Now;
 
-            // Forzamos el marcado de cambios para asegurar el UPDATE
-            context.Entry(project).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
-
             await context.SaveChangesAsync();
-            Console.WriteLine($"[DIITRA DEBUG] Persistencia exitosa para UUID: {project.Uuid}");
+            Console.WriteLine($"[DIITRA DEBUG] Persistencia exitosa para UUID: {project.Uuid} - Título: {project.Titulo}");
             return Ok(new { success = true, uuid = project.Uuid });
         }
     }

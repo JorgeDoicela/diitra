@@ -19,6 +19,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
 
     const [formData, setFormData] = useState({
         Uuid: '',
+        CodigoInstitucional: '',
         Titulo: '',
         TiempoEjecucion: '',
         LineaInvestigacion: '',
@@ -29,6 +30,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         Justificacion: '',
         MarcoTeorico: '',
         Metodologia: '',
+        Evaluacion: '',
         // Extensiones Enterprise
         IdDspaceHandle: '',
         MetadataCacesJson: '',
@@ -265,6 +267,10 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <div>
                                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Descripción Detallada</label>
                                         <textarea name="DescripcionProyecto" value={formData.DescripcionProyecto} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Método de Evaluación / Resultados Esperados</label>
+                                        <textarea name="Evaluacion" value={formData.Evaluacion} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
                                     </div>
                                     
                                     <div className="border-t border-border-thin pt-6">

@@ -18,6 +18,11 @@ namespace Diitra.Domain.Common.Documents
         /// UUID de la entidad que "es dueña" del documento (Proyecto, Convocatoria, etc).
         /// </summary>
         public string EntityUuid { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Tipo de entidad (Proyecto, Informe, Acta, etc.) para que el orquestador sepa qué proveedor usar.
+        /// </summary>
+        public string EntityType { get; private set; } = "Proyecto";
         
         public string? Title { get; private set; }
         public DocumentState State { get; private set; } = DocumentState.Draft;
@@ -38,13 +43,15 @@ namespace Diitra.Domain.Common.Documents
             int templateVersion, 
             string entityUuid, 
             string createdBy, 
-            string? title = null)
+            string? title = null,
+            string entityType = "Proyecto")
         {
             return new DocumentInstance
             {
                 TemplateCode = templateCode,
                 TemplateVersion = templateVersion,
                 EntityUuid = entityUuid,
+                EntityType = entityType,
                 CreatedBy = createdBy,
                 Title = title,
                 State = DocumentState.Draft

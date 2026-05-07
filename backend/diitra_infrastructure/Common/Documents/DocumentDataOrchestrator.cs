@@ -32,9 +32,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 .FirstOrDefaultAsync(i => i.Uuid == documentInstanceUuid, ct)
                 ?? throw new KeyNotFoundException($"No se encontró la instancia: {documentInstanceUuid}");
 
-            // 2. Identificar el tipo de entidad (por ahora basado en la lógica del sistema)
-            // En el futuro, DocumentInstance podría tener un EntityType explicito.
-            string entityType = "Proyecto"; // Por defecto para este sistema
+            // 2. Identificar el tipo de entidad desde la instancia (Resiliencia Enterprise)
+            string entityType = instance.EntityType;
 
             // 3. Buscar el proveedor adecuado
             var provider = _providers.FirstOrDefault(p => p.CanHandle(entityType))
@@ -43,9 +42,9 @@ namespace Diitra.Infrastructure.Common.Documents
             // 4. Obtener los datos base de la entidad
             var entityData = await provider.GetDocumentDataAsync(instance.EntityUuid, ct);
 
-            // 5. Obtener contenido colaborativo (CoWork)
+            // 5. Obtener contenido colaborativo (CoWork) vinculado a esta INSTANCIA de documento
             var coworkDocs = await _db.InvCoworkDocumentos
-                .Where(d => d.EntidadUuid == instance.EntityUuid)
+                .Where(d => d.EntidadUuid == instance.Uuid)
                 .ToListAsync(ct);
 
             var collaborativeContent = coworkDocs.ToDictionary(
