@@ -12,6 +12,8 @@ namespace diitra_infrastructure.data.models
         public string EstadoNuevo { get; set; } = null!;
         public string? Observacion { get; set; }
         public DateTime? FechaTransicion { get; set; }
+        public string? HashAnterior { get; set; }
+        public string? HashActual { get; set; }
 
         public virtual InvProyecto IdProyectoNavigation { get; set; } = null!;
     }

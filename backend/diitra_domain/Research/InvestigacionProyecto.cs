@@ -9,6 +9,10 @@ public class InvestigacionProyecto : ProyectoBase
     public bool AnonimizadoParaRevision { get; set; }
     public decimal PuntajeEvaluacion { get; set; }
     
-    // Peer review details would go here
+    // Extensiones Enterprise Core
+    public string? IdDspaceHandle { get; set; }
+    public string? MetadataCacesJson { get; set; }
+    
+    // Peer review details
     public List<string> RevisoresAsignados { get; set; } = new();
 }
