@@ -18,6 +18,8 @@ public partial class InvCronograma
     public DateOnly? FechaInicioPrevista { get; set; }
     public DateOnly? FechaFinPrevista { get; set; }
     public decimal Progreso { get; set; } = 0;
+    public decimal Ponderacion { get; set; } = 0;
+    public bool EsEntregableCaces { get; set; } = false;
     public int? IdActividadPadre { get; set; }
     public string ColorHex { get; set; } = "#3498db";
 

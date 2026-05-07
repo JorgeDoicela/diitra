@@ -18,41 +18,56 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
     const [auditLogs, setAuditLogs] = useState<{msg: string, type: string}[]>([]);
 
     const [formData, setFormData] = useState({
-        titulo: '',
-        tiempo_ejecucion: '',
-        linea_investigacion: '',
-        tipo_investigacion: '',
-        ods: '',
-        antecedentes: '',
-        descripcion_proyecto: '',
-        justificacion: '',
-        marco_teorico: '',
-        metodologia: ''
+        Titulo: '',
+        TiempoEjecucion: '',
+        LineaInvestigacion: '',
+        TipoInvestigacion: '',
+        Ods: '',
+        Antecedentes: '',
+        DescripcionProyecto: '',
+        Justificacion: '',
+        MarcoTeorico: '',
+        Metodologia: '',
+        // Extensiones Enterprise
+        IdDspaceHandle: '',
+        MetadataCacesJson: '',
+        Presupuesto: [
+            { Categoria: 'Equipos', Detalle: 'Servidor GPU', Cantidad: 1, ValorUnitario: 2500, IdPartida: '53.01.05', EsGastoCapital: true }
+        ],
+        Cronograma: [
+            { Numero: 1, Actividad: 'Diseño de Arquitectura', Ponderacion: 20, EsEntregableCaces: true, Progreso: 0 }
+        ]
     });
+
+    const [auditChain, setAuditChain] = useState([
+        { estado: 'Borrador', fecha: '2026-05-07 10:00', hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' }
+    ]);
 
     const addAudit = (msg: string, type: string = 'info') => {
         setAuditLogs(prev => [{msg, type}, ...prev].slice(0, 5));
     };
 
-    // Simulación de auto-guardado colaborativo (PATCH)
+    // Sincronización automática profesional (Auto-save)
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (formData.titulo || formData.antecedentes) {
-                handlePartialSave();
-                addAudit("Sincronización CoWork: Snapshot incremental guardado", "success");
+            if (formData.Titulo || formData.Antecedentes) {
+                handleSave(); 
             }
-        }, 1500);
+        }, 2000); // 2 segundos para que sea percibido como automático
         return () => clearTimeout(timeoutId);
     }, [formData]);
 
-    const handlePartialSave = async () => {
+    const handleSave = async () => {
         setIsSaving(true);
+        addAudit("Sincronizando con el servidor central...");
         try {
-            // PATCH a la API
-            // await api.patch('/projects/123/section', formData);
+            // En una app real usaríamos el ID del proyecto, aquí creamos/actualizamos
+            await api.post('/projects/save-preview-data', formData);
             setLastSaved(new Date().toLocaleTimeString());
+            addAudit("Proyecto persistido exitosamente en inv_proyectos", "success");
         } catch (e) {
             console.error(e);
+            addAudit("Error al persistir en la base de datos", "error");
         } finally {
             setIsSaving(false);
         }
@@ -126,12 +141,17 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-2 text-[10px] text-text-dim uppercase tracking-widest font-bold">
                             {isSaving ? (
-                                <><Clock size={12} className="animate-spin text-text-main"/> Sincronizando CoWork...</>
+                                <><Clock size={12} className="animate-spin text-text-main"/> Sincronizando...</>
                             ) : (
-                                <><CheckCircle size={12} className="text-green-500"/> Estado: Persistido {lastSaved}</>
+                                <><CheckCircle size={12} className="text-green-500"/> Estado: {lastSaved ? `Guardado ${lastSaved}` : 'Pendiente'}</>
                             )}
                         </div>
-                        <button onClick={onClose} className="px-4 py-2 bg-surface hover:bg-bg-deep border border-border-thin rounded text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors">Cerrar Workspace</button>
+                        <div className="flex gap-2">
+                            <button onClick={handleSave} className="px-4 py-2 bg-green-600 hover:bg-green-500 border border-green-700 rounded text-[10px] font-bold uppercase tracking-widest text-white transition-all shadow-lg flex items-center gap-2">
+                                <Save size={14} /> Guardar Proyecto
+                            </button>
+                            <button onClick={onClose} className="px-4 py-2 bg-surface hover:bg-bg-deep border border-border-thin rounded text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors">Cerrar</button>
+                        </div>
                     </div>
                 </div>
 
@@ -191,12 +211,12 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 <div className="grid grid-cols-1 gap-6">
                                     <div>
                                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Título del Proyecto de Investigación / Innovación</label>
-                                        <input type="text" name="titulo" value={formData.titulo} onChange={handleChange} className="w-full bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none transition-all shadow-sm" placeholder="Ej: Implementación de IA para la gestión de residuos..." />
+                                        <input type="text" name="Titulo" value={formData.Titulo} onChange={handleChange} className="w-full bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none transition-all shadow-sm" placeholder="Ej: Implementación de IA para la gestión de residuos..." />
                                     </div>
                                     <div className="grid grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Línea de Investigación SENESCYT</label>
-                                            <select name="linea_investigacion" value={formData.linea_investigacion} onChange={handleChange} className="w-full bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none">
+                                            <select name="LineaInvestigacion" value={formData.LineaInvestigacion} onChange={handleChange} className="w-full bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none">
                                                 <option value="">Seleccione...</option>
                                                 <option value="Tecnologías de la Información">Tecnologías de la Información</option>
                                                 <option value="Desarrollo de Software">Desarrollo de Software</option>
@@ -206,7 +226,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                         </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Área del Conocimiento (CACES)</label>
-                                            <select name="tipo_investigacion" value={formData.tipo_investigacion} onChange={handleChange} className="w-full bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none">
+                                            <select name="TipoInvestigacion" value={formData.TipoInvestigacion} onChange={handleChange} className="w-full bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none">
                                                 <option value="">Seleccione...</option>
                                                 <option value="Investigación Básica">Investigación Básica</option>
                                                 <option value="Investigación Aplicada">Investigación Aplicada</option>
@@ -226,18 +246,48 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                         <p className="text-[10px] text-text-dim uppercase tracking-widest">Fase de Redacción Técnica - DIITRA CoWork Activo</p>
                                     </div>
                                 </div>
-                                <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded flex items-center gap-3">
+                                <div className="p-4 bg-blue-500 border border-blue-500 rounded flex items-center gap-3">
                                     <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                                     <span className="text-[10px] text-blue-400 font-bold uppercase tracking-widest">DIITRA CoWork: Edición en tiempo real habilitada para este proyecto.</span>
                                 </div>
                                 <div className="grid grid-cols-1 gap-8">
                                     <div>
                                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Antecedentes y Estado del Arte</label>
-                                        <textarea name="antecedentes" value={formData.antecedentes} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                        <textarea name="Antecedentes" value={formData.Antecedentes} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Descripción Detallada</label>
-                                        <textarea name="descripcion_proyecto" value={formData.descripcion_proyecto} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                        <textarea name="DescripcionProyecto" value={formData.DescripcionProyecto} onChange={handleChange} className="w-full h-40 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                    </div>
+                                    
+                                    <div className="border-t border-border-thin pt-6">
+                                        <h4 className="text-[11px] font-bold text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Save size={14} /> Desglose Presupuestario (Auditoría SENESCYT)
+                                        </h4>
+                                        <div className="overflow-x-auto">
+                                            <table className="w-full text-left border-collapse">
+                                                <thead>
+                                                    <tr className="border-b border-border-thin text-[9px] text-text-dim uppercase tracking-widest">
+                                                        <th className="py-2">Categoría</th>
+                                                        <th className="py-2">Partida</th>
+                                                        <th className="py-2">Detalle</th>
+                                                        <th className="py-2 text-right">Monto</th>
+                                                        <th className="py-2 text-center">Capital?</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-xs text-text-main font-medium">
+                                                    {formData.Presupuesto.map((p: any, i: number) => (
+                                                        <tr key={i} className="border-b border-border-thin hover:bg-surface">
+                                                            <td className="py-3">{p.Categoria}</td>
+                                                            <td className="py-3"><span className="bg-bg-deep px-2 py-0.5 rounded text-[10px]">{p.IdPartida}</span></td>
+                                                            <td className="py-3">{p.Detalle}</td>
+                                                            <td className="py-3 text-right">${p.ValorUnitario * p.Cantidad}</td>
+                                                            <td className="py-3 text-center">{p.EsGastoCapital ? 'SI' : 'NO'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -254,11 +304,33 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 <div className="grid grid-cols-1 gap-8">
                                     <div>
                                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Marco Teórico y Referencial</label>
-                                        <textarea name="marco_teorico" value={formData.marco_teorico} onChange={handleChange} className="w-full h-64 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                        <textarea name="MarcoTeorico" value={formData.MarcoTeorico} onChange={handleChange} className="w-full h-64 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
                                     </div>
                                     <div>
                                         <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Metodología de Investigación</label>
-                                        <textarea name="metodologia" value={formData.metodologia} onChange={handleChange} className="w-full h-64 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                        <textarea name="Metodologia" value={formData.Metodologia} onChange={handleChange} className="w-full h-64 bg-surface border border-border-thin rounded-lg px-5 py-4 text-sm text-text-main focus:ring-1 focus:ring-text-main outline-none resize-none shadow-sm" />
+                                    </div>
+
+                                    <div className="border-t border-border-thin pt-6">
+                                        <h4 className="text-[11px] font-bold text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Clock size={14} /> Cronograma de Hitos e Indicadores CACES
+                                        </h4>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {formData.cronograma.map((c, i) => (
+                                                <div key={i} className="bg-surface border border-border-thin p-4 rounded-lg flex justify-between items-center">
+                                                    <div className="flex gap-4 items-center">
+                                                        <div className="w-8 h-8 bg-bg-deep rounded-full flex items-center justify-center font-bold text-[10px]">{c.numero}</div>
+                                                        <div>
+                                                            <p className="text-xs font-bold text-text-main">{c.actividad}</p>
+                                                            <p className="text-[9px] text-text-dim uppercase tracking-widest">Peso: {c.ponderacion}% | {c.esEntregableCaces ? '✓ Evidencia CACES' : 'Actividad Interna'}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="w-32 h-1.5 bg-bg-deep rounded-full overflow-hidden">
+                                                        <div className="h-full bg-green-500" style={{width: `${c.progreso}%`}} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -335,6 +407,10 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                         <div className="p-6 bg-surface border border-border-thin rounded-xl shadow-sm border-t-4 border-t-blue-600">
                                             <h4 className="text-[11px] font-bold uppercase tracking-widest mb-2">Repositorio DSpace</h4>
                                             <p className="text-[9px] text-text-dim uppercase mb-4">Exportación automatizada de metadatos CACES/SENESCYT.</p>
+                                            <div className="bg-bg-deep p-3 rounded border border-border-thin mb-4">
+                                                <span className="text-[8px] text-text-dim uppercase block mb-1">Handle Generado</span>
+                                                <span className="text-[10px] font-mono text-blue-500">{formData.id_dspace_handle || 'PENDIENTE_PUBLISH'}</span>
+                                            </div>
                                             <button 
                                                 onClick={handlePublish}
                                                 disabled={!pdfBlob}
@@ -342,6 +418,28 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                             >
                                                 <Upload size={14}/> Publicar en Repositorio
                                             </button>
+                                        </div>
+
+                                        {/* Bloque 4: Cadena de Confianza del Núcleo */}
+                                        <div className="p-6 bg-bg-deep border border-border-thin rounded-xl shadow-inner">
+                                            <h4 className="text-[10px] font-bold uppercase tracking-widest mb-4 flex items-center gap-2 text-text-main">
+                                                <Settings size={14} className="text-green-500" /> Cadena de Confianza (Core Chain)
+                                            </h4>
+                                            <div className="space-y-4 relative">
+                                                <div className="absolute left-2.5 top-2 bottom-2 w-[1px] bg-border-thin" />
+                                                {auditChain.map((a, i) => (
+                                                    <div key={i} className="relative pl-8">
+                                                        <div className="absolute left-0 top-1 w-5 h-5 bg-bg-deep border border-green-500 rounded-full flex items-center justify-center">
+                                                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[9px] font-bold text-text-main uppercase">{a.estado}</span>
+                                                            <span className="text-[8px] text-text-dim font-mono truncate w-48">{a.hash}</span>
+                                                            <span className="text-[7px] text-text-dim italic">{a.fecha}</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
 

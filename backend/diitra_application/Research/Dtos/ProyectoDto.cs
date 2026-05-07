@@ -88,6 +88,10 @@ namespace Diitra.Application.Research.Dtos
         public string? CargoDirectorFirma { get; set; }
         public string? NombreCoordinadorFirma { get; set; }
         public string? CargoCoordinadorFirma { get; set; }
+
+        // --- Extensiones Core Enterprise ---
+        public string? IdDspaceHandle { get; set; }
+        public string? MetadataCacesJson { get; set; }
     }
 
     public class InvestigadorDto
@@ -113,6 +117,8 @@ namespace Diitra.Application.Research.Dtos
         public string? Cantidad { get; set; }
         public decimal CostoUnitario { get; set; }
         public decimal CostoTotal { get; set; }
+        public string? IdPartida { get; set; }
+        public bool EsGastoCapital { get; set; }
     }
 
     public class ProductoEsperadoDto
@@ -137,6 +143,8 @@ namespace Diitra.Application.Research.Dtos
         public int Numero { get; set; }
         public string? Actividad { get; set; }
         public string? RecursosNecesarios { get; set; }
+        public decimal Ponderacion { get; set; }
+        public bool EsEntregableCaces { get; set; }
 
         /// <summary>Array de 48 bools (12 meses × 4 semanas). true = marcada.</summary>
         public List<bool>? Semanas { get; set; }

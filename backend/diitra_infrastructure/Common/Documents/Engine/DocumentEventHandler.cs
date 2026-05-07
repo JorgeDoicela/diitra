@@ -45,7 +45,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             PdfPage page = docEvent.GetPage();
             Rectangle pageSize = page.GetPageSize();
             
-            PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
+            PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
             Canvas canvas = new Canvas(pdfCanvas, pageSize);
 
             // 1. Marca de agua (Watermark) si es borrador
@@ -80,12 +80,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 pageSize.GetRight() - 36, 25, TextAlignment.RIGHT);
 
             // 4. QR de Verificación Nativo (Esquina inferior derecha)
-            // Este QR permite validar la autenticidad del documento en el portal del instituto
+            // Usamos el estándar iText 9 Professional para asegurar visibilidad en todos los visores
             BarcodeQRCode qrCode = new BarcodeQRCode($"https://diitra.ist.edu.ec/verify/{_traceabilityCode}");
             PdfFormXObject qrObject = qrCode.CreateFormXObject(iText.Kernel.Colors.ColorConstants.BLACK, pdfDoc);
             
-            // Posicionar el QR (35x35 px) sobre el pie de página
-            pdfCanvas.AddXObjectWithTransformationMatrix(qrObject, 35, 0, 0, 35, pageSize.GetRight() - 75, 40);
+            // Creamos un objeto Image para posicionamiento preciso y escalado automático
+            Image qrImage = new Image(qrObject)
+                .SetWidth(45)
+                .SetHeight(45)
+                .SetFixedPosition(pageSize.GetRight() - 85, 45);
+            
+            canvas.Add(qrImage);
 
             canvas.Close();
         }

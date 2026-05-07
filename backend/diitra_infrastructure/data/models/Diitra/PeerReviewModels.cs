@@ -15,6 +15,8 @@ public class InvRevisionesPares
     public DateTime FechaLimite { get; set; }
     public string Estado { get; set; } = "Pendiente";
     public bool EsExterno { get; set; }
+    public bool EsDobleCiego { get; set; } = true;
+    public decimal? PuntajeTotal { get; set; }
     public string? ObservacionesGral { get; set; }
 
     [ForeignKey("IdProyecto")]

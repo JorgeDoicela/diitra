@@ -34,7 +34,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"antecedentes\", \"justificacion\", \"objetivos\", \"metodologia\", \"marco_teorico\"]",
-                version: 3);
+                version: 5);
 
             yield return DocumentTemplate.Create(
                 code: "ACTA_APROBACION_PROYECTO",
@@ -174,7 +174,54 @@ namespace Diitra.Infrastructure.Common.Documents
 <div class=""field-label"">Metodología:</div>
 <div class=""text-field"">{{default metodologia 'No proporcionado'}}</div>
 
-<div class=""section-title"">4. Firmas de Responsabilidad</div>
+<div class=""section-title"">4. Planificación y Presupuesto (SENESCYT/CACES)</div>
+<div class=""field-label"">Desglose Presupuestario:</div>
+<table class=""data-table"">
+    <thead>
+        <tr>
+            <th style=""width:15%"">Partida</th>
+            <th>Detalle</th>
+            <th style=""width:15%"">Monto</th>
+            <th style=""width:10%"">Cap?</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each recursos_necesarios}}
+        <tr>
+            <td>{{id_partida}}</td>
+            <td>{{descripcion}}</td>
+            <td style=""text-align:right"">$ {{costo_total}}</td>
+            <td style=""text-align:center"">{{#if es_gasto_capital}} SÍ {{else}} NO {{/if}}</td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<div class=""field-label"">Cronograma de Hitos e Indicadores:</div>
+<table class=""data-table"">
+    <thead>
+        <tr>
+            <th style=""width:5%"">#</th>
+            <th>Actividad / Hito</th>
+            <th style=""width:15%"">Peso %</th>
+            <th style=""width:20%"">Entregable CACES</th>
+            <th style=""width:15%"">Estado</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each cronograma}}
+        <tr>
+            <td style=""text-align:center"">{{numero}}</td>
+            <td>{{actividad}}</td>
+            <td style=""text-align:center"">{{ponderacion}}%</td>
+            <td style=""text-align:center"">{{#if es_entregable_caces}} [EVIDENCIA] {{else}} - {{/if}}</td>
+            <td style=""text-align:center"">PENDIENTE</td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<div class=""section-title"">5. Firmas de Responsabilidad</div>
 <div class=""firmas-row"">
     <table class=""firma-table"">
         <tr>
