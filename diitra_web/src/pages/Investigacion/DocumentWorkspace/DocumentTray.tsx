@@ -14,11 +14,22 @@ import api from '../../../api/axios_config';
 
 interface DocumentInstance {
     uuid: string;
-    templateCode: string;
-    title: string;
-    state: number; // 1: Draft, 2: Review, 3: Signed...
-    createdAt: string;
+    templateCode?: string;
+    title?: string;
+    state?: number;
+    createdAt?: string;
     traceabilityCode?: string;
+    // Soporte para snake_case (DIITRA Default)
+    created_at?: string;
+    template_code?: string;
+    traceability_code?: string;
+    // Soporte para PascalCase (C# Default)
+    Uuid?: string;
+    TemplateCode?: string;
+    Title?: string;
+    State?: number;
+    CreatedAt?: string;
+    TraceabilityCode?: string;
 }
 
 interface DocumentTrayProps {
@@ -121,24 +132,32 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                         <p className="text-xs text-text-dim font-medium">No hay documentos generados aún.</p>
                     </div>
                 ) : (
-                    documents.map(doc => (
-                        <div key={doc.uuid} className="p-4 flex items-center justify-between hover:bg-bg-deep/50 transition-colors group">
+                    documents.map(doc => {
+                        const state = doc.state ?? doc.State ?? doc.state ?? 1;
+                        const title = doc.title || doc.Title || doc.template_code || doc.templateCode || doc.TemplateCode;
+                        const date = doc.created_at || doc.createdAt || doc.CreatedAt;
+                        const trace = doc.traceability_code || doc.traceabilityCode || doc.TraceabilityCode;
+
+                        return (
+                        <div key={doc.uuid || doc.Uuid} className="p-4 flex items-center justify-between hover:bg-bg-deep/50 transition-colors group">
                             <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-xl border ${getStatusStyles(doc.state)} transition-all group-hover:scale-110`}>
+                                <div className={`p-2 rounded-xl border ${getStatusStyles(state)} transition-all group-hover:scale-110`}>
                                     <FileText size={18} />
                                 </div>
                                 <div>
-                                    <h4 className="text-xs font-bold text-text-main">{doc.title || doc.templateCode}</h4>
+                                    <h4 className="text-xs font-bold text-text-main">
+                                        {title}
+                                    </h4>
                                     <div className="flex items-center gap-3 mt-1">
-                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getStatusStyles(doc.state)}`}>
-                                            {getStatusLabel(doc.state)}
+                                        <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${getStatusStyles(state)}`}>
+                                            {getStatusLabel(state)}
                                         </span>
                                         <span className="flex items-center gap-1 text-[10px] text-text-dim font-medium">
-                                            <Clock size={10} /> {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : 'Fecha Pendiente'}
+                                            <Clock size={10} /> { date ? new Date(date).toLocaleDateString() : 'Fecha Pendiente'}
                                         </span>
-                                        {doc.traceabilityCode && (
+                                        {trace && (
                                             <span className="text-[10px] font-mono text-primary font-bold">
-                                                {doc.traceabilityCode}
+                                                {trace}
                                             </span>
                                         )}
                                     </div>
@@ -147,13 +166,13 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
 
                             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button 
-                                    onClick={() => navigate(`/investigacion/workspace/${doc.templateCode}/${doc.uuid}`)}
+                                    onClick={() => navigate(`/investigacion/workspace/${doc.template_code || doc.templateCode || doc.TemplateCode}/${doc.uuid || doc.Uuid}`)}
                                     className="p-2 hover:bg-surface rounded-lg text-text-dim hover:text-primary transition-all"
                                     title="Abrir Espacio de Trabajo"
                                 >
                                     <ExternalLink size={16} />
                                 </button>
-                                {doc.state === 3 && (
+                                {state === 3 && (
                                     <button 
                                         className="p-2 hover:bg-surface rounded-lg text-text-dim hover:text-green-500 transition-all"
                                         title="Descargar PDF Oficial"
@@ -166,7 +185,8 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                                 </button>
                             </div>
                         </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
