@@ -16,6 +16,17 @@ export interface CoWorkUser {
 }
 
 /**
+ * Respuesta del servidor tras unirse exitosamente a un documento.
+ * Contiene configuraciones críticas inyectadas por el backend.
+ */
+export interface HandshakeResponse {
+    isBlindMode: boolean;        // ¿Debe anonimizarse a los usuarios? (CACES Double Blind)
+    readOnly: boolean;           // ¿El documento ya está firmado o es lectura?
+    serverTimestamp: string;     // Para sincronización horaria
+    deltaCount: number;          // Cantidad de deltas cargados (para telemetría)
+}
+
+/**
  * Estado completo de la sesión colaborativa activa.
  * Devuelto por useCoWork para que el componente pueda renderizar el estado.
  */
@@ -26,6 +37,7 @@ export interface CoWorkSession {
     isSyncing: boolean;
     lastSyncedAt: Date | null;
     error: string | null;
+    readOnly?: boolean;
 }
 
 /**

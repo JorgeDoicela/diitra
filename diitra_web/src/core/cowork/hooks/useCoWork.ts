@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA CoWork — Main Hook: useCoWork (v3.8 - Rendimiento y Estabilidad)
+// DIITRA CoWork — Main Hook: useCoWork (v3.9 - Isolation & Stability)
 // ═══════════════════════════════════════════════════════════════════
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -21,21 +21,13 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         error: null,
     });
 
-    // 2. Referencias persistentes (Lazy Initialization para evitar fugas de memoria)
-    // Usamos refs que se inicializan solo cuando se necesitan
+    // 2. Referencias persistentes
     const ydocRef = useRef<Y.Doc | null>(null);
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
     const transportRef = useRef<ICoWorkTransport | null>(null);
+    const submitTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Getters para obtener las instancias (creándolas si no existen)
-    const getYdoc = () => {
-        if (!ydocRef.current) ydocRef.current = new Y.Doc();
-        return ydocRef.current;
-    };
-    const getAwareness = () => {
-        if (!awarenessRef.current) awarenessRef.current = new awarenessProtocol.Awareness(getYdoc());
-        return awarenessRef.current;
-    };
+    // Getters seguros
     const getTransport = () => {
         if (!transportRef.current) transportRef.current = new SignalRTransport();
         return transportRef.current;
@@ -43,143 +35,189 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
     // 3. Acciones del Handle
     const compact = useCallback(async () => {
-        const update = Y.encodeStateAsUpdate(getYdoc());
+        if (!ydocRef.current) return;
+        const update = Y.encodeStateAsUpdate(ydocRef.current);
         const base64 = btoa(String.fromCharCode(...update));
         await getTransport().submitFullSnapshot(config.documentId, base64);
     }, [config.documentId]);
 
-    // OPTIMIZACIÓN: Debounce para evitar saturar el servidor con cada pulsación de tecla
-    const submitTimerRef = useRef<NodeJS.Timeout | null>(null);
-
     const submitFinalContent = useCallback((html: string, json: string) => {
         if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
-        
+
         submitTimerRef.current = setTimeout(async () => {
             try {
+                console.log(`[useCoWork] Guardando snapshot en servidor para: ${config.documentId}...`);
                 setSession(s => ({ ...s, isSyncing: true }));
                 await getTransport().submitFinalContent(config.documentId, html, json);
+                console.info(`[useCoWork] Snapshot guardado exitosamente.`);
                 setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
             } catch (err) {
                 console.error("[useCoWork] Error al guardar:", err);
                 setSession(s => ({ ...s, isSyncing: false }));
             }
-        }, 1500); // Guardar después de 1.5s de inactividad
+        }, 1500);
     }, [config.documentId]);
 
     const disconnect = useCallback(() => {
-        getTransport().disconnect();
+        if (transportRef.current) transportRef.current.disconnect();
     }, []);
 
-    // 4. Ciclo de vida de la colaboración
+    // 4. Ciclo de vida de la colaboración (Efecto Principal)
     useEffect(() => {
         let isMounted = true;
-        let connectionPromise: Promise<void> | null = null;
-        
-        const ydoc = getYdoc();
-        const awareness = getAwareness();
-        const transport = getTransport();
-
-        if (config.enabled) {
-            console.log(`[useCoWork] Motor activado: ${config.documentId}`);
-        }
-
-        const onYdocUpdate = (update: Uint8Array, origin: any) => {
-            if (origin !== 'remote' && isMounted) {
-                const base64 = btoa(String.fromCharCode(...update));
-                transport.sendYjsUpdate(config.documentId, base64);
-            }
-        };
-
-        const handleAwarenessUpdate = (_: any, origin: any) => {
-            if (!isMounted) return;
-
-            if (origin !== 'remote') {
-                const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [ydoc.clientID]);
-                const base64 = btoa(String.fromCharCode(...update));
-                transport.sendAwarenessUpdate(config.documentId, base64);
-            }
-
-            const states = awareness.getStates();
-            const usersMap = new Map<string, CoWorkUser>();
-            states.forEach((state: any) => {
-                if (state.user) {
-                    usersMap.set(state.user.id + (state.user.tabId || ""), state.user);
-                }
-            });
-
-            setTimeout(() => {
-                if (isMounted) {
-                    setSession(s => ({ ...s, connectedUsers: Array.from(usersMap.values()) }));
-                }
-            }, 0);
-        };
-
-        transport.onYjsUpdate((base64) => {
-            if (!isMounted) return;
-            const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-            Y.applyUpdate(ydoc, update, 'remote');
-        });
-
-        transport.onAwarenessUpdate((base64) => {
-            if (!isMounted) return;
-            const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-            awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
-        });
-
-        transport.onUpdateHistory((updates) => {
-            if (!isMounted) return;
-            console.log(`[useCoWork] Historial: ${updates.length} deltas`);
-            updates.forEach(base64 => {
-                Y.applyUpdate(ydoc, Uint8Array.from(atob(base64), c => c.charCodeAt(0)), 'remote');
-            });
-            setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
-        });
+        let transport: ICoWorkTransport;
 
         const init = async () => {
             if (!config.enabled || !isMounted) return;
+
+            console.log(`[useCoWork] Activando motor para sala: ${config.documentId}`);
+
+            // A) LIMPIEZA EXTREMA: Destruir instancias previas para evitar fugas de datos
+            if (ydocRef.current) {
+                console.log(`[useCoWork] Limpiando sala anterior...`);
+                ydocRef.current.destroy();
+                ydocRef.current = null;
+            }
+            if (awarenessRef.current) {
+                awarenessRef.current.destroy();
+                awarenessRef.current = null;
+            }
+
+            // B) CREACIÓN: Nuevas instancias aisladas para esta sección
+            const ydoc = new Y.Doc();
+            const awareness = new awarenessProtocol.Awareness(ydoc);
+            ydocRef.current = ydoc;
+            awarenessRef.current = awareness;
+            transport = getTransport();
+
+            const syncUserList = () => {
+                if (!isMounted || !awarenessRef.current) return;
+                const states = awarenessRef.current.getStates();
+                const usersMap = new Map<string, CoWorkUser>();
+                states.forEach((state: any) => {
+                    if (state.user) {
+                        usersMap.set(state.user.id + (state.user.tabId || ""), state.user);
+                    }
+                });
+                setSession(s => ({ ...s, connectedUsers: Array.from(usersMap.values()) }));
+            };
+
+            // C) EVENTOS DE ENTRADA (Desde el servidor)
+            transport.onStatusChange((isConnected) => {
+                if (isMounted) setSession(s => ({ ...s, isConnected }));
+            });
+
+            transport.onYjsUpdate((base64) => {
+                if (!isMounted || !ydocRef.current) return;
+                const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                Y.applyUpdate(ydocRef.current, update, 'remote');
+            });
+
+            transport.onUpdateHistory((updates) => {
+                if (!isMounted || !ydocRef.current) return;
+                console.log(`[useCoWork] Sincronizando historial (${updates.length} deltas)`);
+                ydocRef.current.transact(() => {
+                    updates.forEach(base64 => {
+                        const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                        Y.applyUpdate(ydocRef.current!, update, 'remote');
+                    });
+                }, 'remote');
+                setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
+            });
+
+            transport.onAwarenessUpdate((base64) => {
+                if (!isMounted || !awarenessRef.current) return;
+                const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                awarenessProtocol.applyAwarenessUpdate(awarenessRef.current, update, 'remote');
+                syncUserList(); // Refrescar al recibir de otros
+            });
+
+            // D) EVENTOS DE SALIDA (Hacia el servidor)
+            ydoc.on('update', (update, origin) => {
+                if (origin !== 'remote' && isMounted) {
+                    const base64 = btoa(String.fromCharCode(...update));
+                    transport.sendYjsUpdate(config.documentId, base64);
+                }
+            });
+
+            awareness.on('update', ({ added, updated, removed }, origin) => {
+                if (isMounted) {
+                    syncUserList(); // Refrescar siempre que algo cambie (local o remoto)
+                    
+                    if (origin !== 'remote') {
+                        const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [
+                            ...added, ...updated, ...removed
+                        ]);
+                        const base64 = btoa(String.fromCharCode(...update));
+                        transport.sendAwarenessUpdate(config.documentId, base64);
+                    }
+                }
+            });
+
+            // E) CONEXIÓN (Handshake)
             try {
-                connectionPromise = transport.connect(config.documentId, config.user);
-                await connectionPromise;
+                // 4. Iniciar Conexión (Handshake)
+                const handshake = await transport.connect(config.documentId, config.user);
                 
                 if (!isMounted) {
                     transport.disconnect();
                     return;
                 }
 
-                setSession(s => ({ ...s, isConnected: true, error: null }));
-                
+                if (!handshake) throw new Error("Handshake fallido");
+
+                const isReadOnly = (handshake as any).readOnly ?? (handshake as any).ReadOnly ?? false;
+                const isBlindMode = (handshake as any).isBlindMode ?? (handshake as any).IsBlindMode ?? false;
+
+                setSession(s => ({ ...s, readOnly: isReadOnly, error: null }));
+
+                // Configurar Identidad (Blind Mode aware)
+                const userToAnnounce = { ...config.user };
+                if (isBlindMode) {
+                    userToAnnounce.name = config.user.role === 'Revisor' ? 'Revisor Anónimo' : 'Investigador (Autor)';
+                }
+
+                // Aunciar presencia local
                 awareness.setLocalStateField('user', {
-                    ...config.user,
+                    ...userToAnnounce,
                     color: getUserColor(config.user.id),
-                    initials: getUserInitials(config.user.name),
+                    initials: getUserInitials(userToAnnounce.name),
                     tabId: Math.random().toString(36).substring(7)
                 });
+
+                // FORZAR SINCRONIZACIÓN INICIAL:
+                // 1. Inmediata para capturar lo que ya llegó
+                syncUserList();
+                // 2. Retrasada para capturar estados que lleguen con latencia de red
+                setTimeout(() => {
+                    if (isMounted) syncUserList();
+                }, 1000);
+
+                if (handshake.deltaCount > 500) compact();
                 config.onSynced?.();
+
             } catch (err: any) {
+                console.error("[useCoWork] Error de conexión:", err);
                 if (isMounted) setSession(s => ({ ...s, isConnected: false, error: err.message }));
             }
         };
 
         init();
-        ydoc.on('update', onYdocUpdate);
-        awareness.on('update', handleAwarenessUpdate);
 
         return () => {
+            console.log(`[useCoWork] Cleanup sala: ${config.documentId}`);
             isMounted = false;
             if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
-            ydoc.off('update', onYdocUpdate);
-            awareness.off('update', handleAwarenessUpdate);
-            transport.disconnect();
-            console.log(`[useCoWork] Cleanup: ${config.documentId}`);
+            if (transport) transport.disconnect();
         };
-    }, [config.documentId, config.user.id, config.enabled]);
+    }, [config.documentId, config.enabled]); // <--- CRÍTICO: Re-ejecutar al cambiar de sala
 
     return {
         session,
-        ydoc: getYdoc(),
-        awareness: getAwareness(),
-        disconnect,
-        submitFinalContent,
+        ydoc: ydocRef.current,
+        awareness: awarenessRef.current,
         compact,
+        submitFinalContent,
+        disconnect
     };
 }

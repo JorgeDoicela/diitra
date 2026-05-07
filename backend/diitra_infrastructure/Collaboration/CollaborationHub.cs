@@ -34,7 +34,7 @@ namespace diitra_infrastructure.Collaboration
             _db = db;
         }
 
-        public async Task JoinDocument(string documentId, string userName, string userUuid, string userRole)
+        public async Task<HandshakeResponse> JoinDocument(string documentId, string userName, string userUuid, string userRole)
         {
             documentId = documentId.ToLower().Trim();
             _logger.LogInformation("[HUB] User {User} joining: {Room}", userName, documentId);
@@ -42,14 +42,25 @@ namespace diitra_infrastructure.Collaboration
             // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
             var instanceUuid = documentId.Split('_')[0];
 
-            // 2. Seguridad Enterprise: Verificar si el documento ya está finalizado/firmado
+            // 2. Seguridad Enterprise: Verificar si el documento ya está finalizado/firmado o es Doble Ciego
             var instance = await _db.DocumentInstances
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
 
-            if (instance != null && (int)instance.State >= 3)
+            bool isBlindMode = false;
+            bool isReadOnly = instance != null && (int)instance.State >= 3;
+
+            // 2.1 Lógica de Anonimización (Doble Ciego)
+            var revision = await _db.InvRevisionesPares
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Uuid == instanceUuid);
+
+            if (revision != null && revision.EsDobleCiego)
             {
-                throw new HubException("Este documento está FINALIZADO Y FIRMADO. No se permiten más ediciones.");
+                isBlindMode = true;
+                var originalName = userName;
+                userName = userRole == "Revisor" ? "Revisor Anónimo" : "Investigador (Autor)";
+                _logger.LogInformation("[HUB] Masking identity for {Original} -> {Anonymized} (Blind Mode)", originalName, userName);
             }
 
             // 3. Registrar auditoría de acceso (LOPDP)
@@ -68,11 +79,9 @@ namespace diitra_infrastructure.Collaboration
             await Groups.AddToGroupAsync(Context.ConnectionId, documentId);
             await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
 
-            // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas (Historial Reciente)
-            // Esto garantiza que el cliente siempre reconstruya el documento exacto.
+            // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas
             var updatesToSend = new List<string>();
 
-            // 4.1 Cargar el Snapshot (Estado Canónico fusionado)
             var docSnapshot = await _db.InvCoworkDocumentos
                 .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.Uuid == documentId);
@@ -82,7 +91,6 @@ namespace diitra_infrastructure.Collaboration
                 updatesToSend.Add(Convert.ToBase64String(docSnapshot.YjsState));
             }
 
-            // 4.2 Cargar los Deltas acumulados desde el último snapshot
             var deltas = await _db.InvCoworkUpdates
                 .AsNoTracking()
                 .Where(u => u.DocumentoUuid == documentId)
@@ -94,6 +102,13 @@ namespace diitra_infrastructure.Collaboration
 
             _logger.LogInformation("[HUB] Sending {Count} history updates to {User}", updatesToSend.Count, userName);
             await Clients.Caller.SendAsync("ReceiveUpdateHistory", updatesToSend);
+
+            return new HandshakeResponse(
+                IsBlindMode: isBlindMode,
+                ReadOnly: isReadOnly,
+                ServerTimestamp: DateTime.UtcNow.ToString("O"),
+                DeltaCount: deltas.Count
+            );
         }
 
         /// <summary>
@@ -384,4 +399,11 @@ namespace diitra_infrastructure.Collaboration
             return frames;
         }
     }
+
+    public record HandshakeResponse(
+        bool IsBlindMode, 
+        bool ReadOnly, 
+        string ServerTimestamp, 
+        int DeltaCount
+    );
 }
