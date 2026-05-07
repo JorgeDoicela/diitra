@@ -675,7 +675,7 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdProyecto).HasName("PRIMARY");
             entity.ToTable("inv_proyectos");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdConvocatoria).HasColumnName("idConvocatoria");
             entity.Property(e => e.CodigoInstitucional).HasColumnName("codigoInstitucional").HasMaxLength(50);
@@ -699,6 +699,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado')").HasDefaultValueSql("'Borrador'");
             entity.Property(e => e.PuntajeEvaluacion).HasColumnName("puntajeEvaluacion").HasPrecision(5, 2);
             entity.Property(e => e.ValorEjecucion).HasColumnName("valorEjecucion").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.IdDspaceHandle).HasColumnName("idDspaceHandle").HasMaxLength(255);
+            entity.Property(e => e.MetadataCacesJson).HasColumnName("metadataCacesJson").HasColumnType("json");
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
@@ -715,7 +717,7 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdTrazabilidad).HasName("PRIMARY");
             entity.ToTable("inv_trazabilidad_proyectos");
             entity.Property(e => e.IdTrazabilidad).HasColumnName("idTrazabilidad");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
@@ -723,6 +725,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.EstadoNuevo).HasColumnName("estadoNuevo").HasMaxLength(50).IsRequired();
             entity.Property(e => e.Observacion).HasColumnName("observacion").HasColumnType("text");
             entity.Property(e => e.FechaTransicion).HasColumnName("fechaTransicion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.HashAnterior).HasColumnName("hashAnterior").HasMaxLength(100);
+            entity.Property(e => e.HashActual).HasColumnName("hashActual").HasMaxLength(100);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany().HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_trazabilidad_proyecto");
         });
@@ -851,9 +855,11 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
             entity.Property(e => e.Categoria).HasColumnName("categoria").HasMaxLength(100).IsRequired();
             entity.Property(e => e.Detalle).HasColumnName("detalle").HasColumnType("text").IsRequired();
+            entity.Property(e => e.IdPartida).HasColumnName("idPartida").HasMaxLength(50);
             entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasPrecision(10, 2).HasDefaultValueSql("'1'");
             entity.Property(e => e.ValorUnitario).HasColumnName("valorUnitario").HasPrecision(12, 2).IsRequired();
             entity.Property(e => e.ValorTotal).HasColumnName("valorTotal").HasPrecision(12, 2).ValueGeneratedOnAddOrUpdate();
+            entity.Property(e => e.EsGastoCapital).HasColumnName("esGastoCapital").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvPresupuestoItems).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pres_proyecto");
         });
@@ -923,6 +929,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaInicioPrevista).HasColumnName("fechaInicioPrevista");
             entity.Property(e => e.FechaFinPrevista).HasColumnName("fechaFinPrevista");
             entity.Property(e => e.Progreso).HasColumnName("progreso").HasPrecision(5, 2).HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.Ponderacion).HasColumnName("ponderacion").HasPrecision(5, 2).HasDefaultValueSql("'0.00'");
+            entity.Property(e => e.EsEntregableCaces).HasColumnName("esEntregableCaces").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
             entity.Property(e => e.IdActividadPadre).HasColumnName("idActividadPadre");
             entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7).HasDefaultValueSql("'#3498db'");
 
@@ -1047,6 +1055,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaLimite).HasColumnName("fechaLimite");
             entity.Property(e => e.Estado).HasColumnName("estado").HasMaxLength(50).HasDefaultValueSql("'Pendiente'");
             entity.Property(e => e.EsExterno).HasColumnName("esExterno").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsDobleCiego).HasColumnName("esDobleCiego").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.PuntajeTotal).HasColumnName("puntajeTotal").HasPrecision(5, 2);
             entity.Property(e => e.ObservacionesGral).HasColumnName("observacionesGral").HasColumnType("text");
 
             entity.HasOne(d => d.Proyecto).WithMany().HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_rev_proyecto");

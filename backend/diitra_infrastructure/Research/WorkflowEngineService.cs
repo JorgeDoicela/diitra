@@ -65,6 +65,20 @@ namespace Diitra.Infrastructure.Research
             return true;
         }
 
+        public async Task<System.Collections.Generic.IEnumerable<object>> GetTrazabilidadAsync(string proyectoUuid)
+        {
+            return await _context.InvTrazabilidadProyectos
+                .Where(t => t.IdProyectoNavigation.Uuid == proyectoUuid)
+                .OrderByDescending(t => t.FechaTransicion)
+                .Select(t => new {
+                    t.EstadoNuevo,
+                    t.FechaTransicion,
+                    t.HashActual,
+                    t.Observacion
+                })
+                .ToListAsync();
+        }
+
         private bool EsTransicionValida(string actual, string nuevo)
         {
             // Reglas de negocio CACES

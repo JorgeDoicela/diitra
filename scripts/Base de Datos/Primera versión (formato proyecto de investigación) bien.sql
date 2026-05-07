@@ -77,7 +77,7 @@ DROP TABLE IF EXISTS
 
 CREATE TABLE inv_lineas_investigacion (
     idLinea              INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid                 CHAR(36)     NOT NULL UNIQUE,
+    uuid                 VARCHAR(36)     NOT NULL UNIQUE,
     codigoLinea          VARCHAR(30)  NOT NULL UNIQUE,
     nombreLinea          VARCHAR(255) NOT NULL,
     descripcion          TEXT,
@@ -87,7 +87,7 @@ CREATE TABLE inv_lineas_investigacion (
 
 CREATE TABLE inv_programas (
     idPrograma    INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid          CHAR(36)     NOT NULL UNIQUE,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
     nombre        VARCHAR(255) NOT NULL,
     activo        TINYINT(1)   DEFAULT 1,
     fechaRegistro TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
@@ -95,7 +95,7 @@ CREATE TABLE inv_programas (
 
 CREATE TABLE inv_dominios (
     idDominio     INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid          CHAR(36)     NOT NULL UNIQUE,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
     nombre        VARCHAR(255) NOT NULL,
     activo        TINYINT(1)   DEFAULT 1,
     fechaRegistro TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
@@ -111,7 +111,7 @@ CREATE TABLE inv_dominios_carrera (
 
 CREATE TABLE inv_sublineas (
     idSublinea    INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid          CHAR(36)     NOT NULL UNIQUE,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
     idLinea       INT          NOT NULL,
     nombre        VARCHAR(255) NOT NULL,
     activo        TINYINT(1)   DEFAULT 1,
@@ -120,7 +120,7 @@ CREATE TABLE inv_sublineas (
 
 CREATE TABLE inv_tipos_investigacion (
     idTipo        INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid          CHAR(36)     NOT NULL UNIQUE,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
     nombre        VARCHAR(100) NOT NULL,
     idTipoPadre   INT          NULL,
     activo        TINYINT(1)   DEFAULT 1,
@@ -129,7 +129,7 @@ CREATE TABLE inv_tipos_investigacion (
 
 CREATE TABLE inv_grupos_investigacion (
     idGrupo       INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid          CHAR(36)     NOT NULL UNIQUE,
+    uuid          VARCHAR(36)     NOT NULL UNIQUE,
     nombre        VARCHAR(255) NOT NULL,
     activo        TINYINT(1)   DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -177,7 +177,7 @@ INSERT INTO inv_rubricas (nombre, descripcion) VALUES
 
 CREATE TABLE inv_convocatorias (
     idConvocatoria     INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid               CHAR(36)      NOT NULL UNIQUE,
+    uuid               VARCHAR(36)      NOT NULL UNIQUE,
     codigoConvocatoria VARCHAR(30)   NOT NULL UNIQUE,
     titulo             VARCHAR(255)  NOT NULL,
     idPeriodo          CHAR(7) CHARACTER SET latin1 NOT NULL,
@@ -216,7 +216,7 @@ CREATE TABLE inv_convocatorias_lineas (
 
 CREATE TABLE inv_proyectos (
     idProyecto            INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid                  CHAR(36)      NOT NULL UNIQUE,
+    uuid                  VARCHAR(36)      NOT NULL UNIQUE,
     idConvocatoria        INT,
     codigoInstitucional   VARCHAR(50)   UNIQUE,
     titulo                VARCHAR(500)  NOT NULL,
@@ -258,7 +258,7 @@ CREATE TABLE inv_proyectos (
 -- Trazabilidad de Estados para Auditoría (CACES)
 CREATE TABLE inv_trazabilidad_proyectos (
     idTrazabilidad  INT AUTO_INCREMENT PRIMARY KEY,
-    uuid            CHAR(36) NOT NULL UNIQUE,
+    uuid            VARCHAR(36) NOT NULL UNIQUE,
     idProyecto      INT NOT NULL,
     idUsuario       INT(11) NOT NULL,
     estadoAnterior  VARCHAR(50) NOT NULL,
@@ -420,7 +420,7 @@ CREATE TABLE inv_impactos_proyecto (
 
 CREATE TABLE inv_cronograma (
     idActividad       INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid              CHAR(36)      NOT NULL UNIQUE,
+    uuid              VARCHAR(36)      NOT NULL UNIQUE,
     idProyecto        INT           NOT NULL,
     idObjetivo        INT           NOT NULL,
     numeroActividad   INT           NOT NULL,
@@ -452,7 +452,7 @@ CREATE TABLE inv_cronograma_semanas (
 
 CREATE TABLE inv_bibliografia_proyecto (
     idBibliografia INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid           CHAR(36)     NOT NULL UNIQUE,
+    uuid           VARCHAR(36)     NOT NULL UNIQUE,
     idProyecto     INT          NOT NULL,
     citaAPA        TEXT         NOT NULL,
     doi            VARCHAR(100),
@@ -471,7 +471,7 @@ CREATE TABLE inv_bibliografia_proyecto (
 -- Informes de Avance (Mensuales/Trimestrales)
 CREATE TABLE inv_informes_avance (
     idInforme         INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid              CHAR(36)      NOT NULL UNIQUE,
+    uuid              VARCHAR(36)      NOT NULL UNIQUE,
     idProyecto        INT           NOT NULL,
     numeroInforme     INT           NOT NULL,
     fechaReporte      DATE          NOT NULL,
@@ -489,7 +489,7 @@ CREATE TABLE inv_informes_avance (
 -- Evidencias del Informe (Fotos, Listas, Facturas)
 CREATE TABLE inv_evidencias (
     idEvidencia    INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid           CHAR(36)      NOT NULL UNIQUE,
+    uuid           VARCHAR(36)      NOT NULL UNIQUE,
     idInforme      INT           NOT NULL,
     tipo           ENUM('Imagen','Documento','Factura','Asistencia','Otros') DEFAULT 'Imagen',
     descripcion    VARCHAR(255),
@@ -501,7 +501,7 @@ CREATE TABLE inv_evidencias (
 -- Libro Diario de Gastos (Monitoreo Presupuestario)
 CREATE TABLE inv_gastos (
     idGasto        INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid           CHAR(36)      NOT NULL UNIQUE,
+    uuid           VARCHAR(36)      NOT NULL UNIQUE,
     idProyecto     INT           NOT NULL,
     idItem         INT           NOT NULL, -- Referencia al ítem del presupuesto (§4)
     monto          DECIMAL(12,2) NOT NULL,
@@ -531,7 +531,7 @@ CREATE TABLE inv_transferencias (
 
 CREATE TABLE inv_revisiones_pares (
     idRevision        INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid              CHAR(36)      NOT NULL UNIQUE,
+    uuid              VARCHAR(36)      NOT NULL UNIQUE,
     idProyecto        INT           NOT NULL,
     idRevisor         INT(11)       NOT NULL, -- ID del Usuario/Profesor
     fechaAsignacion   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
@@ -623,7 +623,7 @@ CREATE INDEX idx_informesav_proyecto        ON inv_informes_avance(idProyecto);
 
 CREATE TABLE inv_notificaciones (
     idNotificacion   INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid             CHAR(36)     NOT NULL UNIQUE,
+    uuid             VARCHAR(36)     NOT NULL UNIQUE,
     idProyecto       INT          NULL,
     destinatario     INT(11)      NOT NULL,
     tipoDestinatario ENUM('Usuario','Profesor','Alumno') DEFAULT 'Usuario',
@@ -648,7 +648,7 @@ DELIMITER ;
 
 CREATE TABLE inv_tokens_acceso (
     idToken         INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid            CHAR(36)     NOT NULL UNIQUE,
+    uuid            VARCHAR(36)     NOT NULL UNIQUE,
     idProyecto      INT          NULL,
     token           VARCHAR(255) NOT NULL UNIQUE,
     idReferencia    INT          NOT NULL,
@@ -672,7 +672,7 @@ DELIMITER ;
 
 CREATE TABLE inv_usuarios_metadata (
     idMetadata           INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid                 CHAR(36)     NOT NULL UNIQUE,
+    uuid                 VARCHAR(36)     NOT NULL UNIQUE,
     idUsuario            INT(11)      NOT NULL UNIQUE,
     orcidId              VARCHAR(20)  NULL,
     especialidad         TEXT         NULL,
