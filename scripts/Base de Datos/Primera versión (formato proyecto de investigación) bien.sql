@@ -246,10 +246,12 @@ CREATE TABLE inv_proyectos (
     FOREIGN KEY (idPrograma)     REFERENCES inv_programas(idPrograma),
     FOREIGN KEY (idGrupo)        REFERENCES inv_grupos_investigacion(idGrupo),
     FOREIGN KEY (idTipo)         REFERENCES inv_tipos_investigacion(idTipo),
-    -- Extensiones CACES
+    -- Extensiones Enterprise CACES / SENESCYT
     hashActaAprobacion   TEXT NULL,
     fechaAprobacion      TIMESTAMP NULL,
     firmadoPor           INT(11) NULL,
+    idDspaceHandle       VARCHAR(255)  NULL COMMENT 'Handle del Repositorio Digital DSpace',
+    metadataCacesJson    JSON          NULL COMMENT 'Snapshot de indicadores para acreditación',
     FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -263,6 +265,9 @@ CREATE TABLE inv_trazabilidad_proyectos (
     estadoNuevo     VARCHAR(50) NOT NULL,
     observacion     TEXT,
     fechaTransicion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Seguridad del Núcleo: Cadena de Confianza (Blockchain-like Audit)
+    hashAnterior    VARCHAR(100) NULL COMMENT 'Hash de la transición previa',
+    hashActual      VARCHAR(100) NULL COMMENT 'Hash SHA-256 de esta transición (Integridad)',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -360,10 +365,12 @@ CREATE TABLE inv_presupuesto_items (
     idItem        INT           AUTO_INCREMENT PRIMARY KEY,
     idProyecto    INT           NOT NULL,
     categoria     VARCHAR(100)  NOT NULL,
+    idPartida     VARCHAR(50)   NULL COMMENT 'Código de partida presupuestaria institucional',
     detalle       TEXT          NOT NULL,
     cantidad      DECIMAL(10,2) NOT NULL DEFAULT 1,
     valorUnitario DECIMAL(12,2) NOT NULL,
     valorTotal    DECIMAL(12,2) GENERATED ALWAYS AS (cantidad * valorUnitario) STORED,
+    esGastoCapital TINYINT(1)   DEFAULT 0 COMMENT 'Diferenciación para reportes SENESCYT',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -422,6 +429,8 @@ CREATE TABLE inv_cronograma (
     fechaInicioPrevista DATE,
     fechaFinPrevista    DATE,
     progreso            DECIMAL(5,2)  DEFAULT 0.00,
+    ponderacion         DECIMAL(5,2)  DEFAULT 0.00 COMMENT 'Peso porcentual en el proyecto',
+    esEntregableCaces   TINYINT(1)    DEFAULT 0    COMMENT 'Marca actividad como evidencia de acreditación',
     idActividadPadre    INT           NULL,
     colorHex            VARCHAR(7)    DEFAULT '#3498db',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
@@ -529,6 +538,8 @@ CREATE TABLE inv_revisiones_pares (
     fechaLimite       DATE          NOT NULL,
     estado            ENUM('Pendiente', 'Completada', 'Rechazada', 'Expirada') DEFAULT 'Pendiente',
     esExterno         TINYINT(1)    DEFAULT 0,
+    esDobleCiego      TINYINT(1)    DEFAULT 1 COMMENT 'Si es 1, el núcleo oculta identidades',
+    puntajeTotal      DECIMAL(5,2)  NULL,
     observacionesGral TEXT,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idRevisor)  REFERENCES usuarios(idUsuario)      ON DELETE RESTRICT

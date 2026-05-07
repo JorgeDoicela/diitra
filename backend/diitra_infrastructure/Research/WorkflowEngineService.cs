@@ -33,6 +33,12 @@ namespace Diitra.Infrastructure.Research
             proyecto.FechaModificacion = DateTime.Now;
 
             // 3. Registrar Trazabilidad Inmutable (Audit Trail para CACES)
+            // Obtener el hash de la última transición para encadenar
+            var ultimaTransicion = await _context.InvTrazabilidadProyectos
+                .Where(t => t.IdProyecto == proyecto.IdProyecto)
+                .OrderByDescending(t => t.FechaTransicion)
+                .FirstOrDefaultAsync();
+
             var trazabilidad = new InvTrazabilidadProyecto
             {
                 Uuid = Guid.NewGuid().ToString(),
@@ -41,8 +47,17 @@ namespace Diitra.Infrastructure.Research
                 EstadoAnterior = estadoAnterior,
                 EstadoNuevo = nuevoEstado,
                 Observacion = observacion,
-                FechaTransicion = DateTime.Now
+                FechaTransicion = DateTime.Now,
+                HashAnterior = ultimaTransicion?.HashActual
             };
+
+            // Calcular el hash de esta entrada (Sello de Integridad)
+            string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion}";
+            using (var sha256 = System.Security.Cryptography.SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataToHash));
+                trazabilidad.HashActual = Convert.ToHexString(bytes).ToLower();
+            }
 
             _context.InvTrazabilidadProyectos.Add(trazabilidad);
             await _context.SaveChangesAsync();
