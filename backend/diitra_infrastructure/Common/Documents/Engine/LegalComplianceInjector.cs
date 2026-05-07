@@ -50,16 +50,20 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             var footer = $@"
             <div class=""legal-footer"">
                 <div class=""traceability-block"">
-                    <div>
-                        <span class=""trace-code"">Código de Verificación: <strong>{traceabilityCode}</strong></span>
-                        &nbsp;|&nbsp;
-                        <span class=""trace-code"">Versión de Plantilla: v{template.Version}</span>
-                        &nbsp;|&nbsp;
-                        <span class=""trace-code"">Categoría: {GetCategoryLabel(template.Category)}</span>
-                    </div>
-                    <div class=""trace-code"">
-                        Generado por DIITRA · {DateTime.Now:dd/MM/yyyy HH:mm} UTC-5 (Quito, Ecuador)
-                    </div>
+                    <table class=""trace-table"">
+                        <tr>
+                            <td class=""trace-code"">
+                                Código de Verificación: <strong>{traceabilityCode}</strong>
+                                &nbsp;|&nbsp;
+                                Versión de Plantilla: v{template.Version}
+                                &nbsp;|&nbsp;
+                                Categoría: {GetCategoryLabel(template.Category)}
+                            </td>
+                            <td class=""trace-code"" style=""text-align:right"">
+                                Generado por DIITRA · {DateTime.Now:dd/MM/yyyy HH:mm} UTC-5
+                            </td>
+                        </tr>
+                    </table>
                 </div>";
 
             if (template.RequiresLopdpClause)
@@ -99,12 +103,18 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             return $@"
             <div class=""diitra-header"">
-                <div>
-                    <div class=""inst-name"">Instituto Superior Tecnológico</div>
-                    <div class=""inst-sub"">Departamento de Investigación e Innovación Traversari</div>
-                    <div class=""inst-sub"">Sistema DIITRA · Quito, Ecuador</div>
-                </div>
-                <div class=""brand-block"">DIITRA</div>
+                <table class=""header-table"">
+                    <tr>
+                        <td>
+                            <div class=""inst-name"">Instituto Superior Tecnológico</div>
+                            <div class=""inst-sub"">Departamento de Investigación e Innovación Traversari</div>
+                            <div class=""inst-sub"">Sistema DIITRA · Quito, Ecuador</div>
+                        </td>
+                        <td style=""width:100px; text-align:right"">
+                            <div class=""brand-block"">DIITRA</div>
+                        </td>
+                    </tr>
+                </table>
             </div>
             <div class=""doc-title"">{documentTitle}</div>
             {(string.IsNullOrEmpty(documentSubtitle) ? "" : $@"<div class=""doc-subtitle"">{documentSubtitle}</div>")}";

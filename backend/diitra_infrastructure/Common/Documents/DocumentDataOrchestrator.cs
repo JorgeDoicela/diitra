@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Diitra.Application.Common.Documents;
 using diitra_infrastructure.data.models;
 using Microsoft.EntityFrameworkCore;
+using Diitra.Domain.Common.Documents;
 
 namespace Diitra.Infrastructure.Common.Documents
 {

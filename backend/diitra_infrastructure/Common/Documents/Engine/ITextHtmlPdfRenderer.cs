@@ -2,6 +2,7 @@ using iText.Html2pdf;
 using iText.Html2pdf.Resolver.Font;
 using iText.IO.Font;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Event;
 using iText.Layout.Font;
 using System.Text;
 
@@ -17,28 +18,26 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         // CSS base institucional DIITRA. Aplicado a todos los documentos para garantizar
         // consistencia de marca sin depender de internet (crítico para entornos de institutos).
         private const string InstitutionalBaseCss = @"
-            @import url('https://fonts.gstatic.com/s/inter/v13/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiJ-Ek-_EeA.woff2');
-            
             * { box-sizing: border-box; }
             
             body {
-                font-family: 'Arial', 'Helvetica', sans-serif;
+                font-family: 'Helvetica', 'Arial', sans-serif;
                 font-size: 10pt;
-                line-height: 1.5;
+                line-height: 1.4;
                 color: #1a1a1a;
                 margin: 0;
                 padding: 0;
             }
             
-            /* ── Encabezado Institucional ── */
+            /* ── Encabezado Institucional (Tabla para compatibilidad) ── */
             .diitra-header {
+                width: 100%;
                 border-bottom: 3px solid #1a3a6b;
                 padding-bottom: 12px;
                 margin-bottom: 20px;
-                display: flex;
-                justify-content: space-between;
-                align-items: flex-end;
             }
+            .header-table { width: 100%; }
+            .header-table td { vertical-align: bottom; }
             .diitra-header .inst-name {
                 font-size: 13pt;
                 font-weight: bold;
@@ -56,6 +55,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 font-weight: bold;
                 font-size: 14pt;
                 padding: 8px 16px;
+                text-align: center;
                 letter-spacing: 2px;
             }
             
@@ -85,6 +85,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 color: #1a3a6b;
                 text-transform: uppercase;
                 margin: 18px 0 8px 0;
+                page-break-after: avoid;
             }
             
             /* ── Tablas de datos ── */
@@ -129,11 +130,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             .text-field {
                 border: 1px solid #d0d7e2;
                 padding: 10px;
-                min-height: 50px;
+                min-height: 40px;
                 margin-bottom: 8px;
                 font-size: 9.5pt;
-                line-height: 1.6;
+                line-height: 1.4;
                 background-color: #fafbfd;
+                page-break-inside: auto;
             }
             .field-label {
                 font-size: 8pt;
@@ -144,13 +146,19 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 margin-bottom: 3px;
             }
             
-            /* ── Bloque de Firma Electrónica FirmaEC ── */
+            /* ── Bloque de Firma Electrónica FirmaEC (Tabla para compatibilidad) ── */
+            .firmas-row {
+                width: 100%;
+                margin-top: 30px;
+                page-break-inside: avoid;
+            }
+            .firma-table { width: 100%; border-spacing: 20px 0; }
             .firma-ec-block {
                 border: 1px dashed #aaa;
                 padding: 15px;
                 text-align: center;
-                margin-top: 8px;
                 background-color: #f9f9f9;
+                vertical-align: top;
             }
             .firma-ec-block .firma-label {
                 font-size: 8pt;
@@ -167,12 +175,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 font-size: 8pt;
                 color: #555;
             }
-            .firmas-row {
-                display: flex;
-                gap: 30px;
-                margin-top: 30px;
-            }
-            .firmas-row .firma-ec-block { flex: 1; }
             
             /* ── Pie de página legal ── */
             .legal-footer {
@@ -191,12 +193,11 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             
             /* ── Código de trazabilidad ── */
             .traceability-block {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+                width: 100%;
                 margin-top: 4px;
             }
-            .traceability-block .trace-code {
+            .trace-table { width: 100%; }
+            .trace-code {
                 font-family: 'Courier New', monospace;
                 font-size: 7.5pt;
                 color: #999;
@@ -248,16 +249,27 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 metadata.TraceabilityCode,
                 isDraft: metadata.IsDraft
             );
-            pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
-            var converterProperties = new ConverterProperties();
-            var fontProvider = new DefaultFontProvider(true, true, false);
-            converterProperties.SetFontProvider(fontProvider);
-            converterProperties.SetBaseUri("data://");
+            try 
+            {
+                pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
-            HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, converterProperties);
+                var converterProperties = new ConverterProperties();
+                var fontProvider = new DefaultFontProvider(true, true, false);
+                converterProperties.SetFontProvider(fontProvider);
+                converterProperties.SetBaseUri("data://");
 
-            return await Task.FromResult(outputStream.ToArray());
+                HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, converterProperties);
+
+                pdfDocument.Close();
+                return await Task.FromResult(outputStream.ToArray());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[iText9 Renderer Error]: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+                throw;
+            }
         }
 
         private static string WrapInFullHtmlDocument(string bodyContent, string? customCss)

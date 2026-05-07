@@ -13,8 +13,10 @@ using FluentValidation.AspNetCore;
 // DIITRA Document Engine
 using Diitra.Infrastructure.Common.Documents.Engine;
 using Diitra.Infrastructure.Common.Documents.Providers;
+using Diitra.Application.Common.Documents;
 using Diitra.Application.Common.Repositories;
 using Diitra.Infrastructure.Common.Repositories;
+using Diitra.Infrastructure.Common.Documents;
 
 var builder = WebApplication.CreateBuilder(args);
 

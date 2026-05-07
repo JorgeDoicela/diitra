@@ -23,6 +23,12 @@ namespace Diitra.Domain.Common.Documents
         /// <summary>Categoría del documento para reportes estadísticos CACES.</summary>
         public DocumentCategory Category { get; private set; }
 
+        /// <summary>Identificador del proyecto relacionado (si aplica).</summary>
+        public string? ProjectUuid { get; private set; }
+
+        /// <summary>UUID de la entidad origen (Proyecto, Informe, etc).</summary>
+        public string? EntityUuid { get; private set; }
+
         /// <summary>Identificador del usuario que solicitó el documento (Email/Cédula).</summary>
         public string? GeneratedBy { get; private set; }
 
@@ -31,6 +37,12 @@ namespace Diitra.Domain.Common.Documents
 
         /// <summary>Indica si el documento se generó bajo el protocolo de Doble Ciego.</summary>
         public bool WasBlindMode { get; private set; }
+
+        /// <summary>Nombre del archivo generado.</summary>
+        public string FileName { get; private set; } = string.Empty;
+
+        /// <summary>Hash SHA-256 para verificación de integridad.</summary>
+        public string? FileHash { get; private set; }
 
         // Para EF Core
         protected DocumentAuditEntry() { }
@@ -41,7 +53,11 @@ namespace Diitra.Domain.Common.Documents
             int templateVersion,
             DocumentCategory category,
             string? generatedBy,
-            bool wasBlindMode)
+            bool wasBlindMode,
+            string fileName,
+            string? projectUuid = null,
+            string? entityUuid = null,
+            string? fileHash = null)
         {
             return new DocumentAuditEntry
             {
@@ -51,7 +67,11 @@ namespace Diitra.Domain.Common.Documents
                 Category = category,
                 GeneratedBy = generatedBy,
                 GeneratedAt = DateTime.UtcNow,
-                WasBlindMode = wasBlindMode
+                WasBlindMode = wasBlindMode,
+                FileName = fileName,
+                ProjectUuid = projectUuid,
+                EntityUuid = entityUuid,
+                FileHash = fileHash
             };
         }
     }
