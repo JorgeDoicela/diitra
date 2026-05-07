@@ -1279,6 +1279,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.TemplateCode).HasColumnName("template_code").HasMaxLength(100).IsRequired();
             entity.Property(e => e.TemplateVersion).HasColumnName("template_version").IsRequired();
             entity.Property(e => e.EntityUuid).HasColumnName("entity_uuid").HasMaxLength(36).IsRequired();
+            entity.Property(e => e.EntityType).HasColumnName("entity_type").HasMaxLength(50).IsRequired().HasDefaultValue("Proyecto");
             entity.Property(e => e.Title).HasColumnName("titulo_instancia").HasMaxLength(255);
             entity.Property(e => e.State).HasColumnName("estado").IsRequired();
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").IsRequired();

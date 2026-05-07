@@ -33,7 +33,11 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
 
     const fetchDocuments = async () => {
         try {
-            const response = await api.get(`/documents/instances/entity/${entityUuid}`);
+            const url = entityUuid === 'GLOBAL' 
+                ? '/documents/instances/global' 
+                : `/documents/instances/entity/${entityUuid}`;
+                
+            const response = await api.get(url);
             setDocuments(response.data);
         } catch (error) {
             console.error("[DIITRA] Error al cargar bandeja de documentos:", error);
@@ -128,7 +132,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                                             {getStatusLabel(doc.state)}
                                         </span>
                                         <span className="flex items-center gap-1 text-[10px] text-text-dim font-medium">
-                                            <Clock size={10} /> {new Date(doc.createdAt).toLocaleDateString()}
+                                            <Clock size={10} /> {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString() : 'Fecha Pendiente'}
                                         </span>
                                         {doc.traceabilityCode && (
                                             <span className="text-[10px] font-mono text-primary font-bold">

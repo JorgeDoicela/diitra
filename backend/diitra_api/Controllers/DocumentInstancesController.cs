@@ -33,6 +33,7 @@ namespace diitra_api.Controllers
                 request.EntityUuid, 
                 userUuid, 
                 request.Title, 
+                request.EntityType ?? "Proyecto",
                 ct);
 
             return Ok(instance);
@@ -53,6 +54,17 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetByEntity(string entityUuid, CancellationToken ct)
         {
             var instances = await _instanceService.GetByEntityAsync(entityUuid, ct);
+            return Ok(instances);
+        }
+
+        /// <summary>
+        /// Obtiene el historial global de los últimos documentos generados por el núcleo.
+        /// Ideal para tableros de control y auditoría general.
+        /// </summary>
+        [HttpGet("global")]
+        public async Task<IActionResult> GetGlobalHistory(CancellationToken ct)
+        {
+            var instances = await _instanceService.GetAllAsync(20, ct);
             return Ok(instances);
         }
 
@@ -98,6 +110,6 @@ namespace diitra_api.Controllers
         }
     }
 
-    public record CreateInstanceRequest(string TemplateCode, string EntityUuid, string? Title = null);
+    public record CreateInstanceRequest(string TemplateCode, string EntityUuid, string? EntityType = null, string? Title = null);
     public record FinalizeRequest(string? PdfBase64, string Hash, string TraceabilityCode);
 }

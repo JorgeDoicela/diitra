@@ -808,6 +808,7 @@ CREATE TABLE inv_documentos_instancias (
     template_code           VARCHAR(100)  NOT NULL,
     template_version        INT           NOT NULL,
     entity_uuid             VARCHAR(36)   NOT NULL        COMMENT 'UUID de la entidad a la que pertenece (Proyecto, Informe, etc)',
+    entity_type             VARCHAR(50)   NOT NULL DEFAULT 'Proyecto' COMMENT 'Tipo de entidad (Proyecto, Informe, etc)',
     titulo_instancia        VARCHAR(255)  NULL            COMMENT 'Título descriptivo para el usuario',
     estado                  INT           NOT NULL DEFAULT 1 COMMENT '1=Borrador, 2=EnRevision, 3=Finalizado, 4=Firmado',
     created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,

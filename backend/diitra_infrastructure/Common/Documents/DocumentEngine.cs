@@ -32,6 +32,10 @@ namespace Diitra.Infrastructure.Common.Documents
     ///       RequestedBy = currentUser.Email
     ///   });
     ///   return File(result.PdfBytes, "application/pdf", result.FileName);
+    /// 
+    /// NOTA DE RESILIENCIA: Este motor es agnóstico. No depende de 'Proyectos' ni 'Informes'.
+    /// Recibe datos genéricos y los inyecta en plantillas, permitiendo que DIITRA escale
+    /// a cualquier tipo de documento institucional sin cambiar el código del núcleo.
     /// </summary>
     public class DocumentEngine : IDocumentEngine
     {
@@ -98,10 +102,13 @@ namespace Diitra.Infrastructure.Common.Documents
                 var traceabilityCode = GenerateTraceabilityCode(template.Category);
 
                 // 3. Orquestar Datos
-                var data = await _scribanEngine.RenderAsync(template.HtmlContent, request.Data, null, request.IsBlindMode);
+                var renderedHtml = await _scribanEngine.RenderAsync(template.HtmlContent, request.Data, null, request.IsBlindMode);
                 
-                // 4. Inyectar Cumplimiento Legal
-                var finalHtml = _complianceInjector.InjectLegalFooter(data, template, traceabilityCode, request.IsBlindMode);
+                // 4. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
+                var optimizedHtml = ProcessAndOptimizeHtml(renderedHtml);
+
+                // 5. Inyectar Cumplimiento Legal (Header/Footer, QR, Traceability)
+                var finalHtml = _complianceInjector.InjectLegalFooter(optimizedHtml, template, traceabilityCode, request.IsBlindMode);
 
                 // 5. Renderizado a PDF
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata

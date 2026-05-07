@@ -22,7 +22,7 @@ namespace Diitra.Infrastructure.Common.Documents
             _storageService = storageService;
         }
 
-        public async Task<DocumentInstance> CreateAsync(string templateCode, string entityUuid, string createdBy, string? title = null, CancellationToken ct = default)
+        public async Task<DocumentInstance> CreateAsync(string templateCode, string entityUuid, string createdBy, string? title = null, string entityType = "Proyecto", CancellationToken ct = default)
         {
             var template = await _context.DocumentTemplates
                 .FirstOrDefaultAsync(t => t.Code == templateCode && t.IsActive, ct);
@@ -30,7 +30,7 @@ namespace Diitra.Infrastructure.Common.Documents
             if (template == null)
                 throw new KeyNotFoundException($"La plantilla '{templateCode}' no existe o no está activa.");
 
-            var instance = DocumentInstance.Create(templateCode, template.Version, entityUuid, createdBy, title);
+            var instance = DocumentInstance.Create(templateCode, template.Version, entityUuid, createdBy, title, entityType);
             
             _context.DocumentInstances.Add(instance);
             await _context.SaveChangesAsync(ct);
@@ -49,6 +49,14 @@ namespace Diitra.Infrastructure.Common.Documents
             return await _context.DocumentInstances
                 .Where(i => i.EntityUuid == entityUuid)
                 .OrderByDescending(i => i.CreatedAt)
+                .ToListAsync(ct);
+        }
+
+        public async Task<IEnumerable<DocumentInstance>> GetAllAsync(int limit = 20, CancellationToken ct = default)
+        {
+            return await _context.DocumentInstances
+                .OrderByDescending(i => i.CreatedAt)
+                .Take(limit)
                 .ToListAsync(ct);
         }
 
