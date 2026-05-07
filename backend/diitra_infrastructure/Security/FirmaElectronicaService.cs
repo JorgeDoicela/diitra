@@ -42,7 +42,7 @@ public class FirmaElectronicaService : IFirmaElectronicaService
         var pkcs12 = new Pkcs12StoreBuilder().Build();
         pkcs12.Load(new MemoryStream(certificateData), password.ToCharArray());
         
-        string alias = null;
+        string? alias = null;
         foreach (string a in pkcs12.Aliases)
         {
             if (pkcs12.IsKeyEntry(a))

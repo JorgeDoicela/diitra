@@ -255,7 +255,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
                 var converterProperties = new ConverterProperties();
-                var fontProvider = new DefaultFontProvider(true, true, false);
+                var fontProvider = new FontProvider();
+                fontProvider.AddStandardPdfFonts();
+                fontProvider.AddSystemFonts();
                 converterProperties.SetFontProvider(fontProvider);
                 converterProperties.SetBaseUri("data://");
 
