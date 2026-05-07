@@ -36,7 +36,7 @@ namespace diitra_api.Controllers
                 Data = dto,
                 IsDraftMode = isDraft,
                 IsBlindMode = isBlind,
-                RequestedBy = User.Identity?.Name ?? "investigador_demo",
+                RequestedBy = User.Identity?.Name ?? "Sistema DIITRA",
                 ProjectUuid = dto.Uuid,
                 EntityUuid = dto.Uuid // En producción siempre usamos el UUID real del proyecto
             };

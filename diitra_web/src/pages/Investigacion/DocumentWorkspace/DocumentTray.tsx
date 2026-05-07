@@ -100,12 +100,14 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                     </div>
                 </div>
                 
-                <button 
-                    onClick={handleCreateNew}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:scale-105 transition-all shadow-lg shadow-primary/20"
-                >
-                    <Plus size={14} /> Nuevo Documento
-                </button>
+                {entityUuid !== 'GLOBAL' && (
+                    <button 
+                        onClick={handleCreateNew}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:scale-105 transition-all shadow-lg shadow-primary/20"
+                    >
+                        <Plus size={14} /> Nuevo Documento
+                    </button>
+                )}
             </div>
 
             <div className="divide-y divide-border-thin">
