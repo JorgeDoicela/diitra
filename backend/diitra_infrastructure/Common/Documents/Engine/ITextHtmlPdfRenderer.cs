@@ -22,207 +22,111 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             
             body {
                 font-family: 'Helvetica', 'Arial', sans-serif;
-                font-size: 10pt;
-                line-height: 1.4;
+                font-size: 9pt;
+                line-height: 1.3;
                 color: #1a1a1a;
                 margin: 0;
                 padding: 0;
             }
             
-            /* ── Encabezado Institucional (Tabla para compatibilidad) ── */
-            .diitra-header {
+            /* ── Encabezado Institucional ── */
+            .doc-header {
                 width: 100%;
-                border-bottom: 3px solid #1a3a6b;
-                padding-bottom: 12px;
-                margin-bottom: 20px;
+                margin-bottom: 10px;
             }
-            .header-table { width: 100%; }
-            .header-table td { vertical-align: bottom; }
-            .diitra-header .inst-name {
-                font-size: 13pt;
-                font-weight: bold;
-                color: #1a3a6b;
-                text-transform: uppercase;
-            }
-            .diitra-header .inst-sub {
-                font-size: 9pt;
-                color: #555;
-                margin-top: 2px;
-            }
-            .diitra-header .brand-block {
-                background-color: #1a3a6b;
-                color: white;
-                font-weight: bold;
-                font-size: 14pt;
-                padding: 8px 16px;
-                text-align: center;
-                letter-spacing: 2px;
+            .header-logo {
+                height: 50px;
+                width: auto;
             }
             
-            /* ── Título del documento ── */
-            .doc-title {
-                text-align: center;
-                font-size: 13pt;
-                font-weight: bold;
-                text-transform: uppercase;
-                color: #1a3a6b;
-                margin: 15px 0 5px 0;
-            }
-            .doc-subtitle {
-                text-align: center;
-                font-size: 10pt;
-                color: #444;
-                margin-bottom: 20px;
-            }
-            
-            /* ── Secciones ── */
+            /* ── Títulos de Sección ── */
             .section-title {
-                background-color: #f0f4f8;
-                border-left: 4px solid #1a3a6b;
-                padding: 6px 10px;
+                color: #1e2a4a;
+                font-size: 11pt;
                 font-weight: bold;
-                font-size: 10pt;
-                color: #1a3a6b;
                 text-transform: uppercase;
-                margin: 18px 0 8px 0;
-                page-break-after: avoid;
+                margin: 15px 0 10px 0;
+                border-bottom: 2px solid #1e2a4a;
+                padding-bottom: 3px;
             }
             
-            /* ── Tablas de datos ── */
-            table.data-table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 9pt;
-                margin-bottom: 12px;
-            }
-            table.data-table th {
-                background-color: #1a3a6b;
-                color: white;
-                padding: 6px 8px;
-                text-align: left;
-                font-weight: bold;
-            }
-            table.data-table td {
-                padding: 5px 8px;
-                border: 1px solid #dde2e8;
-                vertical-align: top;
-            }
-            table.data-table tr:nth-child(even) td {
-                background-color: #f7f9fc;
-            }
+            /* ── Tablas de Identificación (Info) ── */
             table.info-table {
                 width: 100%;
                 border-collapse: collapse;
-                font-size: 9.5pt;
+                margin-bottom: 15px;
             }
             table.info-table td {
-                padding: 4px 8px;
-                border: 1px solid #dde2e8;
+                border: 1px solid #000;
+                padding: 5px 8px;
+                vertical-align: middle;
             }
-            table.info-table td:first-child {
-                background-color: #f0f4f8;
+            table.info-table td.label {
+                background-color: #1e2a4a;
+                color: #ffffff;
                 font-weight: bold;
-                width: 35%;
-                color: #333;
-            }
-            
-            /* ── Campos de texto largo ── */
-            .text-field {
-                border: 1px solid #d0d7e2;
-                padding: 10px;
-                min-height: 40px;
-                margin-bottom: 8px;
-                font-size: 9.5pt;
-                line-height: 1.4;
-                background-color: #fafbfd;
-                page-break-inside: auto;
-            }
-            .field-label {
-                font-size: 8pt;
-                font-weight: bold;
-                color: #555;
                 text-transform: uppercase;
-                letter-spacing: 0.5px;
-                margin-bottom: 3px;
+                font-size: 8pt;
+                width: 30%;
+            }
+            table.info-table td.value {
+                background-color: #ffffff;
             }
             
-            /* ── Bloque de Firma Electrónica FirmaEC (Tabla para compatibilidad) ── */
-            .firmas-row {
+            /* ── Tablas de Datos (Zonas Destacadas) ── */
+            table.data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 15px;
+            }
+            table.data-table th {
+                background-color: #1e2a4a;
+                color: #ffffff;
+                font-weight: bold;
+                text-transform: uppercase;
+                padding: 6px;
+                font-size: 8.5pt;
+                border: 1px solid #000;
+            }
+            table.data-table td {
+                border: 1px solid #000;
+                padding: 5px;
+                font-size: 8.5pt;
+            }
+            
+            /* ── Fila de Fechas (Gold) ── */
+            tr.date-row td {
+                background-color: #b8912e !important;
+                color: #000;
+                font-weight: bold;
+                text-align: center;
+                font-size: 7.5pt;
+                text-transform: uppercase;
+            }
+            
+            /* ── Firma Electrónica ── */
+            .firmas-container {
                 width: 100%;
                 margin-top: 30px;
-                page-break-inside: avoid;
             }
-            .firma-table { width: 100%; border-spacing: 20px 0; }
-            .firma-ec-block {
-                border: 1px dashed #aaa;
-                padding: 15px;
+            .firma-box {
+                border: 1px solid #000;
+                padding: 10px;
                 text-align: center;
-                background-color: #f9f9f9;
-                vertical-align: top;
-            }
-            .firma-ec-block .firma-label {
-                font-size: 8pt;
-                color: #888;
-                margin-bottom: 30px;
-            }
-            .firma-ec-block .firma-name {
-                font-weight: bold;
-                font-size: 10pt;
-                border-top: 1px solid #555;
-                padding-top: 4px;
-            }
-            .firma-ec-block .firma-role {
-                font-size: 8pt;
-                color: #555;
+                min-height: 80px;
+                width: 48%;
+                display: inline-block;
             }
             
-            /* ── Pie de página legal ── */
-            .legal-footer {
-                border-top: 1px solid #ccc;
-                margin-top: 25px;
-                padding-top: 8px;
-                font-size: 7.5pt;
-                color: #888;
-            }
-            .lopdp-clause {
-                font-size: 7pt;
-                color: #aaa;
-                margin-top: 4px;
-                font-style: italic;
-            }
-            
-            /* ── Código de trazabilidad ── */
-            .traceability-block {
-                width: 100%;
-                margin-top: 4px;
-            }
-            .trace-table { width: 100%; }
-            .trace-code {
-                font-family: 'Courier New', monospace;
-                font-size: 7.5pt;
-                color: #999;
-            }
-            
-            /* ── Aviso Doble Ciego ── */
-            .blind-mode-notice {
-                background-color: #fff3cd;
-                border: 1px solid #ffc107;
-                padding: 8px 12px;
-                font-size: 8.5pt;
-                color: #856404;
-                margin-bottom: 15px;
-                text-align: center;
-                font-weight: bold;
-            }
-            
-            /* ── Páginas ── */
+            /* ── Configuración de Página ── */
             @page {
                 size: A4;
-                margin: 1.8cm 1.5cm 2cm 1.5cm;
+                margin: 1cm 1.5cm 1.5cm 1.5cm;
+                @bottom-right {
+                    content: counter(page);
+                    font-size: 8pt;
+                }
             }
-            
-            /* Saltos de página */
-            .page-break { page-break-before: always; }
         ";
 
         public async Task<byte[]> RenderAsync(string htmlContent, string? customCss = null)

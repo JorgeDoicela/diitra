@@ -191,9 +191,8 @@ namespace Diitra.Infrastructure.Common.Documents
             // 1. Inyectar estilos globales de seguridad para el PDF
             string globalStyles = @"<style>
                 img { max-width: 100% !important; height: auto !important; display: block; margin: 10px 0; }
-                table { width: 100% !important; border-collapse: collapse; page-break-inside: auto; }
-                tr { page-break-inside: avoid; page-break-after: auto; }
-                td, th { border: 1px solid #ddd; padding: 8px; font-size: 10pt; }
+                table { width: 100% !important; border-collapse: collapse; }
+                tr { page-break-inside: avoid; }
             </style>";
 
             // 2. Limitar tamaño de imágenes Base64 (Previene PDFs corruptos)

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Diitra.Application.Research.Dtos
 {
     public class ProyectoDto
@@ -13,14 +15,12 @@ namespace Diitra.Application.Research.Dtos
         public string? Titulo { get; set; }
         public string? Programa { get; set; }
         public string? GrupoInvestigacion { get; set; }
-        public bool TieneGrupoInvestigacion { get; set; } = false;
+        public bool? TieneGrupoInvestigacion { get; set; } // Opcional para pruebas
         public string? Dominio { get; set; }
         public string? LineaInvestigacion { get; set; }
         public string? SublineaInvestigacion { get; set; }
 
-        /// <summary>Ej: "BÁSICA", "APLICADA" o "DESARROLLO EXPERIMENTAL"</summary>
         public string? TipoInvestigacion { get; set; }
-
         public string? CampoAmplio { get; set; }
         public string? CampoEspecifico { get; set; }
         public string? CampoDetallado { get; set; }
@@ -55,9 +55,8 @@ namespace Diitra.Application.Research.Dtos
         // ─────────────────────────────────────────────────────────────────────────
         public List<RecursoDisponibleDto>? RecursosDisponibles { get; set; }
         public List<RecursoNecesarioDto>? RecursosNecesarios { get; set; }
-        public decimal CostoTotal { get; set; }
+        public decimal? CostoTotal { get; set; } // ⚠ TODO: PRODUCTION-LOCK (Volver a decimal no-nulo)
 
-        /// <summary>Ej: "ISTPET", "OTRAS FUENTES", etc.</summary>
         public string? FuenteFinanciamiento { get; set; }
         public string? NombreOtraFuente { get; set; }
 
@@ -115,10 +114,10 @@ namespace Diitra.Application.Research.Dtos
     {
         public string? Descripcion { get; set; }
         public string? Cantidad { get; set; }
-        public decimal CostoUnitario { get; set; }
-        public decimal CostoTotal { get; set; }
+        public decimal? CostoUnitario { get; set; } // ⚠ TODO: PRODUCTION-LOCK
+        public decimal? CostoTotal { get; set; }    // ⚠ TODO: PRODUCTION-LOCK
         public string? IdPartida { get; set; }
-        public bool EsGastoCapital { get; set; }
+        public bool? EsGastoCapital { get; set; }
     }
 
     public class ProductoEsperadoDto
@@ -140,13 +139,12 @@ namespace Diitra.Application.Research.Dtos
     public class ActividadCronogramaDto
     {
         public string? Objetivo { get; set; }
-        public int Numero { get; set; }
+        public int? Numero { get; set; } // ⚠ TODO: PRODUCTION-LOCK
         public string? Actividad { get; set; }
         public string? RecursosNecesarios { get; set; }
-        public decimal Ponderacion { get; set; }
-        public bool EsEntregableCaces { get; set; }
+        public decimal? Ponderacion { get; set; } // ⚠ TODO: PRODUCTION-LOCK
+        public bool? EsEntregableCaces { get; set; }
 
-        /// <summary>Array de 48 bools (12 meses × 4 semanas). true = marcada.</summary>
         public List<bool>? Semanas { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 using Diitra.Application.Common.Documents;
 using Diitra.Infrastructure.Common.Documents;
+using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using Microsoft.AspNetCore.Mvc;
 
 namespace diitra_api.Controllers

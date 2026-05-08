@@ -74,6 +74,14 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // ⚠ TODO: PRODUCTION-LOCK ⚠
+        // Desactivamos la validación automática para que no nos de 400 Bad Request
+        // mientras estamos probando el Wizard con datos incompletos.
+        options.SuppressModelStateInvalidFilter = true;
     });
 
 // Registrar todos los validadores del ensamblado de Application

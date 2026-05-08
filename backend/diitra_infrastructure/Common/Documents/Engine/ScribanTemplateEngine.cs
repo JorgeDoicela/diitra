@@ -146,7 +146,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     var dict = new Dictionary<string, object?>();
                     foreach (var prop in element.EnumerateObject())
                     {
-                        dict[prop.Name] = ToNativeType(prop.Value);
+                        // Normalizamos a minúsculas para que coincida con la plantilla Handlebars
+                        dict[prop.Name.ToLower()] = ToNativeType(prop.Value);
                     }
                     return dict;
 
