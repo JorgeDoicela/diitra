@@ -68,22 +68,24 @@ const ResearchProjectsPage = () => {
                 <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
                     <div 
                         onClick={() => setShowWizard(true)}
-                        className="group relative overflow-hidden bg-text-main p-10 rounded-2xl cursor-pointer shadow-2xl transition-all hover:scale-[1.01] active:scale-95"
+                        className="group relative overflow-hidden bg-surface border border-border-thin p-10 rounded-2xl cursor-pointer shadow-sm transition-all hover:shadow-xl hover:scale-[1.01] active:scale-95 bg-glow"
                     >
-                        <div className="absolute top-0 right-0 p-12 opacity-10 group-hover:scale-110 transition-transform">
+                        <div className="absolute top-0 right-0 p-12 text-text-main opacity-5 group-hover:scale-110 transition-transform">
                             <Target size={180} />
                         </div>
                         <div className="relative z-10">
-                            <div className="flex items-center gap-3 text-bg-deep/60 mb-4">
-                                <Plus size={20} strokeWidth={3} />
-                                <span className="text-xs font-black uppercase tracking-[0.3em]">Nueva Postulación Activa</span>
+                            <div className="flex items-center gap-3 text-text-main/60 mb-4">
+                                <div className="p-1 bg-text-main/10 rounded-sm">
+                                    <Plus size={16} strokeWidth={3} className="text-text-main" />
+                                </div>
+                                <span className="text-[10px] font-black uppercase tracking-[0.4em]">Nueva Postulación Activa</span>
                             </div>
-                            <h3 className="text-4xl font-bold text-bg-deep tracking-tighter uppercase mb-4 leading-none">Lanzar DIITRA Builder</h3>
-                            <p className="text-bg-deep/70 text-sm max-w-md font-medium leading-relaxed mb-8">
-                                Inicie el proceso de creación de su proyecto de investigación utilizando el núcleo de renderizado oficial.
+                            <h3 className="text-4xl font-bold text-text-main tracking-tighter uppercase mb-4 leading-none">Lanzar DIITRA Builder</h3>
+                            <p className="text-text-dim text-sm max-w-md font-medium leading-relaxed mb-8">
+                                Inicie el proceso de creación de su proyecto de investigación utilizando el núcleo de renderizado oficial de la institución.
                             </p>
-                            <div className="inline-flex items-center gap-3 bg-bg-deep text-text-main px-6 py-3 rounded-full text-[11px] font-black uppercase tracking-widest shadow-xl">
-                                Comenzar ahora <ArrowRight size={16} />
+                            <div className="inline-flex items-center gap-3 bg-text-main text-bg-deep px-8 py-3 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-lg group-hover:translate-x-1 transition-transform">
+                                Comenzar ahora <ArrowRight size={14} strokeWidth={3} />
                             </div>
                         </div>
                     </div>
