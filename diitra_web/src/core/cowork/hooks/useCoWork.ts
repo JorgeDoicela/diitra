@@ -66,6 +66,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     useEffect(() => {
         let isMounted = true;
         let transport: ICoWorkTransport;
+        let cleanupInterval: NodeJS.Timeout;
 
         const init = async () => {
             if (!config.enabled || !isMounted) return;
@@ -132,6 +133,31 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 syncUserList(); // Refrescar al recibir de otros
             });
 
+            // F) EVENTOS DE RED (Optimización de Sincronización)
+            transport.onUserJoined?.((name) => {
+                if (!isMounted || !awarenessRef.current) return;
+                console.log(`[useCoWork] Nuevo usuario detectado (${name}), re-anunciando presencia local...`);
+                
+                // Forzar re-anuncio local para que el nuevo usuario nos vea de inmediato
+                const localState = awarenessRef.current.getLocalState();
+                if (localState) {
+                    awarenessRef.current.setLocalState(localState);
+                }
+            });
+
+            // G) LIMPIEZA DE "FANTASMAS" (Timeouts)
+            cleanupInterval = setInterval(() => {
+                if (isMounted && awarenessRef.current) {
+                    const beforeCount = awarenessRef.current.getStates().size;
+                    // Yjs awarenessProtocol.removeAwarenessStates no está disponible directamente como cleanup,
+                    // pero podemos usar la lógica interna de Yjs si estuviera el provider.
+                    // Como es manual, verificamos estados inactivos.
+                    // Nota: y-protocols/awareness maneja internamente el tiempo si se usa correctamente.
+                    // Forzamos un syncUserList para limpiar UI si Yjs ya los quitó.
+                    syncUserList();
+                }
+            }, 5000);
+
             // D) EVENTOS DE SALIDA (Hacia el servidor)
             ydoc.on('update', (update, origin) => {
                 if (origin !== 'remote' && isMounted) {
@@ -172,17 +198,27 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 setSession(s => ({ ...s, readOnly: isReadOnly, error: null }));
 
                 // Configurar Identidad (Blind Mode aware)
-                const userToAnnounce = { ...config.user };
+                // Usar sessionStorage para que el tabId sea persistente al refrescar la misma pestaña
+                const sessionKey = `diitra_tab_id_${config.documentId}`;
+                let tabId = sessionStorage.getItem(sessionKey);
+                if (!tabId) {
+                    tabId = Math.random().toString(36).substring(7);
+                    sessionStorage.setItem(sessionKey, tabId);
+                }
+                
+                const userToAnnounce = { ...config.user, tabId };
+
                 if (isBlindMode) {
-                    userToAnnounce.name = config.user.role === 'Revisor' ? 'Revisor Anónimo' : 'Investigador (Autor)';
+                    const prefix = config.user.role === 'Revisor' ? 'Revisor Anónimo' : 'Investigador (Autor)';
+                    userToAnnounce.name = `${prefix} #${tabId.substring(0, 3)}`;
                 }
 
                 // Aunciar presencia local
                 awareness.setLocalStateField('user', {
                     ...userToAnnounce,
-                    color: getUserColor(config.user.id),
+                    color: getUserColor(config.user.id, tabId),
                     initials: getUserInitials(userToAnnounce.name),
-                    tabId: Math.random().toString(36).substring(7)
+                    tabId: tabId
                 });
 
                 // FORZAR SINCRONIZACIÓN INICIAL:
@@ -207,6 +243,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         return () => {
             console.log(`[useCoWork] Cleanup sala: ${config.documentId}`);
             isMounted = false;
+            clearInterval(cleanupInterval);
             if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
             if (transport) transport.disconnect();
         };

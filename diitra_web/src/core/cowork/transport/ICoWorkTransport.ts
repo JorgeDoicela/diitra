@@ -86,4 +86,10 @@ export interface ICoWorkTransport {
      * El servidor reemplazará el estado base y limpiará el historial de deltas (Compactación).
      */
     submitFullSnapshot(documentId: string, snapshotBase64: string): Promise<void>;
+
+    /**
+     * Se dispara cuando un nuevo colaborador se une a la sala.
+     * Permite a los usuarios actuales re-anunciar su presencia para sincronizar al recién llegado.
+     */
+    onUserJoined?(handler: (userName: string, userRole: string) => void): void;
 }

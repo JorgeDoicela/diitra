@@ -29,11 +29,24 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness 
         const states = awareness.getStates();
         const nextCursors: CursorState[] = [];
         const containerRect = containerRef.current.getBoundingClientRect();
+        
+        // Mapa para deduplicar: si un mismo usuario+pestaña aparece con varios clientIDs (fantasmas), 
+        // nos quedamos con el más reciente (el clientId más alto suele ser el nuevo).
+        const uniqueUsers = new Map<string, { clientId: number, state: any }>();
 
         states.forEach((state: any, clientId) => {
             if (clientId === awareness.clientID) return;
             if (!state.user || typeof state.anchor !== 'number') return;
 
+            const userKey = `${state.user.id}_${state.user.tabId || clientId}`;
+            const existing = uniqueUsers.get(userKey);
+            
+            if (!existing || clientId > existing.clientId) {
+                uniqueUsers.set(userKey, { clientId, state });
+            }
+        });
+
+        uniqueUsers.forEach(({ clientId, state }) => {
             try {
                 const head = state.head ?? state.anchor;
                 const coords = editor.view.coordsAtPos(head);
