@@ -28,17 +28,12 @@ const Sidebar = ({ currentTheme, toggleTheme }: SidebarProps) => {
   return (
     <aside className="w-64 h-screen bg-bg-deep border-r border-border-thin flex flex-col pt-8 pb-4 transition-colors duration-300">
       {/* Brand - Vercel Inspired */}
-      <div className="mb-12 px-6 flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-        <svg 
-            width="24" height="24" viewBox="0 0 76 65" fill="none" xmlns="http://www.w3.org/2000/svg"
-            className="text-text-main hover:opacity-80 transition-opacity"
-        >
-            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor"/>
-        </svg>
-        <div className="flex flex-col">
-            <h1 className="text-sm font-bold tracking-tight text-text-main m-0 transition-colors uppercase">DIITRA | ISTPET</h1>
-            <span className="text-[10px] text-text-dim uppercase tracking-[0.2em] transition-colors">I + D + i</span>
-        </div>
+      <div className="mb-12 px-6 flex items-center cursor-pointer" onClick={() => navigate('/')}>
+        <img 
+          src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
+          alt="DIITRA Logo" 
+          className="h-10 w-auto object-contain transition-all duration-300 hover:opacity-80"
+        />
       </div>
 
       {/* Navigator Search */}

@@ -23,12 +23,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
             <nav className="fixed top-0 w-full z-[60] border-b border-border-thin bg-bg-deep/70 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <svg width="22" height="22" viewBox="0 0 76 65" fill="none" className="text-text-main">
-                            <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
-                        </svg>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold tracking-tight uppercase leading-none">DIITRA | ISTPET</span>
-                        </div>
+                        <img 
+                            src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
+                            alt="DIITRA Logo" 
+                            className="h-8 w-auto object-contain"
+                        />
                     </div>
                     <div className="flex items-center gap-4">
                         <button onClick={toggleTheme} className="p-2 text-text-dim hover:text-text-main transition-colors">
@@ -253,13 +252,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
-                            <svg width="24" height="24" viewBox="0 0 76 65" fill="none" className="text-text-main">
-                                <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
-                            </svg>
-                            <div className="flex flex-col">
-                                <span className="text-sm font-bold tracking-tight uppercase leading-none">DIITRA</span>
-                                <span className="text-[10px] tracking-widest leading-none mt-1 uppercase">Investigación ISTPET</span>
-                            </div>
+                            <img 
+                                src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
+                                alt="DIITRA Logo" 
+                                className="h-10 w-auto object-contain"
+                            />
                         </div>
                         <p className="text-[11px] max-w-xs leading-relaxed font-mono">
                             Tecnológico Traversari, Quito - Ecuador. <br />

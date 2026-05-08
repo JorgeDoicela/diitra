@@ -13,7 +13,11 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const Login: React.FC = () => {
+interface LoginProps {
+    currentTheme?: 'dark' | 'light';
+}
+
+const Login: React.FC<LoginProps> = ({ currentTheme = 'dark' }) => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -47,9 +51,11 @@ const Login: React.FC = () => {
             <div className="w-full max-w-[350px] space-y-10 relative z-20 animate-fade-up">
                 {/* Brand Logo & Header */}
                 <div className="flex flex-col items-center space-y-6">
-                    <svg width="40" height="40" viewBox="0 0 76 65" fill="none" className="text-text-main">
-                        <path d="M37.5274 0L75.0548 65H0L37.5274 0Z" fill="currentColor" />
-                    </svg>
+                    <img 
+                        src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
+                        alt="DIITRA Logo" 
+                        className="h-16 w-auto object-contain"
+                    />
                     <div className="text-center space-y-1">
                         <h1 className="text-2xl font-bold tracking-tighter text-text-main">Entrar a DIITRA</h1>
                         <p className="text-[11px] text-text-dim font-medium tracking-tight">Investigación e Innovación ISTPET</p>
