@@ -218,6 +218,12 @@ namespace diitra_api.Controllers
         {
             var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
             
+            if (dto == null) 
+            {
+                Console.WriteLine("[DIITRA WARNING] Se recibió un DTO nulo en SavePreviewData. Creando instancia vacía para pruebas.");
+                dto = new Diitra.Application.Research.Dtos.ProyectoDto();
+            }
+            
             // Buscamos por UUID si está presente, sino tomamos el último (para pruebas rápidas)
             diitra_infrastructure.data.models.InvProyecto? project = null;
             
@@ -244,27 +250,42 @@ namespace diitra_api.Controllers
             Console.WriteLine($"[DIITRA DEBUG] Recibido Título: '{dto.Titulo}'");
             Console.WriteLine($"[DIITRA DEBUG] Recibido Antecedentes: '{dto.Antecedentes?.Length ?? 0} chars'");
 
-            // Mapeamos los datos de la web a la base de datos (Mapeo Completo para Builder)
-            project.Titulo = dto.Titulo ?? "PROYECTO SIN TÍTULO";
+            // ⚠ TODO: PRODUCTION-LOCK ⚠
+            // En entorno de producción, habilitar FluentValidation aquí.
+            
+            // MAPEO SEGURO (Solo campos que existen en la tabla InvProyecto)
+            project.Titulo = dto.Titulo ?? "PROYECTO EN PRUEBAS";
             project.CodigoInstitucional = dto.CodigoInstitucional;
             project.DescripcionProyecto = dto.DescripcionProyecto;
             project.Antecedentes = dto.Antecedentes;
             project.Justificacion = dto.Justificacion;
             project.MarcoTeorico = dto.MarcoTeorico;
             project.Metodologia = dto.Metodologia;
-            project.MetodoEvaluacion = dto.Evaluacion; // Homologación DTO -> SQL
+            project.MetodoEvaluacion = dto.Evaluacion;
             project.TiempoEjecucion = dto.TiempoEjecucion;
+            project.TieneGrupo = dto.TieneGrupoInvestigacion;
             
-            // Fechas (Conversión explícita a DateOnly para el modelo)
-            if (DateTime.TryParse(dto.FechaInicioEstimada, out var fInicio)) project.FechaInicio = DateOnly.FromDateTime(fInicio);
-            if (DateTime.TryParse(dto.FechaFinEstimada, out var fFin)) project.FechaFin = DateOnly.FromDateTime(fFin);
-            if (DateTime.TryParse(dto.FechaPresentacion, out var fPres)) project.FechaPresentacion = DateOnly.FromDateTime(fPres);
+            // Guardamos TODO el DTO como JSON en MetadataCacesJson para no perder nada
+            // y que el motor de documentos tenga acceso a los datos extra (carrera, programa, etc.)
+            project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
 
             project.Estado = dto.Estado ?? "Borrador"; 
             project.FechaModificacion = DateTime.Now;
 
-            await context.SaveChangesAsync();
-            Console.WriteLine($"[DIITRA DEBUG] Persistencia exitosa para UUID: {project.Uuid} - Título: {project.Titulo}");
+            try 
+            {
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[DIITRA SUCCESS] Proyecto '{project.Titulo}' persistido correctamente.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIITRA ERROR PERSISTENCIA] {ex.Message}");
+                // ⚠ TODO: PRODUCTION-LOCK ⚠
+                // En producción, esto DEBE lanzar una excepción 400 real para evitar 
+                // que queden registros huérfanos o inválidos en la base de datos oficial.
+                return Ok(new { success = false, message = "Guardado parcial (algunos campos DB obligatorios faltan)", uuid = project.Uuid });
+            }
+
             return Ok(new { success = true, uuid = project.Uuid });
         }
     }

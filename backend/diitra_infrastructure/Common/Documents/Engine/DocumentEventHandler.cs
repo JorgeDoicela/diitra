@@ -62,15 +62,10 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     pdfDoc.GetPageNumber(page), TextAlignment.CENTER, VerticalAlignment.MIDDLE, 45);
             }
 
-            // 2. Encabezado Global
-            canvas.SetFontSize(7);
-            canvas.SetFontColor(iText.Kernel.Colors.ColorConstants.GRAY);
-            
-            canvas.ShowTextAligned(new Paragraph(_institutionName), 
-                36, pageSize.GetTop() - 25, TextAlignment.LEFT);
-            
-            canvas.ShowTextAligned(new Paragraph($"Traza: {_traceabilityCode}"), 
-                pageSize.GetRight() - 36, pageSize.GetTop() - 25, TextAlignment.RIGHT);
+            // 2. Encabezado Global - Desactivado (Se maneja por plantilla)
+            // canvas.SetFontSize(7);
+            // ...
+
 
             // 3. Pie de Página Global + QR de Verificación
             canvas.ShowTextAligned(new Paragraph(_lopdpClause), 
