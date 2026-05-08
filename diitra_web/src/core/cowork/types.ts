@@ -13,6 +13,7 @@ export interface CoWorkUser {
     role: string;      // Rol en DIITRA (Investigador, Director, Revisor, etc.)
     color: string;     // Color persistente del cursor (generado desde el ID)
     initials: string;  // Iniciales para el avatar (ej: "JS" para Jorge Sánchez)
+    tabId?: string;    // ID único de la sesión/pestaña (para diferenciar sesiones)
 }
 
 /**

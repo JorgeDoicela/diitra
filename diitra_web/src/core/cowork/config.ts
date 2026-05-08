@@ -33,12 +33,12 @@ export const COWORK_CONFIG = {
 } as const;
 
 /**
- * Genera un color de cursor consistente para un usuario dado su UUID.
- * El mismo ID siempre produce el mismo color en todas las sesiones y dispositivos.
- * Nunca usa Math.random().
+ * Genera un color de cursor consistente para un usuario.
+ * Se puede pasar un secondarySeed (como tabId) para diferenciar sesiones del mismo usuario.
  */
-export function getUserColor(userId: string): string {
-    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+export function getUserColor(userId: string, secondarySeed?: string): string {
+    const input = userId + (secondarySeed || '');
+    const hash = input.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return COWORK_CONFIG.USER_COLORS[Math.abs(hash) % COWORK_CONFIG.USER_COLORS.length];
 }
 

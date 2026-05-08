@@ -181,4 +181,9 @@ export class SignalRTransport implements ICoWorkTransport {
             await this.connection.invoke('SubmitFullSnapshot', documentId.toLowerCase().trim(), snapshotBase64);
         } catch (err) {}
     }
+
+    onUserJoined(handler: (userName: string, userRole: string) => void): void {
+        this.connection.off('UserJoined');
+        this.connection.on('UserJoined', handler);
+    }
 }
