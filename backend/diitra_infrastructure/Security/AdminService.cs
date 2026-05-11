@@ -30,20 +30,20 @@ public class AdminService : IAdminService
                     (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(searchTerm)));
             }
 
-            var students = await studentQuery.Take(20).ToListAsync();
+            var students = await studentQuery.OrderBy(s => s.IdAlumno).Take(20).ToListAsync();
             var ids = students.Select(s => s.IdAlumno.Trim()).ToList();
 
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
-                .Where(ur => ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
+                .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .ToListAsync();
 
-            var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
+            var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
             return students.Select(s => {
-                var roleInfo = userRoles.Where(ur => ur.User.IdSigafi == s.IdAlumno.Trim()).ToList();
+                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == s.IdAlumno.Trim()).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
@@ -69,7 +69,7 @@ public class AdminService : IAdminService
                  userQuery = userQuery.Where(u => u.IdSigafi.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
              }
 
-             var externalUsers = await userQuery.Take(20).ToListAsync();
+             var externalUsers = await userQuery.OrderBy(u => u.IdUsuario).Take(20).ToListAsync();
              var ids = externalUsers.Select(u => u.IdUsuario).ToList();
 
              var userRoles = await _context.UserRoles
@@ -108,11 +108,15 @@ public class AdminService : IAdminService
                     (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(searchTerm)));
             }
 
-            var professors = await professorQuery.Take(20).ToListAsync();
+            var professors = await professorQuery.OrderBy(p => p.IdProfesor).Take(20).ToListAsync();
             var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
 
-            // Obtener periodo activo para las horas de investigación
-            var currentPeriod = await _context.Periodos.FirstOrDefaultAsync(p => p.Activo == true);
+            // Obtener periodo académico de investigación (priorizando el activo del instituto)
+            var currentPeriod = await _context.Periodos
+                .OrderByDescending(p => p.Periodoactivoinstituto)
+                .ThenByDescending(p => p.FechaInicial)
+                .FirstOrDefaultAsync(p => p.Periodoactivoinstituto == 1 || p.Activo == true);
+            
             var periodId = currentPeriod?.IdPeriodo;
 
             // Obtener horas de investigación (idSubcategoria = 7)
@@ -129,14 +133,14 @@ public class AdminService : IAdminService
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
-                .Where(ur => ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
+                .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .ToListAsync();
 
-            var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
+            var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
             return professors.Select(p => {
-                var roleInfo = userRoles.Where(ur => ur.User.IdSigafi == p.IdProfesor.Trim()).ToList();
+                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == p.IdProfesor.Trim()).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
