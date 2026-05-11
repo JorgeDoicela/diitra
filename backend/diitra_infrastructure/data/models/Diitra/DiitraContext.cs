@@ -608,7 +608,7 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Siglas).HasColumnName("siglas").HasMaxLength(50);
-            entity.Property(e => e.IdCoordinador).HasColumnName("idCoordinador").HasMaxLength(14);
+            entity.Property(e => e.IdCoordinador).HasColumnName("idCoordinador");
             entity.Property(e => e.ObjetivoGeneral).HasColumnName("objetivoGeneral").HasColumnType("text");
             entity.Property(e => e.Mision).HasColumnName("mision").HasColumnType("text");
             entity.Property(e => e.Vision).HasColumnName("vision").HasColumnType("text");
@@ -618,7 +618,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.HasOne(d => d.IdCoordinadorNavigation).WithMany()
-                .HasForeignKey(d => d.IdCoordinador).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_grupo_coordinador");
+                .HasForeignKey(d => d.IdCoordinador).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_grupo_coordinador");
 
             entity.HasMany(d => d.IdLineas).WithMany(p => p.IdGrupos)
                 .UsingEntity<Dictionary<string, object>>(
@@ -638,8 +638,7 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_grupos_miembros");
             entity.Property(e => e.IdGrupoMiembro).HasColumnName("idGrupoMiembro");
             entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
-            entity.Property(e => e.IdProfesor).HasColumnName("idProfesor").HasMaxLength(14);
-            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno").HasMaxLength(14);
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
@@ -647,10 +646,8 @@ public partial class DiitraContext : DbContext
 
             entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvGruposMiembros)
                 .HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_miembro_grupo");
-            entity.HasOne(d => d.IdProfesorNavigation).WithMany()
-                .HasForeignKey(d => d.IdProfesor).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_miembro_profesor");
-            entity.HasOne(d => d.IdAlumnoNavigation).WithMany()
-                .HasForeignKey(d => d.IdAlumno).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_miembro_alumno");
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany()
+                .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_miembro_usuario");
         });
 
         modelBuilder.Entity<InvConvocatoria>(entity =>
@@ -817,7 +814,7 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_proyectos_profesores");
             entity.Property(e => e.IdProyectoProfesor).HasColumnName("idProyectoProfesor");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.IdProfesor).HasColumnName("idProfesor").HasMaxLength(14).IsRequired();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.EsDirector).HasColumnName("esDirector").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
@@ -825,7 +822,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.HorasSemanales).HasColumnName("horasSemanales").HasPrecision(4, 1);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosProfesores).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pp_proyecto");
-            entity.HasOne(d => d.IdProfesorNavigation).WithMany().HasForeignKey(d => d.IdProfesor).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pp_profesor");
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pp_usuario");
         });
 
         modelBuilder.Entity<InvProyectoAlumno>(entity =>
@@ -834,13 +831,13 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_proyectos_alumnos");
             entity.Property(e => e.IdProyectoAlumno).HasColumnName("idProyectoAlumno");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno").HasMaxLength(14).IsRequired();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosAlumnos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pa_proyecto");
-            entity.HasOne(d => d.IdAlumnoNavigation).WithMany().HasForeignKey(d => d.IdAlumno).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pa_alumno");
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pa_usuario");
         });
 
         modelBuilder.Entity<InvObjetivoProyecto>(entity =>
@@ -1138,29 +1135,29 @@ public partial class DiitraContext : DbContext
         {
             entity.ToTable("usuarios");
 
-            // LLAVE PRIMARIA: idUsuario (INT AUTO_INCREMENT)
             entity.HasKey(e => e.IdUsuario);
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario").ValueGeneratedOnAdd();
 
-            // MAPEO: La propiedad Usuario en C# (login) apunta a la columna idSigafi en la BD (donde está la cédula)
-            entity.Property(e => e.Usuario).HasMaxLength(50).HasColumnName("idSigafi");
-            
+            entity.Property(e => e.IdSigafi).HasMaxLength(20).HasColumnName("idSigafi");
+            entity.Property(e => e.TablaSigafi).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tablaSigafi");
             entity.Property(e => e.Nombre).HasMaxLength(200).HasColumnName("nombre");
             entity.Property(e => e.Contrasenia).HasMaxLength(250).IsRequired().HasColumnName("contrasenia");
             entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo").HasDefaultValueSql("'1'");
             entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador").HasDefaultValueSql("'0'");
-            entity.Property(e => e.TablaSigafi).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tablaSigafi");
             
-            // Ignoramos IdSigafi en el mapeo porque ya usamos la propiedad Usuario para la misma columna
-            entity.Ignore(e => e.IdSigafi);
+            // Nuevos campos de email y validación
+            entity.Property(e => e.EmailInstitucional).HasMaxLength(100).HasColumnName("emailInstitucional");
+            entity.Property(e => e.EmailValidado).HasColumnType("tinyint(4)").HasColumnName("emailValidado").HasDefaultValueSql("'0'");
+            entity.Property(e => e.HashEmailToken).HasMaxLength(255).HasColumnName("hashEmailToken");
+            entity.Property(e => e.FechaEmailValidacion).HasColumnName("fechaEmailValidacion");
         });
 
         modelBuilder.Entity<Role>(entity =>
         {
             entity.HasKey(e => e.IdRol);
-            entity.ToTable("rol");
+            entity.ToTable("rbac_rol");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
-            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired().HasColumnName("Nombre");
             entity.Property(e => e.CodigoRol).HasMaxLength(25).HasColumnName("codigo_rol").IsRequired();
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
         });
@@ -1168,7 +1165,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<UserRole>(entity =>
         {
             entity.HasKey(e => e.IdUsuarioRol);
-            entity.ToTable("usuario_rol");
+            entity.ToTable("rbac_usuario_rol");
             entity.Property(e => e.IdUsuarioRol).HasColumnName("idUsuarioRol");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
@@ -1186,15 +1183,16 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<SystemEntity>(entity =>
         {
             entity.HasKey(e => e.IdSistema);
-            entity.ToTable("sistema");
+            entity.ToTable("rbac_sistema");
             entity.Property(e => e.IdSistema).HasColumnName("idSistema");
+            entity.Property(e => e.Codigo).HasMaxLength(20).IsRequired().HasColumnName("codigo");
             entity.Property(e => e.Detalle).HasMaxLength(50).IsRequired().HasColumnName("detalle");
         });
 
         modelBuilder.Entity<IdentityModule>(entity =>
         {
             entity.HasKey(e => e.IdModulos);
-            entity.ToTable("modulos");
+            entity.ToTable("rbac_modulos");
             entity.Property(e => e.IdModulos).HasColumnName("idModulos");
             entity.Property(e => e.IdSistema).HasColumnName("id_sistema");
             entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired().HasColumnName("Nombre");
@@ -1207,7 +1205,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<IdentityOperation>(entity =>
         {
             entity.HasKey(e => e.IdOperaciones);
-            entity.ToTable("operaciones");
+            entity.ToTable("rbac_operaciones");
             entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
             entity.Property(e => e.NombreOperacion).HasMaxLength(100).IsRequired();
         });
@@ -1215,7 +1213,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<ModuleOperation>(entity =>
         {
             entity.HasKey(e => e.IdModulosOperaciones);
-            entity.ToTable("modulos_operaciones");
+            entity.ToTable("rbac_modulos_operaciones");
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdModulos).HasColumnName("idModulos");
             entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
@@ -1232,7 +1230,7 @@ public partial class DiitraContext : DbContext
         modelBuilder.Entity<RoleModuleOperation>(entity =>
         {
             entity.HasKey(e => e.IdRolModuloOperacion);
-            entity.ToTable("rol_modulo_operacion");
+            entity.ToTable("rbac_rol_modulo_operacion");
             entity.Property(e => e.IdRolModuloOperacion).HasColumnName("idRolModuloOperacion");
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdRol).HasColumnName("idRol");

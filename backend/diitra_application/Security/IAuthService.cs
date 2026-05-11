@@ -6,4 +6,6 @@ public interface IAuthService
 {
     Task<AuthResponse?> LoginAsync(LoginRequest request);
     string GenerateToken(AuthResponse user);
+    Task<diitra_domain.Identity.Entities.User?> GetOrProvisionUserByCedulaAsync(string cedula);
+    Task<diitra_domain.Identity.Entities.User> ProvisionUserAsync(string username, string name, string password, string table, string sigafiId);
 }

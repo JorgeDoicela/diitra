@@ -6,9 +6,11 @@ namespace diitra_domain.Identity.Entities;
 public class SystemEntity
 {
     public int IdSistema { get; set; }
+    public string Codigo { get; set; } = string.Empty;
     public string Detalle { get; set; } = string.Empty;
     public ICollection<IdentityModule> Modulos { get; set; } = new List<IdentityModule>();
 }
+
 
 public class IdentityModule
 {

@@ -135,7 +135,7 @@ CREATE TABLE inv_grupos_investigacion (
     uuid                 VARCHAR(36)     NOT NULL UNIQUE,
     nombre               VARCHAR(255) NOT NULL,
     siglas               VARCHAR(50),
-    idCoordinador        VARCHAR(14) CHARACTER SET latin1,
+    idCoordinador        INT(11) NULL,
     objetivoGeneral      TEXT,
     mision               TEXT,
     vision               TEXT,
@@ -143,7 +143,7 @@ CREATE TABLE inv_grupos_investigacion (
     fechaCreacion        DATE,
     activo               TINYINT(1)   DEFAULT 1,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idCoordinador) REFERENCES profesores(idProfesor) ON DELETE RESTRICT
+    FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_grupos_lineas (
@@ -157,15 +157,13 @@ CREATE TABLE inv_grupos_lineas (
 CREATE TABLE inv_grupos_miembros (
     idGrupoMiembro INT          AUTO_INCREMENT PRIMARY KEY,
     idGrupo        INT          NOT NULL,
-    idProfesor     VARCHAR(14) CHARACTER SET latin1,
-    idAlumno       VARCHAR(14) CHARACTER SET latin1,
+    idUsuario      INT(11)      NOT NULL,
     rol            VARCHAR(100) COMMENT 'Investigador, Co-investigador, Estudiante, Técnico',
     activo         TINYINT(1)   DEFAULT 1,
     fechaInicio    DATE,
     fechaFin       DATE,
     FOREIGN KEY (idGrupo)    REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
-    FOREIGN KEY (idProfesor) REFERENCES profesores(idProfesor) ON DELETE SET NULL,
-    FOREIGN KEY (idAlumno)   REFERENCES alumnos(idAlumno) ON DELETE SET NULL
+    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################
@@ -326,25 +324,25 @@ CREATE TABLE inv_proyectos_dominios (
 CREATE TABLE inv_proyectos_profesores (
     idProyectoProfesor INT           AUTO_INCREMENT PRIMARY KEY,
     idProyecto         INT           NOT NULL,
-    idProfesor         VARCHAR(14) CHARACTER SET latin1 NOT NULL,
+    idUsuario          INT(11)       NOT NULL,
     esDirector         TINYINT(1)    DEFAULT 0,
     rol                VARCHAR(100),
     nivelAcademico     VARCHAR(150),
     telefono           VARCHAR(20),
     horasSemanales     DECIMAL(4,1),
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idProfesor) REFERENCES profesores(idProfesor)    ON DELETE RESTRICT
+    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyectos_alumnos (
     idProyectoAlumno INT           AUTO_INCREMENT PRIMARY KEY,
     idProyecto       INT           NOT NULL,
-    idAlumno         VARCHAR(14) CHARACTER SET latin1 NOT NULL,
+    idUsuario        INT(11)       NOT NULL,
     rol              VARCHAR(100),
     nivelAcademico   VARCHAR(150),
     telefono         VARCHAR(20),
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idAlumno)   REFERENCES alumnos(idAlumno)         ON DELETE RESTRICT
+    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################

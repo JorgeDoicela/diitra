@@ -36,14 +36,14 @@ public class AdminService : IAdminService
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
-                .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
+                .Where(ur => ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .ToListAsync();
 
             var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
             return students.Select(s => {
-                var roleInfo = userRoles.Where(ur => ur.User.Usuario == s.IdAlumno.Trim()).ToList();
+                var roleInfo = userRoles.Where(ur => ur.User.IdSigafi == s.IdAlumno.Trim()).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
@@ -66,7 +66,7 @@ public class AdminService : IAdminService
              var userQuery = _context.Users.Where(u => u.TablaSigafi == "otros" || u.TablaSigafi == null);
              if (!string.IsNullOrEmpty(searchTerm))
              {
-                 userQuery = userQuery.Where(u => u.Usuario.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
+                 userQuery = userQuery.Where(u => u.IdSigafi.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
              }
 
              var externalUsers = await userQuery.Take(20).ToListAsync();
@@ -85,9 +85,9 @@ public class AdminService : IAdminService
 
                  return new UserManagementDto
                  {
-                     IdProfesor = u.Usuario,
+                     IdProfesor = u.IdSigafi,
                      NombreCompleto = u.Nombre,
-                     Email = u.Usuario.Contains("@") ? u.Usuario : "externo@diitra.ist",
+                     Email = u.IdSigafi.Contains("@") ? u.IdSigafi : "externo@diitra.ist",
                      UserUuid = userMeta?.Uuid.ToString() ?? "",
                      Type = "EXTERNO",
                      Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
@@ -129,14 +129,14 @@ public class AdminService : IAdminService
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
-                .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
+                .Where(ur => ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
                 .ToListAsync();
 
             var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
             return professors.Select(p => {
-                var roleInfo = userRoles.Where(ur => ur.User.Usuario == p.IdProfesor.Trim()).ToList();
+                var roleInfo = userRoles.Where(ur => ur.User.IdSigafi == p.IdProfesor.Trim()).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
                 
@@ -214,35 +214,47 @@ public class AdminService : IAdminService
     public async Task<bool> AssignRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE", string? adminUsername = null)
     {
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode || r.Nombre == roleCode);
-        if (role == null) return false;
+        if (role == null)
+        {
+            role = new Role
+            {
+                CodigoRol = roleCode,
+                Nombre = roleCode == "ADMIN_SIST" ? "Administrador de Sistema" :
+                         roleCode == "DOCENTE_IN" ? "Docente Investigador" :
+                         roleCode == "ESTUDIANTE" ? "Estudiante" : roleCode,
+                EsActivo = true
+            };
+            _context.Roles.Add(role);
+            await _context.SaveChangesAsync();
+        }
 
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == idUsuario);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idUsuario);
         if (user == null)
         {
             if (userType == "ESTUDIANTE")
             {
                 var s = await _context.Alumnos.FirstOrDefaultAsync(a => a.IdAlumno == idUsuario);
                 if (s == null) return false;
+                string fullNombre = $"{s.PrimerNombre} {s.SegundoNombre} {s.ApellidoPaterno} {s.ApellidoMaterno}".Replace("  ", " ").Trim();
                 user = new User { 
-                    Usuario = idUsuario, 
-                    Nombre = $"{s.PrimerNombre} {s.ApellidoPaterno}", 
+                    IdSigafi = idUsuario, 
+                    Nombre = fullNombre, 
                     Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame"), 
                     Activo = true, 
-                    TablaSigafi = "alumno", 
-                    IdSigafi = s.IdAlumno 
+                    TablaSigafi = "alumno"
                 };
             }
             else
             {
                 var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idUsuario);
                 if (p == null) return false;
+                string fullNombre = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim();
                 user = new User { 
-                    Usuario = idUsuario, 
-                    Nombre = $"{p.PrimerNombre} {p.PrimerApellido}", 
+                    IdSigafi = idUsuario, 
+                    Nombre = fullNombre, 
                     Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame"), 
                     Activo = true, 
-                    TablaSigafi = "profesor", 
-                    IdSigafi = p.IdProfesor 
+                    TablaSigafi = "profesor"
                 };
             }
 
@@ -274,7 +286,7 @@ public class AdminService : IAdminService
 
         var existing = await _context.UserRoles
             .Include(ur => ur.User)
-            .FirstOrDefaultAsync(ur => ur.User.Usuario == idUsuario && ur.IdRol == role.IdRol);
+            .FirstOrDefaultAsync(ur => ur.User.IdSigafi == idUsuario && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {
@@ -289,16 +301,15 @@ public class AdminService : IAdminService
 
     public async Task<bool> RegisterExternalUserAsync(ExternalUserDto dto, string? adminUsername = null)
     {
-        var existing = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == dto.Cedula || u.Usuario == dto.Email);
+        var existing = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == dto.Cedula || u.IdSigafi == dto.Email);
         if (existing != null) return false;
 
         var user = new User {
-            Usuario = dto.Cedula,
+            IdSigafi = dto.Cedula,
             Nombre = dto.FullName,
             Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8)), // Temporal
             Activo = true,
-            TablaSigafi = "otros",
-            IdSigafi = dto.Cedula
+            TablaSigafi = "otros"
         };
 
         _context.Users.Add(user);
@@ -309,11 +320,15 @@ public class AdminService : IAdminService
 
         // Asignar rol por defecto
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == dto.DefaultRole);
-        if (role != null)
+        if (role == null)
         {
-            _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateTime.UtcNow });
+            role = new Role { CodigoRol = dto.DefaultRole, Nombre = dto.DefaultRole, EsActivo = true };
+            _context.Roles.Add(role);
             await _context.SaveChangesAsync();
         }
+
+        _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateTime.UtcNow });
+        await _context.SaveChangesAsync();
 
         await AddAuditLogAsync(adminUsername, user.IdUsuario, "REGISTRO_EXTERNO", $"Registro manual de evaluador externo.");
         return true;
@@ -341,7 +356,7 @@ public class AdminService : IAdminService
     {
         if (string.IsNullOrEmpty(adminUsername)) return;
 
-        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == adminUsername);
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == adminUsername);
         if (admin == null) return;
 
         var audit = new InvAuditAdmin {
