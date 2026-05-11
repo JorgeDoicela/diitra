@@ -48,8 +48,8 @@ namespace diitra_api.Controllers
             {
                 await _documentInstanceService.CreateAsync(
                     request.TemplateCode,
-                    request.EntityUuid,
-                    request.RequestedBy,
+                    request.EntityUuid ?? string.Empty,
+                    request.RequestedBy ?? "Sistema DIITRA",
                     $"Preview Oficial: {dto.Titulo ?? "Sin Título"}",
                     "Proyecto"
                 );

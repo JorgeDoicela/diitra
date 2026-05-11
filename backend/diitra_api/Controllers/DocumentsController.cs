@@ -46,7 +46,7 @@ namespace diitra_api.Controllers
 
                 // IMPORTANTE: Scriban procesa mejor objetos anónimos o Dictionaries. 
                 // JsonSerializer deserializa el rawText a una estructura dinámica compatible.
-                var data = JsonSerializer.Deserialize<object>(rawData.GetRawText());
+                var data = JsonSerializer.Deserialize<object>(rawData.GetRawText()) ?? new { };
 
                 var request = new DocumentRequest
                 {
