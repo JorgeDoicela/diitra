@@ -41,11 +41,13 @@ namespace Diitra.Infrastructure.Common.Documents
     {
         private readonly IDocumentTemplateRepository _templateRepository;
         private readonly IDocumentAuditRepository _auditRepository;
-        private readonly ScribanTemplateEngine _scribanEngine;
-        private readonly ITextHtmlPdfRenderer _pdfRenderer;
-        private readonly PdfMergerService _mergerService;
-        private readonly LegalComplianceInjector _complianceInjector;
         private readonly ILogger<DocumentEngine> _logger;
+
+        // PERFORMANCE OPTIMIZATION: Heavy engines are shared across requests
+        private static readonly ScribanTemplateEngine _scribanEngine = new();
+        private static readonly ITextHtmlPdfRenderer _pdfRenderer = new();
+        private static readonly PdfMergerService _mergerService = new();
+        private static readonly LegalComplianceInjector _complianceInjector = new();
 
         public DocumentEngine(
             IDocumentTemplateRepository templateRepository,
@@ -54,10 +56,6 @@ namespace Diitra.Infrastructure.Common.Documents
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
-            _scribanEngine = new ScribanTemplateEngine();
-            _pdfRenderer = new ITextHtmlPdfRenderer();
-            _mergerService = new PdfMergerService();
-            _complianceInjector = new LegalComplianceInjector();
             _logger = logger;
         }
 
