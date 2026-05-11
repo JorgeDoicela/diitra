@@ -159,9 +159,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
                 var converterProperties = new ConverterProperties();
+                
+                // PERFORMANCE OPTIMIZATION: Avoid fontProvider.AddSystemFonts() which scans the entire OS.
+                // Standard fonts and explicitly added fonts are enough for official DIITRA documents.
                 var fontProvider = new FontProvider();
                 fontProvider.AddStandardPdfFonts();
-                fontProvider.AddSystemFonts();
+                
                 converterProperties.SetFontProvider(fontProvider);
                 converterProperties.SetBaseUri("data://");
 
