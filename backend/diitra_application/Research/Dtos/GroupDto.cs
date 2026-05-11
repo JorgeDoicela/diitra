@@ -9,7 +9,7 @@ public class GroupDto
     public string Uuid { get; set; } = null!;
     public string Nombre { get; set; } = null!;
     public string? Siglas { get; set; }
-    public string? IdCoordinador { get; set; }
+    public int? IdCoordinador { get; set; }
     public string? NombreCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
     public string? Mision { get; set; }
@@ -25,8 +25,7 @@ public class GroupDto
 public class GroupMemberDto
 {
     public int IdGrupoMiembro { get; set; }
-    public string? IdProfesor { get; set; }
-    public string? IdAlumno { get; set; }
+    public int IdUsuario { get; set; }
     public string? NombreCompleto { get; set; }
     public string? Rol { get; set; }
     public bool Activo { get; set; }
@@ -38,7 +37,7 @@ public class CreateGroupDto
 {
     public string Nombre { get; set; } = null!;
     public string? Siglas { get; set; }
-    public string? IdCoordinador { get; set; }
+    public int? IdCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
     public string? Mision { get; set; }
     public string? Vision { get; set; }

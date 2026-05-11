@@ -36,7 +36,7 @@ public class PermissionHandler : AuthorizationHandler<PermissionRequirement>
                 .ThenInclude(r => r.RoleModuleOperations)
                     .ThenInclude(rmo => rmo.ModuleOperation)
                         .ThenInclude(mo => mo.Operation)
-            .Where(ur => ur.User.Usuario == username && (ur.EsActivo ?? true))
+            .Where(ur => ur.User.IdSigafi == username && (ur.EsActivo ?? true))
             .SelectMany(ur => ur.Role.RoleModuleOperations)
             .Where(rmo => (rmo.EsActivo ?? true) && rmo.ModuleOperation != null && (rmo.ModuleOperation.EsActivo ?? true))
             .AnyAsync(rmo => 

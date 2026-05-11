@@ -36,9 +36,7 @@ public class GroupsService : IGroupsService
             .Include(g => g.IdCoordinadorNavigation)
             .Include(g => g.IdLineas)
             .Include(g => g.InvGruposMiembros)
-                .ThenInclude(m => m.IdProfesorNavigation)
-            .Include(g => g.InvGruposMiembros)
-                .ThenInclude(m => m.IdAlumnoNavigation)
+                .ThenInclude(m => m.IdUsuarioNavigation)
             .FirstOrDefaultAsync(g => g.Uuid == uuid);
 
         if (group == null) return null;
@@ -48,11 +46,8 @@ public class GroupsService : IGroupsService
         dto.Miembros = group.InvGruposMiembros.Select(m => new GroupMemberDto
         {
             IdGrupoMiembro = m.IdGrupoMiembro,
-            IdProfesor = m.IdProfesor,
-            IdAlumno = m.IdAlumno,
-            NombreCompleto = m.IdProfesorNavigation != null 
-                ? $"{m.IdProfesorNavigation.PrimerApellido} {m.IdProfesorNavigation.PrimerNombre}"
-                : (m.IdAlumnoNavigation != null ? $"{m.IdAlumnoNavigation.ApellidoPaterno} {m.IdAlumnoNavigation.PrimerNombre}" : "Desconocido"),
+            IdUsuario = m.IdUsuario,
+            NombreCompleto = m.IdUsuarioNavigation?.Nombre ?? "Desconocido",
             Rol = m.Rol,
             Activo = m.Activo ?? false,
             FechaInicio = m.FechaInicio,
@@ -147,8 +142,7 @@ public class GroupsService : IGroupsService
         var member = new InvGrupoMiembro
         {
             IdGrupo = group.IdGrupo,
-            IdProfesor = memberDto.IdProfesor,
-            IdAlumno = memberDto.IdAlumno,
+            IdUsuario = memberDto.IdUsuario,
             Rol = memberDto.Rol,
             Activo = true,
             FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now)
@@ -179,9 +173,7 @@ public class GroupsService : IGroupsService
             Nombre = g.Nombre,
             Siglas = g.Siglas,
             IdCoordinador = g.IdCoordinador,
-            NombreCoordinador = g.IdCoordinadorNavigation != null 
-                ? $"{g.IdCoordinadorNavigation.PrimerApellido} {g.IdCoordinadorNavigation.PrimerNombre}"
-                : null,
+            NombreCoordinador = g.IdCoordinadorNavigation?.Nombre,
             ObjetivoGeneral = g.ObjetivoGeneral,
             Mision = g.Mision,
             Vision = g.Vision,

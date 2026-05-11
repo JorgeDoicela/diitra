@@ -29,7 +29,7 @@ public class AuthService : IAuthService
         var password = request.Password.Trim();
 
         // 1. Buscar usuario en DIITRA
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == username && (u.Activo ?? true));
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == username && u.Activo);
 
         if (user != null)
         {
@@ -49,7 +49,8 @@ public class AuthService : IAuthService
             // Validar clave legada de SIGAFI (Asumimos texto plano o BCrypt si ya fue migrada)
             if (profesor.Clave == password || (profesor.Clave != null && BCrypt.Net.BCrypt.Verify(password, profesor.Clave)))
             {
-                user = await ProvisionUserAsync(username, $"{profesor.PrimerNombre} {profesor.PrimerApellido}", password, "profesor", username);
+                string fullNombre = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
+                user = await ProvisionUserAsync(username, fullNombre, password, "profesor", username);
                 return await GetAuthResponseAsync(user);
             }
         }
@@ -60,8 +61,34 @@ public class AuthService : IAuthService
 
         if (alumno != null)
         {
-            user = await ProvisionUserAsync(username, $"{alumno.PrimerNombre} {alumno.ApellidoPaterno}", password, "alumno", alumno.IdAlumno);
+            string fullNombre = $"{alumno.PrimerNombre} {alumno.SegundoNombre} {alumno.ApellidoPaterno} {alumno.ApellidoMaterno}".Replace("  ", " ").Trim();
+            user = await ProvisionUserAsync(username, fullNombre, password, "alumno", alumno.IdAlumno);
             return await GetAuthResponseAsync(user);
+        }
+
+        return null;
+    }
+
+    public async Task<User?> GetOrProvisionUserByCedulaAsync(string cedula)
+    {
+        // 1. Buscar en DIITRA
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == cedula);
+        if (user != null) return user;
+
+        // 2. Buscar en Profesores
+        var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == cedula);
+        if (p != null)
+        {
+            string fullNombre = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim();
+            return await ProvisionUserAsync(cedula, fullNombre, "cambiame", "profesor", cedula);
+        }
+
+        // 3. Buscar en Alumnos
+        var a = await _context.Alumnos.FirstOrDefaultAsync(alum => alum.IdAlumno == cedula);
+        if (a != null)
+        {
+            string fullNombre = $"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}".Replace("  ", " ").Trim();
+            return await ProvisionUserAsync(cedula, fullNombre, "cambiame", "alumno", cedula);
         }
 
         return null;
@@ -87,17 +114,16 @@ public class AuthService : IAuthService
         return false;
     }
 
-    private async Task<User> ProvisionUserAsync(string username, string name, string password, string table, string sigafiId)
+    public async Task<User> ProvisionUserAsync(string username, string name, string password, string table, string sigafiId)
     {
         var user = new User
         {
-            Usuario = username,
+            IdSigafi = sigafiId,
             Nombre = name.Trim(),
             Contrasenia = BCrypt.Net.BCrypt.HashPassword(password),
             Activo = true,
             Administrador = (username == MASTER_ADMIN_ID),
-            TablaSigafi = table,
-            IdSigafi = sigafiId
+            TablaSigafi = table
         };
 
         _context.Users.Add(user);
@@ -117,6 +143,9 @@ public class AuthService : IAuthService
 
     private async Task<AuthResponse> GetAuthResponseAsync(User user)
     {
+        // 0. Asegurar Estructura RBAC (Sistemas, Módulos, Operaciones)
+        await SeedRbacStructureAsync();
+
         // 1. Sincronizar Roles por defecto (Mecánica Profesional de Roles Automáticos)
         await SynchronizeUserRolesAsync(user);
 
@@ -145,17 +174,17 @@ public class AuthService : IAuthService
 
         var response = new AuthResponse
         {
-            IdReferencia = user.Usuario.Trim(),
+            IdReferencia = user.IdSigafi.Trim(),
             IdUsuario = user.IdUsuario,
             UserUuid = metadata?.Uuid.ToString() ?? "",
-            Usuario = user.Usuario,
+            Usuario = user.IdSigafi,
             NombreCompleto = user.Nombre,
             Role = userRoles.FirstOrDefault()?.Role?.Nombre ?? "Usuario",
             Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
             RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),
             TipoUsuario = user.TablaSigafi,
             Permissions = permissions,
-            Administrador = (user.Usuario == MASTER_ADMIN_ID) || (user.Administrador ?? false)
+            Administrador = (user.IdSigafi == MASTER_ADMIN_ID) || user.Administrador
         };
 
         response.Token = GenerateToken(response);
@@ -172,24 +201,38 @@ public class AuthService : IAuthService
         string? requiredRoleCode = null;
 
         // Reglas de negocio para roles automáticos
-        if (user.Usuario == MASTER_ADMIN_ID) requiredRoleCode = "ADMIN_SIST";
+        if (user.IdSigafi == MASTER_ADMIN_ID) requiredRoleCode = "ADMIN_SIST";
         else if (user.TablaSigafi == "profesor") requiredRoleCode = "DOCENTE_IN";
         else if (user.TablaSigafi == "alumno") requiredRoleCode = "ESTUDIANTE";
 
         if (requiredRoleCode != null && !currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
         {
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == requiredRoleCode);
-            if (role != null)
+            
+            // Si el ROL no existe en la base de datos (tabla rbac_rol), lo CREAMOS automáticamente
+            if (role == null)
             {
-                _context.UserRoles.Add(new UserRole
+                role = new Role
                 {
-                    IdUsuario = user.IdUsuario,
-                    IdRol = role.IdRol,
-                    EsActivo = true,
-                    FechaCreacion = DateTime.UtcNow
-                });
+                    CodigoRol = requiredRoleCode,
+                    Nombre = requiredRoleCode == "ADMIN_SIST" ? "Administrador de Sistema" :
+                             requiredRoleCode == "DOCENTE_IN" ? "Docente Investigador" :
+                             requiredRoleCode == "ESTUDIANTE" ? "Estudiante" : requiredRoleCode,
+                    EsActivo = true
+                };
+                _context.Roles.Add(role);
                 await _context.SaveChangesAsync();
             }
+
+            // Ahora que el rol existe, lo asignamos al usuario
+            _context.UserRoles.Add(new UserRole
+            {
+                IdUsuario = user.IdUsuario,
+                IdRol = role.IdRol,
+                EsActivo = true,
+                FechaCreacion = DateTime.UtcNow
+            });
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -223,5 +266,65 @@ public class AuthService : IAuthService
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
+    }
+
+    private async Task SeedRbacStructureAsync()
+    {
+        // 1. Asegurar Sistema
+        var system = await _context.Systems.FirstOrDefaultAsync(s => s.Codigo == "DIITRA");
+        if (system == null)
+        {
+            system = new SystemEntity { Codigo = "DIITRA", Detalle = "Sistema de Gestión de Investigación e Innovación" };
+            _context.Systems.Add(system);
+            await _context.SaveChangesAsync();
+        }
+
+        // 2. Extraer todos los Módulos y Operaciones definidos en el Enum de Permisos
+        var permissions = typeof(diitra_domain.Identity.Enums.Permissions)
+            .GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy)
+            .Where(f => f.IsLiteral && !f.IsInitOnly)
+            .Select(f => f.GetValue(null)?.ToString() ?? "")
+            .Where(p => p.Contains(":"))
+            .Select(p => {
+                var parts = p.Split(':');
+                return new { Modulo = parts[0], Operacion = parts[1] };
+            })
+            .Distinct()
+            .ToList();
+
+        foreach (var p in permissions)
+        {
+            // Asegurar Módulo
+            var module = await _context.Modules.FirstOrDefaultAsync(m => m.Nombre == p.Modulo && m.IdSistema == system.IdSistema);
+            if (module == null)
+            {
+                module = new IdentityModule { Nombre = p.Modulo, IdSistema = system.IdSistema, EsActivo = true };
+                _context.Modules.Add(module);
+                await _context.SaveChangesAsync();
+            }
+
+            // Asegurar Operación
+            var operation = await _context.Operations.FirstOrDefaultAsync(o => o.NombreOperacion == p.Operacion);
+            if (operation == null)
+            {
+                operation = new IdentityOperation { NombreOperacion = p.Operacion };
+                _context.Operations.Add(operation);
+                await _context.SaveChangesAsync();
+            }
+
+            // Asegurar Relación Módulo-Operación
+            var exists = await _context.ModuleOperations.AnyAsync(mo => mo.IdModulos == module.IdModulos && mo.IdOperaciones == operation.IdOperaciones);
+            if (!exists)
+            {
+                _context.ModuleOperations.Add(new ModuleOperation 
+                { 
+                    IdModulos = module.IdModulos, 
+                    IdOperaciones = operation.IdOperaciones, 
+                    EsActivo = true,
+                    FechaCreacion = DateTime.UtcNow
+                });
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

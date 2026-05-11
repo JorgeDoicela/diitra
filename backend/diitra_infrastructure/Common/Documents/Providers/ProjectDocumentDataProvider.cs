@@ -22,8 +22,8 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
         {
             var proyecto = await _db.InvProyectos
                 .Include(p => p.IdConvocatoriaNavigation)
-                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdProfesorNavigation)
-                .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdAlumnoNavigation)
+                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
+                .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
                 .Include(p => p.InvCronogramas)
@@ -39,15 +39,15 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
                 proyecto.Estado,
                 proyecto.FechaPresentacion,
                 Convocatoria = proyecto.IdConvocatoriaNavigation?.Titulo ?? "N/A",
-                Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true)?.IdProfesorNavigation?.PrimerApellido ?? "No asignado",
+                Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true)?.IdUsuarioNavigation?.Nombre ?? "No asignado",
                 
                 EquipoDocente = proyecto.InvProyectosProfesores.Select(p => new {
-                    Nombre = $"{p.IdProfesorNavigation.PrimerNombre} {p.IdProfesorNavigation.PrimerApellido}",
+                    Nombre = p.IdUsuarioNavigation?.Nombre ?? "Desconocido",
                     p.Rol,
                     p.HorasSemanales
                 }),
                 EquipoEstudiantes = proyecto.InvProyectosAlumnos.Select(a => new {
-                    Nombre = $"{a.IdAlumnoNavigation.PrimerNombre} {a.IdAlumnoNavigation.ApellidoPaterno}",
+                    Nombre = a.IdUsuarioNavigation?.Nombre ?? "Desconocido",
                     a.Rol
                 }),
                 Objetivos = proyecto.InvObjetivosProyecto.OrderBy(o => o.Orden).Select(o => new {

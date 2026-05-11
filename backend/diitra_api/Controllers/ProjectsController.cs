@@ -13,11 +13,13 @@ namespace diitra_api.Controllers
     {
         private readonly IDocumentEngine _documentEngine;
         private readonly IDocumentInstanceService _documentInstanceService;
+        private readonly diitra_application.Security.IAuthService _authService;
 
-        public ProjectsController(IDocumentEngine documentEngine, IDocumentInstanceService documentInstanceService)
+        public ProjectsController(IDocumentEngine documentEngine, IDocumentInstanceService documentInstanceService, diitra_application.Security.IAuthService authService)
         {
             _documentEngine = documentEngine;
             _documentInstanceService = documentInstanceService;
+            _authService = authService;
         }
 
         /// <summary>
@@ -272,18 +274,98 @@ namespace diitra_api.Controllers
             project.Estado = dto.Estado ?? "Borrador"; 
             project.FechaModificacion = DateTime.Now;
 
+            // 3. SINCRONIZACIÓN DE PERSONAL (Investigadores)
+            if (dto.Investigadores != null)
+            {
+                // Limpiar previos
+                var oldProfs = context.InvProyectosProfesores.Where(p => p.IdProyecto == project.IdProyecto);
+                var oldAlums = context.InvProyectosAlumnos.Where(p => p.IdProyecto == project.IdProyecto);
+                context.InvProyectosProfesores.RemoveRange(oldProfs);
+                context.InvProyectosAlumnos.RemoveRange(oldAlums);
+
+                foreach (var inv in dto.Investigadores)
+                {
+                    if (string.IsNullOrEmpty(inv.Cedula)) continue;
+
+                    var userPersona = await _authService.GetOrProvisionUserByCedulaAsync(inv.Cedula);
+                    if (userPersona == null) continue;
+
+                    if (userPersona.TablaSigafi == "alumno")
+                    {
+                        context.InvProyectosAlumnos.Add(new diitra_infrastructure.data.models.InvProyectoAlumno
+                        {
+                            IdProyecto = project.IdProyecto,
+                            IdUsuario = userPersona.IdUsuario,
+                            Rol = inv.Rol,
+                            NivelAcademico = inv.NivelAcademico,
+                            Telefono = inv.Telefono
+                        });
+                    }
+                    else
+                    {
+                        context.InvProyectosProfesores.Add(new diitra_infrastructure.data.models.InvProyectoProfesor
+                        {
+                            IdProyecto = project.IdProyecto,
+                            IdUsuario = userPersona.IdUsuario,
+                            Rol = inv.Rol,
+                            NivelAcademico = inv.NivelAcademico,
+                            Telefono = inv.Telefono,
+                            EsDirector = inv.Rol?.Contains("Director") == true
+                        });
+                    }
+                }
+            }
+
+            // 4. SINCRONIZACIÓN DE OBJETIVOS ESPECÍFICOS
+            if (dto.ObjetivosEspecificos != null)
+            {
+                var oldObjs = context.InvObjetivosProyecto.Where(o => o.IdProyecto == project.IdProyecto && o.EsGeneral == false);
+                context.InvObjetivosProyecto.RemoveRange(oldObjs);
+
+                int orden = 1;
+                foreach (var obj in dto.ObjetivosEspecificos)
+                {
+                    if (string.IsNullOrWhiteSpace(obj)) continue;
+                    context.InvObjetivosProyecto.Add(new diitra_infrastructure.data.models.InvObjetivoProyecto
+                    {
+                        IdProyecto = project.IdProyecto,
+                        Descripcion = obj,
+                        EsGeneral = false,
+                        Orden = orden++
+                    });
+                }
+            }
+
+            // 5. SINCRONIZACIÓN DE PRESUPUESTO
+            if (dto.RecursosNecesarios != null)
+            {
+                var oldPres = context.InvPresupuestoItems.Where(p => p.IdProyecto == project.IdProyecto);
+                context.InvPresupuestoItems.RemoveRange(oldPres);
+
+                foreach (var item in dto.RecursosNecesarios)
+                {
+                    context.InvPresupuestoItems.Add(new diitra_infrastructure.data.models.InvPresupuestoItem
+                    {
+                        IdProyecto = project.IdProyecto,
+                        Categoria = "Gasto",
+                        Detalle = item.Descripcion ?? "Sin detalle",
+                        Cantidad = decimal.TryParse(item.Cantidad, out var c) ? c : 1,
+                        ValorUnitario = item.CostoUnitario ?? 0,
+                        EsGastoCapital = item.EsGastoCapital ?? false,
+                        IdPartida = item.IdPartida
+                    });
+                }
+            }
+
             try 
             {
                 await context.SaveChangesAsync();
-                Console.WriteLine($"[DIITRA SUCCESS] Proyecto '{project.Titulo}' persistido correctamente.");
+                Console.WriteLine($"[DIITRA SUCCESS] Proyecto '{project.Titulo}' y sus relaciones persistidas correctamente.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[DIITRA ERROR PERSISTENCIA] {ex.Message}");
-                // ⚠ TODO: PRODUCTION-LOCK ⚠
-                // En producción, esto DEBE lanzar una excepción 400 real para evitar 
-                // que queden registros huérfanos o inválidos en la base de datos oficial.
-                return Ok(new { success = false, message = "Guardado parcial (algunos campos DB obligatorios faltan)", uuid = project.Uuid });
+                return Ok(new { success = false, message = "Error al guardar relaciones: " + ex.Message, uuid = project.Uuid });
             }
 
             return Ok(new { success = true, uuid = project.Uuid });
