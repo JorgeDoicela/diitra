@@ -18,15 +18,15 @@ public class AdminService : IAdminService
     public async Task<List<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE")
     {
         searchTerm = searchTerm?.ToLower() ?? "";
-        
+
         if (type == "ESTUDIANTE")
         {
             var studentQuery = _context.Alumnos.AsQueryable();
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                studentQuery = studentQuery.Where(a => 
-                    (a.IdAlumno != null && a.IdAlumno.Contains(searchTerm)) || 
-                    (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(searchTerm)) || 
+                studentQuery = studentQuery.Where(a =>
+                    (a.IdAlumno != null && a.IdAlumno.Contains(searchTerm)) ||
+                    (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(searchTerm)) ||
                     (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(searchTerm)));
             }
 
@@ -102,9 +102,9 @@ public class AdminService : IAdminService
             var professorQuery = _context.Profesores.Where(p => p.Activo == 1);
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                professorQuery = professorQuery.Where(p => 
-                    (p.IdProfesor != null && p.IdProfesor.Contains(searchTerm)) || 
-                    (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(searchTerm)) || 
+                professorQuery = professorQuery.Where(p =>
+                    (p.IdProfesor != null && p.IdProfesor.Contains(searchTerm)) ||
+                    (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(searchTerm)) ||
                     (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(searchTerm)));
             }
 
@@ -139,7 +139,7 @@ public class AdminService : IAdminService
                 var roleInfo = userRoles.Where(ur => ur.User.IdSigafi == p.IdProfesor.Trim()).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
-                
+
                 var hours = researchHours.FirstOrDefault(rh => rh.IdProfesor == p.IdProfesor.Trim())?.HorasSemana;
                 var contract = activeContracts.FirstOrDefault(c => c.IdProfesor == p.IdProfesor.Trim());
                 var dedName = contract?.TipoContratoNavigation?.Nombre ?? "Sin contrato";
@@ -177,7 +177,7 @@ public class AdminService : IAdminService
     {
         var meta = await _context.InvUsuariosMetadata
             .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
-        
+
         if (meta == null) return null;
 
         return new UserMetadataDto {
@@ -194,7 +194,7 @@ public class AdminService : IAdminService
     {
         var meta = await _context.InvUsuariosMetadata.Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
-        
+
         if (meta == null) return false;
 
         meta.OrcidId = dto.OrcidId;
@@ -236,11 +236,11 @@ public class AdminService : IAdminService
                 var s = await _context.Alumnos.FirstOrDefaultAsync(a => a.IdAlumno == idUsuario);
                 if (s == null) return false;
                 string fullNombre = $"{s.PrimerNombre} {s.SegundoNombre} {s.ApellidoPaterno} {s.ApellidoMaterno}".Replace("  ", " ").Trim();
-                user = new User { 
-                    IdSigafi = idUsuario, 
-                    Nombre = fullNombre, 
-                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame"), 
-                    Activo = true, 
+                user = new User {
+                    IdSigafi = idUsuario,
+                    Nombre = fullNombre,
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame"),
+                    Activo = true,
                     TablaSigafi = "alumno"
                 };
             }
@@ -249,11 +249,11 @@ public class AdminService : IAdminService
                 var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idUsuario);
                 if (p == null) return false;
                 string fullNombre = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim();
-                user = new User { 
-                    IdSigafi = idUsuario, 
-                    Nombre = fullNombre, 
-                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame"), 
-                    Activo = true, 
+                user = new User {
+                    IdSigafi = idUsuario,
+                    Nombre = fullNombre,
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame"),
+                    Activo = true,
                     TablaSigafi = "profesor"
                 };
             }

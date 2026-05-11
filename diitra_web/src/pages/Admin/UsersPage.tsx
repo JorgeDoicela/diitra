@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Search, Shield, User as UserIcon, Check, X, RefreshCw, 
-    ShieldAlert, Filter, Settings2, ExternalLink, GraduationCap, 
+import {
+    Search, Shield, User as UserIcon, Check, X, RefreshCw,
+    ShieldAlert, Filter, Settings2, ExternalLink, GraduationCap,
     Users as UsersIcon, Award, UserPlus, History, Clock, Globe,
     Activity
 } from 'lucide-react';
@@ -105,7 +105,7 @@ const UsersPage = () => {
             } else {
                 await api.post('/Admin/roles/assign', { id_usuario: userId, role_code: roleCode, user_type: userType });
             }
-            await fetchUsers(); 
+            await fetchUsers();
             fetchAuditLogs();
         } catch (error) {
             console.error('Error updating role:', error);
@@ -142,17 +142,16 @@ const UsersPage = () => {
                 </div>
 
                 <div className="flex gap-4">
-                    <button 
+                    <button
                         onClick={() => setShowAudit(!showAudit)}
-                        className={`p-2.5 border rounded-md transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${
-                            showAudit ? 'bg-text-main text-bg-deep border-text-main' : 'border-border-thin text-text-dim hover:text-text-main'
-                        }`}
+                        className={`p-2.5 border rounded-md transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'bg-text-main text-bg-deep border-text-main' : 'border-border-thin text-text-dim hover:text-text-main'
+                            }`}
                     >
                         <History size={14} /> Auditoría
                     </button>
-                    
+
                     {userType === 'EXTERNO' && (
-                        <button 
+                        <button
                             onClick={() => setShowExternalForm(true)}
                             className="bg-text-main text-bg-deep px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-text-main/10"
                         >
@@ -161,27 +160,24 @@ const UsersPage = () => {
                     )}
 
                     <div className="bg-surface border border-border-thin p-1 rounded-lg flex">
-                        <button 
+                        <button
                             onClick={() => setUserType('DOCENTE')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
-                                userType === 'DOCENTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             Docentes
                         </button>
-                        <button 
+                        <button
                             onClick={() => setUserType('ESTUDIANTE')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
-                                userType === 'ESTUDIANTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             Alumnos
                         </button>
-                        <button 
+                        <button
                             onClick={() => setUserType('EXTERNO')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${
-                                userType === 'EXTERNO' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             <Globe size={12} /> Externos
                         </button>
@@ -189,9 +185,9 @@ const UsersPage = () => {
 
                     <div className="relative group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim group-hover:text-text-main transition-colors" size={14} />
-                        <input 
-                            type="text" 
-                            placeholder={`Buscar en ${userType}...`} 
+                        <input
+                            type="text"
+                            placeholder={`Buscar en ${userType}...`}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             className="bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all w-64 uppercase tracking-wider font-mono placeholder:lowercase"
@@ -229,9 +225,8 @@ const UsersPage = () => {
                                         {u.type === 'DOCENTE' ? (
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
-                                                        (u.horas_investigacion || 0) > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                                                    }`}>
+                                                    <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${(u.horas_investigacion || 0) > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                                                        }`}>
                                                         <Activity size={10} className="inline mr-1" />
                                                         {u.horas_investigacion || 0}h Investigación
                                                     </div>
@@ -243,7 +238,7 @@ const UsersPage = () => {
                                         ) : (
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
-                                                    <div 
+                                                    <div
                                                         className={`h-full transition-all duration-1000 ${u.orcid_id ? 'w-full bg-green-500' : 'w-1/3 bg-red-500/50'}`}
                                                     />
                                                 </div>
@@ -259,14 +254,13 @@ const UsersPage = () => {
                                                 const isActive = u.role_codes?.includes(r.codigo_rol);
                                                 const isUpdating = updating === `${u.id_profesor}-${r.codigo_rol}`;
                                                 return (
-                                                    <button 
+                                                    <button
                                                         key={r.id_rol}
                                                         onClick={() => toggleRole(u.id_profesor, r.codigo_rol, isActive)}
-                                                        className={`px-2 py-1 rounded border text-[8px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${
-                                                            isActive 
-                                                                ? 'bg-text-main text-bg-deep border-text-main' 
+                                                        className={`px-2 py-1 rounded border text-[8px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${isActive
+                                                                ? 'bg-text-main text-bg-deep border-text-main'
                                                                 : 'bg-transparent text-text-dim border-border-thin hover:border-text-dim'
-                                                        } ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                                            } ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                                     >
                                                         {r.nombre}
                                                     </button>
@@ -275,7 +269,7 @@ const UsersPage = () => {
                                         </div>
                                     </td>
                                     <td className="p-4 text-right">
-                                        <button 
+                                        <button
                                             onClick={() => setSelectedUser(u)}
                                             className="p-2 hover:bg-surface rounded-md text-text-dim hover:text-text-main transition-all ml-auto"
                                             title="Editar Perfil Extendido"
@@ -343,15 +337,15 @@ const UsersPage = () => {
                             <div className="p-8 space-y-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Identificación / Cédula</label>
-                                    <input required type="text" value={externalForm.cedula} onChange={e => setExternalForm({...externalForm, cedula: e.target.value})} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main" placeholder="1712345678" />
+                                    <input required type="text" value={externalForm.cedula} onChange={e => setExternalForm({ ...externalForm, cedula: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main" placeholder="1712345678" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nombres Completos</label>
-                                    <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({...externalForm, full_name: e.target.value})} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main uppercase" placeholder="Ej: Dr. Juan Pérez" />
+                                    <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({ ...externalForm, full_name: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main uppercase" placeholder="Ej: Dr. Juan Pérez" />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Correo Electrónico</label>
-                                    <input required type="email" value={externalForm.email} onChange={e => setExternalForm({...externalForm, email: e.target.value})} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main" placeholder="juan.perez@universidad.edu.ec" />
+                                    <input required type="email" value={externalForm.email} onChange={e => setExternalForm({ ...externalForm, email: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main" placeholder="juan.perez@universidad.edu.ec" />
                                 </div>
                             </div>
                             <footer className="p-6 bg-bg-deep/50 border-t border-border-thin flex justify-end gap-3">
@@ -364,9 +358,9 @@ const UsersPage = () => {
             )}
 
             {selectedUser && (
-                <UserProfileModal 
-                    user={selectedUser} 
-                    onClose={() => { setSelectedUser(null); fetchUsers(); fetchAuditLogs(); }} 
+                <UserProfileModal
+                    user={selectedUser}
+                    onClose={() => { setSelectedUser(null); fetchUsers(); fetchAuditLogs(); }}
                 />
             )}
         </main>
