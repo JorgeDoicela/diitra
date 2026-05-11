@@ -37,6 +37,7 @@ public class AdminService : IAdminService
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
                 .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
+                .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
                 .ToListAsync();
 
             var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
@@ -63,7 +64,9 @@ public class AdminService : IAdminService
         }
         else if (type == "EXTERNO")
         {
-             var userQuery = _context.Users.Where(u => u.TablaSigafi == "otros" || u.TablaSigafi == null);
+             var userQuery = _context.Users
+                .Where(u => u.TablaSigafi == "otros" || u.TablaSigafi == null)
+                .Where(u => _context.InvUsuariosMetadata.Any(m => m.IdUsuario == u.IdUsuario));
              if (!string.IsNullOrEmpty(searchTerm))
              {
                  userQuery = userQuery.Where(u => u.IdSigafi.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
@@ -75,6 +78,7 @@ public class AdminService : IAdminService
              var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Where(ur => ids.Contains(ur.IdUsuario) && (ur.EsActivo ?? true))
+                .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
                 .ToListAsync();
 
              var metadatas = await _context.InvUsuariosMetadata.Where(m => ids.Contains(m.IdUsuario)).ToListAsync();
@@ -134,6 +138,7 @@ public class AdminService : IAdminService
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
                 .Where(ur => ur.User != null && ids.Contains(ur.User.IdSigafi) && (ur.EsActivo ?? true))
+                .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
                 .ToListAsync();
 
             var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
@@ -169,6 +174,7 @@ public class AdminService : IAdminService
     public async Task<List<RoleDto>> GetAvailableRolesAsync()
     {
         return await _context.Roles
+            .Where(r => r.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
             .Select(r => new RoleDto {
                 IdRol = r.IdRol,
                 Nombre = r.Nombre,
