@@ -35,8 +35,9 @@ public class ModuleOperation
     public int IdModulosOperaciones { get; set; }
     public int IdModulos { get; set; }
     public int IdOperaciones { get; set; }
-    public DateTime? FechaCreacion { get; set; }
-    public DateTime? FechaModificacion { get; set; }
+    // DATE (no DATETIME) en la BD
+    public DateOnly? FechaCreacion { get; set; }
+    public DateOnly? FechaModificacion { get; set; }
     public bool? EsActivo { get; set; } = true;
 
     public IdentityModule Module { get; set; } = null!;
@@ -49,12 +50,13 @@ public class RoleModuleOperation
     public int IdRolModuloOperacion { get; set; }
     public int IdModulosOperaciones { get; set; }
     public int IdRol { get; set; }
-    public DateTime? FechaAsignacion { get; set; }
-    public DateTime? FechaModificacion { get; set; }
-    public DateTime? FechaDesactivacion { get; set; }
+    // DATE (no DATETIME) en la BD
+    public DateOnly? FechaAsignacion { get; set; }
+    public DateOnly? FechaModificacion { get; set; }
+    public DateOnly? FechaDesactivacion { get; set; }
     public bool? EsActivo { get; set; } = true;
-    public string? UsuarioAsigno { get; set; }
-    public string? UsuarioDesactivo { get; set; }
+    public string UsuarioAsigno { get; set; } = string.Empty; // NOT NULL en BD
+    public string? UsuarioDesactivo { get; set; }             // NULL en BD
 
     public ModuleOperation ModuleOperation { get; set; } = null!;
     public Role Role { get; set; } = null!;
