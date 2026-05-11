@@ -8,7 +8,7 @@ public class UserManagementDto
     public string NombreCompleto { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string UserUuid { get; set; } = string.Empty;
-    public string Type { get; set; } = "DOCENTE"; // DOCENTE, ESTUDIANTE
+    public string Type { get; set; } = "DOCENTE"; // DOCENTE, ESTUDIANTE, EXTERNO
     public List<string> Roles { get; set; } = new();
     public List<string> RoleCodes { get; set; } = new();
 
@@ -17,6 +17,19 @@ public class UserManagementDto
     public bool FirmaHabilitada { get; set; }
     public decimal? HorasInvestigacion { get; set; }
     public string? TipoDedicacion { get; set; }
+    
+    // Contexto Académico (Profesionalización)
+    public string? Carrera { get; set; }
+    public string? Nivel { get; set; }
+}
+
+public class PagedResult<T>
+{
+    public List<T> Items { get; set; } = new();
+    public int TotalCount { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
 }
 
 public class UserMetadataDto
