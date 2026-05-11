@@ -201,9 +201,9 @@ public class AuthService : IAuthService
         string? requiredRoleCode = null;
 
         // Reglas de negocio para roles automáticos
-        if (user.IdSigafi == MASTER_ADMIN_ID) requiredRoleCode = "ADMIN_SIST";
-        else if (user.TablaSigafi == "profesor") requiredRoleCode = "DOCENTE_IN";
-        else if (user.TablaSigafi == "alumno") requiredRoleCode = "ESTUDIANTE";
+        if (user.IdSigafi == MASTER_ADMIN_ID) requiredRoleCode = "DIITRA_ADMIN";
+        else if (user.TablaSigafi == "profesor") requiredRoleCode = "DIITRA_DOCENTE";
+        else if (user.TablaSigafi == "alumno") requiredRoleCode = "DIITRA_ESTUDIANTE";
 
         if (requiredRoleCode != null && !currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
         {
@@ -215,13 +215,16 @@ public class AuthService : IAuthService
                 role = new Role
                 {
                     CodigoRol = requiredRoleCode,
-                    Nombre = requiredRoleCode == "ADMIN_SIST" ? "Administrador de Sistema" :
-                             requiredRoleCode == "DOCENTE_IN" ? "Docente Investigador" :
-                             requiredRoleCode == "ESTUDIANTE" ? "Estudiante" : requiredRoleCode,
+                    Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
+                             requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
+                             requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : requiredRoleCode,
                     EsActivo = true
                 };
                 _context.Roles.Add(role);
                 await _context.SaveChangesAsync();
+                
+                // Asignar permisos por defecto al nuevo rol (AISLAMIENTO DE SISTEMA)
+                await AssignDefaultPermissionsToRoleAsync(role);
             }
 
             // Ahora que el rol existe, lo asignamos al usuario
@@ -326,5 +329,47 @@ public class AuthService : IAuthService
                 await _context.SaveChangesAsync();
             }
         }
+    }
+
+    private async Task AssignDefaultPermissionsToRoleAsync(Role role)
+    {
+        // Obtener todas las operaciones de DIITRA
+        var diitraOps = await _context.ModuleOperations
+            .Include(mo => mo.Module)
+            .Include(mo => mo.Operation)
+            .Where(mo => mo.Module.IdSistema == (await _context.Systems.Where(s => s.Codigo == "DIITRA").Select(s => s.IdSistema).FirstOrDefaultAsync()))
+            .ToListAsync();
+
+        foreach (var op in diitraOps)
+        {
+            bool shouldAssign = false;
+            var perm = $"{op.Module.Nombre}:{op.Operation.NombreOperacion}".ToUpper();
+
+            if (role.CodigoRol == "DIITRA_ADMIN") shouldAssign = true; // Admin tiene TODO de DIITRA
+            else if (role.CodigoRol == "DIITRA_DOCENTE")
+            {
+                // Docentes: Gestión de proyectos y bitácora, pero no administración de sistema
+                if (perm.StartsWith("PROYECTOS") || perm.StartsWith("BITACORA") || perm.StartsWith("SOLICITUDES")) shouldAssign = true;
+                if (perm == "CONFIGURACION:VER") shouldAssign = true;
+            }
+            else if (role.CodigoRol == "DIITRA_ESTUDIANTE")
+            {
+                // Estudiantes: Solo ver y postular
+                if (perm == "PROYECTOS:VER" || perm == "PROYECTOS:POSTULAR") shouldAssign = true;
+            }
+
+            if (shouldAssign)
+            {
+                _context.RoleModuleOperations.Add(new RoleModuleOperation
+                {
+                    IdRol = role.IdRol,
+                    IdModulosOperaciones = op.IdModulosOperaciones,
+                    EsActivo = true,
+                    FechaAsignacion = DateTime.UtcNow,
+                    UsuarioAsigno = "SISTEMA_DIITRA_JIT"
+                });
+            }
+        }
+        await _context.SaveChangesAsync();
     }
 }
