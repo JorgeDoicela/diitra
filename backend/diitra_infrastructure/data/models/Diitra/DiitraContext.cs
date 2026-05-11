@@ -1195,7 +1195,8 @@ public partial class DiitraContext : DbContext
             entity.ToTable("rbac_modulos");
             entity.Property(e => e.IdModulos).HasColumnName("idModulos");
             entity.Property(e => e.IdSistema).HasColumnName("id_sistema");
-            entity.Property(e => e.Nombre).HasMaxLength(255).IsRequired().HasColumnName("Nombre");
+            // Nullable en la BD ('YES') — NO usar IsRequired()
+            entity.Property(e => e.Nombre).HasMaxLength(255).HasColumnName("Nombre");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
 
             entity.HasOne(d => d.Sistema).WithMany(p => p.Modulos)
@@ -1207,7 +1208,8 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdOperaciones);
             entity.ToTable("rbac_operaciones");
             entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
-            entity.Property(e => e.NombreOperacion).HasMaxLength(100).IsRequired();
+            // Nullable en la BD ('YES') — NO usar IsRequired()
+            entity.Property(e => e.NombreOperacion).HasMaxLength(100).HasColumnName("NombreOperacion");
         });
 
         modelBuilder.Entity<ModuleOperation>(entity =>
@@ -1217,8 +1219,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdModulos).HasColumnName("idModulos");
             entity.Property(e => e.IdOperaciones).HasColumnName("idOperaciones");
-            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion");
-            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion");
+            // La BD usa DATE no DATETIME
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion").HasColumnType("date");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion").HasColumnType("date");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
 
             entity.HasOne(d => d.Module).WithMany(p => p.ModuloOperations)
@@ -1234,11 +1237,14 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdRolModuloOperacion).HasColumnName("idRolModuloOperacion");
             entity.Property(e => e.IdModulosOperaciones).HasColumnName("idModulosOperaciones");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
-            entity.Property(e => e.FechaAsignacion).HasColumnName("fecha_asignacion");
-            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion");
-            entity.Property(e => e.FechaDesactivacion).HasColumnName("fecha_desactivacion");
+            // La BD usa DATE no DATETIME
+            entity.Property(e => e.FechaAsignacion).HasColumnName("fecha_asignacion").HasColumnType("date");
+            entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion").HasColumnType("date");
+            entity.Property(e => e.FechaDesactivacion).HasColumnName("fecha_desactivacion").HasColumnType("date");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
-            entity.Property(e => e.UsuarioAsigno).HasMaxLength(150).HasColumnName("usuario_asigno");
+            // NOT NULL en la BD — IsRequired correcto
+            entity.Property(e => e.UsuarioAsigno).HasMaxLength(150).HasColumnName("usuario_asigno").IsRequired();
+            // NULL en la BD
             entity.Property(e => e.UsuarioDesactivo).HasMaxLength(150).HasColumnName("usuario_desactivo");
 
             entity.HasOne(d => d.ModuleOperation).WithMany(p => p.RoleModuleOperations)
@@ -1305,9 +1311,14 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.Uuid).IsUnique().HasDatabaseName("uq_usermeta_uuid");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.OrcidId).HasColumnName("orcidId").HasMaxLength(20);
+            // Perfil investigador CACES/SENESCYT
+            entity.Property(e => e.ScopusId).HasColumnName("scopusId").HasMaxLength(30);
+            entity.Property(e => e.GoogleScholarUrl).HasColumnName("googleScholarUrl").HasMaxLength(255);
+            entity.Property(e => e.ResearchGateUrl).HasColumnName("researchGateUrl").HasMaxLength(255);
             entity.Property(e => e.Especialidad).HasColumnName("especialidad").HasColumnType("text");
             entity.Property(e => e.GradoAcademicoMaximo).HasColumnName("gradoAcademicoMaximo").HasMaxLength(100);
             entity.Property(e => e.RutaFirmaP12).HasColumnName("rutaFirmaP12").HasMaxLength(255);
+            entity.Property(e => e.RutaFirmaImagen).HasColumnName("rutaFirmaImagen").HasMaxLength(255);
             entity.Property(e => e.FirmaHabilitada).HasColumnName("firmaHabilitada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
             entity.Property(e => e.Configuracion).HasColumnName("configuracion").HasColumnType("json");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");

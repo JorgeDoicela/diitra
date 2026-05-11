@@ -7,8 +7,9 @@ public class UserRole
     public int IdUsuarioRol { get; set; }
     public int IdUsuario { get; set; }
     public int IdRol { get; set; }
-    public DateTime? FechaCreacion { get; set; }
-    public DateTime? FechaModificacion { get; set; }
+    // La BD usa DATE (no DATETIME)
+    public DateOnly? FechaCreacion { get; set; }
+    public DateOnly? FechaModificacion { get; set; }
     public bool? EsActivo { get; set; } = true;
 
     // Relaciones

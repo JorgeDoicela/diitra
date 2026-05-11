@@ -268,9 +268,9 @@ public class AdminService : IAdminService
         var existing = await _context.UserRoles.FirstOrDefaultAsync(ur => ur.IdUsuario == user.IdUsuario && ur.IdRol == role.IdRol);
         if (existing != null) {
             existing.EsActivo = true;
-            existing.FechaModificacion = DateTime.UtcNow;
+            existing.FechaModificacion = DateOnly.FromDateTime(DateTime.UtcNow);
         } else {
-            _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateTime.UtcNow });
+            _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow) });
         }
 
         await _context.SaveChangesAsync();
@@ -291,7 +291,7 @@ public class AdminService : IAdminService
         if (existing != null)
         {
             existing.EsActivo = false;
-            existing.FechaModificacion = DateTime.UtcNow;
+            existing.FechaModificacion = DateOnly.FromDateTime(DateTime.UtcNow);
             await _context.SaveChangesAsync();
             await AddAuditLogAsync(adminUsername, existing.IdUsuario, "REVOCAR_ROL", $"Revocación del rol {role.Nombre}");
         }
@@ -327,7 +327,7 @@ public class AdminService : IAdminService
             await _context.SaveChangesAsync();
         }
 
-        _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateTime.UtcNow });
+        _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow) });
         await _context.SaveChangesAsync();
 
         await AddAuditLogAsync(adminUsername, user.IdUsuario, "REGISTRO_EXTERNO", $"Registro manual de evaluador externo.");

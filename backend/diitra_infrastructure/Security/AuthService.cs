@@ -233,7 +233,7 @@ public class AuthService : IAuthService
                 IdUsuario = user.IdUsuario,
                 IdRol = role.IdRol,
                 EsActivo = true,
-                FechaCreacion = DateTime.UtcNow
+                FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow)
             });
             await _context.SaveChangesAsync();
         }
@@ -324,7 +324,7 @@ public class AuthService : IAuthService
                     IdModulos = module.IdModulos, 
                     IdOperaciones = operation.IdOperaciones, 
                     EsActivo = true,
-                    FechaCreacion = DateTime.UtcNow
+                    FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow)
                 });
                 await _context.SaveChangesAsync();
             }
@@ -333,11 +333,17 @@ public class AuthService : IAuthService
 
     private async Task AssignDefaultPermissionsToRoleAsync(Role role)
     {
+        // Obtener el IdSistema de DIITRA primero (no se puede usar await dentro de Where lambda)
+        var diitraSistemaId = await _context.Systems
+            .Where(s => s.Codigo == "DIITRA")
+            .Select(s => s.IdSistema)
+            .FirstOrDefaultAsync();
+
         // Obtener todas las operaciones de DIITRA
         var diitraOps = await _context.ModuleOperations
             .Include(mo => mo.Module)
             .Include(mo => mo.Operation)
-            .Where(mo => mo.Module.IdSistema == (await _context.Systems.Where(s => s.Codigo == "DIITRA").Select(s => s.IdSistema).FirstOrDefaultAsync()))
+            .Where(mo => mo.Module.IdSistema == diitraSistemaId)
             .ToListAsync();
 
         foreach (var op in diitraOps)
@@ -365,7 +371,7 @@ public class AuthService : IAuthService
                     IdRol = role.IdRol,
                     IdModulosOperaciones = op.IdModulosOperaciones,
                     EsActivo = true,
-                    FechaAsignacion = DateTime.UtcNow,
+                    FechaAsignacion = DateOnly.FromDateTime(DateTime.UtcNow),
                     UsuarioAsigno = "SISTEMA_DIITRA_JIT"
                 });
             }

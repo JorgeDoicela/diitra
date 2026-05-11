@@ -23,6 +23,7 @@ public partial class InvUsuarioMetadata
     
     // Configuración de Firma Electrónica (.p12)
     public string? RutaFirmaP12 { get; set; }
+    public string? RutaFirmaImagen { get; set; } // Imagen de firma manuscrita
     public bool FirmaHabilitada { get; set; } = false;
     
     // Preferencias y UI (JSON)
