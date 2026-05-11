@@ -64,6 +64,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvNotificacion>       InvNotificaciones      { get; set; }
     public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
+    public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
 
     // --- DIITRA Document Engine (Persistence & Audit) ---
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentTemplate> DocumentTemplates { get; set; }
@@ -1309,6 +1310,24 @@ public partial class DiitraContext : DbContext
                 .HasPrincipalKey<User>(u => u.IdUsuario)
                 .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
                 .HasConstraintName("fk_usermeta_usuario");
+        });
+
+        modelBuilder.Entity<InvAuditAdmin>(entity =>
+        {
+            entity.HasKey(e => e.IdAudit).HasName("PRIMARY");
+            entity.ToTable("inv_audit_admin");
+            entity.Property(e => e.IdAudit).HasColumnName("idAudit");
+            entity.Property(e => e.IdUsuarioAdmin).HasColumnName("idUsuarioAdmin");
+            entity.Property(e => e.IdUsuarioAfectado).HasColumnName("idUsuarioAfectado");
+            entity.Property(e => e.Accion).HasColumnName("accion").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Detalle).HasColumnName("detalle").HasColumnType("text");
+            entity.Property(e => e.IpOrigen).HasColumnName("ipOrigen").HasMaxLength(45);
+            entity.Property(e => e.Fecha).HasColumnName("fecha").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.UserAdmin).WithMany()
+                .HasForeignKey(d => d.IdUsuarioAdmin).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_audit_admin");
+            entity.HasOne(d => d.UserAfectado).WithMany()
+                .HasForeignKey(d => d.IdUsuarioAfectado).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_audit_afectado");
         });
 
         // ============================================================
