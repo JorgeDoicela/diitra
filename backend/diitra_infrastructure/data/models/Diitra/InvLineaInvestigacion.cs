@@ -15,4 +15,5 @@ public partial class InvLineaInvestigacion
 
     public virtual ICollection<InvSublinea> InvSublineas { get; set; } = new List<InvSublinea>();
     public virtual ICollection<InvConvocatoria> Convocatorias { get; set; } = new List<InvConvocatoria>();
+    public virtual ICollection<InvGrupoInvestigacion> IdGrupos { get; set; } = new List<InvGrupoInvestigacion>();
 }

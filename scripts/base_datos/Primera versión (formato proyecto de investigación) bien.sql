@@ -64,6 +64,8 @@ DROP TABLE IF EXISTS
     inv_sublineas,
     inv_lineas_investigacion,
     inv_programas,
+    inv_grupos_lineas,
+    inv_grupos_miembros,
     inv_grupos_investigacion,
     inv_dominios_carrera,
     inv_dominios,
@@ -128,10 +130,41 @@ CREATE TABLE inv_tipos_investigacion (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_grupos_investigacion (
-    idGrupo       INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid          VARCHAR(36)     NOT NULL UNIQUE,
-    nombre        VARCHAR(255) NOT NULL,
-    activo        TINYINT(1)   DEFAULT 1
+    idGrupo              INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid                 VARCHAR(36)     NOT NULL UNIQUE,
+    nombre               VARCHAR(255) NOT NULL,
+    siglas               VARCHAR(50),
+    idCoordinador        VARCHAR(14) CHARACTER SET latin1,
+    objetivoGeneral      TEXT,
+    mision               TEXT,
+    vision               TEXT,
+    resolucionAprobacion VARCHAR(100),
+    fechaCreacion        DATE,
+    activo               TINYINT(1)   DEFAULT 1,
+    fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idCoordinador) REFERENCES profesores(idProfesor) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_grupos_lineas (
+    idGrupo INT NOT NULL,
+    idLinea INT NOT NULL,
+    PRIMARY KEY (idGrupo, idLinea),
+    FOREIGN KEY (idGrupo) REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
+    FOREIGN KEY (idLinea) REFERENCES inv_lineas_investigacion(idLinea) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_grupos_miembros (
+    idGrupoMiembro INT          AUTO_INCREMENT PRIMARY KEY,
+    idGrupo        INT          NOT NULL,
+    idProfesor     VARCHAR(14) CHARACTER SET latin1,
+    idAlumno       VARCHAR(14) CHARACTER SET latin1,
+    rol            VARCHAR(100) COMMENT 'Investigador, Co-investigador, Estudiante, Técnico',
+    activo         TINYINT(1)   DEFAULT 1,
+    fechaInicio    DATE,
+    fechaFin       DATE,
+    FOREIGN KEY (idGrupo)    REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
+    FOREIGN KEY (idProfesor) REFERENCES profesores(idProfesor) ON DELETE SET NULL,
+    FOREIGN KEY (idAlumno)   REFERENCES alumnos(idAlumno) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################

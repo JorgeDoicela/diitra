@@ -29,6 +29,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvSublinea>           InvSublineas           { get; set; }
     public virtual DbSet<InvTipoInvestigacion>  InvTiposInvestigacion  { get; set; }
     public virtual DbSet<InvGrupoInvestigacion> InvGruposInvestigacion { get; set; }
+    public virtual DbSet<InvGrupoMiembro>       InvGruposMiembros       { get; set; }
     public virtual DbSet<InvTipoConvocatoria>   InvTiposConvocatoria   { get; set; }
     public virtual DbSet<InvAgendaZonal>        InvAgendasZonales      { get; set; }
     public virtual DbSet<InvRubrica>             InvRubricas            { get; set; }
@@ -595,7 +596,50 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Siglas).HasColumnName("siglas").HasMaxLength(50);
+            entity.Property(e => e.IdCoordinador).HasColumnName("idCoordinador").HasMaxLength(14);
+            entity.Property(e => e.ObjetivoGeneral).HasColumnName("objetivoGeneral").HasColumnType("text");
+            entity.Property(e => e.Mision).HasColumnName("mision").HasColumnType("text");
+            entity.Property(e => e.Vision).HasColumnName("vision").HasColumnType("text");
+            entity.Property(e => e.ResolucionAprobacion).HasColumnName("resolucionAprobacion").HasMaxLength(100);
+            entity.Property(e => e.FechaCreacion).HasColumnName("fechaCreacion");
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.IdCoordinadorNavigation).WithMany()
+                .HasForeignKey(d => d.IdCoordinador).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_grupo_coordinador");
+
+            entity.HasMany(d => d.IdLineas).WithMany(p => p.IdGrupos)
+                .UsingEntity<Dictionary<string, object>>(
+                    "inv_grupos_lineas",
+                    r => r.HasOne<InvLineaInvestigacion>().WithMany().HasForeignKey("idLinea").OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne<InvGrupoInvestigacion>().WithMany().HasForeignKey("idGrupo").OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("idGrupo", "idLinea");
+                        j.ToTable("inv_grupos_lineas");
+                    });
+        });
+
+        modelBuilder.Entity<InvGrupoMiembro>(entity =>
+        {
+            entity.HasKey(e => e.IdGrupoMiembro).HasName("PRIMARY");
+            entity.ToTable("inv_grupos_miembros");
+            entity.Property(e => e.IdGrupoMiembro).HasColumnName("idGrupoMiembro");
+            entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
+            entity.Property(e => e.IdProfesor).HasColumnName("idProfesor").HasMaxLength(14);
+            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno").HasMaxLength(14);
+            entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
+            entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
+
+            entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvGruposMiembros)
+                .HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_miembro_grupo");
+            entity.HasOne(d => d.IdProfesorNavigation).WithMany()
+                .HasForeignKey(d => d.IdProfesor).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_miembro_profesor");
+            entity.HasOne(d => d.IdAlumnoNavigation).WithMany()
+                .HasForeignKey(d => d.IdAlumno).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_miembro_alumno");
         });
 
         modelBuilder.Entity<InvConvocatoria>(entity =>

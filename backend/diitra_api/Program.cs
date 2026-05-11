@@ -134,6 +134,7 @@ builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_inf
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
+builder.Services.AddScoped<IGroupsService, GroupsService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 builder.Services.AddScoped<Diitra.Application.Research.IWorkflowEngineService, Diitra.Infrastructure.Research.WorkflowEngineService>();
 

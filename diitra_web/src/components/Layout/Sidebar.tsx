@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -22,7 +22,8 @@ const Sidebar = ({ currentTheme, toggleTheme }: SidebarProps) => {
 
   // Agregar Administración si tiene permiso para gestionar usuarios O es administrador global
   if (user?.administrador || hasPermission('USUARIOS', 'VER')) {
-    menuItems.push({ name: 'Administración', icon: Users, path: '/admin' });
+    menuItems.push({ name: 'Usuarios', icon: Users, path: '/admin' });
+    menuItems.push({ name: 'Grupos', icon: Award, path: '/admin/groups' });
   }
 
   return (

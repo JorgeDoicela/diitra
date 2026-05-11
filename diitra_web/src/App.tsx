@@ -10,6 +10,7 @@ import ConvocatoriasPage from './pages/Investigacion/Convocatorias/Convocatorias
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
+import GroupsPage from './pages/Admin/GroupsPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -71,6 +72,14 @@ function App() {
             <AdminRoute>
               <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
                 <UsersPage />
+              </DashboardLayout>
+            </AdminRoute>
+          } />
+
+          <Route path="/admin/groups" element={
+            <AdminRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <GroupsPage />
               </DashboardLayout>
             </AdminRoute>
           } />
