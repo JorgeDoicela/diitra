@@ -20,6 +20,8 @@ interface ManagedUser {
     firma_habilitada: boolean;
     horas_investigacion?: number;
     tipo_dedicacion?: string;
+    carrera?: string;
+    nivel?: string;
 }
 
 interface Role {
@@ -43,6 +45,13 @@ const UsersPage = () => {
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [search, setSearch] = useState('');
     const [userType, setUserType] = useState<'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO'>('DOCENTE');
+    
+    // Estado de Paginación
+    const [page, setPage] = useState(1);
+    const [totalCount, setTotalCount] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [pageSize] = useState(10);
+
     const [loading, setLoading] = useState(false);
     const [updating, setUpdating] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
@@ -58,8 +67,10 @@ const UsersPage = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await api.get(`/Admin/users?search=${search}&type=${userType}`);
-            setUsers(response.data);
+            const response = await api.get(`/Admin/users?search=${search}&type=${userType}&page=${page}&pageSize=${pageSize}`);
+            setUsers(response.data.items);
+            setTotalCount(response.data.total_count);
+            setTotalPages(response.data.total_pages);
         } catch (error) {
             console.error('Error fetching users:', error);
         } finally {
@@ -91,11 +102,15 @@ const UsersPage = () => {
     }, []);
 
     useEffect(() => {
+        setPage(1); // Resetear a la primera página al cambiar tipo o búsqueda
+    }, [search, userType]);
+
+    useEffect(() => {
         const timer = setTimeout(() => {
             fetchUsers();
         }, 300);
         return () => clearTimeout(timer);
-    }, [search, userType]);
+    }, [search, userType, page]);
 
     const toggleRole = async (userId: string, roleCode: string, hasRole: boolean) => {
         setUpdating(`${userId}-${roleCode}`);
@@ -235,6 +250,18 @@ const UsersPage = () => {
                                                     {u.tipo_dedicacion || 'Sin contrato activo'}
                                                 </p>
                                             </div>
+                                        ) : u.type === 'ESTUDIANTE' ? (
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="px-2 py-0.5 rounded bg-surface-elevated text-text-main text-[9px] font-black uppercase tracking-tighter border border-border-thin">
+                                                        <GraduationCap size={10} className="inline mr-1" />
+                                                        {u.carrera || 'Sin Carrera'}
+                                                    </div>
+                                                </div>
+                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                    {u.nivel || 'Nivel no definido'}
+                                                </p>
+                                            </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
@@ -281,6 +308,51 @@ const UsersPage = () => {
                             ))}
                         </tbody>
                     </table>
+
+                    {/* Controles de Paginación Profesionales */}
+                    <footer className="p-4 bg-surface/30 border-t border-border-thin flex items-center justify-between">
+                        <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                            Mostrando <span className="text-text-main">{(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)}</span> de <span className="text-text-main">{totalCount}</span> {userType.toLowerCase()}s
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setPage(p => Math.max(1, p - 1))}
+                                disabled={page === 1}
+                                className="px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                Anterior
+                            </button>
+                            
+                            <div className="flex items-center gap-1">
+                                {[...Array(totalPages)].map((_, i) => {
+                                    const p = i + 1;
+                                    // Mostrar solo algunas páginas si hay muchas
+                                    if (totalPages > 7 && Math.abs(p - page) > 2 && p !== 1 && p !== totalPages) return null;
+                                    
+                                    return (
+                                        <button
+                                            key={p}
+                                            onClick={() => setPage(p)}
+                                            className={`w-8 h-8 rounded-md text-[10px] font-black transition-all flex items-center justify-center ${
+                                                page === p ? 'bg-text-main text-bg-deep shadow-lg shadow-text-main/10' : 'text-text-dim hover:text-text-main hover:bg-surface'
+                                            }`}
+                                        >
+                                            {p}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <button
+                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                disabled={page === totalPages || totalPages === 0}
+                                className="px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                Siguiente
+                            </button>
+                        </div>
+                    </footer>
                 </div>
 
                 {/* Sidebar de Auditoría */}

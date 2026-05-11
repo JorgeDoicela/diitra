@@ -15,9 +15,11 @@ public class AdminService : IAdminService
         _context = context;
     }
 
-    public async Task<List<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE")
+    public async Task<PagedResult<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE", int page = 1, int pageSize = 10)
     {
         searchTerm = searchTerm?.ToLower() ?? "";
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 10;
 
         // Obtener periodo académico activo (usado para alumnos y docentes)
         var currentPeriod = await _context.Periodos
@@ -26,29 +28,56 @@ public class AdminService : IAdminService
             .FirstOrDefaultAsync(p => p.Periodoactivoinstituto == 1 || p.Activo == true);
         var periodId = currentPeriod?.IdPeriodo;
 
+        var result = new PagedResult<UserManagementDto>
+        {
+            PageNumber = page,
+            PageSize = pageSize
+        };
+
         if (type == "ESTUDIANTE")
         {
-            var studentQuery = _context.Alumnos.AsQueryable();
+            var query = _context.Alumnos.AsQueryable();
 
             // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
             if (!string.IsNullOrEmpty(periodId))
             {
-                studentQuery = studentQuery.Where(a => _context.Matriculas.Any(m => 
+                query = query.Where(a => _context.Matriculas.Any(m => 
                     m.IdAlumno == a.IdAlumno && 
                     m.IdPeriodo == periodId && 
                     (m.Retirado == null || m.Retirado == false) && 
                     (m.Valida == 1)));
             }
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                studentQuery = studentQuery.Where(a =>
+                query = query.Where(a =>
                     (a.IdAlumno != null && a.IdAlumno.Contains(searchTerm)) ||
                     (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(searchTerm)) ||
                     (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(searchTerm)));
             }
 
-            var students = await studentQuery.OrderBy(s => s.IdAlumno).Take(20).ToListAsync();
+            result.TotalCount = await query.CountAsync();
+            
+            var students = await query
+                .OrderBy(a => a.ApellidoPaterno)
+                .ThenBy(a => a.PrimerNombre)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
             var ids = students.Select(s => s.IdAlumno.Trim()).ToList();
+
+            // Obtener datos académicos extra (Matrícula actual para Nivel y Carrera)
+            var currentMatriculas = await _context.Matriculas
+                .Where(m => ids.Contains(m.IdAlumno) && m.IdPeriodo == periodId && m.Valida == 1)
+                .ToListAsync();
+            
+            var careerInfo = await _context.AlumnosCarreras
+                .Where(ac => ids.Contains(ac.IdAlumno))
+                .ToListAsync();
+
+            var careers = await _context.Carreras.ToListAsync();
+            var levels = await _context.NivelesAcademicos.ToListAsync();
 
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
@@ -60,14 +89,21 @@ public class AdminService : IAdminService
             var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
-            return students.Select(s => {
-                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == s.IdAlumno.Trim()).ToList();
+            result.Items = students.Select(s => {
+                var sId = s.IdAlumno.Trim();
+                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == sId).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
+                
+                var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
+                var alcarrera = careerInfo.FirstOrDefault(ac => ac.IdAlumno.Trim() == sId);
+                
+                var carreraNom = careers.FirstOrDefault(c => c.IdCarrera == alcarrera?.IdCarrera)?.Carrera1;
+                var nivelNom = levels.FirstOrDefault(l => l.IdNivelAcademico == matricula?.IdNivel)?.Nombre;
 
                 return new UserManagementDto
                 {
-                    IdProfesor = s.IdAlumno.Trim(),
+                    IdProfesor = sId,
                     NombreCompleto = $"{s.PrimerNombre} {s.ApellidoPaterno}",
                     Email = s.EmailInstitucional ?? s.Email ?? "",
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
@@ -75,70 +111,89 @@ public class AdminService : IAdminService
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
-                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
+                    Carrera = carreraNom ?? "No asignada",
+                    Nivel = nivelNom ?? "N/A"
                 };
             }).ToList();
         }
         else if (type == "EXTERNO")
         {
-             var userQuery = _context.Users
+            var query = _context.Users
                 .Where(u => u.TablaSigafi == "otros" || u.TablaSigafi == null)
                 .Where(u => _context.InvUsuariosMetadata.Any(m => m.IdUsuario == u.IdUsuario));
-             if (!string.IsNullOrEmpty(searchTerm))
-             {
-                 userQuery = userQuery.Where(u => u.IdSigafi.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
-             }
 
-             var externalUsers = await userQuery.OrderBy(u => u.IdUsuario).Take(20).ToListAsync();
-             var ids = externalUsers.Select(u => u.IdUsuario).ToList();
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                query = query.Where(u => u.IdSigafi.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
+            }
 
-             var userRoles = await _context.UserRoles
+            result.TotalCount = await query.CountAsync();
+            
+            var externalUsers = await query
+                .OrderBy(u => u.Nombre)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var ids = externalUsers.Select(u => u.IdUsuario).ToList();
+
+            var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Where(ur => ids.Contains(ur.IdUsuario) && (ur.EsActivo ?? true))
                 .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
                 .ToListAsync();
 
-             var metadatas = await _context.InvUsuariosMetadata.Where(m => ids.Contains(m.IdUsuario)).ToListAsync();
+            var metadatas = await _context.InvUsuariosMetadata.Where(m => ids.Contains(m.IdUsuario)).ToListAsync();
 
-             return externalUsers.Select(u => {
-                 var roleInfo = userRoles.Where(ur => ur.IdUsuario == u.IdUsuario).ToList();
-                 var userMeta = metadatas.FirstOrDefault(m => m.IdUsuario == u.IdUsuario);
+            result.Items = externalUsers.Select(u => {
+                var roleInfo = userRoles.Where(ur => ur.IdUsuario == u.IdUsuario).ToList();
+                var userMeta = metadatas.FirstOrDefault(m => m.IdUsuario == u.IdUsuario);
 
-                 return new UserManagementDto
-                 {
-                     IdProfesor = u.IdSigafi,
-                     NombreCompleto = u.Nombre,
-                     Email = u.IdSigafi.Contains("@") ? u.IdSigafi : "externo@diitra.ist",
-                     UserUuid = userMeta?.Uuid.ToString() ?? "",
-                     Type = "EXTERNO",
-                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
-                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
-                     OrcidId = userMeta?.OrcidId,
-                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
-                 };
-             }).ToList();
+                return new UserManagementDto
+                {
+                    IdProfesor = u.IdSigafi,
+                    NombreCompleto = u.Nombre,
+                    Email = u.IdSigafi.Contains("@") ? u.IdSigafi : (u.EmailInstitucional ?? "externo@diitra.ist"),
+                    UserUuid = userMeta?.Uuid.ToString() ?? "",
+                    Type = "EXTERNO",
+                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    OrcidId = userMeta?.OrcidId,
+                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                };
+            }).ToList();
         }
-        else
+        else // DOCENTE
         {
-            var professorQuery = _context.Profesores.Where(p => p.Activo == 1);
+            var query = _context.Profesores.Where(p => p.Activo == 1);
 
             // Solo docentes que tengan actividades de investigación (idSubcategoria = 7) en el periodo actual
             if (!string.IsNullOrEmpty(periodId))
             {
-                professorQuery = professorQuery.Where(p => _context.ProfesoresActividades.Any(pa => 
+                query = query.Where(p => _context.ProfesoresActividades.Any(pa => 
                     pa.IdProfesor == p.IdProfesor && 
                     pa.IdSubcategoria == 7 && 
                     pa.IdPeriodo == periodId));
             }
+
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                professorQuery = professorQuery.Where(p =>
+                query = query.Where(p =>
                     (p.IdProfesor != null && p.IdProfesor.Contains(searchTerm)) ||
                     (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(searchTerm)) ||
                     (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(searchTerm)));
             }
 
-            var professors = await professorQuery.OrderBy(p => p.IdProfesor).Take(20).ToListAsync();
+            result.TotalCount = await query.CountAsync();
+            
+            var professors = await query
+                .OrderBy(p => p.PrimerApellido)
+                .ThenBy(p => p.PrimerNombre)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
             var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
 
             // Obtener horas de investigación (idSubcategoria = 7)
@@ -162,18 +217,17 @@ public class AdminService : IAdminService
             var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
-            return professors.Select(p => {
-                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == p.IdProfesor.Trim()).ToList();
+            result.Items = professors.Select(p => {
+                var pId = p.IdProfesor.Trim();
+                var hours = researchHours.Where(h => h.IdProfesor.Trim() == pId).Sum(h => h.HorasSemana);
+                var contract = activeContracts.FirstOrDefault(c => c.IdProfesor.Trim() == pId);
+                var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == pId).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
-                var hours = researchHours.FirstOrDefault(rh => rh.IdProfesor == p.IdProfesor.Trim())?.HorasSemana;
-                var contract = activeContracts.FirstOrDefault(c => c.IdProfesor == p.IdProfesor.Trim());
-                var dedName = contract?.TipoContratoNavigation?.Nombre ?? "Sin contrato";
-
                 return new UserManagementDto
                 {
-                    IdProfesor = p.IdProfesor.Trim(),
+                    IdProfesor = pId,
                     NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
                     Email = p.EmailInstitucional ?? p.Email ?? "",
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
@@ -183,10 +237,12 @@ public class AdminService : IAdminService
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
                     HorasInvestigacion = hours,
-                    TipoDedicacion = dedName
+                    TipoDedicacion = contract?.TipoContratoNavigation?.Nombre ?? "Sin Contrato"
                 };
             }).ToList();
         }
+
+        return result;
     }
 
     public async Task<List<RoleDto>> GetAvailableRolesAsync()

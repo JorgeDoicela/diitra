@@ -151,36 +151,48 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdProfesor).HasName("PRIMARY");
             entity.ToTable("profesores");
-            entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
-            entity.Property(e => e.PrimerNombre).HasMaxLength(60).HasColumnName("primerNombre");
-            entity.Property(e => e.SegundoNombre).HasMaxLength(60).HasColumnName("segundoNombre");
-            entity.Property(e => e.PrimerApellido).HasMaxLength(60).HasColumnName("primerApellido");
-            entity.Property(e => e.SegundoApellido).HasMaxLength(60).HasColumnName("segundoApellido");
-            entity.Property(e => e.Email).HasMaxLength(100).HasColumnName("email");
-            entity.Property(e => e.EmailInstitucional).HasMaxLength(255).HasColumnName("emailInstitucional");
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo");
-            entity.Property(e => e.Clave).HasMaxLength(20).HasColumnName("clave");
-            entity.Property(e => e.Titulo).HasMaxLength(200).HasColumnName("titulo");
-            entity.Property(e => e.Abreviatura).HasMaxLength(5).HasColumnName("abreviatura");
-            
-            // Mapeos exactos según DESCRIBE
-            entity.Property(e => e.AbreviaturaPost).HasMaxLength(5).HasColumnName("abreviatura_post");
-            entity.Property(e => e.FechaIngreso).HasColumnName("fecha_ingreso");
-            entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_nacimiento");
-            entity.Property(e => e.FechaRetiro).HasColumnName("fecha_retiro");
-            entity.Property(e => e.TipoSangre).HasMaxLength(5).HasColumnName("tipoSangre");
 
-            // Mapeos adicionales para consistencia
+            entity.Property(e => e.IdProfesor).HasColumnName("idProfesor");
+            entity.Property(e => e.Tipodocumento).HasColumnName("tipodocumento");
+            entity.Property(e => e.Apellidos).HasColumnName("apellidos");
+            entity.Property(e => e.Nombres).HasColumnName("nombres");
+            entity.Property(e => e.PrimerApellido).HasColumnName("primerApellido");
+            entity.Property(e => e.SegundoApellido).HasColumnName("segundoApellido");
+            entity.Property(e => e.PrimerNombre).HasColumnName("primerNombre");
+            entity.Property(e => e.SegundoNombre).HasColumnName("segundoNombre");
+            entity.Property(e => e.EstadoCivil).HasColumnName("estadoCivil");
+            entity.Property(e => e.Direccion).HasColumnName("direccion");
             entity.Property(e => e.CallePrincipal).HasColumnName("callePrincipal");
             entity.Property(e => e.CalleSecundaria).HasColumnName("calleSecundaria");
             entity.Property(e => e.NumeroCasa).HasColumnName("numeroCasa");
+            entity.Property(e => e.Telefono).HasColumnName("telefono");
+            entity.Property(e => e.Celular).HasColumnName("celular");
+            entity.Property(e => e.Email).HasColumnName("email");
+            entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_nacimiento");
+            entity.Property(e => e.Sexo).HasColumnName("sexo");
+            entity.Property(e => e.Clave).HasColumnName("clave");
+            entity.Property(e => e.Practicas).HasColumnName("practicas");
+            entity.Property(e => e.Tipo).HasColumnName("tipo");
+            entity.Property(e => e.Nacionalidad).HasColumnName("nacionalidad");
+            entity.Property(e => e.Titulo).HasColumnName("titulo");
+            entity.Property(e => e.Abreviatura).HasColumnName("abreviatura");
+            entity.Property(e => e.AbreviaturaPost).HasColumnName("abreviatura_post");
+            entity.Property(e => e.Activo).HasColumnName("activo");
+            entity.Property(e => e.IdEtnia).HasColumnName("idEtnia");
+            entity.Property(e => e.IdNacionalidad).HasColumnName("idNacionalidad");
+            entity.Property(e => e.IdParroquiaNacimiento).HasColumnName("idParroquiaNacimiento");
+            entity.Property(e => e.EmailInstitucional).HasColumnName("emailInstitucional");
+            entity.Property(e => e.FechaIngreso).HasColumnName("fecha_ingreso");
+            entity.Property(e => e.FechaIngresoIess).HasColumnName("fechaIngresoIess");
+            entity.Property(e => e.FechaRetiro).HasColumnName("fecha_retiro");
+            entity.Property(e => e.IdParroquiaResidencia).HasColumnName("idParroquiaResidencia");
+            entity.Property(e => e.TipoSangre).HasColumnName("tipoSangre");
+            entity.Property(e => e.CodigoPostal).HasColumnName("codigoPostal");
+            entity.Property(e => e.IdDiscapacidad).HasColumnName("idDiscapacidad");
             entity.Property(e => e.PorcentajeDiscapacidad).HasColumnName("porcentajeDiscapacidad");
             entity.Property(e => e.NumeroConadis).HasColumnName("numeroConadis");
-            entity.Property(e => e.Celular).HasColumnName("celular");
-            entity.Property(e => e.Telefono).HasColumnName("telefono");
-            entity.Property(e => e.Direccion).HasColumnName("direccion");
-            entity.Property(e => e.Nacionalidad).HasColumnName("nacionalidad");
-            entity.Property(e => e.Sexo).HasColumnName("sexo");
+            entity.Property(e => e.Foto).HasColumnName("foto");
+            entity.Property(e => e.EsReal).HasColumnName("esReal");
 
             // Ignorar los que definitivamente no usaremos o sospechosos de relaciones rotas
             entity.Ignore(e => e.IdDiscapacidadNavigation);
@@ -194,28 +206,28 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdAlumno).HasName("PRIMARY");
             entity.ToTable("alumnos");
-            entity.Property(e => e.IdAlumno).HasMaxLength(14).HasColumnName("idAlumno");
-            entity.Property(e => e.PrimerNombre).HasMaxLength(30).HasColumnName("primerNombre");
-            entity.Property(e => e.SegundoNombre).HasMaxLength(30).HasColumnName("segundoNombre");
-            entity.Property(e => e.ApellidoPaterno).HasMaxLength(30).HasColumnName("apellidoPaterno");
-            entity.Property(e => e.ApellidoMaterno).HasMaxLength(30).HasColumnName("apellidoMaterno");
-            entity.Property(e => e.Email).HasMaxLength(40).HasColumnName("email");
-            entity.Property(e => e.EmailInstitucional).HasMaxLength(100).HasColumnName("email_institucional");
-            entity.Property(e => e.UserAlumno).HasMaxLength(20).HasColumnName("user_alumno");
-            entity.Property(e => e.Password).HasMaxLength(20).HasColumnName("password");
             
-            // Mapeos adicionales para evitar errores de "Unknown column"
-            entity.Property(e => e.BarrioResidencia).HasColumnName("barrio_residencia");
-            entity.Property(e => e.ParroquiaResidencia).HasColumnName("parroquia_residencia");
-            entity.Property(e => e.CiudadResidencia).HasColumnName("ciudad_residencia");
+            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno");
+            entity.Property(e => e.TipoDocumento).HasColumnName("tipoDocumento");
+            entity.Property(e => e.ApellidoPaterno).HasColumnName("apellidoPaterno");
+            entity.Property(e => e.ApellidoMaterno).HasColumnName("apellidoMaterno");
+            entity.Property(e => e.PrimerNombre).HasColumnName("primerNombre");
+            entity.Property(e => e.SegundoNombre).HasColumnName("segundoNombre");
             entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_Nacimiento");
             entity.Property(e => e.Direccion).HasColumnName("direccion");
             entity.Property(e => e.Telefono).HasColumnName("telefono");
             entity.Property(e => e.Celular).HasColumnName("celular");
+            entity.Property(e => e.Email).HasColumnName("email");
             entity.Property(e => e.CiudadNacimiento).HasColumnName("ciudad_Nacimiento");
             entity.Property(e => e.ProvinciaNacimiento).HasColumnName("provincia_Nacimiento");
+            entity.Property(e => e.Foto).HasColumnName("foto");
             entity.Property(e => e.Sexo).HasColumnName("sexo");
             entity.Property(e => e.Nacionalidad).HasColumnName("nacionalidad");
+            entity.Property(e => e.IdNivel).HasColumnName("idNivel");
+            entity.Property(e => e.IdPeriodo).HasColumnName("idPeriodo");
+            entity.Property(e => e.IdSeccion).HasColumnName("idSeccion");
+            entity.Property(e => e.IdModalidad).HasColumnName("idModalidad");
+            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion");
             entity.Property(e => e.TituloColegio).HasColumnName("tituloColegio");
             entity.Property(e => e.FechaInscripcion).HasColumnName("fecha_Inscripcion");
             entity.Property(e => e.ParroquiaNacimiento).HasColumnName("parroquia_nacimiento");
@@ -225,11 +237,20 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.NombreMadre).HasColumnName("nombre_madre");
             entity.Property(e => e.OcupacionMadre).HasColumnName("ocupacion_madre");
             entity.Property(e => e.NacionalidadMadre).HasColumnName("nacionalidad_madre");
+            entity.Property(e => e.BarrioResidencia).HasColumnName("barrio_residencia");
+            entity.Property(e => e.ParroquiaResidencia).HasColumnName("parroquia_residencia");
+            entity.Property(e => e.CiudadResidencia).HasColumnName("ciudad_residencia");
             entity.Property(e => e.TipoSangre).HasColumnName("tipo_sangre");
+            entity.Property(e => e.UserAlumno).HasColumnName("user_alumno");
+            entity.Property(e => e.Password).HasColumnName("password");
+            entity.Property(e => e.IdDiscapacidad).HasColumnName("idDiscapacidad");
+            entity.Property(e => e.IdEtnia).HasColumnName("idEtnia");
+            entity.Property(e => e.IdNacionalidad).HasColumnName("idNacionalidad");
             entity.Property(e => e.PorcentajeDiscapacidad).HasColumnName("porcentaje_discapacidad");
             entity.Property(e => e.CarnetConadis).HasColumnName("carnet_conadis");
+            entity.Property(e => e.EmailInstitucional).HasColumnName("email_institucional");
+            entity.Property(e => e.PrimerIngreso).HasColumnName("primerIngreso");
             entity.Property(e => e.Archivofoto).HasColumnName("archivofoto");
-            entity.Property(e => e.Foto).HasColumnName("foto");
 
             entity.Ignore(e => e.Matriculas);
         });
@@ -257,17 +278,33 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.VisualizaPowerBi).HasColumnType("tinyint(4)").HasColumnName("visualizaPowerBi");
             entity.Property(e => e.EsInstituto).HasColumnType("tinyint(4)").HasColumnName("esInstituto");
             entity.Property(e => e.PeriodoPlanificacion).HasColumnType("tinyint(4)").HasColumnName("periodoPlanificacion");
+
+            entity.Ignore(e => e.Matriculas);
+            entity.Ignore(e => e.ProfesoresCarrerasPeriodos);
+            entity.Ignore(e => e.ProfesoresDedicacions);
         });
 
         modelBuilder.Entity<Carrera>(entity =>
         {
             entity.HasKey(e => e.IdCarrera).HasName("PRIMARY");
             entity.ToTable("carreras");
-            entity.Property(e => e.IdCarrera).HasColumnType("int(11)").HasColumnName("idCarrera");
-            entity.Property(e => e.Carrera1).HasMaxLength(100).HasColumnName("Carrera");
+            
+            entity.Property(e => e.IdCarrera).HasColumnName("idCarrera");
+            entity.Property(e => e.Carrera1).HasColumnName("Carrera");
+            entity.Property(e => e.FechaCreacion).HasColumnName("fechaCreacion");
             entity.Property(e => e.Activa).HasColumnName("activa");
-            entity.Property(e => e.CodigoCases).HasMaxLength(20).HasColumnName("codigo_cases");
+            entity.Property(e => e.DirectorCarrera).HasColumnName("directorCarrera");
+            entity.Property(e => e.NumeroCreditos).HasColumnName("numero_creditos");
+            entity.Property(e => e.OrdenCarrera).HasColumnName("ordenCarrera");
+            entity.Property(e => e.NumeroAlumnos).HasColumnName("numero_alumnos");
+            entity.Property(e => e.RevisaArrastres).HasColumnName("revisaArrastres");
+            entity.Property(e => e.CodigoCases).HasColumnName("codigo_cases");
+            entity.Property(e => e.AliasCarrera).HasColumnName("aliasCarrera");
+            entity.Property(e => e.BolsaEmpleo).HasColumnName("BolsaEmpleo");
+            entity.Property(e => e.EsInstituto).HasColumnName("esInstituto");
+
             entity.Ignore(e => e.Espacios);
+            entity.Ignore(e => e.ProfesoresCarrerasPeriodos);
         });
 
         modelBuilder.Entity<Departamento>(entity =>
@@ -342,10 +379,33 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdMatricula).HasName("PRIMARY");
             entity.ToTable("matriculas");
-            entity.Property(e => e.IdMatricula).HasColumnType("int(11)").HasColumnName("idMatricula");
-            entity.Property(e => e.IdAlumno).HasMaxLength(14).HasColumnName("idAlumno");
-            entity.Property(e => e.IdPeriodo).HasMaxLength(7).IsFixedLength().HasColumnName("idPeriodo");
+
+            entity.Property(e => e.IdMatricula).HasColumnName("idMatricula");
+            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno");
+            entity.Property(e => e.IdNivel).HasColumnName("idNivel");
+            entity.Property(e => e.IdSeccion).HasColumnName("idSeccion");
+            entity.Property(e => e.IdModalidad).HasColumnName("idModalidad");
+            entity.Property(e => e.IdPeriodo).HasColumnName("idPeriodo");
+            
+            entity.Property(e => e.FechaMatricula).HasColumnName("fechaMatricula");
+            entity.Property(e => e.Paralelo).HasColumnName("paralelo");
+            entity.Property(e => e.Arrastres).HasColumnName("arrastres");
+            entity.Property(e => e.Folio).HasColumnName("folio");
+            
+            entity.Property(e => e.BecaMatricula).HasColumnName("beca_matricula");
+            entity.Property(e => e.BecaColegiatura).HasColumnName("beca_colegiatura");
+            
             entity.Property(e => e.Retirado).HasColumnName("retirado");
+            entity.Property(e => e.FechaRetiro).HasColumnName("fechaRetiro");
+            entity.Property(e => e.Observacion).HasColumnName("observacion");
+            entity.Property(e => e.Convalidacion).HasColumnName("convalidacion");
+            entity.Property(e => e.CarreraConvalidada).HasColumnName("carrera_convalidada");
+            entity.Property(e => e.NumeroPermiso).HasColumnName("numero_permiso");
+            entity.Property(e => e.UserMatricula).HasColumnName("user_matricula");
+            entity.Property(e => e.Valida).HasColumnName("valida");
+            entity.Property(e => e.EsOyente).HasColumnName("esOyente");
+            entity.Property(e => e.DocumentoFactura).HasColumnName("documentoFactura");
+
             entity.Ignore(e => e.IdAlumnoNavigation);
             entity.Ignore(e => e.IdPeriodoNavigation);
         });
@@ -537,8 +597,21 @@ public partial class DiitraContext : DbContext
                 .HasName("PRIMARY")
                 .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
             entity.ToTable("alumnos_carreras");
-            entity.Property(e => e.IdAlumno).HasMaxLength(14).HasColumnName("idAlumno");
-            entity.Property(e => e.IdCarrera).HasColumnType("int(11)").HasColumnName("idCarrera");
+            
+            entity.Property(e => e.IdAlumno).HasColumnName("idAlumno");
+            entity.Property(e => e.IdCarrera).HasColumnName("idCarrera");
+            entity.Property(e => e.Convalidacion).HasColumnName("convalidacion");
+            entity.Property(e => e.CarreraConvalidada).HasColumnName("carrera_convalidada");
+            entity.Property(e => e.InstitucionConvalidada).HasColumnName("institucion_convalidada");
+            entity.Property(e => e.CreditosConvalidados).HasColumnName("creditos_convalidados");
+            entity.Property(e => e.Pasantias).HasColumnName("pasantias");
+            entity.Property(e => e.NotaPasantia).HasColumnName("nota_pasantia");
+            entity.Property(e => e.CreditosPasantia).HasColumnName("creditos_pasantia");
+            entity.Property(e => e.TrabajoGrado).HasColumnName("trabajo_grado");
+            entity.Property(e => e.NotaDocumento).HasColumnName("nota_documento");
+            entity.Property(e => e.NotaDefensa).HasColumnName("nota_defensa");
+            entity.Property(e => e.NotaTesis).HasColumnName("nota_tesis");
+            entity.Property(e => e.CreditosTitulo).HasColumnName("creditos_titulo");
         });
 
         modelBuilder.Entity<Parametro>(entity =>

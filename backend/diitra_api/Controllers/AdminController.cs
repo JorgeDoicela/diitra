@@ -19,9 +19,13 @@ public class AdminController : ControllerBase
     }
 
     [HttpGet("users")]
-    public async Task<IActionResult> GetUsers([FromQuery] string? search, [FromQuery] string type = "DOCENTE")
+    public async Task<IActionResult> GetUsers(
+        [FromQuery] string? search, 
+        [FromQuery] string type = "DOCENTE",
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
     {
-        var users = await _adminService.GetUsersAsync(search, type);
+        var users = await _adminService.GetUsersAsync(search, type, page, pageSize);
         return Ok(users);
     }
 
