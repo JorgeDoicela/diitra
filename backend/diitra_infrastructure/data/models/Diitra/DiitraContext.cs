@@ -121,8 +121,8 @@ public partial class DiitraContext : DbContext
     // --- Actividades del docente (horas de investigación) ---
     public virtual DbSet<ProfesoresActividade>     ProfesoresActividades    { get; set; } // profesores_actividades
     public virtual DbSet<SubcategoriasActividade>  SubcategoriasActividades { get; set; } // subcategorias_actividades
-    public virtual DbSet<ProfesoresDedicacion>     ProfesoresDedicacion     { get; set; } // profesores_dedicacion
-    public virtual DbSet<Dedicacion>               Dedicaciones             { get; set; } // dedicacion
+    public virtual DbSet<Contrato>                 Contratos                { get; set; } // contratos
+    public virtual DbSet<TiposContrato>            TiposContratos           { get; set; } // tipos_contratos
     public virtual DbSet<HorasAcademica>           HorasAcademicas          { get; set; } // horas_academicas (los límites permitidos)
 
     // --- Clasificación UNESCO (obligatorio SENESCYT) ---
@@ -203,9 +203,19 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Detalle).HasMaxLength(100).HasColumnName("detalle");
             entity.Property(e => e.FechaInicial).HasColumnName("fecha_inicial");
             entity.Property(e => e.FechaFinal).HasColumnName("fecha_final");
+            entity.Property(e => e.Cerrado).HasColumnName("cerrado");
+            entity.Property(e => e.FechaMaximaAutocierre).HasColumnName("fecha_maxima_autocierre");
             entity.Property(e => e.Activo).HasColumnName("activo");
-            entity.Property(e => e.EsInstituto).HasColumnType("tinyint(4)").HasColumnName("esInstituto");
+            entity.Property(e => e.Creditos).HasColumnName("creditos");
+            entity.Property(e => e.NumeroPagos).HasColumnName("numero_pagos");
+            entity.Property(e => e.FechaMatruclaExtraordinaria).HasColumnName("fecha_matrucla_extraordinaria");
+            entity.Property(e => e.Foliop).HasColumnName("foliop");
+            entity.Property(e => e.PermiteMatricula).HasColumnType("tinyint(4)").HasColumnName("permiteMatricula");
+            entity.Property(e => e.IngresoCalificaciones).HasColumnType("tinyint(4)").HasColumnName("ingresoCalificaciones");
+            entity.Property(e => e.PermiteCalificacionesInstituto).HasColumnType("tinyint(4)").HasColumnName("permiteCalificacionesInstituto");
             entity.Property(e => e.Periodoactivoinstituto).HasColumnType("tinyint(4)").HasColumnName("periodoactivoinstituto");
+            entity.Property(e => e.VisualizaPowerBi).HasColumnType("tinyint(4)").HasColumnName("visualizaPowerBi");
+            entity.Property(e => e.EsInstituto).HasColumnType("tinyint(4)").HasColumnName("esInstituto");
             entity.Property(e => e.PeriodoPlanificacion).HasColumnType("tinyint(4)").HasColumnName("periodoPlanificacion");
         });
 

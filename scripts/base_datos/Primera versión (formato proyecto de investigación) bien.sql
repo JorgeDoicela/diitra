@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS
     inv_notificaciones,
     inv_tokens_acceso,
     inv_usuarios_metadata,
+    inv_audit_admin,
 
     -- DIITRA Document Engine (Plantillas y Auditoría)
     inv_document_audit,
