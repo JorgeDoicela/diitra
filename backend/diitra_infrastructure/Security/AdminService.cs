@@ -19,9 +19,26 @@ public class AdminService : IAdminService
     {
         searchTerm = searchTerm?.ToLower() ?? "";
 
+        // Obtener periodo académico activo (usado para alumnos y docentes)
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync(p => p.Periodoactivoinstituto == 1 || p.Activo == true);
+        var periodId = currentPeriod?.IdPeriodo;
+
         if (type == "ESTUDIANTE")
         {
             var studentQuery = _context.Alumnos.AsQueryable();
+
+            // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
+            if (!string.IsNullOrEmpty(periodId))
+            {
+                studentQuery = studentQuery.Where(a => _context.Matriculas.Any(m => 
+                    m.IdAlumno == a.IdAlumno && 
+                    m.IdPeriodo == periodId && 
+                    (m.Retirado == null || m.Retirado == false) && 
+                    (m.Valida == 1)));
+            }
             if (!string.IsNullOrEmpty(searchTerm))
             {
                 studentQuery = studentQuery.Where(a =>
@@ -114,14 +131,6 @@ public class AdminService : IAdminService
 
             var professors = await professorQuery.OrderBy(p => p.IdProfesor).Take(20).ToListAsync();
             var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
-
-            // Obtener periodo académico de investigación (priorizando el activo del instituto)
-            var currentPeriod = await _context.Periodos
-                .OrderByDescending(p => p.Periodoactivoinstituto)
-                .ThenByDescending(p => p.FechaInicial)
-                .FirstOrDefaultAsync(p => p.Periodoactivoinstituto == 1 || p.Activo == true);
-            
-            var periodId = currentPeriod?.IdPeriodo;
 
             // Obtener horas de investigación (idSubcategoria = 7)
             var researchHours = await _context.ProfesoresActividades
