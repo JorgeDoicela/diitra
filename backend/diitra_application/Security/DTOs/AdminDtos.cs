@@ -15,6 +15,8 @@ public class UserManagementDto
     // Metadata resumida para la lista
     public string? OrcidId { get; set; }
     public bool FirmaHabilitada { get; set; }
+    public decimal? HorasInvestigacion { get; set; }
+    public string? TipoDedicacion { get; set; }
 }
 
 public class UserMetadataDto

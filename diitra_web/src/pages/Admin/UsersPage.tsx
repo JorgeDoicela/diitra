@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
     Search, Shield, User as UserIcon, Check, X, RefreshCw, 
     ShieldAlert, Filter, Settings2, ExternalLink, GraduationCap, 
-    Users as UsersIcon, Award, UserPlus, History, Clock, Globe
+    Users as UsersIcon, Award, UserPlus, History, Clock, Globe,
+    Activity
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import UserProfileModal from './components/UserProfileModal';
@@ -17,6 +18,8 @@ interface ManagedUser {
     role_codes: string[];
     orcid_id?: string;
     firma_habilitada: boolean;
+    horas_investigacion?: number;
+    tipo_dedicacion?: string;
 }
 
 interface Role {
@@ -203,7 +206,7 @@ const UsersPage = () => {
                         <thead>
                             <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
                                 <th className="p-4 font-bold tracking-widest">Actor</th>
-                                <th className="p-4 font-bold tracking-widest text-center">Perfil Científico</th>
+                                <th className="p-4 font-bold tracking-widest">Capacidad (SIGAFI)</th>
                                 <th className="p-4 font-bold tracking-widest">Permisos / Roles</th>
                                 <th className="p-4 font-bold tracking-widest text-right">Gestión</th>
                             </tr>
@@ -223,16 +226,32 @@ const UsersPage = () => {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
-                                                <div 
-                                                    className={`h-full transition-all duration-1000 ${u.orcid_id ? 'w-full bg-green-500' : 'w-1/3 bg-red-500/50'}`}
-                                                />
+                                        {u.type === 'DOCENTE' ? (
+                                            <div className="space-y-1.5">
+                                                <div className="flex items-center gap-2">
+                                                    <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${
+                                                        (u.horas_investigacion || 0) > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                                                    }`}>
+                                                        <Activity size={10} className="inline mr-1" />
+                                                        {u.horas_investigacion || 0}h Investigación
+                                                    </div>
+                                                </div>
+                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                    {u.tipo_dedicacion || 'Sin contrato activo'}
+                                                </p>
                                             </div>
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-text-dim">
-                                                {u.orcid_id ? 'Completado' : 'Incompleto'}
-                                            </span>
-                                        </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
+                                                    <div 
+                                                        className={`h-full transition-all duration-1000 ${u.orcid_id ? 'w-full bg-green-500' : 'w-1/3 bg-red-500/50'}`}
+                                                    />
+                                                </div>
+                                                <span className="text-[9px] font-black uppercase tracking-widest text-text-dim">
+                                                    {u.orcid_id ? 'Completado' : 'Perfil Incompleto'}
+                                                </span>
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="p-4">
                                         <div className="flex flex-wrap gap-1.5">

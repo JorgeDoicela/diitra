@@ -111,6 +111,26 @@ public class AdminService : IAdminService
             var professors = await professorQuery.Take(20).ToListAsync();
             var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
 
+            // Obtener periodo activo para las horas de investigación
+            var currentPeriod = await _context.Periodos.FirstOrDefaultAsync(p => p.Activo == true);
+            var periodId = currentPeriod?.IdPeriodo;
+
+            // Obtener horas de investigación (idSubcategoria = 7)
+            var researchHours = await _context.ProfesoresActividades
+                .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                .ToListAsync();
+
+            // Obtener dedicación
+            var dedications = await _context.ProfesoresDedicacion
+                .Include(pd => pd.IdPeriodoNavigation)
+                .Where(pd => ids.Contains(pd.IdProfesor) && pd.IdPeriodo == periodId)
+                .ToListAsync();
+
+            // El nombre de la dedicación se obtiene de otra tabla (Dedicacion), pero por simplicidad
+            // y basándonos en que ya tenemos los datos, mapearemos el ID o buscaremos la tabla
+            var dedIds = dedications.Select(d => d.IdDedicacionCategorias).Distinct().ToList();
+            var dedNames = await _context.Dedicaciones.Where(d => dedIds.Contains(d.IdDedicacionCategorias)).ToListAsync();
+
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
@@ -124,6 +144,10 @@ public class AdminService : IAdminService
                 var roleInfo = userRoles.Where(ur => ur.User.Usuario == p.IdProfesor.Trim()).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
+                
+                var hours = researchHours.FirstOrDefault(rh => rh.IdProfesor == p.IdProfesor.Trim())?.HorasSemana;
+                var dedId = dedications.FirstOrDefault(d => d.IdProfesor == p.IdProfesor.Trim())?.IdDedicacionCategorias;
+                var dedName = dedNames.FirstOrDefault(dn => dn.IdDedicacionCategorias == dedId)?.Dedicacion1;
 
                 return new UserManagementDto
                 {
@@ -135,7 +159,9 @@ public class AdminService : IAdminService
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
-                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
+                    HorasInvestigacion = hours,
+                    TipoDedicacion = dedName
                 };
             }).ToList();
         }
