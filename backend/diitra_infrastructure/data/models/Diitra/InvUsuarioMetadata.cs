@@ -15,6 +15,9 @@ public partial class InvUsuarioMetadata
     
     // Perfil Investigador (Normativa CACES/SENESCYT)
     public string? OrcidId { get; set; }
+    public string? ScopusId { get; set; }
+    public string? GoogleScholarUrl { get; set; }
+    public string? ResearchGateUrl { get; set; }
     public string? Especialidad { get; set; } // Para emparejamiento automático de revisores
     public string? GradoAcademicoMaximo { get; set; }
     

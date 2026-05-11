@@ -15,140 +15,323 @@ public class AdminService : IAdminService
         _context = context;
     }
 
-    public async Task<List<UserManagementDto>> GetProfessorsAsync(string? searchTerm)
+    public async Task<List<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE")
     {
-        var query = _context.Profesores.Where(p => p.Activo == 1);
+        searchTerm = searchTerm?.ToLower() ?? "";
         
-        if (!string.IsNullOrEmpty(searchTerm))
+        if (type == "ESTUDIANTE")
         {
-            searchTerm = searchTerm.ToLower();
-            query = query.Where(p => 
-                (p.IdProfesor ?? "").Contains(searchTerm) || 
-                (p.PrimerNombre ?? "").ToLower().Contains(searchTerm) || 
-                (p.PrimerApellido ?? "").ToLower().Contains(searchTerm) ||
-                (p.Email ?? "").ToLower().Contains(searchTerm) ||
-                (p.EmailInstitucional ?? "").ToLower().Contains(searchTerm));
-        }
-
-        var professors = await query.Take(20).ToListAsync();
-        var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
-
-        // Buscar roles enganchados al Usuario centralizado (que coincide con la cédula/idProfesor)
-        var userRoles = await _context.UserRoles
-            .Include(ur => ur.Role)
-            .Include(ur => ur.User)
-            .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
-            .ToListAsync();
-
-        var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
-        var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
-
-        return professors.Select(p => {
-            var roleInfo = userRoles.Where(ur => ur.User.Usuario == p.IdProfesor.Trim()).ToList();
-            var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
-            var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
-
-            return new UserManagementDto
+            var studentQuery = _context.Alumnos.AsQueryable();
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                IdProfesor = p.IdProfesor.Trim(),
-                NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
-                Email = !string.IsNullOrEmpty(p.EmailInstitucional) ? p.EmailInstitucional : (p.Email ?? string.Empty),
-                UserUuid = userMeta?.Uuid.ToString() ?? string.Empty,
-                Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
-                RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList()
-            };
-        }).ToList();
-    }
-
-    public async Task<bool> AssignRoleAsync(string idProfesor, string roleCode)
-    {
-        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode);
-        
-        if (role == null)
-            role = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == roleCode);
-
-        if (role == null) return false;
-
-        // Aseguramos que el usuario esté centralizado (Soporta ID o UUID)
-        var metadataQuery = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.Uuid.ToString() == idProfesor);
-        var user = await _context.Users
-            .FirstOrDefaultAsync(u => u.Usuario == idProfesor || (metadataQuery != null && u.IdUsuario == metadataQuery.IdUsuario));
-        if (user == null)
-        {
-            var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idProfesor);
-            if (p != null)
-            {
-                user = new User
-                {
-                    Usuario = idProfesor,
-                    Nombre = $"{p.PrimerNombre} {p.PrimerApellido}",
-                    Contrasenia = p.Clave ?? "cambiame",
-                    Activo = true,
-                    TablaSigafi = "profesor",
-                    IdSigafi = p.IdProfesor
-                };
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync(); // Importante: Guardar para generar IdUsuario
-
-                // PROVISIÓN DE METADATA (Shielding)
-                var metadata = new InvUsuarioMetadata
-                {
-                    IdUsuario = user.IdUsuario,
-                    Uuid = Guid.NewGuid(),
-                    Version = 1
-                };
-                _context.InvUsuariosMetadata.Add(metadata);
-                await _context.SaveChangesAsync();
+                studentQuery = studentQuery.Where(a => 
+                    (a.IdAlumno != null && a.IdAlumno.Contains(searchTerm)) || 
+                    (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(searchTerm)) || 
+                    (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(searchTerm)));
             }
+
+            var students = await studentQuery.Take(20).ToListAsync();
+            var ids = students.Select(s => s.IdAlumno.Trim()).ToList();
+
+            var userRoles = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .Include(ur => ur.User)
+                .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
+                .ToListAsync();
+
+            var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
+            var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
+
+            return students.Select(s => {
+                var roleInfo = userRoles.Where(ur => ur.User.Usuario == s.IdAlumno.Trim()).ToList();
+                var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
+
+                return new UserManagementDto
+                {
+                    IdProfesor = s.IdAlumno.Trim(),
+                    NombreCompleto = $"{s.PrimerNombre} {s.ApellidoPaterno}",
+                    Email = s.EmailInstitucional ?? s.Email ?? "",
+                    UserUuid = userMeta?.Uuid.ToString() ?? "",
+                    Type = "ESTUDIANTE",
+                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    OrcidId = userMeta?.OrcidId,
+                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                };
+            }).ToList();
         }
-
-        if (user == null) return false;
-
-        var existing = await _context.UserRoles
-            .FirstOrDefaultAsync(ur => ur.IdUsuario == user.IdUsuario && ur.IdRol == role.IdRol);
-
-        if (existing != null)
+        else if (type == "EXTERNO")
         {
-            if (existing.EsActivo ?? true) return true;
-            existing.EsActivo = true;
-            existing.FechaModificacion = DateTime.UtcNow;
+             var userQuery = _context.Users.Where(u => u.TablaSigafi == "otros" || u.TablaSigafi == null);
+             if (!string.IsNullOrEmpty(searchTerm))
+             {
+                 userQuery = userQuery.Where(u => u.Usuario.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
+             }
+
+             var externalUsers = await userQuery.Take(20).ToListAsync();
+             var ids = externalUsers.Select(u => u.IdUsuario).ToList();
+
+             var userRoles = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .Where(ur => ids.Contains(ur.IdUsuario) && (ur.EsActivo ?? true))
+                .ToListAsync();
+
+             var metadatas = await _context.InvUsuariosMetadata.Where(m => ids.Contains(m.IdUsuario)).ToListAsync();
+
+             return externalUsers.Select(u => {
+                 var roleInfo = userRoles.Where(ur => ur.IdUsuario == u.IdUsuario).ToList();
+                 var userMeta = metadatas.FirstOrDefault(m => m.IdUsuario == u.IdUsuario);
+
+                 return new UserManagementDto
+                 {
+                     IdProfesor = u.Usuario,
+                     NombreCompleto = u.Nombre,
+                     Email = u.Usuario.Contains("@") ? u.Usuario : "externo@diitra.ist",
+                     UserUuid = userMeta?.Uuid.ToString() ?? "",
+                     Type = "EXTERNO",
+                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
+                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                     OrcidId = userMeta?.OrcidId,
+                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                 };
+             }).ToList();
         }
         else
         {
-            _context.UserRoles.Add(new UserRole
+            var professorQuery = _context.Profesores.Where(p => p.Activo == 1);
+            if (!string.IsNullOrEmpty(searchTerm))
             {
-                IdUsuario = user.IdUsuario,
-                IdRol = role.IdRol,
-                EsActivo = true,
-                FechaCreacion = DateTime.UtcNow
-            });
+                professorQuery = professorQuery.Where(p => 
+                    (p.IdProfesor != null && p.IdProfesor.Contains(searchTerm)) || 
+                    (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(searchTerm)) || 
+                    (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(searchTerm)));
+            }
+
+            var professors = await professorQuery.Take(20).ToListAsync();
+            var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
+
+            var userRoles = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .Include(ur => ur.User)
+                .Where(ur => ids.Contains(ur.User.Usuario) && (ur.EsActivo ?? true))
+                .ToListAsync();
+
+            var userIds = userRoles.Select(ur => ur.User.IdUsuario).Distinct().ToList();
+            var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
+
+            return professors.Select(p => {
+                var roleInfo = userRoles.Where(ur => ur.User.Usuario == p.IdProfesor.Trim()).ToList();
+                var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
+
+                return new UserManagementDto
+                {
+                    IdProfesor = p.IdProfesor.Trim(),
+                    NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
+                    Email = p.EmailInstitucional ?? p.Email ?? "",
+                    UserUuid = userMeta?.Uuid.ToString() ?? "",
+                    Type = "DOCENTE",
+                    Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
+                    RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
+                    OrcidId = userMeta?.OrcidId,
+                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                };
+            }).ToList();
         }
+    }
+
+    public async Task<List<RoleDto>> GetAvailableRolesAsync()
+    {
+        return await _context.Roles
+            .Select(r => new RoleDto {
+                IdRol = r.IdRol,
+                Nombre = r.Nombre,
+                CodigoRol = r.CodigoRol
+            })
+            .ToListAsync();
+    }
+
+    public async Task<UserMetadataDto?> GetUserMetadataAsync(string userUuid)
+    {
+        var meta = await _context.InvUsuariosMetadata
+            .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
+        
+        if (meta == null) return null;
+
+        return new UserMetadataDto {
+            OrcidId = meta.OrcidId,
+            ScopusId = meta.ScopusId,
+            GoogleScholarUrl = meta.GoogleScholarUrl,
+            ResearchGateUrl = meta.ResearchGateUrl,
+            Especialidad = meta.Especialidad,
+            GradoAcademicoMaximo = meta.GradoAcademicoMaximo
+        };
+    }
+
+    public async Task<bool> UpdateUserMetadataAsync(string userUuid, UserMetadataDto dto, string? adminUsername = null)
+    {
+        var meta = await _context.InvUsuariosMetadata.Include(m => m.User)
+            .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
+        
+        if (meta == null) return false;
+
+        meta.OrcidId = dto.OrcidId;
+        meta.ScopusId = dto.ScopusId;
+        meta.GoogleScholarUrl = dto.GoogleScholarUrl;
+        meta.ResearchGateUrl = dto.ResearchGateUrl;
+        meta.Especialidad = dto.Especialidad;
+        meta.GradoAcademicoMaximo = dto.GradoAcademicoMaximo;
+        meta.Version++;
 
         await _context.SaveChangesAsync();
+        await AddAuditLogAsync(adminUsername, meta.IdUsuario, "ACTUALIZAR_METADATA", $"Actualización de perfil científico y académico.");
+
         return true;
     }
 
-    public async Task<bool> RevokeRoleAsync(string idProfesor, string roleCode)
+    public async Task<bool> AssignRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE", string? adminUsername = null)
     {
-        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode);
-        
-        if (role == null)
-            role = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == roleCode);
-
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode || r.Nombre == roleCode);
         if (role == null) return false;
 
-        var metadataQuery = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.Uuid.ToString() == idProfesor);
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == idUsuario);
+        if (user == null)
+        {
+            if (userType == "ESTUDIANTE")
+            {
+                var s = await _context.Alumnos.FirstOrDefaultAsync(a => a.IdAlumno == idUsuario);
+                if (s == null) return false;
+                user = new User { 
+                    Usuario = idUsuario, 
+                    Nombre = $"{s.PrimerNombre} {s.ApellidoPaterno}", 
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame"), 
+                    Activo = true, 
+                    TablaSigafi = "alumno", 
+                    IdSigafi = s.IdAlumno 
+                };
+            }
+            else
+            {
+                var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == idUsuario);
+                if (p == null) return false;
+                user = new User { 
+                    Usuario = idUsuario, 
+                    Nombre = $"{p.PrimerNombre} {p.PrimerApellido}", 
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame"), 
+                    Activo = true, 
+                    TablaSigafi = "profesor", 
+                    IdSigafi = p.IdProfesor 
+                };
+            }
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata { IdUsuario = user.IdUsuario, Uuid = Guid.NewGuid(), Version = 1 });
+            await _context.SaveChangesAsync();
+        }
+
+        var existing = await _context.UserRoles.FirstOrDefaultAsync(ur => ur.IdUsuario == user.IdUsuario && ur.IdRol == role.IdRol);
+        if (existing != null) {
+            existing.EsActivo = true;
+            existing.FechaModificacion = DateTime.UtcNow;
+        } else {
+            _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateTime.UtcNow });
+        }
+
+        await _context.SaveChangesAsync();
+        await AddAuditLogAsync(adminUsername, user.IdUsuario, "ASIGNAR_ROL", $"Asignación del rol {role.Nombre}");
+
+        return true;
+    }
+
+    public async Task<bool> RevokeRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE", string? adminUsername = null)
+    {
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode || r.Nombre == roleCode);
+        if (role == null) return false;
+
         var existing = await _context.UserRoles
             .Include(ur => ur.User)
-            .FirstOrDefaultAsync(ur => (ur.User.Usuario == idProfesor || (metadataQuery != null && ur.IdUsuario == metadataQuery.IdUsuario)) && ur.IdRol == role.IdRol);
+            .FirstOrDefaultAsync(ur => ur.User.Usuario == idUsuario && ur.IdRol == role.IdRol);
 
         if (existing != null)
         {
             existing.EsActivo = false;
             existing.FechaModificacion = DateTime.UtcNow;
             await _context.SaveChangesAsync();
+            await AddAuditLogAsync(adminUsername, existing.IdUsuario, "REVOCAR_ROL", $"Revocación del rol {role.Nombre}");
         }
 
         return true;
+    }
+
+    public async Task<bool> RegisterExternalUserAsync(ExternalUserDto dto, string? adminUsername = null)
+    {
+        var existing = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == dto.Cedula || u.Usuario == dto.Email);
+        if (existing != null) return false;
+
+        var user = new User {
+            Usuario = dto.Cedula,
+            Nombre = dto.FullName,
+            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8)), // Temporal
+            Activo = true,
+            TablaSigafi = "otros",
+            IdSigafi = dto.Cedula
+        };
+
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata { IdUsuario = user.IdUsuario, Uuid = Guid.NewGuid(), Version = 1 });
+        await _context.SaveChangesAsync();
+
+        // Asignar rol por defecto
+        var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == dto.DefaultRole);
+        if (role != null)
+        {
+            _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateTime.UtcNow });
+            await _context.SaveChangesAsync();
+        }
+
+        await AddAuditLogAsync(adminUsername, user.IdUsuario, "REGISTRO_EXTERNO", $"Registro manual de evaluador externo.");
+        return true;
+    }
+
+    public async Task<List<AuditLogDto>> GetRecentAuditLogsAsync()
+    {
+        return await _context.Set<InvAuditAdmin>()
+            .Include(a => a.UserAdmin)
+            .Include(a => a.UserAfectado)
+            .OrderByDescending(a => a.Fecha)
+            .Take(50)
+            .Select(a => new AuditLogDto {
+                IdAudit = a.IdAudit,
+                AdminName = a.UserAdmin.Nombre,
+                TargetName = a.UserAfectado.Nombre,
+                Action = a.Accion,
+                Details = a.Detalle,
+                Date = a.Fecha
+            })
+            .ToListAsync();
+    }
+
+    private async Task AddAuditLogAsync(string? adminUsername, int affectedUserId, string action, string details)
+    {
+        if (string.IsNullOrEmpty(adminUsername)) return;
+
+        var admin = await _context.Users.FirstOrDefaultAsync(u => u.Usuario == adminUsername);
+        if (admin == null) return;
+
+        var audit = new InvAuditAdmin {
+            IdUsuarioAdmin = admin.IdUsuario,
+            IdUsuarioAfectado = affectedUserId,
+            Accion = action,
+            Detalle = details,
+            Fecha = DateTime.UtcNow
+        };
+
+        _context.Set<InvAuditAdmin>().Add(audit);
+        await _context.SaveChangesAsync();
     }
 }

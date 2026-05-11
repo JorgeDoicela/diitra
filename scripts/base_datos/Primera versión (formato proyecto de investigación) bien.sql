@@ -708,6 +708,9 @@ CREATE TABLE inv_usuarios_metadata (
     uuid                 VARCHAR(36)     NOT NULL UNIQUE,
     idUsuario            INT(11)      NOT NULL UNIQUE,
     orcidId              VARCHAR(20)  NULL,
+    scopusId             VARCHAR(30)  NULL,
+    googleScholarUrl     VARCHAR(255) NULL,
+    researchGateUrl      VARCHAR(255) NULL,
     especialidad         TEXT         NULL,
     gradoAcademicoMaximo VARCHAR(100) NULL,
     rutaFirmaP12         VARCHAR(255) NULL,
@@ -724,6 +727,18 @@ CREATE TRIGGER trg_usermeta_uuid
 BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
+
+CREATE TABLE inv_audit_admin (
+    idAudit              INT          AUTO_INCREMENT PRIMARY KEY,
+    idUsuarioAdmin       INT          NOT NULL,
+    idUsuarioAfectado    INT          NOT NULL,
+    accion               VARCHAR(100) NOT NULL, -- ASIGNAR_ROL, REVOCAR_ROL, ACTUALIZAR_METADATA, REGISTRO_EXTERNO
+    detalle              TEXT,
+    ipOrigen             VARCHAR(45),
+    fecha                TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUsuarioAdmin) REFERENCES usuarios(idUsuario) ON DELETE RESTRICT,
+    FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Auditoría de cambios administrativos en usuarios y roles';
 
 -- CIERRE DE SEGURIDAD PARA EL NÚCLEO V3
 SET FOREIGN_KEY_CHECKS = 1;
