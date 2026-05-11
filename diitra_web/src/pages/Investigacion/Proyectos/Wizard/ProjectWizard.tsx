@@ -258,10 +258,15 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <CoWorkField 
                                         name="TipoInvestigacion" 
                                         cowork={cowork} 
+                                        type="select"
                                         label="Tipo de Investigación" 
                                         onValueChange={(v) => setFormData(p => ({...p, TipoInvestigacion: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
-                                    />
+                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold"
+                                    >
+                                        <option value="Basica">BÁSICA</option>
+                                        <option value="Aplicada">APLICADA</option>
+                                        <option value="Experimental">DESARROLLO EXPERIMENTAL</option>
+                                    </CoWorkField>
                                 </div>
                             </div>
                         </div>
@@ -374,6 +379,41 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     />
                                 </div>
                             </div>
+                            <div className="space-y-6 p-6 bg-surface border border-border-thin rounded-2xl">
+                                <div className="flex justify-between items-center px-2">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-text-dim flex items-center gap-2"><Target size={14}/> Objetivos Específicos (Mín. 3)</h4>
+                                    <button onClick={() => addItem('ObjetivosEspecificos', '')} className="p-2 bg-text-main text-bg-deep rounded-lg hover:opacity-90"><Plus size={14}/></button>
+                                </div>
+                                <div className="space-y-3">
+                                    {formData.ObjetivosEspecificos.map((obj, i) => (
+                                        <div key={i} className="flex gap-4 items-start group">
+                                            <div className="mt-4 w-2 h-2 rounded-full bg-text-main/20 group-hover:bg-text-main transition-colors" />
+                                            <div className="flex-1">
+                                                <CoWorkField 
+                                                    name={`ObjEsp_${i}`} 
+                                                    cowork={cowork} 
+                                                    placeholder="Defina un objetivo específico..."
+                                                    onValueChange={(v) => {
+                                                        const newList = [...formData.ObjetivosEspecificos];
+                                                        newList[i] = v;
+                                                        setFormData(p => ({...p, ObjetivosEspecificos: newList}));
+                                                        
+                                                        // Sync to Y.Array
+                                                        if (coworkRef.current?.ydoc) {
+                                                            const yarray = coworkRef.current.ydoc.getArray('ObjetivosEspecificos');
+                                                            yarray.delete(i, 1);
+                                                            yarray.insert(i, [v]);
+                                                        }
+                                                    }}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
+                                                />
+                                            </div>
+                                            <button onClick={()=>removeItem('ObjetivosEspecificos', i)} className="mt-3 p-2 text-red-500 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={16}/></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-8">
                                 <CoWorkField 
                                     name="ObjetivoGeneral" 
