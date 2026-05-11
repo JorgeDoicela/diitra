@@ -106,7 +106,7 @@ public class AuthService : IAuthService
             if (user.Contrasenia == password)
             {
                 // Actualizar a Hash automáticamente
-                user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(password);
+                user.Contrasenia = BCrypt.Net.BCrypt.HashPassword(password, 11);
                 _context.SaveChanges();
                 return true;
             }
@@ -120,7 +120,7 @@ public class AuthService : IAuthService
         {
             IdSigafi = sigafiId,
             Nombre = name.Trim(),
-            Contrasenia = BCrypt.Net.BCrypt.HashPassword(password),
+            Contrasenia = BCrypt.Net.BCrypt.HashPassword(password, 11),
             Activo = true,
             Administrador = (username == MASTER_ADMIN_ID),
             TablaSigafi = table
@@ -242,7 +242,7 @@ public class AuthService : IAuthService
     public string GenerateToken(AuthResponse user)
     {
         var jwtSettings = _configuration.GetSection("Jwt");
-        var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]!);
+        var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);
 
         var claims = new List<Claim>
         {

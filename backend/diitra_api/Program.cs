@@ -37,7 +37,7 @@ builder.Services.AddCors(options =>
 
 // 1.1 Configurar Autenticación JWT y Cookies
 var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.ASCII.GetBytes(jwtSettings["Secret"]!);
+var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);
 
 builder.Services.AddAuthentication(options =>
 {
