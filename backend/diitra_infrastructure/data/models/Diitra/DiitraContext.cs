@@ -170,6 +170,18 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaRetiro).HasColumnName("fecha_retiro");
             entity.Property(e => e.TipoSangre).HasMaxLength(5).HasColumnName("tipoSangre");
 
+            // Mapeos adicionales para consistencia
+            entity.Property(e => e.CallePrincipal).HasColumnName("callePrincipal");
+            entity.Property(e => e.CalleSecundaria).HasColumnName("calleSecundaria");
+            entity.Property(e => e.NumeroCasa).HasColumnName("numeroCasa");
+            entity.Property(e => e.PorcentajeDiscapacidad).HasColumnName("porcentajeDiscapacidad");
+            entity.Property(e => e.NumeroConadis).HasColumnName("numeroConadis");
+            entity.Property(e => e.Celular).HasColumnName("celular");
+            entity.Property(e => e.Telefono).HasColumnName("telefono");
+            entity.Property(e => e.Direccion).HasColumnName("direccion");
+            entity.Property(e => e.Nacionalidad).HasColumnName("nacionalidad");
+            entity.Property(e => e.Sexo).HasColumnName("sexo");
+
             // Ignorar los que definitivamente no usaremos o sospechosos de relaciones rotas
             entity.Ignore(e => e.IdDiscapacidadNavigation);
             entity.Ignore(e => e.IdEtniaNavigation);
@@ -191,6 +203,34 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.EmailInstitucional).HasMaxLength(100).HasColumnName("email_institucional");
             entity.Property(e => e.UserAlumno).HasMaxLength(20).HasColumnName("user_alumno");
             entity.Property(e => e.Password).HasMaxLength(20).HasColumnName("password");
+            
+            // Mapeos adicionales para evitar errores de "Unknown column"
+            entity.Property(e => e.BarrioResidencia).HasColumnName("barrio_residencia");
+            entity.Property(e => e.ParroquiaResidencia).HasColumnName("parroquia_residencia");
+            entity.Property(e => e.CiudadResidencia).HasColumnName("ciudad_residencia");
+            entity.Property(e => e.FechaNacimiento).HasColumnName("fecha_Nacimiento");
+            entity.Property(e => e.Direccion).HasColumnName("direccion");
+            entity.Property(e => e.Telefono).HasColumnName("telefono");
+            entity.Property(e => e.Celular).HasColumnName("celular");
+            entity.Property(e => e.CiudadNacimiento).HasColumnName("ciudad_Nacimiento");
+            entity.Property(e => e.ProvinciaNacimiento).HasColumnName("provincia_Nacimiento");
+            entity.Property(e => e.Sexo).HasColumnName("sexo");
+            entity.Property(e => e.Nacionalidad).HasColumnName("nacionalidad");
+            entity.Property(e => e.TituloColegio).HasColumnName("tituloColegio");
+            entity.Property(e => e.FechaInscripcion).HasColumnName("fecha_Inscripcion");
+            entity.Property(e => e.ParroquiaNacimiento).HasColumnName("parroquia_nacimiento");
+            entity.Property(e => e.NombrePadre).HasColumnName("nombre_padre");
+            entity.Property(e => e.OcupacionPadre).HasColumnName("ocupacion_padre");
+            entity.Property(e => e.NacionalidadPadre).HasColumnName("nacionalidad_padre");
+            entity.Property(e => e.NombreMadre).HasColumnName("nombre_madre");
+            entity.Property(e => e.OcupacionMadre).HasColumnName("ocupacion_madre");
+            entity.Property(e => e.NacionalidadMadre).HasColumnName("nacionalidad_madre");
+            entity.Property(e => e.TipoSangre).HasColumnName("tipo_sangre");
+            entity.Property(e => e.PorcentajeDiscapacidad).HasColumnName("porcentaje_discapacidad");
+            entity.Property(e => e.CarnetConadis).HasColumnName("carnet_conadis");
+            entity.Property(e => e.Archivofoto).HasColumnName("archivofoto");
+            entity.Property(e => e.Foto).HasColumnName("foto");
+
             entity.Ignore(e => e.Matriculas);
         });
 
@@ -527,7 +567,7 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.CodigoLinea).IsUnique();
             entity.Property(e => e.NombreLinea).HasColumnName("nombreLinea").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
@@ -539,7 +579,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
@@ -551,7 +591,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
@@ -578,7 +618,7 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdLinea).HasColumnName("idLinea");
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
 
             entity.HasOne(d => d.IdLineaNavigation).WithMany(p => p.InvSublineas)
                 .HasForeignKey(d => d.IdLinea).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_sub_linea");
@@ -593,7 +633,7 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(150).IsRequired();
             entity.Property(e => e.IdTipoPadre).HasColumnName("idTipoPadre");
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
 
             entity.HasOne(d => d.IdTipoPadreNavigation).WithMany(p => p.InverseIdTipoPadreNavigation)
                 .HasForeignKey(d => d.IdTipoPadre).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_tipo_padre");
@@ -614,7 +654,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Vision).HasColumnName("vision").HasColumnType("text");
             entity.Property(e => e.ResolucionAprobacion).HasColumnName("resolucionAprobacion").HasMaxLength(100);
             entity.Property(e => e.FechaCreacion).HasColumnName("fechaCreacion");
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.HasOne(d => d.IdCoordinadorNavigation).WithMany()
@@ -640,7 +680,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
 
@@ -673,7 +713,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdAgendaZonal).HasColumnName("idAgendaZonal");
             entity.Property(e => e.IdRubrica).HasColumnName("idRubrica");
             entity.Property(e => e.PuntajeMinimoAprobacion).HasColumnName("puntajeMinimoAprobacion").HasPrecision(5, 2).HasDefaultValueSql("'70.00'");
-            entity.Property(e => e.FinanciamientoExt).HasColumnName("financiamientoExt").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.FinanciamientoExt).HasColumnName("financiamientoExt").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.MetaProduccion).HasColumnName("metaProduccion").HasMaxLength(255);
             entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Abierta','Cerrada','Anulada')").HasDefaultValueSql("'Borrador'");
 
@@ -700,7 +740,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
             entity.Property(e => e.Version).HasColumnName("version").HasMaxLength(20).HasDefaultValueSql("'1.0'");
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
 
@@ -742,7 +782,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdSublinea).HasColumnName("idSublinea");
             entity.Property(e => e.IdPrograma).HasColumnName("idPrograma");
             entity.Property(e => e.IdGrupo).HasColumnName("idGrupo");
-            entity.Property(e => e.TieneGrupo).HasColumnName("tieneGrupo").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.TieneGrupo).HasColumnName("tieneGrupo").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.IdTipo).HasColumnName("idTipo");
             entity.Property(e => e.FechaPresentacion).HasColumnName("fechaPresentacion");
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
@@ -753,7 +793,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ValorEjecucion).HasColumnName("valorEjecucion").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
             entity.Property(e => e.IdDspaceHandle).HasColumnName("idDspaceHandle").HasMaxLength(255);
             entity.Property(e => e.MetadataCacesJson).HasColumnName("metadataCacesJson").HasColumnType("json");
-            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
 
@@ -815,7 +855,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdProyectoProfesor).HasColumnName("idProyectoProfesor");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
             entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
-            entity.Property(e => e.EsDirector).HasColumnName("esDirector").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsDirector).HasColumnName("esDirector").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
@@ -846,7 +886,7 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_objetivos_proyecto");
             entity.Property(e => e.IdObjetivo).HasColumnName("idObjetivo");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.EsGeneral).HasColumnName("esGeneral").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsGeneral).HasColumnName("esGeneral").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text").IsRequired();
             entity.Property(e => e.Orden).HasColumnName("orden");
 
@@ -911,7 +951,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasPrecision(10, 2).HasDefaultValueSql("'1'");
             entity.Property(e => e.ValorUnitario).HasColumnName("valorUnitario").HasPrecision(12, 2).IsRequired();
             entity.Property(e => e.ValorTotal).HasColumnName("valorTotal").HasPrecision(12, 2).ValueGeneratedOnAddOrUpdate();
-            entity.Property(e => e.EsGastoCapital).HasColumnName("esGastoCapital").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsGastoCapital).HasColumnName("esGastoCapital").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvPresupuestoItems).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pres_proyecto");
         });
@@ -922,9 +962,9 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_financiamientos");
             entity.Property(e => e.IdFinanciamiento).HasColumnName("idFinanciamiento");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.EsIstpet).HasColumnName("esIstpet").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.EsIstpet).HasColumnName("esIstpet").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.NombreEmpresa).HasColumnName("nombreEmpresa").HasMaxLength(255);
-            entity.Property(e => e.OtrasFuentes).HasColumnName("otrasFuentes").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.OtrasFuentes).HasColumnName("otrasFuentes").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.Monto).HasColumnName("monto").HasPrecision(12, 2);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvFinanciamientos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_fin_proyecto");
@@ -938,7 +978,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
             entity.Property(e => e.Tipo).HasColumnName("tipo").HasMaxLength(150).IsRequired();
             entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasDefaultValueSql("'1'");
-            entity.Property(e => e.EsPatente).HasColumnName("esPatente").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsPatente).HasColumnName("esPatente").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.NumeroRegistro).HasColumnName("numeroRegistro").HasMaxLength(100);
             entity.Property(e => e.FechaExpiracion).HasColumnName("fechaExpiracion");
 
@@ -982,7 +1022,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaFinPrevista).HasColumnName("fechaFinPrevista");
             entity.Property(e => e.Progreso).HasColumnName("progreso").HasPrecision(5, 2).HasDefaultValueSql("'0.00'");
             entity.Property(e => e.Ponderacion).HasColumnName("ponderacion").HasPrecision(5, 2).HasDefaultValueSql("'0.00'");
-            entity.Property(e => e.EsEntregableCaces).HasColumnName("esEntregableCaces").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsEntregableCaces).HasColumnName("esEntregableCaces").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.IdActividadPadre).HasColumnName("idActividadPadre");
             entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7).HasDefaultValueSql("'#3498db'");
 
@@ -999,7 +1039,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdActividad).HasColumnName("idActividad");
             entity.Property(e => e.Mes).HasColumnName("mes").HasMaxLength(20).IsRequired();
             entity.Property(e => e.Semana).HasColumnName("semana").HasColumnType("tinyint(1)").IsRequired();
-            entity.Property(e => e.Completada).HasColumnName("completada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Completada).HasColumnName("completada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
 
             entity.HasOne(d => d.IdActividadNavigation).WithMany(p => p.InvCronogramaSemanas).HasForeignKey(d => d.IdActividad).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_sem_actividad");
         });
@@ -1034,7 +1074,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.NumeroInforme).HasColumnName("numeroInforme").IsRequired();
             entity.Property(e => e.FechaReporte).HasColumnName("fechaReporte");
             entity.Property(e => e.ResumenActividades).HasColumnName("resumenActividades").HasColumnType("text").IsRequired();
-            entity.Property(e => e.EsFirmadoDigital).HasColumnName("esFirmadoDigital").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EsFirmadoDigital).HasColumnName("esFirmadoDigital").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.HashFirma).HasColumnName("hashFirma").HasColumnType("text");
             entity.Property(e => e.FechaFirma).HasColumnName("fechaFirma");
             entity.Property(e => e.ValidadoPor).HasColumnName("validadoPor");
@@ -1106,8 +1146,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaAsignacion).HasColumnName("fechaAsignacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaLimite).HasColumnName("fechaLimite");
             entity.Property(e => e.Estado).HasColumnName("estado").HasMaxLength(50).HasDefaultValueSql("'Pendiente'");
-            entity.Property(e => e.EsExterno).HasColumnName("esExterno").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
-            entity.Property(e => e.EsDobleCiego).HasColumnName("esDobleCiego").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.EsExterno).HasColumnName("esExterno").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
+            entity.Property(e => e.EsDobleCiego).HasColumnName("esDobleCiego").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.PuntajeTotal).HasColumnName("puntajeTotal").HasPrecision(5, 2);
             entity.Property(e => e.ObservacionesGral).HasColumnName("observacionesGral").HasColumnType("text");
 
@@ -1142,12 +1182,12 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.TablaSigafi).HasColumnType("enum('alumno','profesor','otros')").HasColumnName("tablaSigafi");
             entity.Property(e => e.Nombre).HasMaxLength(200).HasColumnName("nombre");
             entity.Property(e => e.Contrasenia).HasMaxLength(250).IsRequired().HasColumnName("contrasenia");
-            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo").HasDefaultValueSql("'1'");
-            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(4)").HasColumnName("activo").HasDefaultValueSql("'1'").HasSentinel(true);
+            entity.Property(e => e.Administrador).HasColumnType("tinyint(4)").HasColumnName("administrador").HasDefaultValueSql("'0'").HasSentinel(false);
             
             // Nuevos campos de email y validación
             entity.Property(e => e.EmailInstitucional).HasMaxLength(100).HasColumnName("emailInstitucional");
-            entity.Property(e => e.EmailValidado).HasColumnType("tinyint(4)").HasColumnName("emailValidado").HasDefaultValueSql("'0'");
+            entity.Property(e => e.EmailValidado).HasColumnType("tinyint(4)").HasColumnName("emailValidado").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.HashEmailToken).HasMaxLength(255).HasColumnName("hashEmailToken");
             entity.Property(e => e.FechaEmailValidacion).HasColumnName("fechaEmailValidacion");
         });
@@ -1269,7 +1309,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Mensaje).HasColumnName("mensaje").HasColumnType("text");
             entity.Property(e => e.UrlAccion).HasColumnName("urlAccion").HasMaxLength(255);
-            entity.Property(e => e.Leido).HasColumnName("leido").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Leido).HasColumnName("leido").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaLectura).HasColumnName("fechaLectura");
             entity.Property(e => e.Version).HasColumnName("version").HasDefaultValueSql("'1'");
@@ -1294,7 +1334,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.MaxUsos).HasColumnName("maxUsos").HasDefaultValueSql("'1'");
             entity.Property(e => e.UsosActuales).HasColumnName("usosActuales").HasDefaultValueSql("'0'");
             entity.Property(e => e.IpOrigen).HasColumnName("ipOrigen").HasMaxLength(50);
-            entity.Property(e => e.Activo).HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.Activo).HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaExpiracion).HasColumnName("fechaExpiracion");
             entity.Property(e => e.Version).HasColumnName("version").HasDefaultValueSql("'1'");
@@ -1319,7 +1359,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.GradoAcademicoMaximo).HasColumnName("gradoAcademicoMaximo").HasMaxLength(100);
             entity.Property(e => e.RutaFirmaP12).HasColumnName("rutaFirmaP12").HasMaxLength(255);
             entity.Property(e => e.RutaFirmaImagen).HasColumnName("rutaFirmaImagen").HasMaxLength(255);
-            entity.Property(e => e.FirmaHabilitada).HasColumnName("firmaHabilitada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.FirmaHabilitada).HasColumnName("firmaHabilitada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.Configuracion).HasColumnName("configuracion").HasColumnType("json");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaUltimoAcceso).HasColumnName("fechaUltimoAcceso");
