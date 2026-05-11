@@ -1,38 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-    ClipboardList, Plus, Search, FileText, 
-    MoreVertical, ExternalLink, MessageCircle,
-    ArrowRight, Target, Users, DollarSign, Calendar, Filter
+    ClipboardList, Plus, FileText, 
+    ArrowRight, Target, Users, Calendar, Filter
 } from 'lucide-react';
-import api from '../../../api/axios_config';
 import ProjectWorkspace from './Wizard/ProjectWizard';
 import DocumentTray from '../DocumentWorkspace/DocumentTray';
 
-interface Proyecto {
-    uuid: string;
-    titulo: string;
-    estado: string;
-    codigo_institucional?: string;
-    fecha_registro: string;
-    puntaje_evaluacion?: number;
-}
-
 const ResearchProjectsPage = () => {
-    const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-    const [loading, setLoading] = useState(true);
-
     const [showWizard, setShowWizard] = useState(false);
 
     useEffect(() => {
         const fetchProyectos = async () => {
             try {
-                // Endpoint ficticio por ahora, el usuario debe implementarlo o yo lo haré luego
-                // const response = await api.get('/Projects/my-projects');
-                // setProyectos(response.data);
-                setLoading(false);
+                // Endpoint ficticio por ahora
             } catch (error) {
                 console.error('Error fetching projects:', error);
-                setLoading(false);
             }
         };
         fetchProyectos();
