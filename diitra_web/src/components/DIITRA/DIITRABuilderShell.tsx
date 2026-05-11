@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, BookOpen, Target, Upload, Shield } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, BookOpen, Target, Upload, Shield, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
+import { useAuth } from '../../api/AuthContext';
+import { useCoWork } from '../../core/cowork/hooks/useCoWork';
+import { coworkUserFromAuth } from '../../core/cowork/utils/coworkUserFromAuth';
+import type { CoWorkHandle } from '../../core/cowork/types';
+import type { CoWorkUser } from '../../core/cowork/types';
 
 /**
  * DIITRA BUILDER CORE - SHELL UNIVERSAL DE DOCUMENTACIÓN
@@ -35,7 +40,7 @@ interface DIITRABuilderShellProps {
     setFormData: React.Dispatch<React.SetStateAction<any>>;
     onSave?: (data: any) => Promise<void>;
     onClose: () => void;
-    children: (activeTab: string) => React.ReactNode;
+    children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
 }
 
 const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
@@ -49,6 +54,19 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     onClose,
     children
 }) => {
+    const { user } = useAuth();
+    
+    // Motor CoWork: Sincronización en tiempo real para todos los campos
+    const cowork = useCoWork({
+        documentId: `${formData.Uuid || 'temp'}_core`,
+        user: user ? coworkUserFromAuth({
+            userUuid: user.id_referencia,
+            nombreCompleto: user.nombre_completo,
+            role: user.role
+        }) : { id: 'guest', name: 'Invitado', role: 'Visitante', color: '#888', initials: 'IN' },
+        enabled: !!formData.Uuid
+    });
+
     const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -144,11 +162,43 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                     </div>
                     
                     <div className="flex items-center gap-8">
+                        {/* Indicadores de CoWork */}
+                        <div className="flex items-center gap-4 px-4 py-2 bg-bg-deep rounded-xl border border-border-thin">
+                            <div className="flex items-center gap-2 pr-4 border-r border-border-thin">
+                                {cowork.session.isConnected ? (
+                                    <>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                                        <span className="text-[9px] font-black text-green-500 uppercase tracking-widest">CoWork Online</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                        <span className="text-[9px] font-black text-red-500 uppercase tracking-widest">CoWork Offline</span>
+                                    </>
+                                )}
+                            </div>
+                            
+                            {cowork.session.connectedUsers.length > 0 && (
+                                <div className="flex -space-x-2">
+                                    {cowork.session.connectedUsers.map((u, i) => (
+                                        <div 
+                                            key={i} 
+                                            className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center text-[10px] font-black text-white shadow-lg cursor-help transition-transform hover:-translate-y-1"
+                                            style={{ backgroundColor: u.color }}
+                                            title={`${u.name} (${u.role})`}
+                                        >
+                                            {u.initials}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex flex-col items-end">
                             <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest mb-1">Estado de Sincronización</span>
                             <div className="flex items-center gap-2 text-[10px] text-text-main font-black uppercase">
-                                {isSaving ? (
-                                    <><Clock size={12} className="animate-spin"/> Guardando...</>
+                                {isSaving || cowork.session.isSyncing ? (
+                                    <><Clock size={12} className="animate-spin"/> Sincronizando...</>
                                 ) : (
                                     <><CheckCircle size={12} className="text-green-500"/> {lastSaved ? `Sincronizado ${lastSaved}` : 'Listo'}</>
                                 )}
@@ -226,7 +276,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         <p className="text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
                                         <div className="w-20 h-1.5 bg-text-main mt-6 rounded-full" />
                                     </div>
-                                    {children(activeTab)}
+                                    {children(activeTab, cowork)}
                                 </div>
                             </div>
                         ) : (
