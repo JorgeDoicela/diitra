@@ -219,9 +219,9 @@ public class AdminService : IAdminService
             role = new Role
             {
                 CodigoRol = roleCode,
-                Nombre = roleCode == "ADMIN_SIST" ? "Administrador de Sistema" :
-                         roleCode == "DOCENTE_IN" ? "Docente Investigador" :
-                         roleCode == "ESTUDIANTE" ? "Estudiante" : roleCode,
+                Nombre = roleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
+                         roleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
+                         roleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : roleCode,
                 EsActivo = true
             };
             _context.Roles.Add(role);
@@ -231,7 +231,7 @@ public class AdminService : IAdminService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idUsuario);
         if (user == null)
         {
-            if (userType == "ESTUDIANTE")
+            if (userType == "DIITRA_ESTUDIANTE" || userType == "ESTUDIANTE")
             {
                 var s = await _context.Alumnos.FirstOrDefaultAsync(a => a.IdAlumno == idUsuario);
                 if (s == null) return false;
