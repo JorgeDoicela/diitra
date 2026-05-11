@@ -323,7 +323,7 @@ public class AdminService : IAdminService
                 user = new User {
                     IdSigafi = idUsuario,
                     Nombre = fullNombre,
-                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame"),
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame", 11),
                     Activo = true,
                     TablaSigafi = "alumno"
                 };
@@ -336,7 +336,7 @@ public class AdminService : IAdminService
                 user = new User {
                     IdSigafi = idUsuario,
                     Nombre = fullNombre,
-                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame"),
+                    Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame", 11),
                     Activo = true,
                     TablaSigafi = "profesor"
                 };
@@ -391,7 +391,7 @@ public class AdminService : IAdminService
         var user = new User {
             IdSigafi = dto.Cedula,
             Nombre = dto.FullName,
-            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8)), // Temporal
+            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11), // Temporal
             Activo = true,
             TablaSigafi = "otros"
         };
