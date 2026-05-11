@@ -54,7 +54,7 @@ public class AdminController : ControllerBase
     {
         var admin = User.Identity?.Name;
         var roleIdentifier = !string.IsNullOrEmpty(request.RoleCode) ? request.RoleCode : request.RoleName;
-        
+
         if (string.IsNullOrEmpty(request.IdUsuario) || string.IsNullOrEmpty(roleIdentifier))
         {
             return BadRequest(new { message = "Datos incompletos" });
@@ -62,7 +62,7 @@ public class AdminController : ControllerBase
 
         var result = await _adminService.AssignRoleAsync(request.IdUsuario, roleIdentifier, request.UserType, admin);
         if (result) return Ok(new { message = "Rol asignado correctamente" });
-        
+
         return BadRequest(new { message = "Error al asignar rol" });
     }
 
@@ -79,7 +79,7 @@ public class AdminController : ControllerBase
 
         var result = await _adminService.RevokeRoleAsync(request.IdUsuario, roleIdentifier, request.UserType, admin);
         if (result) return Ok(new { message = "Rol revocado correctamente" });
-        
+
         return BadRequest(new { message = "Error al revocar rol" });
     }
 

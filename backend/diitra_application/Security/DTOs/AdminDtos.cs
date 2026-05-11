@@ -11,7 +11,7 @@ public class UserManagementDto
     public string Type { get; set; } = "DOCENTE"; // DOCENTE, ESTUDIANTE
     public List<string> Roles { get; set; } = new();
     public List<string> RoleCodes { get; set; } = new();
-    
+
     // Metadata resumida para la lista
     public string? OrcidId { get; set; }
     public bool FirmaHabilitada { get; set; }
