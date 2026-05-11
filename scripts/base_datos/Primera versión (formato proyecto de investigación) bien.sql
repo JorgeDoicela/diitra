@@ -714,6 +714,7 @@ CREATE TABLE inv_usuarios_metadata (
     especialidad         TEXT         NULL,
     gradoAcademicoMaximo VARCHAR(100) NULL,
     rutaFirmaP12         VARCHAR(255) NULL,
+    rutaFirmaImagen      VARCHAR(255) NULL,
     firmaHabilitada      TINYINT(1)   DEFAULT 0,
     configuracion        JSON         NULL,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
