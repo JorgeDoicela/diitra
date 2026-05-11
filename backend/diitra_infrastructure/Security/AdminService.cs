@@ -120,16 +120,11 @@ public class AdminService : IAdminService
                 .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
                 .ToListAsync();
 
-            // Obtener dedicación
-            var dedications = await _context.ProfesoresDedicacion
-                .Include(pd => pd.IdPeriodoNavigation)
-                .Where(pd => ids.Contains(pd.IdProfesor) && pd.IdPeriodo == periodId)
+            // Obtener dedicación desde la tabla de contratos activos
+            var activeContracts = await _context.Contratos
+                .Include(c => c.TipoContratoNavigation)
+                .Where(c => ids.Contains(c.IdProfesor) && c.EsActivo == 1)
                 .ToListAsync();
-
-            // El nombre de la dedicación se obtiene de otra tabla (Dedicacion), pero por simplicidad
-            // y basándonos en que ya tenemos los datos, mapearemos el ID o buscaremos la tabla
-            var dedIds = dedications.Select(d => d.IdDedicacionCategorias).Distinct().ToList();
-            var dedNames = await _context.Dedicaciones.Where(d => dedIds.Contains(d.IdDedicacionCategorias)).ToListAsync();
 
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
@@ -146,8 +141,8 @@ public class AdminService : IAdminService
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
                 
                 var hours = researchHours.FirstOrDefault(rh => rh.IdProfesor == p.IdProfesor.Trim())?.HorasSemana;
-                var dedId = dedications.FirstOrDefault(d => d.IdProfesor == p.IdProfesor.Trim())?.IdDedicacionCategorias;
-                var dedName = dedNames.FirstOrDefault(dn => dn.IdDedicacionCategorias == dedId)?.Dedicacion1;
+                var contract = activeContracts.FirstOrDefault(c => c.IdProfesor == p.IdProfesor.Trim());
+                var dedName = contract?.TipoContratoNavigation?.Nombre ?? "Sin contrato";
 
                 return new UserManagementDto
                 {
