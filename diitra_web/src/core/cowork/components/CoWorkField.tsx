@@ -47,16 +47,14 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
 
         // Sincronización Inicial: solo actualizamos local si Yjs tiene algo diferente
         const initialVal = ytext.toString();
-        if (initialVal) {
+        if (initialVal && initialVal !== 'undefined') {
             const parsed = type === 'checkbox' ? initialVal === 'true' : initialVal;
-            setLocalValue(prev => {
-                // Evitamos llamar onValueChange si el valor es idéntico
-                if (prev !== parsed) {
-                    console.log(`[CoWorkField:${name}] initial sync different, calling onValueChange`);
-                    onValueChangeRef.current?.(parsed);
-                }
-                return parsed;
-            });
+            // Solo sincronizamos si el valor local inicial (vacío) es diferente al del ydoc
+            if (localValue !== parsed) {
+                console.log(`[CoWorkField:${name}] Sincronización inicial detectada.`);
+                setLocalValue(parsed);
+                onValueChangeRef.current?.(parsed);
+            }
         }
 
         const observer = (event: Y.YTextEvent) => {
