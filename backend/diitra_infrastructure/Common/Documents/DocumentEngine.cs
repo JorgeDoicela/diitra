@@ -118,14 +118,23 @@ namespace Diitra.Infrastructure.Common.Documents
                 // 6. Sello de Integridad (SHA-256)
                 var fileHash = CalculateHash(pdfBytes);
 
-                // 7. Auditoría
+                // 7. Auditoría Forense (Resiliencia CACES 2026)
                 var fileName = $"DIITRA_{template.Code}_v{template.Version}_{DateTime.Now:yyyyMMdd-HHmm}.pdf";
                 try 
                 {
                     string? snapshot = null;
+                    bool requiresSnapshot = template.Category is DocumentCategory.Protocolo 
+                                            or DocumentCategory.ActaAprobacion 
+                                            or DocumentCategory.InformeAvance 
+                                            or DocumentCategory.InformeFinal;
+
                     if (request.Data != null)
                     {
                         snapshot = System.Text.Json.JsonSerializer.Serialize(request.Data);
+                    }
+                    else if (requiresSnapshot)
+                    {
+                        _logger.LogWarning("DIITRA Forensic: Se intenta generar [{Code}] sin datos de origen. El snapshot será nulo, comprometiendo la resiliencia.", template.Code);
                     }
 
                     var auditEntry = DocumentAuditEntry.Create(
@@ -134,8 +143,13 @@ namespace Diitra.Infrastructure.Common.Documents
                         request.ProjectUuid, request.EntityUuid, fileHash, snapshot);
 
                     await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
+                    
+                    if (snapshot != null)
+                    {
+                        _logger.LogInformation("DIITRA Forensic: Snapshot inyectado para [{Code}]. Integridad vinculada a Hash {Hash}.", template.Code, fileHash);
+                    }
                 }
-                catch (Exception ex) { _logger.LogError(ex, "DIITRA DocumentEngine: Error en auditoría."); }
+                catch (Exception ex) { _logger.LogError(ex, "DIITRA DocumentEngine: Error crítico en el log de auditoría forense."); }
 
                 return new DocumentResult
                 {
