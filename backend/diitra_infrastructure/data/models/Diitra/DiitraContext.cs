@@ -57,6 +57,8 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvGasto>              InvGastos              { get; set; }
     public virtual DbSet<InvTransferencia>      InvTransferencias      { get; set; }
     public virtual DbSet<InvTrazabilidadProyecto> InvTrazabilidadProyectos { get; set; }
+    public virtual DbSet<InvConfigWorkflow> InvConfigWorkflows { get; set; }
+    public virtual DbSet<InvDocumentAudit> InvDocumentAudits { get; set; }
     public virtual DbSet<InvRevisionesPares>      InvRevisionesPares      { get; set; }
     public virtual DbSet<InvEvaluacionesDetalle>  InvEvaluacionesDetalle  { get; set; }
     public virtual DbSet<InvPndObjetivo>               InvPndObjetivos              { get; set; }
@@ -1569,6 +1571,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.WasBlindMode).HasColumnName("was_blind_mode").IsRequired();
             entity.Property(e => e.FileName).HasColumnName("file_name").HasMaxLength(255).IsRequired();
             entity.Property(e => e.FileHash).HasColumnName("file_hash").HasMaxLength(100);
+            entity.Property(e => e.DataSnapshotJson).HasColumnName("data_snapshot_json").HasColumnType("longtext");
         });
 
         // --- DIITRA CoWork Tables ---
@@ -1761,6 +1764,22 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Orden).HasColumnName("orden").HasDefaultValueSql("'0'");
 
             entity.HasOne(d => d.IdRubricaNavigation).WithMany(p => p.InvRubricaCriterios).HasForeignKey(d => d.IdRubrica).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_crit_rubrica");
+        });
+
+        modelBuilder.Entity<InvConfigWorkflow>(entity =>
+        {
+            entity.HasKey(e => e.IdWorkflow).HasName("PRIMARY");
+            entity.ToTable("inv_config_workflow");
+            entity.Property(e => e.EstadoOrigen).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.EstadoDestino).HasMaxLength(50).IsRequired();
+        });
+
+        modelBuilder.Entity<InvDocumentAudit>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+            entity.ToTable("inv_document_audit");
+            entity.Property(e => e.TraceabilityCode).HasColumnName("traceability_code").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.DataSnapshotJson).HasColumnName("data_snapshot_json").HasColumnType("longtext");
         });
 
         OnModelCreatingPartial(modelBuilder);

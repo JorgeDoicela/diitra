@@ -43,18 +43,17 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         RecursosDisponibles: [] as any[],
         RecursosNecesarios: [] as any[],
         CostoTotal: 0,
-        FinanciamientoIstpet: true,
-        FinanciamientoOtras: false,
-        FinanciamientoNombres: '',
         ProductosEsperados: [] as any[],
-        ImpactoSocial: false, ImpactoSocialDesc: '',
-        ImpactoCientifico: false, ImpactoCientificoDesc: '',
-        ImpactoEconomico: false, ImpactoEconomicoDesc: '',
-        ImpactoPolitico: false, ImpactoPoliticoDesc: '',
-        ImpactoAmbiental: false, ImpactoAmbientalDesc: '',
-        ImpactoOtro: false, ImpactoOtroDesc: '',
+        Impacto: {
+            Social: '',
+            Cientifico: '',
+            Economico: '',
+            Politico: '',
+            Ambiental: '',
+            Otro: ''
+        },
         Cronograma: [] as any[],
-        Bibliografia: '',
+        Bibliografia: [] as string[],
         NombreCoordinadorFirma: '',
         IdConvocatoria: 0,
         IdObjetivoPnd: 0,
@@ -185,7 +184,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         ];
 
         return () => cleanups.forEach(c => c?.());
-    }, [formData.Uuid]); // Re-sync when document ID changes
+    }, [formData.Uuid, coworkRef.current?.ydoc]); // Sincronización robusta
 
     const sections = [
         { id: 'general', label: '01. Identificación', icon: <BookOpen size={16} /> },
@@ -203,7 +202,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
     return (
         <DIITRABuilderShell
             title="1. Formato Proyecto de Investigación"
-            subtitle="Protocolo Oficial ISTPET v14.0 - FIDELIDAD ABSOLUTA"
+            subtitle="Protocolo Oficial ISTPET v14.0 - RESILIENCIA CACES 2026"
             templateCode="PROTOCOLO_INVESTIGACION"
             sections={sections}
             formData={formData}
@@ -215,6 +214,14 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                 coworkRef.current = cowork;
                 return (
                     <div className="space-y-8 pb-10">
+                        {/* Indicador de Resiliencia Normativa */}
+                        <div className="mx-4 mb-2 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-500/80">Estándar de Calidad CACES 2026 Activo</span>
+                            </div>
+                            <span className="text-[9px] font-bold text-text-dim/50 italic">DIITRA Legal-Tech Engine v4.2</span>
+                        </div>
                         {activeTab === 'general' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="col-span-2 p-8 bg-surface border border-border-thin rounded-3xl space-y-6 shadow-sm">
@@ -405,10 +412,10 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                         <div className="space-y-6">
                             <div className="flex justify-between items-center px-2">
                                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Users size={18}/> 2. Investigadores (Docentes y Estudiantes)</h4>
-                                <button onClick={() => addItem('Investigadores', { nombre: '', cedula: '', email: '', telefono: '', nivel: '', rol: 'Docente' })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-90 shadow-lg"><Plus size={16}/> Añadir Investigador</button>
+                                <button onClick={() => addItem('Investigadores', { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: 'Investigador' })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-90 shadow-lg"><Plus size={16}/> Añadir Investigador</button>
                             </div>
                             <div className="space-y-4">
-                                {formData.Investigadores.map((_inv, idx) => (
+                                {formData.Investigadores.map((inv, idx) => (
                                     <div key={idx} className="p-8 bg-surface border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
                                         <button onClick={()=>removeItem('Investigadores', idx)} className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full"><Trash2 size={18}/></button>
                                         <div className="grid grid-cols-12 gap-6">
@@ -417,7 +424,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                     name={`Inv_${idx}_nombre`} 
                                                     cowork={cowork} 
                                                     label="Nombre y Apellidos Completos"
-                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'nombre', v)}
+                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'Nombre', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold"
                                                 />
                                             </div>
@@ -426,7 +433,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                     name={`Inv_${idx}_cedula`} 
                                                     cowork={cowork} 
                                                     label="N.° Cédula"
-                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'cedula', v)}
+                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'Cedula', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
@@ -435,7 +442,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                     name={`Inv_${idx}_email`} 
                                                     cowork={cowork} 
                                                     label="Email Institucional"
-                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'email', v)}
+                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'Email', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
@@ -444,7 +451,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                     name={`Inv_${idx}_telefono`} 
                                                     cowork={cowork} 
                                                     label="Teléfono de Contacto"
-                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'telefono', v)}
+                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'Telefono', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
@@ -453,7 +460,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                     name={`Inv_${idx}_nivel`} 
                                                     cowork={cowork} 
                                                     label="Nivel Académico (Título Senescyt)"
-                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'nivel', v)}
+                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'NivelAcademico', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                     placeholder="Ej: Magíster en..."
                                                 />
@@ -463,7 +470,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                     name={`Inv_${idx}_rol`} 
                                                     cowork={cowork} 
                                                     label="Rol en el ISTPET"
-                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'rol', v)}
+                                                    onValueChange={(v) => updateItem('Investigadores', idx, 'Rol', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
@@ -684,7 +691,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <div className="p-6 bg-surface border border-border-thin rounded-2xl">
                                         <div className="flex justify-between items-center mb-6">
                                             <p className="text-[10px] font-black uppercase text-text-dim">4.1 Recursos Disponibles</p>
-                                            <button onClick={() => addItem('RecursosDisponibles', { descripcion: '', cantidad: 1, fuente: 'Instituto' })} className="p-2 bg-text-main text-bg-deep rounded-lg"><Plus size={14}/></button>
+                                            <button onClick={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: 1, Fuente: 'Instituto' })} className="p-2 bg-text-main text-bg-deep rounded-lg"><Plus size={14}/></button>
                                         </div>
                                         <div className="space-y-3">
                                             {formData.RecursosDisponibles.map((_r, i) => (
@@ -693,14 +700,14 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                         name={`RecDisp_${i}_desc`} 
                                                         cowork={cowork} 
                                                         placeholder="Descripción..."
-                                                        onValueChange={(v) => updateItem('RecursosDisponibles', i, 'descripcion', v)}
+                                                        onValueChange={(v) => updateItem('RecursosDisponibles', i, 'Descripcion', v)}
                                                         className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
                                                     />
                                                     <div className="w-16">
                                                         <CoWorkField 
                                                             name={`RecDisp_${i}_cant`} 
                                                             cowork={cowork} 
-                                                            onValueChange={(v) => updateItem('RecursosDisponibles', i, 'cantidad', v)}
+                                                            onValueChange={(v) => updateItem('RecursosDisponibles', i, 'Cantidad', v)}
                                                             className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center" 
                                                         />
                                                     </div>
@@ -712,7 +719,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <div className="p-6 bg-surface border border-border-thin rounded-2xl">
                                         <div className="flex justify-between items-center mb-6">
                                             <p className="text-[10px] font-black uppercase text-text-dim">4.2 Recursos Necesarios (Gasto)</p>
-                                            <button onClick={() => addItem('RecursosNecesarios', { descripcion: '', cantidad: 1, unitario: 0, total: 0 })} className="p-2 bg-text-main text-bg-deep rounded-lg"><Plus size={14}/></button>
+                                            <button onClick={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: 1, CostoUnitario: 0, CostoTotal: 0 })} className="p-2 bg-text-main text-bg-deep rounded-lg"><Plus size={14}/></button>
                                         </div>
                                         <div className="space-y-3">
                                             {formData.RecursosNecesarios.map((r, i) => (
@@ -721,7 +728,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                         name={`RecNec_${i}_desc`} 
                                                         cowork={cowork} 
                                                         placeholder="Rubro..."
-                                                        onValueChange={(v) => updateItem('RecursosNecesarios', i, 'descripcion', v)}
+                                                        onValueChange={(v) => updateItem('RecursosNecesarios', i, 'Descripcion', v)}
                                                         className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
                                                     />
                                                     <div className="w-24">
@@ -730,8 +737,8 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                             cowork={cowork} 
                                                             onValueChange={(v) => {
                                                                 const u = parseFloat(v);
-                                                                updateItem('RecursosNecesarios', i, 'unitario', u);
-                                                                updateItem('RecursosNecesarios', i, 'total', r.cantidad * u);
+                                                                updateItem('RecursosNecesarios', i, 'CostoUnitario', u);
+                                                                updateItem('RecursosNecesarios', i, 'CostoTotal', (r.Cantidad || 1) * u);
                                                             }}
                                                             className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-right" 
                                                             placeholder="$ 0.00"
@@ -790,20 +797,15 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 <div className="grid grid-cols-1 gap-3">
                                     {['Social', 'Cientifico', 'Economico', 'Politico', 'Ambiental', 'Otro'].map((tipo) => (
                                         <div key={tipo} className="p-5 bg-surface border border-border-thin rounded-2xl flex gap-6 items-center">
-                                            <div className="flex items-center gap-3 w-32">
-                                                <CoWorkField 
-                                                    name={`Impacto${tipo}`} 
-                                                    cowork={cowork} 
-                                                    type="checkbox" 
-                                                    label={tipo}
-                                                    onValueChange={(v) => setFormData(p => ({...p, [`Impacto${tipo}`]: v}))}
-                                                />
-                                            </div>
+                                            <div className="w-32 text-[10px] font-black uppercase text-text-main">{tipo}</div>
                                             <CoWorkField 
-                                                name={`Impacto${tipo}Desc`} 
+                                                name={`Impacto_${tipo}`} 
                                                 cowork={cowork} 
-                                                placeholder="Descripción breve del impacto..."
-                                                onValueChange={(v) => setFormData(p => ({...p, [`Impacto${tipo}Desc`]: v}))}
+                                                placeholder={`Describa el impacto ${tipo.toLowerCase()} del proyecto...`}
+                                                onValueChange={(v) => setFormData(p => ({
+                                                    ...p, 
+                                                    Impacto: { ...p.Impacto, [tipo.replace('Cientifico', 'Cientifico')]: v }
+                                                }))}
                                                 className="flex-1 bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-xs" 
                                             />
                                         </div>
@@ -817,7 +819,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                         <div className="space-y-8">
                             <div className="flex justify-between items-center px-2">
                                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Calendar size={18}/> 7. Cronograma de Actividades</h4>
-                                <button onClick={() => addItem('Cronograma', { actividad: '', mes: 'Mes 1', recursos: '' })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest">+ Nueva Actividad</button>
+                                <button onClick={() => addItem('Cronograma', { Actividad: '', Numero: formData.Cronograma.length + 1, RecursosNecesarios: '', Ponderacion: 0, EsEntregableCaces: false, Semanas: Array(24).fill(false) })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest">+ Nueva Actividad</button>
                             </div>
                             <div className="space-y-4">
                                 {formData.Cronograma.map((_c, i) => (
@@ -827,16 +829,16 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                 name={`Cron_${i}_act`} 
                                                 cowork={cowork} 
                                                 label="Actividad"
-                                                onValueChange={(v) => updateItem('Cronograma', i, 'actividad', v)}
+                                                onValueChange={(v) => updateItem('Cronograma', i, 'Actividad', v)}
                                                 className="w-full bg-bg-deep border border-border-thin rounded-lg px-4 py-2.5 text-xs font-bold"
                                             />
                                         </div>
-                                        <div className="w-40">
+                                        <div className="w-24">
                                             <CoWorkField 
-                                                name={`Cron_${i}_mes`} 
+                                                name={`Cron_${i}_num`} 
                                                 cowork={cowork} 
-                                                label="Mes"
-                                                onValueChange={(v) => updateItem('Cronograma', i, 'mes', v)}
+                                                label="Orden"
+                                                onValueChange={(v) => updateItem('Cronograma', i, 'Numero', parseInt(v))}
                                                 className="w-full bg-bg-deep border border-border-thin rounded-lg px-4 py-2.5 text-xs"
                                             />
                                         </div>
@@ -845,11 +847,39 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                 name={`Cron_${i}_rec`} 
                                                 cowork={cowork} 
                                                 label="Recursos"
-                                                onValueChange={(v) => updateItem('Cronograma', i, 'recursos', v)}
+                                                onValueChange={(v) => updateItem('Cronograma', i, 'RecursosNecesarios', v)}
                                                 className="w-full bg-bg-deep border border-border-thin rounded-lg px-4 py-2.5 text-xs"
                                             />
                                         </div>
                                         <button onClick={()=>removeItem('Cronograma', i)} className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-lg"><Trash2 size={16}/></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        
+                        <div className="mt-12 p-8 bg-surface border border-border-thin rounded-3xl space-y-6">
+                            <div className="flex justify-between items-center">
+                                <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><BookOpen size={18}/> 8. Bibliografía (APA 7ma Ed.)</h4>
+                                <button onClick={() => addItem('Bibliografia', '')} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest">+ Añadir Referencia</button>
+                            </div>
+                            <div className="space-y-3">
+                                {formData.Bibliografia.map((_b, i) => (
+                                    <div key={i} className="flex gap-4 items-center">
+                                        <CoWorkField 
+                                            name={`Bib_${i}`} 
+                                            cowork={cowork} 
+                                            placeholder="Apellido, A. (Año). Título del libro. Editorial."
+                                            onValueChange={(v) => {
+                                                const newBib = [...formData.Bibliografia];
+                                                newBib[i] = v;
+                                                setFormData(p => ({ ...p, Bibliografia: newBib }));
+                                            }}
+                                            className="flex-1 bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs italic" 
+                                        />
+                                        <button onClick={()=> {
+                                            const newBib = formData.Bibliografia.filter((_, idx) => idx !== i);
+                                            setFormData(p => ({ ...p, Bibliografia: newBib }));
+                                        }} className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-lg"><Trash2 size={16}/></button>
                                     </div>
                                 ))}
                             </div>

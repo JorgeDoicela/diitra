@@ -1062,6 +1062,7 @@ CREATE TABLE inv_document_audit (
     was_blind_mode          TINYINT(1)    NOT NULL DEFAULT 0,
     file_name               VARCHAR(255)  NOT NULL,
     file_hash               VARCHAR(100)  NULL COMMENT 'Hash SHA-256 para verificación de integridad',
+    data_snapshot_json      LONGTEXT      NULL COMMENT 'Snapshot forense de los datos inyectados (Resiliencia CACES 2026)',
     INDEX idx_entity (entity_uuid),
     INDEX idx_trace (traceability_code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1118,3 +1119,25 @@ CREATE TABLE inv_cowork_updates (
     INDEX idx_doc_upd (documentoUuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='DIITRA CoWork — Historial de cambios para sincronización en tiempo real';
+-- =============================================================================
+-- SECCIÓN: DIITRA Workflow Engine — Configuración de Estados
+-- =============================================================================
+
+CREATE TABLE inv_config_workflow (
+    idWorkflow           INT           AUTO_INCREMENT PRIMARY KEY,
+    idTipoProyecto       INT           NULL,
+    estadoOrigen         VARCHAR(50)   NOT NULL,
+    estadoDestino        VARCHAR(50)   NOT NULL,
+    rolRequerido         VARCHAR(100)  NULL,
+    requiereObservacion  TINYINT(1)    NOT NULL DEFAULT 1,
+    activo               TINYINT(1)    NOT NULL DEFAULT 1,
+    CONSTRAINT fk_workflow_tipo FOREIGN KEY (idTipoProyecto) REFERENCES inv_tipos_investigacion(idTipo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO inv_config_workflow (estadoOrigen, estadoDestino, requiereObservacion) VALUES
+('Borrador',      'Enviado',      0),
+('Enviado',       'En Revisión',  1),
+('En Revisión',   'Aprobado',     1),
+('En Revisión',   'Rechazado',    1),
+('En Revisión',   'En Corrección', 1),
+('En Corrección', 'Enviado',      0);

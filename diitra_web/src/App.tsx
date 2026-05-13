@@ -11,6 +11,7 @@ import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjec
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
+import VerifyDocument from './pages/Public/VerifyDocument';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -62,6 +63,8 @@ function App() {
           {/* Public Landing Page */}
           <Route path="/" element={<Landing currentTheme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/login" element={<Login currentTheme={theme} />} />
+          <Route path="/verify/:code" element={<VerifyDocument />} />
+          <Route path="/verify" element={<VerifyDocument />} />
           
           {/* Internal Pages with Layout */}
           <Route path="/dashboard" element={
