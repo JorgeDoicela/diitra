@@ -21,22 +21,6 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         error: null,
     });
 
-    // DEBUG: rastrear qué cambia en session
-    const prevSessionRef = useRef(session);
-    useEffect(() => {
-        const prev = prevSessionRef.current;
-        const changes = [];
-        if (prev.isConnected !== session.isConnected) changes.push(`isConnected: ${prev.isConnected} → ${session.isConnected}`);
-        if (prev.connectedUsers.length !== session.connectedUsers.length) changes.push(`users: ${prev.connectedUsers.length} → ${session.connectedUsers.length}`);
-        if (prev.isSyncing !== session.isSyncing) changes.push(`isSyncing: ${prev.isSyncing} → ${session.isSyncing}`);
-        if (prev.lastSyncedAt?.toISOString() !== session.lastSyncedAt?.toISOString()) changes.push(`lastSyncedAt changed`);
-        if (prev.readOnly !== session.readOnly) changes.push(`readOnly: ${prev.readOnly} → ${session.readOnly}`);
-        if (changes.length > 0) {
-            console.log('[useCoWork] SESSION CHANGE:', changes.join(' | '));
-        }
-        prevSessionRef.current = session;
-    });
-
     // 2. Referencias persistentes
     const ydocRef = useRef<Y.Doc | null>(null);
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
