@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, BookOpen, Target, Upload, Shield, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { useCoWork } from '../../core/cowork/hooks/useCoWork';
 import { coworkUserFromAuth } from '../../core/cowork/utils/coworkUserFromAuth';
 import type { CoWorkHandle } from '../../core/cowork/types';
-import type { CoWorkUser } from '../../core/cowork/types';
 
 /**
  * DIITRA BUILDER CORE - SHELL UNIVERSAL DE DOCUMENTACIÓN
@@ -49,7 +48,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     templateCode,
     sections,
     formData,
-    setFormData,
     onSave,
     onClose,
     children
