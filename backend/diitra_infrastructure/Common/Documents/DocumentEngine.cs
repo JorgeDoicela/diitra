@@ -122,10 +122,16 @@ namespace Diitra.Infrastructure.Common.Documents
                 var fileName = $"DIITRA_{template.Code}_v{template.Version}_{DateTime.Now:yyyyMMdd-HHmm}.pdf";
                 try 
                 {
+                    string? snapshot = null;
+                    if (request.Data != null)
+                    {
+                        snapshot = System.Text.Json.JsonSerializer.Serialize(request.Data);
+                    }
+
                     var auditEntry = DocumentAuditEntry.Create(
                         traceabilityCode, template.Code, template.Version, template.Category,
                         request.RequestedBy ?? "sistema", request.IsBlindMode, fileName,
-                        request.ProjectUuid, request.EntityUuid, fileHash);
+                        request.ProjectUuid, request.EntityUuid, fileHash, snapshot);
 
                     await _auditRepository.RegisterEmissionAsync(auditEntry, cancellationToken);
                 }

@@ -11,6 +11,12 @@ namespace Diitra.Application.Research.Dtos
         public int? IdConvocatoria { get; set; }
         public int? IdObjetivoPnd { get; set; }
 
+        // --- Núcleo de Innovación y Vinculación 2026 ---
+        public int? IdEntidadAliada { get; set; }
+        public int? TrlInicial { get; set; } = 1;
+        public int? TrlActual { get; set; } = 1;
+        public int? TrlMeta { get; set; } = 1;
+
         // ─────────────────────────────────────────────────────────────────────────
         // SECCIÓN 1: IDENTIFICACIÓN DEL PROYECTO (Formato oficial SENESCYT/ISTPET)
         // ─────────────────────────────────────────────────────────────────────────

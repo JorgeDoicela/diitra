@@ -133,6 +133,40 @@ CREATE TABLE inv_tipos_investigacion (
     idTipoPadre   INT          NULL,
     activo        TINYINT(1)   DEFAULT 1,
     FOREIGN KEY (idTipoPadre) REFERENCES inv_tipos_investigacion(idTipo) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo SENESCYT: Básica, Aplicada, Experimental';
+
+-- NÚCLEO PROFESIONAL: CATÁLOGO DE PRODUCTOS (Investigación + Innovación)
+CREATE TABLE inv_cat_tipo_producto (
+    idTipoProducto   INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)     NOT NULL UNIQUE,
+    nombre           VARCHAR(100) NOT NULL,
+    categoria        ENUM('Académico', 'Tecnológico', 'Innovación', 'Transferencia') NOT NULL,
+    requiereRegistro TINYINT(1)   DEFAULT 0 COMMENT 'Si requiere SENADI / SENESCYT',
+    activo           TINYINT(1)   DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- NÚCLEO PROFESIONAL: CATÁLOGO DE EVIDENCIAS
+CREATE TABLE inv_cat_tipo_evidencia (
+    idTipoEvidencia  INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)     NOT NULL UNIQUE,
+    nombre           VARCHAR(100) NOT NULL,
+    descripcion      VARCHAR(255),
+    extensiones      VARCHAR(50)  DEFAULT 'pdf,jpg,png,zip',
+    activo           TINYINT(1)   DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- NÚCLEO PROFESIONAL: ENTIDADES EXTERNAS (Empresas y Aliados)
+CREATE TABLE inv_entidades_externas (
+    idEntidad        INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)     NOT NULL UNIQUE,
+    ruc              VARCHAR(13)  UNIQUE,
+    razonSocial      VARCHAR(255) NOT NULL,
+    tipo             ENUM('Pública', 'Privada', 'ONG', 'Académica') DEFAULT 'Privada',
+    sector           VARCHAR(100) COMMENT 'Ej: Software, Manufactura, Agrícola',
+    contactoNombre   VARCHAR(150),
+    contactoEmail    VARCHAR(150),
+    activo           TINYINT(1)   DEFAULT 1,
+    fechaRegistro    TIMESTAMP    DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_grupos_investigacion (
@@ -220,6 +254,17 @@ CREATE TABLE inv_rubricas (
     version      VARCHAR(20)  DEFAULT '1.0',
     activo       TINYINT(1)   DEFAULT 1,
     fechaRegistro TIMESTAMP   DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- NÚCLEO PROFESIONAL: CRITERIOS DE RÚBRICA (Configuración Dinámica)
+CREATE TABLE inv_rubrica_criterios (
+    idCriterio    INT           AUTO_INCREMENT PRIMARY KEY,
+    idRubrica     INT           NOT NULL,
+    nombre        VARCHAR(255)  NOT NULL,
+    descripcion   TEXT,
+    pesoPorcentaje DECIMAL(5,2) NOT NULL COMMENT 'Ej: 20.00 para 20%',
+    orden         INT           DEFAULT 0,
+    FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO inv_rubricas (nombre, descripcion) VALUES
@@ -316,12 +361,21 @@ CREATE TABLE inv_proyectos (
     activo                TINYINT(1)    DEFAULT 1,
     fechaRegistro         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     fechaModificacion     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- NÚCLEO DE INNOVACIÓN Y VINCULACIÓN PRODUCTIVA
+    idEntidadAliada      INT           NULL COMMENT 'Empresa o Institución Co-ejecutora',
+    trlInicial           TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Inicial (1-9)',
+    trlActual            TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Actual (1-9)',
+    trlMeta              TINYINT       NULL COMMENT 'Technology Readiness Level esperado al finalizar',
+    
     FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria),
     FOREIGN KEY (idSublinea)     REFERENCES inv_sublineas(idSublinea),
     FOREIGN KEY (idPrograma)     REFERENCES inv_programas(idPrograma),
     FOREIGN KEY (idGrupo)        REFERENCES inv_grupos_investigacion(idGrupo),
     FOREIGN KEY (idTipo)         REFERENCES inv_tipos_investigacion(idTipo),
     FOREIGN KEY (idObjetivoPnd)  REFERENCES inv_pnd_objetivos(idObjetivoPnd),
+    FOREIGN KEY (idEntidadAliada) REFERENCES inv_entidades_externas(idEntidad),
+
     -- Extensiones Enterprise CACES / SENESCYT
     hashActaAprobacion   TEXT NULL,
     fechaAprobacion      TIMESTAMP NULL,
@@ -492,13 +546,17 @@ CREATE TABLE inv_financiamientos (
 CREATE TABLE inv_productos (
     idProducto    INT          AUTO_INCREMENT PRIMARY KEY,
     idProyecto    INT          NOT NULL,
-    tipo          VARCHAR(255) NOT NULL,
+    idTipoProducto INT         NOT NULL,
+    titulo        VARCHAR(500) NOT NULL,
     cantidad      INT          NOT NULL DEFAULT 1,
+    urlProducto   VARCHAR(512),
     -- Campos para Propiedad Intelectual (SENADI)
-    esPatente     TINYINT(1)   DEFAULT 0,
+    esPropiedadIntelectual TINYINT(1) DEFAULT 0,
     numeroRegistro VARCHAR(100),
-    fechaExpiracion DATE,
-    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE
+    fechaRegistroSenadi DATE,
+    metadataJson  JSON         NULL COMMENT 'Metadatos específicos según tipo (ISSN, ISBN, PatentID)',
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
+    FOREIGN KEY (idTipoProducto) REFERENCES inv_cat_tipo_producto(idTipoProducto)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_cat_impactos (
@@ -592,11 +650,13 @@ CREATE TABLE inv_evidencias (
     idEvidencia    INT           AUTO_INCREMENT PRIMARY KEY,
     uuid           VARCHAR(36)      NOT NULL UNIQUE,
     idInforme      INT           NOT NULL,
-    tipo           ENUM('Imagen','Documento','Factura','Asistencia','Otros') DEFAULT 'Imagen',
+    idTipoEvidencia INT          NOT NULL,
     descripcion    VARCHAR(255),
     rutaArchivo    VARCHAR(512)  NOT NULL,
+    metadataJson   JSON          NULL COMMENT 'Datos adicionales (Geolocalización, Hash del archivo)',
     fechaRegistro  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idInforme) REFERENCES inv_informes_avance(idInforme) ON DELETE CASCADE
+    FOREIGN KEY (idInforme) REFERENCES inv_informes_avance(idInforme) ON DELETE CASCADE,
+    FOREIGN KEY (idTipoEvidencia) REFERENCES inv_cat_tipo_evidencia(idTipoEvidencia)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Libro Diario de Gastos (Monitoreo Presupuestario)
@@ -677,6 +737,12 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 CREATE TRIGGER trg_gasto_uuid BEFORE INSERT ON inv_gastos FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_revisiones_uuid BEFORE INSERT ON inv_revisiones_pares FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_prod_uuid BEFORE INSERT ON inv_cat_tipo_producto FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_evid_cat_uuid BEFORE INSERT ON inv_cat_tipo_evidencia FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_ent_ext_uuid BEFORE INSERT ON inv_entidades_externas FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
@@ -809,6 +875,19 @@ CREATE TABLE inv_audit_admin (
     FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Auditoría de cambios administrativos en usuarios y roles';
 
+-- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
+CREATE TABLE inv_config_indicadores (
+    idConfig         INT           AUTO_INCREMENT PRIMARY KEY,
+    idInstitucion    INT           DEFAULT 1,
+    codigoIndicador  VARCHAR(20)   NOT NULL COMMENT 'Ej: I+D-1, PUB-3',
+    nombreIndicador  VARCHAR(255)  NOT NULL,
+    descripcion      TEXT,
+    tipoDato         ENUM('Cantidad', 'Monto', 'Booleano', 'Porcentaje') DEFAULT 'Cantidad',
+    valorReferencia  DECIMAL(12,2),
+    añoNormativa     INT           NOT NULL COMMENT 'Año del modelo de evaluación (ej: 2024)',
+    activo           TINYINT(1)    DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- CIERRE DE SEGURIDAD PARA EL NÚCLEO V3
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -840,6 +919,31 @@ INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES
 ('Innovación', 'Proyectos con alto impacto en el mercado o sociedad'),
 ('Semilleros', 'Iniciación a la investigación con estudiantes'),
 ('Vinculación e Investigación', 'Proyectos integrados con la comunidad');
+
+-- 10. Catálogo de Productos (Suck from Core)
+INSERT INTO inv_cat_tipo_producto (uuid, nombre, categoria, requiereRegistro) VALUES
+(UUID(), 'Artículo Indexado (Scopus/WoS)', 'Académico', 0),
+(UUID(), 'Prototipo Industrial', 'Tecnológico', 1),
+(UUID(), 'Software Registrado', 'Innovación', 1),
+(UUID(), 'Patente de Invención', 'Innovación', 1),
+(UUID(), 'Libro / Capítulo de Libro', 'Académico', 0),
+(UUID(), 'Informe Técnico de Transferencia', 'Transferencia', 1);
+
+-- 11. Catálogo de Evidencias
+INSERT INTO inv_cat_tipo_evidencia (uuid, nombre, descripcion) VALUES
+(UUID(), 'Fotografía de Prototipo', 'Evidencia visual de avance tecnológico'),
+(UUID(), 'Acta de Entrega-Recepción', 'Documento legal de vinculación externa'),
+(UUID(), 'Certificado SENADI', 'Registro de propiedad intelectual'),
+(UUID(), 'Lista de Asistencia', 'Evidencia de eventos o validación de campo'),
+(UUID(), 'Factura / Comprobante', 'Evidencia de ejecución presupuestaria');
+
+-- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
+INSERT INTO inv_config_indicadores (codigoIndicador, nombreIndicador, tipoDato, añoNormativa) VALUES
+('I+D-1', 'Proyectos de I+D ejecutados por docentes', 'Cantidad', 2024),
+('I+D-2', 'Participación de estudiantes en proyectos', 'Porcentaje', 2024),
+('PUB-1', 'Artículos en revistas indexadas', 'Cantidad', 2024),
+('INN-1', 'Prototipos y transferencia tecnológica', 'Cantidad', 2024),
+('IP-1', 'Registros de Propiedad Intelectual', 'Cantidad', 2024);
 
 -- 2. Agendas Zonales (Planificación Nacional)
 INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES

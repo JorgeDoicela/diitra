@@ -22,10 +22,16 @@ namespace Diitra.Infrastructure.Research
 
             string estadoAnterior = proyecto.Estado;
 
-            // 1. Reglas estrictas de la Máquina de Estados (State Machine)
-            if (!EsTransicionValida(estadoAnterior, nuevoEstado))
+            // 1. Validación Dinámica vía Base de Datos (Configurable)
+            var esValida = await _context.InvConfigWorkflows
+                .AnyAsync(w => w.Activo && 
+                               w.EstadoOrigen == estadoAnterior && 
+                               w.EstadoDestino == nuevoEstado &&
+                               (w.IdTipoProyecto == null || w.IdTipoProyecto == proyecto.IdTipo));
+
+            if (!esValida)
             {
-                throw new InvalidOperationException($"Transición inválida de estado: {estadoAnterior} -> {nuevoEstado}");
+                throw new InvalidOperationException($"La transición {estadoAnterior} -> {nuevoEstado} no está permitida por la normativa vigente para este tipo de proyecto.");
             }
 
             // 2. Ejecutar Transición
@@ -33,7 +39,6 @@ namespace Diitra.Infrastructure.Research
             proyecto.FechaModificacion = DateTime.Now;
 
             // 3. Registrar Trazabilidad Inmutable (Audit Trail para CACES)
-            // Obtener el hash de la última transición para encadenar
             var ultimaTransicion = await _context.InvTrazabilidadProyectos
                 .Where(t => t.IdProyecto == proyecto.IdProyecto)
                 .OrderByDescending(t => t.FechaTransicion)
@@ -77,23 +82,6 @@ namespace Diitra.Infrastructure.Research
                     t.Observacion
                 })
                 .ToListAsync();
-        }
-
-        private bool EsTransicionValida(string actual, string nuevo)
-        {
-            // Reglas de negocio CACES
-            return (actual, nuevo) switch
-            {
-                ("Borrador", "Enviado") => true,
-                ("Enviado", "En Revisión") => true,
-                ("En Revisión", "Corregir") => true,
-                ("Corregir", "En Revisión") => true,
-                ("En Revisión", "Aprobado") => true,
-                ("En Revisión", "Rechazado") => true,
-                ("Aprobado", "En Ejecución") => true,
-                ("En Ejecución", "Finalizado") => true,
-                _ => false
-            };
         }
     }
 }

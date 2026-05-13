@@ -9,12 +9,14 @@ namespace diitra_infrastructure.data.models;
 public partial class InvEvidencia
 {
     public int IdEvidencia { get; set; }
-    public Guid Uuid { get; set; } = Guid.NewGuid();
+    public string Uuid { get; set; } = null!;
     public int IdInforme { get; set; }
-    public string Tipo { get; set; } = "Imagen"; // Imagen, Documento, Factura, Asistencia, Otros
+    public int IdTipoEvidencia { get; set; }
     public string? Descripcion { get; set; }
     public string RutaArchivo { get; set; } = null!;
+    public string? MetadataJson { get; set; }
     public DateTime FechaRegistro { get; set; } = DateTime.UtcNow;
 
     public virtual InvInformeAvance IdInformeNavigation { get; set; } = null!;
+    public virtual InvCatTipoEvidencia IdTipoEvidenciaNavigation { get; set; } = null!;
 }

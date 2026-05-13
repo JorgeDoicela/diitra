@@ -18,6 +18,8 @@ Para adherirse a estándares de seguridad Enterprise (ISO 27001), la configuraci
 builder.Services.AddScoped<IAuthService, AuthService>();       // Auth Module
 builder.Services.AddScoped<IAdminService, AdminService>();     // Admin Module
 builder.Services.AddScoped<IResearchService, ProjectService>(); // Research Module
+builder.Services.AddScoped<IProjectOrchestrator, ProjectOrchestrator>(); // Atomic Synchronizer
+builder.Services.AddScoped<INotificationService, NotificationService>(); // Resilience Hub
 
 // Motor Enterprise de Documentos (Document Engine)
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();

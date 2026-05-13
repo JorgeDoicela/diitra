@@ -21,25 +21,10 @@ Para entendimiento corporativo, las dependencias cruciales de módulos viajan de
 
 ```mermaid
 erDiagram
-    CONVOCATORIA {
-        int idConvocatoria PK
-        enum estado "borrador | abierta | cerrada"
-        decimal presupuestoTotal
-    }
+    %% Núcleo de Innovación & TRL %%
+    PROYECTO ||--o{ PRODUCTO : genera
+    PROYECTO ||--|| ENTIDAD_EXTERNA : vincula
     
-    PROYECTO {
-        int idProyecto PK
-        varchar codigoInstitucional UK
-        enum estado "en_revision | finalizado"
-        tinyint esAnonimizado
-    }
-    
-    REVISION_PAR {
-        int idRevision PK
-        varchar tokenMagicLink
-        decimal puntajePromedio
-    }
-
     CONVOCATORIA ||--o{ PROYECTO : gestiona
     PROYECTO ||--o{ REVISION_PAR : asigna_evaluacion
     REVISION_PAR }o--|| RUBRICA : pondera
@@ -47,6 +32,37 @@ erDiagram
     %% Trazabilidad %%
     PROYECTO ||--o{ HISTORIAL_AUDIT : loguea_cambio    
 ```
+
+## Arquitectura Nuclear (Dynamic Catalogs)
+Para el cumplimiento CACES 2026, se han implementado tablas de configuración dinámica:
+
+### `inv_cat_tipo_producto`
+Define las categorías de producción científica y tecnológica.
+- `idTipoProducto` (PK)
+- `Nombre`, `Categoria` (Académico, Tecnológico, etc.)
+- `RequiereRegistro` (TINYINT)
+
+### `inv_entidades_externas`
+Repositorio de socios estratégicos para proyectos de innovación.
+- `idEntidad` (PK)
+- `RazonSocial`, `RUC`, `Tipo` (Pública, Privada, etc.)
+- `ContactoEmail`
+
+### `inv_config_indicadores`
+Motor de mapeo para indicadores de acreditación nacional.
+- `CodigoIndicador` (Ej: I.INV.1)
+- `ValorReferencia`, `AñoNormativa`
+
+### `inv_config_workflow`
+Configuración dinámica de la máquina de estados de proyectos.
+- `EstadoOrigen`, `EstadoDestino`
+- `IdTipoProyecto` (Opcional para flujos específicos)
+- `RolRequerido`
+
+### `inv_proyecto_extensiones`
+Registro histórico de prórrogas y cambios de plazos legales.
+- `FechaAnterior`, `FechaNueva`
+- `Motivo`, `Resolucion`
 
 ## Políticas DRP (Disaster Recovery Plan) Básicas Recomendadas
 A nivel empresarial, al manipular bases de datos tan unificadas:
