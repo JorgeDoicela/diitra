@@ -1,99 +1,49 @@
-# 07 - Detalle de Arquitecturas DIITRA
+# Detalle de Arquitecturas DIITRA
 
-Este documento proporciona una visión profunda y técnica de los patrones arquitectónicos implementados en el ecosistema DIITRA, asegurando que cualquier desarrollador futuro comprenda las decisiones de diseño tomadas para cumplir con la normativa SENESCYT/CACES.
+Este documento proporciona una visión técnica profunda de los patrones arquitectónicos implementados en el ecosistema DIITRA, asegurando el cumplimiento de la normativa SENESCYT/CACES y la mantenibilidad del software.
 
----
+## Backend: Clean Architecture (Onion Pattern)
 
-## 1. Backend: Clean Architecture (Onion)
-El backend utiliza **.NET 8.0** siguiendo una arquitectura de capas concéntricas donde el núcleo (Domain) es agnóstico a la tecnología.
+El backend utiliza .NET 8.0 siguiendo una arquitectura de capas concéntricas donde el núcleo de dominio se mantiene independiente de las tecnologías externas.
 
-### Capas y Responsabilidades:
-1.  **Domain (Núcleo):** 
-    *   **Contenido:** Entidades (`Proyecto`, `Presupuesto`), Objetos de Valor, Excepciones de Dominio e Interfaces de Repositorio.
-    *   **Regla:** No tiene dependencias externas. Es puro C#.
-2.  **Application (Lógica de Negocio):**
-    *   **Contenido:** Servicios de aplicación (`ProjectService`), DTOs, Mapeos y Validaciones (`FluentValidation`).
-    *   *Patrón:* Se recomienda el uso de **MediatR** para desacoplar comandos y consultas si el sistema crece en complejidad.
-3.  **Infrastructure (Implementación):**
-    *   **Contenido:** Contexto de base de datos (`DiitraContext`), implementaciones de repositorios, servicios de Firma Electrónica (.p12), y clientes de IA.
-    *   **Tecnología:** Entity Framework Core con MySQL.
-4.  **API (Capa de Presentación):**
-    *   **Contenido:** Controladores REST, Middlewares (como el `ExceptionMiddleware`) y configuración de Inyección de Dependencias.
+### Capas y Responsabilidades
 
----
+1. **Domain (Núcleo)**: Contiene las entidades de negocio (Proyecto, Presupuesto), objetos de valor e interfaces de repositorio. Es código C# puro sin dependencias externas.
+2. **Application (Lógica de Negocio)**: Implementa los casos de uso del sistema. Incluye servicios de aplicación, DTOs y validaciones mediante FluentValidation.
+3. **Infrastructure (Implementación)**: Contiene el contexto de base de datos (DiitraContext), implementaciones de persistencia, integración con servicios de firma electrónica y clientes de IA.
+4. **API (Presentación)**: Define los endpoints REST, controladores y middlewares de gestión de excepciones y seguridad.
 
-## 2. Frontend Web: Modular Layered React
-La web utiliza **React 19** con **Vite** para una experiencia de desarrollo instantánea.
+## Frontend Web: Modular Layered React
 
-### Organización del Código:
-*   **Pages:** Componentes que representan una ruta completa (Dashboard, Login).
-*   **Components:** UI atómica y componentes de negocio reutilizables.
-*   **Hooks:** Encapsulación de lógica reutilizable (ej: `useAuth`, `useProjects`).
-*   **API Services:** Capa de comunicación con el backend usando Axios, con interceptores para manejar tokens de seguridad automáticamente.
-*   **Collaborative Logic:** Integración con **Yjs** y **SignalR** para edición multijugador de protocolos de investigación.
+La aplicación web utiliza React 19 y Vite para optimizar el rendimiento y la experiencia de desarrollo.
 
----
+### Organización de Componentes
 
-## 3. Mobile: File-Based Expo Router
-La aplicación móvil aprovecha el ecosistema de **Expo** para maximizar la productividad y el rendimiento nativo.
+- **Pages**: Componentes que mapean directamente a una ruta de la aplicación.
+- **Components**: Unidades atómicas de interfaz y componentes de negocio reutilizables.
+- **Hooks**: Encapsulación de lógica de estado y efectos secundarios.
+- **API Services**: Capa de comunicación con el backend basada en Axios con interceptores de seguridad.
 
-### Estructura de Navegación:
-*   **App Directory:** Utiliza la convención de carpetas de **Expo Router**.
-    *   `(auth)`: Rutas protegidas de autenticación.
-    *   `(tabs)`: Navegación principal por pestañas (Inicio, Proyectos, Perfil).
-*   **Shared State:** Se recomienda el uso de **Zustand** o **Context API** para estados ligeros y persistentes.
-*   **Native Modules:** Uso de `expo-file-system` para manejo de certificados de firma electrónica y `expo-camera` para evidencias.
+## Base de Datos: Persistencia y Trazabilidad
 
----
+El motor de base de datos MariaDB/MySQL garantiza la integridad referencial y la auditoría de los procesos.
 
-## 4. Base de Datos: Relational Logic Pattern
-MySQL 5.7/8.0 no solo almacena, sino que protege la integridad de la investigación.
+- **Integridad Referencial**: Uso estricto de claves foráneas y triggers para la generación de identificadores únicos.
+- **Soft Delete**: Política de eliminación lógica para asegurar la permanencia de registros auditables.
+- **Optimización de Consultas**: Uso de vistas para la consolidación de indicadores requeridos por los procesos de acreditación.
 
-*   **Vistas de Reporte:** Centralización de consultas complejas para los indicadores del CACES.
-*   **Triggers de Integridad:** Generación automática de UUIDs para asegurar que cada proyecto tenga un identificador único global antes de ser procesado por el backend.
-*   **Soft Delete:** Uso de la columna `activo` para trazabilidad total, prohibiendo el borrado físico de registros auditables.
+## Motor de Documentos: Arquitectura de Pipeline
 
----
+El motor de generación de documentos opera bajo un patrón de pipeline, donde cada etapa tiene una responsabilidad única y es fácilmente reemplazable.
 
-## 5. Parámetros de Calidad y Velocidad
-*   **Rendimiento:** Se eliminó la lógica de detección de red síncrona en el arranque del backend para garantizar una respuesta inmediata.
-*   **Entornos:** Se utilizan perfiles de lanzamiento (`launchSettings.json`) para diferenciar configuraciones de "Casa" y "Oficina" sin ensuciar el código con condicionales.
-*   **CI/CD:** GitHub Actions automatizado para validar compilaciones en .NET 8 y Web.
+1. **Repository Layer**: Localización de plantillas en `inv_document_templates`.
+2. **Compliance Layer**: Inyección automática de cláusulas legales y normativas.
+3. **Template Engine**: Procesamiento dinámico de variables mediante Handlebars.Net.
+4. **Renderer Layer**: Conversión de HTML/CSS a formato PDF binario utilizando iText9.
+5. **Audit Layer**: Registro inmutable de la emisión y captura del snapshot forense.
 
----
+## Calidad y Despliegue
 
-## 6. Motor Enterprise de Documentos — Pipeline Architecture
-
-El Document Engine opera como una **tubería de transformación** (Pipeline Pattern) donde cada paso tiene una única responsabilidad y puede reemplazarse de forma independiente.
-
-```mermaid
-flowchart TD
-    A["fa:fa-user Controlador\nDocumentRequest { TemplateCode, Data }"] --> B
-
-    B["fa:fa-database Paso 1: Repository\nBusca plantilla en doc_templates\npor Code único"] --> C
-
-    C["fa:fa-shield Paso 2: LegalComplianceInjector\nInyecta pie LOPDP\nAviso doble ciego si aplica"] --> D
-
-    D["fa:fa-code Paso 3: ScribanTemplateEngine\nHandlebars.Net → reemplaza\n{{variables}} con datos del DTO"] --> E
-
-    E["fa:fa-file-pdf Paso 4: ITextHtmlPdfRenderer\niText7 pdfHTML → HTML+CSS\n→ PDF binario A4"] --> F
-
-    F["fa:fa-history Paso 5: AuditRepository\nRegistra en doc_audit_entries\nTraceabilityCode único LOPDP"] --> G
-
-    G["fa:fa-check DocumentResult\n{ PdfBytes, FileName, TraceabilityCode }"]
-
-    style A fill:#1a3a6b,color:#fff
-    style G fill:#2d6a2d,color:#fff
-```
-
-### Capas y su intercambiabilidad
-
-| Capa | Implementación actual | Alternativa posible |
-|---|---|---|
-| Motor de plantillas | Handlebars.Net | Fluid, Razor |
-| Renderizador PDF | iText7 + pdfHTML | PuppeteerSharp (MIT), DinkToPdf |
-| Persistencia | EF Core + MySQL | Dapper, MongoDB |
-| Compliance | `LegalComplianceInjector.cs` | Extensible via Strategy Pattern |
-
-> [!TIP]
-> El contrato `IDocumentEngine` garantiza que **ningún controlador del sistema cambia** si se reemplaza cualquiera de las implementaciones internas. El código de llamada siempre es el mismo 3 líneas.
+- **Rendimiento**: Optimización del proceso de arranque mediante la eliminación de dependencias bloqueantes.
+- **Gestión de Entornos**: Uso de perfiles de configuración para asegurar la consistencia entre entornos de desarrollo y producción.
+- **CI/CD**: Integración continua mediante GitHub Actions para la validación automática de la calidad del código.

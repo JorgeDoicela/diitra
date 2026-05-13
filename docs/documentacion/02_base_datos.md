@@ -1,115 +1,34 @@
 # Gobernanza y Modelado de la Base de Datos
 
-DIITRA utiliza un modelo de persistencia relacional compatible con **MySQL 5.7 y 8.0+**. Está diseñado para garantizar la integridad mediante triggers de generación automática de UUIDs.
+El sistema de persistencia de DIITRA utiliza un modelo relacional optimizado para MariaDB/MySQL. El diseño prioriza la integridad de los datos, el cumplimiento de la LOPDP y la trazabilidad histórica de los procesos de investigación.
 
+## Arquitectura de Persistencia
 
-## Arquitectura de Persistencia y Gobernanza
-Dado que el ecosistema maneja datos del presupuesto y procesos gubernamentales auditables a nivel estatal (Ej: Transferencias de Inv. y Resoluciones), la directriz obedece a políticas estrictas de data governance.
+La estrategia de datos se fundamenta en la segregación lógica y la inmutabilidad de los registros críticos.
 
-### 1. Integridad Referencial Mixta (`inv_` Prefixing)
-El sistema coexiste en el entorno del histórico `sigafi_es`. A fin de no impactar la estructura legacy en producción, todas las tablas maestras y catálogos de DIITRA poseen el prefijo `inv_`.
-> [!TIP]
-> **Data Segregation:** Esta segregación lógica previene bloqueos por mutación de filas de otros microservicios operando sobre SIGAFI.
+### Segregación de Dominio (Prefijo inv_)
+Para evitar conflictos con sistemas preexistentes (SIGAFI), todas las tablas pertenecientes al módulo de investigación están identificadas con el prefijo `inv_`. Esto permite una administración independiente de los esquemas y facilita las operaciones de mantenimiento sin afectar el núcleo institucional.
 
-### 2. Trazabilidad y Auditabilidad Histórica
-El esquema central de diseño jamás realiza operaciones **DELETE**. Todas las filas poseen un flag binario `activo (TINYINT)`. 
-La tabla **`inv_proyectos_historial`** funge orgánicamente el rol de un Registro de Inmutabilidad, anotando automáticamente desde la subcapa de infraestructura todos los cambios de transición de estados `(borrador -> en_ejecucion -> finalizado)`.
+### Estrategia de Inmutabilidad
+El sistema implementa una política de eliminación lógica (Soft Delete) mediante la columna `activo`. Los registros de auditoría y trazabilidad operan bajo un modelo de escritura única (Append-Only), impidiendo la alteración de la historia transaccional del sistema.
 
-## Entidades Logísticas Core (Diagrama Intermedio)
+## Componentes Nucleares del Esquema
 
-Para entendimiento corporativo, las dependencias cruciales de módulos viajan de la siguiente manera:
+### Motor de Flujos y Estados (inv_config_workflow)
+Tabla de configuración dinámica que define las transiciones permitidas entre estados. Permite la adaptabilidad del sistema a cambios normativos sin requerir modificaciones en el código fuente.
 
-```mermaid
-erDiagram
-    %% Núcleo de Innovación & TRL %%
-    PROYECTO ||--o{ PRODUCTO : genera
-    PROYECTO ||--|| ENTIDAD_EXTERNA : vincula
-    
-    CONVOCATORIA ||--o{ PROYECTO : gestiona
-    PROYECTO ||--o{ REVISION_PAR : asigna_evaluacion
-    REVISION_PAR }o--|| RUBRICA : pondera
-    
-    %% Trazabilidad %%
-    PROYECTO ||--o{ HISTORIAL_AUDIT : loguea_cambio    
-```
+### Auditoría Forense (inv_document_audit)
+Almacena el registro histórico de cada documento emitido. Incluye el código de trazabilidad, el hash de integridad SHA-256 y el snapshot JSON de los datos de origen. Este componente es vital para la resiliencia del sistema ante auditorías del CACES.
 
-## Arquitectura Nuclear (Dynamic Catalogs)
-Para el cumplimiento CACES 2026, se han implementado tablas de configuración dinámica:
+### CoWork Engine (inv_cowork_*)
+Tablas destinadas a la persistencia del estado binario de documentos colaborativos (Yjs). Garantizan la consistencia de los datos en sesiones concurrentes y la recuperación del historial de cambios.
 
-### `inv_cat_tipo_producto`
-Define las categorías de producción científica y tecnológica.
-- `idTipoProducto` (PK)
-- `Nombre`, `Categoria` (Académico, Tecnológico, etc.)
-- `RequiereRegistro` (TINYINT)
+## Estándares de Datos
 
-### `inv_entidades_externas`
-Repositorio de socios estratégicos para proyectos de innovación.
-- `idEntidad` (PK)
-- `RazonSocial`, `RUC`, `Tipo` (Pública, Privada, etc.)
-- `ContactoEmail`
+1. **UUIDs**: Se utiliza el estándar UUID v4 para la identificación pública de entidades, mitigando ataques de enumeración y asegurando la portabilidad de los datos.
+2. **Charset y Collation**: Configurado en `utf8mb4_unicode_ci` para asegurar el soporte completo de caracteres y la consistencia en las búsquedas.
+3. **Relaciones**: Integridad referencial estricta mediante claves foráneas (FK) con políticas de eliminación controladas (Set Null o Cascade según el contexto).
 
-### `inv_config_indicadores`
-Motor de mapeo para indicadores de acreditación nacional.
-- `CodigoIndicador` (Ej: I.INV.1)
-- `ValorReferencia`, `AñoNormativa`
+## Gestión de Snapshots Forenses
 
-### `inv_config_workflow`
-Configuración dinámica de la máquina de estados de proyectos.
-- `EstadoOrigen`, `EstadoDestino`
-- `IdTipoProyecto` (Opcional para flujos específicos)
-- `RolRequerido`
-
-### `inv_proyecto_extensiones`
-Registro histórico de prórrogas y cambios de plazos legales.
-- `FechaAnterior`, `FechaNueva`
-- `Motivo`, `Resolucion`
-
-## Políticas DRP (Disaster Recovery Plan) Básicas Recomendadas
-A nivel empresarial, al manipular bases de datos tan unificadas:
-1. **Replicación Maestro/Esclavo**: DIITRA debería leer metadatos pesados de `inv_productos` desde nodos réplica de solo lectura para evitar sobrecargar la base escribiente principal.
-2. **Encriptación At-Rest**: Los campos de autenticación se confían pero los P12 generados (paths) deben residir sobre blobs cifrados o ubicaciones fuera del storage relacional por buena práctica.
-
----
-
-## Tablas del Motor de Documentos (Migración: `AddDocumentEngineTables`)
-
-Añadidas el 06/05/2026 mediante EF Core migration. No llevan prefijo `inv_` ya que son parte del núcleo transversal de DIITRA, no del módulo de investigación específico.
-
-### `doc_templates`
-Almacena las plantillas HTML editables. La fuente de verdad para todos los documentos generados.
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `Id` | `int AUTO_INCREMENT` | PK |
-| `Code` | `varchar(100) UNIQUE` | Identificador único. Ej: `PROTOCOLO_INVESTIGACION` |
-| `Name` | `longtext` | Nombre legible |
-| `Description` | `longtext NULL` | Descripción del uso |
-| `HtmlContent` | `longtext` | HTML con variables Handlebars `{{variable}}` |
-| `Version` | `int` | Versión actual (incrementa en cada edición) |
-| `Category` | `int` | Enum: Protocolo, ActaAprobacion, InformeAvance... |
-| `RequiresLopdpClause` | `tinyint(1)` | Auto-inyecta pie legal LOPDP |
-| `SupportsBlindMode` | `tinyint(1)` | Soporta anonimización doble ciego |
-| `RequiresTraceabilityCode` | `tinyint(1)` | Genera código único de trazabilidad |
-| `RequiresElectronicSignature` | `tinyint(1)` | Reserva espacio para FirmaEC |
-| `CustomCss` | `longtext NULL` | CSS adicional por plantilla |
-| `IsActive` | `tinyint(1)` | Soft delete |
-| `CreatedAt` | `datetime(6)` | Fecha de creación |
-| `UpdatedAt` | `datetime(6)` | Fecha de última edición |
-| `UpdatedBy` | `longtext NULL` | Email del administrador que editó |
-
-### `doc_audit_entries`
-Log inmutable de cada documento generado. Cumple exigencias de trazabilidad LOPDP.
-
-| Columna | Tipo | Descripción |
-|---|---|---|
-| `Id` | `int AUTO_INCREMENT` | PK |
-| `TraceabilityCode` | `varchar(50) UNIQUE` | Código único del documento emitido |
-| `TemplateCode` | `longtext` | Code de la plantilla usada |
-| `TemplateVersion` | `int` | Versión de la plantilla en el momento de emisión |
-| `Category` | `int` | Categoría del documento |
-| `GeneratedBy` | `longtext NULL` | Usuario que solicitó el documento |
-| `GeneratedAt` | `datetime(6)` | Timestamp UTC de generación |
-| `WasBlindMode` | `tinyint(1)` | Si fue emitido en modo doble ciego |
-
-> [!NOTE]
-> La tabla `doc_audit_entries` es de escritura única (append-only). Nunca se actualiza ni elimina un registro, garantizando la integridad del log de auditoría.
+En el marco de la acreditación 2026, la columna `data_snapshot_json` dentro de la tabla de auditoría permite capturar el estado exacto de la información en el momento de la generación de un documento. Esto asegura la capacidad de reconstrucción histórica independientemente de ediciones posteriores en los registros maestros del proyecto.

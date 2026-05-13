@@ -1,49 +1,55 @@
-# Enterprise System Design & C4 Architecture
+# Arquitectura de Sistema e Ingeniería de Software
 
-DIITRA implementa una variante pulida del patrón **Monolito Modular** diseñado con **Clean Architecture**. Esta directriz permite una escalabilidad predictiva en empresas de alto nivel de demanda con mínima disrupción.
+DIITRA implementa una arquitectura de Monolito Modular basada en los principios de Clean Architecture (Arquitectura Limpia). Este diseño garantiza el desacoplamiento de las reglas de negocio respecto a las tecnologías de infraestructura, permitiendo una mantenibilidad a largo plazo y una escalabilidad predictiva.
 
-## Modelo C4: Nivel Contexto & Contenedores (Nivel 1 y 2)
+## Modelo C4: Contexto y Contenedores
 
-El Modelo C4 ayuda al equipo corporativo a visualizar la arquitectura desde una perspectiva estandarizada. 
+El sistema se visualiza mediante el estándar C4 para asegurar una comunicación técnica uniforme entre los equipos de desarrollo y auditoría.
 
 ```mermaid
 C4Context
-  title System Context Diagram - Ecosistema DIITRA
-  Person(director, "Director Inv.", "Administra convocatorias y auditaje")
-  Person(revisor, "Pares Revisores", "Evalúan proyectos (Doble ciego)")
-  Person(investigador, "Investigadores", "Docentes y estudiantes operando")
+  title Diagrama de Contexto - Ecosistema DIITRA
+  Person(director, "Director de Investigación", "Gestión de convocatorias y procesos de auditoría")
+  Person(revisor, "Pares Revisores", "Evaluación de proyectos bajo metodología doble ciego")
+  Person(investigador, "Investigadores", "Cuerpo docente y estudiantil encargado de la ejecución")
   
-  System(diitra, "DIITRA Core System", "Gestión Integral de Proyectos y Presupuestos")
+  System(diitra, "Sistema Core DIITRA", "Gestión Integral de Proyectos, Presupuestos e Innovación")
   
-  System_Ext(smtp, "Corporate SMTP", "Envío de Magic Links y Alertas")
-  System_Ext(firma, "EC Sign Middleware", "Validador de Firmas P12/Tokens")
+  System_Ext(smtp, "Servidor SMTP Institucional", "Distribución de notificaciones y alertas")
+  System_Ext(firma, "Middleware de Firma Electrónica", "Validación de certificados P12 y tokens")
   
-  Rel(director, diitra, "Administra", "HTTPS")
-  Rel(revisor, diitra, "Audita (Magic Links)", "HTTPS")
-  Rel(investigador, diitra, "Desarrolla flujos", "HTTPS/WSS")
+  Rel(director, diitra, "Administración", "HTTPS")
+  Rel(revisor, diitra, "Auditoría (Tokens temporales)", "HTTPS")
+  Rel(investigador, diitra, "Ejecución de flujos", "HTTPS/WSS")
   
-  Rel(diitra, smtp, "Dispara Notificaciones", "SMTP/TLS")
-  Rel(diitra, firma, "Firma de actas (Resoluciones)", "Local/REST")
+  Rel(diitra, smtp, "Notificaciones", "SMTP/TLS")
+  Rel(diitra, firma, "Firma de documentos", "REST/Local")
 ```
 
-## Clean Architecture: Desglose de Inversión de Dependencias (DI)
+## Clean Architecture: Desglose de Capas
 
-El Backend de DIITRA desacopla rigurosamente sus librerías de clase asegurando mantenibilidad corporativa superior:
+El Backend se estructura en cuatro capas de responsabilidad única para asegurar la inversión de dependencias:
 
--  **diitra_domain (Enterprise Business Rules)**: Puro código agnóstico; ni rastro de referencias a BD ni Entity Framework. Solo entidades (`inv_proyectos`), enumeraciones (`Permissions`) e interfaces core.
-- **diitra_application (Application Business Rules)**: Comandos de casos de uso (Handlers), Interfaces de servicios (`IAuthService`). 
-- **diitra_infrastructure (Frameworks & Web)**: Capa de cruce contra Entity Framework Core y servicios perimetrales estables (`AIAssistantService`, implementaciones de Redis o SMTP).
-- **diitra_api (Presentation Layer)**: Endpoints REST, WebSockets, mapeos de Middleware, Controladores puros (`Controllers/`).
+1. **Capa de Dominio (diitra_domain)**: Contiene las entidades nucleares (InvProyecto, InvImpacto) y las reglas de negocio fundamentales. Es agnóstica a cualquier framework o base de datos.
+2. **Capa de Aplicación (diitra_application)**: Define los casos de uso del sistema. Incluye los orquestadores (IProjectOrchestrator), manejadores de comandos e interfaces de servicios.
+3. **Capa de Infraestructura (diitra_infrastructure)**: Implementa el acceso a datos mediante Entity Framework Core, la generación de documentos con iText9 y la integración con servicios externos.
+4. **Capa de Presentación (diitra_api)**: Expone los endpoints REST y los hubs de comunicación en tiempo real (SignalR).
 
-## Patrones de Computación y Abstracciones Nivel Enterprise
+## Capa de Resiliencia e Integridad Forense (Compliance CACES 2026)
 
-### 1. Unit of Work (Transaccionalidad Atómica)
-Se evita la fuga de datos transaccionales forzando el commit general al final de la manipulación de entidades (`DiitraContext`). Si un proyecto aprueba pero falla la creación asíncrona de las notificaciones, interviene el rollback.
+Para cumplir con las normativas de acreditación de Institutos Superiores en Ecuador, se ha implementado una capa de seguridad inmutable:
 
-### 2. Time-coupled Communication (SignalR)
-El sistema abandona el _Poling_ tradicional a favor de los WebSockets de larga duración mediante Azure SignalR o Self-hosted WebSockets que empujan la telemetría a usuarios concurrentes durante su trabajo colaborativo (Ej: Modificación del Cronograma simultáneo).
+- **Bloqueo de Estado (State Locking)**: Mecanismo de control en el orquestador que impide la modificación de datos una vez que el proyecto alcanza estados de revisión o aprobación.
+- **Snapshots de Datos (Forensic Snapshots)**: Captura inmutable en formato JSON de la información inyectada en cada documento oficial en el momento de su emisión.
+- **Validación de Trazabilidad**: Sistema de sellado SHA-256 vinculado a un nodo de verificación pública mediante códigos QR, permitiendo la auditoría externa de la integridad del archivo.
 
-### 3. Observabilidad e Instrumentación (Logging / OpenTelemetry)
-> [!IMPORTANT]
-> A nivel corporativo, el stack incluye adaptabilidad para recolección de logs estructurados en **JSON**. Un componente vital para integrar con plataformas APM (Application Performance Monitoring) modernas como ELK Stack, Datadog o Grafana.
-Se exige que toda falla no procesada (unhandled exception filter) se estructure conteniendo: `Request ID`, `UserId`, `TraceId` y el componente originario.
+## Patrones de Diseño Corporativo
+
+### Transaccionalidad Atómica (Unit of Work)
+Se garantiza la integridad de los datos mediante el patrón Unit of Work, asegurando que todas las operaciones de persistencia (proyectos, cronogramas, presupuestos) se ejecuten en una única transacción de base de datos.
+
+### Comunicación en Tiempo Real (SignalR)
+El sistema utiliza WebSockets para la sincronización colaborativa de documentos, permitiendo que múltiples investigadores trabajen sobre un mismo protocolo con actualización instantánea de estados.
+
+### Registro Estructurado (Structured Logging)
+Implementación de logs en formato JSON para facilitar la observabilidad y el monitoreo mediante plataformas APM, registrando trazabilidad de usuarios, identificadores de solicitud y fallos del sistema.
