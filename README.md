@@ -10,9 +10,10 @@
 ## Tabla de Contenidos Automática
 1. [Panorama del Sistema](#panorama-del-sistema)
 2. [Arquitectura Tecnológica High-Level](#arquitectura-tecnológica-high-level)
-3. [Mapeo de Dominios Core](#mapeo-de-dominios-core)
-4. [Documentación Técnica (Tiers)](#documentación-técnica-tiers)
-5. [Guía de Despliegue Empresarial](#guía-de-despliegue-empresarial)
+3. [Arquitectura Nuclear & TRL 2026](#arquitectura-nuclear--trl-2026)
+4. [Mapeo de Dominios Core](#mapeo- de-dominios-core)
+5. [Documentación Técnica (Tiers)](#documentación-técnica-tiers)
+6. [Guía de Despliegue Empresarial](#guía-de-despliegue-empresarial)
 
 ---
 
@@ -44,6 +45,18 @@ graph TD
     GW --- AUTH
 ```
 
+## Arquitectura Nuclear & TRL 2026
+Recientemente se ha integrado la **Arquitectura Nuclear**, diseñada para cumplir con los estándares de excelencia institucional 2026:
+
+- **Metadata-Driven Core**: Persistencia flexible mediante JSON para tipologías de productos y evidencias.
+- **TRL Engine**: Motor de seguimiento de niveles de madurez tecnológica (**TRL 1-9**).
+- **Resilient Workflow Engine**: Máquina de estados 100% configurable por base de datos (Zero-Code).
+- **Forensic Audit Snapshots**: Persistencia de datos históricos inmutables en cada documento emitido.
+- **Project Temporal Extensions**: Sistema de trazabilidad para prórrogas y cambios de vigencia legal.
+- **Omnichannel Notification Hub**: Motor de notificaciones desacoplado con soporte para múltiples drivers (Email, App, etc).
+- **Vinculación Productiva**: Módulo de gestión de entidades aliadas y convenios externos.
+- **Catálogos Dinámicos**: Gestión centralizada de tipos de investigación, productos y rúbricas.
+
 ## Mapeo de Dominios Core
 
 | Dominio                   | Descripción Corta                                                                 | SLA Target |
@@ -57,17 +70,19 @@ graph TD
 Esta documentación ha sido sectorizada para simplificar el onboarding de equipos *DevOps*, *SecOps* y *Frontend/Backend Engineers*:
 
 ### » Nivel Arquitectura & Infraestructura
-- [01 - System Design & C4 Architecture](./docs/01_arquitectura.md)
-- [02 - Data Governance & Database Modeling](./docs/02_base_datos.md)
+- [01 - System Design & C4 Architecture](./docs/documentacion/01_arquitectura.md)
+- [02 - Data Governance & Database Modeling](./docs/documentacion/02_base_datos.md)
+- [12 - Arquitectura Nuclear & TRL 2026](./docs/documentacion/12_arquitectura_nuclear_trl.md)
 
 ### » Nivel Capas de Aplicación
-- [03 - Backend Enterprise API (C#, .NET)](./docs/03_backend.md)
-- [04 - Frontend Web App (React) Performance](./docs/04_frontend_web.md)
-- [05 - Frontend Mobile App (Expo) Lifecycle](./docs/05_frontend_mobile.md)
+- [03 - Backend Enterprise API (C#, .NET)](./docs/documentacion/03_backend.md)
+- [04 - Frontend Web App (React) Performance](./docs/documentacion/04_frontend_web.md)
+- [05 - Frontend Mobile App (Expo) Lifecycle](./docs/documentacion/05_frontend_mobile.md)
 
 ### » Nivel Procesos de Negocio
-- [06 - Flujos de Trabajo Transaccionales & Secuencias](./docs/06_flujos_trabajo.md)
-- [07 - Detalle de Arquitecturas Técnicas](./docs/07_arquitecturas_detalle.md)
+- [06 - Flujos de Trabajo Transaccionales & Secuencias](./docs/documentacion/06_flujos_trabajo.md)
+- [07 - Detalle de Arquitecturas Técnicas](./docs/documentacion/07_arquitecturas_detalle.md)
+- [08 - Motor de Documentos & Compliance](./docs/documentacion/08_motor_documentos.md)
 
 ---
 

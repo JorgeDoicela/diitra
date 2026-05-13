@@ -35,12 +35,19 @@ public partial class InvProyecto
     public DateTime? FechaModificacion { get; set; }
     public int? IdObjetivoPnd { get; set; }
 
+    // NÚCLEO DE INNOVACIÓN Y VINCULACIÓN PRODUCTIVA
+    public int? IdEntidadAliada { get; set; }
+    public sbyte? TrlInicial { get; set; }
+    public sbyte? TrlActual { get; set; }
+    public sbyte? TrlMeta { get; set; }
+
     public virtual InvConvocatoria? IdConvocatoriaNavigation { get; set; }
     public virtual InvSublinea? IdSublineaNavigation { get; set; }
     public virtual InvPrograma? IdProgramaNavigation { get; set; }
     public virtual InvGrupoInvestigacion? IdGrupoNavigation { get; set; }
     public virtual InvTipoInvestigacion? IdTipoNavigation { get; set; }
     public virtual InvPndObjetivo? IdObjetivoPndNavigation { get; set; }
+    public virtual InvEntidadExterna? IdEntidadAliadaNavigation { get; set; }
 
     public virtual ICollection<InvProyectoCarrera> InvProyectosCarreras { get; set; } = new List<InvProyectoCarrera>();
     public virtual ICollection<InvProyectoDominio> InvProyectosDominios { get; set; } = new List<InvProyectoDominio>();

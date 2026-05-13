@@ -44,6 +44,9 @@ namespace Diitra.Domain.Common.Documents
         /// <summary>Hash SHA-256 para verificación de integridad.</summary>
         public string? FileHash { get; private set; }
 
+        /// <summary>Snapshot JSON de los datos exactos inyectados en la plantilla.</summary>
+        public string? DataSnapshotJson { get; private set; }
+
         // Para EF Core
         protected DocumentAuditEntry() { }
 
@@ -57,7 +60,8 @@ namespace Diitra.Domain.Common.Documents
             string fileName,
             string? projectUuid = null,
             string? entityUuid = null,
-            string? fileHash = null)
+            string? fileHash = null,
+            string? dataSnapshotJson = null)
         {
             return new DocumentAuditEntry
             {
@@ -71,7 +75,8 @@ namespace Diitra.Domain.Common.Documents
                 FileName = fileName,
                 ProjectUuid = projectUuid,
                 EntityUuid = entityUuid,
-                FileHash = fileHash
+                FileHash = fileHash,
+                DataSnapshotJson = dataSnapshotJson
             };
         }
     }

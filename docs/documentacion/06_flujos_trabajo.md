@@ -39,24 +39,26 @@ sequenceDiagram
     end
 ```
 
-## Trazabilidad del Proyecto (Diagrama de Estados FSM)
+## Motor de Flujos Dinámico (V3 Resiliente)
 
-Todo el avance burocrático de un *Proyecto de Innovación* puede resumirse en la máquina de estados gestionada y blindada por backend en su historia.
+A partir de la versión actual, DIITRA ha desacoplado las reglas de negocio del código fuente. El sistema utiliza un **Motor de Estados Basado en Configuración**:
 
-```mermaid
-stateDiagram-v2
-    [*] --> Borrador : "Docente crea"
-    Borrador --> Enviado : "Docente postula"
-    Enviado --> En_Revision : "Director envía a pares"
-    En_Revision --> Aprobado : "Peers promedian >70%"
-    En_Revision --> Rechazado : "Deficiente técnica"
-    Aprobado --> En_Ejecucion : "Inicia cronograma oficial"
-    En_Ejecucion --> Finalizado : "Sube firma y audita gastos finales"
-    Rechazado --> [*]
-    Finalizado --> [*]
-```
+### 1. Configuración de Reglas (`inv_config_workflow`)
+Las transiciones permitidas se definen en la base de datos. Cada regla especifica:
+- **Estado Origen**: El estado actual del proyecto (ej: Borrador).
+- **Estado Destino**: El estado al que se desea transicionar (ej: Enviado).
+- **Tipo de Proyecto**: Permite flujos distintos para "Investigación Básica" vs "Innovación Tecnológica".
+- **Rol Requerido**: (Opcional) Define qué perfil de usuario tiene permiso para ejecutar la transición.
 
-Estas mutaciones se registran invariablemente en la tabla `inv_proyectos_historial` a manera de event-sourcing lite, previniendo alteraciones silenciadas por administradores o agentes intermedios.
+### 2. Trazabilidad Forense (Blockchain-lite)
+Cada vez que un proyecto cambia de estado, el sistema registra una entrada en `inv_trazabilidad_proyectos` con las siguientes garantías:
+- **Hash de Integridad**: Un sello SHA-256 generado a partir de los datos de la transición.
+- **Encadenamiento**: Cada entrada contiene el `HashAnterior`, creando una cadena inmutable de confianza.
+- **Auditoría de Usuario**: Identificación exacta de quién ejecutó el cambio y bajo qué observación.
+
+### 3. Ventajas de la Arquitectura Dinámica
+- **Zero-Downtime Updates**: Los administradores pueden añadir nuevos pasos de validación (ej: Comité de Ética) insertando una fila en la base de datos, sin recompilar el servidor.
+- **Adaptabilidad CACES**: Si la normativa institucional cambia en 2026, el sistema se ajusta mediante configuración.
 
 ---
 

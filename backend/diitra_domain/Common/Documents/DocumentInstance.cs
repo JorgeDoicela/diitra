@@ -35,6 +35,7 @@ namespace Diitra.Domain.Common.Documents
         public string? FinalPdfPath { get; private set; }
         public string? FileHash { get; private set; }
         public string? TraceabilityCode { get; private set; }
+        public string? DataSnapshotJson { get; private set; }
 
         protected DocumentInstance() { }
 
@@ -44,7 +45,8 @@ namespace Diitra.Domain.Common.Documents
             string entityUuid, 
             string createdBy, 
             string? title = null,
-            string entityType = "Proyecto")
+            string entityType = "Proyecto",
+            string? dataSnapshotJson = null)
         {
             return new DocumentInstance
             {
@@ -54,7 +56,8 @@ namespace Diitra.Domain.Common.Documents
                 EntityType = entityType,
                 CreatedBy = createdBy,
                 Title = title,
-                State = DocumentState.Draft
+                State = DocumentState.Draft,
+                DataSnapshotJson = dataSnapshotJson
             };
         }
 

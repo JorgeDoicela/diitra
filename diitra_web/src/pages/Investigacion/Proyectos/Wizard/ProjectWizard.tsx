@@ -58,6 +58,10 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         NombreCoordinadorFirma: '',
         IdConvocatoria: 0,
         IdObjetivoPnd: 0,
+        IdEntidadAliada: 0,
+        TrlInicial: 1,
+        TrlActual: 1,
+        TrlMeta: 1,
         MatrizMarcoLogico: [
             { nivel: 'Fin', resumen: '', indicadores: '', medios: '', supuestos: '' },
             { nivel: 'Propósito', resumen: '', indicadores: '', medios: '', supuestos: '' },
@@ -69,16 +73,22 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
 
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [, setObjetivosPnd] = useState<any[]>([]);
+    const [entidadesAliadas, setEntidadesAliadas] = useState<any[]>([]);
+    const [tiposProducto, setTiposProducto] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchMetadata = async () => {
             try {
-                const [convRes, pndRes] = await Promise.all([
+                const [convRes, pndRes, entRes, prodRes] = await Promise.all([
                     api.get('/convocatorias'),
-                    api.get('/pnd/objetivos')
+                    api.get('/pnd/objetivos'),
+                    api.get('/catalogs/entidades-externas'),
+                    api.get('/catalogs/tipo-producto')
                 ]);
                 setConvocatorias(convRes.data);
                 setObjetivosPnd(pndRes.data);
+                setEntidadesAliadas(entRes.data);
+                setTiposProducto(prodRes.data);
             } catch (err) {
                 console.error("Error fetching metadata", err);
             }
@@ -179,14 +189,15 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
 
     const sections = [
         { id: 'general', label: '01. Identificación', icon: <BookOpen size={16} /> },
-        { id: 'pnd', label: '02. Alineación PND', icon: <Target size={16} /> },
-        { id: 'equipo', label: '03. Equipo', icon: <Users size={16} /> },
-        { id: 'tecnico', label: '04. Especificación', icon: <Target size={16} /> },
-        { id: 'mml', label: '05. Marco Lógico', icon: <BarChart3 size={16} /> },
-        { id: 'recursos', label: '06. Recursos', icon: <DollarSign size={16} /> },
-        { id: 'impactos', label: '07. Productos e Impactos', icon: <Award size={16} /> },
-        { id: 'cronograma', label: '08. Cronograma', icon: <Calendar size={16} /> },
-        { id: 'documentos', label: '09. Documentos', icon: <ListChecks size={16} /> }
+        { id: 'innovacion', label: '02. Innovación y TRL', icon: <Award size={16} /> },
+        { id: 'pnd', label: '03. Alineación PND', icon: <Target size={16} /> },
+        { id: 'equipo', label: '04. Equipo', icon: <Users size={16} /> },
+        { id: 'tecnico', label: '05. Especificación', icon: <Target size={16} /> },
+        { id: 'mml', label: '06. Marco Lógico', icon: <BarChart3 size={16} /> },
+        { id: 'recursos', label: '07. Recursos', icon: <DollarSign size={16} /> },
+        { id: 'impactos', label: '08. Productos e Impactos', icon: <Award size={16} /> },
+        { id: 'cronograma', label: '09. Cronograma', icon: <Calendar size={16} /> },
+        { id: 'documentos', label: '10. Documentos', icon: <ListChecks size={16} /> }
     ];
 
     return (
@@ -325,6 +336,67 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <option value="Aplicada">APLICADA</option>
                                     <option value="Experimental">DESARROLLO EXPERIMENTAL</option>
                                 </CoWorkField>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'innovacion' && (
+                        <div className="space-y-8">
+                            <div className="p-8 bg-surface border border-border-thin rounded-3xl space-y-8 shadow-sm">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
+                                        <Award className="text-text-main" size={20}/> 2. Vinculación e Innovación Productiva (CACES 2026)
+                                    </h4>
+                                    <div className="px-4 py-1.5 bg-text-main/10 text-text-main border border-text-main/20 rounded-full text-[10px] font-black uppercase">Core de Excelencia</div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-[10px] font-black uppercase text-text-dim mb-3 block ml-1 tracking-widest">Entidad Aliada / Contraparte Externa</label>
+                                            <select 
+                                                name="IdEntidadAliada"
+                                                value={formData.IdEntidadAliada}
+                                                onChange={handleChange}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-main outline-none focus:border-text-main transition-colors appearance-none"
+                                            >
+                                                <option value={0}>Seleccione una entidad externa...</option>
+                                                {entidadesAliadas.map(e => (
+                                                    <option key={e.idEntidad} value={e.idEntidad}>{e.razonSocial} ({e.tipo})</option>
+                                                ))}
+                                            </select>
+                                            <p className="mt-2 text-[9px] text-text-dim italic px-1">La vinculación con el sector productivo es obligatoria para proyectos de innovación tecnológica.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-6">
+                                        <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nivel de Madurez Tecnológica (TRL)</p>
+                                        
+                                        <div className="space-y-8 py-4">
+                                            {['TrlInicial', 'TrlMeta'].map((field) => (
+                                                <div key={field} className="space-y-3">
+                                                    <div className="flex justify-between items-end">
+                                                        <span className="text-[10px] font-bold text-text-main">{field === 'TrlInicial' ? 'Nivel de Partida' : 'Impacto Esperado'}</span>
+                                                        <span className="text-2xl font-black text-text-main">TRL {(formData as any)[field]}</span>
+                                                    </div>
+                                                    <input 
+                                                        type="range" 
+                                                        min="1" max="9" 
+                                                        name={field}
+                                                        value={(formData as any)[field]}
+                                                        onChange={handleChange}
+                                                        className="w-full accent-text-main h-1.5 bg-surface rounded-full appearance-none cursor-pointer"
+                                                    />
+                                                    <p className="text-[9px] text-text-dim leading-relaxed">
+                                                        {(formData as any)[field] <= 3 && "Investigación básica y formulación tecnológica."}
+                                                        {(formData as any)[field] > 3 && (formData as any)[field] <= 6 && "Desarrollo de prototipo y validación en entorno relevante."}
+                                                        {(formData as any)[field] > 6 && "Sistema completo y probado en entorno real/operativo."}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -686,13 +758,18 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     {formData.ProductosEsperados.map((_p, i) => (
                                         <div key={i} className="p-4 bg-surface border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
                                             <div className="flex-1">
-                                                <CoWorkField 
+                                                <label className="text-[9px] font-black uppercase text-text-dim mb-1 block ml-1">Tipo de Producto</label>
+                                                <select 
                                                     name={`Prod_${i}_tipo`} 
-                                                    cowork={cowork} 
-                                                    placeholder="Ej: Publicación Científica..."
-                                                    onValueChange={(v) => updateItem('ProductosEsperados', i, 'tipo', v)}
-                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-4 py-2 text-xs" 
-                                                />
+                                                    value={_p.tipo}
+                                                    onChange={(e) => updateItem('ProductosEsperados', i, 'tipo', e.target.value)}
+                                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-4 py-2.5 text-xs text-text-main outline-none appearance-none"
+                                                >
+                                                    <option value="">Seleccione tipo...</option>
+                                                    {tiposProducto.map(t => (
+                                                        <option key={t.idTipoProducto} value={t.nombre}>{t.nombre} ({t.categoria})</option>
+                                                    ))}
+                                                </select>
                                             </div>
                                             <div className="w-16">
                                                 <CoWorkField 

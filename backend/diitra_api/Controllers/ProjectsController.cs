@@ -14,12 +14,18 @@ namespace diitra_api.Controllers
         private readonly IDocumentEngine _documentEngine;
         private readonly IDocumentInstanceService _documentInstanceService;
         private readonly diitra_application.Security.IAuthService _authService;
+        private readonly IProjectOrchestrator _projectOrchestrator;
 
-        public ProjectsController(IDocumentEngine documentEngine, IDocumentInstanceService documentInstanceService, diitra_application.Security.IAuthService authService)
+        public ProjectsController(
+            IDocumentEngine documentEngine, 
+            IDocumentInstanceService documentInstanceService, 
+            diitra_application.Security.IAuthService authService,
+            IProjectOrchestrator projectOrchestrator)
         {
             _documentEngine = documentEngine;
             _documentInstanceService = documentInstanceService;
             _authService = authService;
+            _projectOrchestrator = projectOrchestrator;
         }
 
         /// <summary>
@@ -216,182 +222,18 @@ namespace diitra_api.Controllers
         /// usarán el mismo DocumentEngine para generar los PDFs.
         /// </summary>
         [HttpPost("save-preview-data")]
-        public async Task<IActionResult> SavePreviewData([FromBody] Diitra.Application.Research.Dtos.ProyectoDto dto)
+        public async Task<IActionResult> SavePreviewData([FromBody] ProyectoDto dto)
         {
-            var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
-            
-            if (dto == null) 
+            if (dto == null) return BadRequest("Datos nulos");
+
+            var result = await _projectOrchestrator.SyncProjectWizardDataAsync(dto);
+
+            if (!result.Success)
             {
-                Console.WriteLine("[DIITRA WARNING] Se recibió un DTO nulo en SavePreviewData. Creando instancia vacía para pruebas.");
-                dto = new Diitra.Application.Research.Dtos.ProyectoDto();
-            }
-            
-            // Buscamos por UUID si está presente, sino tomamos el último (para pruebas rápidas)
-            diitra_infrastructure.data.models.InvProyecto? project = null;
-            
-            if (!string.IsNullOrEmpty(dto.Uuid))
-            {
-                project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == dto.Uuid);
+                return BadRequest(new { success = false, message = result.Message, uuid = result.Uuid });
             }
 
-            if (project == null)
-            {
-                project = await context.InvProyectos.OrderByDescending(p => p.IdProyecto).FirstOrDefaultAsync();
-            }
-            
-            if (project == null)
-            {
-                project = new diitra_infrastructure.data.models.InvProyecto {
-                    Uuid = dto.Uuid ?? Guid.NewGuid().ToString(),
-                    FechaRegistro = DateTime.Now
-                };
-                context.InvProyectos.Add(project);
-            }
-
-            // Telemetría de diagnóstico
-            Console.WriteLine($"[DIITRA DEBUG] Recibido Título: '{dto.Titulo}'");
-            Console.WriteLine($"[DIITRA DEBUG] Recibido Antecedentes: '{dto.Antecedentes?.Length ?? 0} chars'");
-
-            // ⚠ TODO: PRODUCTION-LOCK ⚠
-            // En entorno de producción, habilitar FluentValidation aquí.
-            
-            // MAPEO SEGURO (Solo campos que existen en la tabla InvProyecto)
-            project.Titulo = dto.Titulo ?? "PROYECTO EN PRUEBAS";
-            project.CodigoInstitucional = dto.CodigoInstitucional;
-            project.DescripcionProyecto = dto.DescripcionProyecto;
-            project.Antecedentes = dto.Antecedentes;
-            project.Justificacion = dto.Justificacion;
-            project.MarcoTeorico = dto.MarcoTeorico;
-            project.Metodologia = dto.Metodologia;
-            project.MetodoEvaluacion = dto.Evaluacion;
-            project.TiempoEjecucion = dto.TiempoEjecucion;
-            project.TieneGrupo = dto.TieneGrupoInvestigacion;
-            project.IdConvocatoria = dto.IdConvocatoria;
-            project.IdObjetivoPnd = dto.IdObjetivoPnd;
-            
-            // Guardamos TODO el DTO como JSON en MetadataCacesJson para no perder nada
-            // y que el motor de documentos tenga acceso a los datos extra (carrera, programa, etc.)
-            project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
-
-            project.Estado = dto.Estado ?? "Borrador"; 
-            project.FechaModificacion = DateTime.Now;
-
-            // 3. SINCRONIZACIÓN DE PERSONAL (Investigadores)
-            if (dto.Investigadores != null)
-            {
-                // Limpiar previos
-                var oldProfs = context.InvProyectosProfesores.Where(p => p.IdProyecto == project.IdProyecto);
-                var oldAlums = context.InvProyectosAlumnos.Where(p => p.IdProyecto == project.IdProyecto);
-                context.InvProyectosProfesores.RemoveRange(oldProfs);
-                context.InvProyectosAlumnos.RemoveRange(oldAlums);
-
-                foreach (var inv in dto.Investigadores)
-                {
-                    if (string.IsNullOrEmpty(inv.Cedula)) continue;
-
-                    var userPersona = await _authService.GetOrProvisionUserByCedulaAsync(inv.Cedula);
-                    if (userPersona == null) continue;
-
-                    if (userPersona.TablaSigafi == "alumno")
-                    {
-                        context.InvProyectosAlumnos.Add(new diitra_infrastructure.data.models.InvProyectoAlumno
-                        {
-                            IdProyecto = project.IdProyecto,
-                            IdUsuario = userPersona.IdUsuario,
-                            Rol = inv.Rol,
-                            NivelAcademico = inv.NivelAcademico,
-                            Telefono = inv.Telefono
-                        });
-                    }
-                    else
-                    {
-                        context.InvProyectosProfesores.Add(new diitra_infrastructure.data.models.InvProyectoProfesor
-                        {
-                            IdProyecto = project.IdProyecto,
-                            IdUsuario = userPersona.IdUsuario,
-                            Rol = inv.Rol,
-                            NivelAcademico = inv.NivelAcademico,
-                            Telefono = inv.Telefono,
-                            EsDirector = inv.Rol?.Contains("Director") == true
-                        });
-                    }
-                }
-            }
-
-            // 4. SINCRONIZACIÓN DE OBJETIVOS ESPECÍFICOS
-            if (dto.ObjetivosEspecificos != null)
-            {
-                var oldObjs = context.InvObjetivosProyecto.Where(o => o.IdProyecto == project.IdProyecto && o.EsGeneral == false);
-                context.InvObjetivosProyecto.RemoveRange(oldObjs);
-
-                int orden = 1;
-                foreach (var obj in dto.ObjetivosEspecificos)
-                {
-                    if (string.IsNullOrWhiteSpace(obj)) continue;
-                    context.InvObjetivosProyecto.Add(new diitra_infrastructure.data.models.InvObjetivoProyecto
-                    {
-                        IdProyecto = project.IdProyecto,
-                        Descripcion = obj,
-                        EsGeneral = false,
-                        Orden = orden++
-                    });
-                }
-            }
-
-            // 5. SINCRONIZACIÓN DE PRESUPUESTO
-            if (dto.RecursosNecesarios != null)
-            {
-                var oldPres = context.InvPresupuestoItems.Where(p => p.IdProyecto == project.IdProyecto);
-                context.InvPresupuestoItems.RemoveRange(oldPres);
-
-                foreach (var item in dto.RecursosNecesarios)
-                {
-                    context.InvPresupuestoItems.Add(new diitra_infrastructure.data.models.InvPresupuestoItem
-                    {
-                        IdProyecto = project.IdProyecto,
-                        Categoria = "Gasto",
-                        Detalle = item.Descripcion ?? "Sin detalle",
-                        Cantidad = decimal.TryParse(item.Cantidad, out var c) ? c : 1,
-                        ValorUnitario = item.CostoUnitario ?? 0,
-                        EsGastoCapital = item.EsGastoCapital ?? false,
-                        IdPartida = item.IdPartida
-                    });
-                }
-            }
-
-            // 6. SINCRONIZACIÓN DE MATRIZ DE MARCO LÓGICO (MML)
-            if (dto.MatrizMarcoLogico != null)
-            {
-                var oldMml = context.InvProyectosMml.Where(m => m.IdProyecto == project.IdProyecto);
-                context.InvProyectosMml.RemoveRange(oldMml);
-
-                foreach (var row in dto.MatrizMarcoLogico)
-                {
-                    if (string.IsNullOrWhiteSpace(row.Resumen)) continue;
-                    context.InvProyectosMml.Add(new diitra_infrastructure.data.models.InvProyectoMml
-                    {
-                        IdProyecto = project.IdProyecto,
-                        Nivel = row.Nivel ?? "Desconocido",
-                        ResumenNarrativo = row.Resumen,
-                        Indicadores = row.Indicadores,
-                        MediosVerificacion = row.Medios,
-                        Supuestos = row.Supuestos
-                    });
-                }
-            }
-
-            try 
-            {
-                await context.SaveChangesAsync();
-                Console.WriteLine($"[DIITRA SUCCESS] Proyecto '{project.Titulo}' y sus relaciones persistidas correctamente.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[DIITRA ERROR PERSISTENCIA] {ex.Message}");
-                return Ok(new { success = false, message = "Error al guardar relaciones: " + ex.Message, uuid = project.Uuid });
-            }
-
-            return Ok(new { success = true, uuid = project.Uuid });
+            return Ok(new { success = true, uuid = result.Uuid });
         }
     }
 }

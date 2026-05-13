@@ -71,6 +71,15 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
 
+    // --- Catálogos Nucleares y Configuración ---
+    public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
+    public virtual DbSet<InvCatTipoEvidencia>  InvCatTipoEvidencias   { get; set; }
+    public virtual DbSet<InvEntidadExterna>    InvEntidadesExternas   { get; set; }
+    public virtual DbSet<InvConfigIndicador>   InvConfigIndicadores   { get; set; }
+    public virtual DbSet<InvRubricaCriterio>   InvRubricaCriterios    { get; set; }
+    public virtual DbSet<InvConfigWorkflow>    InvConfigWorkflows    { get; set; }
+    public virtual DbSet<InvProyectoExtension> InvProyectoExtensions { get; set; }
+
     // --- DIITRA Document Engine (Persistence & Audit) ---
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentTemplate> DocumentTemplates { get; set; }
     public virtual DbSet<Diitra.Domain.Common.Documents.DocumentInstance> DocumentInstances { get; set; }
@@ -891,12 +900,20 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaModificacion).HasColumnName("fechaModificacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
 
             entity.Property(e => e.IdObjetivoPnd).HasColumnName("idObjetivoPnd");
+            
+            // NÚCLEO DE INNOVACIÓN Y VINCULACIÓN PRODUCTIVA
+            entity.Property(e => e.IdEntidadAliada).HasColumnName("idEntidadAliada");
+            entity.Property(e => e.TrlInicial).HasColumnName("trlInicial");
+            entity.Property(e => e.TrlActual).HasColumnName("trlActual");
+            entity.Property(e => e.TrlMeta).HasColumnName("trlMeta");
+
             entity.HasOne(d => d.IdObjetivoPndNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdObjetivoPnd).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_pnd_obj");
             entity.HasOne(d => d.IdConvocatoriaNavigation).WithMany(p => p.Proyectos).HasForeignKey(d => d.IdConvocatoria).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_conv");
             entity.HasOne(d => d.IdSublineaNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdSublinea).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_sublinea");
             entity.HasOne(d => d.IdProgramaNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdPrograma).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_programa");
             entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_grupo");
             entity.HasOne(d => d.IdTipoNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdTipo).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_tipo");
+            entity.HasOne(d => d.IdEntidadAliadaNavigation).WithMany(p => p.InvProyectos).HasForeignKey(d => d.IdEntidadAliada).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_proy_entidad_aliada");
         });
 
         modelBuilder.Entity<InvTrazabilidadProyecto>(entity =>
@@ -1071,13 +1088,17 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_productos");
             entity.Property(e => e.IdProducto).HasColumnName("idProducto");
             entity.Property(e => e.IdProyecto).HasColumnName("idProyecto");
-            entity.Property(e => e.Tipo).HasColumnName("tipo").HasMaxLength(150).IsRequired();
+            entity.Property(e => e.IdTipoProducto).HasColumnName("idTipoProducto");
+            entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(500).IsRequired();
             entity.Property(e => e.Cantidad).HasColumnName("cantidad").HasDefaultValueSql("'1'");
-            entity.Property(e => e.EsPatente).HasColumnName("esPatente").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
+            entity.Property(e => e.UrlProducto).HasColumnName("urlProducto").HasMaxLength(512);
+            entity.Property(e => e.EsPropiedadIntelectual).HasColumnName("esPropiedadIntelectual").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
             entity.Property(e => e.NumeroRegistro).HasColumnName("numeroRegistro").HasMaxLength(100);
-            entity.Property(e => e.FechaExpiracion).HasColumnName("fechaExpiracion");
+            entity.Property(e => e.FechaRegistroSenadi).HasColumnName("fechaRegistroSenadi");
+            entity.Property(e => e.MetadataJson).HasColumnName("metadataJson").HasColumnType("json");
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProductos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_prod_proyecto");
+            entity.HasOne(d => d.IdTipoProductoNavigation).WithMany(p => p.InvProductos).HasForeignKey(d => d.IdTipoProducto).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_prod_tipo");
         });
 
         modelBuilder.Entity<InvCatImpacto>(entity =>
@@ -1187,12 +1208,14 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.IdInforme).HasColumnName("idInforme");
-            entity.Property(e => e.Tipo).HasColumnName("tipo").HasColumnType("enum('Imagen','Documento','Factura','Asistencia','Otros')").HasDefaultValueSql("'Imagen'");
+            entity.Property(e => e.IdTipoEvidencia).HasColumnName("idTipoEvidencia");
             entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
             entity.Property(e => e.RutaArchivo).HasColumnName("rutaArchivo").HasMaxLength(512).IsRequired();
+            entity.Property(e => e.MetadataJson).HasColumnName("metadataJson").HasColumnType("json");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
-
+ 
             entity.HasOne(d => d.IdInformeNavigation).WithMany(p => p.InvEvidencias).HasForeignKey(d => d.IdInforme).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_ev_informe");
+            entity.HasOne(d => d.IdTipoEvidenciaNavigation).WithMany(p => p.InvEvidencias).HasForeignKey(d => d.IdTipoEvidencia).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_ev_tipo");
         });
 
         modelBuilder.Entity<InvGasto>(entity =>
@@ -1663,6 +1686,81 @@ public partial class DiitraContext : DbContext
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.DocumentosAdjuntos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_docadj_proyecto");
             entity.HasOne(d => d.IdDocReqNavigation).WithMany(p => p.InvProyectoDocumentosAdjuntos).HasForeignKey(d => d.IdDocReq).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_docadj_req");
+        });
+
+        // --- Nuevas Configuraciones Nucleares ---
+
+        modelBuilder.Entity<InvCatTipoProducto>(entity =>
+        {
+            entity.HasKey(e => e.IdTipoProducto).HasName("PRIMARY");
+            entity.ToTable("inv_cat_tipo_producto");
+            entity.Property(e => e.IdTipoProducto).HasColumnName("idTipoProducto");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Categoria).HasColumnName("categoria").HasColumnType("enum('Académico','Tecnológico','Innovación','Transferencia')").IsRequired();
+            entity.Property(e => e.RequiereRegistro).HasColumnName("requiereRegistro").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+        });
+
+        modelBuilder.Entity<InvCatTipoEvidencia>(entity =>
+        {
+            entity.HasKey(e => e.IdTipoEvidencia).HasName("PRIMARY");
+            entity.ToTable("inv_cat_tipo_evidencia");
+            entity.Property(e => e.IdTipoEvidencia).HasColumnName("idTipoEvidencia");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasMaxLength(255);
+            entity.Property(e => e.Extensiones).HasColumnName("extensiones").HasMaxLength(50).HasDefaultValueSql("'pdf,jpg,png,zip'");
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+        });
+
+        modelBuilder.Entity<InvEntidadExterna>(entity =>
+        {
+            entity.HasKey(e => e.IdEntidad).HasName("PRIMARY");
+            entity.ToTable("inv_entidades_externas");
+            entity.Property(e => e.IdEntidad).HasColumnName("idEntidad");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Ruc).HasColumnName("ruc").HasMaxLength(13);
+            entity.HasIndex(e => e.Ruc).IsUnique();
+            entity.Property(e => e.RazonSocial).HasColumnName("razonSocial").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Tipo).HasColumnName("tipo").HasColumnType("enum('Pública','Privada','ONG','Académica')").HasDefaultValueSql("'Privada'");
+            entity.Property(e => e.Sector).HasColumnName("sector").HasMaxLength(100);
+            entity.Property(e => e.ContactoNombre).HasColumnName("contactoNombre").HasMaxLength(150);
+            entity.Property(e => e.ContactoEmail).HasColumnName("contactoEmail").HasMaxLength(150);
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        });
+
+        modelBuilder.Entity<InvConfigIndicador>(entity =>
+        {
+            entity.HasKey(e => e.IdConfig).HasName("PRIMARY");
+            entity.ToTable("inv_config_indicadores");
+            entity.Property(e => e.IdConfig).HasColumnName("idConfig");
+            entity.Property(e => e.IdInstitucion).HasColumnName("idInstitucion").HasDefaultValueSql("'1'");
+            entity.Property(e => e.CodigoIndicador).HasColumnName("codigoIndicador").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.NombreIndicador).HasColumnName("nombreIndicador").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.TipoDato).HasColumnName("tipoDato").HasColumnType("enum('Cantidad','Monto','Booleano','Porcentaje')").HasDefaultValueSql("'Cantidad'");
+            entity.Property(e => e.ValorReferencia).HasColumnName("valorReferencia").HasPrecision(12, 2);
+            entity.Property(e => e.AñoNormativa).HasColumnName("añoNormativa").IsRequired();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+        });
+
+        modelBuilder.Entity<InvRubricaCriterio>(entity =>
+        {
+            entity.HasKey(e => e.IdCriterio).HasName("PRIMARY");
+            entity.ToTable("inv_rubrica_criterios");
+            entity.Property(e => e.IdCriterio).HasColumnName("idCriterio");
+            entity.Property(e => e.IdRubrica).HasColumnName("idRubrica");
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.PesoPorcentaje).HasColumnName("pesoPorcentaje").HasPrecision(5, 2).IsRequired();
+            entity.Property(e => e.Orden).HasColumnName("orden").HasDefaultValueSql("'0'");
+
+            entity.HasOne(d => d.IdRubricaNavigation).WithMany(p => p.InvRubricaCriterios).HasForeignKey(d => d.IdRubrica).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_crit_rubrica");
         });
 
         OnModelCreatingPartial(modelBuilder);

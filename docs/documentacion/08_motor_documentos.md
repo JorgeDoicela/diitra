@@ -209,11 +209,12 @@ Content-Type: application/json
 
 ---
 
-## Deuda Técnica
+## 5. Auditoría Forense y Snapshots (V3 Resiliente)
 
-| Elemento | Estado |
-|---|---|
-| `ProjectDocumentTemplate.cs` | `[Obsolete]` — puede eliminarse |
-| `BaseInstitutionalTemplate.cs` | `[Obsolete]` implícito — puede eliminarse |
-| Endpoints admin sin autenticación | ⚠️ Agregar `[Authorize(Roles = "Admin")]` |
-| Advertencia `DefaultFontProvider` (CS0612) | Menor — actualizar API iText7 |
+Para garantizar que DIITRA sea resistente a auditorías externas (CACES) incluso años después de que los datos del proyecto hayan cambiado, el motor implementa un sistema de **Snapshots de Datos**:
+
+- **Persistencia de Insumos**: En cada generación de PDF, se guarda un snapshot JSON completo en el `DocumentAuditEntry`.
+- **Reconstrucción Histórica**: Si se cuestiona un acta de hace 3 años, el administrador puede ver exactamente qué datos se inyectaron en la plantilla, independientemente de si el proyecto fue editado o eliminado posteriormente.
+- **Sello de Integridad**: El snapshot se vincula al Hash SHA-256 del archivo físico, creando un vínculo inquebrantable entre el documento y sus datos de origen.
+
+Este sistema cumple con el principio de **No Repudio** exigido para documentos legales en el marco de la LOPDP y las regulaciones académicas vigentes.
