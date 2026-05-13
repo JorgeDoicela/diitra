@@ -1,12 +1,12 @@
 # Frontend Web Enterprise (Vite + React)
 
-El portal centralizado administrativo está pensado para carga de alta densidad (Rich Data UI) y está compuesto bajo un frontend tooling state-of-the-art.
+El portal centralizado administrativo está diseñado para la gestión de datos de alta densidad (Rich Data UI) y utiliza un ecosistema de herramientas de última generación.
 
-## Core Tecnológico de Alto Rendimiento
+## Core Tecnológico
 
-- **Vite.js sobre Webpack**: Disminuye el Cold Start de los desarrolladores un 80% mediante ESBuild.
-- **Tailwind v4 (Oxide Compiler)**: Motor sin dependencias pesadas de Node. El AST inyectado detecta atómicamente clases utillizadas. Soporte para *Content-Security-Policies* rígidas.
-- **React 19 Hooks & Compiler**: Aprovecha las últimas reducciones de boilerplate para optimizar pre-renderizado del Virtual DOM en tablas de listados infinitos (cientos de convocatorias).
+- **Vite.js**: Optimiza el tiempo de arranque del entorno de desarrollo mediante el uso de ESBuild.
+- **Tailwind v4 (Oxide Compiler)**: Motor de estilos de alto rendimiento que permite una compilación atómica de clases y soporte para Content Security Policies (CSP) estrictas.
+- **React 19**: Utiliza Hooks y compilación optimizada para mejorar el renderizado del DOM virtual en componentes complejos y listados extensos.
 
 ## Optimizaciones Web (Core Web Vitals)
 

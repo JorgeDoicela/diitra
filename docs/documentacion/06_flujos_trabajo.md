@@ -1,130 +1,62 @@
-# Flujos y Diagramas Transaccionales (BPMN / Sequence)
+# Flujos de Trabajo y Diagramas Transaccionales
 
-En ecosistemas complejos, detallar textualmente no es suficiente. El sistema procesa los modelos de dominio según secuencias predefinidas de actor/validación.
+La lógica de DIITRA se describe mediante diagramas de secuencia que detallan la interacción entre los actores, los servicios de aplicación y la capa de persistencia.
 
-## Sequence: Ejecución "Double Blind Peer Review"
+## Proceso de Revisión por Pares (Double Blind Peer Review)
 
-El componente más crítico académicamente. Exige validación, seguridad asincrónica vía "Magic Token" y resolución de estados.
+Este proceso garantiza la imparcialidad académica mediante la anonimización de datos y el uso de tokens de acceso temporales.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor DR as Director
-    participant GW as "API Gateway (.NET)"
-    participant DB as "MariaDB/MySQL"
+    actor DR as Director de Investigación
+    participant GW as API Gateway (.NET)
+    participant DB as MariaDB/MySQL
     actor RE as Revisor Externo
     
-    rect rgb(200, 230, 240)
-        Note over DR,DB: Fase 1: Asignación Ciega
-        DR->>GW: Asignar(ProyectoID=12, RevisorID=8, Ciego=True)
-        GW->>DB: Generar Scope Token temporal en inv_tokens_acceso
-        GW-->>DR: 200 OK (Notificado)
-    end
+    DR->>GW: Asignar Revisor (Ciego=True)
+    GW->>DB: Generar Token en inv_tokens_acceso
+    GW->>RE: Enviar Notificación con Enlace Seguro
     
-    rect rgb(240, 210, 200)
-        Note over GW,RE: Fase 2: Distribución Mágica Integrada
-        GW->>GW: Worker Envia Correo SMTP
-        GW-->>RE: "Inviado a revisar - Clickeable /token?t=xyz"
-    end
-    
-    rect rgb(210, 240, 200)
-        Note over RE,DB: Fase 3: Evaluación Auth-less Dinámica
-        RE->>GW: GET /ver-proyecto (Cookie Sessionless, HTTP Bearer temporal)
-        GW->>DB: Validar Scope/Uso Token == Falso
-        DB-->>GW: Result (Valido)
-        GW-->>RE: Envía Matriz Rúbrica Anónima
-        RE->>GW: POST /enviar-dictamen (Rúbricas cargadas)
-        GW->>DB: Actualiza inv_revisiones. Invalida Token.
-        GW-->>RE: 201 Created. Redirección a Home de agradecimiento.
-    end
+    RE->>GW: Acceder a Evaluación (Bearer Token)
+    GW->>DB: Validar Integridad de Token
+    DB-->>GW: Token Válido
+    GW-->>RE: Proveer Documentación Anonimizada
+    RE->>GW: Registrar Dictamen (Rúbricas)
+    GW->>DB: Persistir Evaluación e Invalidar Token
 ```
 
-## Motor de Flujos Dinámico (V3 Resiliente)
+## Motor de Estados Dinámico (V3)
 
-A partir de la versión actual, DIITRA ha desacoplado las reglas de negocio del código fuente. El sistema utiliza un **Motor de Estados Basado en Configuración**:
+DIITRA implementa un motor de flujos basado en reglas configurables en base de datos, lo que permite modificar el ciclo de vida de los proyectos sin intervenciones en el código.
 
-### 1. Configuración de Reglas (`inv_config_workflow`)
-Las transiciones permitidas se definen en la base de datos. Cada regla especifica:
-- **Estado Origen**: El estado actual del proyecto (ej: Borrador).
-- **Estado Destino**: El estado al que se desea transicionar (ej: Enviado).
-- **Tipo de Proyecto**: Permite flujos distintos para "Investigación Básica" vs "Innovación Tecnológica".
-- **Rol Requerido**: (Opcional) Define qué perfil de usuario tiene permiso para ejecutar la transición.
+1. **Configuración de Transiciones**: Las reglas se definen en la tabla `inv_config_workflow`, especificando los estados de origen, destino y los roles autorizados.
+2. **Encadenamiento SHA-256**: Cada transición genera un registro en `inv_trazabilidad_proyectos`. El sistema calcula un hash que vincula la entrada actual con la anterior, asegurando una cadena de custodia inalterable.
+3. **Bloqueo de Integridad**: Al alcanzar estados críticos (ej. Aprobado), el motor activa señales de solo lectura en los orquestadores de datos.
 
-### 2. Trazabilidad Forense (Blockchain-lite)
-Cada vez que un proyecto cambia de estado, el sistema registra una entrada en `inv_trazabilidad_proyectos` con las siguientes garantías:
-- **Hash de Integridad**: Un sello SHA-256 generado a partir de los datos de la transición.
-- **Encadenamiento**: Cada entrada contiene el `HashAnterior`, creando una cadena inmutable de confianza.
-- **Auditoría de Usuario**: Identificación exacta de quién ejecutó el cambio y bajo qué observación.
+## Generación de Documentación Oficial y Snapshots
 
-### 3. Ventajas de la Arquitectura Dinámica
-- **Zero-Downtime Updates**: Los administradores pueden añadir nuevos pasos de validación (ej: Comité de Ética) insertando una fila en la base de datos, sin recompilar el servidor.
-- **Adaptabilidad CACES**: Si la normativa institucional cambia en 2026, el sistema se ajusta mediante configuración.
-
----
-
-## Sequence: Generación de Documento PDF (Motor DIITRA)
-
-Flujo completo desde que un controlador solicita un PDF hasta que el usuario lo descarga.
+El flujo de generación de documentos PDF incorpora la captura de evidencias forenses para auditorías regulatorias.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor USR as Usuario / Sistema
-    participant CTRL as "Controller (.NET)"
-    participant ENG as "DocumentEngine"
-    participant DB as "doc_templates (MySQL)"
-    participant HB as "Handlebars.Net"
-    participant ITXT as "iText7 pdfHTML"
-    participant AUDIT as "doc_audit_entries"
+    actor USR as Sistema/Usuario
+    participant ENG as DocumentEngine
+    participant DB as inv_document_templates
+    participant ITXT as iText9 Renderer
+    participant AUDIT as inv_document_audit
 
-    rect rgb(200, 230, 240)
-        Note over USR,CTRL: Solicitud de documento
-        USR->>CTRL: POST /api/projects/generate-pdf { ProyectoDto }
-        CTRL->>ENG: GenerateAsync(DocumentRequest { TemplateCode, Data })
-    end
-
-    rect rgb(240, 240, 200)
-        Note over ENG,DB: Paso 1 — Carga plantilla
-        ENG->>DB: SELECT HtmlContent WHERE Code='PROTOCOLO_INVESTIGACION' AND IsActive=1
-        DB-->>ENG: plantilla HTML v2 (9 secciones)
-    end
-
-    rect rgb(220, 240, 220)
-        Note over ENG,HB: Pasos 2-3 — Compliance + Render HTML
-        ENG->>ENG: LegalComplianceInjector → inyecta pie LOPDP
-        ENG->>HB: Compile(html) + Render(ProyectoDto serializado)
-        HB-->>ENG: HTML final con datos del investigador
-    end
-
-    rect rgb(240, 220, 210)
-        Note over ENG,ITXT: Paso 4 — Conversión PDF
-        ENG->>ITXT: HtmlConverter.ConvertToPdf(htmlFinal)
-        ITXT-->>ENG: byte[] PDF (A4, fuentes embebidas)
-    end
-
-    rect rgb(230, 210, 240)
-        Note over ENG,AUDIT: Paso 5 — Auditoría LOPDP
-        ENG->>AUDIT: INSERT (TraceabilityCode, TemplateCode, Version, GeneratedBy, GeneratedAt)
-        AUDIT-->>ENG: OK
-    end
-
-    ENG-->>CTRL: DocumentResult { PdfBytes, FileName, TraceabilityCode }
-    CTRL-->>USR: 200 OK · Content-Type: application/pdf
+    USR->>ENG: Solicitar Generación (TemplateCode, Data)
+    ENG->>DB: Recuperar Plantilla HTML
+    DB-->>ENG: HTML v.X
+    ENG->>ENG: Inyectar Datos y Cláusulas Legales
+    ENG->>ITXT: Renderizar a PDF Binario
+    ITXT-->>ENG: Archivo PDF
+    ENG->>ENG: Calcular Hash SHA-256
+    ENG->>AUDIT: Registrar Auditoría + Snapshot JSON
+    AUDIT-->>ENG: Registro Confirmado
+    ENG-->>USR: Proveer Documento con Sello de Integridad
 ```
 
-## Flujo: Actualización de Plantilla sin Redespliegue
-
-```mermaid
-sequenceDiagram
-    actor ADM as Administrador
-    participant UI as "Panel Admin (futuro)"
-    participant API as "PUT /api/admin/templates/{code}"
-    participant DB as "doc_templates (MySQL)"
-
-    ADM->>UI: Edita HTML del formato en editor web
-    UI->>API: { htmlContent: "...", updatedBy: "admin@ist.edu" }
-    API->>DB: UPDATE doc_templates SET HtmlContent=?, Version=Version+1, UpdatedAt=NOW()
-    DB-->>API: OK
-    API-->>ADM: "Plantilla actualizada a v3"
-    Note over ADM,DB: El próximo PDF generado usará el formato nuevo instantáneamente
-```
+Este proceso asegura que cualquier documento emitido por la institución pueda ser validado años después mediante la comparación del archivo físico con el snapshot de datos almacenado en la base de datos de integridad.

@@ -1,33 +1,35 @@
-# 🏛️ DIITRA: Ecosistema de Gestión de Investigación e Innovación
+# DIITRA: Ecosistema de Gestión de Investigación e Innovación
 
-**DIITRA** (Departamento de Investigación e Innovación Traversari) es una plataforma integral diseñada para automatizar la burocracia académica y elevar los estándares de calidad de los Institutos Superiores Tecnológicos.
+DIITRA es una plataforma integral diseñada para la automatización de procesos académicos y la elevación de los estándares de calidad en Institutos Superiores Tecnológicos.
 
-## 1. Alineación Normativa (Ecuador)
-El sistema ha sido construido bajo la lógica del **Reglamento de Régimen Académico**:
-- **Carga Horaria:** Integración nativa para validar las horas de investigación asignadas a los docentes.
-- **Indicadores CACES:** El esquema de base de datos incluye campos específicos como `esEntregableCaces`, permitiendo exportar reportes de acreditación con un solo clic.
+## Alineación Normativa Nacional
 
-## 2. El Ciclo de Vida en DIITRA (Flujo de Valor)
-El sistema gestiona el proyecto desde la idea hasta el impacto:
-1. **Convocatoria:** Gestión dinámica de periodos académicos y líneas de investigación institucional.
-2. **Evaluación Doble Ciego:** Módulo de `inv_revisiones_pares` que garantiza la ética y calidad científica mediante la anonimización de evaluadores.
-3. **Monitoreo con Evidencias:** Sistema de carga de archivos (`inv_evidencias`) para bitácoras, fotos y facturas que justifican el gasto del fondo de investigación.
-4. **Innovación:** Tablas dedicadas a la Propiedad Intelectual y Transferencia Tecnológica, preparadas para reportar al **SENADI**.
+El sistema se fundamenta en el Reglamento de Régimen Académico vigente en Ecuador:
 
-## 3. Inteligencia de Datos (Esquema SQL)
-Nuestra base de datos es robusta y escalable:
-- **Trazabilidad Total:** Uso de UUIDs en todas las tablas clave para garantizar la unicidad de los datos.
-- **Auditoría de Gastos:** Libro diario vinculado al presupuesto aprobado para evitar desvíos financieros en los proyectos.
-- **Gestión de ODS:** Los proyectos se vinculan automáticamente a los **Objetivos de Desarrollo Sostenible (Agenda 2030)**, un requisito cada vez más común en evaluaciones internacionales.
+- **Gestión de Carga Horaria**: Validación de las horas dedicadas a la investigación por el personal docente.
+- **Indicadores de Acreditación**: Soporte para la extracción de evidencias requeridas por el CACES.
 
-## 4. Próximos Pasos: La Hoja de Ruta Enterprise
-DIITRA está listo para evolucionar hacia la automatización total:
-- **Firma Electrónica Avanzada (.p12):** Integración con servicios como FirmaEC para que los informes y resoluciones tengan validez jurídica total sin necesidad de impresión física.
-- **Integración con DSpace:** Exportación automática de productos terminados (artículos/libros) hacia el Repositorio Institucional.
-- **Dashboard de Analítica:** Gráficos de alta fidelidad para el Rectorado, mostrando el impacto de la investigación por carrera, género y presupuesto ejecutado.
+## Ciclo de Vida del Proyecto
 
-## 5. Conclusión: El Valor para la Institución
-DIITRA no es un gasto, es una inversión en **Soberanía Tecnológica**. Centraliza el conocimiento, protege la propiedad intelectual y asegura que el Instituto cumpla siempre con las exigencias de los organismos de control con el mínimo esfuerzo administrativo.
+DIITRA gestiona de forma integral el flujo de valor de la investigación:
 
----
-*DIITRA: Innovación Ecuatoriana para la Educación del Futuro.*
+1. **Convocatoria y Postulación**: Administración dinámica de periodos académicos y líneas de investigación.
+2. **Evaluación Científica**: Módulo de revisión por pares doble ciego para garantizar la excelencia académica.
+3. **Monitoreo de Evidencias**: Repositorio de justificaciones técnicas y financieras vinculadas a la ejecución del proyecto.
+4. **Resultados e Innovación**: Gestión de la Propiedad Intelectual y reportes para el SENADI.
+
+## Inteligencia y Gobernanza de Datos
+
+- **Trazabilidad de Información**: Uso de identificadores universales únicos para garantizar la integridad de los datos maestros.
+- **Control Presupuestario**: Vinculación entre la planificación financiera y la ejecución real de los fondos de investigación.
+- **Impacto y Sostenibilidad**: Clasificación de proyectos según los Objetivos de Desarrollo Sostenible (Agenda 2030).
+
+## Estrategia de Evolución Tecnológica
+
+- **Integración de Firma Electrónica**: Adopción del estándar FirmaEC para la validación jurídica de informes y resoluciones.
+- **Interoperabilidad Científica**: Conectividad con repositorios institucionales mediante protocolos DSpace y Dublin Core.
+- **Analítica Institucional**: Tableros de indicadores para el apoyo a la toma de decisiones estratégicas.
+
+## Conclusión
+
+DIITRA representa una inversión en soberanía tecnológica institucional, centralizando el conocimiento generado y asegurando el cumplimiento de las exigencias de los organismos de control de la educación superior.
