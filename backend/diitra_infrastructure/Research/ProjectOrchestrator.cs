@@ -260,15 +260,14 @@ namespace diitra_infrastructure.Research
                 if (string.IsNullOrWhiteSpace(p.Tipo)) continue;
                 
                 // Intentamos buscar el ID del tipo de producto por nombre o UUID si viniera
-                var cat = await _context.InvCatTipoProducto.FirstOrDefaultAsync(c => c.Nombre == p.Tipo);
+                var cat = await _context.InvCatTipoProductos.FirstOrDefaultAsync(c => c.Nombre == p.Tipo);
                 
                 _context.InvProductos.Add(new InvProducto
                 {
                     IdProyecto = projectId,
                     IdTipoProducto = cat?.IdTipoProducto ?? 1, // Default a Académico si no se encuentra
-                    NombreProducto = p.Tipo,
-                    CantidadEsperada = int.TryParse(p.Cantidad, out var cant) ? cant : 1,
-                    FechaEsperada = DateOnly.FromDateTime(DateTime.Now.AddMonths(6)) // Placeholder
+                    Titulo = p.Tipo,
+                    Cantidad = int.TryParse(p.Cantidad, out var cant) ? cant : 1
                 });
             }
         }
@@ -280,8 +279,8 @@ namespace diitra_infrastructure.Research
             // 1. Limpieza profunda
             var oldActivities = await _context.InvCronogramas.Where(c => c.IdProyecto == projectId).ToListAsync();
             foreach(var old in oldActivities) {
-                var weeks = _context.InvCronogramasSemanas.Where(s => s.IdActividad == old.IdActividad);
-                _context.InvCronogramasSemanas.RemoveRange(weeks);
+                var weeks = _context.InvCronogramaSemanas.Where(s => s.IdActividad == old.IdActividad);
+                _context.InvCronogramaSemanas.RemoveRange(weeks);
             }
             _context.InvCronogramas.RemoveRange(oldActivities);
             await _context.SaveChangesAsync();
@@ -310,7 +309,7 @@ namespace diitra_infrastructure.Research
                     {
                         if (act.Semanas[i])
                         {
-                            _context.InvCronogramasSemanas.Add(new InvCronogramaSemana
+                            _context.InvCronogramaSemanas.Add(new InvCronogramaSemana
                             {
                                 IdActividad = nuevaAct.IdActividad,
                                 Mes = $"Mes {(i / 4) + 1}",
@@ -351,9 +350,9 @@ namespace diitra_infrastructure.Research
                 _context.InvRecursosDisponibles.Add(new InvRecursoDisponible
                 {
                     IdProyecto = projectId,
-                    Descripcion = r.Descripcion,
-                    Cantidad = r.Cantidad,
-                    FuenteFinanciamiento = r.Fuente
+                    Detalle = r.Descripcion,
+                    Cantidad = decimal.TryParse(r.Cantidad, out var cantRec) ? cantRec : 0,
+                    Fuente = r.Fuente
                 });
             }
         }

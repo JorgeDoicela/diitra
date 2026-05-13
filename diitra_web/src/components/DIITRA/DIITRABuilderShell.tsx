@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { CheckCircle, FileText, Save, Users, Clock, Settings, BookOpen, Target, Upload, Shield, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
@@ -56,16 +56,25 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 }) => {
     const { user } = useAuth();
     
+    // Generamos un ID estable para la sesión si el documento aún no tiene UUID (ej: Nueva Postulación)
+    const sessionTempIdRef = useRef<string>(`temp_${Math.random().toString(36).substring(2, 9)}`);
+    
+    // Bloqueamos el ID de la sala al montar el componente para evitar que CoWork se reinicie
+    // cuando el backend asigna un UUID real tras el primer guardado.
+    const stableRoomIdRef = useRef<string>(formData.Uuid || sessionTempIdRef.current);
+
     // Motor CoWork: Sincronización en tiempo real para todos los campos
-    const cowork = useCoWork({
-        documentId: `${formData.Uuid || 'temp'}_core`,
+    const coworkConfig = useMemo(() => ({
+        documentId: `${stableRoomIdRef.current}_core`,
         user: user ? coworkUserFromAuth({
             userUuid: user.id_referencia,
             nombreCompleto: user.nombre_completo,
             role: user.role
         }) : { id: 'guest', name: 'Invitado', role: 'Visitante', color: '#888', initials: 'IN' },
-        enabled: !!formData.Uuid
-    });
+        enabled: true
+    }), [user]); // Ya no depende de formData.Uuid para evitar flaps
+
+    const cowork = useCoWork(coworkConfig);
 
     const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
     const [isSaving, setIsSaving] = useState(false);
@@ -411,4 +420,4 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     );
 };
 
-export default DIITRABuilderShell;
+export default React.memo(DIITRABuilderShell);

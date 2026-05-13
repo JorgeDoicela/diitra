@@ -148,30 +148,43 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
     };
 
     // MOTOR DE SINCRONIZACIÓN DE LISTAS (Y.Array)
+    // Usamos un efecto que observa cambios en el ydoc del motor CoWork
+    const lastAttachedYdocRef = useRef<Y.Doc | null>(null);
+
     useEffect(() => {
-        if (!coworkRef.current?.ydoc) return;
+        const ydoc = coworkRef.current?.ydoc;
+        if (!ydoc || ydoc === lastAttachedYdocRef.current) return;
+
+        lastAttachedYdocRef.current = ydoc;
+        console.log(`[ProjectWizard] Vinculando observadores Yjs a nueva instancia:`, ydoc.guid);
 
         const syncList = (listName: string) => {
-            const yarray = coworkRef.current!.ydoc.getArray(listName);
+            const yarray = ydoc.getArray(listName);
 
             const applyIfChanged = () => {
                 const newArr = yarray.toArray();
                 setFormData((prev: any) => {
                     const oldArr = prev[listName];
+                    // Comparación profunda para evitar loops de renderizado
                     if (JSON.stringify(oldArr) === JSON.stringify(newArr)) return prev;
+                    console.log(`[ProjectWizard] Aplicando cambio remoto en lista: ${listName}`);
                     return { ...prev, [listName]: newArr };
                 });
             };
 
+            // Carga inicial
             if (yarray.length > 0) applyIfChanged();
 
             const observer = (event: any) => {
+                // Solo aplicar si el cambio viene de otro usuario para evitar eco local
                 if (event.transaction.origin === 'remote') {
                     applyIfChanged();
                 }
             };
             yarray.observe(observer);
-            return () => yarray.unobserve(observer);
+            return () => {
+                yarray.unobserve(observer);
+            };
         };
 
         const cleanups = [
@@ -183,8 +196,12 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
             syncList('ObjetivosEspecificos')
         ];
 
-        return () => cleanups.forEach(c => c?.());
-    }, [formData.Uuid, coworkRef.current?.ydoc]); // Sincronización robusta
+        return () => {
+            console.log(`[ProjectWizard] Limpiando observadores Yjs...`);
+            cleanups.forEach(c => c?.());
+            lastAttachedYdocRef.current = null;
+        };
+    }, [coworkRef.current?.ydoc]); // Se re-vincula si el ydoc físico cambia (ej: reconexión)
 
     const sections = [
         { id: 'general', label: '01. Identificación', icon: <BookOpen size={16} /> },
@@ -211,7 +228,11 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
             onClose={onClose}
         >
             {(activeTab, cowork) => {
-                coworkRef.current = cowork;
+                // Captura estable del motor CoWork sin disparar renders innecesarios
+                if (coworkRef.current !== cowork) {
+                    coworkRef.current = cowork;
+                }
+                
                 return (
                     <div className="space-y-8 pb-10">
                         {/* Indicador de Resiliencia Normativa */}
@@ -402,6 +423,41 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                 </div>
                                             ))}
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {activeTab === 'pnd' && (
+                        <div className="space-y-8">
+                            <div className="p-8 bg-surface border border-border-thin rounded-3xl space-y-8 shadow-sm">
+                                <div className="flex justify-between items-center">
+                                    <h4 className="text-sm font-black uppercase tracking-widest flex items-center gap-3">
+                                        <Target className="text-text-main" size={20}/> 3. Alineación al Plan Nacional de Desarrollo (PND)
+                                    </h4>
+                                    <div className="px-4 py-1.5 bg-text-main/10 text-text-main border border-text-main/20 rounded-full text-[10px] font-black uppercase">Resiliencia Legal-Tech</div>
+                                </div>
+
+                                <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-6">
+                                    <label className="text-[10px] font-black uppercase text-text-dim mb-2 block ml-1 tracking-widest">Objetivo PND / Estrategia Nacional</label>
+                                    <select 
+                                        name="IdObjetivoPnd"
+                                        value={formData.IdObjetivoPnd}
+                                        onChange={handleChange}
+                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm text-text-main outline-none focus:border-text-main transition-colors appearance-none"
+                                    >
+                                        <option value={0}>Seleccione el objetivo de alineación...</option>
+                                        <option value={1}>Objetivo 1: Garantizar la vida digna...</option>
+                                        <option value={2}>Objetivo 2: Afianzar la interculturalidad...</option>
+                                        <option value={3}>Objetivo 3: Garantizar los derechos de la naturaleza...</option>
+                                        <option value={4}>Objetivo 4: Consolidar la sostenibilidad del sistema económico...</option>
+                                        <option value={5}>Objetivo 5: Impulsar la productividad y competitividad...</option>
+                                    </select>
+                                    <div className="p-4 bg-text-main/5 border border-text-main/10 rounded-xl">
+                                        <p className="text-[10px] text-text-dim leading-relaxed italic">
+                                            "La alineación con el Plan Nacional de Desarrollo vigente es un requisito indispensable para la acreditación de proyectos de investigación ante el CACES y SENESCYT."
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -816,7 +872,8 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                     )}
 
                     {activeTab === 'cronograma' && (
-                        <div className="space-y-8">
+                        <>
+                            <div className="space-y-8">
                             <div className="flex justify-between items-center px-2">
                                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2"><Calendar size={18}/> 7. Cronograma de Actividades</h4>
                                 <button onClick={() => addItem('Cronograma', { Actividad: '', Numero: formData.Cronograma.length + 1, RecursosNecesarios: '', Ponderacion: 0, EsEntregableCaces: false, Semanas: Array(24).fill(false) })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest">+ Nueva Actividad</button>
@@ -884,6 +941,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 ))}
                             </div>
                         </div>
+                        </>
                     )}
 
                     {activeTab === 'documentos' && (

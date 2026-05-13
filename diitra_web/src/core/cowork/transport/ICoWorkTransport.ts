@@ -22,9 +22,9 @@ export interface ICoWorkTransport {
 
     /** 
      * Registra un handler para cambios en el estado de la conexión.
-     * Útil para mostrar indicadores de "Reconectando" o "Sin Conexión".
+     * @returns Función para des-registrar el handler (cleanup).
      */
-    onStatusChange(handler: (isConnected: boolean) => void): void;
+    onStatusChange(handler: (isConnected: boolean) => void): () => void;
 
     /**
      * Establece la conexión con el servidor y se une a la sala del documento.

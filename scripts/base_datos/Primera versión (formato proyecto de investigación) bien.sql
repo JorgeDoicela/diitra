@@ -59,6 +59,7 @@ DROP TABLE IF EXISTS
     inv_proyectos,
     inv_convocatorias_lineas,
     inv_convocatorias,
+    inv_rubrica_criterios,
     inv_rubricas,
     inv_tipos_convocatoria,
     inv_agendas_zonales,
@@ -77,7 +78,14 @@ DROP TABLE IF EXISTS
     inv_proyectos_mml,
     inv_convocatorias_documentos_req,
     inv_convocatorias_hitos,
-    inv_pnd_objetivos;
+    inv_pnd_objetivos,
+
+    -- Catálogos y Configuración adicionales
+    inv_cat_tipo_producto,
+    inv_cat_tipo_evidencia,
+    inv_entidades_externas,
+    inv_config_indicadores,
+    inv_config_workflow;
 
 -- #############################################################################
 -- SECCIÓN 1: CATÁLOGOS BASE
@@ -1046,6 +1054,7 @@ CREATE TABLE inv_documentos_instancias (
     final_pdf_path          VARCHAR(512)  NULL            COMMENT 'Ruta al PDF generado físicamente',
     file_hash               VARCHAR(100)  NULL            COMMENT 'Hash SHA-256 del PDF final',
     traceability_code       VARCHAR(100)  NULL            COMMENT 'Código impreso en el PDF para validación externa',
+    data_snapshot_json      LONGTEXT      NULL            COMMENT 'Snapshot forense de los datos inyectados',
     INDEX idx_entity (entity_uuid),
     CONSTRAINT fk_instancia_template FOREIGN KEY (template_code) REFERENCES inv_document_templates(code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

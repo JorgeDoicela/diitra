@@ -14,7 +14,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     // 1. Estado de la sesión
     const [session, setSession] = useState<CoWorkSession>({
         documentId: config.documentId,
-        isConnected: false,
+        isConnected: false, // Se actualizará en el init inmediatamente
         connectedUsers: [],
         isSyncing: false,
         lastSyncedAt: null,
@@ -67,6 +67,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         let isMounted = true;
         let transport: ICoWorkTransport;
         let cleanupInterval: NodeJS.Timeout;
+        let statusCleanup: (() => void) | undefined;
 
         const init = async () => {
             if (!config.enabled || !isMounted) return;
@@ -104,9 +105,17 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             };
 
             // C) EVENTOS DE ENTRADA (Desde el servidor)
-            transport.onStatusChange((isConnected) => {
-                if (isMounted) setSession(s => ({ ...s, isConnected }));
+            statusCleanup = transport.onStatusChange((isConnected) => {
+                if (isMounted) {
+                    console.log(`[useCoWork] Telemetría Real-Time: ${isConnected ? 'ONLINE' : 'OFFLINE'}`);
+                    setSession(s => (s.isConnected === isConnected ? s : { ...s, isConnected }));
+                }
             });
+
+            // Sincronizar estado inicial inmediatamente
+            if (transport.isConnected) {
+                setSession(s => ({ ...s, isConnected: true }));
+            }
 
             transport.onYjsUpdate((base64) => {
                 if (!isMounted || !ydocRef.current) return;
@@ -195,7 +204,12 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 const isReadOnly = (handshake as any).readOnly ?? (handshake as any).ReadOnly ?? false;
                 const isBlindMode = (handshake as any).isBlindMode ?? (handshake as any).IsBlindMode ?? false;
 
-                setSession(s => ({ ...s, readOnly: isReadOnly, error: null }));
+                setSession(s => ({ 
+                    ...s, 
+                    isConnected: true, 
+                    readOnly: isReadOnly, 
+                    error: null 
+                }));
 
                 // Configurar Identidad (Blind Mode aware)
                 // Usar sessionStorage para que el tabId sea persistente al refrescar la misma pestaña
@@ -244,6 +258,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             console.log(`[useCoWork] Cleanup sala: ${config.documentId}`);
             isMounted = false;
             clearInterval(cleanupInterval);
+            if (statusCleanup) statusCleanup();
             if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
             if (transport) transport.disconnect();
         };

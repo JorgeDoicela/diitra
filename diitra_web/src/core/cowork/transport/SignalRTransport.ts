@@ -10,7 +10,7 @@ import { COWORK_CONFIG } from '../config';
 export class SignalRTransport implements ICoWorkTransport {
     private connection: signalR.HubConnection;
     private _isConnected = false;
-    private _startPromise: Promise<import('../types').HandshakeResponse> | null = null;
+    private _operationQueue: Promise<any> = Promise.resolve();
     private _statusListeners: ((isConnected: boolean) => void)[] = [];
 
     constructor(...args: any[]) {
@@ -26,7 +26,7 @@ export class SignalRTransport implements ICoWorkTransport {
             .configureLogging(signalR.LogLevel.Warning)
             .build();
 
-        // No-ops para evitar ruidos de SignalR
+        // No-ops to avoid SignalR noise
         this.connection.on('ReceiveYjsUpdate', () => {});
         this.connection.on('ReceiveAwarenessUpdate', () => {});
         this.connection.on('ReceiveUpdateHistory', () => {});
@@ -57,84 +57,90 @@ export class SignalRTransport implements ICoWorkTransport {
         this._statusListeners.forEach(h => h(isConnected));
     }
 
-    onStatusChange(handler: (isConnected: boolean) => void): void {
+    onStatusChange(handler: (isConnected: boolean) => void): () => void {
         this._statusListeners.push(handler);
+        return () => {
+            this._statusListeners = this._statusListeners.filter(h => h !== handler);
+        };
     }
 
     get isConnected(): boolean { return this._isConnected; }
 
+    /**
+     * Asegura que las operaciones de conexión/desconexión ocurran en secuencia.
+     */
+    private async enqueueOperation<T>(op: () => Promise<T>): Promise<T> {
+        const nextOp = this._operationQueue.then(op).catch(op); // Reintentar o continuar ante error
+        this._operationQueue = nextOp;
+        return nextOp;
+    }
+
     async connect(documentId: string, user: CoWorkUser): Promise<import('../types').HandshakeResponse> {
-        if (this._startPromise) {
-            console.log("[SignalR] Ya hay una conexión en curso, esperando...");
-            return this._startPromise;
-        }
+        return this.enqueueOperation(async () => {
+            const normalizedId = documentId.toLowerCase().trim();
+            console.log(`[SignalR] Iniciando ciclo de conexión para: ${normalizedId}`);
 
-        const normalizedId = documentId.toLowerCase().trim();
-
-        this._startPromise = (async () => {
             try {
-                // Esperar si se está desconectando
-                while (this.connection.state === signalR.HubConnectionState.Disconnecting) {
-                    console.log("[SignalR] Esperando a que termine la desconexión previa...");
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                // 1. Esperar a que el estado sea estable (no transicional)
+                let attempts = 0;
+                while ((this.connection.state === signalR.HubConnectionState.Connecting || 
+                        this.connection.state === signalR.HubConnectionState.Disconnecting) && attempts < 25) {
+                    await new Promise(r => setTimeout(r, 200));
+                    attempts++;
                 }
 
+                // 2. Si ya está conectado a una sala, no hacemos nada (o podríamos desconectar, pero connect es agnóstico a sala a nivel físico)
                 if (this.connection.state === signalR.HubConnectionState.Disconnected) {
-                    console.log("[SignalR] Iniciando conexión física...");
-                    try {
-                        await this.connection.start();
-                        console.info("[SignalR] Conexión física establecida.");
-                    } catch (startErr: any) {
-                        if (startErr.message?.includes('stop()')) {
-                            console.warn("[SignalR] Intento de inicio cancelado por stop() concurrente.");
-                            return { isBlindMode: false, readOnly: false, serverTimestamp: '', deltaCount: 0 };
-                        }
-                        throw startErr;
-                    }
+                    console.log("[SignalR] Ejecutando physical start()...");
+                    await this.connection.start();
                 }
 
-                console.log(`[SignalR] Invocando JoinDocument para sala: ${normalizedId}`);
-                const response = await this.connection.invoke<import('../types').HandshakeResponse>(
-                    'JoinDocument', 
-                    normalizedId, 
-                    user.name, 
-                    user.id, 
-                    user.role
-                );
-                
-                console.log("[SignalR] Respuesta Handshake:", response);
+                // 3. Unirse al documento (Handshake)
+                if (this.connection.state === signalR.HubConnectionState.Connected) {
+                    console.log(`[SignalR] Invocando JoinDocument para: ${normalizedId}`);
+                    const response = await this.connection.invoke<import('../types').HandshakeResponse>(
+                        'JoinDocument', 
+                        normalizedId, 
+                        user.name, 
+                        user.id, 
+                        user.role
+                    );
+                    
+                    this._isConnected = true;
+                    this.notifyStatusChange(true);
+                    return response;
+                }
 
-                this._isConnected = true;
-                this.notifyStatusChange(true);
-                console.info(`[SignalR] Handshake completado para: ${normalizedId}`);
-                return response;
+                return null as any;
             } catch (err: any) {
-                if (err?.name === 'AbortError' || err?.message?.includes('stop()')) {
-                     // Retornar dummy si se abortó
-                     return { isBlindMode: false, readOnly: false, serverTimestamp: '', deltaCount: 0 };
+                if (err?.message?.includes('stop()')) {
+                    console.warn("[SignalR] Abortado por stop() concurrente (esperado).");
+                } else {
+                    console.error('[SignalR] Error en connect():', err);
                 }
-                console.error('[SignalR] Error en connect():', err);
                 this._isConnected = false;
                 this.notifyStatusChange(false);
-                throw err;
-            } finally {
-                this._startPromise = null;
+                return null as any;
             }
-        })();
-
-        return this._startPromise;
+        });
     }
 
     async disconnect(): Promise<void> {
-        if (this.connection.state !== signalR.HubConnectionState.Disconnected) {
-            try {
-                console.log("[SignalR] Solicitando desconexión...");
-                await this.connection.stop();
-                console.log("[SignalR] Desconectado.");
-            } catch (err) {}
-        }
+        // Marcamos inmediatamente como no conectado para que los componentes dejen de enviar datos
         this._isConnected = false;
-        this._startPromise = null;
+        
+        return this.enqueueOperation(async () => {
+            try {
+                if (this.connection.state !== signalR.HubConnectionState.Disconnected && 
+                    this.connection.state !== signalR.HubConnectionState.Disconnecting) {
+                    console.log("[SignalR] Ejecutando physical stop()...");
+                    await this.connection.stop();
+                    console.log("[SignalR] Physical stop() completado.");
+                }
+            } catch (err) {
+                console.warn("[SignalR] Error en disconnect():", err);
+            }
+        });
     }
 
     async sendYjsUpdate(documentId: string, updateBase64: string): Promise<void> {
