@@ -8,6 +8,8 @@ namespace Diitra.Application.Research.Dtos
         public string? Uuid { get; set; }
         public string? Estado { get; set; }
         public string? CodigoInstitucional { get; set; }
+        public int? IdConvocatoria { get; set; }
+        public int? IdObjetivoPnd { get; set; }
 
         // ─────────────────────────────────────────────────────────────────────────
         // SECCIÓN 1: IDENTIFICACIÓN DEL PROYECTO (Formato oficial SENESCYT/ISTPET)
@@ -91,6 +93,27 @@ namespace Diitra.Application.Research.Dtos
         // --- Extensiones Core Enterprise ---
         public string? IdDspaceHandle { get; set; }
         public string? MetadataCacesJson { get; set; }
+
+        // --- Compliance Enterprise ---
+        public List<MmlRowDto>? MatrizMarcoLogico { get; set; }
+        public List<DocumentoAdjuntoDto>? DocumentosAdjuntos { get; set; }
+    }
+
+    public class MmlRowDto
+    {
+        public string? Nivel { get; set; }
+        public string? Resumen { get; set; }
+        public string? Indicadores { get; set; }
+        public string? Medios { get; set; }
+        public string? Supuestos { get; set; }
+    }
+
+    public class DocumentoAdjuntoDto
+    {
+        public string? Uuid { get; set; }
+        public int? IdDocReq { get; set; }
+        public string? NombreArchivo { get; set; }
+        public string? RutaArchivo { get; set; }
     }
 
     public class InvestigadorDto

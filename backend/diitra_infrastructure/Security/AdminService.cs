@@ -46,10 +46,10 @@ public class AdminService : IAdminService
             // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
             if (!string.IsNullOrEmpty(periodId))
             {
-                query = query.Where(a => _context.Matriculas.Any(m => 
-                    m.IdAlumno == a.IdAlumno && 
-                    m.IdPeriodo == periodId && 
-                    (m.Retirado == null || m.Retirado == false) && 
+                query = query.Where(a => _context.Matriculas.Any(m =>
+                    m.IdAlumno == a.IdAlumno &&
+                    m.IdPeriodo == periodId &&
+                    (m.Retirado == null || m.Retirado == false) &&
                     (m.Valida == 1)));
             }
 
@@ -62,7 +62,7 @@ public class AdminService : IAdminService
             }
 
             result.TotalCount = await query.CountAsync();
-            
+
             var students = await query
                 .OrderBy(a => a.ApellidoPaterno)
                 .ThenBy(a => a.PrimerNombre)
@@ -76,9 +76,9 @@ public class AdminService : IAdminService
             var currentMatriculas = await _context.Matriculas
                 .Where(m => ids.Contains(m.IdAlumno) && m.IdPeriodo == periodId && m.Valida == 1)
                 .ToListAsync();
-            
+
             var careers = await _context.Carreras.ToListAsync();
-            
+
             // Pre-cargar información de Cursos (Niveles/Carreras operativos)
             var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
                 .Concat(students.Select(s => s.IdNivel))
@@ -103,21 +103,21 @@ public class AdminService : IAdminService
                 var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == sId).ToList();
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
-                
+
                 var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
-                
+
                 // Lógica de descubrimiento de datos académicos vía tabla 'cursos'
                 // Esta es la forma real en que SIGAFI vincula alumnos con carreras y niveles operativos
                 var idNivelTarget = matricula?.IdNivel ?? s.IdNivel;
                 var cursoInfo = relevantCursos.FirstOrDefault(c => c.IdNivel == idNivelTarget);
-                
+
                 var carreraNom = careers.FirstOrDefault(c => c.IdCarrera == cursoInfo?.IdCarrera)?.Carrera1;
                 var nivelNom = cursoInfo?.Nivel;
 
                 return new UserManagementDto
                 {
                     IdProfesor = sId,
-                    NombreCompleto = $"{s.PrimerNombre} {s.ApellidoPaterno}",
+                    NombreCompleto = $"{s.PrimerNombre} {s.SegundoNombre} {s.ApellidoPaterno} {s.ApellidoMaterno}".Replace("  ", " ").Trim(),
                     Email = s.EmailInstitucional ?? s.Email ?? "",
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "ESTUDIANTE",
@@ -142,7 +142,7 @@ public class AdminService : IAdminService
             }
 
             result.TotalCount = await query.CountAsync();
-            
+
             var externalUsers = await query
                 .OrderBy(u => u.Nombre)
                 .Skip((page - 1) * pageSize)
@@ -159,14 +159,31 @@ public class AdminService : IAdminService
 
             var metadatas = await _context.InvUsuariosMetadata.Where(m => ids.Contains(m.IdUsuario)).ToListAsync();
 
+            // Pre-cargar posibles nombres de fallback desde profesores/alumnos
+            var externalIds = externalUsers.Select(u => u.IdSigafi.Trim()).ToList();
+            var fallbackProfs = await _context.Profesores.Where(p => externalIds.Contains(p.IdProfesor.Trim())).ToListAsync();
+            var fallbackStudents = await _context.Alumnos.Where(a => externalIds.Contains(a.IdAlumno.Trim())).ToListAsync();
+
             result.Items = externalUsers.Select(u => {
+                var sId = u.IdSigafi.Trim();
                 var roleInfo = userRoles.Where(ur => ur.IdUsuario == u.IdUsuario).ToList();
                 var userMeta = metadatas.FirstOrDefault(m => m.IdUsuario == u.IdUsuario);
 
+                // Intentar obtener nombre completo desde tablas base si existe vínculo
+                var prof = fallbackProfs.FirstOrDefault(p => p.IdProfesor.Trim() == sId);
+                var student = fallbackStudents.FirstOrDefault(a => a.IdAlumno.Trim() == sId);
+                
+                string nombreCompleto = u.Nombre;
+                if (prof != null) {
+                    nombreCompleto = $"{prof.PrimerNombre} {prof.SegundoNombre} {prof.PrimerApellido} {prof.SegundoApellido}".Replace("  ", " ").Trim();
+                } else if (student != null) {
+                    nombreCompleto = $"{student.PrimerNombre} {student.SegundoNombre} {student.ApellidoPaterno} {student.ApellidoMaterno}".Replace("  ", " ").Trim();
+                }
+
                 return new UserManagementDto
                 {
-                    IdProfesor = u.IdSigafi,
-                    NombreCompleto = u.Nombre,
+                    IdProfesor = sId,
+                    NombreCompleto = nombreCompleto,
                     Email = u.IdSigafi.Contains("@") ? u.IdSigafi : (u.EmailInstitucional ?? "externo@diitra.ist"),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "EXTERNO",
@@ -184,9 +201,9 @@ public class AdminService : IAdminService
             // Solo docentes que tengan actividades de investigación (idSubcategoria = 7) en el periodo actual
             if (!string.IsNullOrEmpty(periodId))
             {
-                query = query.Where(p => _context.ProfesoresActividades.Any(pa => 
-                    pa.IdProfesor == p.IdProfesor && 
-                    pa.IdSubcategoria == 7 && 
+                query = query.Where(p => _context.ProfesoresActividades.Any(pa =>
+                    pa.IdProfesor == p.IdProfesor &&
+                    pa.IdSubcategoria == 7 &&
                     pa.IdPeriodo == periodId));
             }
 
@@ -199,7 +216,7 @@ public class AdminService : IAdminService
             }
 
             result.TotalCount = await query.CountAsync();
-            
+
             var professors = await query
                 .OrderBy(p => p.PrimerApellido)
                 .ThenBy(p => p.PrimerNombre)
@@ -220,6 +237,13 @@ public class AdminService : IAdminService
                 .Where(c => ids.Contains(c.IdProfesor) && c.EsActivo == 1)
                 .ToListAsync();
 
+            var careers = await _context.Carreras.ToListAsync();
+
+            // Obtener carreras vinculadas a los docentes en este periodo
+            var profCareers = await _context.ProfesoresCarrerasPeriodos
+                .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
+                .ToListAsync();
+
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
                 .Include(ur => ur.User)
@@ -238,10 +262,15 @@ public class AdminService : IAdminService
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
+                // Buscar carrera vinculada al docente en este periodo
+                var profCareerIds = profCareers.Where(pc => pc.IdProfesor.Trim() == pId).Select(pc => pc.IdCarrera).ToList();
+                var linkedCareers = careers.Where(c => profCareerIds.Contains(c.IdCarrera)).Select(c => c.Carrera1).ToList();
+                var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+
                 return new UserManagementDto
                 {
                     IdProfesor = pId,
-                    NombreCompleto = $"{p.PrimerNombre} {p.PrimerApellido}",
+                    NombreCompleto = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim(),
                     Email = p.EmailInstitucional ?? p.Email ?? "",
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "DOCENTE",
@@ -249,6 +278,8 @@ public class AdminService : IAdminService
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
+                    Carrera = carreraNom,
+                    Nivel = "N/A",
                     HorasInvestigacion = hours,
                     TipoDedicacion = contract?.TipoContratoNavigation?.Nombre ?? "Sin Contrato"
                 };

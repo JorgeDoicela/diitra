@@ -266,6 +266,8 @@ namespace diitra_api.Controllers
             project.MetodoEvaluacion = dto.Evaluacion;
             project.TiempoEjecucion = dto.TiempoEjecucion;
             project.TieneGrupo = dto.TieneGrupoInvestigacion;
+            project.IdConvocatoria = dto.IdConvocatoria;
+            project.IdObjetivoPnd = dto.IdObjetivoPnd;
             
             // Guardamos TODO el DTO como JSON en MetadataCacesJson para no perder nada
             // y que el motor de documentos tenga acceso a los datos extra (carrera, programa, etc.)
@@ -353,6 +355,27 @@ namespace diitra_api.Controllers
                         ValorUnitario = item.CostoUnitario ?? 0,
                         EsGastoCapital = item.EsGastoCapital ?? false,
                         IdPartida = item.IdPartida
+                    });
+                }
+            }
+
+            // 6. SINCRONIZACIÓN DE MATRIZ DE MARCO LÓGICO (MML)
+            if (dto.MatrizMarcoLogico != null)
+            {
+                var oldMml = context.InvProyectosMml.Where(m => m.IdProyecto == project.IdProyecto);
+                context.InvProyectosMml.RemoveRange(oldMml);
+
+                foreach (var row in dto.MatrizMarcoLogico)
+                {
+                    if (string.IsNullOrWhiteSpace(row.Resumen)) continue;
+                    context.InvProyectosMml.Add(new diitra_infrastructure.data.models.InvProyectoMml
+                    {
+                        IdProyecto = project.IdProyecto,
+                        Nivel = row.Nivel ?? "Desconocido",
+                        ResumenNarrativo = row.Resumen,
+                        Indicadores = row.Indicadores,
+                        MediosVerificacion = row.Medios,
+                        Supuestos = row.Supuestos
                     });
                 }
             }

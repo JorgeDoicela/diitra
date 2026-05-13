@@ -30,4 +30,8 @@ public partial class InvConvocatoria
     public virtual InvRubrica? IdRubricaNavigation { get; set; }
     public virtual ICollection<InvProyecto> Proyectos { get; set; } = new List<InvProyecto>();
     public virtual ICollection<InvLineaInvestigacion> Lineas { get; set; } = new List<InvLineaInvestigacion>();
+
+    public virtual ICollection<InvConvocatoriaHito> Hitos { get; set; } = new List<InvConvocatoriaHito>();
+
+    public virtual ICollection<InvConvocatoriaDocumentoReq> DocumentosReq { get; set; } = new List<InvConvocatoriaDocumentoReq>();
 }
