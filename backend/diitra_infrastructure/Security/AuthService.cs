@@ -178,7 +178,7 @@ public class AuthService : IAuthService
             IdUsuario = user.IdUsuario,
             UserUuid = metadata?.Uuid.ToString() ?? "",
             Usuario = user.IdSigafi,
-            NombreCompleto = user.Nombre,
+            NombreCompleto = user.Nombre ?? "",
             Role = userRoles.FirstOrDefault()?.Role?.Nombre ?? "Usuario",
             Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
             RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),

@@ -138,7 +138,7 @@ public class AdminService : IAdminService
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(u => u.IdSigafi.Contains(searchTerm) || u.Nombre.ToLower().Contains(searchTerm));
+                query = query.Where(u => u.IdSigafi.Contains(searchTerm) || (u.Nombre != null && u.Nombre.ToLower().Contains(searchTerm)));
             }
 
             result.TotalCount = await query.CountAsync();
@@ -173,7 +173,7 @@ public class AdminService : IAdminService
                 var prof = fallbackProfs.FirstOrDefault(p => p.IdProfesor.Trim() == sId);
                 var student = fallbackStudents.FirstOrDefault(a => a.IdAlumno.Trim() == sId);
                 
-                string nombreCompleto = u.Nombre;
+                string nombreCompleto = u.Nombre ?? "";
                 if (prof != null) {
                     nombreCompleto = $"{prof.PrimerNombre} {prof.SegundoNombre} {prof.PrimerApellido} {prof.SegundoApellido}".Replace("  ", " ").Trim();
                 } else if (student != null) {
@@ -471,8 +471,8 @@ public class AdminService : IAdminService
             .Take(50)
             .Select(a => new AuditLogDto {
                 IdAudit = a.IdAudit,
-                AdminName = a.UserAdmin.Nombre,
-                TargetName = a.UserAfectado.Nombre,
+                AdminName = a.UserAdmin != null ? a.UserAdmin.Nombre ?? "" : "",
+                TargetName = a.UserAfectado != null ? a.UserAfectado.Nombre ?? "" : "",
                 Action = a.Accion,
                 Details = a.Detalle,
                 Date = a.Fecha
