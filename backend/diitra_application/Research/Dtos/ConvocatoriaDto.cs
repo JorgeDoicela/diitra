@@ -34,6 +34,7 @@ public class ConvocatoriaDto
 
 public class ConvocatoriaHitoDto
 {
+    public int IdHito { get; set; }
     public string? Uuid { get; set; }
     public string NombreHito { get; set; } = null!;
     public DateOnly FechaHito { get; set; }
@@ -43,10 +44,12 @@ public class ConvocatoriaHitoDto
 
 public class ConvocatoriaDocumentoReqDto
 {
+    public int IdDocReq { get; set; }
     public string? Uuid { get; set; }
     public string NombreDocumento { get; set; } = null!;
     public string? Descripcion { get; set; }
     public bool EsObligatorio { get; set; }
+    public string? FormatoAceptado { get; set; }
 }
 
 public class PeriodoDto

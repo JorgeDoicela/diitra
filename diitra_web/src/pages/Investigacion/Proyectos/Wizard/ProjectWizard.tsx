@@ -220,7 +220,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                         >
                                             <option value={0}>Seleccione una convocatoria...</option>
                                             {convocatorias.map(c => (
-                                                <option key={c.idConvocatoria} value={c.idConvocatoria}>{c.codigoConvocatoria} - {c.titulo}</option>
+                                                <option key={c.id_convocatoria} value={c.id_convocatoria}>{c.codigo_convocatoria} - {c.titulo}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -782,29 +782,29 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     </div>
                                     <div className="px-4 py-2 bg-bg-deep border border-border-thin rounded-2xl flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-text-main/10 flex items-center justify-center text-text-main font-black text-xs">
-                                            {Math.round((formData.DocumentosAdjuntos.length / (convocatorias.find(c => c.idConvocatoria == formData.IdConvocatoria)?.documentosReq?.length || 1)) * 100)}%
+                                            {Math.round((formData.DocumentosAdjuntos.length / (convocatorias.find(c => c.id_convocatoria == formData.IdConvocatoria)?.documentos_req?.length || 1)) * 100)}%
                                         </div>
                                         <div className="text-[10px] font-black uppercase text-text-dim leading-none">Completado</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-4">
-                                    {convocatorias.find(c => c.idConvocatoria == formData.IdConvocatoria)?.documentosReq?.map((req: any) => (
+                                    {convocatorias.find(c => c.id_convocatoria == formData.IdConvocatoria)?.documentos_req?.map((req: any) => (
                                         <div key={req.uuid} className="p-6 bg-bg-deep border border-border-thin rounded-2xl flex justify-between items-center group hover:border-text-main/30 transition-all">
                                             <div className="flex items-center gap-5">
-                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${formData.DocumentosAdjuntos.find(d => d.idDocReq == req.idDocReq) ? 'bg-green-500/10 text-green-500' : 'bg-surface text-text-dim'}`}>
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${formData.DocumentosAdjuntos.find(d => d.idDocReq == req.id_doc_req) ? 'bg-green-500/10 text-green-500' : 'bg-surface text-text-dim'}`}>
                                                     <ListChecks size={20} />
                                                 </div>
                                                 <div className="space-y-1">
-                                                    <p className="text-xs font-bold text-text-main">{req.nombreDocumento}</p>
+                                                    <p className="text-xs font-bold text-text-main">{req.nombre_documento}</p>
                                                     <div className="flex items-center gap-3">
-                                                        {req.esObligatorio && <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">Obligatorio</span>}
-                                                        <span className="text-[9px] font-bold text-text-dim uppercase tracking-tighter">Formato: {req.formatoAceptado || 'PDF'}</span>
+                                                        {req.es_obligatorio && <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">Obligatorio</span>}
+                                                        <span className="text-[9px] font-bold text-text-dim uppercase tracking-tighter">Formato: {req.formato_aceptado || 'PDF'}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
-                                                {formData.DocumentosAdjuntos.find(d => d.idDocReq == req.idDocReq) ? (
+                                                {formData.DocumentosAdjuntos.find(d => d.idDocReq == req.id_doc_req) ? (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-[10px] font-bold text-green-500 uppercase">Cargado</span>
                                                         <button className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"><Trash2 size={14}/></button>
