@@ -33,12 +33,14 @@ public partial class InvProyecto
     public bool? Activo { get; set; }
     public DateTime? FechaRegistro { get; set; }
     public DateTime? FechaModificacion { get; set; }
+    public int? IdObjetivoPnd { get; set; }
 
     public virtual InvConvocatoria? IdConvocatoriaNavigation { get; set; }
     public virtual InvSublinea? IdSublineaNavigation { get; set; }
     public virtual InvPrograma? IdProgramaNavigation { get; set; }
     public virtual InvGrupoInvestigacion? IdGrupoNavigation { get; set; }
     public virtual InvTipoInvestigacion? IdTipoNavigation { get; set; }
+    public virtual InvPndObjetivo? IdObjetivoPndNavigation { get; set; }
 
     public virtual ICollection<InvProyectoCarrera> InvProyectosCarreras { get; set; } = new List<InvProyectoCarrera>();
     public virtual ICollection<InvProyectoDominio> InvProyectosDominios { get; set; } = new List<InvProyectoDominio>();
@@ -56,4 +58,8 @@ public partial class InvProyecto
     public virtual ICollection<InvInformeAvance> InvInformesAvance { get; set; } = new List<InvInformeAvance>();
     public virtual ICollection<InvGasto> InvGastos { get; set; } = new List<InvGasto>();
     public virtual ICollection<InvTransferencia> InvTransferencias { get; set; } = new List<InvTransferencia>();
+
+    public virtual ICollection<InvProyectoMml> MatrizMarcoLogico { get; set; } = new List<InvProyectoMml>();
+
+    public virtual ICollection<InvProyectoDocumentoAdjunto> DocumentosAdjuntos { get; set; } = new List<InvProyectoDocumentoAdjunto>();
 }

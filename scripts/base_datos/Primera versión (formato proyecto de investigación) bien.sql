@@ -72,7 +72,12 @@ DROP TABLE IF EXISTS
     inv_dominios,
     inv_tipos_investigacion,
     inv_revisiones_pares,
-    inv_evaluaciones_detalle;
+    inv_evaluaciones_detalle,
+    inv_proyectos_documentos_adjuntos,
+    inv_proyectos_mml,
+    inv_convocatorias_documentos_req,
+    inv_convocatorias_hitos,
+    inv_pnd_objetivos;
 
 -- #############################################################################
 -- SECCIÓN 1: CATÁLOGOS BASE
@@ -145,6 +150,21 @@ CREATE TABLE inv_grupos_investigacion (
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_pnd_objetivos (
+    idObjetivoPnd   INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid            VARCHAR(36)     NOT NULL UNIQUE,
+    codigo          VARCHAR(20)  NOT NULL UNIQUE,
+    nombre          VARCHAR(255) NOT NULL,
+    descripcion     TEXT,
+    activo          TINYINT(1)   DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo del Plan Nacional de Desarrollo (SENESCYT)';
+
+INSERT INTO inv_pnd_objetivos (uuid, codigo, nombre, descripcion, activo) VALUES
+(UUID(), 'OBJ-1', 'Garantizar la seguridad ciudadana y el orden público', 'Alineado al eje de seguridad nacional', 1),
+(UUID(), 'OBJ-2', 'Fomentar el crecimiento económico y el empleo', 'Alineado al eje económico', 1),
+(UUID(), 'OBJ-3', 'Impulsar la innovación y la soberanía tecnológica', 'Objetivo principal para proyectos de I+D en ISTs', 1),
+(UUID(), 'OBJ-4', 'Fortalecer el sistema nacional de educación superior', 'Alineado al desarrollo del talento humano', 1);
 
 CREATE TABLE inv_grupos_lineas (
     idGrupo INT NOT NULL,
@@ -234,6 +254,28 @@ CREATE TABLE inv_convocatorias (
     FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE inv_convocatorias_hitos (
+    idHito           INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)      NOT NULL UNIQUE,
+    idConvocatoria   INT           NOT NULL,
+    nombreHito       VARCHAR(150)  NOT NULL COMMENT 'Ej: Publicación de Resultados Preliminares',
+    fechaHito        DATE          NOT NULL,
+    esCritico        TINYINT(1)    DEFAULT 0 COMMENT 'Si es crítico, bloquea acciones del usuario',
+    descripcion      VARCHAR(255),
+    FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_convocatorias_documentos_req (
+    idDocReq         INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)      NOT NULL UNIQUE,
+    idConvocatoria   INT           NOT NULL,
+    nombreDocumento  VARCHAR(255)  NOT NULL COMMENT 'Ej: Certificado de no tener deudas',
+    descripcion      TEXT,
+    esObligatorio    TINYINT(1)    DEFAULT 1,
+    formatoAceptado  VARCHAR(50)   DEFAULT 'PDF',
+    FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE inv_convocatorias_lineas (
     idConvocatoria INT NOT NULL,
     idLinea        INT NOT NULL,
@@ -270,6 +312,7 @@ CREATE TABLE inv_proyectos (
     estado                ENUM('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado') DEFAULT 'Borrador',
     puntajeEvaluacion     DECIMAL(5,2)  NULL,
     valorEjecucion        DECIMAL(12,2) DEFAULT 0.00,
+    idObjetivoPnd         INT           NULL COMMENT 'Vínculo con el Plan Nacional de Desarrollo',
     activo                TINYINT(1)    DEFAULT 1,
     fechaRegistro         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     fechaModificacion     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -278,6 +321,7 @@ CREATE TABLE inv_proyectos (
     FOREIGN KEY (idPrograma)     REFERENCES inv_programas(idPrograma),
     FOREIGN KEY (idGrupo)        REFERENCES inv_grupos_investigacion(idGrupo),
     FOREIGN KEY (idTipo)         REFERENCES inv_tipos_investigacion(idTipo),
+    FOREIGN KEY (idObjetivoPnd)  REFERENCES inv_pnd_objetivos(idObjetivoPnd),
     -- Extensiones Enterprise CACES / SENESCYT
     hashActaAprobacion   TEXT NULL,
     fechaAprobacion      TIMESTAMP NULL,
@@ -285,6 +329,31 @@ CREATE TABLE inv_proyectos (
     idDspaceHandle       VARCHAR(255)  NULL COMMENT 'Handle del Repositorio Digital DSpace',
     metadataCacesJson    JSON          NULL COMMENT 'Snapshot de indicadores para acreditación',
     FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Matriz de Marco Lógico (MML) - Requisito SENESCYT
+CREATE TABLE inv_proyectos_mml (
+    idMml           INT          AUTO_INCREMENT PRIMARY KEY,
+    idProyecto      INT          NOT NULL,
+    nivel           ENUM('Fin','Propósito','Componente','Actividad') NOT NULL,
+    resumenNarrativo TEXT        NOT NULL,
+    indicadores     TEXT         NULL,
+    mediosVerificacion TEXT      NULL,
+    supuestos       TEXT         NULL,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Documentos Adjuntos del Proyecto (Checklist de Postulación)
+CREATE TABLE inv_proyectos_documentos_adjuntos (
+    idDocAdj        INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid            VARCHAR(36)     NOT NULL UNIQUE,
+    idProyecto      INT          NOT NULL,
+    idDocReq        INT          NULL COMMENT 'Referencia al requisito de la convocatoria',
+    nombreArchivo   VARCHAR(255) NOT NULL,
+    rutaArchivo     VARCHAR(512) NOT NULL,
+    fechaSubida     TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
+    FOREIGN KEY (idDocReq)   REFERENCES inv_convocatorias_documentos_req(idDocReq) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Trazabilidad de Estados para Auditoría (CACES)
@@ -825,6 +894,14 @@ INSERT INTO inv_dominios (uuid, nombre, activo) VALUES
 (UUID(), 'Tecnologías de la Información y Comunicación', 1),
 (UUID(), 'Energía y Producción Industrial', 1),
 (UUID(), 'Gestión Empresarial y Servicios', 1);
+
+-- 9. Objetivos del Plan Nacional de Desarrollo (Ecuador 2024-2025)
+INSERT INTO inv_pnd_objetivos (uuid, codigo, nombre, descripcion) VALUES
+(UUID(), 'PND-OBJ-1', 'Productividad y Competitividad', 'Incrementar la productividad y competitividad en los sectores agrícola, industrial y de servicios.'),
+(UUID(), 'PND-OBJ-2', 'Desarrollo Tecnológico', 'Fomentar la generación de conocimiento, el desarrollo científico y la innovación tecnológica.'),
+(UUID(), 'PND-OBJ-3', 'Educación de Calidad', 'Garantizar el acceso, permanencia y calidad de la educación superior tecnológica.'),
+(UUID(), 'PND-OBJ-4', 'Gestión Ambiental', 'Promover la gestión integral de los recursos naturales y la adaptación al cambio climático.'),
+(UUID(), 'PND-OBJ-5', 'Empleo y Emprendimiento', 'Fomentar la generación de empleo digno y el fortalecimiento del ecosistema emprendedor.');
 
 -- #############################################################################
 -- SECCIÓN: DIITRA Document Engine — Plantillas y Auditoría Documental

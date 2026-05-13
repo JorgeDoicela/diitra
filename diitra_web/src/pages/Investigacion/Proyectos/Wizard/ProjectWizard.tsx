@@ -55,8 +55,36 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         ImpactoOtro: false, ImpactoOtroDesc: '',
         Cronograma: [] as any[],
         Bibliografia: '',
-        NombreCoordinadorFirma: ''
+        NombreCoordinadorFirma: '',
+        IdConvocatoria: 0,
+        IdObjetivoPnd: 0,
+        MatrizMarcoLogico: [
+            { nivel: 'Fin', resumen: '', indicadores: '', medios: '', supuestos: '' },
+            { nivel: 'Propósito', resumen: '', indicadores: '', medios: '', supuestos: '' },
+            { nivel: 'Componentes', resumen: '', indicadores: '', medios: '', supuestos: '' },
+            { nivel: 'Actividades', resumen: '', indicadores: '', medios: '', supuestos: '' }
+        ] as any[],
+        DocumentosAdjuntos: [] as any[]
     });
+
+    const [convocatorias, setConvocatorias] = useState<any[]>([]);
+    const [objetivosPnd, setObjetivosPnd] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchMetadata = async () => {
+            try {
+                const [convRes, pndRes] = await Promise.all([
+                    api.get('/convocatorias'),
+                    api.get('/pnd/objetivos')
+                ]);
+                setConvocatorias(convRes.data);
+                setObjetivosPnd(pndRes.data);
+            } catch (err) {
+                console.error("Error fetching metadata", err);
+            }
+        };
+        fetchMetadata();
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target as any;
@@ -144,11 +172,14 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
 
     const sections = [
         { id: 'general', label: '01. Identificación', icon: <BookOpen size={16} /> },
-        { id: 'equipo', label: '02. Equipo', icon: <Users size={16} /> },
-        { id: 'tecnico', label: '03. Especificación', icon: <Target size={16} /> },
-        { id: 'recursos', label: '04. Recursos', icon: <DollarSign size={16} /> },
-        { id: 'impactos', label: '05. Productos e Impactos', icon: <Award size={16} /> },
-        { id: 'cronograma', label: '06. Cronograma', icon: <Calendar size={16} /> },
+        { id: 'pnd', label: '02. Alineación PND', icon: <Target size={16} /> },
+        { id: 'equipo', label: '03. Equipo', icon: <Users size={16} /> },
+        { id: 'tecnico', label: '04. Especificación', icon: <Target size={16} /> },
+        { id: 'mml', label: '05. Marco Lógico', icon: <BarChart3 size={16} /> },
+        { id: 'recursos', label: '06. Recursos', icon: <DollarSign size={16} /> },
+        { id: 'impactos', label: '07. Productos e Impactos', icon: <Award size={16} /> },
+        { id: 'cronograma', label: '08. Cronograma', icon: <Calendar size={16} /> },
+        { id: 'documentos', label: '09. Documentos', icon: <ListChecks size={16} /> }
     ];
 
     return (
@@ -168,106 +199,125 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                     <div className="animate-fade-in space-y-8 pb-10">
                         {activeTab === 'general' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="col-span-2 p-6 bg-surface border border-border-thin rounded-2xl">
+                            <div className="col-span-2 p-8 bg-surface border border-border-thin rounded-3xl space-y-6 shadow-sm">
                                 <CoWorkField 
                                     name="Titulo" 
                                     cowork={cowork} 
                                     type="textarea" 
-                                    label="Título del Proyecto (En Mayúsculas)"
+                                    label="Título del Proyecto (Protocolo Oficial ISTPET)"
                                     onValueChange={(v) => setFormData(p => ({...p, Titulo: v}))}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-6 py-5 text-lg font-bold text-text-main resize-none h-28" 
+                                    className="w-full bg-bg-deep border border-border-thin rounded-2xl px-6 py-5 text-xl font-bold text-text-main resize-none h-32" 
                                 />
+                                
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div>
+                                        <label className="text-[10px] font-black uppercase text-text-dim mb-2 block ml-1 tracking-widest">Convocatoria de Investigación</label>
+                                        <select 
+                                            name="IdConvocatoria"
+                                            value={formData.IdConvocatoria}
+                                            onChange={handleChange}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-main outline-none focus:border-text-main transition-colors appearance-none"
+                                        >
+                                            <option value={0}>Seleccione una convocatoria...</option>
+                                            {convocatorias.map(c => (
+                                                <option key={c.idConvocatoria} value={c.idConvocatoria}>{c.codigoConvocatoria} - {c.titulo}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <CoWorkField 
+                                            name="CodigoInstitucional" 
+                                            cowork={cowork} 
+                                            label="Código del Proyecto"
+                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-dim font-mono" 
+                                            placeholder="Auto-generado..."
+                                            readOnly
+                                        />
+                                        <CoWorkField 
+                                            name="Periodo" 
+                                            cowork={cowork} 
+                                            label="Periodo Académico"
+                                            onValueChange={(v) => setFormData(p => ({...p, Periodo: v}))}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
+                                        />
+                                    </div>
+                                </div>
                             </div>
+
                             <div className="space-y-6">
-                                <div>
+                                <div className="p-6 bg-surface border border-border-thin rounded-2xl space-y-4">
+                                    <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Estructura Académica</p>
                                     <CoWorkField 
                                         name="Carrera" 
                                         cowork={cowork} 
                                         label="Tecnología Superior en" 
                                         onValueChange={(v) => setFormData(p => ({...p, Carrera: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
                                     />
-                                </div>
-                                <div>
-                                    <CoWorkField 
-                                        name="Periodo" 
-                                        cowork={cowork} 
-                                        label="Periodo Académico" 
-                                        onValueChange={(v) => setFormData(p => ({...p, Periodo: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm" 
-                                    />
-                                </div>
-                                <div>
                                     <CoWorkField 
                                         name="NombreDirector" 
                                         cowork={cowork} 
-                                        label="Director del Proyecto (Tít. Abv., Nombres y Apellidos)" 
+                                        label="Director del Proyecto" 
                                         onValueChange={(v) => setFormData(p => ({...p, NombreDirector: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
                                     />
                                 </div>
-                            </div>
-                            <div className="space-y-6">
-                                <div>
-                                    <CoWorkField 
-                                        name="Programa" 
-                                        cowork={cowork} 
-                                        label="Programa de Investigación" 
-                                        onValueChange={(v) => setFormData(p => ({...p, Programa: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
-                                    />
-                                </div>
-                                <div>
-                                    <CoWorkField 
-                                        name="GrupoInvestigacion" 
-                                        cowork={cowork} 
-                                        label="Grupo de Investigación (Opcional)" 
-                                        onValueChange={(v) => setFormData(p => ({...p, GrupoInvestigacion: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm" 
-                                        placeholder="Escriba el nombre si aplica..."
-                                    />
-                                </div>
-                                <div>
-                                    <CoWorkField 
-                                        name="Dominio" 
-                                        cowork={cowork} 
-                                        label="Dominio Institucional" 
-                                        onValueChange={(v) => setFormData(p => ({...p, Dominio: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm" 
-                                    />
-                                </div>
-                                <div>
+                                <div className="p-6 bg-surface border border-border-thin rounded-2xl space-y-4">
+                                    <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Líneas y Sublíneas</p>
                                     <CoWorkField 
                                         name="LineaInvestigacion" 
                                         cowork={cowork} 
-                                        label="Línea de Investigación" 
+                                        label="Línea de Investigación Principal" 
                                         onValueChange={(v) => setFormData(p => ({...p, LineaInvestigacion: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
                                     />
-                                </div>
-                                <div>
                                     <CoWorkField 
                                         name="SublineaInvestigacion" 
                                         cowork={cowork} 
                                         label="Sublínea de Investigación" 
                                         onValueChange={(v) => setFormData(p => ({...p, SublineaInvestigacion: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm" 
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
                                     />
                                 </div>
-                                <div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="p-6 bg-surface border border-border-thin rounded-2xl space-y-4">
+                                    <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Gestión Organizacional</p>
                                     <CoWorkField 
-                                        name="TipoInvestigacion" 
+                                        name="Programa" 
                                         cowork={cowork} 
-                                        type="select"
-                                        label="Tipo de Investigación" 
-                                        onValueChange={(v) => setFormData(p => ({...p, TipoInvestigacion: v}))}
-                                        className="w-full bg-surface border border-border-thin rounded-xl px-5 py-4 text-sm font-bold"
-                                    >
-                                        <option value="Basica">BÁSICA</option>
-                                        <option value="Aplicada">APLICADA</option>
-                                        <option value="Experimental">DESARROLLO EXPERIMENTAL</option>
-                                    </CoWorkField>
+                                        label="Programa de Investigación" 
+                                        onValueChange={(v) => setFormData(p => ({...p, Programa: v}))}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold" 
+                                    />
+                                    <CoWorkField 
+                                        name="GrupoInvestigacion" 
+                                        cowork={cowork} 
+                                        label="Grupo de Investigación" 
+                                        onValueChange={(v) => setFormData(p => ({...p, GrupoInvestigacion: v}))}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
+                                    />
+                                    <CoWorkField 
+                                        name="Dominio" 
+                                        cowork={cowork} 
+                                        label="Dominio Institucional" 
+                                        onValueChange={(v) => setFormData(p => ({...p, Dominio: v}))}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
+                                    />
                                 </div>
+                                <CoWorkField 
+                                    name="TipoInvestigacion" 
+                                    cowork={cowork} 
+                                    type="select"
+                                    label="Tipo de Investigación (SENESCYT)" 
+                                    onValueChange={(v) => setFormData(p => ({...p, TipoInvestigacion: v}))}
+                                    className="w-full bg-surface border border-border-thin rounded-2xl px-6 py-4 text-sm font-bold appearance-none"
+                                >
+                                    <option value="Basica">BÁSICA</option>
+                                    <option value="Aplicada">APLICADA</option>
+                                    <option value="Experimental">DESARROLLO EXPERIMENTAL</option>
+                                </CoWorkField>
                             </div>
                         </div>
                     )}
@@ -463,6 +513,90 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                         </div>
                     )}
 
+                    {activeTab === 'mml' && (
+                        <div className="space-y-8">
+                            <div className="flex justify-between items-center px-2">
+                                <h4 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><BarChart3 size={18}/> 5. Matriz de Marco Lógico (MML)</h4>
+                                <div className="text-[9px] font-bold bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-3 py-1 rounded-full uppercase">Requerido SENESCYT</div>
+                            </div>
+                            <div className="overflow-hidden border border-border-thin rounded-3xl bg-surface shadow-2xl">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-bg-deep/50 border-b border-border-thin">
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-text-dim w-32">Nivel</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-text-dim">Resumen Narrativo</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-text-dim">Indicadores</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-text-dim">Medios de Verificación</th>
+                                            <th className="px-6 py-4 text-[10px] font-black uppercase text-text-dim">Supuestos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border-thin">
+                                        {formData.MatrizMarcoLogico.map((row, idx) => (
+                                            <tr key={idx} className="group hover:bg-white/[0.02] transition-colors">
+                                                <td className="px-6 py-8 align-top">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-text-main">{row.nivel}</span>
+                                                </td>
+                                                <td className="px-4 py-4 align-top">
+                                                    <CoWorkField 
+                                                        name={`MML_${idx}_resumen`} 
+                                                        cowork={cowork} 
+                                                        type="textarea"
+                                                        placeholder={`Escriba el ${row.nivel}...`}
+                                                        onValueChange={(v) => {
+                                                            const newMml = [...formData.MatrizMarcoLogico];
+                                                            newMml[idx].resumen = v;
+                                                            setFormData({...formData, MatrizMarcoLogico: newMml});
+                                                        }}
+                                                        className="w-full min-h-[120px] bg-bg-deep/50 border border-border-thin rounded-xl px-4 py-3 text-xs leading-relaxed focus:bg-bg-deep transition-all"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4 align-top">
+                                                    <CoWorkField 
+                                                        name={`MML_${idx}_ind`} 
+                                                        cowork={cowork} 
+                                                        type="textarea"
+                                                        onValueChange={(v) => {
+                                                            const newMml = [...formData.MatrizMarcoLogico];
+                                                            newMml[idx].indicadores = v;
+                                                            setFormData({...formData, MatrizMarcoLogico: newMml});
+                                                        }}
+                                                        className="w-full min-h-[120px] bg-bg-deep/50 border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4 align-top">
+                                                    <CoWorkField 
+                                                        name={`MML_${idx}_medios`} 
+                                                        cowork={cowork} 
+                                                        type="textarea"
+                                                        onValueChange={(v) => {
+                                                            const newMml = [...formData.MatrizMarcoLogico];
+                                                            newMml[idx].medios = v;
+                                                            setFormData({...formData, MatrizMarcoLogico: newMml});
+                                                        }}
+                                                        className="w-full min-h-[120px] bg-bg-deep/50 border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                                    />
+                                                </td>
+                                                <td className="px-4 py-4 align-top">
+                                                    <CoWorkField 
+                                                        name={`MML_${idx}_sup`} 
+                                                        cowork={cowork} 
+                                                        type="textarea"
+                                                        onValueChange={(v) => {
+                                                            const newMml = [...formData.MatrizMarcoLogico];
+                                                            newMml[idx].supuestos = v;
+                                                            setFormData({...formData, MatrizMarcoLogico: newMml});
+                                                        }}
+                                                        className="w-full min-h-[120px] bg-bg-deep/50 border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'recursos' && (
                         <div className="space-y-12">
                             <div className="space-y-6">
@@ -634,6 +768,62 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                         <button onClick={()=>removeItem('Cronograma', i)} className="p-2.5 text-red-500 hover:bg-red-500/10 rounded-lg"><Trash2 size={16}/></button>
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'documentos' && (
+                        <div className="space-y-8">
+                            <div className="p-8 bg-surface border border-border-thin rounded-3xl space-y-8">
+                                <div className="flex justify-between items-start">
+                                    <div className="space-y-2">
+                                        <h4 className="text-sm font-black uppercase tracking-widest flex items-center gap-2"><ListChecks size={18}/> 9. Requisitos de Postulación</h4>
+                                        <p className="text-[10px] text-text-dim">Cargue los anexos obligatorios según la convocatoria seleccionada.</p>
+                                    </div>
+                                    <div className="px-4 py-2 bg-bg-deep border border-border-thin rounded-2xl flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-text-main/10 flex items-center justify-center text-text-main font-black text-xs">
+                                            {Math.round((formData.DocumentosAdjuntos.length / (convocatorias.find(c => c.idConvocatoria == formData.IdConvocatoria)?.documentosReq?.length || 1)) * 100)}%
+                                        </div>
+                                        <div className="text-[10px] font-black uppercase text-text-dim leading-none">Completado</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    {convocatorias.find(c => c.idConvocatoria == formData.IdConvocatoria)?.documentosReq?.map((req: any) => (
+                                        <div key={req.uuid} className="p-6 bg-bg-deep border border-border-thin rounded-2xl flex justify-between items-center group hover:border-text-main/30 transition-all">
+                                            <div className="flex items-center gap-5">
+                                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${formData.DocumentosAdjuntos.find(d => d.idDocReq == req.idDocReq) ? 'bg-green-500/10 text-green-500' : 'bg-surface text-text-dim'}`}>
+                                                    <ListChecks size={20} />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <p className="text-xs font-bold text-text-main">{req.nombreDocumento}</p>
+                                                    <div className="flex items-center gap-3">
+                                                        {req.esObligatorio && <span className="text-[9px] font-black text-red-500 uppercase tracking-tighter">Obligatorio</span>}
+                                                        <span className="text-[9px] font-bold text-text-dim uppercase tracking-tighter">Formato: {req.formatoAceptado || 'PDF'}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                {formData.DocumentosAdjuntos.find(d => d.idDocReq == req.idDocReq) ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[10px] font-bold text-green-500 uppercase">Cargado</span>
+                                                        <button className="p-2 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors"><Trash2 size={14}/></button>
+                                                    </div>
+                                                ) : (
+                                                    <label className="px-6 py-2.5 bg-surface border border-border-thin rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-text-main hover:text-bg-deep transition-all">
+                                                        Subir Archivo
+                                                        <input type="file" className="hidden" accept=".pdf" />
+                                                    </label>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {(!formData.IdConvocatoria || formData.IdConvocatoria == 0) && (
+                                        <div className="p-12 text-center bg-bg-deep/50 border-2 border-dashed border-border-thin rounded-3xl">
+                                            <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Debe seleccionar una convocatoria en la pestaña de Identificación para ver los requisitos.</p>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

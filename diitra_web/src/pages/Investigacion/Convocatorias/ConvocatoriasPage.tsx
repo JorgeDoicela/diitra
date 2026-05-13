@@ -31,6 +31,8 @@ interface Convocatoria {
     fecha_cierre: string;
     estado: 'Borrador' | 'Abierta' | 'Cerrada' | 'Anulada';
     lineas_ids: number[];
+    hitos: { uuid?: string; nombre_hito: string; fecha_hito: string; es_critico: boolean; descripcion?: string }[];
+    documentos_req: { uuid?: string; nombre_documento: string; descripcion?: string; es_obligatorio: boolean }[];
 }
 
 interface Periodo {
@@ -76,7 +78,9 @@ const ConvocatoriasPage = () => {
         meta_produccion: '',
         fecha_apertura: '',
         fecha_cierre: '',
-        lineas_ids: [] as number[]
+        lineas_ids: [] as number[],
+        hitos: [] as { nombre_hito: string; fecha_hito: string; es_critico: boolean; descripcion?: string }[],
+        documentos_req: [] as { nombre_documento: string; descripcion?: string; es_obligatorio: boolean }[]
     });
 
     const fetchConvocatorias = async () => {
@@ -156,7 +160,9 @@ const ConvocatoriasPage = () => {
             meta_produccion: conv.meta_produccion || '',
             fecha_apertura: conv.fecha_apertura,
             fecha_cierre: conv.fecha_cierre,
-            lineas_ids: conv.lineas_ids || []
+            lineas_ids: conv.lineas_ids || [],
+            hitos: conv.hitos || [],
+            documentos_req: conv.documentos_req || []
         });
         setShowModal(true);
     };
@@ -199,7 +205,9 @@ const ConvocatoriasPage = () => {
             meta_produccion: '',
             fecha_apertura: '',
             fecha_cierre: '',
-            lineas_ids: []
+            lineas_ids: [],
+            hitos: [],
+            documentos_req: []
         });
         setIsEditing(false);
         setSelectedUuid(null);
@@ -551,6 +559,112 @@ const ConvocatoriasPage = () => {
                                         <label htmlFor="financiamiento_ext" className="text-xs text-text-main font-medium cursor-pointer">
                                             Requiere Cofinanciamiento Externo (Empresa/ONG)
                                         </label>
+                                    </div>
+
+                                    {/* Nueva Sección: Calendario del Proceso (Hitos) */}
+                                    <div className="space-y-4 pt-4 border-t border-border-thin">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                                <CalendarDays size={12} /> Calendario del Proceso (Hitos)
+                                            </label>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData({...formData, hitos: [...formData.hitos, { nombre_hito: '', fecha_hito: '', es_critico: false }]})}
+                                                className="text-[10px] font-bold text-text-main uppercase hover:underline"
+                                            >
+                                                + Añadir Hito
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {formData.hitos.map((hito, idx) => (
+                                                <div key={idx} className="grid grid-cols-12 gap-3 bg-surface/30 p-3 rounded border border-border-thin relative group">
+                                                    <div className="col-span-6">
+                                                        <input 
+                                                            className="w-full bg-bg-deep border border-border-thin rounded px-3 py-1.5 text-xs text-text-main outline-none"
+                                                            placeholder="Nombre del hito (Ej: Resultados)"
+                                                            value={hito.nombre_hito}
+                                                            onChange={e => {
+                                                                const newHitos = [...formData.hitos];
+                                                                newHitos[idx].nombre_hito = e.target.value;
+                                                                setFormData({...formData, hitos: newHitos});
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-4">
+                                                        <input 
+                                                            type="date"
+                                                            className="w-full bg-bg-deep border border-border-thin rounded px-3 py-1.5 text-xs text-text-main outline-none [color-scheme:dark]"
+                                                            value={hito.fecha_hito}
+                                                            onChange={e => {
+                                                                const newHitos = [...formData.hitos];
+                                                                newHitos[idx].fecha_hito = e.target.value;
+                                                                setFormData({...formData, hitos: newHitos});
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-2 flex items-center justify-center">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setFormData({...formData, hitos: formData.hitos.filter((_, i) => i !== idx)})}
+                                                            className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Nueva Sección: Documentación Requerida */}
+                                    <div className="space-y-4 pt-4 border-t border-border-thin">
+                                        <div className="flex justify-between items-center">
+                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                                <FileText size={12} /> Documentación Obligatoria (Checklist)
+                                            </label>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setFormData({...formData, documentos_req: [...formData.documentos_req, { nombre_documento: '', es_obligatorio: true }]})}
+                                                className="text-[10px] font-bold text-text-main uppercase hover:underline"
+                                            >
+                                                + Añadir Documento
+                                            </button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {formData.documentos_req.map((doc, idx) => (
+                                                <div key={idx} className="flex items-center gap-3 bg-surface/30 p-3 rounded border border-border-thin relative group">
+                                                    <input 
+                                                        className="flex-1 bg-bg-deep border border-border-thin rounded px-3 py-1.5 text-xs text-text-main outline-none"
+                                                        placeholder="Nombre del documento (Ej: Certificado de Título)"
+                                                        value={doc.nombre_documento}
+                                                        onChange={e => {
+                                                            const newDocs = [...formData.documentos_req];
+                                                            newDocs[idx].nombre_documento = e.target.value;
+                                                            setFormData({...formData, documentos_req: newDocs});
+                                                        }}
+                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <input 
+                                                            type="checkbox"
+                                                            checked={doc.es_obligatorio}
+                                                            onChange={e => {
+                                                                const newDocs = [...formData.documentos_req];
+                                                                newDocs[idx].es_obligatorio = e.target.checked;
+                                                                setFormData({...formData, documentos_req: newDocs});
+                                                            }}
+                                                        />
+                                                        <span className="text-[9px] font-bold text-text-dim uppercase">Obligatorio</span>
+                                                    </div>
+                                                    <button 
+                                                        type="button"
+                                                        onClick={() => setFormData({...formData, documentos_req: formData.documentos_req.filter((_, i) => i !== idx)})}
+                                                        className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             )}

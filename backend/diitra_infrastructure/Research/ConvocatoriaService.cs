@@ -19,6 +19,8 @@ public class ConvocatoriaService : IConvocatoriaService
         return await _context.InvConvocatorias
             .Include(c => c.IdPeriodoNavigation)
             .Include(c => c.IdRubricaNavigation)
+            .Include(c => c.Hitos)
+            .Include(c => c.DocumentosReq)
             .OrderByDescending(c => c.Anio)
             .Select(c => new ConvocatoriaDto
             {
@@ -44,7 +46,20 @@ public class ConvocatoriaService : IConvocatoriaService
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
                 Estado = c.Estado,
-                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList()
+                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList(),
+                Hitos = c.Hitos.Select(h => new ConvocatoriaHitoDto {
+                    Uuid = h.Uuid,
+                    NombreHito = h.NombreHito,
+                    FechaHito = h.FechaHito,
+                    EsCritico = h.EsCritico ?? false,
+                    Descripcion = h.Descripcion
+                }).ToList(),
+                DocumentosReq = c.DocumentosReq.Select(d => new ConvocatoriaDocumentoReqDto {
+                    Uuid = d.Uuid,
+                    NombreDocumento = d.NombreDocumento,
+                    Descripcion = d.Descripcion,
+                    EsObligatorio = d.EsObligatorio ?? false
+                }).ToList()
             })
             .ToListAsync();
     }
@@ -55,6 +70,8 @@ public class ConvocatoriaService : IConvocatoriaService
             .Include(c => c.IdPeriodoNavigation)
             .Include(c => c.IdRubricaNavigation)
             .Include(c => c.Lineas)
+            .Include(c => c.Hitos)
+            .Include(c => c.DocumentosReq)
             .Where(c => c.Uuid == uuid)
             .Select(c => new ConvocatoriaDto
             {
@@ -80,7 +97,20 @@ public class ConvocatoriaService : IConvocatoriaService
                 FechaApertura = c.FechaApertura,
                 FechaCierre = c.FechaCierre,
                 Estado = c.Estado,
-                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList()
+                LineasIds = c.Lineas.Select(l => l.IdLinea).ToList(),
+                Hitos = c.Hitos.Select(h => new ConvocatoriaHitoDto {
+                    Uuid = h.Uuid,
+                    NombreHito = h.NombreHito,
+                    FechaHito = h.FechaHito,
+                    EsCritico = h.EsCritico ?? false,
+                    Descripcion = h.Descripcion
+                }).ToList(),
+                DocumentosReq = c.DocumentosReq.Select(d => new ConvocatoriaDocumentoReqDto {
+                    Uuid = d.Uuid,
+                    NombreDocumento = d.NombreDocumento,
+                    Descripcion = d.Descripcion,
+                    EsObligatorio = d.EsObligatorio ?? false
+                }).ToList()
             })
             .FirstOrDefaultAsync();
     }
@@ -110,6 +140,33 @@ public class ConvocatoriaService : IConvocatoriaService
             Estado = "Borrador"
         };
 
+        if (dto.Hitos != null)
+        {
+            foreach (var h in dto.Hitos)
+            {
+                convocatoria.Hitos.Add(new InvConvocatoriaHito {
+                    Uuid = Guid.NewGuid().ToString(),
+                    NombreHito = h.NombreHito,
+                    FechaHito = h.FechaHito,
+                    EsCritico = h.EsCritico,
+                    Descripcion = h.Descripcion
+                });
+            }
+        }
+
+        if (dto.DocumentosReq != null)
+        {
+            foreach (var d in dto.DocumentosReq)
+            {
+                convocatoria.DocumentosReq.Add(new InvConvocatoriaDocumentoReq {
+                    Uuid = Guid.NewGuid().ToString(),
+                    NombreDocumento = d.NombreDocumento,
+                    Descripcion = d.Descripcion,
+                    EsObligatorio = d.EsObligatorio,
+                });
+            }
+        }
+
         if (dto.LineasIds != null && dto.LineasIds.Any())
         {
             var lineas = await _context.InvLineasInvestigacion
@@ -130,6 +187,8 @@ public class ConvocatoriaService : IConvocatoriaService
     {
         var conv = await _context.InvConvocatorias
             .Include(c => c.Lineas)
+            .Include(c => c.Hitos)
+            .Include(c => c.DocumentosReq)
             .FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
@@ -161,6 +220,37 @@ public class ConvocatoriaService : IConvocatoriaService
             foreach (var linea in lineas)
             {
                 conv.Lineas.Add(linea);
+            }
+        }
+
+        // Update Hitos
+        _context.InvConvocatoriasHitos.RemoveRange(conv.Hitos);
+        if (dto.Hitos != null)
+        {
+            foreach (var h in dto.Hitos)
+            {
+                conv.Hitos.Add(new InvConvocatoriaHito {
+                    Uuid = Guid.NewGuid().ToString(),
+                    NombreHito = h.NombreHito,
+                    FechaHito = h.FechaHito,
+                    EsCritico = h.EsCritico,
+                    Descripcion = h.Descripcion
+                });
+            }
+        }
+
+        // Update DocumentosReq
+        _context.InvConvocatoriasDocumentosReq.RemoveRange(conv.DocumentosReq);
+        if (dto.DocumentosReq != null)
+        {
+            foreach (var d in dto.DocumentosReq)
+            {
+                conv.DocumentosReq.Add(new InvConvocatoriaDocumentoReq {
+                    Uuid = Guid.NewGuid().ToString(),
+                    NombreDocumento = d.NombreDocumento,
+                    Descripcion = d.Descripcion,
+                    EsObligatorio = d.EsObligatorio,
+                });
             }
         }
 
