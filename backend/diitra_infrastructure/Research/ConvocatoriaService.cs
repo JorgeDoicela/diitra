@@ -48,6 +48,7 @@ public class ConvocatoriaService : IConvocatoriaService
                 Estado = c.Estado,
                 LineasIds = c.Lineas.Select(l => l.IdLinea).ToList(),
                 Hitos = c.Hitos.Select(h => new ConvocatoriaHitoDto {
+                    IdHito = h.IdHito,
                     Uuid = h.Uuid,
                     NombreHito = h.NombreHito,
                     FechaHito = h.FechaHito,
@@ -55,10 +56,12 @@ public class ConvocatoriaService : IConvocatoriaService
                     Descripcion = h.Descripcion
                 }).ToList(),
                 DocumentosReq = c.DocumentosReq.Select(d => new ConvocatoriaDocumentoReqDto {
+                    IdDocReq = d.IdDocReq,
                     Uuid = d.Uuid,
                     NombreDocumento = d.NombreDocumento,
                     Descripcion = d.Descripcion,
-                    EsObligatorio = d.EsObligatorio ?? false
+                    EsObligatorio = d.EsObligatorio ?? false,
+                    FormatoAceptado = d.FormatoAceptado
                 }).ToList()
             })
             .ToListAsync();
@@ -99,6 +102,7 @@ public class ConvocatoriaService : IConvocatoriaService
                 Estado = c.Estado,
                 LineasIds = c.Lineas.Select(l => l.IdLinea).ToList(),
                 Hitos = c.Hitos.Select(h => new ConvocatoriaHitoDto {
+                    IdHito = h.IdHito,
                     Uuid = h.Uuid,
                     NombreHito = h.NombreHito,
                     FechaHito = h.FechaHito,
@@ -106,10 +110,12 @@ public class ConvocatoriaService : IConvocatoriaService
                     Descripcion = h.Descripcion
                 }).ToList(),
                 DocumentosReq = c.DocumentosReq.Select(d => new ConvocatoriaDocumentoReqDto {
+                    IdDocReq = d.IdDocReq,
                     Uuid = d.Uuid,
                     NombreDocumento = d.NombreDocumento,
                     Descripcion = d.Descripcion,
-                    EsObligatorio = d.EsObligatorio ?? false
+                    EsObligatorio = d.EsObligatorio ?? false,
+                    FormatoAceptado = d.FormatoAceptado
                 }).ToList()
             })
             .FirstOrDefaultAsync();
