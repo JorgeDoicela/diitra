@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Target, Users, Plus, Trash2, BarChart3, ListChecks, DollarSign, Award, Calendar } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
@@ -68,7 +68,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
     });
 
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
-    const [objetivosPnd, setObjetivosPnd] = useState<any[]>([]);
+    const [, setObjetivosPnd] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchMetadata = async () => {
@@ -329,7 +329,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 <button onClick={() => addItem('Investigadores', { nombre: '', cedula: '', email: '', telefono: '', nivel: '', rol: 'Docente' })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-90 shadow-lg"><Plus size={16}/> Añadir Investigador</button>
                             </div>
                             <div className="space-y-4">
-                                {formData.Investigadores.map((inv, idx) => (
+                                {formData.Investigadores.map((_inv, idx) => (
                                     <div key={idx} className="p-8 bg-surface border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
                                         <button onClick={()=>removeItem('Investigadores', idx)} className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full"><Trash2 size={18}/></button>
                                         <div className="grid grid-cols-12 gap-6">
@@ -435,7 +435,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <button onClick={() => addItem('ObjetivosEspecificos', '')} className="p-2 bg-text-main text-bg-deep rounded-lg hover:opacity-90"><Plus size={14}/></button>
                                 </div>
                                 <div className="space-y-3">
-                                    {formData.ObjetivosEspecificos.map((obj, i) => (
+                                    {formData.ObjetivosEspecificos.map((_obj, i) => (
                                         <div key={i} className="flex gap-4 items-start group">
                                             <div className="mt-4 w-2 h-2 rounded-full bg-text-main/20 group-hover:bg-text-main transition-colors" />
                                             <div className="flex-1">
@@ -608,7 +608,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                             <button onClick={() => addItem('RecursosDisponibles', { descripcion: '', cantidad: 1, fuente: 'Instituto' })} className="p-2 bg-text-main text-bg-deep rounded-lg"><Plus size={14}/></button>
                                         </div>
                                         <div className="space-y-3">
-                                            {formData.RecursosDisponibles.map((r, i) => (
+                                            {formData.RecursosDisponibles.map((_r, i) => (
                                                 <div key={i} className="flex gap-2 items-center">
                                                     <CoWorkField 
                                                         name={`RecDisp_${i}_desc`} 
@@ -676,7 +676,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     <button onClick={() => addItem('ProductosEsperados', { tipo: '', cantidad: 1 })} className="px-4 py-2 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase">+ Añadir Producto</button>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {formData.ProductosEsperados.map((p, i) => (
+                                    {formData.ProductosEsperados.map((_p, i) => (
                                         <div key={i} className="p-4 bg-surface border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
                                             <div className="flex-1">
                                                 <CoWorkField 
@@ -736,7 +736,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 <button onClick={() => addItem('Cronograma', { actividad: '', mes: 'Mes 1', recursos: '' })} className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest">+ Nueva Actividad</button>
                             </div>
                             <div className="space-y-4">
-                                {formData.Cronograma.map((c, i) => (
+                                {formData.Cronograma.map((_c, i) => (
                                     <div key={i} className="p-6 bg-surface border border-border-thin rounded-2xl flex gap-6 items-end shadow-sm">
                                         <div className="flex-1">
                                             <CoWorkField 

@@ -10,7 +10,8 @@ interface CoWorkFieldProps {
     label?: string;
     type?: 'text' | 'textarea' | 'select' | 'checkbox';
     onValueChange?: (value: any) => void;
-    children?: React.ReactNode; 
+    children?: React.ReactNode;
+    readOnly?: boolean;
 }
 
 /**
@@ -26,7 +27,8 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     label,
     type = 'text',
     onValueChange,
-    children
+    children,
+    readOnly
 }) => {
     const [localValue, setLocalValue] = useState<any>(type === 'checkbox' ? false : '');
     const { ydoc } = cowork;
@@ -81,10 +83,11 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     const commonProps = {
         name,
         placeholder,
-        className: type === 'checkbox' 
+        className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
             : `${className} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
-        disabled: cowork.session.readOnly
+        disabled: cowork.session.readOnly,
+        readOnly
     };
 
     return (
