@@ -2,7 +2,7 @@
 // DIITRA CoWork — Main Hook: useCoWork (v3.9 - Isolation & Stability)
 // ═══════════════════════════════════════════════════════════════════
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import type { CoWorkConfig, CoWorkHandle, CoWorkSession, CoWorkUser } from '../types';
@@ -19,6 +19,22 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         isSyncing: false,
         lastSyncedAt: null,
         error: null,
+    });
+
+    // DEBUG: rastrear qué cambia en session
+    const prevSessionRef = useRef(session);
+    useEffect(() => {
+        const prev = prevSessionRef.current;
+        const changes = [];
+        if (prev.isConnected !== session.isConnected) changes.push(`isConnected: ${prev.isConnected} → ${session.isConnected}`);
+        if (prev.connectedUsers.length !== session.connectedUsers.length) changes.push(`users: ${prev.connectedUsers.length} → ${session.connectedUsers.length}`);
+        if (prev.isSyncing !== session.isSyncing) changes.push(`isSyncing: ${prev.isSyncing} → ${session.isSyncing}`);
+        if (prev.lastSyncedAt?.toISOString() !== session.lastSyncedAt?.toISOString()) changes.push(`lastSyncedAt changed`);
+        if (prev.readOnly !== session.readOnly) changes.push(`readOnly: ${prev.readOnly} → ${session.readOnly}`);
+        if (changes.length > 0) {
+            console.log('[useCoWork] SESSION CHANGE:', changes.join(' | '));
+        }
+        prevSessionRef.current = session;
     });
 
     // 2. Referencias persistentes
@@ -249,12 +265,12 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         };
     }, [config.documentId, config.enabled]); // <--- CRÍTICO: Re-ejecutar al cambiar de sala
 
-    return {
+    return useMemo(() => ({
         session,
         ydoc: ydocRef.current,
         awareness: awarenessRef.current,
         compact,
         submitFinalContent,
         disconnect
-    };
+    }), [session, compact, submitFinalContent, disconnect]);
 }

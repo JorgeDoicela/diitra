@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CheckCircle, FileText, Save, Users, Clock, Settings, BookOpen, Target, Upload, Shield, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
@@ -76,26 +76,74 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [signaturePassword, setSignaturePassword] = useState('');
     const [isSigning, setIsSigning] = useState(false);
     const [auditLogs, setAuditLogs] = useState<{msg: string, type: string}[]>([]);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!pdfBlob) {
+            setPdfUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(pdfBlob);
+        setPdfUrl(url);
+        return () => URL.revokeObjectURL(url);
+    }, [pdfBlob]);
+
+    // DEBUG: rastrear qué estado cambia y causa re-render
+    const prevStateRef = useRef({ isSaving, lastSaved, auditLogsLength: auditLogs.length, activeTab, isDraftMode });
+    useEffect(() => {
+        const prev = prevStateRef.current;
+        const changes = [];
+        if (prev.isSaving !== isSaving) changes.push(`isSaving: ${prev.isSaving} → ${isSaving}`);
+        if (prev.lastSaved !== lastSaved) changes.push(`lastSaved: ${prev.lastSaved?.slice(0,8)} → ${lastSaved?.slice(0,8)}`);
+        if (prev.auditLogsLength !== auditLogs.length) changes.push(`auditLogs: ${prev.auditLogsLength} → ${auditLogs.length}`);
+        if (prev.activeTab !== activeTab) changes.push(`activeTab: ${prev.activeTab} → ${activeTab}`);
+        if (prev.isDraftMode !== isDraftMode) changes.push(`isDraftMode: ${prev.isDraftMode} → ${isDraftMode}`);
+        if (changes.length > 0) {
+            console.log('[DIITRABuilderShell] STATE CHANGE:', changes.join(' | '));
+        }
+        prevStateRef.current = { isSaving, lastSaved, auditLogsLength: auditLogs.length, activeTab, isDraftMode };
+    });
 
     const addAudit = (msg: string, type: string = 'info') => {
         setAuditLogs(prev => [{msg, type}, ...prev].slice(0, 8));
     };
 
-    // Auto-save inteligente del núcleo
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (onSave && (formData.Titulo || formData.Nombre)) {
-                handleSave(); 
-            }
-        }, 3000);
-        return () => clearTimeout(timeoutId);
-    }, [formData]);
+    // ── Auto-save inteligente del núcleo (con debounce y dirty-check) ──
+    const lastSavedSnapshotRef = useRef<string>('');
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const formDataRef = useRef(formData);
+    const onSaveRef = useRef(onSave);
 
-    const handleSave = async () => {
-        if (!onSave) return;
+    useEffect(() => { formDataRef.current = formData; }, [formData]);
+    useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
+
+    const snapshotForm = (data: any) => {
+        try {
+            // Excluimos campos efímeros que cambian por render (audit, fecha, etc.)
+            const { Uuid, Titulo, Nombre, ...rest } = data;
+            return JSON.stringify({ Uuid, Titulo, Nombre, ...rest });
+        } catch {
+            return '';
+        }
+    };
+
+    const handleSave = useCallback(async () => {
+        const data = formDataRef.current;
+        const saveFn = onSaveRef.current;
+        if (!saveFn) return;
+        const currentSnap = snapshotForm(data);
+        // No guardar si no hay cambios desde la última vez
+        if (currentSnap === lastSavedSnapshotRef.current) {
+            return;
+        }
+        // No guardar si está vacío y sin UUID
+        if (!data.Uuid && !data.Titulo && !data.Nombre) {
+            return;
+        }
         setIsSaving(true);
         try {
-            await onSave(formData);
+            await saveFn(data);
+            lastSavedSnapshotRef.current = currentSnap;
             setLastSaved(new Date().toLocaleTimeString());
             addAudit("Sincronización de estado exitosa", "success");
         } catch (e) {
@@ -103,7 +151,21 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         } finally {
             setIsSaving(false);
         }
-    };
+    }, []); // Estable: lee siempre de refs
+
+    useEffect(() => {
+        const currentSnap = snapshotForm(formData);
+        if (currentSnap === lastSavedSnapshotRef.current) {
+            return; // Sin cambios, no reiniciar timer
+        }
+        if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = setTimeout(() => {
+            handleSave();
+        }, 3000);
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, [formData]); // Solo reinicia cuando formData cambia realmente
 
     const handleGeneratePdf = async (blind = false) => {
         setIsGenerating(true);
@@ -344,8 +406,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                     <p className="text-[9px] text-text-dim uppercase tracking-widest mt-2">Construyendo evidencia digital de alta fidelidad...</p>
                                                 </div>
                                             </div>
-                                        ) : pdfBlob ? (
-                                            <iframe src={URL.createObjectURL(pdfBlob)} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl"></iframe>
+                                        ) : pdfUrl ? (
+                                            <iframe src={pdfUrl} className="flex-1 w-full bg-white rounded-xl border-none shadow-2xl"></iframe>
                                         ) : (
                                             <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20">
                                                 <FileText size={120} strokeWidth={0.5} className="mb-8" />
