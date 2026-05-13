@@ -108,6 +108,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<FechasHorario>        FechasHorarios     { get; set; }  // fechas_horario (fechas de calendario para horarios)
     public virtual DbSet<HorasClase>           HorasClase         { get; set; }  // horas_clases (franjas horarias)
     public virtual DbSet<Matricula>            Matriculas         { get; set; }  // matriculas
+    public virtual DbSet<Curso>                Cursos             { get; set; }  // cursos
     public virtual DbSet<Asignatura>           Asignaturas        { get; set; }  // asignaturas
 
     // --- Títulos y nivel académico (para reportes CACES) ---
@@ -417,6 +418,20 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdAsignatura).HasColumnType("int(11)").HasColumnName("idAsignatura");
             entity.Property(e => e.Asignatura1).HasMaxLength(200).HasColumnName("asignatura");
             entity.Property(e => e.Codigo).HasMaxLength(30).HasColumnName("codigo");
+        });
+
+        modelBuilder.Entity<Curso>(entity =>
+        {
+            entity.HasKey(e => e.IdNivel).HasName("PRIMARY");
+            entity.ToTable("cursos");
+
+            entity.Property(e => e.IdNivel).HasColumnName("idNivel");
+            entity.Property(e => e.IdCarrera).HasColumnName("idCarrera");
+            entity.Property(e => e.Nivel).HasMaxLength(20).HasColumnName("Nivel");
+            entity.Property(e => e.Jerarquia).HasColumnName("jerarquia");
+            entity.Property(e => e.Orden).HasColumnName("orden");
+            entity.Property(e => e.EsRecuperacion).HasColumnName("esRecuperacion");
+            entity.Property(e => e.AliasCurso).HasMaxLength(5).HasColumnName("aliasCurso");
         });
 
         modelBuilder.Entity<TitulosProfesore>(entity =>

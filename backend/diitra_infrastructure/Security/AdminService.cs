@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
 using diitra_infrastructure.data.models;
@@ -21,11 +22,15 @@ public class AdminService : IAdminService
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 10;
 
-        // Obtener periodo académico activo (usado para alumnos y docentes)
+        // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var currentPeriod = await _context.Periodos
-            .OrderByDescending(p => p.Periodoactivoinstituto)
-            .ThenByDescending(p => p.FechaInicial)
-            .FirstOrDefaultAsync(p => p.Periodoactivoinstituto == 1 || p.Activo == true);
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1) // 1. Marcado explícitamente para el sistema
+            .ThenByDescending(p => p.Activo == true)             // 2. Marcado como activo genérico
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today) // 3. El que cubre la fecha de hoy
+            .ThenByDescending(p => p.FechaInicial)               // 4. El más reciente cronológicamente
+            .FirstOrDefaultAsync();
+
         var periodId = currentPeriod?.IdPeriodo;
 
         var result = new PagedResult<UserManagementDto>
@@ -72,12 +77,16 @@ public class AdminService : IAdminService
                 .Where(m => ids.Contains(m.IdAlumno) && m.IdPeriodo == periodId && m.Valida == 1)
                 .ToListAsync();
             
-            var careerInfo = await _context.AlumnosCarreras
-                .Where(ac => ids.Contains(ac.IdAlumno))
-                .ToListAsync();
-
             var careers = await _context.Carreras.ToListAsync();
-            var levels = await _context.NivelesAcademicos.ToListAsync();
+            
+            // Pre-cargar información de Cursos (Niveles/Carreras operativos)
+            var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
+                .Concat(students.Select(s => s.IdNivel))
+                .Where(id => id.HasValue)
+                .Select(id => id!.Value)
+                .Distinct()
+                .ToList();
+            var relevantCursos = await _context.Cursos.Where(c => levelIds.Contains(c.IdNivel)).ToListAsync();
 
             var userRoles = await _context.UserRoles
                 .Include(ur => ur.Role)
@@ -96,10 +105,14 @@ public class AdminService : IAdminService
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
                 
                 var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
-                var alcarrera = careerInfo.FirstOrDefault(ac => ac.IdAlumno.Trim() == sId);
                 
-                var carreraNom = careers.FirstOrDefault(c => c.IdCarrera == alcarrera?.IdCarrera)?.Carrera1;
-                var nivelNom = levels.FirstOrDefault(l => l.IdNivelAcademico == matricula?.IdNivel)?.Nombre;
+                // Lógica de descubrimiento de datos académicos vía tabla 'cursos'
+                // Esta es la forma real en que SIGAFI vincula alumnos con carreras y niveles operativos
+                var idNivelTarget = matricula?.IdNivel ?? s.IdNivel;
+                var cursoInfo = relevantCursos.FirstOrDefault(c => c.IdNivel == idNivelTarget);
+                
+                var carreraNom = careers.FirstOrDefault(c => c.IdCarrera == cursoInfo?.IdCarrera)?.Carrera1;
+                var nivelNom = cursoInfo?.Nivel;
 
                 return new UserManagementDto
                 {
@@ -112,7 +125,7 @@ public class AdminService : IAdminService
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
-                    Carrera = carreraNom ?? "No asignada",
+                    Carrera = carreraNom ?? "No vinculada",
                     Nivel = nivelNom ?? "N/A"
                 };
             }).ToList();
