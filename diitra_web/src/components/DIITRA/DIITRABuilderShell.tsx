@@ -88,22 +88,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         return () => URL.revokeObjectURL(url);
     }, [pdfBlob]);
 
-    // DEBUG: rastrear qué estado cambia y causa re-render
-    const prevStateRef = useRef({ isSaving, lastSaved, auditLogsLength: auditLogs.length, activeTab, isDraftMode });
-    useEffect(() => {
-        const prev = prevStateRef.current;
-        const changes = [];
-        if (prev.isSaving !== isSaving) changes.push(`isSaving: ${prev.isSaving} → ${isSaving}`);
-        if (prev.lastSaved !== lastSaved) changes.push(`lastSaved: ${prev.lastSaved?.slice(0,8)} → ${lastSaved?.slice(0,8)}`);
-        if (prev.auditLogsLength !== auditLogs.length) changes.push(`auditLogs: ${prev.auditLogsLength} → ${auditLogs.length}`);
-        if (prev.activeTab !== activeTab) changes.push(`activeTab: ${prev.activeTab} → ${activeTab}`);
-        if (prev.isDraftMode !== isDraftMode) changes.push(`isDraftMode: ${prev.isDraftMode} → ${isDraftMode}`);
-        if (changes.length > 0) {
-            console.log('[DIITRABuilderShell] STATE CHANGE:', changes.join(' | '));
-        }
-        prevStateRef.current = { isSaving, lastSaved, auditLogsLength: auditLogs.length, activeTab, isDraftMode };
-    });
-
     const addAudit = (msg: string, type: string = 'info') => {
         setAuditLogs(prev => [{msg, type}, ...prev].slice(0, 8));
     };

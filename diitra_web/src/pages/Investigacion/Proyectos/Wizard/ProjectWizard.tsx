@@ -67,24 +67,6 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
         DocumentosAdjuntos: [] as any[]
     });
 
-    // DEBUG: rastrear qué campos de formData cambian
-    const prevFormDataRef = useRef(formData);
-    useEffect(() => {
-        const prev = prevFormDataRef.current;
-        const changes: string[] = [];
-        for (const key of Object.keys(formData)) {
-            const prevVal = (prev as any)[key];
-            const currVal = (formData as any)[key];
-            if (JSON.stringify(prevVal) !== JSON.stringify(currVal)) {
-                changes.push(key);
-            }
-        }
-        if (changes.length > 0) {
-            console.log('[ProjectWizard] formData fields changed:', changes.join(', '));
-        }
-        prevFormDataRef.current = formData;
-    });
-
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [, setObjetivosPnd] = useState<any[]>([]);
 
@@ -111,11 +93,8 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
     };
 
     const handleSave = async (data: any) => {
-        console.log('[ProjectWizard] handleSave POST, current Uuid=', formData.Uuid, 'Titulo=', data.Titulo);
         const response = await api.post('/projects/save-preview-data', data);
-        console.log('[ProjectWizard] handleSave response', response.data);
         if (response.data.uuid && !formData.Uuid) {
-            console.log('[ProjectWizard] handleSave setting Uuid=', response.data.uuid);
             setFormData(prev => ({ ...prev, Uuid: response.data.uuid }));
         }
     };
@@ -222,7 +201,6 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
             onClose={onClose}
         >
             {(activeTab, cowork) => {
-                console.log('[ProjectWizard] children render fn called', activeTab, 'cowork ydoc=', !!cowork.ydoc, 'session users=', cowork.session.connectedUsers.length);
                 coworkRef.current = cowork;
                 return (
                     <div className="space-y-8 pb-10">
