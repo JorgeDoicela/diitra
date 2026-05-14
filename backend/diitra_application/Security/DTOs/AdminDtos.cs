@@ -73,5 +73,8 @@ public class ExternalUserDto
     public string Cedula { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string DefaultRole { get; set; } = "EVALUADOR_PAR";
+    public string? Especialidad { get; set; }
+    public string? GradoAcademico { get; set; }
+    public string? Institucion { get; set; }
+    public string DefaultRole { get; set; } = "DIITRA_REVISOR_EXTERNO";
 }

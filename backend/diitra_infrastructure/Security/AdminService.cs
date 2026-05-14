@@ -444,8 +444,19 @@ public class AdminService : IAdminService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata { IdUsuario = user.IdUsuario, Uuid = Guid.NewGuid(), Version = 1 });
+        // Registrar Metadata Profesional Académica
+        _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata { 
+            IdUsuario = user.IdUsuario, 
+            Uuid = Guid.NewGuid(), 
+            Version = 1,
+            Especialidad = dto.Especialidad,
+            GradoAcademicoMaximo = dto.GradoAcademico
+            // Nota: Podríamos añadir Institución a la base de datos si fuera necesario, 
+            // por ahora usamos los campos existentes.
+        });
         await _context.SaveChangesAsync();
+
+        await AddAuditLogAsync(adminUsername, user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {dto.FullName} ({dto.Institucion ?? "S/I"})");
 
         // Asignar rol por defecto
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == dto.DefaultRole);

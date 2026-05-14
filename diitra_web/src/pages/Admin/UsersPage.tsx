@@ -134,7 +134,7 @@ const UsersPage = () => {
         try {
             await api.post('/Admin/external', externalForm);
             setShowExternalForm(false);
-            setExternalForm({ cedula: '', full_name: '', email: '' });
+            setExternalForm({ cedula: '', full_name: '', email: '', especialidad: '', grado_academico: '', institucion: '' });
             fetchUsers();
             fetchAuditLogs();
         } catch (error) {
@@ -394,35 +394,78 @@ const UsersPage = () => {
             {/* Modal Registro Externo */}
             {showExternalForm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
                         <form onSubmit={handleRegisterExternal}>
                             <header className="p-6 border-b border-border-thin bg-bg-deep/50 flex justify-between items-center">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-text-main/10 text-text-main rounded-lg"><UserPlus size={20} /></div>
+                                    <div className="p-2 bg-text-main/10 text-text-main rounded-lg"><Globe size={20} /></div>
                                     <div>
-                                        <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">Registro de Evaluador</h3>
-                                        <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Personal Externo DIITRA</p>
+                                        <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">Registro de Evaluador Académico</h3>
+                                        <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Personal Externo DIITRA - IST Quito</p>
                                     </div>
                                 </div>
                                 <button type="button" onClick={() => setShowExternalForm(false)} className="text-text-dim hover:text-text-main"><X size={20} /></button>
                             </header>
-                            <div className="p-8 space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Identificación / Cédula</label>
-                                    <input required type="text" value={externalForm.cedula} onChange={e => setExternalForm({ ...externalForm, cedula: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main" placeholder="1712345678" />
+                            
+                            <div className="p-8 grid grid-cols-2 gap-6">
+                                {/* Datos Personales */}
+                                <div className="col-span-2 space-y-4">
+                                    <h4 className="text-[10px] font-black text-text-main uppercase tracking-widest border-b border-border-thin pb-2">Identificación y Contacto</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Cédula / Pasaporte</label>
+                                            <input required type="text" value={externalForm.cedula} onChange={e => setExternalForm({ ...externalForm, cedula: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="1712345678" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Correo Electrónico</label>
+                                            <input required type="email" value={externalForm.email} onChange={e => setExternalForm({ ...externalForm, email: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="dr.perez@universidad.edu.ec" />
+                                        </div>
+                                        <div className="col-span-2 space-y-2">
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Nombres Completos (Grado Académico + Nombres)</label>
+                                            <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({ ...externalForm, full_name: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main uppercase focus:border-text-main transition-colors" placeholder="Ej: PhD. Juan Pérez Arrieta" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nombres Completos</label>
-                                    <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({ ...externalForm, full_name: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main uppercase" placeholder="Ej: Dr. Juan Pérez" />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Correo Electrónico</label>
-                                    <input required type="email" value={externalForm.email} onChange={e => setExternalForm({ ...externalForm, email: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main" placeholder="juan.perez@universidad.edu.ec" />
+
+                                {/* Perfil Académico */}
+                                <div className="col-span-2 space-y-4 mt-4">
+                                    <h4 className="text-[10px] font-black text-text-main uppercase tracking-widest border-b border-border-thin pb-2">Perfil Profesional (Contexto SENESCYT)</h4>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Grado Máximo</label>
+                                            <select 
+                                                value={externalForm.grado_academico} 
+                                                onChange={e => setExternalForm({ ...externalForm, grado_academico: e.target.value })}
+                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors appearance-none"
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                <option value="PHD">Doctorado / PhD</option>
+                                                <option value="MAESTRIA">Maestría / Magíster</option>
+                                                <option value="ESPECIALIDAD">Especialidad Médica</option>
+                                                <option value="TERCER_NIVEL">Tercer Nivel</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Especialidad (Línea de Inv.)</label>
+                                            <input type="text" value={externalForm.especialidad} onChange={e => setExternalForm({ ...externalForm, especialidad: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="Ej: Inteligencia Artificial" />
+                                        </div>
+                                        <div className="col-span-2 space-y-2">
+                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Institución de Origen</label>
+                                            <input type="text" value={externalForm.institucion} onChange={e => setExternalForm({ ...externalForm, institucion: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="Ej: Escuela Politécnica Nacional" />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <footer className="p-6 bg-bg-deep/50 border-t border-border-thin flex justify-end gap-3">
-                                <button type="button" onClick={() => setShowExternalForm(false)} className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim">Cancelar</button>
-                                <button type="submit" className="bg-text-main text-bg-deep px-6 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest">Registrar y Asignar Rol</button>
+
+                            <footer className="p-6 bg-bg-deep/50 border-t border-border-thin flex justify-between items-center">
+                                <div className="flex items-center gap-2 text-text-dim italic text-[9px]">
+                                    <Shield size={10} />
+                                    <span>Se asignará automáticamente el rol de Revisor Externo DIITRA</span>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button type="button" onClick={() => setShowExternalForm(false)} className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main">Cancelar</button>
+                                    <button type="submit" className="bg-text-main text-bg-deep px-6 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">Registrar Evaluador</button>
+                                </div>
                             </footer>
                         </form>
                     </div>
