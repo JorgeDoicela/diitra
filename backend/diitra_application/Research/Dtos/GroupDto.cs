@@ -38,6 +38,7 @@ public class CreateGroupDto
     public string Nombre { get; set; } = null!;
     public string? Siglas { get; set; }
     public int? IdCoordinador { get; set; }
+    public string? IdProfesorCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
     public string? Mision { get; set; }
     public string? Vision { get; set; }

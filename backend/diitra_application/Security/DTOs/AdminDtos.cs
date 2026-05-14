@@ -4,6 +4,7 @@ namespace diitra_application.Security.DTOs;
 
 public class UserManagementDto
 {
+    public int? IdUsuario { get; set; }
     public string IdProfesor { get; set; } = string.Empty;
     public string NombreCompleto { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;

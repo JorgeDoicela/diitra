@@ -185,6 +185,7 @@ public class AdminService : IAdminService
 
                 return new UserManagementDto
                 {
+                    IdUsuario = u.IdUsuario,
                     IdProfesor = sId,
                     NombreCompleto = nombreCompleto,
                     Email = u.IdSigafi.Contains("@") ? u.IdSigafi : (u.EmailInstitucional ?? "externo@diitra.ist"),
@@ -272,6 +273,7 @@ public class AdminService : IAdminService
 
                 return new UserManagementDto
                 {
+                    IdUsuario = firstUserId,
                     IdProfesor = pId,
                     NombreCompleto = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim(),
                     Email = p.EmailInstitucional ?? p.Email ?? "",
