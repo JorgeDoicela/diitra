@@ -282,7 +282,7 @@ public class ConvocatoriaService : IConvocatoriaService
                 "Nueva Convocatoria Abierta",
                 $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
                 "DOCENTE",
-                "/investigacion/convocatorias"
+                "/convocatorias"
             );
         }
 
