@@ -83,5 +83,37 @@ namespace diitra_infrastructure.Common.Notifications
                 await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", null);
             }
         }
+
+        public async Task<IEnumerable<object>> GetMyNotificationsAsync(int userId)
+        {
+            return await _context.InvNotificaciones
+                .Where(n => n.Destinatario == userId)
+                .OrderByDescending(n => n.FechaEnvio)
+                .Take(20)
+                .Select(n => new
+                {
+                    uuid = n.Uuid,
+                    titulo = n.Titulo,
+                    mensaje = n.Mensaje,
+                    categoria = n.Categoria,
+                    fecha_envio = n.FechaEnvio,
+                    leido = n.Leido,
+                    url_accion = n.UrlAccion
+                })
+                .ToListAsync();
+        }
+
+        public async Task<bool> MarkAsReadAsync(string uuid)
+        {
+            if (!Guid.TryParse(uuid, out var guid)) return false;
+            
+            var notif = await _context.InvNotificaciones.FirstOrDefaultAsync(n => n.Uuid == guid);
+            if (notif == null) return false;
+
+            notif.Leido = true;
+            notif.FechaLectura = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
     }
 }

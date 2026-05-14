@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import UsersPage from './pages/Admin/UsersPage';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Landing from './pages/Landing/Landing';
 import Login from './pages/Login/Login';
 import { AuthProvider, useAuth } from './api/AuthContext';
+import { NotificationsProvider } from './api/NotificationsContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
@@ -79,7 +80,8 @@ function App() {
 
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <NotificationsProvider>
+        <BrowserRouter>
         <Routes>
           {/* Public Landing Page */}
           <Route path="/" element={
@@ -95,75 +97,31 @@ function App() {
           <Route path="/verify/:code" element={<VerifyDocument />} />
           <Route path="/verify" element={<VerifyDocument />} />
           
-          {/* Internal Pages with Layout */}
-          <Route path="/dashboard" element={
+          {/* Internal Pages with Layout (Stable) */}
+          <Route element={
             <ProtectedRoute>
               <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <Dashboard />
+                <Outlet />
               </DashboardLayout>
             </ProtectedRoute>
-          } />
-
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-4">
-                  <div className="w-16 h-16 bg-surface border border-border-thin rounded-2xl flex items-center justify-center text-text-dim">
-                    <Settings2 size={32} />
-                  </div>
-                  <h2 className="text-xl font-bold text-text-main uppercase tracking-tighter">Módulo en Desarrollo</h2>
-                  <p className="text-sm text-text-dim max-w-xs">La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización.</p>
+          }>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/settings" element={
+              <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-4">
+                <div className="w-16 h-16 bg-surface border border-border-thin rounded-2xl flex items-center justify-center text-text-dim">
+                  <Settings2 size={32} />
                 </div>
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
-
-          <Route path="/admin" element={
-            <AdminRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <UsersPage />
-              </DashboardLayout>
-            </AdminRoute>
-          } />
-
-          <Route path="/admin/audit" element={
-            <AdminRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <AuditPage />
-              </DashboardLayout>
-            </AdminRoute>
-          } />
-
-          <Route path="/admin/groups" element={
-            <AdminRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <GroupsPage />
-              </DashboardLayout>
-            </AdminRoute>
-          } />
-
-          {/* Redirections for common paths */}
-          <Route path="/investigacion" element={
-            <ProtectedRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <ResearchProjectsPage />
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/convocatorias" element={
-            <ProtectedRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <ConvocatoriaRoute />
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
-          <Route path="/revisiones" element={
-            <ProtectedRoute>
-              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <PeerReviewPage />
-              </DashboardLayout>
-            </ProtectedRoute>
-          } />
+                <h2 className="text-xl font-bold text-text-main uppercase tracking-tighter">Módulo en Desarrollo</h2>
+                <p className="text-sm text-text-dim max-w-xs">La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización.</p>
+              </div>
+            } />
+            <Route path="/admin" element={<AdminRoute><UsersPage /></AdminRoute>} />
+            <Route path="/admin/audit" element={<AdminRoute><AuditPage /></AdminRoute>} />
+            <Route path="/admin/groups" element={<AdminRoute><GroupsPage /></AdminRoute>} />
+            <Route path="/investigacion" element={<ResearchProjectsPage />} />
+            <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
+            <Route path="/revisiones" element={<PeerReviewPage />} />
+          </Route>
           
           <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
             <ProtectedRoute>
@@ -176,7 +134,8 @@ function App() {
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </BrowserRouter>
+        </BrowserRouter>
+      </NotificationsProvider>
     </AuthProvider>
   );
 }

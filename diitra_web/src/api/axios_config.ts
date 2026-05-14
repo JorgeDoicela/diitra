@@ -12,14 +12,10 @@ const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Si el servidor responde con 401 (No autorizado)
+        // Si el servidor responde con 401 (No autorizado) simplemente rechazamos.
+        // El AuthContext y las rutas protegidas se encargarán de mandar al login.
         if (error.response?.status === 401) {
-            const currentPath = window.location.pathname;
-            
-            // No redirigir si ya estamos en login o si es el chequeo inicial de /me
-            if (currentPath !== '/' && !error.config.url?.includes('/auth/me')) {
-                window.location.href = '/';
-            }
+            console.warn('Sesión expirada o inválida');
         }
         return Promise.reject(error);
     }

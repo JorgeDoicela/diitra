@@ -9,7 +9,7 @@ namespace diitra_infrastructure.Common.Notifications.Hubs
     {
         public override async Task OnConnectedAsync()
         {
-            var userId = Context.User?.FindFirst("id")?.Value;
+            var userId = Context.User?.FindFirst("id_usuario")?.Value;
             if (!string.IsNullOrEmpty(userId))
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, $"User_{userId}");

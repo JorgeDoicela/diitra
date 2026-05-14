@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, X, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
-import * as signalR from '@microsoft/signalr';
-import api from '../../api/axios_config';
+import React, { useState } from 'react';
+import { Bell, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
+import { useNotifications } from '../../api/NotificationsContext';
 
 interface Notification {
     uuid: string;
@@ -14,58 +13,8 @@ interface Notification {
 }
 
 const NotificationBell = () => {
-    const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
-    const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
-
-    const fetchNotifications = async () => {
-        try {
-            const response = await api.get('/Admin/notifications/my');
-            setNotifications(response.data);
-            setUnreadCount(response.data.filter((n: any) => !n.leido).length);
-        } catch (error) {
-            console.error('Error fetching notifications:', error);
-        }
-    };
-
-    useEffect(() => {
-        fetchNotifications();
-
-        // Configurar SignalR
-        const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:5175'}/hubs/notifications`, {
-                withCredentials: true
-            })
-            .withAutomaticReconnect()
-            .build();
-
-        setConnection(newConnection);
-    }, []);
-
-    useEffect(() => {
-        if (connection) {
-            connection.start()
-                .then(() => {
-                    console.log('Connected to NotificationHub');
-                    connection.on('ReceiveNotification', (notification) => {
-                        // Reproducir sonido sutil (opcional)
-                        // toast.info(notification.title);
-                        fetchNotifications();
-                    });
-                })
-                .catch(e => console.log('Connection failed: ', e));
-        }
-    }, [connection]);
-
-    const markAsRead = async (uuid: string) => {
-        try {
-            await api.patch(`/Admin/notifications/${uuid}/read`);
-            fetchNotifications();
-        } catch (error) {
-            console.error('Error marking as read:', error);
-        }
-    };
+    const { notifications, unreadCount, markAsRead } = useNotifications();
 
     const getIcon = (category: string) => {
         switch (category) {
