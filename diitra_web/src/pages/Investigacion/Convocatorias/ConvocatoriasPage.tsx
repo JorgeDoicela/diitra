@@ -233,32 +233,32 @@ const ConvocatoriasPage = () => {
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-10 overflow-y-auto transition-colors duration-300">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300">
             {/* Header */}
-            <header className="flex justify-between items-end mb-16 px-2 animate-fade-up">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 px-2 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                         <Activity size={10} strokeWidth={2} className="text-text-main" />
                         <span>Gestión de Investigación - Convocatorias</span>
                     </div>
-                    <h2 className="text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Ciclos de Investigación</h2>
-                    <p className="text-sm text-text-dim max-w-lg font-medium leading-relaxed">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Ciclos de Investigación</h2>
+                    <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Administración de convocatorias anuales para proyectos de I+D+i. 
                         Alineado con estándares CACES y SENESCYT.
                     </p>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="w-full lg:w-auto flex gap-4">
                     <button 
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex items-center gap-2 bg-text-main text-bg-deep px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
+                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 lg:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
                     >
                         <Plus size={14} strokeWidth={3} />
                         Nueva Convocatoria
                     </button>
                     <button 
                         onClick={fetchConvocatorias}
-                        className="p-2 border border-border-thin rounded-md hover:bg-surface text-text-dim hover:text-text-main transition-all"
+                        className="p-3 border border-border-thin rounded-md hover:bg-surface text-text-dim hover:text-text-main transition-all"
                     >
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
@@ -266,7 +266,7 @@ const ConvocatoriasPage = () => {
             </header>
 
             {/* Grid of Stats (Quick View) */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 animate-fade-up [animation-delay:100ms]">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-up [animation-delay:100ms]">
                 <StatCard label="Total Anual" value={convocatorias.length} icon={CalendarDays} />
                 <StatCard label="Abiertas" value={convocatorias.filter(c => c.estado === 'Abierta').length} icon={CheckCircle} color="text-green-500" />
                 <StatCard label="Presupuesto Total" value={`$${convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0).toLocaleString()}`} icon={DollarSign} />
@@ -276,59 +276,61 @@ const ConvocatoriasPage = () => {
             {/* List View */}
             <div className="space-y-4 animate-fade-up [animation-delay:200ms]">
                 {convocatorias.map((conv) => (
-                    <div key={conv.uuid} className="bento-card p-6 flex flex-col md:flex-row justify-between items-center group hover:border-text-main transition-all">
-                        <div className="flex items-center gap-6 flex-1">
-                            <div className="p-3 rounded-lg bg-surface border border-border-thin group-hover:border-text-main transition-colors text-text-dim group-hover:text-text-main">
+                    <div key={conv.uuid} className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group hover:border-text-main transition-all gap-6 md:gap-0">
+                        <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
+                            <div className="p-3 rounded-lg bg-surface border border-border-thin group-hover:border-text-main transition-colors text-text-dim group-hover:text-text-main shrink-0">
                                 <FileText size={20} strokeWidth={1.5} />
                             </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-3">
+                            <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2 md:gap-3">
                                     <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter border ${getStatusColor(conv.estado)}`}>
                                         {conv.estado}
                                     </span>
                                     <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{conv.codigo_convocatoria}</span>
                                 </div>
-                                <h4 className="text-lg font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform">{conv.titulo}</h4>
-                                <div className="flex items-center gap-4 text-[10px] text-text-dim font-medium uppercase tracking-tight">
+                                <h4 className="text-base md:text-lg font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform truncate">{conv.titulo}</h4>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-text-dim font-medium uppercase tracking-tight">
                                     <span className="flex items-center gap-1"><Calendar size={12} /> {conv.anio}</span>
                                     <span className="flex items-center gap-1"><ShieldCheck size={12} /> {conv.periodo_nombre || conv.id_periodo}</span>
-                                    <span className="flex items-center gap-1 text-text-main"><DollarSign size={12} /> Max: ${conv.monto_maximo_proyecto?.toLocaleString()}</span>
+                                    <span className="flex items-center gap-1 text-text-main whitespace-nowrap"><DollarSign size={12} /> Max: ${conv.monto_maximo_proyecto?.toLocaleString()}</span>
                                     {conv.rubrica_nombre && <span className="flex items-center gap-1"><Layers size={12} /> {conv.rubrica_nombre}</span>}
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-3 mt-4 md:mt-0">
-                            <div className="text-right hidden md:block mr-4">
+                        <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-border-thin pt-4 md:pt-0">
+                            <div className="text-left md:text-right md:mr-4">
                                 <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Cierre</p>
                                 <p className="text-xs font-mono text-text-main">{conv.fecha_cierre}</p>
                             </div>
                             
-                            {conv.estado === 'Borrador' && (
+                            <div className="flex items-center gap-1">
+                                {conv.estado === 'Borrador' && (
+                                    <button 
+                                        onClick={() => handleStatusChange(conv.uuid, 'Abierta')}
+                                        className="p-2 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                                        title="Publicar Convocatoria"
+                                    >
+                                        <CheckCircle size={18} />
+                                    </button>
+                                )}
+                                
                                 <button 
-                                    onClick={() => handleStatusChange(conv.uuid, 'Abierta')}
-                                    className="p-2 text-green-500 hover:bg-green-500/10 rounded transition-colors"
-                                    title="Publicar Convocatoria"
+                                    onClick={() => handleEdit(conv)}
+                                    className="p-2 text-text-dim hover:text-text-main hover:bg-surface rounded transition-colors"
+                                    title="Editar"
                                 >
-                                    <CheckCircle size={18} />
+                                    <Edit2 size={18} />
                                 </button>
-                            )}
-                            
-                            <button 
-                                onClick={() => handleEdit(conv)}
-                                className="p-2 text-text-dim hover:text-text-main hover:bg-surface rounded transition-colors"
-                                title="Editar"
-                            >
-                                <Edit2 size={18} />
-                            </button>
-                            
-                            <button 
-                                onClick={() => handleDelete(conv.uuid)}
-                                className="p-2 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
-                                title="Eliminar"
-                            >
-                                <Trash2 size={18} />
-                            </button>
+                                
+                                <button 
+                                    onClick={() => handleDelete(conv.uuid)}
+                                    className="p-2 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                    title="Eliminar"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
@@ -348,8 +350,8 @@ const ConvocatoriasPage = () => {
 
             {/* Modal - Create/Edit */}
             {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-bg-deep/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-bg-deep border border-border-thin w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-bg-deep/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-bg-deep border border-border-thin w-full max-w-2xl md:rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col h-full md:max-h-[90vh]">
                         <header className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30 shrink-0">
                             <div>
                                 <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
@@ -362,8 +364,8 @@ const ConvocatoriasPage = () => {
                             </button>
                         </header>
 
-                        <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-6">
+                        <form onSubmit={handleSave} className="p-4 md:p-8 space-y-6 overflow-y-auto">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
                                     <input 
@@ -397,7 +399,7 @@ const ConvocatoriasPage = () => {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
                                     <select 
@@ -424,7 +426,7 @@ const ConvocatoriasPage = () => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Apertura</label>
                                     <input 
@@ -452,7 +454,7 @@ const ConvocatoriasPage = () => {
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
                                     <BookOpen size={12} /> Líneas de Investigación Habilitadas
                                 </label>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                     {lineas.map(l => (
                                         <button
                                             key={l.id}
@@ -484,7 +486,7 @@ const ConvocatoriasPage = () => {
 
                             {showAdvanced && (
                                 <div className="space-y-6 animate-in slide-in-from-top-2 duration-200">
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Rúbrica de Evaluación</label>
                                             <select 
@@ -509,7 +511,7 @@ const ConvocatoriasPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
                                             <select 

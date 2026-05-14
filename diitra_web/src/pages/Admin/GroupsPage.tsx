@@ -134,33 +134,33 @@ const GroupsPage = () => {
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-10 overflow-y-auto">
-            <header className="flex justify-between items-end mb-16 px-2 animate-fade-up">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 px-2 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                         <Shield size={10} className="text-text-main" />
                         <span>Administración Institucional</span>
                     </div>
-                    <h2 className="text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Grupos de Investigación</h2>
-                    <p className="text-sm text-text-dim max-w-lg font-medium leading-relaxed">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Grupos de Investigación</h2>
+                    <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Configure las unidades organizativas de I+D+i y sus líneas de acción.
                     </p>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="relative group">
+                <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4">
+                    <div className="relative group w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim group-hover:text-text-main transition-colors" size={14} />
                         <input 
                             type="text" 
                             placeholder="Buscar grupo o siglas..." 
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all w-64 uppercase tracking-wider font-mono"
+                            className="w-full bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all uppercase tracking-wider font-mono"
                         />
                     </div>
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="flex items-center gap-2 bg-text-main text-bg-deep px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                        className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
                     >
                         <Plus size={14} strokeWidth={3} />
                         Crear Grupo
@@ -169,23 +169,24 @@ const GroupsPage = () => {
             </header>
 
             <div className="bento-card overflow-hidden animate-fade-up [animation-delay:200ms]">
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                            <th className="p-4 font-bold tracking-widest">Grupo / Identidad</th>
-                            <th className="p-4 font-bold tracking-widest">Coordinador</th>
-                            <th className="p-4 font-bold tracking-widest">Estado</th>
-                            <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-thin">
-                        {groups.map((g) => (
-                            <tr key={g.uuid} className="hover:bg-surface/30 transition-colors group">
-                                <td className="p-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded bg-text-main/10 border border-text-main/20 flex items-center justify-center text-text-main group-hover:scale-105 transition-transform">
-                                            <Award size={18} />
-                                        </div>
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
+                                <th className="p-4 font-bold tracking-widest">Grupo / Identidad</th>
+                                <th className="p-4 font-bold tracking-widest">Coordinador</th>
+                                <th className="p-4 font-bold tracking-widest">Estado</th>
+                                <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border-thin">
+                            {groups.map((g) => (
+                                <tr key={g.uuid} className="hover:bg-surface/30 transition-colors group">
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded bg-text-main/10 border border-text-main/20 flex items-center justify-center text-text-main group-hover:scale-105 transition-transform">
+                                                <Award size={18} />
+                                            </div>
                                         <div>
                                             <p className="text-sm font-bold text-text-main tracking-tight uppercase">{g.nombre}</p>
                                             <div className="flex gap-2 items-center">
@@ -243,6 +244,7 @@ const GroupsPage = () => {
                         <p className="text-sm text-text-dim font-medium uppercase tracking-widest">No se encontraron grupos registrados</p>
                     </div>
                 )}
+                </div>
             </div>
 
             {/* Modal de Creación/Edición */}
@@ -266,9 +268,9 @@ const GroupsPage = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-8">
+                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
                             {/* Datos Básicos */}
-                            <section className="grid grid-cols-2 gap-6">
+                            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="col-span-2 space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nombre del Grupo</label>
                                     <input 
@@ -307,7 +309,7 @@ const GroupsPage = () => {
                             </section>
 
                             {/* Normativa */}
-                            <section className="grid grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
+                            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
                                         <FileText size={12} /> Resolución de Aprobación
@@ -344,7 +346,7 @@ const GroupsPage = () => {
                                         className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
                                         <textarea 
