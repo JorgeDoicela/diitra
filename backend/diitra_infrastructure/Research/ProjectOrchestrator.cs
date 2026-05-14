@@ -14,12 +14,14 @@ namespace diitra_infrastructure.Research
     {
         private readonly DiitraContext _context;
         private readonly IAuthService _authService;
+        private readonly IAuditService _auditService;
         private readonly ILogger<ProjectOrchestrator> _logger;
 
-        public ProjectOrchestrator(DiitraContext context, IAuthService authService, ILogger<ProjectOrchestrator> logger)
+        public ProjectOrchestrator(DiitraContext context, IAuthService authService, IAuditService auditService, ILogger<ProjectOrchestrator> logger)
         {
             _context = context;
             _authService = authService;
+            _auditService = auditService;
             _logger = logger;
         }
 
@@ -109,6 +111,8 @@ namespace diitra_infrastructure.Research
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                await _auditService.LogActionAsync(null, project.Estado == "Borrador" && dto.Uuid == null ? "CREAR_PROYECTO" : "ACTUALIZAR_PROYECTO", $"Sincronización de datos del proyecto: {project.Titulo}", "PROYECTOS");
 
                 return new SyncResult { Success = true, Uuid = project.Uuid };
             }

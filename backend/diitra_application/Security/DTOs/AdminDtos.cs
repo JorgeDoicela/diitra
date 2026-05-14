@@ -64,7 +64,12 @@ public class AuditLogDto
     public string AdminName { get; set; } = string.Empty;
     public string TargetName { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
+    public string? Modulo { get; set; }
     public string? Details { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public string? ValuesBefore { get; set; } // JSON
+    public string? ValuesAfter { get; set; }  // JSON
     public DateTime Date { get; set; }
 }
 

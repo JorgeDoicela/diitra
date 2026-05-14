@@ -47,8 +47,7 @@ public class AdminController : ControllerBase
     [HttpPut("metadata/{uuid}")]
     public async Task<IActionResult> UpdateMetadata(string uuid, [FromBody] UserMetadataDto dto)
     {
-        var admin = User.Identity?.Name;
-        var result = await _adminService.UpdateUserMetadataAsync(uuid, dto, admin);
+        var result = await _adminService.UpdateUserMetadataAsync(uuid, dto);
         if (!result) return NotFound();
         return Ok(new { message = "Metadata actualizada" });
     }
@@ -56,7 +55,6 @@ public class AdminController : ControllerBase
     [HttpPost("roles/assign")]
     public async Task<IActionResult> AssignRole([FromBody] RoleActionRequest request)
     {
-        var admin = User.Identity?.Name;
         var roleIdentifier = !string.IsNullOrEmpty(request.RoleCode) ? request.RoleCode : request.RoleName;
 
         if (string.IsNullOrEmpty(request.IdUsuario) || string.IsNullOrEmpty(roleIdentifier))
@@ -64,7 +62,7 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = "Datos incompletos" });
         }
 
-        var result = await _adminService.AssignRoleAsync(request.IdUsuario, roleIdentifier, request.UserType, admin);
+        var result = await _adminService.AssignRoleAsync(request.IdUsuario, roleIdentifier, request.UserType);
         if (result) return Ok(new { message = "Rol asignado correctamente" });
 
         return BadRequest(new { message = "Error al asignar rol" });
@@ -73,7 +71,6 @@ public class AdminController : ControllerBase
     [HttpPost("roles/revoke")]
     public async Task<IActionResult> RevokeRole([FromBody] RoleActionRequest request)
     {
-        var admin = User.Identity?.Name;
         var roleIdentifier = !string.IsNullOrEmpty(request.RoleCode) ? request.RoleCode : request.RoleName;
 
         if (string.IsNullOrEmpty(request.IdUsuario) || string.IsNullOrEmpty(roleIdentifier))
@@ -81,7 +78,7 @@ public class AdminController : ControllerBase
             return BadRequest(new { message = "Datos incompletos" });
         }
 
-        var result = await _adminService.RevokeRoleAsync(request.IdUsuario, roleIdentifier, request.UserType, admin);
+        var result = await _adminService.RevokeRoleAsync(request.IdUsuario, roleIdentifier, request.UserType);
         if (result) return Ok(new { message = "Rol revocado correctamente" });
 
         return BadRequest(new { message = "Error al revocar rol" });
@@ -90,8 +87,7 @@ public class AdminController : ControllerBase
     [HttpPost("external")]
     public async Task<IActionResult> RegisterExternal([FromBody] ExternalUserDto dto)
     {
-        var admin = User.Identity?.Name;
-        var result = await _adminService.RegisterExternalUserAsync(dto, admin);
+        var result = await _adminService.RegisterExternalUserAsync(dto);
         if (result) return Ok(new { message = "Evaluador externo registrado" });
         return BadRequest(new { message = "El usuario ya existe o hubo un error" });
     }
@@ -100,6 +96,20 @@ public class AdminController : ControllerBase
     public async Task<IActionResult> GetAuditLogs()
     {
         var logs = await _adminService.GetRecentAuditLogsAsync();
+        return Ok(logs);
+    }
+
+    [HttpGet("audit/advanced")]
+    public async Task<IActionResult> GetAuditLogsAdvanced(
+        [FromQuery] DateTime? from, 
+        [FromQuery] DateTime? to, 
+        [FromQuery] string? action, 
+        [FromQuery] string? modulo, 
+        [FromQuery] string? search, 
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 20)
+    {
+        var logs = await _adminService.GetAuditLogsPagedAsync(from, to, action, modulo, search, page, pageSize);
         return Ok(logs);
     }
 }
