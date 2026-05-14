@@ -143,77 +143,80 @@ const UsersPage = () => {
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-10 overflow-y-auto transition-colors duration-300 relative">
-            <header className="flex justify-between items-end mb-12 px-2 animate-fade-up">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300 relative">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 px-2 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                         <Shield size={10} strokeWidth={2} className="text-text-main" />
                         <span>Administración Central - DIITRA Production</span>
                     </div>
-                    <h2 className="text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Gestión Institucional</h2>
-                    <p className="text-sm text-text-dim max-w-lg font-medium leading-relaxed">
+                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Gestión Institucional</h2>
+                    <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Control de acceso institucional y gestión de evaluadores pares externos.
                     </p>
                 </div>
 
-                <div className="flex gap-4">
-                    <button
-                        onClick={() => setShowAudit(!showAudit)}
-                        className={`p-2.5 border rounded-md transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'bg-text-main text-bg-deep border-text-main' : 'border-border-thin text-text-dim hover:text-text-main'
-                            }`}
-                    >
-                        <History size={14} /> Auditoría
-                    </button>
-
-                    {userType === 'EXTERNO' && (
+                <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4">
+                    <div className="flex gap-2">
                         <button
-                            onClick={() => setShowExternalForm(true)}
-                            className="bg-text-main text-bg-deep px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-text-main/10"
+                            onClick={() => setShowAudit(!showAudit)}
+                            className={`flex-1 md:flex-none p-2.5 border rounded-md transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'bg-text-main text-bg-deep border-text-main' : 'border-border-thin text-text-dim hover:text-text-main'
+                                }`}
                         >
-                            <UserPlus size={14} /> Nuevo Externo
+                            <History size={14} /> Auditoría
                         </button>
-                    )}
 
-                    <div className="bg-surface border border-border-thin p-1 rounded-lg flex">
+                        {userType === 'EXTERNO' && (
+                            <button
+                                onClick={() => setShowExternalForm(true)}
+                                className="flex-1 md:flex-none bg-text-main text-bg-deep px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-text-main/10"
+                            >
+                                <UserPlus size={14} /> Nuevo Externo
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="bg-surface border border-border-thin p-1 rounded-lg flex overflow-x-auto custom-scrollbar">
                         <button
                             onClick={() => setUserType('DOCENTE')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
                                 }`}
                         >
                             Docentes
                         </button>
                         <button
                             onClick={() => setUserType('ESTUDIANTE')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
                                 }`}
                         >
                             Alumnos
                         </button>
                         <button
                             onClick={() => setUserType('EXTERNO')}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
                                 }`}
                         >
                             <Globe size={12} /> Externos
                         </button>
                     </div>
 
-                    <div className="relative group">
+                    <div className="relative group w-full md:w-64">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim group-hover:text-text-main transition-colors" size={14} />
                         <input
                             type="text"
                             placeholder={`Buscar en ${userType}...`}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all w-64 uppercase tracking-wider font-mono placeholder:lowercase"
+                            className="w-full bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all uppercase tracking-wider font-mono placeholder:lowercase"
                         />
                     </div>
                 </div>
             </header>
 
-            <div className={`grid transition-all duration-500 gap-6 ${showAudit ? 'grid-cols-[1fr,350px]' : 'grid-cols-1'}`}>
+            <div className={`grid transition-all duration-500 gap-6 ${showAudit ? 'lg:grid-cols-[1fr,350px]' : 'grid-cols-1'}`}>
                 <div className="bento-card overflow-hidden animate-fade-up">
-                    <table className="w-full text-left border-collapse">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
                                 <th className="p-4 font-bold tracking-widest">Actor</th>
@@ -308,10 +311,11 @@ const UsersPage = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
 
                     {/* Controles de Paginación Profesionales */}
-                    <footer className="p-4 bg-surface/30 border-t border-border-thin flex items-center justify-between">
-                        <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                    <footer className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
+                        <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest text-center md:text-left">
                             Mostrando <span className="text-text-main">{(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)}</span> de <span className="text-text-main">{totalCount}</span> {userType.toLowerCase()}s
                         </div>
                         
@@ -319,9 +323,10 @@ const UsersPage = () => {
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="px-2 md:px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
-                                Anterior
+                                <span className="hidden md:inline">Anterior</span>
+                                <span className="md:hidden">{"<"}</span>
                             </button>
                             
                             <div className="flex items-center gap-1">
@@ -347,9 +352,10 @@ const UsersPage = () => {
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages || totalPages === 0}
-                                className="px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="px-2 md:px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
-                                Siguiente
+                                <span className="hidden md:inline">Siguiente</span>
+                                <span className="md:hidden">{">"}</span>
                             </button>
                         </div>
                     </footer>

@@ -12,6 +12,7 @@ import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
+import { Settings2, Loader2 } from 'lucide-react';
 import VerifyDocument from './pages/Public/VerifyDocument';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -30,6 +31,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  return <>{children}</>;
+};
+
+const AuthenticatedRedirect = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (isAuthenticated) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
@@ -65,8 +73,16 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Landing Page */}
-          <Route path="/" element={<Landing currentTheme={theme} toggleTheme={toggleTheme} />} />
-          <Route path="/login" element={<Login currentTheme={theme} />} />
+          <Route path="/" element={
+            <AuthenticatedRedirect>
+              <Landing currentTheme={theme} toggleTheme={toggleTheme} />
+            </AuthenticatedRedirect>
+          } />
+          <Route path="/login" element={
+            <AuthenticatedRedirect>
+              <Login currentTheme={theme} />
+            </AuthenticatedRedirect>
+          } />
           <Route path="/verify/:code" element={<VerifyDocument />} />
           <Route path="/verify" element={<VerifyDocument />} />
           
@@ -75,6 +91,20 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
                 <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-4">
+                  <div className="w-16 h-16 bg-surface border border-border-thin rounded-2xl flex items-center justify-center text-text-dim">
+                    <Settings2 size={32} />
+                  </div>
+                  <h2 className="text-xl font-bold text-text-main uppercase tracking-tighter">Módulo en Desarrollo</h2>
+                  <p className="text-sm text-text-dim max-w-xs">La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización.</p>
+                </div>
               </DashboardLayout>
             </ProtectedRoute>
           } />
@@ -135,7 +165,7 @@ function App() {
           <Route path="/analiticas" element={<Navigate to="/dashboard" replace />} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
