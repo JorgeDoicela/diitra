@@ -1819,7 +1819,6 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdComentario).HasName("PRIMARY");
             entity.ToTable("inv_collaboration_comments");
-            entity.HasIndex(e => e.Uuid).IsUnique();
             entity.HasIndex(e => e.DocumentoUuid);
         });
 
