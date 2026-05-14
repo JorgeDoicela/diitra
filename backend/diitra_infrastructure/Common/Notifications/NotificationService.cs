@@ -67,7 +67,7 @@ namespace diitra_infrastructure.Common.Notifications
             }
         }
 
-        public async Task BroadcastAsync(string title, string body, string? role = null)
+        public async Task BroadcastAsync(string title, string body, string? role = null, string? url = null)
         {
             _logger.LogInformation($"Iniciando Broadcast: {title} (Filtro Rol: {role ?? "TODOS"})");
 
@@ -77,10 +77,9 @@ namespace diitra_infrastructure.Common.Notifications
             var recipients = await query.ToListAsync();
 
             // 2. Procesar cada uno
-            // En producción, esto debería ir a una cola de fondo (BackgroundJob)
             foreach (var user in recipients)
             {
-                await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", null);
+                await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", url);
             }
         }
 

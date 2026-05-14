@@ -281,7 +281,8 @@ public class ConvocatoriaService : IConvocatoriaService
             await _notificationService.BroadcastAsync(
                 "Nueva Convocatoria Abierta",
                 $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
-                "DOCENTE"
+                "DOCENTE",
+                "/investigacion/convocatorias"
             );
         }
 

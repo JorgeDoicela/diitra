@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { Bell, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
 
-interface Notification {
-    uuid: string;
-    titulo: string;
-    mensaje: string;
-    categoria: string;
-    fecha_envio: string;
-    leido: boolean;
-    url_accion?: string;
-}
-
 const NotificationBell = () => {
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const { notifications, unreadCount, markAsRead } = useNotifications();
+
+    const handleNotificationClick = async (n: any) => {
+        if (!n.leido) {
+            await markAsRead(n.uuid);
+        }
+        
+        if (n.url_accion) {
+            navigate(n.url_accion);
+            setIsOpen(false);
+        }
+    };
 
     const getIcon = (category: string) => {
         switch (category) {
@@ -61,7 +64,7 @@ const NotificationBell = () => {
                                     <div 
                                         key={n.uuid} 
                                         className={`p-4 border-b border-border-thin last:border-0 hover:bg-surface/50 transition-colors cursor-pointer group ${!n.leido ? 'bg-surface/30' : 'opacity-70'}`}
-                                        onClick={() => !n.leido && markAsRead(n.uuid)}
+                                        onClick={() => handleNotificationClick(n)}
                                     >
                                         <div className="flex gap-3">
                                             <div className="mt-1 shrink-0">
