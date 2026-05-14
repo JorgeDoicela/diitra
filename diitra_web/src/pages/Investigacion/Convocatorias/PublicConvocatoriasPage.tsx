@@ -25,7 +25,7 @@ const PublicConvocatoriasPage = () => {
     useEffect(() => {
         const fetchConvocatorias = async () => {
             try {
-                const response = await api.get('/Investigacion/convocatorias');
+                const response = await api.get('/Convocatorias');
                 // Filtrar solo las abiertas o cerradas recientemente
                 setConvocatorias(response.data.filter((c: any) => c.estado === 'Abierta'));
             } catch (error) {

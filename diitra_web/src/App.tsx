@@ -60,7 +60,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const ConvocatoriaRoute = () => {
     const { user, roles } = useAuth();
     const normalizedRoles = roles.map(r => r.toUpperCase());
-    const isAdmin = user?.administrador || normalizedRoles.includes('DIITRA_ADMIN') || normalizedRoles.includes('DIITRA_DOCENTE');
+    const isAdmin = user?.administrador || normalizedRoles.includes('DIITRA_ADMIN');
     
     return isAdmin ? <ConvocatoriasPage /> : <PublicConvocatoriasPage />;
 };
