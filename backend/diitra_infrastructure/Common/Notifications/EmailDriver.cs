@@ -19,21 +19,39 @@ namespace diitra_infrastructure.Common.Notifications
             _configuration = configuration;
             _logger = logger;
         }
-
         public async Task SendAsync(string recipient, string title, string body, string? url = null)
         {
-            // En un entorno profesional, aquí usaríamos una plantilla HTML
-            // Para esta versión, generamos un cuerpo HTML básico pero elegante
-            
+            var frontendUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+            var absoluteUrl = url != null ? (url.StartsWith("http") ? url : $"{frontendUrl}{url}") : null;
+
             var htmlBody = $@"
-                <div style='font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;'>
-                    <h2 style='color: #0070f3;'>DIITRA - Notificación Institucional</h2>
-                    <hr />
-                    <p><strong>{title}</strong></p>
-                    <p>{body}</p>
-                    {(url != null ? $"<div style='margin-top: 20px;'><a href='{url}' style='background-color: #0070f3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Ver Detalle</a></div>" : "")}
-                    <hr style='margin-top: 30px;' />
-                    <p style='font-size: 10px; color: #888;'>Este es un correo automático generado por el Departamento de Investigación e Innovación Traversari.</p>
+                <div style='background-color: #f8fafc; padding: 40px 0; font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif;'>
+                    <table align='center' border='0' cellpadding='0' cellspacing='0' width='600' style='background-color: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);'>
+                        <tr>
+                            <td align='center' style='padding: 40px 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);'>
+                                <h1 style='color: white; margin: 0; font-size: 24px; letter-spacing: 2px; font-weight: 900; text-transform: uppercase;'>DIITRA</h1>
+                                <p style='color: #94a3b8; margin: 5px 0 0 0; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;'>Investigación e Innovación</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 40px 50px;'>
+                                <h2 style='color: #1e293b; font-size: 20px; margin-bottom: 20px; font-weight: 800;'>{title}</h2>
+                                <p style='color: #475569; font-size: 15px; line-height: 1.6; margin-bottom: 30px;'>{body}</p>
+                                
+                                { (absoluteUrl != null ? $@"
+                                    <div style='text-align: center; margin-top: 40px;'>
+                                        <a href='{absoluteUrl}' style='background-color: #0f172a; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 14px; display: inline-block; transition: background-color 0.2s;'>
+                                            ACCEDER AL DETALLE
+                                        </a>
+                                    </div>" : "") }
+                                
+                                <div style='margin-top: 50px; padding-top: 30px; border-top: 1px solid #f1f5f9; text-align: center;'>
+                                    <p style='color: #94a3b8; font-size: 12px; margin: 0;'>Has recibido este mensaje porque eres parte de la red de investigadores DIITRA.</p>
+                                    <p style='color: #64748b; font-size: 11px; margin: 10px 0 0 0; font-weight: 600;'>© 2026 Instituto Superior Tecnológico Traversari</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                 </div>";
 
             try
@@ -50,6 +68,9 @@ namespace diitra_infrastructure.Common.Notifications
                     return;
                 }
 
+                var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
+                var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
+
                 using var client = new SmtpClient(host, port)
                 {
                     Credentials = new NetworkCredential(user, pass),
@@ -58,7 +79,7 @@ namespace diitra_infrastructure.Common.Notifications
 
                 var mailMessage = new MailMessage
                 {
-                    From = new MailAddress(user!),
+                    From = new MailAddress(fromEmail, fromName),
                     Subject = title,
                     Body = htmlBody,
                     IsBodyHtml = true
