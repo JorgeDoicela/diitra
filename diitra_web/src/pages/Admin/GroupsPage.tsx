@@ -19,8 +19,11 @@ interface Group {
     vision: string;
     resolucion_aprobacion: string;
     fecha_creacion: string;
+    tipo_grupo: string;
+    id_dominio: number | null;
     activo: boolean;
     lineas_ids: number[];
+    carreras_ids: number[];
 }
 
 interface ResearchLine {
@@ -34,10 +37,22 @@ interface Teacher {
     nombre_completo: string;
 }
 
+interface Domain {
+    id_dominio: number;
+    nombre: string;
+}
+
+interface Career {
+    id_carrera: number;
+    carrera1: string;
+}
+
 const GroupsPage = () => {
     const [groups, setGroups] = useState<Group[]>([]);
     const [lines, setLines] = useState<ResearchLine[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [dominios, setDominios] = useState<Domain[]>([]);
+    const [carreras, setCarreras] = useState<Career[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -49,26 +64,33 @@ const GroupsPage = () => {
     const [formData, setFormData] = useState({
         nombre: '',
         siglas: '',
+        tipo_grupo: 'Investigación',
+        id_dominio: '',
         id_profesor_coordinador: '',
         objetivo_general: '',
         mision: '',
         vision: '',
         resolucion_aprobacion: '',
         fecha_creacion: '',
-        lineas_ids: [] as number[]
+        lineas_ids: [] as number[],
+        carreras_ids: [] as number[]
     });
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [groupsRes, linesRes, teachersRes] = await Promise.all([
+            const [groupsRes, linesRes, teachersRes, dominiosRes, carrerasRes] = await Promise.all([
                 api.get(`/Groups?search=${search}`),
                 api.get('/Convocatorias/catalogos/lineas'),
-                api.get('/Admin/users')
+                api.get('/Admin/users'),
+                api.get('/catalogs/dominios'),
+                api.get('/catalogs/carreras')
             ]);
             setGroups(groupsRes.data);
             setLines(linesRes.data);
             setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : (teachersRes.data.items || []));
+            setDominios(dominiosRes.data);
+            setCarreras(carrerasRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -86,26 +108,32 @@ const GroupsPage = () => {
             setFormData({
                 nombre: group.nombre,
                 siglas: group.siglas || '',
+                tipo_grupo: group.tipo_grupo || 'Investigación',
+                id_dominio: group.id_dominio?.toString() || '',
                 id_profesor_coordinador: group.id_profesor_coordinador || '',
                 objetivo_general: group.objetivo_general || '',
                 mision: group.mision || '',
                 vision: group.vision || '',
                 resolucion_aprobacion: group.resolucion_aprobacion || '',
                 fecha_creacion: group.fecha_creacion ? group.fecha_creacion.split('T')[0] : '',
-                lineas_ids: group.lineas_ids || []
+                lineas_ids: group.lineas_ids || [],
+                carreras_ids: group.carreras_ids || []
             });
         } else {
             setEditingGroup(null);
             setFormData({
                 nombre: '',
                 siglas: '',
+                tipo_grupo: 'Investigación',
+                id_dominio: '',
                 id_profesor_coordinador: '',
                 objetivo_general: '',
                 mision: '',
                 vision: '',
                 resolucion_aprobacion: '',
                 fecha_creacion: '',
-                lineas_ids: []
+                lineas_ids: [],
+                carreras_ids: []
             });
         }
         setIsModalOpen(true);
@@ -116,7 +144,8 @@ const GroupsPage = () => {
         try {
             const payload = {
                 ...formData,
-                id_profesor_coordinador: formData.id_profesor_coordinador || null
+                id_profesor_coordinador: formData.id_profesor_coordinador || null,
+                id_dominio: formData.id_dominio ? parseInt(formData.id_dominio) : null
             };
 
             if (editingGroup) {
@@ -140,6 +169,27 @@ const GroupsPage = () => {
                 ? prev.lineas_ids.filter(lineId => lineId !== id)
                 : [...prev.lineas_ids, id]
         }));
+    };
+
+    const toggleCarrera = (id: number) => {
+        setFormData(prev => ({
+            ...prev,
+            carreras_ids: prev.carreras_ids.includes(id) 
+                ? prev.carreras_ids.filter(cId => cId !== id)
+                : [...prev.carreras_ids, id]
+        }));
+    };
+
+    const handleDelete = async (uuid: string, name: string) => {
+        if (!window.confirm(`¿Está seguro de desactivar el grupo "${name}"?`)) return;
+        
+        try {
+            await api.delete(`/Groups/${uuid}`);
+            fetchData();
+        } catch (error: any) {
+            console.error('Error deactivating group:', error);
+            alert('No se pudo desactivar el grupo: ' + error.message);
+        }
     };
 
     return (
@@ -197,11 +247,22 @@ const GroupsPage = () => {
                                                 <Award size={18} />
                                             </div>
                                         <div>
-                                            <p className="text-sm font-bold text-text-main tracking-tight uppercase">{g.nombre}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm font-bold text-text-main tracking-tight uppercase">{g.nombre}</p>
+                                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${
+                                                    g.tipo_grupo === 'Semillero' 
+                                                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' 
+                                                        : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                }`}>
+                                                    {g.tipo_grupo?.toUpperCase() || 'INVESTIGACIÓN'}
+                                                </span>
+                                            </div>
                                             <div className="flex gap-2 items-center">
                                                 <span className="text-[10px] text-text-dim font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">{g.siglas || 'SIN_SIGLAS'}</span>
                                                 {g.resolucion_aprobacion && (
-                                                    <span className="text-[9px] text-text-dim/80 font-bold uppercase tracking-tighter">Res: {g.resolucion_aprobacion}</span>
+                                                    <span className="text-[9px] text-text-dim/80 font-bold uppercase tracking-tighter flex items-center gap-1">
+                                                        <FileText size={8} /> {g.resolucion_aprobacion}
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>
@@ -236,6 +297,7 @@ const GroupsPage = () => {
                                             <Edit2 size={14} />
                                         </button>
                                         <button 
+                                            onClick={() => handleDelete(g.uuid, g.nombre)}
                                             className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
                                             title="Desactivar"
                                         >
@@ -300,6 +362,32 @@ const GroupsPage = () => {
                                         className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono"
                                         placeholder="GISI"
                                     />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Tipo de Grupo</label>
+                                    <select 
+                                        required
+                                        value={formData.tipo_grupo}
+                                        onChange={(e) => setFormData({...formData, tipo_grupo: e.target.value})}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none"
+                                    >
+                                        <option value="Investigación">Grupo de Investigación</option>
+                                        <option value="Semillero">Semillero de Investigación</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Dominio Académico</label>
+                                    <select 
+                                        required
+                                        value={formData.id_dominio}
+                                        onChange={(e) => setFormData({...formData, id_dominio: e.target.value})}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none"
+                                    >
+                                        <option value="">Seleccione Dominio...</option>
+                                        {dominios.map(d => (
+                                            <option key={d.id_dominio} value={d.id_dominio}>{d.nombre}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Coordinador Responsable</label>
@@ -377,11 +465,43 @@ const GroupsPage = () => {
                                 </div>
                             </section>
 
+                            {/* Carreras Asociadas */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <Users size={12} /> Carreras / Programas Académicos
+                                    </label>
+                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                        {formData.carreras_ids.length} seleccionadas
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {carreras.map(career => (
+                                        <div 
+                                            key={career.id_carrera}
+                                            onClick={() => toggleCarrera(career.id_carrera)}
+                                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-2 ${
+                                                formData.carreras_ids.includes(career.id_carrera)
+                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-500'
+                                                    : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
+                                            }`}
+                                        >
+                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center ${
+                                                formData.carreras_ids.includes(career.id_carrera) ? 'border-blue-500 bg-blue-500' : 'border-border-thin'
+                                            }`}>
+                                                {formData.carreras_ids.includes(career.id_carrera) && <CheckCircle size={8} className="text-bg-deep" />}
+                                            </div>
+                                            <span className="text-[9px] font-bold uppercase truncate">{career.carrera1}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
                             {/* Líneas de Investigación (M:N) */}
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <BookOpen size={12} /> Líneas de Investigación Asociadas
+                                        <BookOpen size={12} /> Líneas de Investigación Institucionales
                                     </label>
                                     <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
                                         {formData.lineas_ids.length} seleccionadas

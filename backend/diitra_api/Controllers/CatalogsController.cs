@@ -54,5 +54,24 @@ namespace diitra_api.Controllers
                 .ToListAsync();
             return Ok(data);
         }
+
+        [HttpGet("dominios")]
+        public async Task<IActionResult> GetDominios()
+        {
+            var data = await _context.InvDominios
+                .Where(d => d.Activo == true)
+                .OrderBy(d => d.Nombre)
+                .ToListAsync();
+            return Ok(data);
+        }
+
+        [HttpGet("carreras")]
+        public async Task<IActionResult> GetCarreras()
+        {
+            var data = await _context.Carreras
+                .OrderBy(c => c.Carrera1)
+                .ToListAsync();
+            return Ok(data);
+        }
     }
 }

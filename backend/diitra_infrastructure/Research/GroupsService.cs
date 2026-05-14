@@ -80,6 +80,8 @@ public class GroupsService : IGroupsService
             Uuid = Guid.NewGuid().ToString(),
             Nombre = dto.Nombre,
             Siglas = dto.Siglas,
+            TipoGrupo = dto.TipoGrupo,
+            IdDominio = dto.IdDominio,
             IdCoordinador = coordinatorId,
             ObjetivoGeneral = dto.ObjetivoGeneral,
             Mision = dto.Mision,
@@ -94,10 +96,15 @@ public class GroupsService : IGroupsService
             var lineas = await _context.InvLineasInvestigacion
                 .Where(l => dto.LineasIds.Contains(l.IdLinea))
                 .ToListAsync();
-            foreach (var linea in lineas)
-            {
-                group.IdLineas.Add(linea);
-            }
+            foreach (var linea in lineas) group.IdLineas.Add(linea);
+        }
+
+        if (dto.CarrerasIds.Any())
+        {
+            var carreras = await _context.Carreras
+                .Where(c => dto.CarrerasIds.Contains(c.IdCarrera))
+                .ToListAsync();
+            foreach (var carrera in carreras) group.IdCarreras.Add(carrera);
         }
 
         _context.InvGruposInvestigacion.Add(group);
@@ -125,6 +132,8 @@ public class GroupsService : IGroupsService
 
         group.Nombre = dto.Nombre;
         group.Siglas = dto.Siglas;
+        group.TipoGrupo = dto.TipoGrupo;
+        group.IdDominio = dto.IdDominio;
         group.IdCoordinador = coordinatorId;
         group.ObjetivoGeneral = dto.ObjetivoGeneral;
         group.Mision = dto.Mision;
@@ -136,13 +145,17 @@ public class GroupsService : IGroupsService
         group.IdLineas.Clear();
         if (dto.LineasIds.Any())
         {
-            var lineas = await _context.InvLineasInvestigacion
-                .Where(l => dto.LineasIds.Contains(l.IdLinea))
-                .ToListAsync();
-            foreach (var linea in lineas)
-            {
-                group.IdLineas.Add(linea);
-            }
+            var lineas = await _context.InvLineasInvestigacion.Where(l => dto.LineasIds.Contains(l.IdLinea)).ToListAsync();
+            foreach (var linea in lineas) group.IdLineas.Add(linea);
+        }
+
+        // Actualizar carreras (M:N)
+        var currentGroupWithCarreras = await _context.InvGruposInvestigacion.Include(g => g.IdCarreras).FirstOrDefaultAsync(g => g.IdGrupo == group.IdGrupo);
+        currentGroupWithCarreras?.IdCarreras.Clear();
+        if (dto.CarrerasIds.Any())
+        {
+            var carreras = await _context.Carreras.Where(c => dto.CarrerasIds.Contains(c.IdCarrera)).ToListAsync();
+            foreach (var carrera in carreras) currentGroupWithCarreras?.IdCarreras.Add(carrera);
         }
 
         await _context.SaveChangesAsync();
@@ -198,6 +211,8 @@ public class GroupsService : IGroupsService
             Uuid = g.Uuid,
             Nombre = g.Nombre,
             Siglas = g.Siglas,
+            TipoGrupo = g.TipoGrupo,
+            IdDominio = g.IdDominio,
             IdCoordinador = g.IdCoordinador,
             NombreCoordinador = g.IdCoordinadorNavigation?.Nombre,
             ObjetivoGeneral = g.ObjetivoGeneral,

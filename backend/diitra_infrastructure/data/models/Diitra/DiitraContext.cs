@@ -750,6 +750,8 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Siglas).HasColumnName("siglas").HasMaxLength(50);
+            entity.Property(e => e.TipoGrupo).HasColumnName("tipoGrupo").HasMaxLength(20).IsRequired().HasDefaultValue("Investigación");
+            entity.Property(e => e.IdDominio).HasColumnName("idDominio");
             entity.Property(e => e.IdCoordinador).HasColumnName("idCoordinador");
             entity.Property(e => e.ObjetivoGeneral).HasColumnName("objetivoGeneral").HasColumnType("text");
             entity.Property(e => e.Mision).HasColumnName("mision").HasColumnType("text");
@@ -762,6 +764,9 @@ public partial class DiitraContext : DbContext
             entity.HasOne(d => d.IdCoordinadorNavigation).WithMany()
                 .HasForeignKey(d => d.IdCoordinador).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_grupo_coordinador");
 
+            entity.HasOne(d => d.IdDominioNavigation).WithMany()
+                .HasForeignKey(d => d.IdDominio).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_grupo_dominio");
+
             entity.HasMany(d => d.IdLineas).WithMany(p => p.IdGrupos)
                 .UsingEntity<Dictionary<string, object>>(
                     "inv_grupos_lineas",
@@ -771,6 +776,17 @@ public partial class DiitraContext : DbContext
                     {
                         j.HasKey("idGrupo", "idLinea");
                         j.ToTable("inv_grupos_lineas");
+                    });
+
+            entity.HasMany(d => d.IdCarreras).WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "inv_grupos_carreras",
+                    r => r.HasOne<Carrera>().WithMany().HasForeignKey("idCarrera").OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne<InvGrupoInvestigacion>().WithMany().HasForeignKey("idGrupo").OnDelete(DeleteBehavior.Cascade),
+                    j =>
+                    {
+                        j.HasKey("idGrupo", "idCarrera");
+                        j.ToTable("inv_grupos_carreras");
                     });
         });
 

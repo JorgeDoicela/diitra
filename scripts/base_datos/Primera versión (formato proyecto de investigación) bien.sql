@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS
     inv_notificaciones,
     inv_tokens_acceso,
     inv_usuarios_metadata,
+    inv_config_indicadores,
     inv_audit_admin,
 
     -- DIITRA Document Engine (Plantillas y Auditoría)
@@ -67,6 +68,7 @@ DROP TABLE IF EXISTS
     inv_lineas_investigacion,
     inv_programas,
     inv_grupos_lineas,
+    inv_grupos_carreras,
     inv_grupos_miembros,
     inv_grupos_investigacion,
     inv_dominios_carrera,
@@ -84,7 +86,6 @@ DROP TABLE IF EXISTS
     inv_cat_tipo_producto,
     inv_cat_tipo_evidencia,
     inv_entidades_externas,
-    inv_config_indicadores,
     inv_config_workflow;
 
 -- #############################################################################
@@ -182,6 +183,8 @@ CREATE TABLE inv_grupos_investigacion (
     uuid                 VARCHAR(36)     NOT NULL UNIQUE,
     nombre               VARCHAR(255) NOT NULL,
     siglas               VARCHAR(50),
+    tipoGrupo            ENUM('Investigación', 'Semillero') NOT NULL DEFAULT 'Investigación',
+    idDominio            INT          NULL,
     idCoordinador        INT(11) NULL,
     objetivoGeneral      TEXT,
     mision               TEXT,
@@ -190,7 +193,8 @@ CREATE TABLE inv_grupos_investigacion (
     fechaCreacion        DATE,
     activo               TINYINT(1)   DEFAULT 1,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+    FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
+    FOREIGN KEY (idDominio)     REFERENCES inv_dominios(idDominio) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_pnd_objetivos (
@@ -215,6 +219,14 @@ CREATE TABLE inv_grupos_lineas (
     FOREIGN KEY (idGrupo) REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
     FOREIGN KEY (idLinea) REFERENCES inv_lineas_investigacion(idLinea) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_grupos_carreras (
+    idGrupo   INT NOT NULL,
+    idCarrera INT(11) NOT NULL,
+    PRIMARY KEY (idGrupo, idCarrera),
+    FOREIGN KEY (idGrupo)   REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
+    FOREIGN KEY (idCarrera) REFERENCES carreras(idCarrera)              ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Vinculación de grupos con programas académicos';
 
 CREATE TABLE inv_grupos_miembros (
     idGrupoMiembro INT          AUTO_INCREMENT PRIMARY KEY,
@@ -369,13 +381,13 @@ CREATE TABLE inv_proyectos (
     activo                TINYINT(1)    DEFAULT 1,
     fechaRegistro         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     fechaModificacion     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
+
     -- NÚCLEO DE INNOVACIÓN Y VINCULACIÓN PRODUCTIVA
     idEntidadAliada      INT           NULL COMMENT 'Empresa o Institución Co-ejecutora',
     trlInicial           TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Inicial (1-9)',
     trlActual            TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Actual (1-9)',
     trlMeta              TINYINT       NULL COMMENT 'Technology Readiness Level esperado al finalizar',
-    
+
     FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria),
     FOREIGN KEY (idSublinea)     REFERENCES inv_sublineas(idSublinea),
     FOREIGN KEY (idPrograma)     REFERENCES inv_programas(idPrograma),
@@ -433,6 +445,23 @@ CREATE TABLE inv_trazabilidad_proyectos (
     hashActual      VARCHAR(100) NULL COMMENT 'Hash SHA-256 de esta transición (Integridad)',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Auditoría Administrativa Forense (CACES/SENESCYT)
+CREATE TABLE inv_audit_admin (
+    idAudit            INT AUTO_INCREMENT PRIMARY KEY,
+    idUsuarioAdmin     INT NOT NULL,
+    idUsuarioAfectado  INT NOT NULL,
+    accion             VARCHAR(100) NOT NULL,
+    modulo             VARCHAR(100),
+    detalle            TEXT,
+    ipOrigen           VARCHAR(45),
+    userAgent          TEXT,
+    valoresAnteriores  TEXT, -- Snapshot JSON del estado previo
+    valoresNuevos      TEXT, -- Snapshot JSON del estado posterior
+    fecha              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUsuarioAdmin) REFERENCES usuarios(idUsuario),
+    FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyectos_carreras (
@@ -871,17 +900,6 @@ BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
-CREATE TABLE inv_audit_admin (
-    idAudit              INT          AUTO_INCREMENT PRIMARY KEY,
-    idUsuarioAdmin       INT          NOT NULL,
-    idUsuarioAfectado    INT          NOT NULL,
-    accion               VARCHAR(100) NOT NULL, -- ASIGNAR_ROL, REVOCAR_ROL, ACTUALIZAR_METADATA, REGISTRO_EXTERNO
-    detalle              TEXT,
-    ipOrigen             VARCHAR(45),
-    fecha                TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idUsuarioAdmin) REFERENCES usuarios(idUsuario) ON DELETE RESTRICT,
-    FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Auditoría de cambios administrativos en usuarios y roles';
 
 -- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
 CREATE TABLE inv_config_indicadores (

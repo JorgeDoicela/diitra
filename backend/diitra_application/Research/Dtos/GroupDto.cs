@@ -9,6 +9,8 @@ public class GroupDto
     public string Uuid { get; set; } = null!;
     public string Nombre { get; set; } = null!;
     public string? Siglas { get; set; }
+    public string TipoGrupo { get; set; } = "Investigación";
+    public int? IdDominio { get; set; }
     public int? IdCoordinador { get; set; }
     public string? NombreCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
@@ -19,6 +21,7 @@ public class GroupDto
     public bool Activo { get; set; }
     
     public List<int> LineasIds { get; set; } = new();
+    public List<int> CarrerasIds { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
 }
 
@@ -37,6 +40,8 @@ public class CreateGroupDto
 {
     public string Nombre { get; set; } = null!;
     public string? Siglas { get; set; }
+    public string TipoGrupo { get; set; } = "Investigación";
+    public int? IdDominio { get; set; }
     public int? IdCoordinador { get; set; }
     public string? IdProfesorCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
@@ -45,4 +50,5 @@ public class CreateGroupDto
     public string? ResolucionAprobacion { get; set; }
     public DateOnly? FechaCreacion { get; set; }
     public List<int> LineasIds { get; set; } = new();
+    public List<int> CarrerasIds { get; set; } = new();
 }
