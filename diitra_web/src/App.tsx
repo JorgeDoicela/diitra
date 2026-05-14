@@ -33,11 +33,14 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-    const { user, isAuthenticated, isLoading, hasPermission } = useAuth();
+    const { user, isAuthenticated, isLoading, hasPermission, roles } = useAuth();
     if (isLoading) return null;
     
+    const normalizedRoles = roles.map(r => r.toUpperCase());
+    const isSystemAdmin = user?.administrador || normalizedRoles.includes('DIITRA_ADMIN') || normalizedRoles.includes('ADMIN_SISTEMA');
+
     // Validar permiso modular O flag de administrador global
-    if (!isAuthenticated || (!user?.administrador && !hasPermission('USUARIOS', 'VER'))) {
+    if (!isAuthenticated || (!isSystemAdmin && !hasPermission('USUARIOS', 'VER'))) {
         return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;

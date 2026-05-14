@@ -204,6 +204,7 @@ public class AuthService : IAuthService
         if (user.IdSigafi == MASTER_ADMIN_ID) requiredRoleCode = "DIITRA_ADMIN";
         else if (user.TablaSigafi == "profesor") requiredRoleCode = "DIITRA_DOCENTE";
         else if (user.TablaSigafi == "alumno") requiredRoleCode = "DIITRA_ESTUDIANTE";
+        else if (user.TablaSigafi == "otros") requiredRoleCode = "DIITRA_REVISOR_EXTERNO";
 
         if (requiredRoleCode != null && !currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
         {
@@ -217,7 +218,8 @@ public class AuthService : IAuthService
                     CodigoRol = requiredRoleCode,
                     Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
                              requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
-                             requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : requiredRoleCode,
+                             requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : 
+                             requiredRoleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : requiredRoleCode,
                     EsActivo = true
                 };
                 _context.Roles.Add(role);
@@ -362,6 +364,11 @@ public class AuthService : IAuthService
             {
                 // Estudiantes: Solo ver y postular
                 if (perm == "PROYECTOS:VER" || perm == "PROYECTOS:POSTULAR") shouldAssign = true;
+            }
+            else if (role.CodigoRol == "DIITRA_REVISOR_EXTERNO")
+            {
+                // Revisores Externos: Solo ver proyectos asignados y realizar revisiones
+                if (perm == "PROYECTOS:VER" || perm.StartsWith("REVISIONES")) shouldAssign = true;
             }
 
             if (shouldAssign)

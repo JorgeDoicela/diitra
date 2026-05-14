@@ -8,7 +8,7 @@ interface User {
     tipo_usuario: string;
     permissions: string[];
     administrador: boolean; 
-    role_codes?: string[];
+    roles: string[];
     usuario?: string;
     id_usuario?: number;
 }
@@ -21,6 +21,7 @@ interface AuthContextType {
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
     hasPermission: (module: string, operation: string) => boolean;
+    roles: string[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -60,6 +61,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return user.permissions.includes(target);
     }, [user]);
 
+    const roles = React.useMemo(() => {
+        if (!user) return [];
+        return user.roles || (user.role ? [user.role] : []);
+    }, [user]);
+
     return (
         <AuthContext.Provider value={{ 
             user, 
@@ -68,7 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             login, 
             logout, 
             refreshUser,
-            hasPermission 
+            hasPermission,
+            roles
         }}>
             {children}
         </AuthContext.Provider>
