@@ -8,7 +8,7 @@ namespace diitra_api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "ADMIN_SIST")]
+[Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA")]
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
