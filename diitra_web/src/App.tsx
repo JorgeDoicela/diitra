@@ -12,6 +12,7 @@ import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
+import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
 import { Settings2, Loader2 } from 'lucide-react';
 import VerifyDocument from './pages/Public/VerifyDocument';
 
@@ -53,6 +54,14 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
         return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;
+};
+
+const ConvocatoriaRoute = () => {
+    const { user, roles } = useAuth();
+    const normalizedRoles = roles.map(r => r.toUpperCase());
+    const isAdmin = user?.administrador || normalizedRoles.includes('DIITRA_ADMIN') || normalizedRoles.includes('DIITRA_DOCENTE');
+    
+    return isAdmin ? <ConvocatoriasPage /> : <PublicConvocatoriasPage />;
 };
 
 function App() {
@@ -144,7 +153,7 @@ function App() {
           <Route path="/convocatorias" element={
             <ProtectedRoute>
               <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
-                <ConvocatoriasPage />
+                <ConvocatoriaRoute />
               </DashboardLayout>
             </ProtectedRoute>
           } />

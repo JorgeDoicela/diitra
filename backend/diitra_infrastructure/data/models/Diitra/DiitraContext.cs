@@ -71,6 +71,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
+    public virtual DbSet<InvDispositivoToken> InvDispositivosTokens   { get; set; }
 
     // --- Catálogos Nucleares y Configuración ---
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
@@ -1521,6 +1522,21 @@ public partial class DiitraContext : DbContext
                 .HasForeignKey(d => d.IdUsuarioAdmin).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_audit_admin");
             entity.HasOne(d => d.UserAfectado).WithMany()
                 .HasForeignKey(d => d.IdUsuarioAfectado).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_audit_afectado");
+        });
+
+        modelBuilder.Entity<InvDispositivoToken>(entity =>
+        {
+            entity.HasKey(e => e.IdToken).HasName("PRIMARY");
+            entity.ToTable("inv_dispositivos_tokens");
+            entity.Property(e => e.IdToken).HasColumnName("idToken");
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+            entity.Property(e => e.DeviceToken).HasColumnName("deviceToken").HasMaxLength(512).IsRequired();
+            entity.HasIndex(e => e.DeviceToken).IsUnique();
+            entity.Property(e => e.Plataforma).HasColumnName("plataforma").HasMaxLength(20).HasDefaultValueSql("'Web'");
+            entity.Property(e => e.UltimaSincronizacion).HasColumnName("ultimaSincronizacion").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany()
+                .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_token_usuario");
         });
 
         // ============================================================
