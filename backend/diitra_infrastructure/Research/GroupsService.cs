@@ -8,10 +8,17 @@ namespace diitra_infrastructure.Research;
 public class GroupsService : IGroupsService
 {
     private readonly DiitraContext _context;
+    private readonly diitra_application.Security.IAuditService _auditService;
+    private readonly diitra_application.Security.IAuthService _authService;
 
-    public GroupsService(DiitraContext context)
+    public GroupsService(
+        DiitraContext context, 
+        diitra_application.Security.IAuditService auditService,
+        diitra_application.Security.IAuthService authService)
     {
         _context = context;
+        _auditService = auditService;
+        _authService = authService;
     }
 
     public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null)
@@ -59,12 +66,21 @@ public class GroupsService : IGroupsService
 
     public async Task<GroupDto> CreateAsync(CreateGroupDto dto)
     {
+        int? coordinatorId = dto.IdCoordinador;
+        
+        // JIT Provisioning if selected by sigafi ID
+        if (!string.IsNullOrEmpty(dto.IdProfesorCoordinador))
+        {
+            var user = await _authService.GetOrProvisionUserByCedulaAsync(dto.IdProfesorCoordinador);
+            coordinatorId = user?.IdUsuario;
+        }
+
         var group = new InvGrupoInvestigacion
         {
             Uuid = Guid.NewGuid().ToString(),
             Nombre = dto.Nombre,
             Siglas = dto.Siglas,
-            IdCoordinador = dto.IdCoordinador,
+            IdCoordinador = coordinatorId,
             ObjetivoGeneral = dto.ObjetivoGeneral,
             Mision = dto.Mision,
             Vision = dto.Vision,
@@ -87,6 +103,8 @@ public class GroupsService : IGroupsService
         _context.InvGruposInvestigacion.Add(group);
         await _context.SaveChangesAsync();
 
+        await _auditService.LogActionAsync(null, "CREAR_GRUPO", $"Creación del grupo {group.Nombre}", "INVESTIGACION");
+
         return MapToDto(group);
     }
 
@@ -98,9 +116,16 @@ public class GroupsService : IGroupsService
 
         if (group == null) throw new Exception("Grupo no encontrado");
 
+        int? coordinatorId = dto.IdCoordinador;
+        if (!string.IsNullOrEmpty(dto.IdProfesorCoordinador))
+        {
+            var user = await _authService.GetOrProvisionUserByCedulaAsync(dto.IdProfesorCoordinador);
+            coordinatorId = user?.IdUsuario;
+        }
+
         group.Nombre = dto.Nombre;
         group.Siglas = dto.Siglas;
-        group.IdCoordinador = dto.IdCoordinador;
+        group.IdCoordinador = coordinatorId;
         group.ObjetivoGeneral = dto.ObjetivoGeneral;
         group.Mision = dto.Mision;
         group.Vision = dto.Vision;
@@ -121,6 +146,7 @@ public class GroupsService : IGroupsService
         }
 
         await _context.SaveChangesAsync();
+        await _auditService.LogActionAsync(null, "EDITAR_GRUPO", $"Edición del grupo {group.Nombre}", "INVESTIGACION");
         return MapToDto(group);
     }
 

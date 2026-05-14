@@ -36,8 +36,15 @@ public class GroupsController : ControllerBase
     // [Authorize(Roles = "ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> Create([FromBody] CreateGroupDto dto)
     {
-        var group = await _groupsService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetByUuid), new { uuid = group.Uuid }, group);
+        try 
+        {
+            var group = await _groupsService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetByUuid), new { uuid = group.Uuid }, group);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message, detail = ex.InnerException?.Message });
+        }
     }
 
     [HttpPut("{uuid}")]

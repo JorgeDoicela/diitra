@@ -11,7 +11,8 @@ interface Group {
     uuid: string;
     nombre: string;
     siglas: string;
-    id_coordinador: string;
+    id_coordinador: number | null;
+    id_profesor_coordinador: string | null;
     nombre_coordinador: string;
     objetivo_general: string;
     mision: string;
@@ -23,11 +24,12 @@ interface Group {
 }
 
 interface ResearchLine {
-    idLinea: number;
-    nombreLinea: string;
+    id: number;
+    nombre: string;
 }
 
 interface Teacher {
+    id_usuario: number | null;
     id_profesor: string;
     nombre_completo: string;
 }
@@ -47,7 +49,7 @@ const GroupsPage = () => {
     const [formData, setFormData] = useState({
         nombre: '',
         siglas: '',
-        id_coordinador: '',
+        id_profesor_coordinador: '',
         objetivo_general: '',
         mision: '',
         vision: '',
@@ -66,7 +68,7 @@ const GroupsPage = () => {
             ]);
             setGroups(groupsRes.data);
             setLines(linesRes.data);
-            setTeachers(teachersRes.data);
+            setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : (teachersRes.data.items || []));
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -84,7 +86,7 @@ const GroupsPage = () => {
             setFormData({
                 nombre: group.nombre,
                 siglas: group.siglas || '',
-                id_coordinador: group.id_coordinador || '',
+                id_profesor_coordinador: group.id_profesor_coordinador || '',
                 objetivo_general: group.objetivo_general || '',
                 mision: group.mision || '',
                 vision: group.vision || '',
@@ -97,7 +99,7 @@ const GroupsPage = () => {
             setFormData({
                 nombre: '',
                 siglas: '',
-                id_coordinador: '',
+                id_profesor_coordinador: '',
                 objetivo_general: '',
                 mision: '',
                 vision: '',
@@ -112,15 +114,22 @@ const GroupsPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const payload = {
+                ...formData,
+                id_profesor_coordinador: formData.id_profesor_coordinador || null
+            };
+
             if (editingGroup) {
-                await api.put(`/Groups/${editingGroup.uuid}`, formData);
+                await api.put(`/Groups/${editingGroup.uuid}`, payload);
             } else {
-                await api.post('/Groups', formData);
+                await api.post('/Groups', payload);
             }
             setIsModalOpen(false);
             fetchData();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving group:', error);
+            const detail = error.response?.data?.detail || error.response?.data?.message || '';
+            alert(`Error al guardar el grupo: ${error.message}${detail ? `\n\nDetalle: ${detail}` : ''}`);
         }
     };
 
@@ -296,8 +305,8 @@ const GroupsPage = () => {
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Coordinador Responsable</label>
                                     <select 
                                         required
-                                        value={formData.id_coordinador}
-                                        onChange={(e) => setFormData({...formData, id_coordinador: e.target.value})}
+                                        value={formData.id_profesor_coordinador}
+                                        onChange={(e) => setFormData({...formData, id_profesor_coordinador: e.target.value})}
                                         className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none"
                                     >
                                         <option value="">Seleccione un docente...</option>
@@ -381,20 +390,20 @@ const GroupsPage = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     {lines.map(line => (
                                         <div 
-                                            key={line.idLinea}
-                                            onClick={() => toggleLine(line.idLinea)}
+                                            key={line.id}
+                                            onClick={() => toggleLine(line.id)}
                                             className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
-                                                formData.lineas_ids.includes(line.idLinea)
+                                                formData.lineas_ids.includes(line.id)
                                                     ? 'bg-text-main/10 border-text-main text-text-main'
                                                     : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
                                             }`}
                                         >
                                             <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                                                formData.lineas_ids.includes(line.idLinea) ? 'border-text-main bg-text-main' : 'border-border-thin'
+                                                formData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
                                             }`}>
-                                                {formData.lineas_ids.includes(line.idLinea) && <CheckCircle size={10} className="text-bg-deep" />}
+                                                {formData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
                                             </div>
-                                            <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombreLinea}</span>
+                                            <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombre}</span>
                                         </div>
                                     ))}
                                 </div>
