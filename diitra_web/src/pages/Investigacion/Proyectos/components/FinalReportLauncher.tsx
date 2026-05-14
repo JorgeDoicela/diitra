@@ -59,8 +59,9 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
             // 2. Navegar al Workspace Premium (Ruta estandarizada)
             navigate(`/investigacion/workspace/INFORME_FINAL_INVESTIGACION/${response.data.uuid}`);
             onClose();
-        } catch (err) {
-            alert("No se pudo inicializar el Informe Final.");
+        } catch (err: any) {
+            console.error("[DIITRA] Error al lanzar informe:", err.response?.data || err.message);
+            alert(`Error: ${err.response?.data?.message || "No se pudo inicializar el Informe Final."}`);
         }
     };
 
