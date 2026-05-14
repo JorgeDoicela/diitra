@@ -9,6 +9,7 @@ namespace diitra_api.Controllers
 {
     [ApiController]
     [Route("api/projects")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public class ProjectsController : ControllerBase
     {
         private readonly IDocumentEngine _documentEngine;
@@ -234,6 +235,12 @@ namespace diitra_api.Controllers
             }
 
             return Ok(new { success = true, uuid = result.Uuid });
+        }
+        [HttpGet]
+        public async Task<IActionResult> List()
+        {
+            var projects = await _projectOrchestrator.GetAllProjectsAsync();
+            return Ok(projects);
         }
     }
 }

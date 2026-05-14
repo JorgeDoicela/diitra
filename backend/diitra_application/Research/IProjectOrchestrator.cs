@@ -16,6 +16,11 @@ namespace Diitra.Application.Research
         /// <param name="dto">Datos provenientes del frontend colaborativo.</param>
         /// <returns>Resultado de la operación con el UUID del proyecto.</returns>
         Task<SyncResult> SyncProjectWizardDataAsync(ProyectoDto dto);
+
+        /// <summary>
+        /// Obtiene todos los proyectos registrados para su visualización en tableros y lanzadores.
+        /// </summary>
+        Task<System.Collections.Generic.List<ProyectoDto>> GetAllProjectsAsync();
     }
 
     public class SyncResult

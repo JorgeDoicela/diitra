@@ -61,7 +61,19 @@ export interface CoWorkConfig {
  */
 export interface CoWorkHandle {
     session: CoWorkSession;
-    ydoc: import('yjs').Doc;
-    awareness: import('y-protocols/awareness').Awareness;
+    ydoc: import('yjs').Doc | null;
+    awareness: import('y-protocols/awareness').Awareness | null;
     disconnect: () => void;
+    compact: () => Promise<void>;
+    submitFinalContent: (html: string, json: string) => void;
+
+    // Coordination (Team Pulse)
+    notifySectionActivity: (instanceUuid: string, sectionName: string, action: string) => Promise<void>;
+    updateSectionStatus: (instanceUuid: string, sectionName: string, status: string) => Promise<void>;
+    postComment: (instanceUuid: string, content: string, parentId?: number) => Promise<void>;
+
+    // Real-Time Subscriptions
+    onSectionActivity: (handler: (data: any) => void) => void;
+    onSectionStatusUpdated: (handler: (data: any) => void) => void;
+    onNewCommentReceived: (handler: (data: any) => void) => void;
 }

@@ -58,6 +58,8 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvTransferencia>      InvTransferencias      { get; set; }
     public virtual DbSet<InvTrazabilidadProyecto> InvTrazabilidadProyectos { get; set; }
     public virtual DbSet<InvConfigWorkflow> InvConfigWorkflows { get; set; }
+    public virtual DbSet<InvDocumentoSeccionMetadata> InvDocumentosSeccionesMetadata { get; set; }
+    public virtual DbSet<InvCollaborationComment> InvCollaborationComments { get; set; }
     public virtual DbSet<InvRevisionesPares>      InvRevisionesPares      { get; set; }
     public virtual DbSet<InvEvaluacionesDetalle>  InvEvaluacionesDetalle  { get; set; }
     public virtual DbSet<InvPndObjetivo>               InvPndObjetivos              { get; set; }
@@ -1803,6 +1805,22 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_config_workflow");
             entity.Property(e => e.EstadoOrigen).HasMaxLength(50).IsRequired();
             entity.Property(e => e.EstadoDestino).HasMaxLength(50).IsRequired();
+        });
+
+        // --- Colaboración y Metadatos ---
+        modelBuilder.Entity<InvDocumentoSeccionMetadata>(entity =>
+        {
+            entity.HasKey(e => e.IdMetadata).HasName("PRIMARY");
+            entity.ToTable("inv_documentos_secciones_metadata");
+            entity.HasIndex(e => new { e.DocumentoUuid, e.SeccionNombre }).IsUnique();
+        });
+
+        modelBuilder.Entity<InvCollaborationComment>(entity =>
+        {
+            entity.HasKey(e => e.IdComentario).HasName("PRIMARY");
+            entity.ToTable("inv_collaboration_comments");
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.HasIndex(e => e.DocumentoUuid);
         });
 
         OnModelCreatingPartial(modelBuilder);

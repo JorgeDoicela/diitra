@@ -30,7 +30,9 @@ DROP TABLE IF EXISTS
     inv_documentos_instancias,
     inv_document_templates,
 
-    -- DIITRA CoWork (Persistencia de Sesiones Colaborativas)
+    -- DIITRA CoWork (Coordinación Team Pulse & Colaboración)
+    inv_collaboration_comments,
+    inv_documentos_secciones_metadata,
     inv_cowork_updates,
     inv_cowork_sesiones,
     inv_cowork_documentos,
@@ -1178,3 +1180,41 @@ INSERT INTO inv_config_workflow (estadoOrigen, estadoDestino, requiereObservacio
 ('En Revisión',   'Rechazado',    1),
 ('En Revisión',   'En Corrección', 1),
 ('En Corrección', 'Enviado',      0);
+
+-- ═══════════════════════════════════════════════════════════════════
+-- DIITRA CoWork — Coordinación Team Pulse & Colaboración Premium
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Metadatos de Secciones (Estado y Progreso)
+CREATE TABLE IF NOT EXISTS inv_documentos_secciones_metadata (
+    idMetadata          INT           AUTO_INCREMENT PRIMARY KEY,
+    instanceUuid        VARCHAR(100)  NOT NULL COMMENT 'UUID de la instancia del documento',
+    sectionName         VARCHAR(100)  NOT NULL COMMENT 'Nombre de la sección (ej: resumen, presupuesto)',
+    status              VARCHAR(50)   NOT NULL DEFAULT 'Borrador' COMMENT 'Borrador, Revisión, Aprobado',
+    lastUserUuid        VARCHAR(36)   NULL,
+    actualizadoEn       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_instance_section (instanceUuid, sectionName)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Gestión de estados por sección para coordinación Team Pulse';
+
+-- Comentarios Colaborativos (Hilos de Discusión)
+CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
+    idComment           INT           AUTO_INCREMENT PRIMARY KEY,
+    instanceUuid        VARCHAR(100)  NOT NULL,
+    userUuid            VARCHAR(36)   NOT NULL,
+    userName            VARCHAR(255)  NOT NULL,
+    content             TEXT          NOT NULL,
+    parentId            INT           NULL COMMENT 'Para hilos de conversación',
+    creadoEn            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_instance (instanceUuid),
+    CONSTRAINT fk_comment_parent FOREIGN KEY (parentId) REFERENCES inv_collaboration_comments(idComment) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Hilos de discusión real-time dentro de los documentos';
+
+-- =============================================================================
+-- SEMILLAS: Documentos Base DIITRA Builder
+-- =============================================================================
+
+INSERT INTO inv_document_templates (code, name, description, html_content, category, collaborative_fields_json) VALUES 
+('PROTOCOLO_INVESTIGACION', 'Protocolo de Investigación', 'Template oficial para la presentación de proyectos SENESCYT/CACES.', '<h1>Protocolo</h1>', 1, '["antecedentes", "justificacion", "marcoTeorico", "metodologia", "evaluacion"]'),
+('INFORME_FINAL_INVESTIGACION', 'Informe Final de Investigación', 'Template consolidado para el cierre de proyectos CACES 2026.', '<h1>Informe Final</h1>', 1, '["resumen_ejecutivo", "introduccion", "desarrollo_tecnico", "analisis_resultados", "conclusiones_recomendaciones"]');

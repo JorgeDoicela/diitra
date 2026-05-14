@@ -192,4 +192,42 @@ export class SignalRTransport implements ICoWorkTransport {
         this.connection.off('UserJoined');
         this.connection.on('UserJoined', handler);
     }
+
+    // ── COORDINACIÓN (Team Pulse) ──────────────────────────────────────
+
+    async notifySectionActivity(instanceUuid: string, sectionName: string, action: string, userName: string): Promise<void> {
+        if (!this._isConnected) return;
+        try {
+            await this.connection.invoke('NotifySectionActivity', instanceUuid, sectionName, action, userName);
+        } catch (err) {}
+    }
+
+    async updateSectionStatus(instanceUuid: string, sectionName: string, status: string, userUuid: string): Promise<void> {
+        if (!this._isConnected) return;
+        try {
+            await this.connection.invoke('UpdateSectionStatus', instanceUuid, sectionName, status, userUuid);
+        } catch (err) {}
+    }
+
+    async postComment(instanceUuid: string, userUuid: string, userName: string, content: string, parentId?: number): Promise<void> {
+        if (!this._isConnected) return;
+        try {
+            await this.connection.invoke('PostComment', instanceUuid, userUuid, userName, content, parentId);
+        } catch (err) {}
+    }
+
+    onSectionActivity(handler: (data: any) => void): void {
+        this.connection.off('SectionActivity');
+        this.connection.on('SectionActivity', handler);
+    }
+
+    onSectionStatusUpdated(handler: (data: any) => void): void {
+        this.connection.off('SectionStatusUpdated');
+        this.connection.on('SectionStatusUpdated', handler);
+    }
+
+    onNewCommentReceived(handler: (data: any) => void): void {
+        this.connection.off('NewCommentReceived');
+        this.connection.on('NewCommentReceived', handler);
+    }
 }

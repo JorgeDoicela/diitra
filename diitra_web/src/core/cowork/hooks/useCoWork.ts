@@ -62,6 +62,30 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         if (transportRef.current) transportRef.current.disconnect();
     }, []);
 
+    const notifySectionActivity = useCallback((instanceUuid: string, sectionName: string, action: string) => {
+        return getTransport().notifySectionActivity(instanceUuid, sectionName, action, config.user.name);
+    }, [config.user.name]);
+
+    const updateSectionStatus = useCallback((instanceUuid: string, sectionName: string, status: string) => {
+        return getTransport().updateSectionStatus(instanceUuid, sectionName, status, config.user.id);
+    }, [config.user.id]);
+
+    const postComment = useCallback((instanceUuid: string, content: string, parentId?: number) => {
+        return getTransport().postComment(instanceUuid, config.user.id, config.user.name, content, parentId);
+    }, [config.user.id, config.user.name]);
+
+    const onSectionActivity = useCallback((handler: (data: any) => void) => {
+        getTransport().onSectionActivity(handler);
+    }, []);
+
+    const onSectionStatusUpdated = useCallback((handler: (data: any) => void) => {
+        getTransport().onSectionStatusUpdated(handler);
+    }, []);
+
+    const onNewCommentReceived = useCallback((handler: (data: any) => void) => {
+        getTransport().onNewCommentReceived(handler);
+    }, []);
+
     // 4. Ciclo de vida de la colaboración (Efecto Principal)
     useEffect(() => {
         let isMounted = true;
@@ -270,6 +294,16 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         awareness: awarenessRef.current,
         compact,
         submitFinalContent,
-        disconnect
-    }), [session, compact, submitFinalContent, disconnect]);
+        disconnect,
+        notifySectionActivity,
+        updateSectionStatus,
+        postComment,
+        onSectionActivity,
+        onSectionStatusUpdated,
+        onNewCommentReceived
+    }), [
+        session, compact, submitFinalContent, disconnect, 
+        notifySectionActivity, updateSectionStatus, postComment,
+        onSectionActivity, onSectionStatusUpdated, onNewCommentReceived
+    ]);
 }
