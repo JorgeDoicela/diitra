@@ -34,7 +34,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const response = await api.get('/auth/me');
             setUser(response.data);
-        } catch (error) {
+        } catch (error: any) {
+            // Manejo silencioso: si es 401 simplemente no hay sesión
             setUser(null);
         } finally {
             setIsLoading(false);
@@ -42,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     useEffect(() => {
+        // Ejecución única al montar el proveedor
         refreshUser();
     }, [refreshUser]);
 
