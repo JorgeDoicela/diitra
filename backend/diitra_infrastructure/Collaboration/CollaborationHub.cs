@@ -244,7 +244,7 @@ namespace diitra_infrastructure.Collaboration
             }
 
             meta.Estado = status;
-            meta.UltimaModificacionPor = userUuid;
+            meta.UltimoUsuarioUuid = userUuid;
             meta.ActualizadoEn = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
@@ -276,13 +276,12 @@ namespace diitra_infrastructure.Collaboration
             await _db.SaveChangesAsync();
 
             await Clients.Group(instanceUuid).SendAsync("NewCommentReceived", new {
-                comment.IdComentario,
-                comment.Uuid,
-                comment.UsuarioUuid,
-                comment.NombreUsuario,
-                comment.Contenido,
-                comment.IdPadre,
-                comment.CreadoEn
+                idComentario = comment.IdComentario,
+                usuarioUuid = comment.UsuarioUuid,
+                nombreUsuario = comment.NombreUsuario,
+                contenido = comment.Contenido,
+                idPadre = comment.IdPadre,
+                creadoEn = comment.CreadoEn
             });
         }
 

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace diitra_infrastructure.data.models.Cowork
 {
@@ -12,70 +13,67 @@ namespace diitra_infrastructure.data.models.Cowork
     {
         [Key]
         [Column("idMetadata")]
+        [JsonPropertyName("idMetadata")]
         public int IdMetadata { get; set; }
 
-        [Column("documentoUuid", TypeName = "varchar(100)")]
+        [Column("instanceUuid", TypeName = "varchar(100)")]
         [Required, MaxLength(100)]
+        [JsonPropertyName("documentoUuid")]
         public string DocumentoUuid { get; set; } = string.Empty;
 
-        [Column("seccionNombre")]
+        [Column("sectionName")]
         [Required, MaxLength(100)]
+        [JsonPropertyName("seccionNombre")]
         public string SeccionNombre { get; set; } = string.Empty;
 
-        [Column("estado")]
+        [Column("status")]
         [Required, MaxLength(50)]
-        public string Estado { get; set; } = "Borrador"; // Borrador, En Revisión, Aprobado
+        [JsonPropertyName("estado")]
+        public string Estado { get; set; } = "Borrador";
 
-        [Column("asignadoAUuid", TypeName = "varchar(36)")]
+        [Column("lastUserUuid", TypeName = "varchar(36)")]
         [MaxLength(36)]
-        public string? AsignadoAUuid { get; set; }
-
-        [Column("ultimaModificacionPor", TypeName = "varchar(36)")]
-        [MaxLength(36)]
-        public string? UltimaModificacionPor { get; set; }
+        [JsonPropertyName("ultimoUsuarioUuid")]
+        public string? UltimoUsuarioUuid { get; set; }
 
         [Column("actualizadoEn")]
         public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
     }
 
-    /// <summary>
-    /// Comentarios colaborativos vinculados a un documento o instancia.
-    /// Soporta hilos de conversación (threaded comments).
-    /// </summary>
     [Table("inv_collaboration_comments")]
     public class InvCollaborationComment
     {
         [Key]
-        [Column("idComentario")]
+        [Column("idComment")]
+        [JsonPropertyName("idComentario")]
         public int IdComentario { get; set; }
 
-        [Column("uuid", TypeName = "varchar(36)")]
-        [Required, MaxLength(36)]
-        public string Uuid { get; set; } = Guid.NewGuid().ToString();
-
-        [Column("documentoUuid", TypeName = "varchar(100)")]
+        [Column("instanceUuid", TypeName = "varchar(100)")]
         [Required, MaxLength(100)]
+        [JsonPropertyName("documentoUuid")]
         public string DocumentoUuid { get; set; } = string.Empty;
 
-        [Column("usuarioUuid", TypeName = "varchar(36)")]
+        [Column("userUuid", TypeName = "varchar(36)")]
         [Required, MaxLength(36)]
+        [JsonPropertyName("usuarioUuid")]
         public string UsuarioUuid { get; set; } = string.Empty;
 
-        [Column("nombreUsuario")]
+        [Column("userName")]
         [Required, MaxLength(255)]
+        [JsonPropertyName("nombreUsuario")]
         public string NombreUsuario { get; set; } = string.Empty;
 
-        [Column("contenido", TypeName = "text")]
+        [Column("content", TypeName = "text")]
         [Required]
+        [JsonPropertyName("contenido")]
         public string Contenido { get; set; } = string.Empty;
 
-        [Column("idPadre")]
+        [Column("parentId")]
+        [JsonPropertyName("idPadre")]
         public int? IdPadre { get; set; }
 
-        [Column("estaResuelto")]
-        public bool EstaResuelto { get; set; } = false;
-
         [Column("creadoEn")]
+        [JsonPropertyName("creadoEn")]
         public DateTime CreadoEn { get; set; } = DateTime.UtcNow;
 
         [ForeignKey(nameof(IdPadre))]
