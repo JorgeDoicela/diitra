@@ -2,6 +2,7 @@ using Diitra.Application.Common.Documents;
 using Diitra.Domain.Common.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json.Serialization;
 
 namespace diitra_api.Controllers
 {
@@ -110,6 +111,14 @@ namespace diitra_api.Controllers
         }
     }
 
-    public record CreateInstanceRequest(string TemplateCode, string EntityUuid, string? EntityType = null, string? Title = null);
-    public record FinalizeRequest(string? PdfBase64, string Hash, string TraceabilityCode);
+    public record CreateInstanceRequest(
+        [property: JsonPropertyName("templateCode")] string TemplateCode, 
+        [property: JsonPropertyName("entityUuid")] string EntityUuid, 
+        [property: JsonPropertyName("entityType")] string? EntityType = null, 
+        [property: JsonPropertyName("title")] string? Title = null);
+    
+    public record FinalizeRequest(
+        [property: JsonPropertyName("pdfBase64")] string? PdfBase64, 
+        [property: JsonPropertyName("hash")] string Hash, 
+        [property: JsonPropertyName("traceabilityCode")] string TraceabilityCode);
 }
