@@ -349,7 +349,8 @@ public class AdminService : IAdminService
                 CodigoRol = roleCode,
                 Nombre = roleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
                          roleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
-                         roleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : roleCode,
+                         roleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : 
+                         roleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : roleCode,
                 EsActivo = true
             };
             _context.Roles.Add(role);
