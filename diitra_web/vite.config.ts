@@ -16,7 +16,7 @@ export default defineConfig({
     dedupe: ['yjs', 'y-prosemirror']
   },
   optimizeDeps: {
-    include: ['yjs', 'y-prosemirror'],
+    include: ['yjs', 'y-prosemirror', 'date-fns'],
     exclude: ['@tiptap/pm']
   }
 })

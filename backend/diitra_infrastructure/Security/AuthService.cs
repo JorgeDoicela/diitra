@@ -15,12 +15,14 @@ public class AuthService : IAuthService
 {
     private readonly DiitraContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IAuditService _auditService;
     private const string MASTER_ADMIN_ID = "0302144159";
 
-    public AuthService(DiitraContext context, IConfiguration configuration)
+    public AuthService(DiitraContext context, IConfiguration configuration, IAuditService auditService)
     {
         _context = context;
         _configuration = configuration;
+        _auditService = auditService;
     }
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request)
@@ -35,7 +37,9 @@ public class AuthService : IAuthService
         {
             if (VerifyPassword(user, password))
             {
-                return await GetAuthResponseAsync(user);
+                var response = await GetAuthResponseAsync(user);
+                await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (Usuario DIITRA)", "SEGURIDAD");
+                return response;
             }
             return null;
         }
@@ -51,7 +55,9 @@ public class AuthService : IAuthService
             {
                 string fullNombre = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
                 user = await ProvisionUserAsync(username, fullNombre, password, "profesor", username);
-                return await GetAuthResponseAsync(user);
+                var response = await GetAuthResponseAsync(user);
+                await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Profesor)", "SEGURIDAD");
+                return response;
             }
         }
 
@@ -63,7 +69,9 @@ public class AuthService : IAuthService
         {
             string fullNombre = $"{alumno.PrimerNombre} {alumno.SegundoNombre} {alumno.ApellidoPaterno} {alumno.ApellidoMaterno}".Replace("  ", " ").Trim();
             user = await ProvisionUserAsync(username, fullNombre, password, "alumno", alumno.IdAlumno);
-            return await GetAuthResponseAsync(user);
+            var response = await GetAuthResponseAsync(user);
+            await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Alumno)", "SEGURIDAD");
+            return response;
         }
 
         return null;

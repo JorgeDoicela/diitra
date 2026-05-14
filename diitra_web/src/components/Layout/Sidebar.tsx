@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -21,6 +21,7 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     { name: 'Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
     { name: 'Usuarios', icon: Users, path: '/admin', permission: 'USUARIOS:VER' },
+    { name: 'Auditoría', icon: Activity, path: '/admin/audit', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
     { name: 'Grupos', icon: Award, path: '/admin/groups', permission: 'GRUPOS:VER' },
   ];
 

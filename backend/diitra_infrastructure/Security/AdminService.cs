@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using System.Linq;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
@@ -10,10 +11,12 @@ namespace diitra_infrastructure.Security;
 public class AdminService : IAdminService
 {
     private readonly DiitraContext _context;
+    private readonly IAuditService _auditService;
 
-    public AdminService(DiitraContext context)
+    public AdminService(DiitraContext context, IAuditService auditService)
     {
         _context = context;
+        _auditService = auditService;
     }
 
     public async Task<PagedResult<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE", int page = 1, int pageSize = 10)
@@ -318,7 +321,7 @@ public class AdminService : IAdminService
         };
     }
 
-    public async Task<bool> UpdateUserMetadataAsync(string userUuid, UserMetadataDto dto, string? adminUsername = null)
+    public async Task<bool> UpdateUserMetadataAsync(string userUuid, UserMetadataDto dto)
     {
         var meta = await _context.InvUsuariosMetadata.Include(m => m.User)
             .FirstOrDefaultAsync(m => m.Uuid.ToString() == userUuid);
@@ -334,12 +337,12 @@ public class AdminService : IAdminService
         meta.Version++;
 
         await _context.SaveChangesAsync();
-        await AddAuditLogAsync(adminUsername, meta.IdUsuario, "ACTUALIZAR_METADATA", $"Actualización de perfil científico y académico.");
+        await _auditService.LogActionAsync(meta.IdUsuario, "ACTUALIZAR_METADATA", $"Actualización de perfil científico y académico.", "USUARIOS");
 
         return true;
     }
 
-    public async Task<bool> AssignRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE", string? adminUsername = null)
+    public async Task<bool> AssignRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE")
     {
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode || r.Nombre == roleCode);
         if (role == null)
@@ -403,12 +406,12 @@ public class AdminService : IAdminService
         }
 
         await _context.SaveChangesAsync();
-        await AddAuditLogAsync(adminUsername, user.IdUsuario, "ASIGNAR_ROL", $"Asignación del rol {role.Nombre}");
+        await _auditService.LogActionAsync(user.IdUsuario, "ASIGNAR_ROL", $"Asignación del rol {role.Nombre}", "SEGURIDAD");
 
         return true;
     }
 
-    public async Task<bool> RevokeRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE", string? adminUsername = null)
+    public async Task<bool> RevokeRoleAsync(string idUsuario, string roleCode, string userType = "DOCENTE")
     {
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == roleCode || r.Nombre == roleCode);
         if (role == null) return false;
@@ -422,13 +425,13 @@ public class AdminService : IAdminService
             existing.EsActivo = false;
             existing.FechaModificacion = DateOnly.FromDateTime(DateTime.UtcNow);
             await _context.SaveChangesAsync();
-            await AddAuditLogAsync(adminUsername, existing.IdUsuario, "REVOCAR_ROL", $"Revocación del rol {role.Nombre}");
+            await _auditService.LogActionAsync(existing.IdUsuario, "REVOCAR_ROL", $"Revocación del rol {role.Nombre}", "SEGURIDAD");
         }
 
         return true;
     }
 
-    public async Task<bool> RegisterExternalUserAsync(ExternalUserDto dto, string? adminUsername = null)
+    public async Task<bool> RegisterExternalUserAsync(ExternalUserDto dto)
     {
         var existing = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == dto.Cedula || u.IdSigafi == dto.Email);
         if (existing != null) return false;
@@ -456,7 +459,7 @@ public class AdminService : IAdminService
         });
         await _context.SaveChangesAsync();
 
-        await AddAuditLogAsync(adminUsername, user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {dto.FullName} ({dto.Institucion ?? "S/I"})");
+        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {dto.FullName} ({dto.Institucion ?? "S/I"})", "USUARIOS");
 
         // Asignar rol por defecto
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == dto.DefaultRole);
@@ -470,7 +473,7 @@ public class AdminService : IAdminService
         _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow) });
         await _context.SaveChangesAsync();
 
-        await AddAuditLogAsync(adminUsername, user.IdUsuario, "REGISTRO_EXTERNO", $"Registro manual de evaluador externo.");
+        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro manual de evaluador externo.", "USUARIOS");
         return true;
     }
 
@@ -492,22 +495,53 @@ public class AdminService : IAdminService
             .ToListAsync();
     }
 
-    private async Task AddAuditLogAsync(string? adminUsername, int affectedUserId, string action, string details)
+    public async Task<PagedResult<AuditLogDto>> GetAuditLogsPagedAsync(DateTime? from, DateTime? to, string? action, string? modulo, string? searchTerm, int page = 1, int pageSize = 20)
     {
-        if (string.IsNullOrEmpty(adminUsername)) return;
+        var query = _context.Set<InvAuditAdmin>()
+            .Include(a => a.UserAdmin)
+            .Include(a => a.UserAfectado)
+            .AsQueryable();
 
-        var admin = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == adminUsername);
-        if (admin == null) return;
+        if (from.HasValue) query = query.Where(a => a.Fecha >= from.Value);
+        if (to.HasValue) query = query.Where(a => a.Fecha <= to.Value);
+        if (!string.IsNullOrEmpty(action)) query = query.Where(a => a.Accion == action);
+        if (!string.IsNullOrEmpty(modulo)) query = query.Where(a => a.Modulo == modulo);
+        if (!string.IsNullOrEmpty(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower();
+            query = query.Where(a => 
+                (a.Detalle != null && a.Detalle.ToLower().Contains(searchTerm)) ||
+                (a.UserAdmin.Nombre != null && a.UserAdmin.Nombre.ToLower().Contains(searchTerm)) ||
+                (a.UserAfectado.Nombre != null && a.UserAfectado.Nombre.ToLower().Contains(searchTerm))
+            );
+        }
 
-        var audit = new InvAuditAdmin {
-            IdUsuarioAdmin = admin.IdUsuario,
-            IdUsuarioAfectado = affectedUserId,
-            Accion = action,
-            Detalle = details,
-            Fecha = DateTime.UtcNow
+        var result = new PagedResult<AuditLogDto> {
+            PageNumber = page,
+            PageSize = pageSize,
+            TotalCount = await query.CountAsync()
         };
 
-        _context.Set<InvAuditAdmin>().Add(audit);
-        await _context.SaveChangesAsync();
+        result.Items = await query
+            .OrderByDescending(a => a.Fecha)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(a => new AuditLogDto {
+                IdAudit = a.IdAudit,
+                AdminName = a.UserAdmin != null ? a.UserAdmin.Nombre ?? "" : "",
+                TargetName = a.UserAfectado != null ? a.UserAfectado.Nombre ?? "" : "",
+                Action = a.Accion,
+                Modulo = a.Modulo,
+                Details = a.Detalle,
+                IpAddress = a.IpOrigen,
+                UserAgent = a.UserAgent,
+                ValuesBefore = a.ValoresAnteriores,
+                ValuesAfter = a.ValoresNuevos,
+                Date = a.Fecha
+            })
+            .ToListAsync();
+
+        return result;
     }
+
 }

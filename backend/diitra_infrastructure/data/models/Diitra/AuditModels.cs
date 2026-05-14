@@ -13,8 +13,12 @@ public class InvAuditAdmin
     public int IdUsuarioAdmin { get; set; }
     public int IdUsuarioAfectado { get; set; }
     public string Accion { get; set; } = null!;
+    public string? Modulo { get; set; }
     public string? Detalle { get; set; }
     public string? IpOrigen { get; set; }
+    public string? UserAgent { get; set; }
+    public string? ValoresAnteriores { get; set; } // JSON
+    public string? ValoresNuevos { get; set; }     // JSON
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
 
     [ForeignKey("IdUsuarioAdmin")]

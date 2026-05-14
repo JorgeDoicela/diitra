@@ -11,6 +11,7 @@ import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjec
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
+import AuditPage from './pages/Admin/AuditPage';
 import VerifyDocument from './pages/Public/VerifyDocument';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -82,6 +83,14 @@ function App() {
             <AdminRoute>
               <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
                 <UsersPage />
+              </DashboardLayout>
+            </AdminRoute>
+          } />
+
+          <Route path="/admin/audit" element={
+            <AdminRoute>
+              <DashboardLayout theme={theme} toggleTheme={toggleTheme}>
+                <AuditPage />
               </DashboardLayout>
             </AdminRoute>
           } />
