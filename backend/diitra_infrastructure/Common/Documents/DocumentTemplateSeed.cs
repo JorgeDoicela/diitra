@@ -51,6 +51,19 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresSignature: true, 
                 version: 10);
 
+            yield return DocumentTemplate.Create(
+                code: InformeFinalTemplate.CODE,
+                name: "Informe Final de Investigación",
+                description: "Documento de consolidación de resultados para acreditación CACES.",
+                category: DocumentCategory.InformeFinal,
+                htmlContent: InformeFinalTemplate.GetHtml(),
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"resumen_ejecutivo\", \"cumplimiento_objetivos\", \"resultados\", \"discusion\", \"impacto_final\", \"transferencia_conocimiento\", \"conclusiones\", \"recomendaciones\", \"bibliografia_final\"]",
+                version: 1);
+
             // Nota: Conforme digitalicemos más documentos, se crearán sus carpetas
             // correspondientes y se registrarán aquí de forma limpia.
         }

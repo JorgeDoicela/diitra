@@ -1,32 +1,24 @@
 import { useState, useEffect } from 'react';
 import { 
     ClipboardList, Plus, FileText, 
-    ArrowRight, Target, Users, Calendar, Filter
+    ArrowRight, Target, Users, Calendar, Filter,
+    FileCheck
 } from 'lucide-react';
 import ProjectWorkspace from './Wizard/ProjectWizard';
 import DocumentTray from '../DocumentWorkspace/DocumentTray';
+import FinalReportLauncher from './components/FinalReportLauncher';
 
 const ResearchProjectsPage = () => {
     const [showWizard, setShowWizard] = useState(false);
-
-    useEffect(() => {
-        const fetchProyectos = async () => {
-            try {
-                // Endpoint ficticio por ahora
-            } catch (error) {
-                console.error('Error fetching projects:', error);
-            }
-        };
-        fetchProyectos();
-    }, []);
+    const [showReportLauncher, setShowReportLauncher] = useState(false);
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto selection:bg-primary/20">
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                        <ClipboardList size={10} className="text-text-main" />
+                        <ClipboardList size={10} className="text-primary" />
                         <span>Mis Investigaciones</span>
                     </div>
                     <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Proyectos de I+D+i</h2>
@@ -37,7 +29,7 @@ const ResearchProjectsPage = () => {
 
                 <button 
                     onClick={() => setShowWizard(true)}
-                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-xl"
                 >
                     <Plus size={14} strokeWidth={3} />
                     Nueva Postulación
@@ -45,9 +37,9 @@ const ResearchProjectsPage = () => {
             </header>
 
             {/* ── NÚCLEO DIITRA BUILDER: Centro de Control ── */}
-            <div className="grid grid-cols-12 gap-8 mb-16 animate-fade-up [animation-delay:100ms]">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-16 animate-fade-up [animation-delay:100ms]">
                 {/* Lado Izquierdo: Acciones de Postulación */}
-                <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+                <div className="col-span-1 lg:col-span-8 flex flex-col gap-6">
                     <div 
                         onClick={() => setShowWizard(true)}
                         className="group relative overflow-hidden bg-surface border border-border-thin p-6 md:p-10 rounded-2xl cursor-pointer shadow-sm transition-all hover:shadow-xl hover:scale-[1.01] active:scale-95 bg-glow"
@@ -73,13 +65,16 @@ const ResearchProjectsPage = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-text-main transition-colors cursor-pointer group">
-                            <FileText className="text-text-main mb-6" size={28} />
-                            <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Mis Expedientes</h4>
-                            <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Gestión de Ciclo de Vida</p>
+                        <div 
+                            onClick={() => setShowReportLauncher(true)}
+                            className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-primary transition-colors cursor-pointer group shadow-sm hover:shadow-lg bg-glow"
+                        >
+                            <FileCheck className="text-primary mb-6 group-hover:scale-110 transition-transform" size={28} />
+                            <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Informe Final</h4>
+                            <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Consolidación de Resultados</p>
                         </div>
-                        <div className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-text-main transition-colors cursor-pointer group">
-                            <Users className="text-text-main mb-6" size={28} />
+                        <div className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-text-main transition-colors cursor-pointer group shadow-sm">
+                            <Users className="text-text-main mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Colaboración</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">DIITRA CoWork Activo</p>
                         </div>
@@ -87,7 +82,7 @@ const ResearchProjectsPage = () => {
                 </div>
 
                 {/* Lado Derecho: Capacidades del Núcleo */}
-                <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+                <div className="col-span-1 lg:col-span-4 flex flex-col gap-6">
                     <div className="bg-bg-deep border border-border-thin p-8 rounded-2xl shadow-inner">
                         <div className="flex items-center gap-3 mb-8">
                             <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
@@ -152,6 +147,7 @@ const ResearchProjectsPage = () => {
             </div>
 
             {showWizard && <ProjectWorkspace onClose={() => setShowWizard(false)} />}
+            {showReportLauncher && <FinalReportLauncher onClose={() => setShowReportLauncher(false)} />}
         </main>
     );
 };

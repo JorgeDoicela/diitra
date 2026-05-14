@@ -92,4 +92,20 @@ export interface ICoWorkTransport {
      * Permite a los usuarios actuales re-anunciar su presencia para sincronizar al recién llegado.
      */
     onUserJoined?(handler: (userName: string, userRole: string) => void): void;
+
+    // ── COORDINACIÓN (Team Pulse) ──────────────────────────────────────
+
+    /** Notifica actividad en una sección (ej: "Juan está editando Resumen") */
+    notifySectionActivity(instanceUuid: string, sectionName: string, action: string, userName: string): Promise<void>;
+    
+    /** Actualiza el estado de una sección (Borrador, Revisión, Aprobado) */
+    updateSectionStatus(instanceUuid: string, sectionName: string, status: string, userUuid: string): Promise<void>;
+    
+    /** Publica un comentario en el hilo de discusión del documento */
+    postComment(instanceUuid: string, userUuid: string, userName: string, content: string, parentId?: number): Promise<void>;
+
+    /** Handlers para eventos de coordinación en tiempo real */
+    onSectionActivity(handler: (data: any) => void): void;
+    onSectionStatusUpdated(handler: (data: any) => void): void;
+    onNewCommentReceived(handler: (data: any) => void): void;
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     FileText, 
@@ -11,11 +11,13 @@ import {
     Clock,
     Eye,
     Sun,
-    Moon
+    Moon,
+    Activity
 } from 'lucide-react';
 import { useCoWork, CoWorkEditor } from '../../../core/cowork';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
+import CollaborationSidebar from './components/CollaborationSidebar';
 
 interface TemplateMetadata {
     code: string;
@@ -67,7 +69,6 @@ const DocumentWorkspace: React.FC = () => {
                 }
             } catch (error) {
                 console.error("[DIITRA] Error cargando workspace:", error);
-                // Si la instancia no existe, podríamos crear una nueva o navegar atrás
             } finally {
                 setIsLoading(false);
             }
@@ -79,7 +80,7 @@ const DocumentWorkspace: React.FC = () => {
     // Inicializar CoWork para la sección activa
     const cowork = useCoWork({
         documentId: activeSection ? `${documentUuid}_${activeSection}`.toLowerCase().trim() : '', 
-        enabled: !!activeSection && !!documentUuid, // Freno de mano hasta tener sección
+        enabled: !!activeSection && !!documentUuid, 
         readOnly: instance?.state === 3,
         user: {
             id: user?.id || 'anon',
@@ -90,31 +91,25 @@ const DocumentWorkspace: React.FC = () => {
         }
     });
 
+    // Notificar actividad al cambiar de sección
+    useEffect(() => {
+        if (activeSection && documentUuid && cowork.session.isConnected) {
+            cowork.notifySectionActivity(documentUuid, activeSection, "ha entrado a redactar");
+        }
+    }, [activeSection, documentUuid, cowork.session.isConnected]);
+
     const handleGeneratePdf = async () => {
         if (!window.confirm("¿Está seguro de finalizar este documento? Una vez generado el PDF oficial, no se podrá editar el contenido.")) return;
 
         try {
             setIsLoading(true);
-            
-            // 0. COMPACTACIÓN PLATINUM: Asegurar que el servidor tenga el estado Yjs fusionado
-            // Esto limpia los deltas y deja un Snapshot único antes de la generación oficial.
             await cowork.compact();
-            
-            // 1. Sincronizar el contenido actual una última vez (Garantía de Snapshot HTML)
-            // Esto asegura que el servidor tenga el HTML más reciente antes de generar el PDF
-            // Note: En una implementación más robusta, usaríamos una referencia al editor Tiptap aquí
-            // Por ahora, el onUpdate ya lo hace debounced, pero forzamos el guardado del estado final.
-            
-            // 2. Ejecutar la Orquestación Enterprise en el Servidor
-            // El servidor buscará los datos de investigación + el contenido de CoWork que acabamos de subir.
             const response = await api.post(`/documents/instances/${documentUuid}/finalize`);
-            
             const { traceabilityCode, fileName } = response.data;
             
             console.info(`[DIITRA Builder] Documento finalizado exitosamente. Trazabilidad: ${traceabilityCode}`);
             alert(`Documento finalizado y guardado como ${fileName}.\nCódigo de Trazabilidad: ${traceabilityCode}`);
 
-            // 3. Recargar datos para mostrar estado 'Firmado' e inmutable
             window.location.reload();
         } catch (error: any) {
             console.error("[DIITRA] Error en finalización:", error);
@@ -157,8 +152,8 @@ const DocumentWorkspace: React.FC = () => {
                         <div className="text-[10px] text-gray-400 dark:text-text-dim font-medium flex items-center gap-2">
                             <span>ID: {documentUuid?.substring(0, 8)}...</span>
                             <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-border-thin"></span>
-                            <span className="flex items-center gap-1">
-                                <Clock size={10} /> Editado recientemente
+                            <span className="flex items-center gap-1 font-bold text-primary">
+                                <Activity size={10} className="animate-pulse" /> Team Pulse Activado
                             </span>
                         </div>
                     </div>
@@ -179,11 +174,9 @@ const DocumentWorkspace: React.FC = () => {
                         ))}
                     </div>
 
-                    {/* Selector de Tema (Sun/Moon) */}
                     <button 
                         onClick={toggleTheme}
                         className="p-2 mr-2 hover:bg-gray-100 dark:hover:bg-bg-deep rounded-full text-gray-500 dark:text-text-dim transition-all active:scale-90"
-                        title={isDarkMode ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
                     >
                         {isDarkMode ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-gray-600" />}
                     </button>
@@ -199,7 +192,7 @@ const DocumentWorkspace: React.FC = () => {
                         onClick={handleGeneratePdf}
                         className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                     >
-                        <Download size={14} /> Finalizar y Generar PDF
+                        <Download size={14} /> Finalizar Documento
                     </button>
                 </div>
             </header>
@@ -208,7 +201,7 @@ const DocumentWorkspace: React.FC = () => {
                 {/* Sidebar Izquierdo - Secciones Dinámicas */}
                 <aside className="w-64 bg-surface border-r border-border-thin flex flex-col p-4 shadow-sm z-20 transition-colors duration-300">
                     <div className="mb-6 px-2">
-                        <span className="text-[10px] font-black text-gray-400 dark:text-text-dim uppercase tracking-[0.2em]">Secciones del Documento</span>
+                        <span className="text-[10px] font-black text-gray-400 dark:text-text-dim uppercase tracking-[0.2em]">Secciones</span>
                     </div>
                     <nav className="space-y-1 flex-1">
                         {sections.map(section => (
@@ -229,10 +222,10 @@ const DocumentWorkspace: React.FC = () => {
 
                     <div className="mt-auto p-4 bg-gray-50 dark:bg-bg-deep rounded-xl border border-gray-100 dark:border-border-thin">
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-900 dark:text-text-main mb-2">
-                            <Shield size={12} className="text-green-500" /> CUMPLIMIENTO LOPDP
+                            <Shield size={12} className="text-green-500" /> CUMPLIMIENTO SENESCYT
                         </div>
                         <p className="text-[9px] text-gray-400 dark:text-text-dim leading-relaxed">
-                            Este documento está siendo auditado en tiempo real según el Art. 26 de la LOPDP.
+                            Registro de auditoría forense activo. Todas las ediciones están firmadas digitalmente.
                         </p>
                     </div>
                 </aside>
@@ -246,11 +239,11 @@ const DocumentWorkspace: React.FC = () => {
                                     {activeSection.replace(/_/g, ' ')}
                                 </h2>
                                 <p className="text-text-dim text-sm mt-1">
-                                    Redacción colaborativa para el campo oficial del documento.
+                                    Redacción colaborativa en tiempo real.
                                 </p>
                             </div>
                             <div className="flex items-center gap-2 text-[10px] font-mono text-text-dim bg-surface px-3 py-1.5 rounded-full border border-border-thin shadow-sm">
-                                <Users size={12} /> {cowork.session.connectedUsers.length} editando ahora
+                                <Users size={12} /> {cowork.session.connectedUsers.length} investigadores activos
                             </div>
                         </div>
 
@@ -259,25 +252,27 @@ const DocumentWorkspace: React.FC = () => {
                                 <CoWorkEditor 
                                     key={activeSection}
                                     cowork={cowork}
-                                    placeholder={`Empiece a redactar la sección de ${activeSection.replace(/_/g, ' ')}...`}
+                                    placeholder={`Empiece a redactar...`}
                                 />
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-[600px] text-gray-400 gap-4">
                                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
-                                    <p className="text-sm font-medium">Preparando entorno colaborativo...</p>
+                                    <p className="text-sm font-medium">Preparando entorno...</p>
                                 </div>
                             )}
                         </div>
-
-                        {/* Footer del Editor */}
-                        <div className="mt-6 flex items-center justify-between text-[10px] text-gray-400 dark:text-text-dim font-medium italic">
-                            <div className="flex items-center gap-2">
-                                <History size={12} /> Auto-guardado en base de datos habilitado
-                            </div>
-                            <div>DIITRA CoWork Core v3.0</div>
-                        </div>
                     </div>
                 </main>
+
+                {/* Sidebar Derecho - Coordinación (Team Pulse) */}
+                {documentUuid && activeSection && (
+                    <CollaborationSidebar 
+                        instanceUuid={documentUuid}
+                        sectionName={activeSection}
+                        cowork={cowork}
+                        allSections={sections}
+                    />
+                )}
             </div>
         </div>
     );

@@ -124,6 +124,20 @@ namespace diitra_infrastructure.Research
             }
         }
 
+        public async Task<System.Collections.Generic.List<ProyectoDto>> GetAllProjectsAsync()
+        {
+            return await _context.InvProyectos
+                .Select(p => new ProyectoDto
+                {
+                    Uuid = p.Uuid,
+                    Titulo = p.Titulo,
+                    CodigoInstitucional = p.CodigoInstitucional,
+                    Estado = p.Estado
+                })
+                .OrderByDescending(p => p.Titulo)
+                .ToListAsync();
+        }
+
         private async Task SyncInvestigadoresAsync(int projectId, System.Collections.Generic.List<InvestigadorDto>? investigadores)
         {
             if (investigadores == null) return;

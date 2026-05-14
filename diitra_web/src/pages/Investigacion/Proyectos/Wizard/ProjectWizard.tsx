@@ -254,40 +254,39 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     onValueChange={(v) => setFormData(p => ({...p, Titulo: v}))}
                                     className="w-full bg-bg-deep border border-border-thin rounded-2xl px-6 py-5 text-xl font-bold text-text-main resize-none h-32" 
                                 />
-                                
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div>
-                                        <label className="text-[10px] font-black uppercase text-text-dim mb-2 block ml-1 tracking-widest">Convocatoria de Investigación</label>
-                                        <select 
-                                            name="IdConvocatoria"
-                                            value={formData.IdConvocatoria}
-                                            onChange={handleChange}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-main outline-none focus:border-text-main transition-colors appearance-none"
-                                        >
-                                            <option value={0}>Seleccione una convocatoria...</option>
-                                            {convocatorias.map(c => (
-                                                <option key={c.id_convocatoria} value={c.id_convocatoria}>{c.codigo_convocatoria} - {c.titulo}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <CoWorkField 
-                                            name="CodigoInstitucional" 
-                                            cowork={cowork} 
-                                            label="Código del Proyecto"
-                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-dim font-mono" 
-                                            placeholder="Auto-generado..."
-                                            readOnly
-                                        />
-                                        <CoWorkField 
-                                            name="Periodo" 
-                                            cowork={cowork} 
-                                            label="Periodo Académico"
-                                            onValueChange={(v) => setFormData(p => ({...p, Periodo: v}))}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
-                                        />
-                                    </div>
-                                </div>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
+                                     <div className="md:col-span-1">
+                                         <label className="text-[10px] font-black uppercase text-text-dim mb-2 block ml-1 tracking-widest">Convocatoria de Investigación</label>
+                                         <select 
+                                             name="IdConvocatoria"
+                                             value={formData.IdConvocatoria}
+                                             onChange={handleChange}
+                                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-main outline-none focus:border-text-main transition-colors appearance-none"
+                                         >
+                                             <option value={0}>Seleccione una convocatoria...</option>
+                                             {convocatorias.map(c => (
+                                                 <option key={c.id_convocatoria} value={c.id_convocatoria}>{c.codigo_convocatoria} - {c.titulo}</option>
+                                             ))}
+                                         </select>
+                                     </div>
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                         <CoWorkField 
+                                             name="CodigoInstitucional" 
+                                             cowork={cowork} 
+                                             label="Código del Proyecto"
+                                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-dim font-mono" 
+                                             placeholder="Auto-generado..."
+                                             readOnly
+                                         />
+                                         <CoWorkField 
+                                             name="Periodo" 
+                                             cowork={cowork} 
+                                             label="Periodo Académico"
+                                             onValueChange={(v) => setFormData(p => ({...p, Periodo: v}))}
+                                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm" 
+                                         />
+                                     </div>
+                                 </div>
                             </div>
 
                             <div className="space-y-6">
@@ -474,58 +473,58 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 {formData.Investigadores.map((inv, idx) => (
                                     <div key={idx} className="p-8 bg-surface border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
                                         <button onClick={()=>removeItem('Investigadores', idx)} className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full"><Trash2 size={18}/></button>
-                                        <div className="grid grid-cols-12 gap-6">
-                                            <div className="col-span-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+                                            <div className="md:col-span-5">
                                                 <CoWorkField 
                                                     name={`Inv_${idx}_nombre`} 
                                                     cowork={cowork} 
-                                                    label="Nombre y Apellidos Completos"
+                                                    label="Nombre y Apellidos"
                                                     onValueChange={(v) => updateItem('Investigadores', idx, 'Nombre', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold"
                                                 />
                                             </div>
-                                            <div className="col-span-3">
+                                            <div className="md:col-span-3">
                                                 <CoWorkField 
                                                     name={`Inv_${idx}_cedula`} 
                                                     cowork={cowork} 
-                                                    label="N.° Cédula"
+                                                    label="Cédula"
                                                     onValueChange={(v) => updateItem('Investigadores', idx, 'Cedula', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
-                                            <div className="col-span-4">
+                                            <div className="md:col-span-4">
                                                 <CoWorkField 
                                                     name={`Inv_${idx}_email`} 
                                                     cowork={cowork} 
-                                                    label="Email Institucional"
+                                                    label="Email"
                                                     onValueChange={(v) => updateItem('Investigadores', idx, 'Email', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
-                                            <div className="col-span-3">
+                                            <div className="md:col-span-3">
                                                 <CoWorkField 
                                                     name={`Inv_${idx}_telefono`} 
                                                     cowork={cowork} 
-                                                    label="Teléfono de Contacto"
+                                                    label="Teléfono"
                                                     onValueChange={(v) => updateItem('Investigadores', idx, 'Telefono', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
                                             </div>
-                                            <div className="col-span-5">
+                                            <div className="md:col-span-5">
                                                 <CoWorkField 
                                                     name={`Inv_${idx}_nivel`} 
                                                     cowork={cowork} 
-                                                    label="Nivel Académico (Título Senescyt)"
+                                                    label="Nivel Académico"
                                                     onValueChange={(v) => updateItem('Investigadores', idx, 'NivelAcademico', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                     placeholder="Ej: Magíster en..."
                                                 />
                                             </div>
-                                            <div className="col-span-4">
+                                            <div className="md:col-span-4">
                                                 <CoWorkField 
                                                     name={`Inv_${idx}_rol`} 
                                                     cowork={cowork} 
-                                                    label="Rol en el ISTPET"
+                                                    label="Rol"
                                                     onValueChange={(v) => updateItem('Investigadores', idx, 'Rol', v)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                                 />
@@ -549,7 +548,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     className="w-full h-56 bg-surface border border-border-thin rounded-2xl px-8 py-6 text-sm text-text-main shadow-inner" 
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                 <div>
                                     <CoWorkField 
                                         name="DescripcionProyecto" 
@@ -606,7 +605,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                 <CoWorkField 
                                     name="ObjetivoGeneral" 
                                     cowork={cowork} 
@@ -624,7 +623,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                     className="w-full h-32 bg-surface border border-border-thin rounded-2xl px-6 py-5 text-sm" 
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                                 <CoWorkField 
                                     name="Metodologia" 
                                     cowork={cowork} 
@@ -743,7 +742,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                         <div className="space-y-12">
                             <div className="space-y-6">
                                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-2"><DollarSign size={18}/> 4. Recursos y Presupuesto</h4>
-                                <div className="grid grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="p-6 bg-surface border border-border-thin rounded-2xl">
                                         <div className="flex justify-between items-center mb-6">
                                             <p className="text-[10px] font-black uppercase text-text-dim">4.1 Recursos Disponibles</p>
@@ -787,7 +786,7 @@ const ProjectWorkspace: React.FC<ProjectWorkspaceProps> = ({ onClose }) => {
                                                         onValueChange={(v) => updateItem('RecursosNecesarios', i, 'Descripcion', v)}
                                                         className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
                                                     />
-                                                    <div className="w-24">
+                                                    <div className="w-20 md:w-24">
                                                         <CoWorkField 
                                                             name={`RecNec_${i}_unit`} 
                                                             cowork={cowork} 

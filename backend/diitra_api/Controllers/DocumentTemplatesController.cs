@@ -134,6 +134,44 @@ namespace diitra_api.Controllers
                 return NotFound(new { error = "La plantilla 'PROTOCOLO_INVESTIGACION' no existe en BD. Ejecute primero el seed." });
             }
         }
+
+        [HttpPost("migrate-informe-final")]
+        public async Task<IActionResult> MigrateInformeFinal(CancellationToken ct)
+        {
+            try
+            {
+                var html = InformeFinalTemplate.GetHtml();
+                var updatedBy = User.Identity?.Name ?? "migration-script";
+
+                await _documentEngine.UpdateTemplateAsync(
+                    InformeFinalTemplate.CODE,
+                    html,
+                    customCss: null,
+                    updatedBy,
+                    ct);
+
+                return Ok(new
+                {
+                    message = "Plantilla 'INFORME_FINAL_INVESTIGACION' migrada exitosamente al formato oficial CACES 2026.",
+                    templateCode = InformeFinalTemplate.CODE,
+                    sections = new[]
+                    {
+                        "Resumen Ejecutivo",
+                        "Cumplimiento de Objetivos",
+                        "Resultados Obtenidos",
+                        "Discusión de Hallazgos",
+                        "Impacto Final",
+                        "Transferencia de Conocimiento",
+                        "Conclusiones y Recomendaciones",
+                        "Bibliografía Final"
+                    }
+                });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { error = "La plantilla 'INFORME_FINAL_INVESTIGACION' no existe en BD. Ejecute primero el seed." });
+            }
+        }
     }
 
     public record UpdateTemplateRequest(string HtmlContent, string? CustomCss = null);

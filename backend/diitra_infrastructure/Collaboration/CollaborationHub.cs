@@ -77,6 +77,7 @@ namespace diitra_infrastructure.Collaboration
             await _db.SaveChangesAsync();
 
             await Groups.AddToGroupAsync(Context.ConnectionId, documentId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, instanceUuid); // Grupo de Coordinación (Team Pulse)
             await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
 
             // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas
@@ -203,6 +204,86 @@ namespace diitra_infrastructure.Collaboration
             documentId = documentId.ToLower().Trim();
             await Clients.OthersInGroup(documentId)
                          .SendAsync("ReceiveAwarenessUpdate", updateBase64);
+        }
+
+        // ── COORDINACIÓN DE EQUIPO (Team Pulse) ──────────────────────────────
+
+        /// <summary>
+        /// Notifica actividad en una sección específica (ej: "Usuario X está escribiendo en Resumen").
+        /// Se difunde a todos los miembros de la instancia del documento (no solo de la sección).
+        /// </summary>
+        public async Task NotifySectionActivity(string instanceUuid, string sectionName, string action, string userName)
+        {
+            await Clients.Group(instanceUuid).SendAsync("SectionActivity", new {
+                instanceUuid,
+                sectionName,
+                action,
+                userName,
+                timestamp = DateTime.UtcNow
+            });
+        }
+
+        /// <summary>
+        /// Actualiza el estado de una sección y lo notifica en tiempo real.
+        /// </summary>
+        public async Task UpdateSectionStatus(string instanceUuid, string sectionName, string status, string userUuid)
+        {
+            var documentUuid = $"{instanceUuid}_{sectionName}";
+            
+            var meta = await _db.InvDocumentosSeccionesMetadata
+                .FirstOrDefaultAsync(m => m.DocumentoUuid == documentUuid && m.SeccionNombre == sectionName);
+
+            if (meta == null)
+            {
+                meta = new InvDocumentoSeccionMetadata
+                {
+                    DocumentoUuid = documentUuid,
+                    SeccionNombre = sectionName
+                };
+                _db.InvDocumentosSeccionesMetadata.Add(meta);
+            }
+
+            meta.Estado = status;
+            meta.UltimaModificacionPor = userUuid;
+            meta.ActualizadoEn = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+
+            // Notificar a todo el equipo
+            await Clients.Group(instanceUuid).SendAsync("SectionStatusUpdated", new {
+                instanceUuid,
+                sectionName,
+                status,
+                updatedBy = userUuid
+            });
+        }
+
+        /// <summary>
+        /// Publica un comentario y lo retransmite a todo el equipo.
+        /// </summary>
+        public async Task PostComment(string instanceUuid, string userUuid, string userName, string content, int? parentId = null)
+        {
+            var comment = new InvCollaborationComment
+            {
+                DocumentoUuid = instanceUuid,
+                UsuarioUuid = userUuid,
+                NombreUsuario = userName,
+                Contenido = content,
+                IdPadre = parentId
+            };
+
+            _db.InvCollaborationComments.Add(comment);
+            await _db.SaveChangesAsync();
+
+            await Clients.Group(instanceUuid).SendAsync("NewCommentReceived", new {
+                comment.IdComentario,
+                comment.Uuid,
+                comment.UsuarioUuid,
+                comment.NombreUsuario,
+                comment.Contenido,
+                comment.IdPadre,
+                comment.CreadoEn
+            });
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
