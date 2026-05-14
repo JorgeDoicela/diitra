@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
 using Microsoft.Extensions.Logging;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.Common.Notifications
 {
@@ -28,6 +31,7 @@ namespace diitra_infrastructure.Common.Notifications
             // 1. Persistencia Interna (In-App Notification)
             var notif = new InvNotificacion
             {
+                Uuid = Guid.NewGuid(),
                 Destinatario = userId,
                 Titulo = title,
                 Mensaje = body,
@@ -40,13 +44,21 @@ namespace diitra_infrastructure.Common.Notifications
             _context.InvNotificaciones.Add(notif);
             await _context.SaveChangesAsync();
 
-            // 2. Notificación Externa vía Drivers (Email, Push, etc.)
+            // 2. Buscar Email del Usuario
+            var user = await _context.Users.FindAsync(userId);
+            var recipientContact = user?.EmailInstitucional ?? "";
+
+            // 3. Notificación Externa vía Drivers (Email, SignalR, Push)
             foreach (var driver in _drivers)
             {
                 try
                 {
-                    // En un sistema real, aquí buscaríamos el email/teléfono del usuario
-                    // await driver.SendAsync(userEmail, title, body, url);
+                    // El driver de SignalR usa el ID, el de Email usa el correo, el de Push usa el ID para buscar tokens
+                    string contact = (driver.Name == "Email") ? recipientContact : userId.ToString();
+                    
+                    if (string.IsNullOrEmpty(contact) && driver.Name == "Email") continue;
+
+                    await driver.SendAsync(contact, title, body, url);
                 }
                 catch (Exception ex)
                 {
@@ -57,9 +69,19 @@ namespace diitra_infrastructure.Common.Notifications
 
         public async Task BroadcastAsync(string title, string body, string? role = null)
         {
-            // Lógica para enviar a múltiples usuarios
-            _logger.LogInformation($"Broadcast: {title}");
-            await Task.CompletedTask;
+            _logger.LogInformation($"Iniciando Broadcast: {title} (Filtro Rol: {role ?? "TODOS"})");
+
+            // 1. Obtener lista de destinatarios
+            IQueryable<User> query = _context.Users;
+            
+            var recipients = await query.ToListAsync();
+
+            // 2. Procesar cada uno
+            // En producción, esto debería ir a una cola de fondo (BackgroundJob)
+            foreach (var user in recipients)
+            {
+                await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", null);
+            }
         }
     }
 }

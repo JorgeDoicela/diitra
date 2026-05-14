@@ -135,7 +135,11 @@ builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_inf
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationService, diitra_infrastructure.Common.Notifications.NotificationService>();
-builder.Services.AddSingleton<IEnumerable<diitra_application.Common.Notifications.INotificationDriver>>(new List<diitra_application.Common.Notifications.INotificationDriver>());
+// Notificación Drivers
+builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.SignalRDriver>();
+builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.EmailDriver>();
+builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.PushDriver>();
+
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
 builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
 builder.Services.AddScoped<IGroupsService, GroupsService>();
@@ -187,6 +191,7 @@ var app = builder.Build();
 
     // SignalR Hubs (Unificado)
     app.MapHub<CollaborationHub>("/hubs/collaboration");
+    app.MapHub<diitra_infrastructure.Common.Notifications.Hubs.NotificationHub>("/hubs/notifications");
 
 app.Run();
 

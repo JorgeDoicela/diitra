@@ -8,10 +8,12 @@ namespace diitra_infrastructure.Research;
 public class ConvocatoriaService : IConvocatoriaService
 {
     private readonly DiitraContext _context;
+    private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
 
-    public ConvocatoriaService(DiitraContext context)
+    public ConvocatoriaService(DiitraContext context, diitra_application.Common.Notifications.INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<ConvocatoriaDto>> GetAllAsync()
@@ -269,8 +271,20 @@ public class ConvocatoriaService : IConvocatoriaService
         var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
+        var oldState = conv.Estado;
         conv.Estado = newState;
         await _context.SaveChangesAsync();
+
+        // Notificación Profesional
+        if (newState == "Abierta" && oldState != "Abierta")
+        {
+            await _notificationService.BroadcastAsync(
+                "Nueva Convocatoria Abierta",
+                $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
+                "DOCENTE"
+            );
+        }
+
         return true;
     }
 

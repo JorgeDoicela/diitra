@@ -1,5 +1,5 @@
 -- =============================================================================
---  ADVERTENCIA DE SEGURIDAD - AMBIENTE DE PRODUCCIÓN
+--  ADVERTENCIA DE SEGURIDAD - AMBIENTE DE DESARROLLO
 --  Este script está diseñado para el despliegue del módulo de INVESTIGACIÓN.
 --  SOLO AFECTA A TABLAS CON PREFIJO 'inv_'.
 --  NO MODIFICA, ELIMINA NI ALTERA TABLAS INSTITUCIONALES (periodos, carreras,
@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS
     inv_notificaciones,
     inv_tokens_acceso,
     inv_usuarios_metadata,
+    inv_dispositivos_tokens,
     inv_config_indicadores,
     inv_audit_admin,
 
@@ -899,6 +900,15 @@ CREATE TRIGGER trg_usermeta_uuid
 BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
+
+CREATE TABLE inv_dispositivos_tokens (
+    idToken             INT          AUTO_INCREMENT PRIMARY KEY,
+    idUsuario           INT(11)      NOT NULL,
+    deviceToken         VARCHAR(512) NOT NULL UNIQUE,
+    plataforma          VARCHAR(20)  DEFAULT 'Web', -- Web, iOS, Android
+    ultimaSincronizacion TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[MÓVIL] Almacén de tokens para Push Notifications (FCM)';
 
 
 -- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
