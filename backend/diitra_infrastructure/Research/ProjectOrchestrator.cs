@@ -4,9 +4,11 @@ using System.Threading.Tasks;
 using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
 using diitra_application.Security;
+using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 
 namespace diitra_infrastructure.Research
 {
@@ -15,13 +17,15 @@ namespace diitra_infrastructure.Research
         private readonly DiitraContext _context;
         private readonly IAuthService _authService;
         private readonly IAuditService _auditService;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<ProjectOrchestrator> _logger;
 
-        public ProjectOrchestrator(DiitraContext context, IAuthService authService, IAuditService auditService, ILogger<ProjectOrchestrator> logger)
+        public ProjectOrchestrator(DiitraContext context, IAuthService authService, IAuditService auditService, INotificationService notificationService, ILogger<ProjectOrchestrator> logger)
         {
             _context = context;
             _authService = authService;
             _auditService = auditService;
+            _notificationService = notificationService;
             _logger = logger;
         }
 
@@ -177,6 +181,22 @@ namespace diitra_infrastructure.Research
                         EsDirector = inv.Rol?.Contains("Director") == true
                     });
                 }
+
+                // Notificar al investigador sobre su asignación/actualización
+                var project = await _context.InvProyectos.FindAsync(projectId);
+                await _notificationService.NotifyUserAsync(
+                    persona.IdUsuario,
+                    "Actualización de Proyecto",
+                    $"Se han sincronizado tus datos en el proyecto: {project?.Titulo}",
+                    "INVESTIGACION",
+                    $"/proyectos/{project?.Uuid}",
+                    new Dictionary<string, string>
+                    {
+                        { "Proyecto", project?.Titulo ?? "Sin título" },
+                        { "Rol Asignado", inv.Rol ?? "Investigador" },
+                        { "Fecha Sincronización", DateTime.Now.ToString("dd/MM/yyyy HH:mm") }
+                    }
+                );
             }
         }
 

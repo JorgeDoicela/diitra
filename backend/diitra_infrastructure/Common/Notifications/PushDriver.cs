@@ -15,7 +15,7 @@ namespace diitra_infrastructure.Common.Notifications
             _logger = logger;
         }
 
-        public async Task SendAsync(string recipient, string title, string body, string? url = null)
+        public async Task SendAsync(string recipient, string title, string body, string? url = null, string? recipientName = null, Dictionary<string, string>? extraData = null)
         {
             // Este es un cascarón preparado para una futura integración con Firebase Cloud Messaging (FCM)
             // Cuando Dios mediante se cree la versión móvil, aquí se consultarán los tokens de la tabla 

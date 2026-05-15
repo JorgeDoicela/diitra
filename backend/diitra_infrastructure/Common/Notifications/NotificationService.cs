@@ -26,7 +26,7 @@ namespace diitra_infrastructure.Common.Notifications
             _logger = logger;
         }
 
-        public async Task NotifyUserAsync(int userId, string title, string body, string category = "SISTEMA", string? url = null)
+        public async Task NotifyUserAsync(int userId, string title, string body, string category = "SISTEMA", string? url = null, Dictionary<string, string>? extraData = null)
         {
             // 1. Persistencia Interna (In-App Notification)
             var notif = new InvNotificacion
@@ -47,6 +47,7 @@ namespace diitra_infrastructure.Common.Notifications
             // 2. Buscar Email del Usuario
             var user = await _context.Users.FindAsync(userId);
             var recipientContact = user?.EmailInstitucional ?? "";
+            var recipientName = user?.Nombre ?? "Usuario";
 
             // 3. Notificación Externa vía Drivers (Email, SignalR, Push)
             foreach (var driver in _drivers)
@@ -58,7 +59,7 @@ namespace diitra_infrastructure.Common.Notifications
                     
                     if (string.IsNullOrEmpty(contact) && driver.Name == "Email") continue;
 
-                    await driver.SendAsync(contact, title, body, url);
+                    await driver.SendAsync(contact, title, body, url, recipientName, extraData);
                 }
                 catch (Exception ex)
                 {
@@ -67,7 +68,7 @@ namespace diitra_infrastructure.Common.Notifications
             }
         }
 
-        public async Task BroadcastAsync(string title, string body, string? role = null, string? url = null)
+        public async Task BroadcastAsync(string title, string body, string? role = null, string? url = null, Dictionary<string, string>? extraData = null)
         {
             _logger.LogInformation($"Iniciando Broadcast: {title} (Filtro Rol: {role ?? "TODOS"})");
 
@@ -79,7 +80,7 @@ namespace diitra_infrastructure.Common.Notifications
             // 2. Procesar cada uno
             foreach (var user in recipients)
             {
-                await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", url);
+                await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", url, extraData);
             }
         }
 
