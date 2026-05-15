@@ -15,7 +15,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
 <style>
     /* RESET & CORE */
     * {{ box-sizing: border-box; }}
-    .page {{ page-break-after: always; position: relative; width: 100%; height: 100%; }}
+    .page-break {{ page-break-after: always; }}
     
     /* PORTADA (COVER PAGE) FULL BLEED - Breaking out of 1.5cm margins */
     .cover-page {{ 
@@ -29,7 +29,9 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         background-size: 100% 100%;
         background-repeat: no-repeat;
         color: #1a2b4a;
+        z-index: 1000;
     }}
+    .page {{ page-break-after: always; position: relative; }}
 
     .cover-overlay {{
         position: absolute;
@@ -95,28 +97,46 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     .period-label {{ font-size: 11pt; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }}
     .period-value {{ font-size: 11pt; font-weight: 400; text-transform: uppercase; }}
 
+    /* BACKGROUND STATIONARY (Papel Membretado) - Fixed on all pages */
+    .stationary-bg {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 210mm;
+        height: 297mm;
+        z-index: -1000;
+        background-image: url('data:image/jpeg;base64,{TemplateImages.FondoHojasInvestigacionBase64}');
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        opacity: 0.35;
+    }}
+
     /* CUERPO DEL DOCUMENTO (PAGE 2+) */
     .doc-container {{ 
         font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
         color: #1e2a4a; 
         line-height: 1.4; 
-        padding: 40px; 
-        background-image: url('data:image/jpeg;base64,{TemplateImages.FondoHojasInvestigacionBase64}');
-        background-size: 100% auto;
-        background-repeat: repeat-y;
+        padding: 100px 40px 40px 40px; 
+        background: transparent;
     }}
-    .header-table {{ width: 100%; margin-bottom: 20px; border-bottom: 2px solid #1e2a4a; padding-bottom: 10px; background: transparent; }}
-    .section-title {{ background: #1e2a4a; color: #fff; padding: 8px 15px; font-weight: bold; font-size: 11pt; margin: 25px 0 12px 0; text-transform: uppercase; border-radius: 4px; }}
-    .info-table, .data-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9.5pt; background: transparent; }}
-    .info-table td {{ border: 1px solid #1e2a4a; padding: 10px; vertical-align: top; }}
-    .info-table .label {{ font-weight: bold; background: rgba(248, 250, 252, 0.8); width: 35%; text-transform: uppercase; font-size: 8.5pt; color: #475569; }}
-    .data-table th {{ background: rgba(241, 245, 249, 0.8); border: 1px solid #1e2a4a; padding: 8px; font-size: 9pt; text-transform: uppercase; color: #1e2a4a; }}
-    .data-table td {{ border: 1px solid #1e2a4a; padding: 8px; background: rgba(255, 255, 255, 0.4); }}
-    .firma-box {{ border: 1px solid #1e2a4a; padding: 20px; height: 140px; vertical-align: bottom; background: transparent; }}
+    .section-title {{ 
+        color: #1e2a4a; 
+        padding: 10px 0; 
+        font-weight: 800; 
+        font-size: 11pt; 
+        margin: 15px 0 5px 0; 
+        text-transform: uppercase; 
+    }}
+    .info-table, .data-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9pt; background: #fff; }}
+    .info-table td {{ border: 1px solid #1e2a4a; padding: 6px 10px; vertical-align: middle; }}
+    .info-table .label {{ font-weight: bold; background: #1e2a4a; width: 35%; text-transform: uppercase; font-size: 8pt; color: #ffffff; }}
+    .data-table th {{ background: #1e2a4a; border: 1px solid #1e2a4a; padding: 8px; font-size: 8pt; text-transform: uppercase; color: #ffffff; }}
+    .data-table td {{ border: 1px solid #1e2a4a; padding: 8px; background: #ffffff; color: #000; }}
+    .firma-box {{ border: 1px solid #1e2a4a; padding: 20px; height: 120px; vertical-align: bottom; background: #fff; }}
 </style>
 
 <!-- PÁGINA 1: PORTADA INSTITUCIONAL CON IMAGEN DE FONDO -->
-<div class=""page"">
+<div class=""page"" style=""height: 270mm;"">
     <div class=""cover-page"">
         <div class=""cover-overlay"">
             <h1 class=""main-label"">PROYECTO DE INVESTIGACIÓN</h1>
@@ -140,16 +160,6 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
 
 <!-- PÁGINA 2+: CONTENIDO DEL PROTOCOLO -->
 <div class=""doc-container"">
-    <table class=""header-table"">
-        <tr>
-            <td><img src=""https://diitra.ist.edu.ec/assets/logo_institucional.png"" style=""width:160px"" /></td>
-            <td style=""text-align:right"">
-                <div style=""font-weight:900; font-size:14pt; color:#1a2b4a"">PROTOCOLO DE INVESTIGACIÓN</div>
-                <div style=""font-size:8pt; color:#c5a059; font-weight:bold"">VERSIÓN OFICIAL v17.0 - RESILIENCIA CACES 2026</div>
-            </td>
-        </tr>
-    </table>
-
     <div class=""section-title"">1. IDENTIFICACIÓN DEL PROYECTO</div>
     <table class=""info-table"">
         <tr><td class=""label"">NOMBRE DEL PROYECTO:</td><td><strong>{{{{default titulo '...'}}}}</strong></td></tr>
@@ -284,6 +294,9 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
             <td class=""firma-box"" style=""width:48%""><strong>{{{{default coordinador 'COORDINADOR CARRERA'}}}}</strong><br/>Firma</td>
         </tr>
     </table>
-</div>";
+</div>
+
+<!-- FONDO FIJO PARA TODAS LAS HOJAS (PAPEL MEMBRETADO) -->
+<div class=""stationary-bg""></div>";
     }
 }
