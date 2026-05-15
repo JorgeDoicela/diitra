@@ -282,7 +282,13 @@ public class ConvocatoriaService : IConvocatoriaService
                 "Nueva Convocatoria Abierta",
                 $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
                 "DOCENTE",
-                "/convocatorias"
+                "/convocatorias",
+                new Dictionary<string, string>
+                {
+                    { "Año", conv.Anio.ToString() },
+                    { "Código", conv.CodigoConvocatoria ?? "N/A" },
+                    { "Fecha Cierre", conv.FechaCierre.ToString("dd/MM/yyyy") }
+                }
             );
         }
 

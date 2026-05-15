@@ -170,7 +170,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             transport.onUserJoined?.((name) => {
                 if (!isMounted || !awarenessRef.current) return;
                 console.log(`[useCoWork] Nuevo usuario detectado (${name}), re-anunciando presencia local...`);
-                
+
                 // Forzar re-anuncio local para que el nuevo usuario nos vea de inmediato
                 const localState = awarenessRef.current.getLocalState();
                 if (localState) {
@@ -202,7 +202,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             awareness.on('update', ({ added, updated, removed }, origin) => {
                 if (isMounted) {
                     syncUserList(); // Refrescar siempre que algo cambie (local o remoto)
-                    
+
                     if (origin !== 'remote') {
                         const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [
                             ...added, ...updated, ...removed
@@ -217,7 +217,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             try {
                 // 4. Iniciar Conexión (Handshake)
                 const handshake = await transport.connect(config.documentId, config.user);
-                
+
                 if (!isMounted) {
                     transport.disconnect();
                     return;
@@ -228,11 +228,11 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 const isReadOnly = (handshake as any).readOnly ?? (handshake as any).ReadOnly ?? false;
                 const isBlindMode = (handshake as any).isBlindMode ?? (handshake as any).IsBlindMode ?? false;
 
-                setSession(s => ({ 
-                    ...s, 
-                    isConnected: true, 
-                    readOnly: isReadOnly, 
-                    error: null 
+                setSession(s => ({
+                    ...s,
+                    isConnected: true,
+                    readOnly: isReadOnly,
+                    error: null
                 }));
 
                 // Configurar Identidad (Blind Mode aware)
@@ -243,7 +243,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     tabId = Math.random().toString(36).substring(7);
                     sessionStorage.setItem(sessionKey, tabId);
                 }
-                
+
                 const userToAnnounce = { ...config.user, tabId };
 
                 if (isBlindMode) {
@@ -302,7 +302,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         onSectionStatusUpdated,
         onNewCommentReceived
     }), [
-        session, compact, submitFinalContent, disconnect, 
+        session, compact, submitFinalContent, disconnect,
         notifySectionActivity, updateSectionStatus, postComment,
         onSectionActivity, onSectionStatusUpdated, onNewCommentReceived
     ]);

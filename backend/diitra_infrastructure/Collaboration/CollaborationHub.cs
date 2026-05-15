@@ -38,7 +38,7 @@ namespace diitra_infrastructure.Collaboration
         {
             documentId = documentId.ToLower().Trim();
             _logger.LogInformation("[HUB] User {User} joining: {Room}", userName, documentId);
-            
+
             // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
             var instanceUuid = documentId.Split('_')[0];
 
@@ -86,7 +86,7 @@ namespace diitra_infrastructure.Collaboration
             var docSnapshot = await _db.InvCoworkDocumentos
                 .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.Uuid == documentId);
-            
+
             if (docSnapshot?.YjsState != null)
             {
                 updatesToSend.Add(Convert.ToBase64String(docSnapshot.YjsState));
@@ -98,7 +98,7 @@ namespace diitra_infrastructure.Collaboration
                 .OrderBy(u => u.IdUpdate)
                 .Select(u => Convert.ToBase64String(u.UpdateData))
                 .ToListAsync();
-            
+
             updatesToSend.AddRange(deltas);
 
             _logger.LogInformation("[HUB] Sending {Count} history updates to {User}", updatesToSend.Count, userName);
@@ -119,7 +119,7 @@ namespace diitra_infrastructure.Collaboration
         public async Task SendYjsUpdate(string documentId, string updateBase64)
         {
             documentId = documentId.ToLower().Trim();
-            
+
             var instanceUuid = documentId.Split('_')[0];
             var instance = await _db.DocumentInstances
                 .AsNoTracking()
@@ -136,13 +136,13 @@ namespace diitra_infrastructure.Collaboration
                 DocumentoUuid = documentId,
                 UpdateData = Convert.FromBase64String(updateBase64)
             };
-            
+
             _db.InvCoworkUpdates.Add(newUpdate);
             await _db.SaveChangesAsync();
         }
 
         /// <summary>
-        /// ESTRATEGIA DE COMPACTACIÓN (Nivel Platinum): 
+        /// ESTRATEGIA DE COMPACTACIÓN (Nivel Platinum):
         /// El cliente envía el estado completo ya fusionado. El servidor reemplaza el snapshot
         /// y limpia el historial de deltas para mantener la base de datos esbelta y rápida.
         /// </summary>
@@ -154,8 +154,8 @@ namespace diitra_infrastructure.Collaboration
             var doc = await _db.InvCoworkDocumentos.FirstOrDefaultAsync(d => d.Uuid == documentId);
             if (doc == null)
             {
-                doc = new InvCoworkDocumento { 
-                    Uuid = documentId, 
+                doc = new InvCoworkDocumento {
+                    Uuid = documentId,
                     EntidadUuid = documentId.Split('_')[0],
                     CampoNombre = documentId.Contains('_') ? documentId.Split('_')[1] : "contenido"
                 };
@@ -229,7 +229,7 @@ namespace diitra_infrastructure.Collaboration
         public async Task UpdateSectionStatus(string instanceUuid, string sectionName, string status, string userUuid)
         {
             var documentUuid = $"{instanceUuid}_{sectionName}";
-            
+
             var meta = await _db.InvDocumentosSeccionesMetadata
                 .FirstOrDefaultAsync(m => m.DocumentoUuid == documentUuid && m.SeccionNombre == sectionName);
 
@@ -481,9 +481,9 @@ namespace diitra_infrastructure.Collaboration
     }
 
     public record HandshakeResponse(
-        bool IsBlindMode, 
-        bool ReadOnly, 
-        string ServerTimestamp, 
+        bool IsBlindMode,
+        bool ReadOnly,
+        string ServerTimestamp,
         int DeltaCount
     );
 }
