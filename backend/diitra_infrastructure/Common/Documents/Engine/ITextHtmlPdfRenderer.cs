@@ -22,6 +22,30 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             _fontProvider = new FontProvider();
             _fontProvider.AddStandardPdfFonts();
+
+            // 1. Cargar fuentes locales del proyecto (Portabilidad total para Producción)
+            string localFontsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Fonts");
+            if (Directory.Exists(localFontsPath))
+            {
+                _fontProvider.AddDirectory(localFontsPath);
+            }
+
+            // 2. Fallback: Registrar fuentes del sistema Windows (por si faltan en el proyecto)
+            string fontsPath = "C:/Windows/Fonts";
+            string[] requestedFonts = { 
+                "GOTHIC.TTF", "GOTHICB.TTF", "GOTHICI.TTF", "GOTHICBI.TTF", // Century Gothic
+                "CALIBRI.TTF", "CALIBRIB.TTF", "CALIBRII.TTF", "CALIBRIZ.TTF", // Calibri
+                "TIMES.TTF", "TIMESBD.TTF", "TIMESBI.TTF", "TIMESI.TTF" // Times New Roman
+            };
+
+            foreach (var fontFile in requestedFonts)
+            {
+                var fullPath = Path.Combine(fontsPath, fontFile);
+                if (File.Exists(fullPath))
+                {
+                    _fontProvider.AddFont(fullPath);
+                }
+            }
             
             _converterProperties = new ConverterProperties();
             _converterProperties.SetFontProvider(_fontProvider);
@@ -34,7 +58,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             * { box-sizing: border-box; }
             
             body {
-                font-family: 'Helvetica', 'Arial', sans-serif;
+                font-family: 'Calibri', 'Open Sans', 'Helvetica', 'Arial', sans-serif;
                 font-size: 9pt;
                 line-height: 1.3;
                 color: #1a1a1a;
@@ -46,6 +70,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             .doc-header {
                 width: 100%;
                 margin-bottom: 10px;
+                font-family: 'Century Gothic', 'Helvetica', sans-serif;
             }
             .header-logo {
                 height: 50px;
@@ -54,6 +79,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             
             /* ── Títulos de Sección ── */
             .section-title {
+                font-family: 'Century Gothic', 'Helvetica', sans-serif;
                 color: #1e2a4a;
                 font-size: 11pt;
                 font-weight: bold;
@@ -81,6 +107,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 text-transform: uppercase;
                 font-size: 8pt;
                 width: 30%;
+                font-family: 'Century Gothic', sans-serif;
             }
             table.info-table td.value {
                 background-color: #ffffff;
@@ -100,6 +127,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 padding: 6px;
                 font-size: 8.5pt;
                 border: 1px solid #000;
+                font-family: 'Century Gothic', sans-serif;
             }
             table.data-table td {
                 border: 1px solid #000;
@@ -115,6 +143,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 text-align: center;
                 font-size: 7.5pt;
                 text-transform: uppercase;
+                font-family: 'Century Gothic', sans-serif;
             }
             
             /* ── Firma Electrónica ── */
