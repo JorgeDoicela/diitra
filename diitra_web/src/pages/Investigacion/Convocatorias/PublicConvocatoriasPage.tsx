@@ -129,7 +129,7 @@ const PublicConvocatoriasPage = () => {
                                             <Calendar size={10} /> Cierre
                                         </div>
                                         <p className="text-xs font-black text-text-main uppercase italic">
-                                            {format(new Date(c.fecha_cierre), 'dd MMM, yyyy', { locale: es })}
+                                            {c.fecha_cierre ? format(new Date(c.fecha_cierre), 'dd MMM, yyyy', { locale: es }) : 'Por definir'}
                                         </p>
                                     </div>
                                     <div className="space-y-1">
@@ -137,7 +137,7 @@ const PublicConvocatoriasPage = () => {
                                             <DollarSign size={10} /> Max. Proyecto
                                         </div>
                                         <p className="text-xs font-black text-text-main uppercase italic">
-                                            ${c.monto_maximo_proyecto.toLocaleString()}
+                                            ${c.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
                                         </p>
                                     </div>
                                 </div>
