@@ -36,10 +36,10 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     .cover-overlay {{
         position: absolute;
         top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        padding: 80px 60px 80px 330px; /* Incrementado para desplazar más a la derecha */
+        left: 330px; /* Iniciamos exactamente donde termina la zona de triángulos */
+        right: 40px;
+        bottom: 0;
+        padding: 80px 0;
         display: flex;
         flex-direction: column;
         align-items: center; 
@@ -103,7 +103,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         font-weight: bold; 
         text-transform: uppercase; 
         margin-bottom: 2px; 
-    }
+    }}
     .period-value {{ 
         font-family: 'Century Gothic', sans-serif;
         font-size: 12pt; 
