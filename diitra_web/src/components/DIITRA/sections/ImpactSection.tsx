@@ -1,0 +1,95 @@
+import React from 'react';
+import { Award, Trash2 } from 'lucide-react';
+import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
+import type { CoWorkHandle } from '../../../core/cowork/types';
+
+interface ImpactSectionProps {
+    productosEsperados: any[];
+    impacto: Record<string, string>;
+    tiposProducto: any[];
+    cowork: CoWorkHandle;
+    onAddProducto: () => void;
+    onRemoveProducto: (index: number) => void;
+    onUpdateProducto: (index: number, field: string, value: any) => void;
+    onUpdateImpacto: (tipo: string, value: string) => void;
+}
+
+export const ImpactSection: React.FC<ImpactSectionProps> = ({
+    productosEsperados,
+    impacto,
+    tiposProducto,
+    cowork,
+    onAddProducto,
+    onRemoveProducto,
+    onUpdateProducto,
+    onUpdateImpacto
+}) => {
+    return (
+        <div className="space-y-12">
+            <div className="space-y-6">
+                <div className="flex justify-between items-center px-2">
+                    <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                        <Award size={18}/> 5. Productos Esperados
+                    </h4>
+                    <button 
+                        onClick={onAddProducto} 
+                        className="px-4 py-2 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase"
+                    >
+                        + Añadir Producto
+                    </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {productosEsperados.map((_p, i) => (
+                        <div key={i} className="p-4 bg-surface border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
+                            <div className="flex-1">
+                                <label className="text-[9px] font-black uppercase text-text-dim mb-1 block ml-1">Tipo de Producto</label>
+                                <select 
+                                    value={_p.tipo}
+                                    onChange={(e) => onUpdateProducto(i, 'tipo', e.target.value)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-4 py-2.5 text-xs text-text-main outline-none appearance-none"
+                                >
+                                    <option value="">Seleccione tipo...</option>
+                                    {tiposProducto.map(t => (
+                                        <option key={t.idTipoProducto} value={t.nombre}>{t.nombre} ({t.categoria})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="w-16">
+                                <CoWorkField 
+                                    name={`Prod_${i}_cant`} 
+                                    cowork={cowork} 
+                                    onValueChange={(v) => onUpdateProducto(i, 'cantidad', v)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center" 
+                                />
+                            </div>
+                            <button 
+                                onClick={() => onRemoveProducto(i)} 
+                                className="text-red-500 p-1 hover:bg-red-500/10 rounded-lg"
+                            >
+                                <Trash2 size={16}/>
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-6">
+                <h4 className="text-xs font-black uppercase tracking-widest px-2">6. Matriz de Impacto</h4>
+                <div className="grid grid-cols-1 gap-3">
+                    {['Social', 'Cientifico', 'Economico', 'Politico', 'Ambiental', 'Otro'].map((tipo) => (
+                        <div key={tipo} className="p-5 bg-surface border border-border-thin rounded-2xl flex gap-6 items-center">
+                            <div className="w-32 text-[10px] font-black uppercase text-text-main">{tipo}</div>
+                            <CoWorkField 
+                                name={`Impacto_${tipo}`} 
+                                cowork={cowork} 
+                                placeholder={`Describa el impacto ${tipo.toLowerCase()} del proyecto...`}
+                                onValueChange={(v) => onUpdateImpacto(tipo, v)}
+                                className="flex-1 bg-bg-deep border border-border-thin rounded-xl px-4 py-2.5 text-xs" 
+                            />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
