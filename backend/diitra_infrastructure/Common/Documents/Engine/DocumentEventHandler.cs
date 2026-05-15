@@ -50,37 +50,39 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             PdfPage page = docEvent.GetPage();
             Rectangle pageSize = page.GetPageSize();
             
-            PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
-            Canvas canvas = new Canvas(pdfCanvas, pageSize);
-
-            // 0. Omitir en la primera página (Portada)
-            if (pdfDoc.GetPageNumber(page) == 1) 
-            {
-                canvas.Close();
-                return;
-            }
-
-            // 0.1 Fondo Institucional (Papel Membretado) - Inyectado nativamente
-            if (!string.IsNullOrEmpty(_stationaryImageBase64))
+            // 0.1 Fondo Institucional (Papel Membretado) - Inyectado nativamente DEBAJO del contenido
+            if (pdfDoc.GetPageNumber(page) > 1 && !string.IsNullOrEmpty(_stationaryImageBase64))
             {
                 try
                 {
-                    // Limpiar el prefijo data:image/...;base64, si existe
+                    // Usamos un Layout Canvas sobre un stream ANTES del contenido
+                    PdfCanvas pc = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
+                    Canvas underCanvas = new Canvas(pc, pageSize);
+
                     string base64Data = Regex.Replace(_stationaryImageBase64, @"^data:image\/[a-zA-Z]+;base64,", "");
                     byte[] imageBytes = Convert.FromBase64String(base64Data);
                     ImageData imageData = ImageDataFactory.Create(imageBytes);
                     
-                    // Dibujar el fondo antes que el contenido (NewContentStreamBefore sería mejor pero After + z-index también funciona)
-                    // Usamos el canvas actual para posicionamiento fijo
                     Image bgImage = new Image(imageData)
                         .SetFixedPosition(0, 0)
                         .SetWidth(pageSize.GetWidth())
                         .SetHeight(pageSize.GetHeight())
-                        .SetOpacity(0.35f); // Opacidad institucional ghosted
+                        .SetOpacity(0.35f); 
                     
-                    canvas.Add(bgImage);
+                    underCanvas.Add(bgImage);
+                    underCanvas.Close();
                 }
-                catch (Exception) { /* Ignorar errores de imagen para no romper la generación */ }
+                catch (Exception) { /* Ignorar errores de imagen */ }
+            }
+
+            PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
+            Canvas canvas = new Canvas(pdfCanvas, pageSize);
+
+            // 0. Omitir en la primera página (Portada) para los elementos superiores
+            if (pdfDoc.GetPageNumber(page) == 1)
+            {
+                canvas.Close();
+                return;
             }
 
             // 1. Marca de agua (Watermark) si es borrador
