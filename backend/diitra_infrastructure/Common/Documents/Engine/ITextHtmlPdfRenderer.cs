@@ -15,8 +15,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
     /// </summary>
     public class ITextHtmlPdfRenderer
     {
-        // CSS base institucional DIITRA. Aplicado a todos los documentos para garantizar
-        // consistencia de marca sin depender de internet (crítico para entornos de institutos).
+        private static readonly FontProvider _fontProvider;
+        private static readonly ConverterProperties _converterProperties;
+
+        static ITextHtmlPdfRenderer()
+        {
+            _fontProvider = new FontProvider();
+            _fontProvider.AddStandardPdfFonts();
+            
+            _converterProperties = new ConverterProperties();
+            _converterProperties.SetFontProvider(_fontProvider);
+            _converterProperties.SetBaseUri("data://");
+        }
+
+        // CSS base institucional DIITRA...
+        // (keeping InstitutionalBaseCss as is)
         private const string InstitutionalBaseCss = @"
             * { box-sizing: border-box; }
             
@@ -159,17 +172,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
-                var converterProperties = new ConverterProperties();
-                
-                // PERFORMANCE OPTIMIZATION: Avoid fontProvider.AddSystemFonts() which scans the entire OS.
-                // Standard fonts and explicitly added fonts are enough for official DIITRA documents.
-                var fontProvider = new FontProvider();
-                fontProvider.AddStandardPdfFonts();
-                
-                converterProperties.SetFontProvider(fontProvider);
-                converterProperties.SetBaseUri("data://");
-
-                HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, converterProperties);
+                HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, _converterProperties);
 
                 pdfDocument.Close();
                 return await Task.FromResult(outputStream.ToArray());
