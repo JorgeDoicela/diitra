@@ -74,7 +74,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 var template = await _templateRepository.FindByCodeAsync(request.TemplateCode, cancellationToken);
                 if (template == null || !template.IsActive)
                 {
-                    var seed = DocumentTemplateSeed.GetByCode(request.TemplateCode);
+                    var seed = DocumentTemplateRegistry.GetByCode(request.TemplateCode);
                     if (seed != null)
                     {
                         _logger.LogWarning("DIITRA DocumentEngine: Plantilla '{Code}' no encontrada. Restaurando...", request.TemplateCode);
@@ -85,7 +85,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
                 else
                 {
-                    var seed = DocumentTemplateSeed.GetByCode(request.TemplateCode);
+                    var seed = DocumentTemplateRegistry.GetByCode(request.TemplateCode);
                     if (seed != null && seed.Version > template.Version)
                     {
                         _logger.LogInformation("DIITRA DocumentEngine: Sincronizando v{SeedVersion} de '{Code}'...", seed.Version, request.TemplateCode);
