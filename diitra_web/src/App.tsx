@@ -44,24 +44,18 @@ const AuthenticatedRedirect = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-    const { user, isAuthenticated, isLoading, hasPermission, roles } = useAuth();
+    const { isAuthenticated, isLoading, hasPermission, isAdmin } = useAuth();
     if (isLoading) return null;
     
-    const normalizedRoles = roles.map(r => r.toUpperCase());
-    const isSystemAdmin = user?.administrador || normalizedRoles.includes('DIITRA_ADMIN') || normalizedRoles.includes('ADMIN_SISTEMA');
-
     // Validar permiso modular O flag de administrador global
-    if (!isAuthenticated || (!isSystemAdmin && !hasPermission('USUARIOS', 'VER'))) {
+    if (!isAuthenticated || (!isAdmin && !hasPermission('USUARIOS', 'VER'))) {
         return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;
 };
 
 const ConvocatoriaRoute = () => {
-    const { user, roles } = useAuth();
-    const normalizedRoles = roles.map(r => r.toUpperCase());
-    const isAdmin = user?.administrador || normalizedRoles.includes('DIITRA_ADMIN');
-    
+    const { isAdmin } = useAuth();
     return isAdmin ? <ConvocatoriasPage /> : <PublicConvocatoriasPage />;
 };
 

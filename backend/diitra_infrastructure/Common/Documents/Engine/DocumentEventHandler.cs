@@ -27,14 +27,14 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly string _institutionName;
         private readonly string _lopdpClause;
         private readonly bool _isDraft;
-        private readonly string _stationaryImageBase64;
+        private readonly string? _stationaryImageBase64;
 
         public DocumentEventHandler(
             string traceabilityCode, 
             string institutionName = "DIITRA - Departamento de Investigación e Innovación",
             string lopdpClause = "Tratamiento de datos conforme a LOPDP (R.O. 459, 2021).",
             bool isDraft = false,
-            string stationaryImageBase64 = null)
+            string? stationaryImageBase64 = null)
         {
             _traceabilityCode = traceabilityCode;
             _institutionName = institutionName;

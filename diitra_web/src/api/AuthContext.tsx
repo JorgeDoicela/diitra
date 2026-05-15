@@ -22,6 +22,11 @@ interface AuthContextType {
     refreshUser: () => Promise<void>;
     hasPermission: (module: string, operation: string) => boolean;
     roles: string[];
+    isAdmin: boolean;
+    isDocente: boolean;
+    isEstudiante: boolean;
+    isRevisor: boolean;
+    roleDisplayName: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -50,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (credentials: any) => {
         const response = await api.post('/auth/login', credentials);
         setUser(response.data);
+        return response.data;
     };
 
     const logout = async () => {
@@ -65,8 +71,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const roles = React.useMemo(() => {
         if (!user) return [];
-        return user.roles || (user.role ? [user.role] : []);
+        const rawRoles = user.roles || (user.role ? [user.role] : []);
+        return rawRoles.map(r => r.toUpperCase());
     }, [user]);
+
+    const isAdmin = React.useMemo(() => {
+        return user?.administrador || roles.includes('DIITRA_ADMIN') || roles.includes('ADMIN_SISTEMA');
+    }, [user, roles]);
+
+    const isDocente = React.useMemo(() => {
+        return roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
+    }, [roles]);
+
+    const isEstudiante = React.useMemo(() => {
+        return roles.includes('DIITRA_ESTUDIANTE') || roles.includes('ESTUDIANTE_COLAB');
+    }, [roles]);
+
+    const isRevisor = React.useMemo(() => {
+        return roles.includes('DIITRA_REVISOR_EXTERNO') || roles.includes('REVISOR_EXT') || roles.includes('REVISOR_INT');
+    }, [roles]);
+
+    const roleDisplayName = React.useMemo(() => {
+        if (isAdmin) return 'Administrador';
+        if (isDocente) return 'Investigador';
+        if (isEstudiante) return 'Estudiante';
+        if (isRevisor) return 'Revisor';
+        return 'Usuario';
+    }, [isAdmin, isDocente, isEstudiante, isRevisor]);
 
     return (
         <AuthContext.Provider value={{ 
@@ -77,7 +108,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             logout, 
             refreshUser,
             hasPermission,
-            roles
+            roles,
+            isAdmin,
+            isDocente,
+            isEstudiante,
+            isRevisor,
+            roleDisplayName
         }}>
             {children}
         </AuthContext.Provider>

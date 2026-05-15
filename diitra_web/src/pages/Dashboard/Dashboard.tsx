@@ -7,36 +7,18 @@ import { RevisorDashboard } from './Roles/RevisorDashboard';
 import { Loader2 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-    const { user, roles, isLoading } = useAuth();
+    const { isAdmin, isDocente, isEstudiante, isRevisor, isLoading } = useAuth();
 
     const roleDashboard = useMemo(() => {
         if (isLoading) return null;
         
-        // Normalize roles to uppercase for safe comparison
-        const normalizedRoles = roles.map(r => r.toUpperCase());
-        
-        // 1. Admin Check (Global flag or specific codes)
-        if (user?.administrador || normalizedRoles.includes('DIITRA_ADMIN') || normalizedRoles.includes('ADMIN_SISTEMA')) {
-            return <AdminDashboard />;
-        }
-
-        // 2. Docente Check
-        if (normalizedRoles.includes('DIITRA_DOCENTE') || normalizedRoles.includes('DOCENTE_INV') || normalizedRoles.includes('DIRECTOR_INV')) {
-            return <DocenteDashboard />;
-        }
-
-        // 3. Estudiante Check
-        if (normalizedRoles.includes('DIITRA_ESTUDIANTE') || normalizedRoles.includes('ESTUDIANTE_COLAB')) {
-            return <EstudianteDashboard />;
-        }
-
-        // 4. Revisor Check
-        if (normalizedRoles.includes('DIITRA_REVISOR_EXTERNO') || normalizedRoles.includes('REVISOR_EXT') || normalizedRoles.includes('REVISOR_INT')) {
-            return <RevisorDashboard />;
-        }
+        if (isAdmin) return <AdminDashboard />;
+        if (isDocente) return <DocenteDashboard />;
+        if (isEstudiante) return <EstudianteDashboard />;
+        if (isRevisor) return <RevisorDashboard />;
         
         return <DocenteDashboard />; // Global Fallback
-    }, [user, roles, isLoading]);
+    }, [isAdmin, isDocente, isEstudiante, isRevisor, isLoading]);
 
     return (
         <main className="flex-1 bg-bg-deep overflow-y-auto selection:bg-selection-bg selection:text-selection-fg transition-colors duration-300">

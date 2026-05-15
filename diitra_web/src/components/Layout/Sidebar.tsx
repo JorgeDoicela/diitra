@@ -10,7 +10,7 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) => {
-  const { user, logout, hasPermission, roles } = useAuth();
+  const { logout, hasPermission, roles, isAdmin, isDocente, isEstudiante, isRevisor } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -26,38 +26,35 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
   ];
 
   const menuItems = allMenuItems.filter(item => {
-    // Normalize user roles for comparison
-    const normalizedRoles = roles.map(r => r.toUpperCase());
+    // 1. Admins see everything
+    if (isAdmin) return true;
 
-    // Si es admin global, ve todo
-    if (user?.administrador || normalizedRoles.includes('DIITRA_ADMIN') || normalizedRoles.includes('ADMIN_SISTEMA')) return true;
-
-    // Si requiere un permiso específico
+    // 2. Specific permission check
     if (item.permission) {
         const [module, op] = item.permission.split(':');
         return hasPermission(module, op);
     }
 
-    // Si tiene restricción de roles
+    // 3. Role-based restrictions
     if (item.roles) {
         if (item.roles.includes('ANY')) return true;
         
-        // Mapeo extendido para roles equivalentes
-        const roleMap: Record<string, string[]> = {
-            'DIITRA_DOCENTE': ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIRECTOR_INV'],
-            'DIITRA_ESTUDIANTE': ['DIITRA_ESTUDIANTE', 'ESTUDIANTE_COLAB'],
-            'DIITRA_REVISOR_EXTERNO': ['DIITRA_REVISOR_EXTERNO', 'REVISOR_EXT', 'REVISOR_INT'],
-            'DOCENTE_INV': ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIRECTOR_INV']
-        };
+        const checkRoles = item.roles.map(r => r.toUpperCase());
+        
+        if (checkRoles.includes('DIITRA_DOCENTE') || checkRoles.includes('DOCENTE_INV')) {
+            if (isDocente) return true;
+        }
+        
+        if (checkRoles.includes('DIITRA_ESTUDIANTE')) {
+            if (isEstudiante) return true;
+        }
+        
+        if (checkRoles.includes('DIITRA_REVISOR_EXTERNO')) {
+            if (isRevisor) return true;
+        }
 
-        return item.roles.some(r => {
-            const upRole = r.toUpperCase();
-            if (normalizedRoles.includes(upRole)) return true;
-            
-            // Verificar equivalentes
-            const equivalents = roleMap[upRole] || [];
-            return equivalents.some(eq => normalizedRoles.includes(eq));
-        });
+        // Generic fallback for any other roles
+        return item.roles.some(r => roles.includes(r.toUpperCase()));
     }
 
     return true;

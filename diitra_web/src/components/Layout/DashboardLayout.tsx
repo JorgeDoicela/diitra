@@ -12,7 +12,7 @@ interface LayoutProps {
 }
 
 const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }) => {
-    const { user, roles } = useAuth();
+    const { user, roleDisplayName } = useAuth();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
@@ -36,9 +36,9 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3 pr-6 border-r border-border-thin">
                             <div className="text-right hidden xl:block">
-                                <p className="text-[10px] font-bold text-text-main uppercase tracking-tighter leading-none mb-1">{user?.nombre || 'Usuario'}</p>
+                                <p className="text-[10px] font-bold text-text-main uppercase tracking-tighter leading-none mb-1">{user?.nombre_completo || 'Usuario'}</p>
                                 <p className="text-[8px] font-bold text-text-dim uppercase tracking-widest leading-none">
-                                    {roles.includes('DIITRA_ADMIN') ? 'Administrador' : 'Investigador'}
+                                    {roleDisplayName}
                                 </p>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-main uppercase">
