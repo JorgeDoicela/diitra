@@ -39,7 +39,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         left: 0;
         width: 100%;
         height: 100%;
-        padding: 80px 40px 80px 250px; /* Padding izquierdo para centrar en la zona blanca */
+        padding: 80px 60px 80px 330px; /* Incrementado para desplazar más a la derecha */
         display: flex;
         flex-direction: column;
         align-items: center; 
