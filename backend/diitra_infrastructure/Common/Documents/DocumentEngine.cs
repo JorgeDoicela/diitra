@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using Diitra.Infrastructure.Common.Documents.Engine;
+using Diitra.Infrastructure.Common.Documents.Resources;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -112,7 +113,10 @@ namespace Diitra.Infrastructure.Common.Documents
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
                 {
                     TraceabilityCode = traceabilityCode,
-                    IsDraft = request.IsDraftMode
+                    IsDraft = request.IsDraftMode,
+                    StationaryImageBase64 = template.Code == "PROTOCOLO_INVESTIGACION" 
+                        ? TemplateImages.FondoHojasInvestigacionBase64 
+                        : null
                 }, template.CustomCss);
 
                 // 6. Sello de Integridad (SHA-256)

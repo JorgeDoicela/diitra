@@ -151,7 +151,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // ── NUEVO: Registro de Eventos Globales (Encabezados/Pies/Marcas de Agua) ──
             var handler = new DocumentEventHandler(
                 metadata.TraceabilityCode,
-                isDraft: metadata.IsDraft
+                isDraft: metadata.IsDraft,
+                stationaryImageBase64: metadata.StationaryImageBase64
             );
 
             try 
@@ -208,5 +209,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         public bool IsDraft { get; set; } = false;
         public string? InstitutionName { get; set; }
         public string? LopdpClause { get; set; }
+        public string? StationaryImageBase64 { get; set; }
     }
 }
