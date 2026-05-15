@@ -10,7 +10,7 @@ namespace Diitra.Infrastructure.Common.Documents
     /// Este archivo actúa como el índice central. El contenido HTML de cada documento
     /// se encuentra en su propia carpeta bajo /Templates/ para máxima organización.
     /// </summary>
-    public static class DocumentTemplateSeed
+    public static class DocumentTemplateRegistry
     {
         public static DocumentTemplate? GetByCode(string code) => 
             GetSeedTemplates().FirstOrDefault(t => t.Code == code);
