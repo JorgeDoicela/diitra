@@ -34,8 +34,20 @@ const Login: React.FC<LoginProps> = ({ currentTheme = 'dark' }) => {
         setIsSubmitting(true);
         setError(null);
         try {
-            await login(data);
-            navigate(from, { replace: true });
+            const user = await login(data);
+            
+            // Determinar página de destino si no viene de una ruta específica
+            let target = from;
+            if (target === '/dashboard') {
+                const roles = (user.roles || [user.role] || []).map((r: string) => r.toUpperCase());
+                const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN') || roles.includes('ADMIN_SISTEMA');
+                const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
+
+                if (isAdmin) target = '/admin';
+                else if (isDocente) target = '/investigacion';
+            }
+
+            navigate(target, { replace: true });
         } catch (err: any) {
             setError(err.response?.data?.message || 'Error al iniciar sesión. Verifique sus credenciales.');
         } finally {
