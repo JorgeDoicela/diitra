@@ -19,7 +19,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     
     /* PORTADA (COVER PAGE) FULL BLEED - Breaking out of 1.5cm margins */
     .cover-page {{ 
-        font-family: 'Inter', 'Montserrat', Arial, sans-serif;
+        font-family: 'Century Gothic', 'Inter', Arial, sans-serif;
         position: absolute;
         top: -1cm;
         left: -1.5cm;
@@ -39,67 +39,81 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         left: 0;
         width: 100%;
         height: 100%;
-        padding: 100px 80px;
+        padding: 80px 40px 80px 250px; /* Padding izquierdo para centrar en la zona blanca */
         display: flex;
         flex-direction: column;
-        align-items: flex-end; 
-        text-align: right;
+        align-items: center; 
+        text-align: center;
     }}
 
     .main-label {{
-        font-size: 26pt;
-        font-weight: 800;
-        color: #c5a059;
+        font-family: 'Century Gothic', sans-serif;
+        font-size: 28pt;
+        font-weight: bold;
+        color: #b8912e;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        margin-top: 240px; 
-        width: 70%;
+        letter-spacing: 1px;
+        margin-top: 250px; 
+        width: 100%;
     }}
     
     .project-theme {{
+        font-family: 'Century Gothic', sans-serif;
         font-size: 18pt;
-        font-weight: 900;
+        font-weight: bold;
         color: #1a2b4a;
         text-transform: uppercase;
         margin: 100px 0;
         line-height: 1.2;
-        width: 70%;
+        width: 100%;
         word-wrap: break-word;
     }}
     
     .career-container {{
         margin-top: auto;
-        margin-bottom: 120px;
-        width: 70%;
+        margin-bottom: 100px;
+        width: 100%;
     }}
 
     .career-label {{
+        font-family: 'Century Gothic', sans-serif;
         font-size: 14pt;
-        font-weight: 800;
+        font-weight: bold;
         color: #1a2b4a;
         text-transform: uppercase;
     }}
     
     .career-value {{
+        font-family: 'Century Gothic', sans-serif;
         font-size: 14pt;
-        font-weight: 400;
+        font-weight: normal;
         color: #1a2b4a;
         text-transform: uppercase;
         margin-top: 8px;
     }}
     
     .period-container {{
-        border-top: 2px solid #eee;
-        padding-top: 20px;
-        width: 70%;
+        width: 100%;
+        margin-bottom: 60px;
     }}
     
-    .period-label {{ font-size: 11pt; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }}
-    .period-value {{ font-size: 11pt; font-weight: 400; text-transform: uppercase; }}
+    .period-label {{ 
+        font-family: 'Century Gothic', sans-serif;
+        font-size: 12pt; 
+        font-weight: bold; 
+        text-transform: uppercase; 
+        margin-bottom: 2px; 
+    }
+    .period-value {{ 
+        font-family: 'Century Gothic', sans-serif;
+        font-size: 12pt; 
+        font-weight: normal; 
+        text-transform: uppercase; 
+    }}
 
     /* CUERPO DEL DOCUMENTO (PAGE 2+) */
     .doc-container {{ 
-        font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
+        font-family: 'Calibri', 'Open Sans', Arial, sans-serif; 
         color: #1e2a4a; 
         line-height: 1.4; 
         padding: 50px 40px; 
