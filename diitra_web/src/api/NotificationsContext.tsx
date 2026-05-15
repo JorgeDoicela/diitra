@@ -71,21 +71,30 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             .withAutomaticReconnect()
             .build();
 
+        let isSubscribed = true;
+
         newConnection.start()
             .then(() => {
+                if (!isSubscribed) {
+                    newConnection.stop();
+                    return;
+                }
                 console.log('Global Notification Connection established');
                 newConnection.on('ReceiveNotification', () => {
                     fetchNotifications();
                 });
             })
-            .catch(err => console.error('SignalR Connection Error: ', err));
+            .catch(err => {
+                if (isSubscribed) {
+                    console.error('SignalR Connection Error: ', err);
+                }
+            });
 
         setConnection(newConnection);
 
         return () => {
-            if (newConnection) {
-                newConnection.stop();
-            }
+            isSubscribed = false;
+            newConnection.stop();
         };
     }, [isAuthenticated]);
 
