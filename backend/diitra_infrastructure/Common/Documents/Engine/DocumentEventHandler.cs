@@ -48,6 +48,13 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
             Canvas canvas = new Canvas(pdfCanvas, pageSize);
 
+            // 0. Omitir en la primera página (Portada)
+            if (pdfDoc.GetPageNumber(page) == 1) 
+            {
+                canvas.Close();
+                return;
+            }
+
             // 1. Marca de agua (Watermark) si es borrador
             if (_isDraft)
             {
