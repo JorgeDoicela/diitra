@@ -97,26 +97,12 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     .period-label {{ font-size: 11pt; font-weight: 800; text-transform: uppercase; margin-bottom: 5px; }}
     .period-value {{ font-size: 11pt; font-weight: 400; text-transform: uppercase; }}
 
-    /* BACKGROUND STATIONARY (Papel Membretado) - Fixed on all pages */
-    .stationary-bg {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 210mm;
-        height: 297mm;
-        z-index: -1000;
-        background-image: url('data:image/jpeg;base64,{TemplateImages.FondoHojasInvestigacionBase64}');
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
-        opacity: 0.35;
-    }}
-
     /* CUERPO DEL DOCUMENTO (PAGE 2+) */
     .doc-container {{ 
         font-family: 'Inter', 'Segoe UI', Arial, sans-serif; 
         color: #1e2a4a; 
         line-height: 1.4; 
-        padding: 100px 40px 40px 40px; 
+        padding: 50px 40px; 
         background: transparent;
     }}
     .section-title {{ 
@@ -294,9 +280,6 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
             <td class=""firma-box"" style=""width:48%""><strong>{{{{default coordinador 'COORDINADOR CARRERA'}}}}</strong><br/>Firma</td>
         </tr>
     </table>
-</div>
-
-<!-- FONDO FIJO PARA TODAS LAS HOJAS (PAPEL MEMBRETADO) -->
-<div class=""stationary-bg""></div>";
+</div>";
     }
 }
