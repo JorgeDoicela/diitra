@@ -27,7 +27,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly string _institutionName;
         private readonly string _lopdpClause;
         private readonly bool _isDraft;
-        private readonly string? _stationaryImageBase64;
+        private readonly ImageData? _stationaryImageData;
+        private readonly PdfFont? _watermarkFont;
 
         public DocumentEventHandler(
             string traceabilityCode, 
@@ -40,7 +41,27 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _institutionName = institutionName;
             _lopdpClause = lopdpClause;
             _isDraft = isDraft;
-            _stationaryImageBase64 = stationaryImageBase64;
+
+            // PERFORMANCE: Pre-procesar imagen una sola vez en lugar de hacerlo por cada página
+            if (!string.IsNullOrEmpty(stationaryImageBase64))
+            {
+                try
+                {
+                    string base64Data = stationaryImageBase64.Contains(",") 
+                        ? stationaryImageBase64.Substring(stationaryImageBase64.IndexOf(",") + 1) 
+                        : stationaryImageBase64;
+                    
+                    byte[] imageBytes = Convert.FromBase64String(base64Data);
+                    _stationaryImageData = ImageDataFactory.Create(imageBytes);
+                }
+                catch { /* Ignorar errores de imagen */ }
+            }
+
+            // PERFORMANCE: Pre-crear fuente de marca de agua
+            if (_isDraft)
+            {
+                _watermarkFont = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
+            }
         }
 
         protected override void OnAcceptedEvent(AbstractPdfDocumentEvent @event)
@@ -50,20 +71,15 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             PdfPage page = docEvent.GetPage();
             Rectangle pageSize = page.GetPageSize();
             
-            // 0.1 Fondo Institucional (Papel Membretado) - Inyectado nativamente DEBAJO del contenido
-            if (pdfDoc.GetPageNumber(page) > 1 && !string.IsNullOrEmpty(_stationaryImageBase64))
+            // 0.1 Fondo Institucional (Papel Membretado)
+            if (pdfDoc.GetPageNumber(page) > 1 && _stationaryImageData != null)
             {
                 try
                 {
-                    // Usamos un Layout Canvas sobre un stream ANTES del contenido
                     PdfCanvas pc = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
                     Canvas underCanvas = new Canvas(pc, pageSize);
-
-                    string base64Data = Regex.Replace(_stationaryImageBase64, @"^data:image\/[a-zA-Z]+;base64,", "");
-                    byte[] imageBytes = Convert.FromBase64String(base64Data);
-                    ImageData imageData = ImageDataFactory.Create(imageBytes);
                     
-                    Image bgImage = new Image(imageData)
+                    Image bgImage = new Image(_stationaryImageData)
                         .SetFixedPosition(0, 0)
                         .SetWidth(pageSize.GetWidth())
                         .SetHeight(pageSize.GetHeight())
@@ -72,13 +88,13 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     underCanvas.Add(bgImage);
                     underCanvas.Close();
                 }
-                catch (Exception) { /* Ignorar errores de imagen */ }
+                catch { }
             }
 
             PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
             Canvas canvas = new Canvas(pdfCanvas, pageSize);
 
-            // 0. Omitir en la primera página (Portada) para los elementos superiores
+            // 0. Omitir en la primera página (Portada)
             if (pdfDoc.GetPageNumber(page) == 1)
             {
                 canvas.Close();
@@ -86,11 +102,10 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             }
 
             // 1. Marca de agua (Watermark) si es borrador
-            if (_isDraft)
+            if (_isDraft && _watermarkFont != null)
             {
-                PdfFont font = PdfFontFactory.CreateFont(iText.IO.Font.Constants.StandardFonts.HELVETICA);
                 Paragraph p = new Paragraph("BORRADOR / DRAFT")
-                    .SetFont(font)
+                    .SetFont(_watermarkFont)
                     .SetFontSize(60)
                     .SetFontColor(iText.Kernel.Colors.ColorConstants.LIGHT_GRAY)
                     .SetOpacity(0.3f);
