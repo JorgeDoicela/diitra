@@ -19,7 +19,7 @@ interface CursorState {
     selectionRects: Array<{ x: number, y: number, width: number, height: number }>;
 }
 
-export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness }) => {
+export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness, field = 'default' }) => {
     const [cursors, setCursors] = useState<CursorState[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +36,9 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness 
 
         states.forEach((state: any, clientId) => {
             if (clientId === awareness.clientID) return;
-            if (!state.user || typeof state.anchor !== 'number') return;
+            
+            const anchor = state[`anchor_${field}`];
+            if (!state.user || typeof anchor !== 'number') return;
 
             const userKey = `${state.user.id}_${state.user.tabId || clientId}`;
             const existing = uniqueUsers.get(userKey);
@@ -48,13 +50,14 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness 
 
         uniqueUsers.forEach(({ clientId, state }) => {
             try {
-                const head = state.head ?? state.anchor;
+                const anchor = state[`anchor_${field}`];
+                const head = state[`head_${field}`] ?? anchor;
                 const coords = editor.view.coordsAtPos(head);
                 
                 const selectionRects: CursorState['selectionRects'] = [];
-                if (state.anchor !== head) {
-                    const from = Math.min(state.anchor, head);
-                    const to = Math.max(state.anchor, head);
+                if (anchor !== head) {
+                    const from = Math.min(anchor, head);
+                    const to = Math.max(anchor, head);
                     
                     // Obtener rectángulos de selección reales del DOM para mayor precisión
                     const range = editor.view.state.doc.slice(from, to);

@@ -30,6 +30,10 @@ import {
 interface CoWorkEditorProps {
     /** Handle retornado por useCoWork — contiene ydoc, awareness y sesión */
     cowork: CoWorkHandle;
+    /** Llave de fragmento Yjs a la cual se unirá este editor (ej. 'Antecedentes') */
+    field?: string;
+    /** Callback para extraer el HTML puro generado por Tiptap (para guardado agnóstico) */
+    onChange?: (html: string) => void;
     /** Texto de guía visible cuando el editor está vacío */
     placeholder?: string;
     /** Modo solo lectura (para revisores en evaluación doble ciego) */
@@ -40,6 +44,8 @@ interface CoWorkEditorProps {
 
 export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
     cowork,
+    field = 'default',
+    onChange,
     placeholder,
     readonly = false,
     className = '',
@@ -62,8 +68,9 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
             ydoc,
             awareness,
             placeholder,
+            field
         });
-    }, [ydoc, awareness, placeholder]);
+    }, [ydoc, awareness, placeholder, field]);
 
     const editor = useEditor({
         extensions,
@@ -73,26 +80,30 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
                 class: 'focus:outline-none',
             },
         },
-        // Sincronizar selección completa (posición y resaltado)
+        // Sincronizar selección completa (posición y resaltado) aislada por campo
         onSelectionUpdate: ({ editor }) => {
             const { anchor, head } = editor.state.selection;
             // Usar setTimeout para evitar el error "Cannot update a component while rendering"
             setTimeout(() => {
                 if (cowork.awareness) {
-                    cowork.awareness.setLocalStateField('anchor', anchor);
-                    cowork.awareness.setLocalStateField('head', head);
+                    cowork.awareness.setLocalStateField(`anchor_${field}`, anchor);
+                    cowork.awareness.setLocalStateField(`head_${field}`, head);
                 }
             }, 0);
         },
-        // Sincronizar instantánea HTML/JSON con el servidor (para el DIITRA Builder)
+        // Notificar cambios al formulario contenedor o usar fallback de SignalR (retrocompatibilidad)
         onUpdate: ({ editor }) => {
-            // Usamos un pequeño debounce implícito o solo enviamos si hay cambios reales
-            // Para nivel enterprise, el servidor necesita el HTML legible
             const html = editor.getHTML();
-            const json = JSON.stringify(editor.getJSON());
-            cowork.submitFinalContent(html, json);
+            if (onChange) {
+                // Modo Moderno: Delegar al formulario centralizador de React
+                setTimeout(() => onChange(html), 0);
+            } else {
+                // Modo Legado: Guardar de manera autónoma vía SignalR para pantallas anteriores
+                const json = JSON.stringify(editor.getJSON());
+                cowork.submitFinalContent(html, json);
+            }
         }
-    }, [extensions]); // Re-inicializar si las extensiones cambian críticamente
+    }, [extensions, onChange, cowork]); // Re-inicializar si cambian críticamente
 
     const { session } = cowork;
 
@@ -204,6 +215,7 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
                             <RemoteCursors 
                                 editor={editor} 
                                 awareness={cowork.awareness} 
+                                field={field}
                             />
                         </>
                     )}

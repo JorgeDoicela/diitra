@@ -23,6 +23,7 @@ export interface CoWorkExtensionsConfig {
     ydoc: Y.Doc;
     awareness: awarenessProtocol.Awareness;
     placeholder?: string;
+    field?: string;
 }
 
 export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
@@ -59,6 +60,7 @@ export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
         extensions.push(
             Collaboration.configure({ 
                 document: config.ydoc,
+                field: config.field || 'default'
             })
         );
     }
