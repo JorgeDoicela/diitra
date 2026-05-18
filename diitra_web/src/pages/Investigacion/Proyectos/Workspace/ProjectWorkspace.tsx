@@ -38,7 +38,6 @@ export const ProjectWorkspace: React.FC = () => {
                     uuid: res.data.uuid,
                     title: res.data.metadata?.titulo || 'Proyecto de Investigación (Sin Título)',
                     status: statusLabel,
-                    role: user?.role || 'Investigador',
                     presupuesto: res.data.metadata?.CostoTotal || 0,
                     linea: res.data.metadata?.linea || 'No definida'
                 });
@@ -49,8 +48,7 @@ export const ProjectWorkspace: React.FC = () => {
                     id: documentUuid?.substring(0,8).toUpperCase() || 'NEW',
                     uuid: documentUuid || '',
                     title: 'Nuevo Proyecto de Investigación',
-                    status: 'Borrador',
-                    role: user?.role || 'Investigador'
+                    status: 'Borrador'
                 });
             } finally {
                 setIsLoading(false);
@@ -58,7 +56,7 @@ export const ProjectWorkspace: React.FC = () => {
         };
         
         if (documentUuid) fetchProject();
-    }, [documentUuid, user]);
+    }, [documentUuid]);
 
     if (isLoading) {
         return (
@@ -114,7 +112,7 @@ export const ProjectWorkspace: React.FC = () => {
                             {currentProject.status}
                         </span>
                         <span>UUID: {currentProject.uuid.split('-')[0]}...</span>
-                        <span>Rol: <strong className="text-white bg-[#222] px-2 py-0.5 rounded border border-[#333]">{currentProject.role}</strong></span>
+                        <span>Rol: <strong className="text-white bg-[#222] px-2 py-0.5 rounded border border-[#333]">{user?.role || 'Investigador'}</strong></span>
                     </div>
                 </div>
 
