@@ -41,6 +41,9 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             const anchor = state[`anchor_${field}`];
             if (!state.user || typeof anchor !== 'number') return;
 
+            // FILTRAR CURSOR: Dibujar el cursor únicamente si este campo es el enfocado por el usuario remoto
+            if (state.focusedField !== field) return;
+
             const userKey = `${state.user.id}_${state.user.tabId || clientId}`;
             const existing = uniqueUsers.get(userKey);
             

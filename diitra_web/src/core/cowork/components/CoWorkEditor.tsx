@@ -102,6 +102,27 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
                 }
             }, 0);
         },
+        // Registrar qué campo está enfocado activamente por este cliente
+        onFocus: () => {
+            const currentField = fieldRef.current;
+            setTimeout(() => {
+                if (coworkRef.current.awareness) {
+                    coworkRef.current.awareness.setLocalStateField('focusedField', currentField);
+                }
+            }, 0);
+        },
+        // Limpiar el campo enfocado al perder foco
+        onBlur: () => {
+            const currentField = fieldRef.current;
+            setTimeout(() => {
+                if (coworkRef.current.awareness) {
+                    const state = coworkRef.current.awareness.getLocalState();
+                    if (state?.focusedField === currentField) {
+                        coworkRef.current.awareness.setLocalStateField('focusedField', null);
+                    }
+                }
+            }, 0);
+        },
         // Notificar cambios al formulario contenedor o usar fallback de SignalR (retrocompatibilidad)
         onUpdate: ({ editor }) => {
             const html = editor.getHTML();
