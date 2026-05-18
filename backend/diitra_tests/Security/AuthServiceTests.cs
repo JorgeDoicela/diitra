@@ -3,6 +3,7 @@ using Moq;
 using Microsoft.Extensions.Configuration;
 using diitra_infrastructure.Security;
 using diitra_infrastructure.data.models;
+using diitra_application.Security;
 using diitra_application.Security.DTOs;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,11 +14,13 @@ public class AuthServiceTests
 {
     private readonly Mock<IConfiguration> _mockConfig;
     private readonly Mock<DiitraContext> _mockContext;
+    private readonly Mock<IAuditService> _mockAudit;
 
     public AuthServiceTests()
     {
         _mockConfig = new Mock<IConfiguration>();
         _mockContext = new Mock<DiitraContext>();
+        _mockAudit = new Mock<IAuditService>();
 
         // Setup common JWT config for testing
         _mockConfig.Setup(c => c.GetSection("Jwt:Secret")).Returns(new Mock<IConfigurationSection>().Object);
@@ -31,7 +34,7 @@ public class AuthServiceTests
     public void GenerateToken_ShouldReturnValidJwtString()
     {
         // Arrange
-        var service = new AuthService(_mockContext.Object, _mockConfig.Object);
+        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object);
         var authResponse = new AuthResponse
         {
             IdReferencia = "12345",
@@ -62,7 +65,7 @@ public class AuthServiceTests
         // Arrange
         // (Simplified mock for DB sets would go here or use InMemoryDatabase)
         // For now, let's just check the service instantiation works and handles null returns
-        var service = new AuthService(_mockContext.Object, _mockConfig.Object);
+        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object);
         var request = new LoginRequest { Username = "wrong", Password = "wrong" };
 
         // Act - This might fail if DB sets aren't mocked, so we expect null or an exception handled
