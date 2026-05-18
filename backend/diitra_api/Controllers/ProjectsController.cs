@@ -4,6 +4,7 @@ using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
 using Diitra.Application.Common.Documents;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace diitra_api.Controllers
 {
@@ -241,6 +242,45 @@ namespace diitra_api.Controllers
         {
             var projects = await _projectOrchestrator.GetAllProjectsAsync();
             return Ok(projects);
+        }
+
+        /// <summary>
+        /// Devuelve los proyectos donde el usuario autenticado participa (docente o estudiante).
+        /// </summary>
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMyProjects()
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var projects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef);
+            return Ok(projects);
+        }
+
+        /// <summary>
+        /// Devuelve el detalle completo de un proyecto por UUID.
+        /// </summary>
+        [HttpGet("{uuid}/detail")]
+        public async Task<IActionResult> GetDetail(string uuid)
+        {
+            var detail = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+            if (detail == null) return NotFound();
+            return Ok(detail);
+        }
+
+        /// <summary>
+        /// Estadísticas del dashboard para el usuario autenticado.
+        /// Responde con métricas propias si es Investigador, o globales si es Director/Admin.
+        /// </summary>
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var isAdmin = User.FindFirst("es_admin")?.Value == "true";
+            var stats = await _projectOrchestrator.GetDashboardStatsAsync(userIdRef, isAdmin);
+            return Ok(stats);
         }
     }
 }

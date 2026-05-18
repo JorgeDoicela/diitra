@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -17,6 +17,7 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
   const allMenuItems = [
     { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'] },
     { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
+    { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true },
     { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE', 'DOCENTE_INV'] },
     { name: 'Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
@@ -106,22 +107,26 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
           </div>
         </div>
         
-        {/* Navigation */}
         <nav className="flex-1 px-3 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path
+                || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
             return (
               <div
                 key={item.name}
                 onClick={() => handleNavigation(item.path)}
                 className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-150 group ${
+                  (item as any).indent ? 'ml-3 border-l border-border-thin pl-4' : ''
+                } ${
                   isActive 
                     ? 'bg-surface text-text-main shadow-sm' 
                     : 'text-text-dim hover:text-text-main hover:bg-surface/50'
                 }`}
               >
-                <item.icon size={16} strokeWidth={isActive ? 2 : 1.5} />
-                <span className={`text-sm tracking-tight ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
+                <item.icon size={(item as any).indent ? 14 : 16} strokeWidth={isActive ? 2 : 1.5} />
+                <span className={`text-sm tracking-tight ${
+                  (item as any).indent ? 'text-xs' : ''
+                } ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
               </div>
             );
           })}

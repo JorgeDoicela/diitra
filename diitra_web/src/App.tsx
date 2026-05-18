@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
+import MyProjectsPage from './pages/Investigacion/Proyectos/MyProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import { ProjectWorkspace } from './pages/Investigacion/Proyectos/Workspace/ProjectWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
@@ -113,6 +114,7 @@ function App() {
             <Route path="/admin/audit" element={<AdminRoute><AuditPage /></AdminRoute>} />
             <Route path="/admin/groups" element={<AdminRoute><GroupsPage /></AdminRoute>} />
             <Route path="/investigacion" element={<ResearchProjectsPage />} />
+            <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
             <Route path="/revisiones" element={<PeerReviewPage />} />
           </Route>

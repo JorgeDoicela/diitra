@@ -1,26 +1,81 @@
-import React from 'react';
-import { Plus, FileText, TrendingUp, Clock, BarChart3, Briefcase } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+    Plus, FileText, TrendingUp, Clock, BarChart3, Briefcase,
+    Loader2, AlertCircle, ClipboardList, Zap, BookOpen, ArrowRight
+} from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import api from '../../../api/axios_config';
+
+interface DashboardStats {
+    mis_proyectos_activos: number;
+    mis_proyectos_borrador: number;
+    mis_productos_registrados: number;
+    mis_informes_pendientes: number;
+    mis_horas_investigacion: number;
+    actividad_reciente: Array<{
+        tipo: string;
+        descripcion: string;
+        fecha: string;
+        uuid?: string;
+        estado?: string;
+    }>;
+}
+
+const ESTADO_DOT: Record<string, string> = {
+    'Borrador': 'bg-gray-500',
+    'Enviado': 'bg-blue-500',
+    'En Revisión': 'bg-amber-500 animate-pulse',
+    'Aprobado': 'bg-emerald-500',
+    'En Ejecución': 'bg-violet-500 animate-pulse',
+    'Finalizado': 'bg-teal-500',
+    'Pendiente': 'bg-amber-500',
+};
 
 export const DocenteDashboard: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const firstName = user?.nombre_completo?.split(' ')[0] || 'Investigador';
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetch = async () => {
+            try {
+                const res = await api.get('/projects/stats');
+                setStats(res.data);
+            } catch (e) {
+                console.error('[DIITRA] Error al cargar stats:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetch();
+    }, []);
+
+    const totalProyectos = (stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0);
 
     return (
         <>
-            <DashboardHeader 
-                title={`Panel de Investigación: ${firstName}`} 
-                subtitle="Gestiona tus proyectos, carga horaria y productos científicos en un solo lugar." 
+            <DashboardHeader
+                title={`Bienvenido, ${firstName}`}
+                subtitle="Gestiona tus proyectos, carga horaria y productos científicos en un solo lugar."
                 roleName="Docente Investigador"
                 actions={
                     <>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 md:px-5 py-2.5 md:py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all">
-                            <FileText size={14} />
-                            <span>Reportes</span>
+                        <button
+                            onClick={() => navigate('/investigacion/mis-proyectos')}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 md:px-5 py-2.5 md:py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
+                        >
+                            <ClipboardList size={14} />
+                            <span>Mis Proyectos</span>
                         </button>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all">
+                        <button
+                            onClick={() => navigate('/investigacion')}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                        >
                             <Plus size={16} />
                             <span>Nuevo Proyecto</span>
                         </button>
@@ -28,71 +83,126 @@ export const DocenteDashboard: React.FC = () => {
                 }
             />
 
-            <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms] pb-10">
-                <BentoCard 
-                    title="Mis Proyectos" 
-                    description="Estado actual de tus investigaciones"
-                    icon={<Briefcase size={14} />}
-                    className="md:col-span-2"
-                >
-                    <div className="mt-4 space-y-3">
-                        <div className="p-3 rounded-md border border-border-thin bg-surface">
-                            <p className="text-[10px] font-bold text-text-main">SISTEMA_IA_AGRO</p>
-                            <div className="w-full h-1 bg-border-thin mt-2 rounded-full overflow-hidden">
-                                <div className="h-full bg-text-main w-[65%]" />
+            {loading ? (
+                <div className="flex items-center justify-center py-20">
+                    <Loader2 className="animate-spin text-text-dim" size={24} />
+                </div>
+            ) : (
+                <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms] pb-10">
+
+                    {/* Mis proyectos activos */}
+                    <BentoCard
+                        title="Proyectos Activos"
+                        description="Investigaciones en ejecución o aprobadas"
+                        icon={<Briefcase size={14} />}
+                        className="md:col-span-2"
+                    >
+                        <div className="mt-6 flex items-end gap-6">
+                            <div>
+                                <p className="text-5xl font-bold text-text-main font-mono tracking-tighter">
+                                    {stats?.mis_proyectos_activos ?? 0}
+                                </p>
+                                <p className="text-[10px] text-text-dim uppercase tracking-widest mt-1">
+                                    proyectos activos
+                                </p>
                             </div>
+                            {stats?.mis_proyectos_borrador != null && stats.mis_proyectos_borrador > 0 && (
+                                <div className="pb-1">
+                                    <p className="text-2xl font-bold text-text-dim font-mono tracking-tighter">
+                                        +{stats.mis_proyectos_borrador}
+                                    </p>
+                                    <p className="text-[10px] text-text-dim uppercase tracking-widest">
+                                        en borrador
+                                    </p>
+                                </div>
+                            )}
                         </div>
-                        <div className="p-3 rounded-md border border-border-thin bg-surface">
-                            <p className="text-[10px] font-bold text-text-main">DOMÓTICA_ISTPET</p>
-                            <div className="w-full h-1 bg-border-thin mt-2 rounded-full overflow-hidden">
-                                <div className="h-full bg-text-main w-[20%]" />
-                            </div>
-                        </div>
-                    </div>
-                </BentoCard>
+                        <button
+                            onClick={() => navigate('/investigacion/mis-proyectos')}
+                            className="mt-6 flex items-center gap-2 text-[10px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors group"
+                        >
+                            Ver todos mis proyectos
+                            <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </BentoCard>
 
-                <BentoCard 
-                    title="Carga Investigativa" 
-                    description="Horas asignadas vs ejecutadas"
-                    icon={<Clock size={14} />}
-                >
-                    <div className="mt-4">
-                        <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">32.5h</p>
-                        <div className="flex justify-between mt-6 text-[10px] font-mono text-text-dim uppercase">
-                            <span>Meta Semanal</span>
-                            <span>40h</span>
+                    {/* Informes pendientes */}
+                    <BentoCard
+                        title="Informes Pendientes"
+                        description="Reportes de avance por entregar"
+                        icon={<Clock size={14} />}
+                    >
+                        <div className="mt-4">
+                            <p className={`text-4xl font-bold font-mono tracking-tighter ${
+                                (stats?.mis_informes_pendientes ?? 0) > 0 ? 'text-amber-400' : 'text-text-main'
+                            }`}>
+                                {stats?.mis_informes_pendientes ?? 0}
+                            </p>
+                            {(stats?.mis_informes_pendientes ?? 0) > 0 && (
+                                <div className="flex items-center gap-1.5 mt-3 text-[10px] text-amber-400 font-bold uppercase">
+                                    <AlertCircle size={10} />
+                                    Acción requerida
+                                </div>
+                            )}
+                            {(stats?.mis_informes_pendientes ?? 0) === 0 && (
+                                <p className="text-[10px] text-text-dim mt-3 uppercase tracking-wide">
+                                    Al día ✓
+                                </p>
+                            )}
                         </div>
-                    </div>
-                </BentoCard>
+                    </BentoCard>
 
-                <BentoCard 
-                    title="Productos" 
-                    description="Activos validados"
-                    icon={<BarChart3 size={14} />}
-                >
-                    <div className="mt-2 flex items-center justify-between">
-                        <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">04</p>
-                    </div>
-                    <p className="text-[10px] text-text-dim mt-4 uppercase font-bold tracking-tighter">3 Artículos / 1 Prototipo</p>
-                </BentoCard>
+                    {/* Productos registrados */}
+                    <BentoCard
+                        title="Mis Productos"
+                        description="Artículos, prototipos y ponencias"
+                        icon={<BarChart3 size={14} />}
+                    >
+                        <div className="mt-2 flex items-center justify-between">
+                            <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">
+                                {String(stats?.mis_productos_registrados ?? 0).padStart(2, '0')}
+                            </p>
+                        </div>
+                        <p className="text-[10px] text-text-dim mt-4 uppercase font-bold tracking-tighter">
+                            productos validados
+                        </p>
+                    </BentoCard>
 
-                <BentoCard 
-                    title="Crecimiento de Producción" 
-                    description="Impacto de tus publicaciones"
-                    icon={<TrendingUp size={14} />}
-                    className="md:col-span-4"
-                >
-                    <div className="mt-8 flex justify-between items-end">
-                        <div>
-                            <p className="text-5xl font-bold text-text-main font-mono tracking-tighter">84.22%</p>
-                            <p className="text-[10px] text-text-dim uppercase mt-1">Nivel de cumplimiento global</p>
+                    {/* Actividad reciente */}
+                    <BentoCard
+                        title="Actividad Reciente"
+                        description="Últimos movimientos en el sistema"
+                        icon={<TrendingUp size={14} />}
+                        className="md:col-span-4"
+                    >
+                        <div className="mt-4 space-y-2">
+                            {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
+                                <p className="text-[11px] text-text-dim py-4 text-center">
+                                    Aún no hay actividad registrada.
+                                </p>
+                            ) : (
+                                stats.actividad_reciente.slice(0, 5).map((item, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin hover:border-text-dim transition-colors cursor-pointer group">
+                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ESTADO_DOT[item.estado ?? ''] ?? 'bg-text-dim'}`} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-[11px] font-bold text-text-main truncate">{item.descripcion}</p>
+                                            <p className="text-[9px] text-text-dim uppercase tracking-wide">
+                                                {item.tipo} · {new Date(item.fecha).toLocaleDateString('es-EC')}
+                                            </p>
+                                        </div>
+                                        {item.estado && (
+                                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-wide shrink-0">
+                                                {item.estado}
+                                            </span>
+                                        )}
+                                    </div>
+                                ))
+                            )}
                         </div>
-                        <div className="text-right">
-                             <span className="inline-flex items-center gap-1 text-[10px] text-green-500 font-bold">+12.4% este mes</span>
-                        </div>
-                    </div>
-                </BentoCard>
-            </BentoGrid>
+                    </BentoCard>
+
+                </BentoGrid>
+            )}
         </>
     );
 };

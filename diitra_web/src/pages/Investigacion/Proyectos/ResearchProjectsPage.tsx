@@ -1,14 +1,16 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
     ClipboardList, Plus, 
     ArrowRight, Target, Users, Calendar, Filter,
-    FileCheck, ShieldCheck
+    FileCheck, ShieldCheck, ListChecks
 } from 'lucide-react';
 import DocumentEditor from './Wizard/DocumentEditor';
 import DocumentTray from '../../../components/DIITRA/DocumentTray';
 import FinalReportLauncher from './components/FinalReportLauncher';
 
 const ResearchProjectsPage = () => {
+    const navigate = useNavigate();
     const [showWizard, setShowWizard] = useState(false);
     const [showReportLauncher, setShowReportLauncher] = useState(false);
 
@@ -64,7 +66,15 @@ const ResearchProjectsPage = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div 
+                            onClick={() => navigate('/investigacion/mis-proyectos')}
+                            className="bg-surface border border-primary/40 p-8 rounded-2xl hover:border-primary transition-colors cursor-pointer group shadow-sm hover:shadow-lg"
+                        >
+                            <ListChecks className="text-primary mb-6 group-hover:scale-110 transition-transform" size={28} />
+                            <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Mis Proyectos</h4>
+                            <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Expediente Personal</p>
+                        </div>
                         <div 
                             onClick={() => setShowReportLauncher(true)}
                             className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-primary transition-colors cursor-pointer group shadow-sm hover:shadow-lg bg-glow"

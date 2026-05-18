@@ -128,18 +128,306 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        public async Task<System.Collections.Generic.List<ProyectoDto>> GetAllProjectsAsync()
+        public async Task<List<ProyectoResumenDto>> GetAllProjectsAsync()
         {
             return await _context.InvProyectos
-                .Select(p => new ProyectoDto
+                .Include(p => p.IdSublineaNavigation)
+                .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.InvProyectosProfesores)
+                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvProductos)
+                .Include(p => p.InvInformesAvance)
+                .OrderByDescending(p => p.FechaRegistro)
+                .Select(p => new ProyectoResumenDto
                 {
                     Uuid = p.Uuid,
-                    Titulo = p.Titulo,
                     CodigoInstitucional = p.CodigoInstitucional,
+                    Titulo = p.Titulo,
+                    Estado = p.Estado,
+                    LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
+                    PresupuestoTotal = p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad),
+                    PresupuestoEjecutado = p.ValorEjecucion,
+                    PuntajeEvaluacion = p.PuntajeEvaluacion,
+                    FechaRegistro = p.FechaRegistro,
+                    FechaModificacion = p.FechaModificacion,
+                    FechaInicio = p.FechaInicio,
+                    FechaFin = p.FechaFin,
+                    TiempoEjecucion = p.TiempoEjecucion,
+                    ConvocatoriaTitulo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.Titulo : null,
+                    TotalInvestigadores = p.InvProyectosProfesores.Count + p.InvProyectosAlumnos.Count,
+                    TotalProductos = p.InvProductos.Count,
+                    TotalInformes = p.InvInformesAvance.Count,
+                    InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
+                    TrlActual = (int?)p.TrlActual,
+                    TrlMeta = (int?)p.TrlMeta
+                })
+                .ToListAsync();
+        }
+
+        public async Task<List<ProyectoResumenDto>> GetMyProjectsAsync(string userIdReferencia)
+        {
+            // Buscar el usuario interno por su id de referencia externo
+            var userId = await _context.Users
+                .Where(u => u.IdSigafi == userIdReferencia)
+                .Select(u => (int?)u.IdUsuario)
+                .FirstOrDefaultAsync();
+
+            if (userId == null)
+                return new List<ProyectoResumenDto>();
+
+            // Proyectos donde participa como profesor
+            var proyectosProfesor = _context.InvProyectosProfesores
+                .Where(pp => pp.IdUsuario == userId.Value)
+                .Select(pp => pp.IdProyecto);
+
+            // Proyectos donde participa como alumno
+            var proyectosAlumno = _context.InvProyectosAlumnos
+                .Where(pa => pa.IdUsuario == userId.Value)
+                .Select(pa => pa.IdProyecto);
+
+            var misProyectosIds = proyectosProfesor.Union(proyectosAlumno);
+
+            return await _context.InvProyectos
+                .Where(p => misProyectosIds.Contains(p.IdProyecto))
+                .Include(p => p.IdSublineaNavigation)
+                .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.InvProyectosProfesores)
+                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvProductos)
+                .Include(p => p.InvInformesAvance)
+                .OrderByDescending(p => p.FechaModificacion ?? p.FechaRegistro)
+                .Select(p => new ProyectoResumenDto
+                {
+                    Uuid = p.Uuid,
+                    CodigoInstitucional = p.CodigoInstitucional,
+                    Titulo = p.Titulo,
+                    Estado = p.Estado,
+                    LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
+                    PresupuestoTotal = p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad),
+                    PresupuestoEjecutado = p.ValorEjecucion,
+                    PuntajeEvaluacion = p.PuntajeEvaluacion,
+                    FechaRegistro = p.FechaRegistro,
+                    FechaModificacion = p.FechaModificacion,
+                    FechaInicio = p.FechaInicio,
+                    FechaFin = p.FechaFin,
+                    TiempoEjecucion = p.TiempoEjecucion,
+                    ConvocatoriaTitulo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.Titulo : null,
+                    RolEnProyecto = p.InvProyectosProfesores
+                        .Where(pp => pp.IdUsuario == userId.Value)
+                        .Select(pp => pp.Rol)
+                        .FirstOrDefault()
+                        ?? p.InvProyectosAlumnos
+                        .Where(pa => pa.IdUsuario == userId.Value)
+                        .Select(pa => pa.Rol)
+                        .FirstOrDefault() ?? "Investigador",
+                    TotalInvestigadores = p.InvProyectosProfesores.Count + p.InvProyectosAlumnos.Count,
+                    TotalProductos = p.InvProductos.Count,
+                    TotalInformes = p.InvInformesAvance.Count,
+                    InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
+                    TrlActual = (int?)p.TrlActual,
+                    TrlMeta = (int?)p.TrlMeta
+                })
+                .ToListAsync();
+        }
+
+        public async Task<ProyectoDto?> GetProjectDetailAsync(string uuid)
+        {
+            var p = await _context.InvProyectos
+                .Include(p => p.IdSublineaNavigation)
+                .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
+                .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
+                .Include(p => p.InvObjetivosProyecto)
+                .Include(p => p.InvPresupuestoItems)
+                .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
+                .Include(p => p.InvBibliografiasProyecto)
+                .Include(p => p.InvImpactosProyecto)
+                .Include(p => p.InvProductos)
+                .Include(p => p.MatrizMarcoLogico)
+                .Include(p => p.InvRecursosDisponibles)
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (p == null) return null;
+
+            return new ProyectoDto
+            {
+                Uuid = p.Uuid,
+                CodigoInstitucional = p.CodigoInstitucional,
+                Estado = p.Estado,
+                Titulo = p.Titulo,
+                DescripcionProyecto = p.DescripcionProyecto,
+                Antecedentes = p.Antecedentes,
+                Justificacion = p.Justificacion,
+                MarcoTeorico = p.MarcoTeorico,
+                Metodologia = p.Metodologia,
+                TiempoEjecucion = p.TiempoEjecucion,
+                IdConvocatoria = p.IdConvocatoria,
+                IdObjetivoPnd = p.IdObjetivoPnd,
+                TrlInicial = (int?)p.TrlInicial,
+                TrlActual = (int?)p.TrlActual,
+                TrlMeta = (int?)p.TrlMeta,
+                Investigadores = p.InvProyectosProfesores.Select(pp => new InvestigadorDto
+                {
+                    Nombre = pp.IdUsuarioNavigation?.Nombre,
+                    Rol = pp.Rol,
+                    NivelAcademico = pp.NivelAcademico,
+                    Telefono = pp.Telefono
+                }).Concat(p.InvProyectosAlumnos.Select(pa => new InvestigadorDto
+                {
+                    Nombre = pa.IdUsuarioNavigation?.Nombre,
+                    Rol = pa.Rol,
+                    NivelAcademico = pa.NivelAcademico,
+                    Telefono = pa.Telefono
+                })).ToList(),
+                ObjetivosEspecificos = p.InvObjetivosProyecto
+                    .Where(o => !o.EsGeneral)
+                    .OrderBy(o => o.Orden)
+                    .Select(o => o.Descripcion)
+                    .ToList(),
+                RecursosNecesarios = p.InvPresupuestoItems.Select(i => new RecursoNecesarioDto
+                {
+                    Descripcion = i.Detalle,
+                    CostoUnitario = i.ValorUnitario,
+                    IdPartida = i.IdPartida,
+                    EsGastoCapital = i.EsGastoCapital
+                }).ToList(),
+                Cronograma = p.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new ActividadCronogramaDto
+                {
+                    Numero = c.NumeroActividad,
+                    Actividad = c.Descripcion,
+                    Ponderacion = c.Ponderacion,
+                    EsEntregableCaces = c.EsEntregableCaces,
+                    Semanas = c.InvCronogramaSemanas.OrderBy(s => s.IdSemana).Select(s => s.Semana).ToList()
+                }).ToList(),
+                Bibliografia = p.InvBibliografiasProyecto.Select(b => b.CitaApa).ToList(),
+                MatrizMarcoLogico = p.MatrizMarcoLogico.Select(m => new MmlRowDto
+                {
+                    Nivel = m.Nivel,
+                    Resumen = m.ResumenNarrativo,
+                    Indicadores = m.Indicadores,
+                    Medios = m.MediosVerificacion,
+                    Supuestos = m.Supuestos
+                }).ToList()
+            };
+        }
+
+        public async Task<DashboardStatsDto> GetDashboardStatsAsync(string userIdReferencia, bool isAdmin)
+        {
+            var stats = new DashboardStatsDto();
+
+            // ── Métricas Globales (siempre las calculamos para Admin/Director) ──
+            var proyectosQuery = _context.InvProyectos.AsQueryable();
+
+            stats.TotalProyectos = await proyectosQuery.CountAsync();
+            stats.ProyectosBorrador = await proyectosQuery.CountAsync(p => p.Estado == "Borrador");
+            stats.ProyectosEnRevision = await proyectosQuery.CountAsync(p => p.Estado == "En Revisión" || p.Estado == "Enviado");
+            stats.ProyectosAprobados = await proyectosQuery.CountAsync(p => p.Estado == "Aprobado");
+            stats.ProyectosEnEjecucion = await proyectosQuery.CountAsync(p => p.Estado == "En Ejecución");
+            stats.ProyectosFinalizados = await proyectosQuery.CountAsync(p => p.Estado == "Finalizado");
+
+            stats.TotalConvocatoriasAbiertas = await _context.InvConvocatorias
+                .CountAsync(c => c.Estado == "Abierta");
+
+            stats.TotalProductosPeriodo = await _context.InvProductos.CountAsync();
+            stats.ArticulosIndexados = await _context.InvProductos
+                .CountAsync(p => p.IdTipoProducto == 1); // 1 = Artículo indexado
+            stats.Prototipos = await _context.InvProductos
+                .CountAsync(p => p.IdTipoProducto == 3); // 3 = Prototipo
+            stats.Ponencias = await _context.InvProductos
+                .CountAsync(p => p.IdTipoProducto == 5); // 5 = Ponencia
+
+            stats.PresupuestoTotalAsignado = await _context.InvPresupuestoItems
+                .SumAsync(i => (decimal?)(i.ValorUnitario * i.Cantidad)) ?? 0;
+            stats.PresupuestoTotalEjecutado = await _context.InvProyectos
+                .SumAsync(p => p.ValorEjecucion ?? 0);
+
+            // Distribución por estado para el gráfico
+            var colorMap = new Dictionary<string, string>
+            {
+                { "Borrador", "#6B7280" },
+                { "Enviado", "#3B82F6" },
+                { "En Revisión", "#F59E0B" },
+                { "Aprobado", "#10B981" },
+                { "En Ejecución", "#8B5CF6" },
+                { "Finalizado", "#059669" },
+                { "Rechazado", "#EF4444" }
+            };
+
+            stats.ProyectosPorEstado = await _context.InvProyectos
+                .GroupBy(p => p.Estado)
+                .Select(g => new EstadoConteoDto
+                {
+                    Estado = g.Key,
+                    Cantidad = g.Count(),
+                    Color = colorMap.ContainsKey(g.Key) ? colorMap[g.Key] : "#6B7280"
+                })
+                .ToListAsync();
+
+            // ── Métricas del Investigador (siempre calculamos para el usuario actual) ──
+            var userId = await _context.Users
+                .Where(u => u.IdSigafi == userIdReferencia)
+                .Select(u => (int?)u.IdUsuario)
+                .FirstOrDefaultAsync();
+
+            if (userId != null)
+            {
+                var misIds = _context.InvProyectosProfesores
+                    .Where(pp => pp.IdUsuario == userId.Value).Select(pp => pp.IdProyecto)
+                    .Union(_context.InvProyectosAlumnos
+                    .Where(pa => pa.IdUsuario == userId.Value).Select(pa => pa.IdProyecto));
+
+                stats.MisProyectosActivos = await _context.InvProyectos
+                    .Where(p => misIds.Contains(p.IdProyecto) && (p.Estado == "En Ejecución" || p.Estado == "Aprobado"))
+                    .CountAsync();
+
+                stats.MisProyectosBorrador = await _context.InvProyectos
+                    .Where(p => misIds.Contains(p.IdProyecto) && p.Estado == "Borrador")
+                    .CountAsync();
+
+                stats.MisProductosRegistrados = await _context.InvProductos
+                    .Where(p => misIds.Contains(p.IdProyecto))
+                    .CountAsync();
+
+                stats.MisInformesPendientes = await _context.InvInformesAvance
+                    .Where(i => misIds.Contains(i.IdProyecto) && i.Estado == "Pendiente")
+                    .CountAsync();
+            }
+
+            // ── Actividad Reciente (últimos 10 eventos) ──
+            var ultimosProyectos = await _context.InvProyectos
+                .OrderByDescending(p => p.FechaModificacion ?? p.FechaRegistro)
+                .Take(5)
+                .Select(p => new ActividadRecienteDto
+                {
+                    Tipo = "proyecto",
+                    Descripcion = p.Titulo,
+                    Fecha = p.FechaModificacion ?? p.FechaRegistro ?? DateTime.Now,
+                    Uuid = p.Uuid,
                     Estado = p.Estado
                 })
-                .OrderByDescending(p => p.Titulo)
                 .ToListAsync();
+
+            var ultimosInformes = await _context.InvInformesAvance
+                .Include(i => i.IdProyectoNavigation)
+                .OrderByDescending(i => i.IdInforme)
+                .Take(5)
+                .Select(i => new ActividadRecienteDto
+                {
+                    Tipo = "informe",
+                    Descripcion = $"Informe #{i.NumeroInforme} — {i.IdProyectoNavigation.Titulo}",
+                    Fecha = DateTime.Now,
+                    Uuid = i.Uuid.ToString(),
+                    Estado = i.Estado
+                })
+                .ToListAsync();
+
+            stats.ActividadReciente = ultimosProyectos
+                .Concat(ultimosInformes)
+                .OrderByDescending(a => a.Fecha)
+                .Take(8)
+                .ToList();
+
+            return stats;
         }
 
         private async Task SyncInvestigadoresAsync(int projectId, System.Collections.Generic.List<InvestigadorDto>? investigadores)
