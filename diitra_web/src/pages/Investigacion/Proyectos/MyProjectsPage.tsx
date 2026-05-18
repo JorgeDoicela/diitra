@@ -5,8 +5,8 @@ import {
     FileText, TrendingUp, CheckCircle2, Clock, AlertCircle,
     Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen
 } from 'lucide-react';
-import api from '../../../../api/axios_config';
-import DocumentEditor from '../Wizard/DocumentEditor';
+import api from '../../../api/axios_config';
+import DocumentEditor from './Wizard/DocumentEditor';
 
 interface ProyectoResumen {
     uuid: string;
