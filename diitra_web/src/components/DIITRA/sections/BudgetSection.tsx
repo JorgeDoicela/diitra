@@ -48,9 +48,9 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                         </div>
                         <div className="space-y-3">
                             {recursosDisponibles.map((_r, i) => (
-                                <div key={i} className="flex gap-2 items-center">
+                                <div key={_r.id || i} className="flex gap-2 items-center">
                                     <CoWorkField 
-                                        name={`RecDisp_${i}_desc`} 
+                                        name={`RecDisp_${_r.id || i}_desc`} 
                                         cowork={cowork} 
                                         placeholder="Descripción..."
                                         onValueChange={(v) => onUpdateDisponible(i, 'Descripcion', v)}
@@ -58,7 +58,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                     />
                                     <div className="w-16">
                                         <CoWorkField 
-                                            name={`RecDisp_${i}_cant`} 
+                                            name={`RecDisp_${_r.id || i}_cant`} 
                                             cowork={cowork} 
                                             onValueChange={(v) => onUpdateDisponible(i, 'Cantidad', v)}
                                             className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center" 
@@ -88,9 +88,9 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                         </div>
                         <div className="space-y-3">
                             {recursosNecesarios.map((r, i) => (
-                                <div key={i} className="flex gap-2 items-center">
+                                <div key={r.id || i} className="flex gap-2 items-center">
                                     <CoWorkField 
-                                        name={`RecNec_${i}_desc`} 
+                                        name={`RecNec_${r.id || i}_desc`} 
                                         cowork={cowork} 
                                         placeholder="Rubro..."
                                         onValueChange={(v) => onUpdateNecesario(i, 'Descripcion', v)}
@@ -98,7 +98,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                     />
                                     <div className="w-12">
                                         <CoWorkField 
-                                            name={`RecNec_${i}_cant`} 
+                                            name={`RecNec_${r.id || i}_cant`} 
                                             cowork={cowork} 
                                             onValueChange={(v) => {
                                                 const c = parseFloat(v) || 0;
@@ -111,7 +111,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                     </div>
                                     <div className="w-20 md:w-24">
                                         <CoWorkField 
-                                            name={`RecNec_${i}_unit`} 
+                                            name={`RecNec_${r.id || i}_unit`} 
                                             cowork={cowork} 
                                             onValueChange={(v) => {
                                                 const u = parseFloat(v) || 0;

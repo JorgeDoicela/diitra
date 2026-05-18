@@ -14,30 +14,61 @@ export function useDIITRADocument<T extends Record<string, any>>(
         lists?: string[];
     } = {}
 ) {
-    const [formData, setFormData] = useState<T>(initialData);
+    // Inicializar el estado enriqueciendo los arrays con IDs únicos estables si no existen
+    const [formData, setFormData] = useState<T>(() => {
+        const enriched = { ...initialData };
+        options.lists?.forEach(listName => {
+            if (Array.isArray(enriched[listName])) {
+                enriched[listName] = (enriched[listName] as any[]).map((item, idx) => {
+                    if (item && typeof item === 'object' && !item.id) {
+                        return { ...item, id: `db_${idx}` };
+                    }
+                    return item;
+                });
+            }
+        });
+        return enriched;
+    });
     const coworkRef = useRef<CoWorkHandle | null>(null);
 
-    // Función estable para actualizar el estado de React sin bucles
+    // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
     const updateField = useCallback((name: string, value: any) => {
+        // Sincronizar en Yjs si existe ydoc y no es una lista trackeada
+        const ydoc = coworkRef.current?.ydoc;
+        if (ydoc && !options.lists?.includes(name)) {
+            const ytext = ydoc.getText(name);
+            const stringVal = String(value);
+            if (ytext.toString() !== stringVal) {
+                ydoc.transact(() => {
+                    ytext.delete(0, ytext.length);
+                    ytext.insert(0, stringVal);
+                }, 'local-hook');
+            }
+        }
+
         setFormData(prev => {
             // Evitar re-renders si el valor es idéntico (deep check para objetos/arrays)
             if (JSON.stringify(prev[name]) === JSON.stringify(value)) return prev;
             return { ...prev, [name]: value };
         });
-    }, []);
+    }, [options.lists]);
 
     // --- LÓGICA DE LISTAS (Y.Array) ---
     const addItem = (listName: string, template: any) => {
         const ydoc = coworkRef.current?.ydoc;
+        const enrichedTemplate = {
+            ...template,
+            id: template.id || `rand_${Math.random().toString(36).substring(2, 9)}`
+        };
         if (ydoc) {
             const yarray = ydoc.getArray(listName);
             ydoc.transact(() => {
-                yarray.push([template]);
+                yarray.push([enrichedTemplate]);
             }, 'local-hook');
         }
         setFormData(prev => ({
             ...prev,
-            [listName]: [...(prev as any)[listName], template]
+            [listName]: [...(prev as any)[listName], enrichedTemplate]
         }));
     };
 
@@ -123,7 +154,14 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const yarray = ydoc.getArray(listName);
             const observer = (event: any) => {
                 if (event.transaction.origin === 'remote') {
-                    updateField(listName, yarray.toArray());
+                    const rawArray = yarray.toArray();
+                    const enriched = rawArray.map((item, idx) => {
+                        if (item && typeof item === 'object' && !item.id) {
+                            return { ...item, id: `db_${idx}` };
+                        }
+                        return item;
+                    });
+                    updateField(listName, enriched);
                 }
             };
             yarray.observe(observer);
@@ -132,7 +170,13 @@ export function useDIITRADocument<T extends Record<string, any>>(
             // Sincronización Inicial de listas
             const currentArray = yarray.toArray();
             if (currentArray.length > 0) {
-                updateField(listName, currentArray);
+                const enriched = currentArray.map((item, idx) => {
+                    if (item && typeof item === 'object' && !item.id) {
+                        return { ...item, id: `db_${idx}` };
+                    }
+                    return item;
+                });
+                updateField(listName, enriched);
             }
         });
 
