@@ -109,6 +109,30 @@ namespace diitra_api.Controllers
                 return BadRequest(new { error = $"Error en la orquestación del documento: {ex.Message}" });
             }
         }
+
+        /// <summary>
+        /// ENDPOINT UNIVERSAL: Permite a DIITRA Builder (Frontend) autoguardar
+        /// cualquier estructura de datos JSON (Rúbricas, Actas, Proyectos) sin 
+        /// depender de modelos rígidos como ProyectoDto.
+        /// </summary>
+        [HttpPatch("{uuid}/metadata")]
+        public async Task<IActionResult> UpdateMetadata(string uuid, [FromBody] System.Text.Json.JsonElement metadata, CancellationToken ct)
+        {
+            try
+            {
+                string metadataJson = metadata.GetRawText();
+                var instance = await _instanceService.UpdateMetadataAsync(uuid, metadataJson, ct);
+                return Ok(new { success = true, uuid = instance.Uuid });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new { success = false, message = "Documento no encontrado." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
     }
 
     public record CreateInstanceRequest(

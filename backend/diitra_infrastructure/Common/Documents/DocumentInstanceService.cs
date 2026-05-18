@@ -77,5 +77,15 @@ namespace Diitra.Infrastructure.Common.Documents
             await _context.SaveChangesAsync(ct);
             return instance;
         }
+
+        public async Task<DocumentInstance> UpdateMetadataAsync(string uuid, string metadataJson, CancellationToken ct = default)
+        {
+            var instance = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
+            if (instance == null) throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
+            
+            instance.UpdateDataSnapshot(metadataJson);
+            await _context.SaveChangesAsync(ct);
+            return instance;
+        }
     }
 }

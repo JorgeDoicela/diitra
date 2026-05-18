@@ -12,5 +12,6 @@ namespace Diitra.Application.Common.Documents
         Task<IEnumerable<DocumentInstance>> GetByEntityAsync(string entityUuid, CancellationToken ct = default);
         Task<IEnumerable<DocumentInstance>> GetAllAsync(int limit = 20, CancellationToken ct = default);
         Task<DocumentInstance> FinalizeAsync(string uuid, byte[] pdfContent, string fileName, string hash, string traceabilityCode, CancellationToken ct = default);
+        Task<DocumentInstance> UpdateMetadataAsync(string uuid, string metadataJson, CancellationToken ct = default);
     }
 }
