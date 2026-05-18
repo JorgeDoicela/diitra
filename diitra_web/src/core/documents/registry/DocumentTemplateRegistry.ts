@@ -5,6 +5,7 @@ import { TeamSection } from '../../../components/DIITRA/sections/TeamSection';
 import { BudgetSection } from '../../../components/DIITRA/sections/BudgetSection';
 import { TimelineSection } from '../../../components/DIITRA/sections/TimelineSection';
 import { ImpactSection } from '../../../components/DIITRA/sections/ImpactSection';
+import { AgnosticSection } from '../../../components/DIITRA/sections/AgnosticSection';
 
 // Nota: Las secciones de Rúbrica y Avance se irán creando luego, por ahora dejamos placeholders 
 // para demostrar el poder del enrutamiento dinámico (CACES / CES Compliance).
@@ -52,7 +53,23 @@ export const DocumentTemplateRegistry: Record<string, any> = {
         },
         lists: [],
         sections: [
-            // { id: 'evaluacion', label: 'Evaluación Técnica', icon: CheckSquare, component: RubricSection }
+            { 
+                id: 'evaluacion', 
+                label: 'Evaluación Técnica', 
+                icon: CheckSquare, 
+                component: AgnosticSection,
+                config: {
+                    referenceTemplateCode: 'PROTOCOLO_INVESTIGACION',
+                    fields: [
+                        { name: 'Pertinencia', label: 'Pertinencia Social (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
+                        { name: 'Metodologia', label: 'Metodología Científica (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
+                        { name: 'Viabilidad', label: 'Viabilidad y Presupuesto (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
+                        { name: 'Impacto', label: 'Impacto y Transferencia (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
+                        { name: 'ComentariosGenerales', label: 'Observaciones y comentarios institucionales', type: 'textarea', collaborative: false, placeholder: 'Escriba un informe cualitativo para fundamentar las puntuaciones...' },
+                        { name: 'RecomendacionFinal', label: 'Recomendación Final de Comisión', type: 'select', collaborative: false, options: ['Aprobado sin modificaciones', 'Aprobado con observaciones menores', 'Requiere re-estructuración mayor', 'Rechazado'] }
+                    ]
+                }
+            }
         ]
     },
     INFORME_AVANCE: {
@@ -66,7 +83,19 @@ export const DocumentTemplateRegistry: Record<string, any> = {
         },
         lists: ['HitosCompletados', 'Evidencias', 'PresupuestoEjecutado'],
         sections: [
-            // { id: 'ejecucion', label: 'Avance de Ejecución', icon: BarChart, component: ProgressSection }
+            {
+                id: 'ejecucion',
+                label: 'Avance de Ejecución',
+                icon: BarChart,
+                component: AgnosticSection,
+                config: {
+                    fields: [
+                        { name: 'ConclusionesParciales', label: 'Bitácora y Conclusiones Científicas Parciales', type: 'rich-text', collaborative: true },
+                        { name: 'Hito_Gantt_Completados', label: 'Validar hito del proyecto', type: 'checkbox', collaborative: true },
+                        { name: 'Anexo_Evidencias', label: 'Notas complementarias y anexos', type: 'textarea', collaborative: true, placeholder: 'Describa brevemente las evidencias de laboratorio anexadas al expediente...' }
+                    ]
+                }
+            }
         ]
     }
 };
