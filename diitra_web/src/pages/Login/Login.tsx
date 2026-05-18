@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Lock, User, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -17,7 +17,7 @@ interface LoginProps {
     currentTheme?: 'dark' | 'light';
 }
 
-const Login: React.FC<LoginProps> = ({ currentTheme = 'dark' }) => {
+const Login = ({ currentTheme = 'dark' }: LoginProps) => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();

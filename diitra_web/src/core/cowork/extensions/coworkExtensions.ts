@@ -25,7 +25,7 @@ export interface CoWorkExtensionsConfig {
 }
 
 export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
-    const extensions = [
+    const extensions: any[] = [
         // Reemplazo de StarterKit por componentes individuales para evitar 
         // la inclusión automática de extensiones de historia conflictivas.
         Document,

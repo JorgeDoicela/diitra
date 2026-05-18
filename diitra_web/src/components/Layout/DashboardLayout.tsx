@@ -42,7 +42,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                 </p>
                             </div>
                             <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-main uppercase">
-                                {user?.nombre?.split(' ').map(n => n[0]).join('').slice(0, 2) || 'JD'}
+                                {user?.nombre_completo?.split(' ').map((n: string) => n[0]).join('').slice(0, 2) || 'JD'}
                             </div>
                         </div>
                         <NotificationBell />

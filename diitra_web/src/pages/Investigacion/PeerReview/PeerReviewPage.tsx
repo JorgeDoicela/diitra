@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    ShieldCheck, Clock, CheckCircle, AlertCircle, 
-    FileText, Search, Filter, ChevronRight, Star,
-    MessageSquare, Send, Save, X, ExternalLink
+    ShieldCheck, Clock, CheckCircle, 
+    FileText, ChevronRight,
+    MessageSquare, Send, X, ExternalLink
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 

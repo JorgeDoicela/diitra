@@ -8,12 +8,10 @@ import {
     ChevronLeft, 
     ChevronRight, 
     Activity, 
-    User, 
     MapPin, 
     Monitor, 
     Code,
     Info,
-    ArrowUpDown,
     Download
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -53,7 +51,7 @@ const AuditPage: React.FC = () => {
     const [modulo, setModulo] = useState('');
     const [action, setAction] = useState('');
     const [fromDate, setFromDate] = useState('');
-    const [toDate, setToDate] = useState('');
+    const [toDate, _setToDate] = useState('');
 
     const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);

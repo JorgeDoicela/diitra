@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Bell, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';

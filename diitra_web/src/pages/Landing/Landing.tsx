@@ -1,8 +1,8 @@
 import {
-    ArrowRight, FileText, Activity, TrendingUp, Clock, BarChart3,
-    ShieldCheck, Sun, Moon, Plus, ArrowUpRight, Database, Cpu,
-    Zap, Award, BookOpen, Users, Fingerprint, Scale, FileSignature,
-    LayoutDashboard, Globe, Search, MessageSquareCode
+    ArrowRight, Activity, TrendingUp, Clock,
+    ShieldCheck, Sun, Moon, Cpu,
+    Users, Fingerprint, Scale, FileSignature,
+    LayoutDashboard, Globe, MessageSquareCode
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

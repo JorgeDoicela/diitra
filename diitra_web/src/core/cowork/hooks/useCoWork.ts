@@ -25,7 +25,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     const ydocRef = useRef<Y.Doc | null>(null);
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
     const transportRef = useRef<ICoWorkTransport | null>(null);
-    const submitTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const submitTimerRef = useRef<any>(null);
 
     // Getters seguros
     const getTransport = () => {
@@ -90,7 +90,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     useEffect(() => {
         let isMounted = true;
         let transport: ICoWorkTransport;
-        let cleanupInterval: NodeJS.Timeout;
+        let cleanupInterval: any;
         let statusCleanup: (() => void) | undefined;
 
         const init = async () => {
@@ -181,7 +181,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             // G) LIMPIEZA DE "FANTASMAS" (Timeouts)
             cleanupInterval = setInterval(() => {
                 if (isMounted && awarenessRef.current) {
-                    const beforeCount = awarenessRef.current.getStates().size;
+                    // Clean up inactive states if needed
                     // Yjs awarenessProtocol.removeAwarenessStates no está disponible directamente como cleanup,
                     // pero podemos usar la lógica interna de Yjs si estuviera el provider.
                     // Como es manual, verificamos estados inactivos.
@@ -199,7 +199,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }
             });
 
-            awareness.on('update', ({ added, updated, removed }, origin) => {
+            awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
                 if (isMounted) {
                     syncUserList(); // Refrescar siempre que algo cambie (local o remoto)
 

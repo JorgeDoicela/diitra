@@ -22,7 +22,7 @@ export class SignalRTransport implements ICoWorkTransport {
                 transport: signalR.HttpTransportType.WebSockets,
                 accessTokenFactory: () => localStorage.getItem('diitra_token') ?? '',
             })
-            .withAutomaticReconnect(COWORK_CONFIG.RECONNECT_DELAYS)
+            .withAutomaticReconnect([...COWORK_CONFIG.RECONNECT_DELAYS])
             .configureLogging(signalR.LogLevel.Warning)
             .build();
 

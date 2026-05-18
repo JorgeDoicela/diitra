@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, ChevronRight, Award, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, Award, Clock } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

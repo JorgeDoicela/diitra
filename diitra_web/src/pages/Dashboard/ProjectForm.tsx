@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface ProjectFormData {
@@ -11,7 +12,7 @@ const ProjectForm = () => {
   const { register, handleSubmit, formState: { errors } } = useForm<ProjectFormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = (data: ProjectFormData) => {
+  const onSubmit = (_data: ProjectFormData) => {
     setIsSubmitting(true);
     alert('Postulación enviada correctamente (Simulado)');
   };
@@ -69,9 +70,10 @@ const ProjectForm = () => {
 
         <button
           type="submit"
-          className="w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transform hover:scale-[1.02] transition-all shadow-xl shadow-primary/20"
+          disabled={isSubmitting}
+          className="w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transform hover:scale-[1.02] transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
         >
-          Enviar Protocolo
+          {isSubmitting ? 'Enviando...' : 'Enviar Protocolo'}
         </button>
       </form>
     </div>
