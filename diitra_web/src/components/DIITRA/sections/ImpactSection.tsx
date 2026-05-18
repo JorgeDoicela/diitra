@@ -38,7 +38,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {productosEsperados.map((_p, i) => (
-                        <div key={i} className="p-4 bg-surface border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
+                        <div key={_p.id || i} className="p-4 bg-surface border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
                             <div className="flex-1">
                                 <label className="text-[9px] font-black uppercase text-text-dim mb-1 block ml-1">Tipo de Producto</label>
                                 <select 
@@ -54,7 +54,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             </div>
                             <div className="w-16">
                                 <CoWorkField 
-                                    name={`Prod_${i}_cant`} 
+                                    name={`Prod_${_p.id || i}_cant`} 
                                     cowork={cowork} 
                                     onValueChange={(v) => onUpdateProducto(i, 'cantidad', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center" 

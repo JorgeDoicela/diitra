@@ -33,7 +33,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
             </div>
             <div className="space-y-4">
                 {investigadores.map((_inv, idx) => (
-                    <div key={idx} className="p-8 bg-surface border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
+                    <div key={_inv.id || idx} className="p-8 bg-surface border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
                         <button 
                             onClick={() => onRemove(idx)} 
                             className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full"
@@ -43,7 +43,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
                             <div className="md:col-span-5">
                                 <CoWorkField 
-                                    name={`Inv_${idx}_nombre`} 
+                                    name={`Inv_${_inv.id || idx}_nombre`} 
                                     cowork={cowork} 
                                     label="Nombre y Apellidos"
                                     onValueChange={(v) => onUpdate(idx, 'Nombre', v)}
@@ -52,7 +52,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                             </div>
                             <div className="md:col-span-3">
                                 <CoWorkField 
-                                    name={`Inv_${idx}_cedula`} 
+                                    name={`Inv_${_inv.id || idx}_cedula`} 
                                     cowork={cowork} 
                                     label="Cédula"
                                     onValueChange={(v) => onUpdate(idx, 'Cedula', v)}
@@ -61,7 +61,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                             </div>
                             <div className="md:col-span-4">
                                 <CoWorkField 
-                                    name={`Inv_${idx}_email`} 
+                                    name={`Inv_${_inv.id || idx}_email`} 
                                     cowork={cowork} 
                                     label="Email"
                                     onValueChange={(v) => onUpdate(idx, 'Email', v)}
@@ -70,7 +70,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                             </div>
                             <div className="md:col-span-3">
                                 <CoWorkField 
-                                    name={`Inv_${idx}_telefono`} 
+                                    name={`Inv_${_inv.id || idx}_telefono`} 
                                     cowork={cowork} 
                                     label="Teléfono"
                                     onValueChange={(v) => onUpdate(idx, 'Telefono', v)}
@@ -79,7 +79,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                             </div>
                             <div className="md:col-span-5">
                                 <CoWorkField 
-                                    name={`Inv_${idx}_nivel`} 
+                                    name={`Inv_${_inv.id || idx}_nivel`} 
                                     cowork={cowork} 
                                     label="Nivel Académico"
                                     onValueChange={(v) => onUpdate(idx, 'NivelAcademico', v)}
@@ -89,7 +89,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                             </div>
                             <div className="md:col-span-4">
                                 <CoWorkField 
-                                    name={`Inv_${idx}_rol`} 
+                                    name={`Inv_${_inv.id || idx}_rol`} 
                                     cowork={cowork} 
                                     label="Rol"
                                     onValueChange={(v) => onUpdate(idx, 'Rol', v)}

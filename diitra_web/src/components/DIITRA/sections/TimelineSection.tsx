@@ -33,10 +33,10 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             </div>
             <div className="space-y-4">
                 {cronograma.map((_c, i) => (
-                    <div key={i} className="p-6 bg-surface border border-border-thin rounded-2xl flex gap-6 items-end shadow-sm">
+                    <div key={_c.id || i} className="p-6 bg-surface border border-border-thin rounded-2xl flex gap-6 items-end shadow-sm">
                         <div className="flex-1">
                             <CoWorkField 
-                                name={`Cron_${i}_act`} 
+                                name={`Cron_${_c.id || i}_act`} 
                                 cowork={cowork} 
                                 label="Actividad"
                                 onValueChange={(v) => onUpdate(i, 'Actividad', v)}
@@ -45,7 +45,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                         </div>
                         <div className="w-24">
                             <CoWorkField 
-                                name={`Cron_${i}_num`} 
+                                name={`Cron_${_c.id || i}_num`} 
                                 cowork={cowork} 
                                 label="Orden"
                                 onValueChange={(v) => onUpdate(i, 'Numero', parseInt(v) || 0)}
@@ -54,7 +54,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
                         </div>
                         <div className="w-48">
                             <CoWorkField 
-                                name={`Cron_${i}_rec`} 
+                                name={`Cron_${_c.id || i}_rec`} 
                                 cowork={cowork} 
                                 label="Recursos"
                                 onValueChange={(v) => onUpdate(i, 'RecursosNecesarios', v)}
