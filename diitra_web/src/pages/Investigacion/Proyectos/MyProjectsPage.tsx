@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    ClipboardList, Plus, ArrowRight, Users, Calendar,
-    FileText, TrendingUp, CheckCircle2, Clock, AlertCircle,
+    ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
     Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen
 } from 'lucide-react';
 import api from '../../../api/axios_config';
