@@ -69,14 +69,20 @@ const ProjectWizard: React.FC<{ initialData?: any; onClose: () => void }> = ({ i
         const loadMetadata = async () => {
             try {
                 const [rCarreras, rConvocatorias, rTipos] = await Promise.all([
-                    api.get('/Carreras'),
-                    api.get('/Convocatorias/activas'),
-                    api.get('/metadata/tipos-producto')
+                    api.get('/catalogs/carreras'),
+                    api.get('/Convocatorias'),
+                    api.get('/catalogs/tipo-producto')
                 ]);
                 setCarreras(rCarreras.data);
-                setConvocatorias(rConvocatorias.data);
+                
+                // Filtrar por estado 'Abierta' o 'Activa', con fallback al listado completo si está vacío en desarrollo.
+                const activeConvs = (rConvocatorias.data || []).filter(
+                    (c: any) => c.estado === 'Abierta' || c.estado === 'Activa'
+                );
+                setConvocatorias(activeConvs.length > 0 ? activeConvs : rConvocatorias.data);
+                
                 setTiposProducto(rTipos.data);
-            } catch (e) { console.error("Error al cargar metadatos"); }
+            } catch (e) { console.error("Error al cargar metadatos", e); }
         };
         loadMetadata();
     }, []);
