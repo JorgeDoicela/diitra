@@ -14,7 +14,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     // 1. Estado de la sesión
     const [session, setSession] = useState<CoWorkSession>({
         documentId: config.documentId,
-        isConnected: false, // Se actualizará en el init inmediatamente
+        isConnected: false,
         connectedUsers: [],
         isSyncing: false,
         lastSyncedAt: null,
@@ -24,13 +24,15 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     // 2. Referencias persistentes
     const ydocRef = useRef<Y.Doc | null>(null);
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
-    const transportRef = useRef<ICoWorkTransport | null>(null);
+    const activeTransportRef = useRef<ICoWorkTransport | null>(null);
     const submitTimerRef = useRef<any>(null);
 
-    // Getters seguros
+    // Getters seguros para el handle
     const getTransport = () => {
-        if (!transportRef.current) transportRef.current = new SignalRTransport();
-        return transportRef.current;
+        if (!activeTransportRef.current) {
+            activeTransportRef.current = new SignalRTransport();
+        }
+        return activeTransportRef.current;
     };
 
     // 3. Acciones del Handle
@@ -59,7 +61,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     }, [config.documentId]);
 
     const disconnect = useCallback(() => {
-        if (transportRef.current) transportRef.current.disconnect();
+        if (activeTransportRef.current) activeTransportRef.current.disconnect();
     }, []);
 
     const notifySectionActivity = useCallback((instanceUuid: string, sectionName: string, action: string) => {
@@ -86,35 +88,28 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         getTransport().onNewCommentReceived(handler);
     }, []);
 
-    // 4. Ciclo de vida de la colaboración (Efecto Principal)
+    // 4. Ciclo de vida de la colaboración (Efecto Principal Aislado)
     useEffect(() => {
         let isMounted = true;
-        let transport: ICoWorkTransport;
+
+        if (!config.enabled) return;
+
+        console.log(`[useCoWork] Activando motor para sala: ${config.documentId}`);
+
+        // A) CREACIÓN: Instancias aisladas exclusivas de este ciclo de efecto
+        const transport = new SignalRTransport();
+        activeTransportRef.current = transport;
+
+        const ydoc = new Y.Doc();
+        const awareness = new awarenessProtocol.Awareness(ydoc);
+        ydocRef.current = ydoc;
+        awarenessRef.current = awareness;
+
         let cleanupInterval: any;
         let statusCleanup: (() => void) | undefined;
 
         const init = async () => {
-            if (!config.enabled || !isMounted) return;
-
-            console.log(`[useCoWork] Activando motor para sala: ${config.documentId}`);
-
-            // A) LIMPIEZA EXTREMA: Destruir instancias previas para evitar fugas de datos
-            if (ydocRef.current) {
-                console.log(`[useCoWork] Limpiando sala anterior...`);
-                ydocRef.current.destroy();
-                ydocRef.current = null;
-            }
-            if (awarenessRef.current) {
-                awarenessRef.current.destroy();
-                awarenessRef.current = null;
-            }
-
-            // B) CREACIÓN: Nuevas instancias aisladas para esta sección
-            const ydoc = new Y.Doc();
-            const awareness = new awarenessProtocol.Awareness(ydoc);
-            ydocRef.current = ydoc;
-            awarenessRef.current = awareness;
-            transport = getTransport();
+            if (!isMounted) return;
 
             const syncUserList = () => {
                 if (!isMounted || !awarenessRef.current) return;
@@ -128,7 +123,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 setSession(s => ({ ...s, connectedUsers: Array.from(usersMap.values()) }));
             };
 
-            // C) EVENTOS DE ENTRADA (Desde el servidor)
+            // B) EVENTOS DE ENTRADA
             statusCleanup = transport.onStatusChange((isConnected) => {
                 if (isMounted) {
                     console.log(`[useCoWork] Telemetría Real-Time: ${isConnected ? 'ONLINE' : 'OFFLINE'}`);
@@ -136,62 +131,51 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }
             });
 
-            // Sincronizar estado inicial inmediatamente
             if (transport.isConnected) {
                 setSession(s => ({ ...s, isConnected: true }));
             }
 
             transport.onYjsUpdate((base64) => {
-                if (!isMounted || !ydocRef.current) return;
+                if (!isMounted || ydocRef.current !== ydoc) return;
                 const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-                Y.applyUpdate(ydocRef.current, update, 'remote');
+                Y.applyUpdate(ydoc, update, 'remote');
             });
 
             transport.onUpdateHistory((updates) => {
-                if (!isMounted || !ydocRef.current) return;
+                if (!isMounted || ydocRef.current !== ydoc) return;
                 console.log(`[useCoWork] Sincronizando historial (${updates.length} deltas)`);
-                ydocRef.current.transact(() => {
+                ydoc.transact(() => {
                     updates.forEach(base64 => {
                         const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-                        Y.applyUpdate(ydocRef.current!, update, 'remote');
+                        Y.applyUpdate(ydoc, update, 'remote');
                     });
                 }, 'remote');
                 setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
             });
 
             transport.onAwarenessUpdate((base64) => {
-                if (!isMounted || !awarenessRef.current) return;
+                if (!isMounted || awarenessRef.current !== awareness) return;
                 const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-                awarenessProtocol.applyAwarenessUpdate(awarenessRef.current, update, 'remote');
-                syncUserList(); // Refrescar al recibir de otros
+                awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
+                syncUserList();
             });
 
-            // F) EVENTOS DE RED (Optimización de Sincronización)
             transport.onUserJoined?.((name) => {
-                if (!isMounted || !awarenessRef.current) return;
+                if (!isMounted || awarenessRef.current !== awareness) return;
                 console.log(`[useCoWork] Nuevo usuario detectado (${name}), re-anunciando presencia local...`);
-
-                // Forzar re-anuncio local para que el nuevo usuario nos vea de inmediato
-                const localState = awarenessRef.current.getLocalState();
+                const localState = awareness.getLocalState();
                 if (localState) {
-                    awarenessRef.current.setLocalState(localState);
+                    awareness.setLocalState(localState);
                 }
             });
 
-            // G) LIMPIEZA DE "FANTASMAS" (Timeouts)
             cleanupInterval = setInterval(() => {
-                if (isMounted && awarenessRef.current) {
-                    // Clean up inactive states if needed
-                    // Yjs awarenessProtocol.removeAwarenessStates no está disponible directamente como cleanup,
-                    // pero podemos usar la lógica interna de Yjs si estuviera el provider.
-                    // Como es manual, verificamos estados inactivos.
-                    // Nota: y-protocols/awareness maneja internamente el tiempo si se usa correctamente.
-                    // Forzamos un syncUserList para limpiar UI si Yjs ya los quitó.
+                if (isMounted) {
                     syncUserList();
                 }
             }, 5000);
 
-            // D) EVENTOS DE SALIDA (Hacia el servidor)
+            // C) EVENTOS DE SALIDA
             ydoc.on('update', (update, origin) => {
                 if (origin !== 'remote' && isMounted) {
                     const base64 = btoa(String.fromCharCode(...update));
@@ -201,8 +185,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
             awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
                 if (isMounted) {
-                    syncUserList(); // Refrescar siempre que algo cambie (local o remoto)
-
+                    syncUserList();
                     if (origin !== 'remote') {
                         const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [
                             ...added, ...updated, ...removed
@@ -213,9 +196,8 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }
             });
 
-            // E) CONEXIÓN (Handshake)
+            // D) CONEXIÓN (Handshake)
             try {
-                // 4. Iniciar Conexión (Handshake)
                 const handshake = await transport.connect(config.documentId, config.user);
 
                 if (!isMounted) {
@@ -236,8 +218,6 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     error: null
                 }));
 
-                // Configurar Identidad (Blind Mode aware)
-                // Usar sessionStorage para que el tabId sea persistente al refrescar la misma pestaña
                 const sessionKey = `diitra_tab_id_${config.documentId}`;
                 let tabId = sessionStorage.getItem(sessionKey);
                 if (!tabId) {
@@ -252,7 +232,6 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     userToAnnounce.name = `${prefix} #${tabId.substring(0, 3)}`;
                 }
 
-                // Aunciar presencia local
                 awareness.setLocalStateField('user', {
                     ...userToAnnounce,
                     color: getUserColor(config.user.id, tabId),
@@ -260,10 +239,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     tabId: tabId
                 });
 
-                // FORZAR SINCRONIZACIÓN INICIAL:
-                // 1. Inmediata para capturar lo que ya llegó
                 syncUserList();
-                // 2. Retrasada para capturar estados que lleguen con latencia de red
                 setTimeout(() => {
                     if (isMounted) syncUserList();
                 }, 1000);
@@ -279,15 +255,25 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
         init();
 
+        // E) LIMPIEZA EXTREMA: Desconectar y destruir SOLO los recursos de este efecto
         return () => {
             console.log(`[useCoWork] Cleanup sala: ${config.documentId}`);
             isMounted = false;
             clearInterval(cleanupInterval);
             if (statusCleanup) statusCleanup();
             if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
-            if (transport) transport.disconnect();
+
+            ydoc.destroy();
+            awareness.destroy();
+
+            // Nullificar la referencia central únicamente si no ha sido ya suplantada por un efecto posterior
+            if (ydocRef.current === ydoc) ydocRef.current = null;
+            if (awarenessRef.current === awareness) awarenessRef.current = null;
+
+            transport.disconnect();
+            if (activeTransportRef.current === transport) activeTransportRef.current = null;
         };
-    }, [config.documentId, config.enabled]); // <--- CRÍTICO: Re-ejecutar al cambiar de sala
+    }, [config.documentId, config.enabled]);
 
     return useMemo(() => ({
         session,
