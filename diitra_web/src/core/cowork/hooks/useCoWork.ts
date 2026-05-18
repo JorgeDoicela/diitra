@@ -232,6 +232,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     ...s,
                     isConnected: true,
                     readOnly: isReadOnly,
+                    isBlindMode: isBlindMode,
                     error: null
                 }));
 

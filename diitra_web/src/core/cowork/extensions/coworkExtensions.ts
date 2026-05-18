@@ -15,6 +15,7 @@ import HorizontalRule from '@tiptap/extension-horizontal-rule';
 import CodeBlock from '@tiptap/extension-code-block';
 import Collaboration from '@tiptap/extension-collaboration';
 import Placeholder from '@tiptap/extension-placeholder';
+import Image from '@tiptap/extension-image';
 import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
 
@@ -47,6 +48,10 @@ export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
         Placeholder.configure({
             placeholder: config.placeholder ?? 'Comienza a escribir tu propuesta académica...',
             emptyEditorClass: 'is-editor-empty',
+        }),
+        Image.configure({
+            inline: true,
+            allowBase64: true, // Habilitamos subida directa en base64 para prototipado rápido y facilidad de transporte por Yjs
         }),
     ];
 
