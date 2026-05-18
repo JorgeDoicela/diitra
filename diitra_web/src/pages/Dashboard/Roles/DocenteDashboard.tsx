@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Plus, FileText, TrendingUp, Clock, BarChart3, Briefcase,
-    Loader2, AlertCircle, ClipboardList, Zap, BookOpen, ArrowRight
+    Plus, TrendingUp, Clock, BarChart3, Briefcase,
+    Loader2, AlertCircle, ClipboardList, ArrowRight
 } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
@@ -55,7 +55,7 @@ export const DocenteDashboard: React.FC = () => {
         fetch();
     }, []);
 
-    const totalProyectos = (stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0);
+
 
     return (
         <>

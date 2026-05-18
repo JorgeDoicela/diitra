@@ -16,10 +16,10 @@ export function useDIITRADocument<T extends Record<string, any>>(
 ) {
     // Inicializar el estado enriqueciendo los arrays con IDs únicos estables si no existen
     const [formData, setFormData] = useState<T>(() => {
-        const enriched = { ...initialData };
+        const enriched: any = { ...initialData };
         options.lists?.forEach(listName => {
             if (Array.isArray(enriched[listName])) {
-                enriched[listName] = (enriched[listName] as any[]).map((item, idx) => {
+                enriched[listName] = enriched[listName].map((item: any, idx: number) => {
                     if (item && typeof item === 'object' && !item.id) {
                         return { ...item, id: `db_${idx}` };
                     }
@@ -155,7 +155,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const observer = (event: any) => {
                 if (event.transaction.origin === 'remote') {
                     const rawArray = yarray.toArray();
-                    const enriched = rawArray.map((item, idx) => {
+                    const enriched = rawArray.map((item: any, idx) => {
                         if (item && typeof item === 'object' && !item.id) {
                             return { ...item, id: `db_${idx}` };
                         }
@@ -170,7 +170,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             // Sincronización Inicial de listas
             const currentArray = yarray.toArray();
             if (currentArray.length > 0) {
-                const enriched = currentArray.map((item, idx) => {
+                const enriched = currentArray.map((item: any, idx) => {
                     if (item && typeof item === 'object' && !item.id) {
                         return { ...item, id: `db_${idx}` };
                     }
