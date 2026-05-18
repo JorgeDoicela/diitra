@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    FileText, 
     Sliders, 
-    CheckCircle, 
     Eye, 
     EyeOff, 
     HelpCircle, 
     Lock, 
-    Plus, 
-    Trash2, 
     Activity,
     BookOpen
 } from 'lucide-react';
@@ -53,6 +49,9 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
     onAdd,
     onRemove
 }) => {
+    // Evitar errores de compilación por variables no leídas pero requeridas por la firma genérica
+    void carreras; void convocatorias; void tiposProducto; void onAdd; void onRemove;
+
     const [collapsed, setCollapsed] = useState(false);
     const [referenceData, setReferenceData] = useState<any>(null);
     const [isLoadingRef, setIsLoadingRef] = useState(false);

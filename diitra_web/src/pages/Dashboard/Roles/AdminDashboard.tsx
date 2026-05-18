@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    ShieldCheck, Users, Activity, Settings, BarChart3, Database,
-    ClipboardList, Loader2, FileCheck, Megaphone, TrendingUp, AlertCircle
+    Users, Activity, BarChart3,
+    ClipboardList, Loader2, Megaphone, TrendingUp
 } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
