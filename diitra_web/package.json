@@ -24,6 +24,7 @@
     "@tiptap/extension-hard-break": "^3.22.5",
     "@tiptap/extension-heading": "^3.22.5",
     "@tiptap/extension-horizontal-rule": "^3.22.5",
+    "@tiptap/extension-image": "^3.22.5",
     "@tiptap/extension-italic": "^3.22.5",
     "@tiptap/extension-list-item": "^3.22.5",
     "@tiptap/extension-ordered-list": "^3.22.5",

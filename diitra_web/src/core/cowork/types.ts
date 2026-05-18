@@ -39,6 +39,7 @@ export interface CoWorkSession {
     lastSyncedAt: Date | null;
     error: string | null;
     readOnly?: boolean;
+    isBlindMode?: boolean;
 }
 
 /**
