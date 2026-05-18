@@ -103,21 +103,23 @@ const VerifyDocument = () => {
                             <div className="space-y-6">
                                 <div>
                                     <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 flex items-center gap-2"><FileText size={12}/> Tipo de Documento</p>
-                                    <p className="text-sm font-bold">{result.templateName || 'Protocolo de Investigación'}</p>
+                                    <p className="text-sm font-bold">{result.template_name || result.templateName || 'Protocolo de Investigación'}</p>
                                 </div>
                                 <div>
                                     <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 flex items-center gap-2"><User size={12}/> Emitido por</p>
-                                    <p className="text-sm font-bold">{result.generatedBy}</p>
+                                    <p className="text-sm font-bold">{result.generated_by || result.generatedBy || 'Sistema DIITRA'}</p>
                                 </div>
                             </div>
                             <div className="space-y-6">
                                 <div>
                                     <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 flex items-center gap-2"><Calendar size={12}/> Fecha de Emisión</p>
-                                    <p className="text-sm font-bold">{new Date(result.generatedAt).toLocaleDateString()} - {new Date(result.generatedAt).toLocaleTimeString()}</p>
+                                    <p className="text-sm font-bold">
+                                        {new Date(result.generated_at || result.generatedAt).toLocaleDateString()} - {new Date(result.generated_at || result.generatedAt).toLocaleTimeString()}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-[9px] font-black uppercase text-white/40 tracking-widest mb-2 flex items-center gap-2"><ShieldCheck size={12}/> Hash de Integridad</p>
-                                    <p className="text-[10px] font-mono break-all text-white/60">{result.fileHash}</p>
+                                    <p className="text-[10px] font-mono break-all text-white/60">{result.file_hash || result.fileHash || 'N/A'}</p>
                                 </div>
                             </div>
                         </div>

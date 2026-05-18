@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Diitra.Application.Common.Documents;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 
 namespace diitra_api.Controllers
 {
@@ -76,6 +77,55 @@ namespace diitra_api.Controllers
         {
             var templates = await _documentEngine.GetAvailableTemplatesAsync();
             return Ok(templates);
+        }
+
+        /// <summary>
+        /// VALIDADOR PÚBLICO DE TRAZABILIDAD E INTEGRIDAD DE DOCUMENTOS (CACES Compliance)
+        /// -------------------------------------------------------------------------
+        /// Permite a cualquier persona u organismo externo (CACES) verificar la validez 
+        /// y autenticidad de un documento mediante su código de trazabilidad único.
+        /// </summary>
+        [HttpGet("verify/{code}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Verify(
+            string code, 
+            [FromServices] IDocumentAuditRepository auditRepository, 
+            [FromServices] IDocumentTemplateRepository templateRepository,
+            System.Threading.CancellationToken ct)
+        {
+            _logger.LogInformation("[DIITRA CORE] Solicitud de verificación pública de trazabilidad para código: {Code}", code);
+
+            var auditEntry = await auditRepository.FindByTraceabilityCodeAsync(code, ct);
+            if (auditEntry == null)
+            {
+                return NotFound(new { error = "El código de trazabilidad no es válido o el documento no ha sido emitido oficialmente." });
+            }
+
+            string templateName = "Documento Oficial DIITRA";
+            try 
+            {
+                var template = await templateRepository.FindByCodeAsync(auditEntry.TemplateCode, ct);
+                if (template != null)
+                {
+                    templateName = template.Name;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogWarning(ex, "[DIITRA CORE] No se pudo obtener el nombre de la plantilla {Code}", auditEntry.TemplateCode);
+            }
+
+            return Ok(new
+            {
+                TemplateCode = auditEntry.TemplateCode,
+                TemplateName = templateName,
+                TemplateVersion = auditEntry.TemplateVersion,
+                Category = auditEntry.Category.ToString(),
+                GeneratedBy = auditEntry.GeneratedBy ?? "Sistema DIITRA",
+                GeneratedAt = auditEntry.GeneratedAt,
+                FileHash = auditEntry.FileHash ?? "N/A",
+                FileName = auditEntry.FileName
+            });
         }
     }
 }
