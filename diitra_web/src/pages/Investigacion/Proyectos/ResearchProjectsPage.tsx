@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { 
     ClipboardList, Plus, 
     ArrowRight, Target, Users, Calendar, Filter,
-    FileCheck
+    FileCheck, ShieldCheck
 } from 'lucide-react';
 import ProjectWorkspace from './Wizard/ProjectWizard';
 import DocumentTray from '../DocumentWorkspace/DocumentTray';
@@ -64,7 +64,7 @@ const ResearchProjectsPage = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div 
                             onClick={() => setShowReportLauncher(true)}
                             className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-primary transition-colors cursor-pointer group shadow-sm hover:shadow-lg bg-glow"
@@ -77,6 +77,14 @@ const ResearchProjectsPage = () => {
                             <Users className="text-text-main mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Colaboración</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">DIITRA CoWork Activo</p>
+                        </div>
+                        <div 
+                            onClick={() => window.open('/verify', '_blank')}
+                            className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-green-500 transition-colors cursor-pointer group shadow-sm hover:shadow-lg bg-glow"
+                        >
+                            <ShieldCheck className="text-green-500 mb-6 group-hover:scale-110 transition-transform" size={28} />
+                            <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Verificar Firma</h4>
+                            <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Trazabilidad & CACES</p>
                         </div>
                     </div>
                 </div>
