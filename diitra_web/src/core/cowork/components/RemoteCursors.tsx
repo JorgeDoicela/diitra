@@ -6,6 +6,7 @@ import type { CoWorkUser } from '../types';
 interface RemoteCursorsProps {
     editor: Editor | null;
     awareness: awarenessProtocol.Awareness | null;
+    field?: string;
 }
 
 interface CursorState {
@@ -113,7 +114,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             window.removeEventListener('resize', handleUpdate);
             clearInterval(interval);
         };
-    }, [editor, awareness]);
+    }, [editor, awareness, field]);
 
     if (!editor) return null;
 
