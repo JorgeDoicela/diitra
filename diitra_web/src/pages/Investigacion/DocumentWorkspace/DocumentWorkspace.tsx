@@ -1,14 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     FileText, 
     Users, 
     Shield, 
     Download, 
-    History, 
-    CheckCircle, 
     ArrowLeft,
-    Clock,
     Eye,
     Sun,
     Moon,
@@ -81,13 +78,13 @@ const DocumentWorkspace: React.FC = () => {
     const cowork = useCoWork({
         documentId: activeSection ? `${documentUuid}_${activeSection}`.toLowerCase().trim() : '', 
         enabled: !!activeSection && !!documentUuid, 
-        readOnly: instance?.state === 3,
+        readonly: instance?.state === 3,
         user: {
-            id: user?.id || 'anon',
-            name: user?.nombreCompleto || 'Usuario',
-            role: user?.rol || 'Investigador',
+            id: user?.id_referencia || 'anon',
+            name: user?.nombre_completo || 'Usuario',
+            role: user?.role || 'Investigador',
             color: '#4f46e9',
-            initials: user?.nombreCompleto?.substring(0, 2).toUpperCase() || 'U'
+            initials: user?.nombre_completo?.substring(0, 2).toUpperCase() || 'U'
         }
     });
 

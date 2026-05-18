@@ -96,7 +96,7 @@ const ProjectWizard: React.FC<{ initialData?: any; onClose: () => void }> = ({ i
         const method = data.Uuid ? 'put' : 'post';
         const response = await api[method](endpoint, data);
         if (!data.Uuid && response.data.Uuid) {
-            setFormData(prev => ({ ...prev, Uuid: response.data.Uuid }));
+            setFormData((prev: any) => ({ ...prev, Uuid: response.data.Uuid }));
         }
     };
 
@@ -172,7 +172,6 @@ const ProjectWizard: React.FC<{ initialData?: any; onClose: () => void }> = ({ i
                         {activeTab === 'impactos' && (
                             <ImpactSection 
                                 productosEsperados={formData.ProductosEsperados}
-                                impacto={formData.Impacto}
                                 tiposProducto={tiposProducto}
                                 cowork={cowork}
                                 onAddProducto={() => addItem('ProductosEsperados', { tipo: '', cantidad: 1 })}

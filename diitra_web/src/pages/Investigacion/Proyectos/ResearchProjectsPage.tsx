@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
-    ClipboardList, Plus, FileText, 
+    ClipboardList, Plus, 
     ArrowRight, Target, Users, Calendar, Filter,
     FileCheck
 } from 'lucide-react';

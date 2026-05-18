@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Search, Shield, User as UserIcon, Check, X, RefreshCw,
-    ShieldAlert, Filter, Settings2, ExternalLink, GraduationCap,
-    Users as UsersIcon, Award, UserPlus, History, Clock, Globe,
+    Search, Shield, User as UserIcon, X, RefreshCw,
+    Settings2, GraduationCap, UserPlus, History, Globe,
     Activity
 } from 'lucide-react';
 import api from '../../api/axios_config';
@@ -61,7 +60,10 @@ const UsersPage = () => {
     const [externalForm, setExternalForm] = useState({
         cedula: '',
         full_name: '',
-        email: ''
+        email: '',
+        especialidad: '',
+        grado_academico: '',
+        institucion: ''
     });
 
     const fetchUsers = async () => {
@@ -226,7 +228,19 @@ const UsersPage = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-thin">
-                            {users.map((u) => (
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={4} className="p-8 text-center text-xs font-bold uppercase text-text-dim tracking-widest animate-pulse">
+                                        Cargando Personal...
+                                    </td>
+                                </tr>
+                            ) : users.length === 0 ? (
+                                <tr>
+                                    <td colSpan={4} className="p-8 text-center text-xs font-bold uppercase text-text-dim tracking-widest">
+                                        No se encontraron registros
+                                    </td>
+                                </tr>
+                            ) : users.map((u) => (
                                 <tr key={u.id_profesor} className="hover:bg-surface/30 transition-colors group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">

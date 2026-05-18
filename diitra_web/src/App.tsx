@@ -14,7 +14,7 @@ import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentW
 import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
 import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
-import { Settings2, Loader2 } from 'lucide-react';
+import { Settings2 } from 'lucide-react';
 import VerifyDocument from './pages/Public/VerifyDocument';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

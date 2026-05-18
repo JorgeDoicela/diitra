@@ -35,14 +35,26 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
     readonly = false,
     className = '',
 }) => {
+    const ydoc = cowork.ydoc;
+    const awareness = cowork.awareness;
+
+    if (!ydoc || !awareness) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 bg-bg-deep rounded-lg border border-border-thin">
+                <Loader2 className="animate-spin text-text-main mb-4" size={24} />
+                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Inicializando editor colaborativo...</span>
+            </div>
+        );
+    }
+
     // Memorizar las extensiones para evitar re-creaciones del editor innecesarias
     const extensions = React.useMemo(() => {
         return buildCoWorkExtensions({
-            ydoc: cowork.ydoc,
-            awareness: cowork.awareness,
+            ydoc,
+            awareness,
             placeholder,
         });
-    }, [cowork.ydoc, cowork.awareness, placeholder]);
+    }, [ydoc, awareness, placeholder]);
 
     const editor = useEditor({
         extensions,

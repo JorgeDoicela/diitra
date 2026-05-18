@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, ShieldAlert, FileText, Calendar, User, Search, Loader2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, FileText, Calendar, User, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 
-const VerifyDocument: React.FC = () => {
+const VerifyDocument = () => {
     const { code } = useParams<{ code: string }>();
     const [loading, setLoading] = useState(!!code);
     const [inputCode, setInputCode] = useState(code || '');

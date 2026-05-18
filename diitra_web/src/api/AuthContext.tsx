@@ -17,7 +17,7 @@ interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (credentials: any) => Promise<void>;
+    login: (credentials: any) => Promise<User>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
     hasPermission: (module: string, operation: string) => boolean;

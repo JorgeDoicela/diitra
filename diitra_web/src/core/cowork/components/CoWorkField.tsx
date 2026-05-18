@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
 
@@ -63,7 +63,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                 isRemoteChange.current = true;
                 const raw = ytext.toString();
                 const newVal = type === 'checkbox' ? raw === 'true' : raw;
-                setLocalValue(prev => {
+                setLocalValue((prev: any) => {
                     if (prev !== newVal) {
                         onValueChangeRef.current?.(newVal);
                     }

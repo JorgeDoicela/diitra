@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    Users, Plus, Search, RefreshCw, Edit2, 
-    Trash2, UserPlus, Info, CheckCircle, XCircle,
+    Users, Plus, Search, Edit2, 
+    Trash2, CheckCircle, XCircle,
     BookOpen, Shield, Award, Calendar, FileText
 } from 'lucide-react';
 import api from '../../api/axios_config';
@@ -56,9 +56,7 @@ const GroupsPage = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-    const [selectedGroupUuid, setSelectedGroupUuid] = useState<string | null>(null);
 
     // Form states
     const [formData, setFormData] = useState({

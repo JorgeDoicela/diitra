@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Award, Link, BookOpen, Fingerprint, Save, RefreshCw } from 'lucide-react';
 import api from '../../../api/axios_config';
 

@@ -5,7 +5,6 @@ import type { CoWorkHandle } from '../../../core/cowork/types';
 
 interface ImpactSectionProps {
     productosEsperados: any[];
-    impacto: Record<string, string>;
     tiposProducto: any[];
     cowork: CoWorkHandle;
     onAddProducto: () => void;
@@ -16,7 +15,6 @@ interface ImpactSectionProps {
 
 export const ImpactSection: React.FC<ImpactSectionProps> = ({
     productosEsperados,
-    impacto,
     tiposProducto,
     cowork,
     onAddProducto,
