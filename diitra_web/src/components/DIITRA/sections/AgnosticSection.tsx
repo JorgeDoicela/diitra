@@ -12,10 +12,10 @@ import {
     Activity,
     BookOpen
 } from 'lucide-react';
-import api from '../../../../api/axios_config';
-import { CoWorkField } from '../../../../core/cowork/components/CoWorkField';
-import { CoWorkEditor } from '../../../../core/cowork/components/CoWorkEditor';
-import { DocumentTemplateRegistry } from '../../../../core/documents/registry/DocumentTemplateRegistry';
+import api from '../../../api/axios_config';
+import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
+import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
+import { DocumentTemplateRegistry } from '../../../core/documents/registry/DocumentTemplateRegistry';
 
 interface FieldConfig {
     name: string;
