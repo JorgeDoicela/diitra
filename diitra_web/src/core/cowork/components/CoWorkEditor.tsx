@@ -53,6 +53,17 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
     const ydoc = cowork.ydoc;
     const awareness = cowork.awareness;
 
+    // Guardar referencias a callbacks e inputs volátiles para evitar la destrucción/re-creación de Tiptap
+    const onChangeRef = React.useRef(onChange);
+    const coworkRef = React.useRef(cowork);
+    const fieldRef = React.useRef(field);
+
+    React.useEffect(() => {
+        onChangeRef.current = onChange;
+        coworkRef.current = cowork;
+        fieldRef.current = field;
+    });
+
     if (!ydoc || !awareness) {
         return (
             <div className="flex flex-col items-center justify-center p-20 bg-bg-deep rounded-lg border border-border-thin">
@@ -74,7 +85,6 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
 
     const editor = useEditor({
         extensions,
-        editable: !readonly && !cowork.session.readOnly,
         editorProps: {
             attributes: {
                 class: 'focus:outline-none',
@@ -83,27 +93,37 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
         // Sincronizar selección completa (posición y resaltado) aislada por campo
         onSelectionUpdate: ({ editor }) => {
             const { anchor, head } = editor.state.selection;
+            const currentField = fieldRef.current;
             // Usar setTimeout para evitar el error "Cannot update a component while rendering"
             setTimeout(() => {
-                if (cowork.awareness) {
-                    cowork.awareness.setLocalStateField(`anchor_${field}`, anchor);
-                    cowork.awareness.setLocalStateField(`head_${field}`, head);
+                if (coworkRef.current.awareness) {
+                    coworkRef.current.awareness.setLocalStateField(`anchor_${currentField}`, anchor);
+                    coworkRef.current.awareness.setLocalStateField(`head_${currentField}`, head);
                 }
             }, 0);
         },
         // Notificar cambios al formulario contenedor o usar fallback de SignalR (retrocompatibilidad)
         onUpdate: ({ editor }) => {
             const html = editor.getHTML();
-            if (onChange) {
+            const currentOnChange = onChangeRef.current;
+            if (currentOnChange) {
                 // Modo Moderno: Delegar al formulario centralizador de React
-                setTimeout(() => onChange(html), 0);
+                setTimeout(() => currentOnChange(html), 0);
             } else {
                 // Modo Legado: Guardar de manera autónoma vía SignalR para pantallas anteriores
                 const json = JSON.stringify(editor.getJSON());
-                cowork.submitFinalContent(html, json);
+                coworkRef.current.submitFinalContent(html, json);
             }
         }
-    }, [extensions, onChange, cowork]); // Re-inicializar si cambian críticamente
+    }, [extensions]); // El editor se instancia UNA SOLA VEZ y permanece estable en memoria
+
+    // Sincronizar estado de Edición/Solo Lectura de forma dinámica sin destruir el editor
+    const isEditable = !readonly && !cowork.session.readOnly;
+    React.useEffect(() => {
+        if (editor) {
+            editor.setEditable(isEditable);
+        }
+    }, [editor, isEditable]);
 
     const { session } = cowork;
 
