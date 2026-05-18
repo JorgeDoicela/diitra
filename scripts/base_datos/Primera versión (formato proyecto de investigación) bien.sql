@@ -27,6 +27,7 @@ DROP TABLE IF EXISTS
 
     -- DIITRA Document Engine (Plantillas y Auditoría)
     inv_document_audit,
+    inv_documentos_firmas,
     inv_documentos_instancias,
     inv_document_templates,
 
@@ -1087,6 +1088,19 @@ CREATE TABLE inv_documentos_instancias (
     data_snapshot_json      LONGTEXT      NULL            COMMENT 'Snapshot forense de los datos inyectados',
     INDEX idx_entity (entity_uuid),
     CONSTRAINT fk_instancia_template FOREIGN KEY (template_code) REFERENCES inv_document_templates(code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE inv_documentos_firmas (
+    idFirma                 INT           AUTO_INCREMENT PRIMARY KEY,
+    documento_uuid          VARCHAR(36)   NOT NULL,
+    firmante_id             VARCHAR(100)  NOT NULL COMMENT 'ID o Email del firmante (ej. c.c. o correo)',
+    firmante_rol            VARCHAR(50)   NOT NULL COMMENT 'Rol del firmante en el documento (ej. Director, Autor)',
+    fecha_firma             TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    firma_metadata          TEXT          NULL     COMMENT 'Datos extraídos del certificado PAdES .p12 (Issuer, Serial, etc)',
+    archivo_pdf_firmado     VARCHAR(512)  NOT NULL COMMENT 'Ruta relativa al documento final firmado por este usuario',
+    es_valida               TINYINT(1)    NOT NULL DEFAULT 1,
+    INDEX idx_doc_firma (documento_uuid),
+    CONSTRAINT fk_firma_documento FOREIGN KEY (documento_uuid) REFERENCES inv_documentos_instancias(uuid) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE inv_document_audit (
