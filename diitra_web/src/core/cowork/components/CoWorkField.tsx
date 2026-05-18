@@ -53,7 +53,10 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             if (localValue !== parsed) {
                 console.log(`[CoWorkField:${name}] Sincronización inicial detectada.`);
                 setLocalValue(parsed);
-                onValueChangeRef.current?.(parsed);
+                const callback = onValueChangeRef.current;
+                if (callback) {
+                    setTimeout(() => callback(parsed), 0);
+                }
             }
         }
 
@@ -63,12 +66,16 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
                 isRemoteChange.current = true;
                 const raw = ytext.toString();
                 const newVal = type === 'checkbox' ? raw === 'true' : raw;
-                setLocalValue((prev: any) => {
-                    if (prev !== newVal) {
-                        onValueChangeRef.current?.(newVal);
-                    }
-                    return newVal;
-                });
+                
+                // 1. Actualizar el valor local síncronamente
+                setLocalValue(newVal);
+                
+                // 2. Disparar el callback del padre de forma asíncrona para no contaminar la fase de render
+                const callback = onValueChangeRef.current;
+                if (callback) {
+                    setTimeout(() => callback(newVal), 0);
+                }
+                
                 setTimeout(() => { isRemoteChange.current = false; }, 0);
             }
         };
