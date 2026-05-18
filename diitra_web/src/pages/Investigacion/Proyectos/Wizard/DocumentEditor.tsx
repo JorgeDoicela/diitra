@@ -71,9 +71,24 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     }, []);
 
     const handleSave = async (data: any) => {
-        const response = await api.post('/projects/save-preview-data', { ...data, templateCode });
-        if (!data.Uuid && response.data?.uuid) {
-            setFormData((prev: any) => ({ ...prev, Uuid: response.data.uuid }));
+        try {
+            if (data.Uuid) {
+                // Actualización Agnóstica (Guarda el JSON puro en la base de datos sin mapeos forzados)
+                await api.patch(`/documents/instances/${data.Uuid}/metadata`, data);
+            } else {
+                // Creación de nueva instancia agnóstica si no existe
+                const response = await api.post('/documents/instances', { 
+                    templateCode, 
+                    entityUuid: 'GLOBAL', 
+                    title: data.Titulo || data.title || `Documento ${templateCode}`
+                });
+                if (response.data?.uuid) {
+                    setFormData((prev: any) => ({ ...prev, Uuid: response.data.uuid }));
+                }
+            }
+        } catch (error) {
+            console.error("[DIITRA] Error al guardar documento agnóstico:", error);
+            throw error; // Lanzamos el error para que el DIITRABuilderShell muestre el toast rojo
         }
     };
 

@@ -79,6 +79,15 @@ namespace Diitra.Domain.Common.Documents
             State = DocumentState.Signed;
             UpdatedAt = DateTime.UtcNow;
         }
+
+        public void UpdateDataSnapshot(string json)
+        {
+            if (State == DocumentState.Signed || State == DocumentState.Archived)
+                throw new InvalidOperationException("No se puede modificar la data de un documento inmutable.");
+            
+            DataSnapshotJson = json;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 
     public enum DocumentState
