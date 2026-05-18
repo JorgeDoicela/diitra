@@ -98,11 +98,9 @@ const ProjectWizard: React.FC<{ initialData?: any; onClose: () => void }> = ({ i
     ];
 
     const handleSave = async (data: any) => {
-        const endpoint = data.Uuid ? `/projects/${data.Uuid}` : '/projects';
-        const method = data.Uuid ? 'put' : 'post';
-        const response = await api[method](endpoint, data);
-        if (!data.Uuid && response.data.Uuid) {
-            setFormData((prev: any) => ({ ...prev, Uuid: response.data.Uuid }));
+        const response = await api.post('/projects/save-preview-data', data);
+        if (!data.Uuid && response.data.uuid) {
+            setFormData((prev: any) => ({ ...prev, Uuid: response.data.uuid }));
         }
     };
 
