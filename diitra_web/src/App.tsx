@@ -10,7 +10,7 @@ import { NotificationsProvider } from './api/NotificationsContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
-import DocumentWorkspace from './pages/Investigacion/DocumentWorkspace/DocumentWorkspace';
+import { ProjectWorkspace } from './pages/Investigacion/Proyectos/Workspace/ProjectWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
 import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
@@ -119,7 +119,7 @@ function App() {
           
           <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
             <ProtectedRoute>
-                <DocumentWorkspace />
+                <ProjectWorkspace />
             </ProtectedRoute>
           } />
 

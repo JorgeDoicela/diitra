@@ -4,8 +4,8 @@ import {
     ArrowRight, Target, Users, Calendar, Filter,
     FileCheck, ShieldCheck
 } from 'lucide-react';
-import ProjectWorkspace from './Wizard/ProjectWizard';
-import DocumentTray from '../DocumentWorkspace/DocumentTray';
+import DocumentEditor from './Wizard/DocumentEditor';
+import DocumentTray from '../../../components/DIITRA/DocumentTray';
 import FinalReportLauncher from './components/FinalReportLauncher';
 
 const ResearchProjectsPage = () => {
@@ -154,7 +154,7 @@ const ResearchProjectsPage = () => {
                 />
             </div>
 
-            {showWizard && <ProjectWorkspace onClose={() => setShowWizard(false)} />}
+            {showWizard && <DocumentEditor templateCode="PROTOCOLO_INVESTIGACION" onClose={() => setShowWizard(false)} />}
             {showReportLauncher && <FinalReportLauncher onClose={() => setShowReportLauncher(false)} />}
         </main>
     );

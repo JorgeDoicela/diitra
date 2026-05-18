@@ -10,7 +10,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../../api/axios_config';
+import api from '../../api/axios_config';
 
 interface DocumentInstance {
     uuid: string;

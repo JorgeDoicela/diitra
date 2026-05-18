@@ -1,15 +1,9 @@
-import React, { useState } from 'react';
-import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft } from 'lucide-react';
+import api from '../../../../api/axios_config';
+import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
-
-// Datos Simulados del Proyecto (Esto vendrá de la base de datos vía API)
-const currentProject = {
-    id: 'PRJ-2026-004',
-    uuid: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    title: 'Desarrollo de un Sistema de Trazabilidad IoT para el Sector Florícola',
-    status: 'En Revisión', // Coincide con inv_config_workflow
-    role: 'Director' // Puede ser Investigador, Revisor, Director
-};
 
 const WorkflowPhases = [
     { id: 'Borrador', label: 'Formulación', icon: FileText },
@@ -19,25 +13,82 @@ const WorkflowPhases = [
 ];
 
 export const ProjectWorkspace: React.FC = () => {
-    // Controla qué documento está abierto en el editor
+    const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    const [currentProject, setCurrentProject] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const [activeDocument, setActiveDocument] = useState<string | null>(null);
 
-    // Si hay un documento activo, renderizamos el Editor Genérico a pantalla completa
+    useEffect(() => {
+        const fetchProject = async () => {
+            try {
+                // Fetch de datos reales desde el backend
+                const res = await api.get(`/documents/instances/${documentUuid}`);
+                
+                // Mapeo seguro del state
+                let statusLabel = 'Borrador';
+                if (res.data.state === 1) statusLabel = 'Borrador';
+                if (res.data.state === 2) statusLabel = 'En Revisión';
+                if (res.data.state === 3) statusLabel = 'Aprobado';
+                
+                setCurrentProject({
+                    id: res.data.uuid.substring(0,8).toUpperCase(),
+                    uuid: res.data.uuid,
+                    title: res.data.metadata?.titulo || 'Proyecto de Investigación (Sin Título)',
+                    status: statusLabel,
+                    role: user?.role || 'Investigador',
+                    presupuesto: res.data.metadata?.CostoTotal || 0,
+                    linea: res.data.metadata?.linea || 'No definida'
+                });
+            } catch (e) {
+                console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
+                // Fallback graceful
+                setCurrentProject({
+                    id: documentUuid?.substring(0,8).toUpperCase() || 'NEW',
+                    uuid: documentUuid || '',
+                    title: 'Nuevo Proyecto de Investigación',
+                    status: 'Borrador',
+                    role: user?.role || 'Investigador'
+                });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        if (documentUuid) fetchProject();
+    }, [documentUuid, user]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 rounded-full"></div>
+                    <span className="text-gray-500 font-mono text-sm">Cargando Workspace...</span>
+                </div>
+            </div>
+        );
+    }
+
+    // Render del Editor Genérico estructurado (Oculta el Dashboard)
     if (activeDocument) {
         return (
             <DocumentEditor 
                 templateCode={activeDocument} 
+                initialData={{ Uuid: currentProject.uuid }}
                 onClose={() => setActiveDocument(null)} 
             />
         );
     }
 
-    // Interfaz Premium estilo Vercel (Dark Mode, Bordes limpios, Glassmorphism)
     return (
         <div className="min-h-screen bg-[#000000] text-white font-sans selection:bg-blue-500/30">
-            {/* Cabecera Vercel */}
             <header className="border-b border-[#333] bg-[#000] px-8 py-4 sticky top-0 z-10 flex justify-between items-center">
                 <div className="flex items-center gap-3">
+                    <button onClick={() => navigate('/investigacion')} className="p-1.5 hover:bg-[#222] rounded text-gray-400 transition-colors">
+                        <ArrowLeft size={16} />
+                    </button>
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-sm shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                         DI
                     </div>
@@ -53,7 +104,6 @@ export const ProjectWorkspace: React.FC = () => {
             </header>
 
             <main className="max-w-6xl mx-auto px-8 py-12 animate-fade-in">
-                {/* Sección Hero */}
                 <div className="mb-12">
                     <h1 className="text-4xl font-bold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
                         {currentProject.title}
@@ -68,10 +118,7 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Diseño de Cuadrícula (Workflow + Firmas) */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    {/* Columna Izquierda: Línea de Tiempo del Flujo Institucional */}
                     <div className="lg:col-span-2 space-y-6">
                         <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                             <Settings size={20} className="text-gray-400" />
@@ -97,34 +144,26 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
                                             </p>
                                             
-                                            {/* Acciones Contextuales inyectadas dinámicamente según la fase */}
                                             {phase.id === 'Borrador' && (
                                                 <div className="mt-5 flex gap-3">
                                                     <button 
-                                                        onClick={() => setActiveDocument('PROTOCOLO_INVESTIGACION')}
+                                                        onClick={() => setActiveDocument(templateCode || 'PROTOCOLO_INVESTIGACION')}
                                                         className="px-4 py-2 bg-[#1a1a1a] border border-[#333] hover:border-gray-500 hover:bg-[#222] text-sm rounded-lg transition-all flex items-center gap-2 shadow-sm"
                                                     >
                                                         <FileText size={16} className="text-gray-400" />
-                                                        Editar Protocolo
+                                                        {isPast ? 'Ver Protocolo' : 'Editar Protocolo'}
                                                     </button>
                                                 </div>
                                             )}
                                             
-                                            {phase.id === 'En Revisión' && isCurrent && (
+                                            {phase.id === 'En Revisión' && (isCurrent || isPast) && (
                                                 <div className="mt-5 flex gap-3 animate-fade-in">
                                                     <button 
                                                         onClick={() => setActiveDocument('RUBRICA_EVALUACION')}
                                                         className="px-4 py-2 bg-white text-black hover:bg-gray-200 text-sm font-medium rounded-lg transition-all flex items-center gap-2 shadow-[0_0_10px_rgba(255,255,255,0.2)]"
                                                     >
                                                         <CheckSquare size={16} />
-                                                        Llenar Rúbrica de Pares
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => setActiveDocument('PROTOCOLO_INVESTIGACION')}
-                                                        className="px-4 py-2 bg-[#1a1a1a] border border-[#333] hover:border-gray-500 hover:bg-[#222] text-sm rounded-lg transition-all flex items-center gap-2"
-                                                    >
-                                                        <FileText size={16} className="text-gray-400" />
-                                                        Revisar Protocolo (Lectura)
+                                                        {isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica de Pares'}
                                                     </button>
                                                 </div>
                                             )}
@@ -147,12 +186,8 @@ export const ProjectWorkspace: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Columna Derecha: Bóveda de Firmas y Metadatos Normativos */}
                     <div className="space-y-6">
-                        
-                        {/* Bóveda de Firmas PAdES (Conectada a la nueva tabla inv_documentos_firmas) */}
                         <div className="border border-[#333] rounded-xl bg-[#0a0a0a] p-6 shadow-xl relative overflow-hidden">
-                            {/* Efecto de resplandor sutil */}
                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
                             
                             <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
@@ -164,7 +199,6 @@ export const ProjectWorkspace: React.FC = () => {
                             </p>
                             
                             <div className="space-y-3">
-                                {/* Estado: Pendiente */}
                                 <div className="p-4 border border-[#333] rounded-lg bg-[#111] flex items-center justify-between group hover:border-blue-500/50 transition-colors">
                                     <div>
                                         <p className="text-sm font-medium">Director de Investigación</p>
@@ -176,36 +210,19 @@ export const ProjectWorkspace: React.FC = () => {
                                         <UploadCloud size={16} />
                                     </button>
                                 </div>
-
-                                {/* Estado: Firmado */}
-                                <div className="p-4 border border-green-500/30 rounded-lg bg-green-500/5 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-sm font-medium">Investigador Principal</p>
-                                        <p className="text-[11px] text-green-500 mt-0.5">Firmado por: Juan Pérez</p>
-                                        <p className="text-[9px] text-gray-500 mt-0.5 font-mono">Issuer: Banco Central del Ecuador</p>
-                                    </div>
-                                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/50">
-                                        <CheckCircle2 size={16} className="text-green-500" />
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
-                        {/* Metadatos Normativos (Visión Directiva) */}
                         <div className="border border-[#333] rounded-xl bg-[#0a0a0a] p-6 shadow-xl">
                             <h2 className="text-lg font-semibold mb-4">Metadata Normativa</h2>
                             <div className="space-y-3 text-sm font-mono">
                                 <div className="flex justify-between border-b border-[#222] pb-2">
                                     <span className="text-gray-500">Línea Inv.</span>
-                                    <span className="text-gray-300">Inteligencia Artificial</span>
+                                    <span className="text-gray-300">{currentProject.linea || 'N/A'}</span>
                                 </div>
                                 <div className="flex justify-between border-b border-[#222] pb-2">
                                     <span className="text-gray-500">Presupuesto</span>
-                                    <span className="text-blue-400">$ 4,500.00</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">Horas Asig.</span>
-                                    <span className="text-gray-300">120h / Semestre</span>
+                                    <span className="text-blue-400">${currentProject.presupuesto || '0.00'}</span>
                                 </div>
                             </div>
                         </div>
