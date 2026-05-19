@@ -34,6 +34,46 @@ namespace Diitra.Infrastructure.Research
                 throw new InvalidOperationException($"La transición {estadoAnterior} -> {nuevoEstado} no está permitida por la normativa vigente para este tipo de proyecto.");
             }
 
+            // 1.1 Validación de Reglas de Convocatoria (CACES & SENESCYT Compliance)
+            if (nuevoEstado == "Enviado" && proyecto.IdConvocatoria.HasValue)
+            {
+                var convocatoria = await _context.InvConvocatorias
+                    .Include(c => c.Lineas)
+                    .FirstOrDefaultAsync(c => c.IdConvocatoria == proyecto.IdConvocatoria.Value);
+
+                if (convocatoria != null)
+                {
+                    // A. Validación de Fechas de Cierre
+                    var hoy = DateOnly.FromDateTime(DateTime.Today);
+                    if (hoy > convocatoria.FechaCierre)
+                    {
+                        throw new InvalidOperationException($"No es posible enviar la postulación. La convocatoria '{convocatoria.Titulo}' cerró el {convocatoria.FechaCierre:dd/MM/yyyy}.");
+                    }
+                    if (hoy < convocatoria.FechaApertura)
+                    {
+                        throw new InvalidOperationException($"No es posible enviar la postulación. La convocatoria '{convocatoria.Titulo}' abre el {convocatoria.FechaApertura:dd/MM/yyyy}.");
+                    }
+
+                    // B. Validación de Presupuesto Máximo
+                    var totalPresupuesto = await _context.InvPresupuestoItems
+                        .Where(i => i.IdProyecto == proyecto.IdProyecto)
+                        .SumAsync(i => (decimal?)(i.ValorUnitario * i.Cantidad)) ?? 0;
+
+                    if (convocatoria.MontoMaximoProyecto.HasValue && totalPresupuesto > convocatoria.MontoMaximoProyecto.Value)
+                    {
+                        throw new InvalidOperationException($"El presupuesto total del proyecto (${totalPresupuesto:N2}) excede el monto máximo permitido para esta convocatoria (${convocatoria.MontoMaximoProyecto.Value:N2}).");
+                    }
+
+                    // C. Validación de al menos un Investigador
+                    var totalInvestigadores = await _context.InvProyectosProfesores.CountAsync(p => p.IdProyecto == proyecto.IdProyecto)
+                                            + await _context.InvProyectosAlumnos.CountAsync(a => a.IdProyecto == proyecto.IdProyecto);
+                    if (totalInvestigadores == 0)
+                    {
+                        throw new InvalidOperationException("No es posible enviar la propuesta. Debe registrar al menos un investigador en el equipo humano.");
+                    }
+                }
+            }
+
             // 2. Ejecutar Transición
             proyecto.Estado = nuevoEstado;
             proyecto.FechaModificacion = DateTime.Now;
