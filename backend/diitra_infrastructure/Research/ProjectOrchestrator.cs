@@ -140,6 +140,7 @@ namespace diitra_infrastructure.Research
                 .OrderByDescending(p => p.FechaRegistro)
                 .Select(p => new ProyectoResumenDto
                 {
+                    IdProyecto = p.IdProyecto,
                     Uuid = p.Uuid,
                     CodigoInstitucional = p.CodigoInstitucional,
                     Titulo = p.Titulo,
@@ -198,6 +199,7 @@ namespace diitra_infrastructure.Research
                 .OrderByDescending(p => p.FechaModificacion ?? p.FechaRegistro)
                 .Select(p => new ProyectoResumenDto
                 {
+                    IdProyecto = p.IdProyecto,
                     Uuid = p.Uuid,
                     CodigoInstitucional = p.CodigoInstitucional,
                     Titulo = p.Titulo,
@@ -266,6 +268,8 @@ namespace diitra_infrastructure.Research
                 TrlInicial = (int?)p.TrlInicial,
                 TrlActual = (int?)p.TrlActual,
                 TrlMeta = (int?)p.TrlMeta,
+                LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
+                CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad),
                 Investigadores = p.InvProyectosProfesores.Select(pp => new InvestigadorDto
                 {
                     Nombre = pp.IdUsuarioNavigation?.Nombre,
@@ -522,7 +526,7 @@ namespace diitra_infrastructure.Research
                     Categoria = "Gasto",
                     Detalle = r.Descripcion ?? "Sin detalle",
                     Cantidad = decimal.TryParse(r.Cantidad, out var c) ? c : 1,
-                    ValorUnitario = r.CostoUnitario ?? 0,
+                    ValorUnitario = r.CostoUnitario,
                     EsGastoCapital = r.EsGastoCapital ?? false,
                     IdPartida = r.IdPartida
                 });
@@ -620,10 +624,10 @@ namespace diitra_infrastructure.Research
                 {
                     IdProyecto = projectId,
                     IdObjetivo = 0, // TODO: Vincular con objetivo específico si se requiere
-                    NumeroActividad = act.Numero ?? 0,
+                    NumeroActividad = act.Numero,
                     Descripcion = act.Actividad,
                     RecursosNecesarios = act.RecursosNecesarios,
-                    Ponderacion = act.Ponderacion ?? 0,
+                    Ponderacion = act.Ponderacion,
                     EsEntregableCaces = act.EsEntregableCaces ?? false
                 };
                 _context.InvCronogramas.Add(nuevaAct);

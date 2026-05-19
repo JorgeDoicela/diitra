@@ -20,10 +20,12 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true },
     { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE', 'DOCENTE_INV'] },
     { name: 'Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
+    { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'] },
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
     { name: 'Usuarios', icon: Users, path: '/admin', permission: 'USUARIOS:VER' },
     { name: 'Auditoría', icon: Activity, path: '/admin/audit', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
     { name: 'Grupos', icon: Award, path: '/admin/groups', permission: 'GRUPOS:VER' },
+    { name: 'Configuración', icon: Settings, path: '/admin/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
   ];
 
   const menuItems = allMenuItems.filter(item => {

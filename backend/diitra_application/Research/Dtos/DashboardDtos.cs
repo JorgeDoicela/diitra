@@ -9,6 +9,7 @@ namespace Diitra.Application.Research.Dtos
     /// </summary>
     public class ProyectoResumenDto
     {
+        public int IdProyecto { get; set; }
         public string Uuid { get; set; } = string.Empty;
         public string? CodigoInstitucional { get; set; }
         public string Titulo { get; set; } = string.Empty;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft } from 'lucide-react';
+import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
@@ -20,26 +20,112 @@ export const ProjectWorkspace: React.FC = () => {
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeDocument, setActiveDocument] = useState<string | null>(null);
+    const [isPublishingDSpace, setIsPublishingDSpace] = useState(false);
+
+    const [products, setProducts] = useState<any[]>([]);
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [productTypes, setProductTypes] = useState<any[]>([]);
+    
+    // Modal Form States
+    const [newProduct, setNewProduct] = useState({
+        id_tipo_producto: 1,
+        titulo: '',
+        cantidad: 1,
+        url_producto: '',
+        es_propiedad_intelectual: false,
+        numero_registro: '',
+        fecha_registro_senadi: ''
+    });
+
+    const fetchProducts = async () => {
+        try {
+            const res = await api.get(`/ResearchProducts/project/${documentUuid}`);
+            setProducts(res.data);
+        } catch (err) {
+            console.error("[DIITRA] Error al cargar productos", err);
+        }
+    };
+
+    const fetchProductTypes = async () => {
+        try {
+            const res = await api.get('/catalogs/tipo-producto');
+            setProductTypes(res.data);
+            if (res.data.length > 0) {
+                setNewProduct(prev => ({ ...prev, id_tipo_producto: res.data[0].id_tipo_producto }));
+            }
+        } catch (err) {
+            console.error("[DIITRA] Error al cargar tipos de producto", err);
+        }
+    };
+
+    useEffect(() => {
+        if (documentUuid) {
+            fetchProducts();
+            fetchProductTypes();
+        }
+    }, [documentUuid]);
+
+    const handleCreateProduct = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await api.post('/ResearchProducts', {
+                projectUuid: documentUuid,
+                idTipoProducto: Number(newProduct.id_tipo_producto),
+                titulo: newProduct.titulo,
+                cantidad: Number(newProduct.cantidad),
+                urlProducto: newProduct.url_producto || null,
+                esPropiedadIntelectual: newProduct.es_propiedad_intelectual,
+                numeroRegistro: newProduct.es_propiedad_intelectual ? newProduct.numero_registro : null,
+                fechaRegistroSenadi: newProduct.es_propiedad_intelectual && newProduct.fecha_registro_senadi ? newProduct.fecha_registro_senadi : null
+            });
+            setShowProductModal(false);
+            setNewProduct({
+                id_tipo_producto: productTypes[0]?.id_tipo_producto || 1,
+                titulo: '',
+                cantidad: 1,
+                url_producto: '',
+                es_propiedad_intelectual: false,
+                numero_registro: '',
+                fecha_registro_senadi: ''
+            });
+            fetchProducts();
+        } catch (err) {
+            console.error("[DIITRA] Error al crear producto", err);
+            alert("Error al registrar el producto");
+        }
+    };
+
+    const handleDeleteProduct = async (id: number) => {
+        if (!window.confirm("¿Está seguro de eliminar este producto de investigación?")) return;
+        try {
+            await api.delete(`/ResearchProducts/${id}`);
+            fetchProducts();
+        } catch (err) {
+            console.error("[DIITRA] Error al eliminar producto", err);
+        }
+    };
+
+    const getPhaseIndex = (status: string) => {
+        if (status === 'Borrador') return 0;
+        if (status === 'Enviado' || status === 'En Revisión') return 1;
+        if (status === 'Aprobado') return 2;
+        if (status === 'En Ejecución' || status === 'Finalizado') return 3;
+        return -1;
+    };
 
     useEffect(() => {
         const fetchProject = async () => {
             try {
                 // Fetch de datos reales desde el backend
-                const res = await api.get(`/documents/instances/${documentUuid}`);
-                
-                // Mapeo seguro del state
-                let statusLabel = 'Borrador';
-                if (res.data.state === 1) statusLabel = 'Borrador';
-                if (res.data.state === 2) statusLabel = 'En Revisión';
-                if (res.data.state === 3) statusLabel = 'Aprobado';
+                const res = await api.get(`/projects/${documentUuid}/detail`);
                 
                 setCurrentProject({
                     id: res.data.uuid.substring(0,8).toUpperCase(),
                     uuid: res.data.uuid,
-                    title: res.data.metadata?.titulo || 'Proyecto de Investigación (Sin Título)',
-                    status: statusLabel,
-                    presupuesto: res.data.metadata?.CostoTotal || 0,
-                    linea: res.data.metadata?.linea || 'No definida'
+                    title: res.data.titulo || 'Proyecto de Investigación (Sin Título)',
+                    status: res.data.estado || 'Borrador',
+                    presupuesto: res.data.costo_total || 0,
+                    linea: res.data.linea_investigacion || 'No definida'
                 });
             } catch (e) {
                 console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
@@ -48,7 +134,9 @@ export const ProjectWorkspace: React.FC = () => {
                     id: documentUuid?.substring(0,8).toUpperCase() || 'NEW',
                     uuid: documentUuid || '',
                     title: 'Nuevo Proyecto de Investigación',
-                    status: 'Borrador'
+                    status: 'Borrador',
+                    presupuesto: 0,
+                    linea: 'No definida'
                 });
             } finally {
                 setIsLoading(false);
@@ -95,8 +183,50 @@ export const ProjectWorkspace: React.FC = () => {
                     <span className="font-semibold text-sm">{currentProject.id}</span>
                 </div>
                 <div className="flex gap-4">
-                    <button className="px-4 py-1.5 text-sm font-medium bg-white text-black rounded-md hover:bg-gray-100 transition-colors shadow-sm">
+                    <button 
+                        onClick={async () => {
+                            try {
+                                const response = await api.get(`/projects/${currentProject.uuid}/export-caces`, { responseType: 'blob' });
+                                const url = window.URL.createObjectURL(new Blob([response.data]));
+                                const link = document.createElement('a');
+                                link.href = url;
+                                link.setAttribute('download', `CACES_METADATA_${currentProject.id}.csv`);
+                                document.body.appendChild(link);
+                                link.click();
+                                link.remove();
+                            } catch (err) {
+                                console.error("[DIITRA] Error al exportar metadatos CACES", err);
+                                alert("No se pudo realizar la exportación de metadatos CACES");
+                            }
+                        }}
+                        className="px-4 py-1.5 text-sm font-medium bg-white text-black rounded-md hover:bg-gray-100 transition-colors shadow-sm"
+                    >
                         Exportar Metadatos CACES
+                    </button>
+
+                    <button 
+                        disabled={isPublishingDSpace}
+                        onClick={async () => {
+                            try {
+                                setIsPublishingDSpace(true);
+                                const res = await api.post(`/projects/${currentProject.uuid}/publish-dspace`);
+                                alert(`¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`);
+                            } catch (err: any) {
+                                console.error("[DIITRA] Error al publicar en DSpace", err);
+                                const errMsg = err.response?.data?.error || "No se pudo realizar la publicación en DSpace";
+                                alert(errMsg);
+                            } finally {
+                                setIsPublishingDSpace(false);
+                            }
+                        }}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors shadow-sm flex items-center gap-1.5 ${
+                            isPublishingDSpace 
+                                ? 'bg-[#222] text-gray-500 cursor-not-allowed border border-[#333]' 
+                                : 'bg-blue-600 hover:bg-blue-500 text-white'
+                        }`}
+                    >
+                        <UploadCloud size={16} className={isPublishingDSpace ? "animate-pulse" : ""} />
+                        {isPublishingDSpace ? 'Publicando...' : 'Publicar en DSpace'}
                     </button>
                 </div>
             </header>
@@ -125,8 +255,9 @@ export const ProjectWorkspace: React.FC = () => {
                         
                         <div className="border border-[#333] rounded-xl bg-[#0a0a0a] overflow-hidden shadow-2xl">
                             {WorkflowPhases.map((phase, idx) => {
-                                const isCurrent = phase.id === currentProject.status;
-                                const isPast = WorkflowPhases.findIndex(p => p.id === currentProject.status) > idx;
+                                const currentIdx = getPhaseIndex(currentProject.status);
+                                const isCurrent = currentIdx === idx;
+                                const isPast = currentIdx > idx;
                                 
                                 return (
                                     <div key={phase.id} className={`p-6 border-b border-[#333] last:border-b-0 flex items-start gap-4 transition-all duration-300 ${isCurrent ? 'bg-[#111] border-l-2 border-l-blue-500' : ''}`}>
@@ -179,8 +310,61 @@ export const ProjectWorkspace: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
-                                )
+                                );
                             })}
+                        </div>
+
+                        {/* MÓDULO DE PRODUCTOS DE INVESTIGACIÓN (CACES Compliance) */}
+                        <div className="border border-[#333] rounded-xl bg-[#0a0a0a] p-6 shadow-2xl space-y-6 mt-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-semibold flex items-center gap-2">
+                                    <BookOpen size={20} className="text-gray-400" />
+                                    Productos de Investigación Registrados
+                                </h2>
+                                <button 
+                                    onClick={() => setShowProductModal(true)}
+                                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-lg shadow-blue-500/10"
+                                >
+                                    + Registrar Producto
+                                </button>
+                            </div>
+                            
+                            {products.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500 border border-dashed border-[#222] rounded-xl font-mono text-xs">
+                                    No hay productos declarados para este proyecto de investigación.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {products.map((prod: any) => (
+                                        <div key={prod.id_producto} className="p-4 border border-[#222] rounded-xl bg-[#111] space-y-2 relative group hover:border-[#444] transition-all">
+                                            <div className="flex justify-between items-start">
+                                                <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-widest rounded">
+                                                    {prod.tipo_producto_nombre}
+                                                </span>
+                                                <button 
+                                                    onClick={() => handleDeleteProduct(prod.id_producto)}
+                                                    className="p-1 hover:bg-red-500/20 hover:text-red-500 text-gray-500 rounded transition-all"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            </div>
+                                            <h3 className="font-bold text-sm text-white line-clamp-1">{prod.titulo}</h3>
+                                            <div className="text-[11px] text-gray-500 space-y-1 font-mono">
+                                                {prod.url_producto && (
+                                                    <a href={prod.url_producto} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 hover:underline">
+                                                        <ExternalLink size={10} /> {prod.url_producto.length > 30 ? prod.url_producto.substring(0, 30) + '...' : prod.url_producto}
+                                                    </a>
+                                                )}
+                                                {prod.es_propiedad_intelectual && (
+                                                    <p className="text-emerald-500 flex items-center gap-1">
+                                                        <span>★ SENADI:</span> {prod.numero_registro || 'En trámite'}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -227,6 +411,129 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {/* Modal de Registro de Producto */}
+            {showProductModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#0c0c0c] border border-[#333] w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-white">
+                        <div className="flex justify-between items-center border-b border-[#222] pb-4">
+                            <h3 className="text-lg font-bold flex items-center gap-2">
+                                <BookOpen size={18} className="text-blue-500" />
+                                Registrar Producto de Investigación
+                            </h3>
+                            <button onClick={() => setShowProductModal(false)} className="text-gray-500 hover:text-white transition-colors">
+                                ✕
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleCreateProduct} className="space-y-4 text-sm">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Tipo de Producto</label>
+                                <select 
+                                    value={newProduct.id_tipo_producto}
+                                    onChange={(e) => setNewProduct({ ...newProduct, id_tipo_producto: Number(e.target.value) })}
+                                    className="w-full bg-[#111] border border-[#333] rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-white"
+                                >
+                                    {productTypes.map((type) => (
+                                        <option key={type.id_tipo_producto} value={type.id_tipo_producto}>
+                                            {type.nombre}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Título del Producto / Artículo</label>
+                                <input 
+                                    type="text"
+                                    required
+                                    placeholder="Ej: Análisis comparativo de algoritmos CNN en cultivos..."
+                                    value={newProduct.titulo}
+                                    onChange={(e) => setNewProduct({ ...newProduct, titulo: e.target.value })}
+                                    className="w-full bg-[#111] border border-[#333] rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-white placeholder:text-gray-600"
+                                />
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Cantidad</label>
+                                    <input 
+                                        type="number"
+                                        min="1"
+                                        required
+                                        value={newProduct.cantidad}
+                                        onChange={(e) => setNewProduct({ ...newProduct, cantidad: Number(e.target.value) })}
+                                        className="w-full bg-[#111] border border-[#333] rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-white"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">URL / DOI / ISSN</label>
+                                    <input 
+                                        type="text"
+                                        placeholder="Ej: https://doi.org/10..."
+                                        value={newProduct.url_producto}
+                                        onChange={(e) => setNewProduct({ ...newProduct, url_producto: e.target.value })}
+                                        className="w-full bg-[#111] border border-[#333] rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-white placeholder:text-gray-600"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2 pt-2">
+                                <input 
+                                    type="checkbox"
+                                    id="es_propiedad_intelectual"
+                                    checked={newProduct.es_propiedad_intelectual}
+                                    onChange={(e) => setNewProduct({ ...newProduct, es_propiedad_intelectual: e.target.checked })}
+                                    className="rounded bg-[#111] border-[#333] text-blue-500 focus:ring-0 focus:ring-offset-0"
+                                />
+                                <label htmlFor="es_propiedad_intelectual" className="text-xs font-medium text-gray-300 select-none">
+                                    ¿Es Propiedad Intelectual Registrada (SENADI)?
+                                </label>
+                            </div>
+                            
+                            {newProduct.es_propiedad_intelectual && (
+                                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-[#222] animate-in fade-in duration-200">
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Número de Registro</label>
+                                        <input 
+                                            type="text"
+                                            placeholder="Ej: SENADI-2026-0045"
+                                            value={newProduct.numero_registro}
+                                            onChange={(e) => setNewProduct({ ...newProduct, numero_registro: e.target.value })}
+                                            className="w-full bg-[#111] border border-[#333] rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-white placeholder:text-gray-600"
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Fecha de Registro</label>
+                                        <input 
+                                            type="date"
+                                            value={newProduct.fecha_registro_senadi}
+                                            onChange={(e) => setNewProduct({ ...newProduct, fecha_registro_senadi: e.target.value })}
+                                            className="w-full bg-[#111] border border-[#333] rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-white"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            
+                            <div className="flex justify-end gap-3 pt-4 border-t border-[#222]">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowProductModal(false)}
+                                    className="px-4 py-2 border border-[#333] hover:bg-[#222] hover:text-white text-gray-400 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-lg shadow-blue-500/10"
+                                >
+                                    Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

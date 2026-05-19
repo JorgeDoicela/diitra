@@ -14,6 +14,7 @@ import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import { ProjectWorkspace } from './pages/Investigacion/Proyectos/Workspace/ProjectWorkspace';
 import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
+import ConfiguracionPage from './pages/Admin/ConfiguracionPage';
 import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
 import { Settings2 } from 'lucide-react';
 import VerifyDocument from './pages/Public/VerifyDocument';
@@ -113,6 +114,7 @@ function App() {
             <Route path="/admin" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AuditPage /></AdminRoute>} />
             <Route path="/admin/groups" element={<AdminRoute><GroupsPage /></AdminRoute>} />
+            <Route path="/admin/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
             <Route path="/investigacion" element={<ResearchProjectsPage />} />
             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
