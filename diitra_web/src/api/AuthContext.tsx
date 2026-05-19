@@ -36,12 +36,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
 
     const refreshUser = useCallback(async () => {
+        if (!localStorage.getItem('diitra_logged_in')) {
+            setUser(null);
+            setIsLoading(false);
+            return;
+        }
         try {
             const response = await api.get('/auth/me');
             setUser(response.data);
         } catch (error: any) {
-            // Manejo silencioso: si es 401 simplemente no hay sesión
             setUser(null);
+            localStorage.removeItem('diitra_logged_in');
         } finally {
             setIsLoading(false);
         }
@@ -55,12 +60,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const login = async (credentials: any) => {
         const response = await api.post('/auth/login', credentials);
         setUser(response.data);
+        localStorage.setItem('diitra_logged_in', 'true');
         return response.data;
     };
 
     const logout = async () => {
-        await api.post('/auth/logout');
+        try {
+            await api.post('/auth/logout');
+        } catch (err) {}
         setUser(null);
+        localStorage.removeItem('diitra_logged_in');
     };
 
     const hasPermission = useCallback((module: string, operation: string): boolean => {
