@@ -14,10 +14,8 @@ const api = axios.create({
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Si el servidor responde con 401 (No autorizado) simplemente rechazamos.
-        // El AuthContext y las rutas protegidas se encargarán de mandar al login.
         if (error.response?.status === 401) {
-            console.warn('Sesión expirada o inválida');
+            localStorage.removeItem('diitra_logged_in');
         }
         return Promise.reject(error);
     }
