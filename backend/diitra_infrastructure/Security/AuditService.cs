@@ -27,10 +27,27 @@ namespace diitra_infrastructure.Security
                 // 1. Obtener la identidad del usuario actual (el que realiza la acción)
                 // Usamos NameIdentifier que es donde AuthService.GenerateToken guarda el IdSigafi
                 var adminIdentifier = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(adminIdentifier)) return;
-
-                var admin = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == adminIdentifier);
-                if (admin == null) return;
+                
+                int adminId;
+                if (string.IsNullOrEmpty(adminIdentifier))
+                {
+                    // Si la acción es LOGIN o similar y no hay sesión autenticada en HttpContext,
+                    // usamos affectedUserId como el realizador de la acción si está disponible.
+                    if (affectedUserId.HasValue)
+                    {
+                        adminId = affectedUserId.Value;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    var admin = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == adminIdentifier);
+                    if (admin == null) return;
+                    adminId = admin.IdUsuario;
+                }
 
                 // 2. Obtener Metadata de Red
                 var ip = context.Connection?.RemoteIpAddress?.ToString();
@@ -39,8 +56,8 @@ namespace diitra_infrastructure.Security
                 // 3. Crear Registro
                 var audit = new InvAuditAdmin
                 {
-                    IdUsuarioAdmin = admin.IdUsuario,
-                    IdUsuarioAfectado = affectedUserId ?? admin.IdUsuario, // Si no hay afectado, el mismo usuario
+                    IdUsuarioAdmin = adminId,
+                    IdUsuarioAfectado = affectedUserId ?? adminId, // Si no hay afectado, el mismo usuario
                     Accion = action,
                     Modulo = modulo ?? "SISTEMA",
                     Detalle = details,
