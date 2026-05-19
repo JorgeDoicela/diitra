@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen
+    Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen, Trash2
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -53,6 +53,29 @@ const MyProjectsPage: React.FC = () => {
     const [search, setSearch] = useState('');
     const [filterEstado, setFilterEstado] = useState<string>('todos');
     const [showNewProject, setShowNewProject] = useState(false);
+    const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
+    const [deletingTitle, setDeletingTitle] = useState<string>('');
+    const [deletionError, setDeletionError] = useState<string | null>(null);
+
+    const confirmarEliminar = (uuid: string, titulo: string) => {
+        setDeletingUuid(uuid);
+        setDeletingTitle(titulo || 'PROYECTO SIN TÍTULO');
+        setDeletionError(null);
+    };
+
+    const ejecutarEliminacion = async () => {
+        if (!deletingUuid) return;
+        try {
+            setDeletionError(null);
+            await api.delete(`/projects/${deletingUuid}`);
+            setProyectos(prev => prev.filter(p => p.uuid !== deletingUuid));
+            setDeletingUuid(null);
+            setDeletingTitle('');
+        } catch (err: any) {
+            console.error('[DIITRA] Error al eliminar borrador:', err);
+            setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador de investigación debido a un error del servidor.');
+        }
+    };
 
     useEffect(() => {
         const fetchProyectos = async () => {
@@ -203,10 +226,24 @@ const MyProjectsPage: React.FC = () => {
                                         {p.titulo}
                                     </h3>
                                 </div>
-                                <ArrowRight
-                                    size={14}
-                                    className="text-text-dim group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0 mt-0.5 ml-2"
-                                />
+                                <div className="flex items-center gap-2 shrink-0 ml-2 mt-0.5">
+                                    {(p.estado === 'Borrador' || p.estado === 'En Corrección') && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                confirmarEliminar(p.uuid, p.titulo);
+                                            }}
+                                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-dim hover:text-red-400 transition-colors"
+                                            title="Eliminar borrador"
+                                        >
+                                            <Trash2 size={13} />
+                                        </button>
+                                    )}
+                                    <ArrowRight
+                                        size={14}
+                                        className="text-text-dim group-hover:text-primary group-hover:translate-x-1 transition-all"
+                                    />
+                                </div>
                             </div>
 
                             {/* Badge de estado */}
@@ -245,7 +282,7 @@ const MyProjectsPage: React.FC = () => {
                             </div>
 
                             {/* Barra de ejecución presupuestaria */}
-                            {p.presupuesto_total && p.presupuesto_total > 0 && (
+                            {p.presupuesto_total !== undefined && p.presupuesto_total > 0 && (
                                 <div className="mb-3">
                                     <div className="flex justify-between text-[10px] font-mono text-text-dim mb-1">
                                         <span>Ejecución presupuestaria</span>
@@ -299,6 +336,48 @@ const MyProjectsPage: React.FC = () => {
                 <CreateProjectModal
                     onClose={() => setShowNewProject(false)}
                 />
+            )}
+
+            {/* Modal de Confirmación de Eliminación */}
+            {deletingUuid && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="relative w-full max-w-md bg-surface border border-border-thin rounded-2xl p-6 shadow-2xl animate-scale-up">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-red-500/10 text-red-400 rounded-full shrink-0 animate-pulse">
+                                <AlertCircle size={24} />
+                            </div>
+                            <div className="space-y-2">
+                                <h4 className="font-bold text-text-main text-base">¿Eliminar borrador de investigación?</h4>
+                                <p className="text-text-dim text-xs leading-relaxed">
+                                    Esta acción eliminará de forma permanente el borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
+                                </p>
+                                {deletionError && (
+                                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-[11px] leading-relaxed">
+                                        {deletionError}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border-thin">
+                            <button
+                                onClick={() => {
+                                    setDeletingUuid(null);
+                                    setDeletingTitle('');
+                                    setDeletionError(null);
+                                }}
+                                className="px-4 py-2 rounded-lg text-xs font-bold bg-bg-deep border border-border-thin hover:border-text-dim/30 text-text-dim hover:text-text-main transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={ejecutarEliminacion}
+                                className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 hover:shadow-red-600/30 transition-all active:scale-[0.98]"
+                            >
+                                Confirmar y Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </main>
     );

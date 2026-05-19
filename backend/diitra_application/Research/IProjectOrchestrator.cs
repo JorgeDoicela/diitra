@@ -34,6 +34,11 @@ namespace Diitra.Application.Research
         /// Estadísticas agregadas para el dashboard según el rol del usuario.
         /// </summary>
         Task<DashboardStatsDto> GetDashboardStatsAsync(string userIdReferencia, bool isAdmin);
+
+        /// <summary>
+        /// Elimina físicamente un proyecto y todas sus relaciones en cascada (solo permitido para borradores/correcciones).
+        /// </summary>
+        Task<SyncResult> DeleteProjectAsync(string uuid, string? userIdRef);
     }
 
     public class SyncResult
