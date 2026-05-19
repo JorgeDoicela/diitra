@@ -83,7 +83,10 @@ const ResearchProjectsPage = () => {
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Informe Final</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Consolidación de Resultados</p>
                         </div>
-                        <div className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-text-main transition-colors cursor-pointer group shadow-sm">
+                        <div 
+                            onClick={() => navigate('/investigacion/mis-proyectos')}
+                            className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-text-main transition-colors cursor-pointer group shadow-sm bg-glow hover:border-primary hover:shadow-lg"
+                        >
                             <Users className="text-text-main mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Colaboración</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">DIITRA CoWork Activo</p>
