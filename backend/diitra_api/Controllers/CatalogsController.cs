@@ -19,10 +19,48 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetTiposProducto()
         {
             var data = await _context.InvCatTipoProductos
-                .Where(t => t.Activo == true)
-                .OrderBy(t => t.Nombre)
+                .OrderByDescending(t => t.Activo)
+                .ThenBy(t => t.Nombre)
                 .ToListAsync();
             return Ok(data);
+        }
+
+        [HttpPost("tipo-producto")]
+        public async Task<IActionResult> CreateTipoProducto([FromBody] InvCatTipoProducto model)
+        {
+            if (string.IsNullOrEmpty(model.Nombre)) return BadRequest("Nombre requerido");
+            if (string.IsNullOrEmpty(model.Categoria)) return BadRequest("Categoría requerida");
+            model.Uuid = System.Guid.NewGuid().ToString();
+            model.Activo = true;
+            _context.InvCatTipoProductos.Add(model);
+            await _context.SaveChangesAsync();
+            return Created($"/api/catalogs/tipo-producto/{model.Uuid}", model);
+        }
+
+        [HttpPut("tipo-producto/{uuid}")]
+        public async Task<IActionResult> UpdateTipoProducto(string uuid, [FromBody] InvCatTipoProducto model)
+        {
+            var existing = await _context.InvCatTipoProductos.FirstOrDefaultAsync(t => t.Uuid == uuid);
+            if (existing == null) return NotFound();
+
+            existing.Nombre = model.Nombre;
+            existing.Categoria = model.Categoria;
+            existing.RequiereRegistro = model.RequiereRegistro;
+            existing.Activo = model.Activo;
+
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("tipo-producto/{uuid}")]
+        public async Task<IActionResult> ToggleTipoProducto(string uuid)
+        {
+            var existing = await _context.InvCatTipoProductos.FirstOrDefaultAsync(t => t.Uuid == uuid);
+            if (existing == null) return NotFound();
+
+            existing.Activo = !(existing.Activo ?? true);
+            await _context.SaveChangesAsync();
+            return Ok(existing);
         }
 
         [HttpGet("tipo-evidencia")]
@@ -49,20 +87,96 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetConfigIndicadores()
         {
             var data = await _context.InvConfigIndicadores
-                .Where(i => i.Activo == true)
-                .OrderBy(i => i.CodigoIndicador)
+                .OrderByDescending(i => i.Activo)
+                .ThenBy(i => i.CodigoIndicador)
                 .ToListAsync();
             return Ok(data);
+        }
+
+        [HttpPost("config-indicadores")]
+        public async Task<IActionResult> CreateConfigIndicador([FromBody] InvConfigIndicador model)
+        {
+            if (string.IsNullOrEmpty(model.CodigoIndicador)) return BadRequest("Código de indicador requerido");
+            if (string.IsNullOrEmpty(model.NombreIndicador)) return BadRequest("Nombre de indicador requerido");
+            model.Activo = true;
+            _context.InvConfigIndicadores.Add(model);
+            await _context.SaveChangesAsync();
+            return Created($"/api/catalogs/config-indicadores/{model.IdConfig}", model);
+        }
+
+        [HttpPut("config-indicadores/{id}")]
+        public async Task<IActionResult> UpdateConfigIndicador(int id, [FromBody] InvConfigIndicador model)
+        {
+            var existing = await _context.InvConfigIndicadores.FirstOrDefaultAsync(i => i.IdConfig == id);
+            if (existing == null) return NotFound();
+
+            existing.CodigoIndicador = model.CodigoIndicador;
+            existing.NombreIndicador = model.NombreIndicador;
+            existing.Descripcion = model.Descripcion;
+            existing.TipoDato = model.TipoDato;
+            existing.ValorReferencia = model.ValorReferencia;
+            existing.AñoNormativa = model.AñoNormativa;
+            existing.Activo = model.Activo;
+
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("config-indicadores/{id}")]
+        public async Task<IActionResult> ToggleConfigIndicador(int id)
+        {
+            var existing = await _context.InvConfigIndicadores.FirstOrDefaultAsync(i => i.IdConfig == id);
+            if (existing == null) return NotFound();
+
+            existing.Activo = !(existing.Activo ?? true);
+            await _context.SaveChangesAsync();
+            return Ok(existing);
         }
 
         [HttpGet("dominios")]
         public async Task<IActionResult> GetDominios()
         {
             var data = await _context.InvDominios
-                .Where(d => d.Activo == true)
-                .OrderBy(d => d.Nombre)
+                .OrderByDescending(d => d.Activo)
+                .ThenBy(d => d.Nombre)
                 .ToListAsync();
             return Ok(data);
+        }
+
+        [HttpPost("dominios")]
+        public async Task<IActionResult> CreateDominio([FromBody] InvDominio model)
+        {
+            if (string.IsNullOrEmpty(model.Nombre)) return BadRequest("Nombre requerido");
+            model.Uuid = System.Guid.NewGuid().ToString();
+            model.FechaRegistro = DateTime.Now;
+            model.Activo = true;
+            _context.InvDominios.Add(model);
+            await _context.SaveChangesAsync();
+            return Created($"/api/catalogs/dominios/{model.Uuid}", model);
+        }
+
+        [HttpPut("dominios/{uuid}")]
+        public async Task<IActionResult> UpdateDominio(string uuid, [FromBody] InvDominio model)
+        {
+            var existing = await _context.InvDominios.FirstOrDefaultAsync(d => d.Uuid == uuid);
+            if (existing == null) return NotFound();
+
+            existing.Nombre = model.Nombre;
+            existing.Activo = model.Activo;
+
+            await _context.SaveChangesAsync();
+            return Ok(existing);
+        }
+
+        [HttpDelete("dominios/{uuid}")]
+        public async Task<IActionResult> ToggleDominio(string uuid)
+        {
+            var existing = await _context.InvDominios.FirstOrDefaultAsync(d => d.Uuid == uuid);
+            if (existing == null) return NotFound();
+
+            existing.Activo = !(existing.Activo ?? true);
+            await _context.SaveChangesAsync();
+            return Ok(existing);
         }
 
         [HttpGet("carreras")]
