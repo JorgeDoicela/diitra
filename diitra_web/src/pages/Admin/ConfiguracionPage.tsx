@@ -55,10 +55,28 @@ const ConfiguracionPage = () => {
         try {
             if (activeTab === 'lineas') {
                 const res = await api.get('/catalogs/lineas-investigacion');
-                setLineas(res.data || []);
+                const rawData = res.data || [];
+                const mappedData = rawData.map((l: any) => ({
+                    idLinea: l.id_linea,
+                    uuid: l.uuid,
+                    codigoLinea: l.codigo_linea || '',
+                    nombreLinea: l.nombre_linea || '',
+                    descripcion: l.descripcion,
+                    activo: l.activo
+                }));
+                setLineas(mappedData);
             } else {
                 const res = await api.get('/catalogs/periodos');
-                setPeriodos(res.data || []);
+                const rawData = res.data || [];
+                const mappedData = rawData.map((p: any) => ({
+                    idPeriodo: p.id_periodo || '',
+                    detalle: p.detalle,
+                    fechaInicial: p.fecha_inicial,
+                    fechaFinal: p.fecha_final,
+                    activo: p.activo,
+                    cerrado: p.cerrado
+                }));
+                setPeriodos(mappedData);
             }
         } catch (error) {
             console.error('[DIITRA] Error al cargar configuración:', error);
@@ -73,12 +91,12 @@ const ConfiguracionPage = () => {
 
     // Search filter
     const filteredLineas = lineas.filter(l => 
-        l.nombreLinea.toLowerCase().includes(search.toLowerCase()) || 
-        l.codigoLinea.toLowerCase().includes(search.toLowerCase())
+        (l.nombreLinea || '').toLowerCase().includes(search.toLowerCase()) || 
+        (l.codigoLinea || '').toLowerCase().includes(search.toLowerCase())
     );
 
     const filteredPeriodos = periodos.filter(p => 
-        p.idPeriodo.toLowerCase().includes(search.toLowerCase()) || 
+        (p.idPeriodo || '').toLowerCase().includes(search.toLowerCase()) || 
         (p.detalle || '').toLowerCase().includes(search.toLowerCase())
     );
 
@@ -105,13 +123,19 @@ const ConfiguracionPage = () => {
     const handleSaveLinea = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const payload = {
+                codigo_linea: lineaForm.codigoLinea,
+                nombre_linea: lineaForm.nombreLinea,
+                descripcion: lineaForm.descripcion,
+                activo: editingLinea ? editingLinea.activo : true
+            };
             if (editingLinea) {
                 await api.put(`/catalogs/lineas-investigacion/${editingLinea.uuid}`, {
-                    ...editingLinea,
-                    ...lineaForm
+                    uuid: editingLinea.uuid,
+                    ...payload
                 });
             } else {
-                await api.post('/catalogs/lineas-investigacion', lineaForm);
+                await api.post('/catalogs/lineas-investigacion', payload);
             }
             setIsLineaModalOpen(false);
             fetchData();
@@ -156,8 +180,12 @@ const ConfiguracionPage = () => {
         e.preventDefault();
         try {
             const payload = {
-                ...editingPeriodo,
-                ...periodoForm
+                id_periodo: periodoForm.idPeriodo,
+                detalle: periodoForm.detalle,
+                fecha_inicial: periodoForm.fechaInicial || null,
+                fecha_final: periodoForm.fechaFinal || null,
+                activo: editingPeriodo ? editingPeriodo.activo : true,
+                cerrado: editingPeriodo ? editingPeriodo.cerrado : false
             };
             if (editingPeriodo) {
                 await api.put(`/catalogs/periodos/${editingPeriodo.idPeriodo}`, payload);
