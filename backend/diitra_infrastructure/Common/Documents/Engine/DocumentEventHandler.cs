@@ -28,6 +28,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly string _lopdpClause;
         private readonly bool _isDraft;
         private readonly ImageData? _stationaryImageData;
+        private readonly Image? _stationaryImage;
         private readonly PdfFont? _watermarkFont;
 
         public DocumentEventHandler(
@@ -35,15 +36,19 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             string institutionName = "DIITRA - Departamento de Investigación e Innovación",
             string lopdpClause = "Tratamiento de datos conforme a LOPDP (R.O. 459, 2021).",
             bool isDraft = false,
-            string? stationaryImageBase64 = null)
+            string? stationaryImageBase64 = null,
+            ImageData? stationaryImageData = null)
         {
             _traceabilityCode = traceabilityCode;
             _institutionName = institutionName;
             _lopdpClause = lopdpClause;
             _isDraft = isDraft;
 
-            // PERFORMANCE: Pre-procesar imagen una sola vez en lugar de hacerlo por cada página
-            if (!string.IsNullOrEmpty(stationaryImageBase64))
+            if (stationaryImageData != null)
+            {
+                _stationaryImageData = stationaryImageData;
+            }
+            else if (!string.IsNullOrEmpty(stationaryImageBase64))
             {
                 try
                 {
@@ -55,6 +60,18 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     _stationaryImageData = ImageDataFactory.Create(imageBytes);
                 }
                 catch { /* Ignorar errores de imagen */ }
+            }
+
+            if (_stationaryImageData != null)
+            {
+                try
+                {
+                    // PERFORMANCE: Pre-create the Image instance to avoid repeated wrapper creation per page
+                    _stationaryImage = new Image(_stationaryImageData)
+                        .SetFixedPosition(0, 0)
+                        .SetOpacity(0.35f);
+                }
+                catch { }
             }
 
             // PERFORMANCE: Pre-crear fuente de marca de agua
@@ -72,20 +89,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             Rectangle pageSize = page.GetPageSize();
             
             // 0.1 Fondo Institucional (Papel Membretado)
-            if (pdfDoc.GetPageNumber(page) > 1 && _stationaryImageData != null)
+            if (pdfDoc.GetPageNumber(page) > 1 && _stationaryImage != null)
             {
                 try
                 {
                     PdfCanvas pc = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
                     Canvas underCanvas = new Canvas(pc, pageSize);
                     
-                    Image bgImage = new Image(_stationaryImageData)
-                        .SetFixedPosition(0, 0)
-                        .SetWidth(pageSize.GetWidth())
-                        .SetHeight(pageSize.GetHeight())
-                        .SetOpacity(0.35f); 
+                    _stationaryImage.SetWidth(pageSize.GetWidth())
+                                    .SetHeight(pageSize.GetHeight()); 
                     
-                    underCanvas.Add(bgImage);
+                    underCanvas.Add(_stationaryImage);
                     underCanvas.Close();
                 }
                 catch { }

@@ -194,7 +194,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             var handler = new DocumentEventHandler(
                 metadata.TraceabilityCode,
                 isDraft: metadata.IsDraft,
-                stationaryImageBase64: metadata.StationaryImageBase64
+                stationaryImageBase64: metadata.StationaryImageBase64,
+                stationaryImageData: metadata.StationaryImageData
             );
 
             try 
@@ -242,5 +243,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         public string? InstitutionName { get; set; }
         public string? LopdpClause { get; set; }
         public string? StationaryImageBase64 { get; set; }
+        public iText.IO.Image.ImageData? StationaryImageData { get; set; }
     }
 }

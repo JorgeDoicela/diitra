@@ -28,7 +28,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         background-image: url('data:image/jpeg;base64,{TemplateImages.PortadaProyectoBase64}');
         background-size: 100% 100%;
         background-repeat: no-repeat;
-        color: #1a2b4a;
+        color: #222c57;
         z-index: 1000;
     }}
     .page {{ page-break-after: always; position: relative; }}
@@ -50,7 +50,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         font-family: 'Century Gothic', sans-serif;
         font-size: 28pt;
         font-weight: bold;
-        color: #b8912e;
+        color: #c4a857;
         text-transform: uppercase;
         letter-spacing: 1px;
         margin-top: 250px; 
@@ -61,7 +61,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         font-family: 'Century Gothic', sans-serif;
         font-size: 18pt;
         font-weight: bold;
-        color: #1a2b4a;
+        color: #222c57;
         text-transform: uppercase;
         margin: 100px 0;
         line-height: 1.2;
@@ -79,7 +79,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         font-family: 'Century Gothic', sans-serif;
         font-size: 14pt;
         font-weight: bold;
-        color: #1a2b4a;
+        color: #222c57;
         text-transform: uppercase;
     }}
     
@@ -87,7 +87,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         font-family: 'Century Gothic', sans-serif;
         font-size: 14pt;
         font-weight: normal;
-        color: #1a2b4a;
+        color: #222c57;
         text-transform: uppercase;
         margin-top: 8px;
     }}
@@ -114,25 +114,61 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     /* CUERPO DEL DOCUMENTO (PAGE 2+) */
     .doc-container {{ 
         font-family: 'Calibri', 'Open Sans', Arial, sans-serif; 
-        color: #1e2a4a; 
+        color: #222c57; 
         line-height: 1.4; 
         padding: 50px 40px; 
         background: transparent;
     }}
     .section-title {{ 
-        color: #1e2a4a; 
+        color: #222c57; 
         padding: 10px 0; 
         font-weight: 800; 
         font-size: 11pt; 
         margin: 15px 0 5px 0; 
         text-transform: uppercase; 
+        border-bottom: none !important;
     }}
     .info-table, .data-table {{ width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9pt; background: #fff; }}
-    .info-table td {{ border: 1px solid #1e2a4a; padding: 6px 10px; vertical-align: middle; }}
-    .info-table .label {{ font-weight: bold; background: #1e2a4a; width: 35%; text-transform: uppercase; font-size: 8pt; color: #ffffff; }}
-    .data-table th {{ background: #1e2a4a; border: 1px solid #1e2a4a; padding: 8px; font-size: 8pt; text-transform: uppercase; color: #ffffff; }}
-    .data-table td {{ border: 1px solid #1e2a4a; padding: 8px; background: #ffffff; color: #000; }}
-    .firma-box {{ border: 1px solid #1e2a4a; padding: 20px; height: 120px; vertical-align: bottom; background: #fff; }}
+    .info-table td {{ border: 1px solid #222c57; padding: 6px 10px; vertical-align: middle; }}
+    .info-table .label {{ font-weight: bold; background: #222c57; width: 35%; text-transform: uppercase; font-size: 8pt; color: #ffffff; }}
+    .data-table th {{ background: #222c57; border: 1px solid #222c57; padding: 8px; font-size: 8pt; text-transform: uppercase; color: #ffffff; }}
+    .data-table td {{ border: 1px solid #222c57; padding: 8px; background: #ffffff; color: #000; }}
+    .firma-box {{ border: 1px solid #222c57; padding: 20px; height: 120px; vertical-align: bottom; background: #fff; }}
+
+    .identificacion-table {{ 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-bottom: 20px; 
+        font-family: 'Calibri', 'Open Sans', Arial, sans-serif; 
+        font-size: 11pt; 
+        line-height: 1.0; 
+        background: #fff; 
+    }}
+    .identificacion-table td {{ 
+        border: 1px solid #000000; 
+        padding: 5px 8px; 
+        vertical-align: middle; 
+        color: #000000;
+        font-family: 'Calibri', 'Open Sans', Arial, sans-serif; 
+        font-size: 11pt; 
+        line-height: 1.0; 
+    }}
+    .identificacion-table .label {{ 
+        font-weight: bold; 
+        background: #222c57; 
+        width: 35%; 
+        text-transform: uppercase; 
+        color: #ffffff; 
+        text-align: left;
+    }}
+    .identificacion-table .date-header {{
+        font-weight: bold;
+        background: #c4a857;
+        color: #000000;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 11pt;
+    }}
 </style>
 
 <!-- PÁGINA 1: PORTADA INSTITUCIONAL CON IMAGEN DE FONDO -->
@@ -161,20 +197,91 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
 <!-- PÁGINA 2+: CONTENIDO DEL PROTOCOLO -->
 <div class=""doc-container"">
     <div class=""section-title"">1. IDENTIFICACIÓN DEL PROYECTO</div>
-    <table class=""info-table"">
-        <tr><td class=""label"">NOMBRE DEL PROYECTO:</td><td><strong>{{{{default titulo '...'}}}}</strong></td></tr>
-        <tr><td class=""label"">PROGRAMA:</td><td>{{{{default programa '...'}}}}</td></tr>
+    <table class=""identificacion-table"">
+        <tr>
+            <td class=""label"">NOMBRE DEL PROYECTO:</td>
+            <td colspan=""6""><strong>{{{{default titulo '...'}}}}</strong></td>
+        </tr>
+        <tr>
+            <td class=""label"">PROGRAMA:</td>
+            <td colspan=""6"">{{{{default programa '...'}}}}</td>
+        </tr>
         <tr>
             <td class=""label"">GRUPO DE INVESTIGACIÓN:</td>
-            <td>
-                {{{{#if grupo_investigacion}}}} SI ({{{{grupo_investigacion}}}}) {{{{else}}}} NO {{{{/if}}}}
+            <td style=""width: 10%; text-align: center; font-weight: bold;"">NO</td>
+            <td style=""width: 8%; text-align: center; font-weight: bold;"">
+                {{{{#if grupo_investigacion}}}}{{{{else}}}}X{{{{/if}}}}
+            </td>
+            <td style=""width: 10%; text-align: center; font-weight: bold;"">SI</td>
+            <td colspan=""3"" style=""width: 37%;"">
+                {{{{#if grupo_investigacion}}}}{{{{grupo_investigacion}}}}{{{{else}}}}&nbsp;{{{{/if}}}}
             </td>
         </tr>
-        <tr><td class=""label"">DOMINIO / LÍNEA / SUBLÍNEA:</td><td>{{{{default dominio '...'}}}} / {{{{default linea_investigacion '...'}}}} / {{{{default sublinea_investigacion '...'}}}}</td></tr>
-        <tr><td class=""label"">TIPO DE INVESTIGACIÓN:</td><td>{{{{default tipo_investigacion '...'}}}}</td></tr>
-        <tr><td class=""label"">CAMPOS (A/E/D):</td><td>{{{{default campo_amplio '...'}}}} / {{{{default campo_especifico '...'}}}} / {{{{default campo_detallado '...'}}}}</td></tr>
-        <tr><td class=""label"">DIRECTOR DEL PROYECTO:</td><td><strong>{{{{default nombre_director '...'}}}}</strong></td></tr>
-        <tr><td class=""label"">TIEMPO DE EJECUCIÓN:</td><td>{{{{default tiempo_ejecucion '...'}}}}</td></tr>
+        <tr>
+            <td class=""label"">DOMINIO:</td>
+            <td colspan=""6"">{{{{default dominio '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">LÍNEA DE INVESTIGACIÓN:</td>
+            <td colspan=""6"">{{{{default linea_investigacion '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">SUBLÍNEA DE INVESTIGACIÓN:</td>
+            <td colspan=""6"">{{{{default sublinea_investigacion '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">TIPO DE INVESTIGACIÓN (X):</td>
+            <td style=""width: 12%; font-weight: bold;"">BÁSICA</td>
+            <td style=""width: 8%; text-align: center; font-weight: bold;"">
+                {{{{#if (eq tipo_investigacion 'BÁSICA')}}}}X{{{{else}}}}&nbsp;{{{{/if}}}}
+            </td>
+            <td style=""width: 12%; font-weight: bold;"">APLICADA</td>
+            <td style=""width: 8%; text-align: center; font-weight: bold;"">
+                {{{{#if (eq tipo_investigacion 'APLICADA')}}}}X{{{{else}}}}&nbsp;{{{{/if}}}}
+            </td>
+            <td style=""width: 17%; font-weight: bold;"">DESARROLLO EXPERIMENTAL</td>
+            <td style=""width: 8%; text-align: center; font-weight: bold;"">
+                {{{{#if (eq tipo_investigacion 'DESARROLLO EXPERIMENTAL')}}}}X{{{{else}}}}{{{{#if (eq tipo_investigacion 'DESARROLLO_EXPERIMENTAL')}}}}X{{{{else}}}}&nbsp;{{{{/if}}}}{{{{/if}}}}
+            </td>
+        </tr>
+        <tr>
+            <td class=""label"">CAMPO AMPLIO:</td>
+            <td colspan=""6"">{{{{default campo_amplio '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">CAMPO ESPECÍFICO:</td>
+            <td colspan=""6"">{{{{default campo_especifico '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">CAMPO DETALLADO:</td>
+            <td colspan=""6"">{{{{default campo_detallado '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">CARRERA:</td>
+            <td colspan=""6"">Tecnología Superior en {{{{default carrera '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">PERIODO ACADÉMICO DE CONVOCATORIA:</td>
+            <td colspan=""6"">{{{{default periodo '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">TIEMPO DE EJECUCIÓN:</td>
+            <td colspan=""6"">{{{{default tiempo_ejecucion '...'}}}}</td>
+        </tr>
+        <tr>
+            <td class=""label"">DIRECTOR DEL PROYECTO:</td>
+            <td colspan=""6""><strong>{{{{default nombre_director '...'}}}}</strong></td>
+        </tr>
+        <tr>
+            <td colspan=""2"" class=""date-header"" style=""width: 33%;"">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
+            <td colspan=""2"" class=""date-header"" style=""width: 33%;"">FECHA PREVISTA DE INICIO DEL PROYECTO</td>
+            <td colspan=""3"" class=""date-header"" style=""width: 34%;"">FECHA PREVISTA DE FINALIZACIÓN DEL PROYECTO</td>
+        </tr>
+        <tr style=""text-align: center;"">
+            <td colspan=""2"" style=""padding: 8px;"">{{{{default fecha_presentacion '[día/mes/año]'}}}}</td>
+            <td colspan=""2"" style=""padding: 8px;"">{{{{default fecha_inicio '[día/mes/año]'}}}}</td>
+            <td colspan=""3"" style=""padding: 8px;"">{{{{default fecha_fin '[día/mes/año]'}}}}</td>
+        </tr>
     </table>
 
     <div class=""section-title"">2. INVESTIGADORES</div>
@@ -200,13 +307,13 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
 
     <div class=""section-title"">3. ESPECIFICACIÓN TÉCNICA</div>
     <div style=""font-weight:bold; margin-bottom:5px"">3.1 Antecedentes</div>
-    <div style=""border:1px solid #1e2a4a; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;"">{{{{default antecedentes 'Información no proporcionada.'}}}}</div>
+    <div style=""border:1px solid #222c57; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;"">{{{{default antecedentes 'Información no proporcionada.'}}}}</div>
     
     <div style=""font-weight:bold; margin-bottom:5px"">3.2 Descripción del Proyecto</div>
-    <div style=""border:1px solid #1e2a4a; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;"">{{{{default descripcion_proyecto 'Información no proporcionada.'}}}}</div>
+    <div style=""border:1px solid #222c57; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;"">{{{{default descripcion_proyecto 'Información no proporcionada.'}}}}</div>
 
     <div style=""font-weight:bold; margin-bottom:5px"">3.3 Justificación</div>
-    <div style=""border:1px solid #1e2a4a; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;"">{{{{default justificacion 'Información no proporcionada.'}}}}</div>
+    <div style=""border:1px solid #222c57; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;"">{{{{default justificacion 'Información no proporcionada.'}}}}</div>
 
     <table class=""data-table"">
         <tr><th style=""width:40%"">OBJETIVO GENERAL</th><th>OBJETIVOS ESPECÍFICOS</th></tr>
@@ -284,7 +391,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     </table>
 
     <div class=""section-title"">8. BIBLIOGRAFÍA</div>
-    <div style=""font-size:9pt; min-height:80px; border:1px solid #1e2a4a; padding:15px; text-align:justify;"">{{{{default bibliografia 'Sin bibliografía registrada.'}}}}</div>
+    <div style=""font-size:9pt; min-height:80px; border:1px solid #222c57; padding:15px; text-align:justify;"">{{{{default bibliografia 'Sin bibliografía registrada.'}}}}</div>
 
     <div class=""section-title"">9. FIRMAS DE RESPONSABILIDAD</div>
     <table style=""width:100%; border-collapse:collapse"">
