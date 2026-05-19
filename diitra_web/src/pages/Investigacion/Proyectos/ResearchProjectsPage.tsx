@@ -5,7 +5,7 @@ import {
     ArrowRight, Target, Users, Calendar, Filter,
     FileCheck, ShieldCheck, ListChecks
 } from 'lucide-react';
-import DocumentEditor from './Wizard/DocumentEditor';
+import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import DocumentTray from '../../../components/DIITRA/DocumentTray';
 import FinalReportLauncher from './components/FinalReportLauncher';
 
@@ -167,7 +167,7 @@ const ResearchProjectsPage = () => {
                 />
             </div>
 
-            {showWizard && <DocumentEditor templateCode="PROTOCOLO_INVESTIGACION" onClose={() => setShowWizard(false)} />}
+            {showWizard && <CreateProjectModal onClose={() => setShowWizard(false)} />}
             {showReportLauncher && <FinalReportLauncher onClose={() => setShowReportLauncher(false)} />}
         </main>
     );

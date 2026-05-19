@@ -5,7 +5,7 @@ import {
     Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen
 } from 'lucide-react';
 import api from '../../../api/axios_config';
-import DocumentEditor from './Wizard/DocumentEditor';
+import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 
 interface ProyectoResumen {
     uuid: string;
@@ -296,8 +296,7 @@ const MyProjectsPage: React.FC = () => {
 
             {/* Lanzador de nuevo proyecto */}
             {showNewProject && (
-                <DocumentEditor
-                    templateCode="PROTOCOLO_INVESTIGACION"
+                <CreateProjectModal
                     onClose={() => setShowNewProject(false)}
                 />
             )}
