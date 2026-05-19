@@ -88,6 +88,15 @@ namespace Diitra.Domain.Common.Documents
             DataSnapshotJson = json;
             UpdatedAt = DateTime.UtcNow;
         }
+
+        public void SetEntityUuid(string entityUuid)
+        {
+            if (State == DocumentState.Signed || State == DocumentState.Archived)
+                throw new InvalidOperationException("No se puede modificar la entidad vinculada de un documento inmutable.");
+            
+            EntityUuid = entityUuid;
+            UpdatedAt = DateTime.UtcNow;
+        }
     }
 
     public enum DocumentState

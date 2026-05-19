@@ -13,7 +13,7 @@ namespace Diitra.Application.Research
         /// <summary>
         /// Sincroniza de forma atómica todos los componentes de un proyecto desde el DTO colaborativo.
         /// </summary>
-        Task<SyncResult> SyncProjectWizardDataAsync(ProyectoDto dto);
+        Task<SyncResult> SyncProjectWizardDataAsync(ProyectoDto dto, string? creatorUserIdRef = null);
 
         /// <summary>
         /// Obtiene todos los proyectos registrados (vista de Administrador/Director).

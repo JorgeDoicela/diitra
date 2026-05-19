@@ -29,8 +29,9 @@ namespace diitra_infrastructure.Research
             _logger = logger;
         }
 
-        public async Task<SyncResult> SyncProjectWizardDataAsync(ProyectoDto dto)
+        public async Task<SyncResult> SyncProjectWizardDataAsync(ProyectoDto dto, string? creatorUserIdRef = null)
         {
+            Console.WriteLine($"[DIITRA DEBUG ORCH] SyncProjectWizardDataAsync initiated for UUID: '{dto.Uuid}', creatorUserIdRef: '{creatorUserIdRef}'");
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -41,11 +42,14 @@ namespace diitra_infrastructure.Research
                     project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == dto.Uuid);
                 }
 
+                Console.WriteLine($"[DIITRA DEBUG ORCH] Step 1: Database lookup. Existing project: {project != null}");
+
                 if (project != null)
                 {
                     // 1.1 Bloqueo de Integridad por Estado
                     if (project.Estado != "Borrador" && project.Estado != "En Corrección")
                     {
+                        Console.WriteLine($"[DIITRA DEBUG ORCH] Project [{project.Estado}] is protected. Aborting sync.");
                         return new SyncResult { Success = false, Message = $"El proyecto [{project.Estado}] está blindado y no permite modificaciones." };
                     }
                 }
@@ -58,6 +62,7 @@ namespace diitra_infrastructure.Research
                         Estado = "Borrador"
                     };
                     _context.InvProyectos.Add(project);
+                    Console.WriteLine("[DIITRA DEBUG ORCH] Created new InvProyecto entity in DbContext.");
                 }
 
                 // 2. Mapeo de Atributos Nucleares
@@ -84,12 +89,76 @@ namespace diitra_infrastructure.Research
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
 
+                Console.WriteLine("[DIITRA DEBUG ORCH] Step 2: Nuclear properties mapped. Saving changes to get project ID...");
                 await _context.SaveChangesAsync(); // Aseguramos ID del proyecto
+                Console.WriteLine($"[DIITRA DEBUG ORCH] Core project saved. IdProyecto: {project.IdProyecto}");
+
+                // Sincronización de Carreras
+                if (dto.IdCarrera.HasValue && dto.IdCarrera.Value > 0)
+                {
+                    Console.WriteLine($"[DIITRA DEBUG ORCH] Syncing Careers. IdCarrera: {dto.IdCarrera.Value}");
+                    var oldCarreras = _context.InvProyectosCarreras.Where(pc => pc.IdProyecto == project.IdProyecto);
+                    _context.InvProyectosCarreras.RemoveRange(oldCarreras);
+                    
+                    _context.InvProyectosCarreras.Add(new InvProyectoCarrera
+                    {
+                        IdProyecto = project.IdProyecto,
+                        IdCarrera = dto.IdCarrera.Value
+                    });
+                }
 
                 // 3. Sincronización de Equipo (Anti-Corruption Layer provisionada por AuthService)
+                Console.WriteLine($"[DIITRA DEBUG ORCH] Syncing researchers. Count: {dto.Investigadores?.Count ?? 0}");
                 await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores);
 
+                // Auto-vincular al creador como Director si no hay investigadores registrados o no está ya vinculado
+                if (!string.IsNullOrEmpty(creatorUserIdRef))
+                {
+                    Console.WriteLine($"[DIITRA DEBUG ORCH] Auto-linking creator. creatorUserIdRef: '{creatorUserIdRef}'");
+                    var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == creatorUserIdRef);
+                    if (internalUser != null)
+                    {
+                        var isLinked = await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == internalUser.IdUsuario) ||
+                                       await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == internalUser.IdUsuario);
+                        
+                        Console.WriteLine($"[DIITRA DEBUG ORCH] Creator internal user found: '{internalUser.Nombre}' (Id: {internalUser.IdUsuario}, Tabla: '{internalUser.TablaSigafi}'). Already linked: {isLinked}");
+                        if (!isLinked)
+                        {
+                            if (internalUser.TablaSigafi == "alumno")
+                            {
+                                _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
+                                {
+                                    IdProyecto = project.IdProyecto,
+                                    IdUsuario = internalUser.IdUsuario,
+                                    Rol = "Co-Investigador (Estudiante)",
+                                    NivelAcademico = "Pregrado",
+                                    Telefono = ""
+                                });
+                                Console.WriteLine("[DIITRA DEBUG ORCH] Linked creator to inv_proyectos_alumnos.");
+                            }
+                            else
+                            {
+                                _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                                {
+                                    IdProyecto = project.IdProyecto,
+                                    IdUsuario = internalUser.IdUsuario,
+                                    Rol = "Director de Proyecto",
+                                    NivelAcademico = "Tercer Nivel",
+                                    Telefono = "",
+                                    EsDirector = true
+                                });
+                                Console.WriteLine("[DIITRA DEBUG ORCH] Linked creator to inv_proyectos_profesores as Director.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("[DIITRA DEBUG ORCH] WARNING: Creator internal user not found in 'usuarios' table by IdSigafi!");
+                    }
+                }
+
                 // 4. Sincronización de Objetivos Específicos
+                Console.WriteLine("[DIITRA DEBUG ORCH] Syncing other sections...");
                 await SyncObjetivosAsync(project.IdProyecto, dto.ObjetivosEspecificos);
 
                 // 5. Sincronización de Presupuesto
@@ -113,16 +182,21 @@ namespace diitra_infrastructure.Research
                 // 11. Sincronización de Recursos Disponibles
                 await SyncRecursosDisponiblesAsync(project.IdProyecto, dto.RecursosDisponibles);
 
+                Console.WriteLine("[DIITRA DEBUG ORCH] Saving all synchronized changes...");
                 await _context.SaveChangesAsync();
+                Console.WriteLine("[DIITRA DEBUG ORCH] Committing transaction...");
                 await transaction.CommitAsync();
 
                 await _auditService.LogActionAsync(null, project.Estado == "Borrador" && dto.Uuid == null ? "CREAR_PROYECTO" : "ACTUALIZAR_PROYECTO", $"Sincronización de datos del proyecto: {project.Titulo}", "PROYECTOS");
+                Console.WriteLine("[DIITRA DEBUG ORCH] Sync transaction completed successfully!");
 
                 return new SyncResult { Success = true, Uuid = project.Uuid };
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
+                Console.WriteLine($"[DIITRA DEBUG ORCH] EXCEPTION: {ex.Message}");
+                Console.WriteLine($"[DIITRA DEBUG ORCH] StackTrace: {ex.StackTrace}");
                 _logger.LogError(ex, "Error crítico en SyncProjectWizardData para UUID: {Uuid}", dto.Uuid);
                 return new SyncResult { Success = false, Message = ex.Message, Uuid = dto.Uuid };
             }
@@ -237,6 +311,7 @@ namespace diitra_infrastructure.Research
             var p = await _context.InvProyectos
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.InvProyectosCarreras)
                 .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
                 .Include(p => p.InvObjetivosProyecto)
@@ -256,6 +331,9 @@ namespace diitra_infrastructure.Research
                 Uuid = p.Uuid,
                 CodigoInstitucional = p.CodigoInstitucional,
                 Estado = p.Estado,
+                IdConvocatoria = p.IdConvocatoria,
+                IdCarrera = p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera,
+                IdObjetivoPnd = p.IdObjetivoPnd,
                 Titulo = p.Titulo,
                 DescripcionProyecto = p.DescripcionProyecto,
                 Antecedentes = p.Antecedentes,
@@ -263,8 +341,6 @@ namespace diitra_infrastructure.Research
                 MarcoTeorico = p.MarcoTeorico,
                 Metodologia = p.Metodologia,
                 TiempoEjecucion = p.TiempoEjecucion,
-                IdConvocatoria = p.IdConvocatoria,
-                IdObjetivoPnd = p.IdObjetivoPnd,
                 TrlInicial = (int?)p.TrlInicial,
                 TrlActual = (int?)p.TrlActual,
                 TrlMeta = (int?)p.TrlMeta,

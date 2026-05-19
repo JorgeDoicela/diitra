@@ -9,6 +9,7 @@ namespace Diitra.Application.Research.Dtos
         public string? Estado { get; set; }
         public string? CodigoInstitucional { get; set; }
         public int? IdConvocatoria { get; set; }
+        public int? IdCarrera { get; set; }
         public int? IdObjetivoPnd { get; set; }
 
         // --- Núcleo de Innovación y Vinculación 2026 ---
