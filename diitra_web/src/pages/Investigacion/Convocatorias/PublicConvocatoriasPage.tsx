@@ -4,8 +4,7 @@ import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, Award, Clo
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import DocumentEditor from '../Proyectos/Wizard/DocumentEditor';
-import { DocumentTemplateRegistry } from '../../../core/documents/registry/DocumentTemplateRegistry';
+import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 
 interface Convocatoria {
     id_convocatoria: number;
@@ -207,12 +206,8 @@ const PublicConvocatoriasPage = () => {
 
             {/* Lanzador de nuevo proyecto con Convocatoria preseleccionada */}
             {showNewProject && (
-                <DocumentEditor
-                    templateCode="PROTOCOLO_INVESTIGACION"
-                    initialData={{
-                        ...DocumentTemplateRegistry.PROTOCOLO_INVESTIGACION.schema,
-                        IdConvocatoria: preselectedConvocatoriaId
-                    }}
+                <CreateProjectModal
+                    preselectedConvocatoriaId={preselectedConvocatoriaId}
                     onClose={() => {
                         setShowNewProject(false);
                         setPreselectedConvocatoriaId(null);
