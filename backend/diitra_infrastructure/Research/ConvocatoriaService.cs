@@ -307,10 +307,9 @@ public class ConvocatoriaService : IConvocatoriaService
 
     public async Task<IEnumerable<PeriodoDto>> GetActivePeriodsAsync()
     {
-        // Eliminamos el filtro de esInstituto porque en tu DB todos están en 0.
-        // Ahora mostrará cualquier periodo que esté marcado como activo (global o del instituto).
+        // Filtrar utilizando la columna esInstituto de la base de datos (SIGAFI Compliance)
         return await _context.Periodos
-            .Where(p => p.Activo == true || p.Periodoactivoinstituto == 1)
+            .Where(p => p.EsInstituto == 1)
             .OrderByDescending(p => p.IdPeriodo)
             .Select(p => new PeriodoDto
             {

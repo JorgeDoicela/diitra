@@ -53,7 +53,7 @@ namespace diitra_infrastructure.Common.Notifications
                                         <td align='center'>
                                             <div style='background-color: rgba(255,255,255,0.05); padding: 15px; border-radius: 16px; display: inline-block;'>
                                                 <h1 style='color: white; margin: 0; font-size: 28px; letter-spacing: 4px; font-weight: 900; text-transform: uppercase; display: flex; align-items: center;'>
-                                                    <span style='color: #b9975b;'>IST</span><span style='margin: 0 10px; opacity: 0.5;'>|</span>DIITRA
+                                                    <span style='color: #b9975b;'>ISTET</span><span style='margin: 0 10px; opacity: 0.5;'>|</span>DIITRA
                                                 </h1>
                                             </div>
                                             <p style='color: #94a3b8; margin: 15px 0 0 0; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;'>Investigación e Innovación Tecnológica</p>
@@ -62,24 +62,24 @@ namespace diitra_infrastructure.Common.Notifications
                                 </table>
                             </td>
                         </tr>
-                        
+
                         <!-- Contenido Principal -->
                         <tr>
                             <td style='padding: 50px 60px;'>
                                 <h2 style='color: #1e293b; font-size: 24px; margin: 0 0 25px 0; font-weight: 800; line-height: 1.2;'>Hola {name},</h2>
                                 <p style='color: #475569; font-size: 16px; line-height: 1.8; margin: 0 0 30px 0;'>{body}</p>
-                                
+
                                 {extraDataHtml}
-                                
+
                                 { (absoluteUrl != null ? $@"
                                     <div style='text-align: center; margin: 40px 0;'>
                                         <a href='{absoluteUrl}' style='background-color: #1b2141; color: white; padding: 20px 40px; text-decoration: none; border-radius: 14px; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 10px 15px -3px rgba(27, 33, 65, 0.3);'>
                                             VER DETALLES EN DIITRA
                                         </a>
                                     </div>" : "") }
-                                
+
                                 <p style='color: #64748b; font-size: 14px; margin-top: 40px;'>Si tienes alguna duda, puedes contactarnos respondiendo a este correo o a través de nuestra plataforma.</p>
-                                
+
                                 <!-- Footer Institucional -->
                                 <div style='margin-top: 60px; padding-top: 40px; border-top: 1px solid #f1f5f9;'>
                                     <table width='100%'>
@@ -93,14 +93,14 @@ namespace diitra_infrastructure.Common.Notifications
                                             </td>
                                         </tr>
                                     </table>
-                                    
+
                                     <!-- LOPDP Ecuador -->
                                     <div style='margin-top: 30px; background-color: #f8fafc; border-radius: 12px; padding: 20px;'>
                                         <p style='color: #94a3b8; font-size: 11px; line-height: 1.5; margin: 0;'>
                                             <strong>Protección de Datos Personales:</strong> En cumplimiento de la Ley Orgánica de Protección de Datos Personales (LOPDP) de Ecuador, le informamos que sus datos son tratados con la finalidad de gestionar su participación en actividades de investigación. Usted puede ejercer sus derechos de acceso, rectificación, cancelación u oposición enviando un correo a <a href='mailto:admisiones@istpet.edu.ec' style='color: #b9975b; text-decoration: none;'>admisiones@istpet.edu.ec</a>.
                                         </p>
                                     </div>
-                                    
+
                                     <div style='text-align: center; margin-top: 30px;'>
                                         <p style='color: #cbd5e1; font-size: 10px; margin: 0;'>Av. Matilde Álvarez y Hugo Díaz Romero. Sector Chillogallo. Quito, Ecuador.</p>
                                     </div>
@@ -109,7 +109,7 @@ namespace diitra_infrastructure.Common.Notifications
                         </tr>
                     </table>
                     <div style='text-align: center; padding: 30px 0;'>
-                        <p style='color: #94a3b8; font-size: 12px;'>&copy; 2026 DIITRA Platform. Todos los derechos reservados.</p>
+                        <p style='color: #94a3b8; font-size: 12px;'>&copy; 2026 Sistema DIITRA. Todos los derechos reservados.</p>
                     </div>
                 </div>";
 

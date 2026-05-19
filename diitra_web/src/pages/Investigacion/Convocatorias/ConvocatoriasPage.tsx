@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { 
     Plus, Calendar, DollarSign, FileText, CheckCircle, 
     Clock, Trash2, Edit2, Activity, 
@@ -52,6 +53,7 @@ const ConvocatoriasPage = () => {
     const [agendas, setAgendas] = useState<Catalogo[]>([]);
     const [rubricas, setRubricas] = useState<Catalogo[]>([]);
     const [lineas, setLineas] = useState<Catalogo[]>([]);
+    const [selectedConvocatoria, setSelectedConvocatoria] = useState<Convocatoria | null>(null);
     
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -276,7 +278,11 @@ const ConvocatoriasPage = () => {
             {/* List View */}
             <div className="space-y-4 animate-fade-up [animation-delay:200ms]">
                 {convocatorias.map((conv) => (
-                    <div key={conv.uuid} className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group hover:border-text-main transition-all gap-6 md:gap-0">
+                    <div 
+                        key={conv.uuid} 
+                        onClick={() => setSelectedConvocatoria(conv)}
+                        className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group hover:border-text-main transition-all gap-6 md:gap-0 cursor-pointer"
+                    >
                         <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
                             <div className="p-3 rounded-lg bg-surface border border-border-thin group-hover:border-text-main transition-colors text-text-dim group-hover:text-text-main shrink-0">
                                 <FileText size={20} strokeWidth={1.5} />
@@ -307,7 +313,10 @@ const ConvocatoriasPage = () => {
                             <div className="flex items-center gap-1">
                                 {conv.estado === 'Borrador' && (
                                     <button 
-                                        onClick={() => handleStatusChange(conv.uuid, 'Abierta')}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStatusChange(conv.uuid, 'Abierta');
+                                        }}
                                         className="p-2 text-green-500 hover:bg-green-500/10 rounded transition-colors"
                                         title="Publicar Convocatoria"
                                     >
@@ -316,7 +325,10 @@ const ConvocatoriasPage = () => {
                                 )}
                                 
                                 <button 
-                                    onClick={() => handleEdit(conv)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleEdit(conv);
+                                    }}
                                     className="p-2 text-text-dim hover:text-text-main hover:bg-surface rounded transition-colors"
                                     title="Editar"
                                 >
@@ -324,7 +336,10 @@ const ConvocatoriasPage = () => {
                                 </button>
                                 
                                 <button 
-                                    onClick={() => handleDelete(conv.uuid)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(conv.uuid);
+                                    }}
                                     className="p-2 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
                                     title="Eliminar"
                                 >
@@ -690,6 +705,151 @@ const ConvocatoriasPage = () => {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Vercel-style Slide-over Detail Panel */}
+            {selectedConvocatoria && createPortal(
+                <div className="fixed inset-0 z-[9999] flex justify-end animate-in fade-in duration-300">
+                    {/* Backdrop */}
+                    <div 
+                        className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
+                        onClick={() => setSelectedConvocatoria(null)}
+                    />
+                    
+                    {/* Panel */}
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300 ease-out">
+                        {/* Close button & top bar */}
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
+                            <div className="flex items-center gap-3">
+                                <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
+                                    {selectedConvocatoria.codigo_convocatoria}
+                                </span>
+                                <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider ${
+                                    selectedConvocatoria.estado === 'Abierta' ? 'text-green-500' : 'text-amber-500'
+                                }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                                        selectedConvocatoria.estado === 'Abierta' ? 'bg-green-500' : 'bg-amber-500'
+                                    }`} />
+                                    {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setSelectedConvocatoria(null)}
+                                className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        
+                        {/* Contents */}
+                        <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
+                            {/* Title & Description */}
+                            <div className="space-y-4">
+                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                    {selectedConvocatoria.titulo}
+                                </h2>
+                                <p className="text-sm text-text-dim leading-relaxed font-medium">
+                                    {selectedConvocatoria.descripcion || 'Sin descripción detallada.'}
+                                </p>
+                            </div>
+                            
+                            {/* Key Metrics Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                        <Calendar size={12} className="text-text-dim" /> Fecha de Apertura
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main font-mono">
+                                        {selectedConvocatoria.fecha_apertura}
+                                    </div>
+                                </div>
+                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                        <Calendar size={12} className="text-red-500/80" /> Fecha de Cierre (Límite)
+                                    </div>
+                                    <div className="text-sm font-bold text-red-500 font-mono">
+                                        {selectedConvocatoria.fecha_cierre}
+                                    </div>
+                                </div>
+                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                        <DollarSign size={12} className="text-green-500/80" /> Financiamiento Máximo
+                                    </div>
+                                    <div className="text-sm font-bold text-green-500 font-mono">
+                                        ${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
+                                    </div>
+                                </div>
+                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                        <Layers size={12} className="text-text-dim" /> Rúbrica Evaluativa
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main truncate">
+                                        {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Academic Alignment Section */}
+                            <div className="space-y-4 p-6 rounded-2xl bg-bg-deep/40 border border-border-thin">
+                                <div className="flex items-center gap-2 text-xs font-bold text-text-main uppercase tracking-wider">
+                                    <BookOpen size={14} className="text-text-main" /> Configuración Académica & Auditoría
+                                </div>
+                                <p className="text-xs text-text-dim leading-relaxed font-medium">
+                                    Esta convocatoria tiene un puntaje mínimo de aprobación de <strong>{selectedConvocatoria.puntaje_minimo_aprobacion}%</strong> para el proceso de pares doble ciego. Cualquier cambio de estado a "Abierta" publicará las bases a los docentes inmediatamente.
+                                </p>
+                            </div>
+                            
+                            {/* Requirements List */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-text-main uppercase tracking-widest">Requisitos & Documentos Exigidos</h4>
+                                <div className="space-y-2">
+                                    {selectedConvocatoria.documentos_req && selectedConvocatoria.documentos_req.length > 0 ? (
+                                        selectedConvocatoria.documentos_req.map((doc, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-bg-deep/40 border border-border-thin text-xs">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-text-main">{doc.nombre_documento}</span>
+                                                    {doc.descripcion && <span className="text-[10px] text-text-dim">{doc.descripcion}</span>}
+                                                </div>
+                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tight ${
+                                                    doc.es_obligatorio ? 'bg-red-950/40 text-red-400 border border-red-900/30' : 'bg-bg-deep text-text-dim'
+                                                }`}>
+                                                    {doc.es_obligatorio ? 'Obligatorio' : 'Opcional'}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-xs text-text-dim italic">No se configuraron documentos específicos.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Action buttons */}
+                        <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
+                            <button 
+                                onClick={() => {
+                                    handleEdit(selectedConvocatoria);
+                                    setSelectedConvocatoria(null);
+                                }}
+                                className="flex-1 bg-text-main text-bg-deep py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-90 active:scale-95 transition-all"
+                            >
+                                Editar Convocatoria
+                            </button>
+                            {selectedConvocatoria.estado === 'Borrador' && (
+                                <button 
+                                    onClick={() => {
+                                        handleStatusChange(selectedConvocatoria.uuid, 'Abierta');
+                                        setSelectedConvocatoria(null);
+                                    }}
+                                    className="flex-1 bg-green-500 text-black py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-90 active:scale-95 transition-all"
+                                >
+                                    Publicar Ahora
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>,
+                document.body
             )}
         </main>
     );
