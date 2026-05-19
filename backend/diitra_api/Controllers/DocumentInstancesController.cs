@@ -259,13 +259,11 @@ namespace diitra_api.Controllers
             {
                 string metadataJson = metadata.GetRawText();
                 var instance = await _instanceService.UpdateMetadataAsync(uuid, metadataJson, ct);
-                Console.WriteLine($"[DIITRA DEBUG] UpdateMetadata called. instance.TemplateCode: '{instance.TemplateCode}', uuid: {uuid}");
 
                 if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION")
                 {
                     try
                     {
-                        Console.WriteLine($"[DIITRA DEBUG] Raw metadataJson: {metadataJson}");
                         var options = new System.Text.Json.JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true
@@ -275,19 +273,21 @@ namespace diitra_api.Controllers
                         {
                             dto.Uuid = uuid;
                             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
-                            Console.WriteLine($"[DIITRA DEBUG] DTO deserialized. Title: '{dto.Titulo}', IdCarrera: {dto.IdCarrera}, IdConvocatoria: {dto.IdConvocatoria}, userIdRef: '{userIdRef}'");
                             var result = await projectOrchestrator.SyncProjectWizardDataAsync(dto, userIdRef);
-                            Console.WriteLine($"[DIITRA DEBUG] SyncProjectWizardDataAsync complete. Success: {result.Success}, Message: '{result.Message}'");
+                            
+                            if (!result.Success)
+                            {
+                                return BadRequest(new { success = false, message = $"Error de sincronización relacional: {result.Message}" });
+                            }
                         }
                         else
                         {
-                            Console.WriteLine("[DIITRA DEBUG] Deserialized DTO is null!");
+                            return BadRequest(new { success = false, message = "La metadata enviada no pudo ser deserializada correctamente como Proyecto." });
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[DIITRA DEBUG] Error syncing project metadata to inv_proyectos: {ex.Message}");
-                        Console.WriteLine($"[DIITRA DEBUG] Exception StackTrace: {ex.StackTrace}");
+                        return BadRequest(new { success = false, message = $"Fallo crítico en la sincronización de base de datos: {ex.Message}" });
                     }
                 }
 

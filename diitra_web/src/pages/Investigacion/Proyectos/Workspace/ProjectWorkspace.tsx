@@ -44,11 +44,26 @@ export const ProjectWorkspace: React.FC = () => {
     });
 
     const fetchProducts = async () => {
-        try {
-            const res = await api.get(`/ResearchProducts/project/${documentUuid}`);
+        let retries = 3;
+        let success = false;
+        let res: any = null;
+        while (retries > 0 && !success) {
+            try {
+                res = await api.get(`/ResearchProducts/project/${documentUuid}`);
+                success = true;
+            } catch (err: any) {
+                retries--;
+                if (err?.response?.status === 404 && retries > 0) {
+                    console.warn(`[DIITRA] Productos no encontrados (404), reintentando en 1s... (${retries} intentos restantes)`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } else {
+                    retries = 0; // abortar otros errores o intentos agotados
+                    console.error("[DIITRA] Error al cargar productos", err);
+                }
+            }
+        }
+        if (success && res) {
             setProducts(res.data);
-        } catch (err) {
-            console.error("[DIITRA] Error al cargar productos", err);
         }
     };
 
@@ -121,10 +136,26 @@ export const ProjectWorkspace: React.FC = () => {
 
     useEffect(() => {
         const fetchProject = async () => {
-            try {
-                // Fetch de datos reales desde el backend
-                const res = await api.get(`/projects/${documentUuid}/detail`);
-                
+            let retries = 3;
+            let success = false;
+            let res: any = null;
+            while (retries > 0 && !success) {
+                try {
+                    res = await api.get(`/projects/${documentUuid}/detail`);
+                    success = true;
+                } catch (e: any) {
+                    retries--;
+                    if (e?.response?.status === 404 && retries > 0) {
+                        console.warn(`[DIITRA] Detalle de proyecto no encontrado (404), reintentando en 1s... (${retries} intentos restantes)`);
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    } else {
+                        retries = 0; // abortar otros errores o intentos agotados
+                        console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
+                    }
+                }
+            }
+
+            if (success && res) {
                 setCurrentProject({
                     id: res.data.uuid.substring(0,8).toUpperCase(),
                     uuid: res.data.uuid,
@@ -133,8 +164,7 @@ export const ProjectWorkspace: React.FC = () => {
                     presupuesto: res.data.costo_total || 0,
                     linea: res.data.linea_investigacion || 'No definida'
                 });
-            } catch (e) {
-                console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
+            } else {
                 // Fallback graceful
                 setCurrentProject({
                     id: documentUuid?.substring(0,8).toUpperCase() || 'NEW',
@@ -144,9 +174,8 @@ export const ProjectWorkspace: React.FC = () => {
                     presupuesto: 0,
                     linea: 'No definida'
                 });
-            } finally {
-                setIsLoading(false);
             }
+            setIsLoading(false);
         };
         
         if (documentUuid) fetchProject();

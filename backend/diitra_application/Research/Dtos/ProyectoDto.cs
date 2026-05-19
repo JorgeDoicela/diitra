@@ -53,7 +53,42 @@ namespace Diitra.Application.Research.Dtos
         public string? DescripcionProyecto { get; set; }
         public string? Justificacion { get; set; }
         public string? ObjetivoGeneral { get; set; }
-        public List<string>? ObjetivosEspecificos { get; set; }
+        private List<string>? _objetivosEspecificos;
+
+        [System.Text.Json.Serialization.JsonPropertyName("ObjetivosEspecificos")]
+        public System.Text.Json.JsonElement? ObjetivosEspecificosElement { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public List<string>? ObjetivosEspecificos
+        {
+            get
+            {
+                if (_objetivosEspecificos != null) return _objetivosEspecificos;
+                if (ObjetivosEspecificosElement == null) return null;
+
+                var element = ObjetivosEspecificosElement.Value;
+                if (element.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    var list = new List<string>();
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        list.Add(item.GetString() ?? "");
+                    }
+                    return list;
+                }
+                else if (element.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var str = element.GetString();
+                    if (string.IsNullOrWhiteSpace(str)) return new List<string>();
+                    return new List<string> { str };
+                }
+                return null;
+            }
+            set
+            {
+                _objetivosEspecificos = value;
+            }
+        }
         public string? Ods { get; set; }
         public string? MarcoTeorico { get; set; }
         public string? Metodologia { get; set; }
@@ -87,7 +122,42 @@ namespace Diitra.Application.Research.Dtos
         // ─────────────────────────────────────────────────────────────────────────
         // SECCIÓN 8: BIBLIOGRAFÍA
         // ─────────────────────────────────────────────────────────────────────────
-        public List<string>? Bibliografia { get; set; }
+        private List<string>? _bibliografia;
+
+        [System.Text.Json.Serialization.JsonPropertyName("Bibliografia")]
+        public System.Text.Json.JsonElement? BibliografiaElement { get; set; }
+
+        [System.Text.Json.Serialization.JsonIgnore]
+        public List<string>? Bibliografia
+        {
+            get
+            {
+                if (_bibliografia != null) return _bibliografia;
+                if (BibliografiaElement == null) return null;
+
+                var element = BibliografiaElement.Value;
+                if (element.ValueKind == System.Text.Json.JsonValueKind.Array)
+                {
+                    var list = new List<string>();
+                    foreach (var item in element.EnumerateArray())
+                    {
+                        list.Add(item.GetString() ?? "");
+                    }
+                    return list;
+                }
+                else if (element.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var str = element.GetString();
+                    if (string.IsNullOrWhiteSpace(str)) return new List<string>();
+                    return new List<string> { str };
+                }
+                return null;
+            }
+            set
+            {
+                _bibliografia = value;
+            }
+        }
 
         // ─────────────────────────────────────────────────────────────────────────
         // SECCIÓN 9: FIRMAS

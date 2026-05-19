@@ -33,7 +33,6 @@ interface DocumentEditorProps {
 }
 
 const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, onClose }) => {
-    const navigate = useNavigate();
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
 
@@ -86,7 +85,76 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         loadMetadata();
     }, []);
 
-    // 4. Hook Maestro con esquema dinámico
+    if (isLoadingTemplate) {
+        return (
+            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
+                <Loader size={48} className="animate-spin text-primary" />
+                <p className="text-text-dim text-sm font-black uppercase tracking-widest animate-pulse">
+                    Cargando Workspace Colaborativo...
+                </p>
+            </div>
+        );
+    }
+
+    if (!templateConfig) {
+        return (
+            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center p-8 text-center">
+                <div className="bg-surface border border-red-500/30 p-8 rounded-3xl max-w-md shadow-2xl">
+                    <h3 className="text-red-500 text-lg font-black uppercase tracking-wider mb-2">Error de Inicialización</h3>
+                    <p className="text-text-dim text-sm font-medium mb-6">
+                        No se pudo resolver la estructura de la plantilla "{templateCode}" ni cargar el respaldo de seguridad local.
+                    </p>
+                    <button onClick={onClose} className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all text-xs uppercase tracking-widest">
+                        Volver
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <DocumentEditorCore
+            templateCode={templateCode}
+            templateConfig={templateConfig}
+            initialData={initialData}
+            carreras={carreras}
+            convocatorias={convocatorias}
+            tiposProducto={tiposProducto}
+            onClose={onClose}
+        />
+    );
+};
+
+interface DocumentEditorCoreProps {
+    templateCode: string;
+    templateConfig: any;
+    initialData: any;
+    carreras: any[];
+    convocatorias: any[];
+    tiposProducto: any[];
+    onClose: () => void;
+}
+
+const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
+    templateCode,
+    templateConfig,
+    initialData,
+    carreras,
+    convocatorias,
+    tiposProducto,
+    onClose
+}) => {
+    const navigate = useNavigate();
+
+    // Mergear el esquema de la plantilla con los datos iniciales de forma estable
+    const mergedInitial = React.useMemo(() => {
+        return {
+            ...(templateConfig?.schema || {}),
+            ...initialData
+        };
+    }, [templateConfig, initialData]);
+
+    // 4. Hook Maestro con esquema dinámico completo
     const { 
         formData, 
         setFormData, 
@@ -95,16 +163,9 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         removeItem, 
         updateItem, 
         updateField 
-    } = useDIITRADocument(initialData || (templateConfig?.schema || {}), {
+    } = useDIITRADocument(mergedInitial, {
         lists: templateConfig?.lists || []
     });
-    
-    // Sincronizar datos iniciales cuando el esquema termine de cargar
-    useEffect(() => {
-        if (templateConfig && !initialData) {
-            setFormData(templateConfig.schema);
-        }
-    }, [templateConfig, initialData, setFormData]);
 
     // 5. Lógica de Cálculos Especiales (Solo si aplica)
     useEffect(() => {
@@ -143,47 +204,22 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         }
     };
 
-    if (isLoadingTemplate) {
-        return (
-            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
-                <Loader size={48} className="animate-spin text-primary" />
-                <p className="text-text-dim text-sm font-black uppercase tracking-widest animate-pulse">
-                    Cargando Workspace Colaborativo...
-                </p>
-            </div>
-        );
-    }
-
-    if (!templateConfig) {
-        return (
-            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center p-8 text-center">
-                <div className="bg-surface border border-red-500/30 p-8 rounded-3xl max-w-md shadow-2xl">
-                    <h3 className="text-red-500 text-lg font-black uppercase tracking-wider mb-2">Error de Inicialización</h3>
-                    <p className="text-text-dim text-sm font-medium mb-6">
-                        No se pudo resolver la estructura de la plantilla "{templateCode}" ni cargar el respaldo de seguridad local.
-                    </p>
-                    <button onClick={onClose} className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all text-xs uppercase tracking-widest">
-                        Volver
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     // Mapear los iconos del registry (o nombres de iconos del backend) a elementos de React.
     // NORMALIZACIÓN DE ESTRUCTURA:
     //   - Backend dinámico: cada section tiene { id, label, iconName, fields: [...] }
     //   - Registry local:  cada section tiene { id, label, icon, component, config: { fields: [...] } }
     // Unificamos ambos en la misma forma para que AgnosticSection siempre reciba { config: { fields } }
-    const mappedSections = templateConfig.sections.map((sec: any) => {
-        const IconComponent = sec.icon || iconMap[sec.iconName] || FileText;
-        const normalizedConfig = sec.config || (sec.fields ? { fields: sec.fields } : undefined);
-        return {
-            ...sec,
-            icon: <IconComponent size={18} />,
-            config: normalizedConfig,
-        };
-    });
+    const mappedSections = React.useMemo(() => {
+        return templateConfig.sections.map((sec: any) => {
+            const IconComponent = sec.icon || iconMap[sec.iconName] || FileText;
+            const normalizedConfig = sec.config || (sec.fields ? { fields: sec.fields } : undefined);
+            return {
+                ...sec,
+                icon: <IconComponent size={18} />,
+                config: normalizedConfig,
+            };
+        });
+    }, [templateConfig]);
 
     return (
         <DIITRABuilderShell
