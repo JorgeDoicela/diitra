@@ -6,8 +6,9 @@ import { BudgetSection } from '../../../components/DIITRA/sections/BudgetSection
 import { TimelineSection } from '../../../components/DIITRA/sections/TimelineSection';
 import { ImpactSection } from '../../../components/DIITRA/sections/ImpactSection';
 import { AgnosticSection } from '../../../components/DIITRA/sections/AgnosticSection';
+import { ProgressReportSection } from '../../../components/DIITRA/sections/ProgressReportSection';
 
-// Nota: Las secciones de Rúbrica y Avance se irán creando luego, por ahora dejamos placeholders 
+// Nota: Las secciones de Rúbrica se irán creando luego, por ahora dejamos placeholders 
 // para demostrar el poder del enrutamiento dinámico (CACES / CES Compliance).
 
 export const DocumentTemplateRegistry: Record<string, any> = {
@@ -135,14 +136,7 @@ export const DocumentTemplateRegistry: Record<string, any> = {
                 id: 'ejecucion',
                 label: 'Avance de Ejecución',
                 icon: BarChart,
-                component: AgnosticSection,
-                config: {
-                    fields: [
-                        { name: 'ConclusionesParciales', label: 'Bitácora y Conclusiones Científicas Parciales', type: 'rich-text', collaborative: true },
-                        { name: 'Hito_Gantt_Completados', label: 'Validar hito del proyecto', type: 'checkbox', collaborative: true },
-                        { name: 'Anexo_Evidencias', label: 'Notas complementarias y anexos', type: 'textarea', collaborative: true, placeholder: 'Describa brevemente las evidencias de laboratorio anexadas al expediente...' }
-                    ]
-                }
+                component: ProgressReportSection
             }
         ]
     },

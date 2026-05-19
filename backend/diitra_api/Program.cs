@@ -79,10 +79,9 @@ builder.Services.AddControllers()
     })
     .ConfigureApiBehaviorOptions(options =>
     {
-        // ⚠ TODO: PRODUCTION-LOCK ⚠
-        // Desactivamos la validación automática para que no nos de 400 Bad Request
-        // mientras estamos probando el Wizard con datos incompletos.
-        options.SuppressModelStateInvalidFilter = true;
+        // 🔒 PRODUCTION-LOCK ACTIVADO 🔒
+        // Activamos la validación automática para retornar 400 Bad Request en payloads inválidos.
+        options.SuppressModelStateInvalidFilter = false;
     });
 
 // Registrar todos los validadores del ensamblado de Application

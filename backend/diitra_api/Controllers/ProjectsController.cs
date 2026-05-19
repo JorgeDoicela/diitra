@@ -282,5 +282,118 @@ namespace diitra_api.Controllers
             var stats = await _projectOrchestrator.GetDashboardStatsAsync(userIdRef, isAdmin);
             return Ok(stats);
         }
+
+        /// <summary>
+        /// Exporta la metadata de un proyecto en formato CSV para cumplimiento CACES.
+        /// </summary>
+        [HttpGet("{uuid}/export-caces")]
+        public async Task<IActionResult> ExportCaces(string uuid)
+        {
+            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+            if (project == null) return NotFound(new { error = "Proyecto no encontrado" });
+
+            var csv = new System.Text.StringBuilder();
+            csv.AppendLine("CAMPO,VALOR");
+            csv.AppendLine($"\"Código Institucional\",\"{project.CodigoInstitucional ?? "N/A"}\"");
+            csv.AppendLine($"\"Título del Proyecto\",\"{project.Titulo?.Replace("\"", "\"\"") ?? "N/A"}\"");
+            csv.AppendLine($"\"Estado Actual\",\"{project.Estado ?? "N/A"}\"");
+            csv.AppendLine($"\"Línea de Investigación\",\"{project.LineaInvestigacion ?? "N/A"}\"");
+            csv.AppendLine($"\"Tiempo de Ejecución\",\"{project.TiempoEjecucion ?? "N/A"}\"");
+            csv.AppendLine($"\"Presupuesto Total Planificado\",\"${project.CostoTotal}\"");
+            csv.AppendLine($"\"TRL Inicial\",\"{project.TrlInicial ?? 1}\"");
+            csv.AppendLine($"\"TRL Actual\",\"{project.TrlActual ?? 1}\"");
+            csv.AppendLine($"\"TRL Meta\",\"{project.TrlMeta ?? 1}\"");
+            csv.AppendLine("");
+            csv.AppendLine("INTEGRANTE,ROL,CEDULA,TELEFONO");
+            if (project.Investigadores != null)
+            {
+                foreach (var inv in project.Investigadores)
+                {
+                    csv.AppendLine($"\"{inv.Nombre}\",\"{inv.Rol}\",\"{inv.Cedula}\",\"{inv.Telefono}\"");
+                }
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());
+            return File(bytes, "text/csv", $"CACES_METADATA_{uuid.Substring(0,8).ToUpper()}.csv");
+        }
+
+        /// <summary>
+        /// Publica el proyecto de investigación y su PDF oficial en el repositorio institucional DSpace.
+        /// </summary>
+        [HttpPost("{uuid}/publish-dspace")]
+        public async Task<IActionResult> PublishDSpace(
+            string uuid, 
+            [FromServices] Diitra.Application.Common.Repositories.IRepositoryConnector repositoryConnector, 
+            [FromServices] Diitra.Infrastructure.Common.Storage.IFileStorageService fileStorageService)
+        {
+            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+            if (project == null) return NotFound(new { error = "Proyecto no encontrado" });
+
+            byte[] pdfBytes;
+            
+            // Intentamos buscar una instancia de documento finalizada
+            var instances = await _documentInstanceService.GetByEntityAsync(uuid);
+            var finalizedInstance = instances.FirstOrDefault(i => !string.IsNullOrEmpty(i.FinalPdfPath) && i.State == Diitra.Domain.Common.Documents.DocumentState.Signed);
+
+            if (finalizedInstance != null)
+            {
+                try
+                {
+                    pdfBytes = await fileStorageService.GetFileAsync(finalizedInstance.FinalPdfPath);
+                }
+                catch
+                {
+                    // Fallback: Generar el PDF dinámicamente si el archivo no existe en almacenamiento
+                    var request = new DocumentRequest
+                    {
+                        TemplateCode = "PROTOCOLO_INVESTIGACION",
+                        Data = project,
+                        IsDraftMode = false,
+                        IsBlindMode = false,
+                        RequestedBy = User.Identity?.Name ?? "Sistema DIITRA",
+                        ProjectUuid = uuid,
+                        EntityUuid = uuid
+                    };
+                    var genResult = await _documentEngine.GenerateAsync(request);
+                    pdfBytes = genResult.PdfBytes;
+                }
+            }
+            else
+            {
+                // Generar el PDF dinámicamente
+                var request = new DocumentRequest
+                {
+                    TemplateCode = "PROTOCOLO_INVESTIGACION",
+                    Data = project,
+                    IsDraftMode = false,
+                    IsBlindMode = false,
+                    RequestedBy = User.Identity?.Name ?? "Sistema DIITRA",
+                    ProjectUuid = uuid,
+                    EntityUuid = uuid
+                };
+                var genResult = await _documentEngine.GenerateAsync(request);
+                pdfBytes = genResult.PdfBytes;
+            }
+
+            var dspaceMetadata = new
+            {
+                title = project.Titulo,
+                creator = project.DirectorProyecto ?? "DIITRA Investigador",
+                subject = project.LineaInvestigacion,
+                description = $"Proyecto de investigación institucional: {project.Titulo}. Estado: {project.Estado}.",
+                publisher = "Instituto Superior Tecnológico Traversari",
+                date = System.DateTime.UtcNow.ToString("yyyy-MM-dd"),
+                identifier = project.CodigoInstitucional ?? $"DIITRA-{uuid.Substring(0,8).ToUpper()}"
+            };
+
+            var dspaceUri = await repositoryConnector.PublishAsync(pdfBytes, dspaceMetadata);
+
+            if (dspaceUri.StartsWith("ERROR:"))
+            {
+                return BadRequest(new { error = dspaceUri });
+            }
+
+            return Ok(new { success = true, uri = dspaceUri });
+        }
     }
 }

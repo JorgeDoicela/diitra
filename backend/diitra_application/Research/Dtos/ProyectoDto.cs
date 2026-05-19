@@ -63,7 +63,7 @@ namespace Diitra.Application.Research.Dtos
         // ─────────────────────────────────────────────────────────────────────────
         public List<RecursoDisponibleDto>? RecursosDisponibles { get; set; }
         public List<RecursoNecesarioDto>? RecursosNecesarios { get; set; }
-        public decimal? CostoTotal { get; set; } // ⚠ TODO: PRODUCTION-LOCK (Volver a decimal no-nulo)
+        public decimal CostoTotal { get; set; }
 
         public string? FuenteFinanciamiento { get; set; }
         public string? NombreOtraFuente { get; set; }
@@ -143,8 +143,8 @@ namespace Diitra.Application.Research.Dtos
     {
         public string? Descripcion { get; set; }
         public string? Cantidad { get; set; }
-        public decimal? CostoUnitario { get; set; } // ⚠ TODO: PRODUCTION-LOCK
-        public decimal? CostoTotal { get; set; }    // ⚠ TODO: PRODUCTION-LOCK
+        public decimal CostoUnitario { get; set; }
+        public decimal CostoTotal { get; set; }
         public string? IdPartida { get; set; }
         public bool? EsGastoCapital { get; set; }
     }
@@ -168,10 +168,10 @@ namespace Diitra.Application.Research.Dtos
     public class ActividadCronogramaDto
     {
         public string? Objetivo { get; set; }
-        public int? Numero { get; set; } // ⚠ TODO: PRODUCTION-LOCK
+        public int Numero { get; set; }
         public string? Actividad { get; set; }
         public string? RecursosNecesarios { get; set; }
-        public decimal? Ponderacion { get; set; } // ⚠ TODO: PRODUCTION-LOCK
+        public decimal Ponderacion { get; set; }
         public bool? EsEntregableCaces { get; set; }
 
         public List<bool>? Semanas { get; set; }
