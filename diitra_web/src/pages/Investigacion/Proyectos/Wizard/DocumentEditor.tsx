@@ -40,15 +40,25 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [convocatorias, setConvocatorias] = useState([]);
     const [tiposProducto, setTiposProducto] = useState([]);
 
-    // 2. Cargar Configuración de la Plantilla en Caliente (Backend Metadata-Driven UI)
+    // 2. Cargar Configuración de la Plantilla (Prioridad: Registry Local > Backend Dinámico)
     useEffect(() => {
         const fetchConfig = async () => {
+            // PRIORIDAD 1: Registry local (tiene componentes ricos: GeneralSection, TechnicalSection, etc.)
+            // Si la plantilla está definida localmente, usarla directamente sin consultar al backend.
+            const localConfig = DocumentTemplateRegistry[templateCode];
+            if (localConfig) {
+                setTemplateConfig(localConfig);
+                setIsLoadingTemplate(false);
+                return;
+            }
+
+            // PRIORIDAD 2: Backend dinámico (para plantillas custom creadas en BD sin contraparte local)
             try {
                 const response = await api.get(`/documents/instances/templates/${templateCode}/ui-config`);
                 setTemplateConfig(response.data);
             } catch (err) {
-                console.warn(`[DIITRA] Fallback a Registro local para plantilla ${templateCode}`);
-                setTemplateConfig(DocumentTemplateRegistry[templateCode]);
+                console.warn(`[DIITRA] No se encontró config local ni en backend para: ${templateCode}`);
+                setTemplateConfig(null);
             } finally {
                 setIsLoadingTemplate(false);
             }
@@ -151,12 +161,18 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         );
     }
 
-    // Mapear los iconos del registry (o nombres de iconos del backend) a elementos de React
+    // Mapear los iconos del registry (o nombres de iconos del backend) a elementos de React.
+    // NORMALIZACIÓN DE ESTRUCTURA:
+    //   - Backend dinámico: cada section tiene { id, label, iconName, fields: [...] }
+    //   - Registry local:  cada section tiene { id, label, icon, component, config: { fields: [...] } }
+    // Unificamos ambos en la misma forma para que AgnosticSection siempre reciba { config: { fields } }
     const mappedSections = templateConfig.sections.map((sec: any) => {
         const IconComponent = sec.icon || iconMap[sec.iconName] || FileText;
+        const normalizedConfig = sec.config || (sec.fields ? { fields: sec.fields } : undefined);
         return {
             ...sec,
-            icon: <IconComponent size={18} />
+            icon: <IconComponent size={18} />,
+            config: normalizedConfig,
         };
     });
 
