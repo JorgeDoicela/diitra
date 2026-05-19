@@ -30,6 +30,7 @@ interface AgnosticSectionProps {
     onUpdate: (field: string, value: any) => void;
     activeTab: string;
     templateCode: string;
+    config?: any;             // Prop directo para carga dinámica desde backend
     carreras?: any[];
     convocatorias?: any[];
     tiposProducto?: any[];
@@ -47,7 +48,8 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
     convocatorias = [],
     tiposProducto = [],
     onAdd,
-    onRemove
+    onRemove,
+    config: configProp,    // <-- prop directo desde DocumentEditor (carga dinámica)
 }) => {
     // Evitar errores de compilación por variables no leídas pero requeridas por la firma genérica
     void carreras; void convocatorias; void tiposProducto; void onAdd; void onRemove;
@@ -57,9 +59,10 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
     const [isLoadingRef, setIsLoadingRef] = useState(false);
 
     // 1. Obtener la configuración del Registry de forma agnóstica
+    //    Prioridad: prop 'config' (carga dinámica del backend) > Registry local
     const templateConfig = DocumentTemplateRegistry[templateCode];
     const sectionConfig = templateConfig?.sections?.find((s: any) => s.id === activeTab);
-    const config = sectionConfig?.config;
+    const config = configProp || sectionConfig?.config;
 
     // 2. Efecto de carga asíncrona de documentos vinculados (Dossier de Referencia)
     useEffect(() => {
@@ -85,7 +88,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
         fetchReference();
     }, [formData.EntityUuid, formData.entityUuid, config?.referenceTemplateCode]);
 
-    if (!templateConfig || !sectionConfig || !config?.fields) {
+    if (!config?.fields) {
         return (
             <div className="p-8 bg-surface border border-border-thin rounded-2xl text-center">
                 <HelpCircle size={32} className="mx-auto text-text-dim mb-2 opacity-50" />
