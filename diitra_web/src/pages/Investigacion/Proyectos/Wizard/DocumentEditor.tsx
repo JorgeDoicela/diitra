@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../../../api/axios_config';
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
 import { useDIITRADocument } from '../../../../core/documents/hooks/useDIITRADocument';
@@ -32,6 +33,7 @@ interface DocumentEditorProps {
 }
 
 const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, onClose }) => {
+    const navigate = useNavigate();
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
 
@@ -125,7 +127,14 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                     title: data.Titulo || data.title || `Documento ${templateCode}`
                 });
                 if (response.data?.uuid) {
-                    setFormData((prev: any) => ({ ...prev, Uuid: response.data.uuid }));
+                    const newUuid = response.data.uuid;
+                    setFormData((prev: any) => ({ ...prev, Uuid: newUuid }));
+                    // Si no estamos en la página formal de workspace, redirigir
+                    if (!window.location.pathname.includes('/workspace/')) {
+                        // Guardar estado inicial para que no se pierda al recargar la nueva ruta
+                        await api.patch(`/documents/instances/${newUuid}/metadata`, { ...data, Uuid: newUuid });
+                        navigate(`/investigacion/workspace/${templateCode}/${newUuid}?edit=true`, { replace: true });
+                    }
                 }
             }
         } catch (error) {
