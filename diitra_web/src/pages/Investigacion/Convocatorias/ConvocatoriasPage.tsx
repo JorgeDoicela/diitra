@@ -397,8 +397,11 @@ const ConvocatoriasPage = () => {
                                         type="number"
                                         required
                                         className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
-                                        value={formData.anio}
-                                        onChange={e => setFormData({...formData, anio: parseInt(e.target.value)})}
+                                        value={isNaN(formData.anio) ? '' : formData.anio}
+                                        onChange={e => {
+                                            const val = parseInt(e.target.value);
+                                            setFormData({...formData, anio: isNaN(val) ? new Date().getFullYear() : val});
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -434,8 +437,11 @@ const ConvocatoriasPage = () => {
                                         <input 
                                             type="number"
                                             className="w-full bg-surface border border-border-thin rounded pl-9 pr-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
-                                            value={formData.presupuesto_total}
-                                            onChange={e => setFormData({...formData, presupuesto_total: parseFloat(e.target.value)})}
+                                            value={isNaN(formData.presupuesto_total) ? '' : formData.presupuesto_total}
+                                            onChange={e => {
+                                                const val = parseFloat(e.target.value);
+                                                setFormData({...formData, presupuesto_total: isNaN(val) ? 0 : val});
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -520,8 +526,11 @@ const ConvocatoriasPage = () => {
                                             <input 
                                                 type="number"
                                                 className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
-                                                value={formData.puntaje_minimo_aprobacion}
-                                                onChange={e => setFormData({...formData, puntaje_minimo_aprobacion: parseFloat(e.target.value)})}
+                                                value={isNaN(formData.puntaje_minimo_aprobacion) ? '' : formData.puntaje_minimo_aprobacion}
+                                                onChange={e => {
+                                                    const val = parseFloat(e.target.value);
+                                                    setFormData({...formData, puntaje_minimo_aprobacion: isNaN(val) ? 0 : val});
+                                                }}
                                             />
                                         </div>
                                     </div>
