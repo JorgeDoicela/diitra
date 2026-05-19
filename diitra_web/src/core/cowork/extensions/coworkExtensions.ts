@@ -52,7 +52,7 @@ export function buildCoWorkExtensions(config: CoWorkExtensionsConfig) {
         }),
         Image.configure({
             inline: true,
-            allowBase64: true, // Habilitamos subida directa en base64 para prototipado rápido y facilidad de transporte por Yjs
+            allowBase64: false, // Desactivado intencionalmente para forzar la arquitectura Upload-on-Paste (alto rendimiento)
         }),
     ];
 
