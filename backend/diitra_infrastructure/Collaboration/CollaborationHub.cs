@@ -81,7 +81,7 @@ namespace diitra_infrastructure.Collaboration
             await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
 
             // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas
-            var updatesToSend = new List<string>();
+            var updatesToSend = new List<byte[]>();
 
             var docSnapshot = await _db.InvCoworkDocumentos
                 .AsNoTracking()
@@ -89,17 +89,22 @@ namespace diitra_infrastructure.Collaboration
 
             if (docSnapshot?.YjsState != null)
             {
-                updatesToSend.Add(Convert.ToBase64String(docSnapshot.YjsState));
+                byte[] decompressedSnapshot = GZipHelper.Decompress(docSnapshot.YjsState);
+                updatesToSend.Add(decompressedSnapshot);
             }
 
             var deltas = await _db.InvCoworkUpdates
                 .AsNoTracking()
                 .Where(u => u.DocumentoUuid == documentId)
                 .OrderBy(u => u.IdUpdate)
-                .Select(u => Convert.ToBase64String(u.UpdateData))
+                .Select(u => u.UpdateData)
                 .ToListAsync();
 
-            updatesToSend.AddRange(deltas);
+            foreach (var deltaBytes in deltas)
+            {
+                byte[] decompressedDelta = GZipHelper.Decompress(deltaBytes);
+                updatesToSend.Add(decompressedDelta);
+            }
 
             _logger.LogInformation("[HUB] Sending {Count} history updates to {User}", updatesToSend.Count, userName);
             await Clients.Caller.SendAsync("ReceiveUpdateHistory", updatesToSend);
@@ -116,7 +121,7 @@ namespace diitra_infrastructure.Collaboration
         /// Recibe una actualización incremental (Delta) de Yjs.
         /// Estrategia: Append-only en la tabla de updates para evitar colisiones.
         /// </summary>
-        public async Task SendYjsUpdate(string documentId, string updateBase64)
+        public async Task SendYjsUpdate(string documentId, byte[] updateData)
         {
             documentId = documentId.ToLower().Trim();
 
@@ -127,18 +132,27 @@ namespace diitra_infrastructure.Collaboration
 
             if (instance != null && (int)instance.State >= 3) return;
 
-            // 1. Difusión inmediata a otros colaboradores
-            await Clients.OthersInGroup(documentId).SendAsync("ReceiveYjsUpdate", updateBase64);
+            // 1. Difusión inmediata a otros colaboradores (envío binario directo)
+            await Clients.OthersInGroup(documentId).SendAsync("ReceiveYjsUpdate", updateData);
 
-            // 2. Persistencia Append-Only (Profesional)
+            // 2. Persistencia Append-Only con compresión GZip transparente
+            byte[] compressedBytes = GZipHelper.Compress(updateData);
+
             var newUpdate = new InvCoworkUpdate
             {
                 DocumentoUuid = documentId,
-                UpdateData = Convert.FromBase64String(updateBase64)
+                UpdateData = compressedBytes
             };
 
             _db.InvCoworkUpdates.Add(newUpdate);
             await _db.SaveChangesAsync();
+
+            // 3. Compactación reactiva automática asistida por el cliente
+            var deltaCount = await _db.InvCoworkUpdates.CountAsync(u => u.DocumentoUuid == documentId);
+            if (deltaCount > 500)
+            {
+                await Clients.Caller.SendAsync("TriggerCompaction");
+            }
         }
 
         /// <summary>
@@ -146,9 +160,9 @@ namespace diitra_infrastructure.Collaboration
         /// El cliente envía el estado completo ya fusionado. El servidor reemplaza el snapshot
         /// y limpia el historial de deltas para mantener la base de datos esbelta y rápida.
         /// </summary>
-        public async Task SubmitFullSnapshot(string documentId, string snapshotBase64)
+        public async Task SubmitFullSnapshot(string documentId, byte[] snapshotBytes)
         {
-            var snapshotBytes = Convert.FromBase64String(snapshotBase64);
+            var compressedSnapshot = GZipHelper.Compress(snapshotBytes);
 
             // 1. Actualizar el estado canónico en el documento principal
             var doc = await _db.InvCoworkDocumentos.FirstOrDefaultAsync(d => d.Uuid == documentId);
@@ -161,7 +175,7 @@ namespace diitra_infrastructure.Collaboration
                 };
                 _db.InvCoworkDocumentos.Add(doc);
             }
-            doc.YjsState = snapshotBytes;
+            doc.YjsState = compressedSnapshot;
             doc.ActualizadoEn = DateTime.UtcNow;
 
             // 2. COMPACTACIÓN: Eliminar todos los deltas previos ya que están incluidos en el snapshot
@@ -199,11 +213,11 @@ namespace diitra_infrastructure.Collaboration
         /// Retransmite el estado de presencia (cursores, nombres, colores).
         /// No se persiste — la presencia es efímera por diseño.
         /// </summary>
-        public async Task SendAwarenessUpdate(string documentId, string updateBase64)
+        public async Task SendAwarenessUpdate(string documentId, byte[] updateData)
         {
             documentId = documentId.ToLower().Trim();
             await Clients.OthersInGroup(documentId)
-                         .SendAsync("ReceiveAwarenessUpdate", updateBase64);
+                         .SendAsync("ReceiveAwarenessUpdate", updateData);
         }
 
         // ── COORDINACIÓN DE EQUIPO (Team Pulse) ──────────────────────────────

@@ -89,8 +89,12 @@ builder.Services.AddControllers()
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<diitra_application.Security.Validators.LoginRequestValidator>();
 
-// 3. Agregar SignalR
-builder.Services.AddSignalR();
+// 3. Agregar SignalR con límites ampliados para soportar transporte de imágenes Base64 en CoWork
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 Megabytes
+});
 
 // Infrastructure Services
 builder.Services.AddScoped<IFirmaElectronicaService, FirmaElectronicaService>();

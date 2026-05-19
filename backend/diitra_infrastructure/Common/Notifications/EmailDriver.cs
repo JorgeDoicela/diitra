@@ -56,7 +56,7 @@ namespace diitra_infrastructure.Common.Notifications
                                                     <span style='color: #b9975b;'>ISTET</span><span style='margin: 0 10px; opacity: 0.5;'>|</span>DIITRA
                                                 </h1>
                                             </div>
-                                            <p style='color: #94a3b8; margin: 15px 0 0 0; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;'>Investigación e Innovación Tecnológica</p>
+                                            <p style='color: #94a3b8; margin: 15px 0 0 0; font-size: 12px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;'>Departamento de Investigación e Innovación Tecnológica</p>
                                         </td>
                                     </tr>
                                 </table>

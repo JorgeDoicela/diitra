@@ -32,7 +32,15 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
             try {
                 // Endpoint unificado en ProjectsController
                 const response = await api.get('/projects');
-                setProjects(response.data);
+                if (response.data && response.data.length > 0) {
+                    setProjects(response.data);
+                } else {
+                    // Fallback si la lista de la BD está vacía para permitir pruebas
+                    setProjects([
+                        { uuid: 'p1', titulo: 'Desarrollo de IA para el ISTPET', codigoInstitucional: 'IST-2026-001', estado: 'En Ejecución' },
+                        { uuid: 'p2', titulo: 'Estudio de Energías Renovables en Quito', codigoInstitucional: 'IST-2026-002', estado: 'Por Finalizar' }
+                    ]);
+                }
             } catch (err) {
                 // Fallback con datos de ejemplo profesionales
                 setProjects([
