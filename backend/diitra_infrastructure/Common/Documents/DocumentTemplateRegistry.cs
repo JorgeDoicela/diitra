@@ -33,7 +33,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresTraceability: true,
                 requiresSignature: true,
                 collaborativeFields: "[\"programa\", \"grupo_investigacion\", \"dominio\", \"linea_investigacion\", \"sublinea_investigacion\", \"tipo_investigacion\", \"campo_amplio\", \"campo_especifico\", \"campo_detallado\", \"antecedentes\", \"descripcion_proyecto\", \"justificacion\", \"objetivo_general\", \"objetivos_especificos\", \"ods\", \"marco_teorico\", \"metodologia\", \"evaluacion\", \"bibliografia\"]",
-                version: 38);
+                version: 42);
 
             // ══════════════════════════════════════════════════════════════
             // OTRAS ÁREAS (Registro de marcadores de posición)

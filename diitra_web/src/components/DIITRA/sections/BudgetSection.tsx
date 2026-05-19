@@ -14,6 +14,8 @@ interface BudgetSectionProps {
     onAddNecesario: () => void;
     onRemoveNecesario: (index: number) => void;
     onUpdateNecesario: (index: number, field: string, value: any) => void;
+    formData: any;
+    onUpdate: (field: string, value: any) => void;
 }
 
 export const BudgetSection: React.FC<BudgetSectionProps> = ({
@@ -26,17 +28,19 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
     onUpdateDisponible,
     onAddNecesario,
     onRemoveNecesario,
-    onUpdateNecesario
+    onUpdateNecesario,
+    formData,
+    onUpdate
 }) => {
     return (
-        <div className="space-y-12">
+        <div className="space-y-8">
             <div className="space-y-6">
                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2 px-2">
                     <DollarSign size={18}/> 4. Recursos y Presupuesto
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Recursos Disponibles */}
-                    <div className="p-6 bg-surface border border-border-thin rounded-2xl">
+                    <div className="p-6 bg-surface border border-border-thin rounded-2xl shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-[10px] font-black uppercase text-text-dim">4.1 Recursos Disponibles</p>
                             <button 
@@ -52,7 +56,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                     <CoWorkField 
                                         name={`RecDisp_${_r.id || i}_desc`} 
                                         cowork={cowork} 
-                                        placeholder="Descripción..."
+                                        placeholder="Descripción del recurso..."
                                         onValueChange={(v) => onUpdateDisponible(i, 'Descripcion', v)}
                                         className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
                                     />
@@ -60,6 +64,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                         <CoWorkField 
                                             name={`RecDisp_${_r.id || i}_cant`} 
                                             cowork={cowork} 
+                                            placeholder="Cant."
                                             onValueChange={(v) => onUpdateDisponible(i, 'Cantidad', v)}
                                             className="w-full bg-bg-deep border border-border-thin rounded-lg px-2 py-2 text-xs text-center" 
                                         />
@@ -76,7 +81,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                     </div>
 
                     {/* Recursos Necesarios */}
-                    <div className="p-6 bg-surface border border-border-thin rounded-2xl">
+                    <div className="p-6 bg-surface border border-border-thin rounded-2xl shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-[10px] font-black uppercase text-text-dim">4.2 Recursos Necesarios (Gasto)</p>
                             <button 
@@ -92,7 +97,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                     <CoWorkField 
                                         name={`RecNec_${r.id || i}_desc`} 
                                         cowork={cowork} 
-                                        placeholder="Rubro..."
+                                        placeholder="Descripción del rubro..."
                                         onValueChange={(v) => onUpdateNecesario(i, 'Descripcion', v)}
                                         className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
                                     />
@@ -136,6 +141,45 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* 4.3 Financiamiento (X) */}
+            <div className="p-6 bg-surface border border-border-thin rounded-2xl space-y-4 shadow-sm">
+                <p className="text-[10px] font-black uppercase text-text-dim">4.3 Fuentes de Financiamiento</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+                    <label className="flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl cursor-pointer hover:bg-surface-hover transition-colors">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.FinanciamientoIstpet || false}
+                            onChange={(e) => onUpdate('FinanciamientoIstpet', e.target.checked)}
+                            className="w-4 h-4 rounded text-text-main focus:ring-0 accent-text-main"
+                        />
+                        <span className="text-xs font-black uppercase text-text-main">ISTPET</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl cursor-pointer hover:bg-surface-hover transition-colors">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.FinanciamientoOtrasFuentes || false}
+                            onChange={(e) => onUpdate('FinanciamientoOtrasFuentes', e.target.checked)}
+                            className="w-4 h-4 rounded text-text-main focus:ring-0 accent-text-main"
+                        />
+                        <span className="text-xs font-black uppercase text-text-main">OTRAS FUENTES</span>
+                    </label>
+
+                    {formData.FinanciamientoOtrasFuentes && (
+                        <div className="space-y-2">
+                            <CoWorkField 
+                                name="NombresOtrasFuentes" 
+                                cowork={cowork} 
+                                label="Nombre de las Fuentes Externas" 
+                                onValueChange={(v) => onUpdate('NombresOtrasFuentes', v)}
+                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main" 
+                                placeholder="Especifique nombres..."
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

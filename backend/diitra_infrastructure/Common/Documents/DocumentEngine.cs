@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using Diitra.Infrastructure.Common.Documents.Engine;
 using Diitra.Infrastructure.Common.Documents.Resources;
+using iText.IO.Image;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -49,6 +50,16 @@ namespace Diitra.Infrastructure.Common.Documents
         private static readonly ITextHtmlPdfRenderer _pdfRenderer = new();
         private static readonly PdfMergerService _mergerService = new();
         private static readonly LegalComplianceInjector _complianceInjector = new();
+
+        private static readonly Lazy<ImageData> _fondoHojasInvestigacionImageData = new(() =>
+        {
+            string base64 = TemplateImages.FondoHojasInvestigacionBase64;
+            string base64Data = base64.Contains(",") 
+                ? base64.Substring(base64.IndexOf(",") + 1) 
+                : base64;
+            byte[] imageBytes = Convert.FromBase64String(base64Data);
+            return ImageDataFactory.Create(imageBytes);
+        });
 
         public DocumentEngine(
             IDocumentTemplateRepository templateRepository,
@@ -114,8 +125,8 @@ namespace Diitra.Infrastructure.Common.Documents
                 {
                     TraceabilityCode = traceabilityCode,
                     IsDraft = request.IsDraftMode,
-                    StationaryImageBase64 = template.Code == "PROTOCOLO_INVESTIGACION" 
-                        ? TemplateImages.FondoHojasInvestigacionBase64 
+                    StationaryImageData = template.Code == "PROTOCOLO_INVESTIGACION" 
+                        ? _fondoHojasInvestigacionImageData.Value 
                         : null
                 }, template.CustomCss);
 

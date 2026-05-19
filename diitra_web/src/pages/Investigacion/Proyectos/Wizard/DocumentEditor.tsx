@@ -117,6 +117,22 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 
                 const SectionComponent = activeSectionConfig.component;
 
+                // Specific list overrides for sections to resolve parameter mismatch
+                let sectionProps: any = {};
+                if (activeTab === 'equipo') {
+                    sectionProps = {
+                        onAdd: () => addItem('Investigadores', { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '' }),
+                        onRemove: (i: number) => removeItem('Investigadores', i),
+                        onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
+                    };
+                } else if (activeTab === 'cronograma') {
+                    sectionProps = {
+                        onAdd: () => addItem('Cronograma', { Actividad: '', Numero: 1, RecursosNecesarios: '' }),
+                        onRemove: (i: number) => removeItem('Cronograma', i),
+                        onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v)
+                    };
+                }
+
                 return (
                     <div className="pb-20">
                         <SectionComponent 
@@ -152,6 +168,9 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                             onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
                             onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
                             onUpdateImpacto={(t: string, v: any) => updateField('Impacto', { ...formData.Impacto, [t.toLowerCase()]: v })}
+                            
+                            // Overriding generic handlers for type-safe specific sections
+                            {...sectionProps}
                         />
                     </div>
                 );

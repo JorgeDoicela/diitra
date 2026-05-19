@@ -12,32 +12,80 @@ import { AgnosticSection } from '../../../components/DIITRA/sections/AgnosticSec
 
 export const DocumentTemplateRegistry: Record<string, any> = {
     PROTOCOLO_INVESTIGACION: {
-        title: "Protocolo de Investigación",
-        subtitle: "Formulación del proyecto (Fase 1)",
+        title: "Proyecto de Investigación",
+        subtitle: "Formulación del Proyecto de Investigación - ISTPET",
         schema: {
+            // Sección 1: Identificación
             Titulo: '',
             IdCarrera: 0,
             IdConvocatoria: 0,
             Periodo: '',
             TiempoEjecucion: '',
-            Antecedentes: '',
-            ObjetivoGeneral: '',
+            Programa: '',
+            GrupoInvestigacionTipo: 'NO', // 'NO' | 'SI'
+            GrupoInvestigacionNombre: '',
+            Dominio: '',
+            LineaInvestigacion: '',
+            SublineaInvestigacion: '',
+            TipoInvestigacion: 'APLICADA', // 'BÁSICA' | 'APLICADA' | 'DESARROLLO EXPERIMENTAL'
+            CampoAmplio: '',
+            CampoEspecifico: '',
+            CampoDetallado: '',
+            DirectorProyecto: '',
+            FechaPresentacion: '',
+            FechaInicio: '',
+            FechaFin: '',
+
+            // Sección 2: Investigadores
             Investigadores: [],
+
+            // Sección 3: Especificación Técnica
+            Antecedentes: '', // Antecedentes Específicos
+            DescripcionProyecto: '', // Descripción del Proyecto
+            Justificacion: '', // Justificación
+            ObjetivoGeneral: '', // Objetivo General
+            ObjetivosEspecificos: '', // Objetivos Específicos
+            ObjetivosDesarrolloSostenible: '', // ODS
+            MarcoTeorico: '', // Marco Teórico
+            Metodologia: '', // Metodología
+            Evaluacion: '', // Evaluación
+
+            // Sección 4: Recursos, Costo y Financiamiento
             RecursosDisponibles: [],
             RecursosNecesarios: [],
-            Cronograma: [],
+            CostoTotal: 0,
+            FinanciamientoIstpet: false,
+            FinanciamientoOtrasFuentes: false,
+            NombresOtrasFuentes: '',
+
+            // Sección 5: Productos Esperados
             ProductosEsperados: [],
-            Impacto: { social: '', cientifico: '', economico: '', ambiental: '' },
-            CostoTotal: 0
+
+            // Sección 6: Impactos
+            Impacto: { social: '', cientifico: '', economico: '', politico: '', ambiental: '', otro: '' },
+
+            // Sección 7: Cronograma
+            Cronograma: [],
+
+            // Sección 8: Bibliografía
+            Bibliografia: '',
+
+            // Sección 9: Firmas de Responsabilidad
+            FirmasResponsabilidad: {
+                DirectorNombre: '',
+                DirectorCargo: 'Director del Proyecto',
+                CoordinadorNombre: '',
+                CoordinadorCargo: 'Coordinador de Carrera'
+            }
         },
         lists: ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'Cronograma', 'ProductosEsperados'],
         sections: [
             { id: 'identificacion', label: 'Identificación', icon: BookOpen, component: GeneralSection },
             { id: 'tecnico', label: 'Plan Técnico', icon: FileText, component: TechnicalSection },
             { id: 'equipo', label: 'Equipo Humano', icon: Users, component: TeamSection },
-            { id: 'recursos', label: 'Recursos', icon: DollarSign, component: BudgetSection },
-            { id: 'cronograma', label: 'Cronograma', icon: Calendar, component: TimelineSection },
-            { id: 'impactos', label: 'Impactos', icon: Target, component: ImpactSection }
+            { id: 'recursos', label: 'Recursos & Financiamiento', icon: DollarSign, component: BudgetSection },
+            { id: 'cronograma', label: 'Cronograma (Gantt)', icon: Calendar, component: TimelineSection },
+            { id: 'impactos', label: 'Impacto & Productos', icon: Target, component: ImpactSection }
         ]
     },
     RUBRICA_EVALUACION: {
