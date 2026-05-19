@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
@@ -16,10 +16,16 @@ export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const queryParams = new URLSearchParams(location.search);
+    const shouldEdit = queryParams.get('edit') === 'true';
 
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeDocument, setActiveDocument] = useState<string | null>(null);
+    const [activeDocument, setActiveDocument] = useState<string | null>(() => {
+        return shouldEdit ? (templateCode || 'PROTOCOLO_INVESTIGACION') : null;
+    });
     const [isPublishingDSpace, setIsPublishingDSpace] = useState(false);
 
     const [products, setProducts] = useState<any[]>([]);
@@ -157,13 +163,18 @@ export const ProjectWorkspace: React.FC = () => {
         );
     }
 
+    const handleCloseEditor = () => {
+        setActiveDocument(null);
+        navigate(`/investigacion/workspace/${templateCode}/${documentUuid}`, { replace: true });
+    };
+
     // Render del Editor Genérico estructurado (Oculta el Dashboard)
     if (activeDocument) {
         return (
             <DocumentEditor 
                 templateCode={activeDocument} 
                 initialData={{ Uuid: currentProject.uuid }}
-                onClose={() => setActiveDocument(null)} 
+                onClose={handleCloseEditor} 
             />
         );
     }
