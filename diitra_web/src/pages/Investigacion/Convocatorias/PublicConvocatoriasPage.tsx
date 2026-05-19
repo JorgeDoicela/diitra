@@ -3,8 +3,11 @@ import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, Award, Clo
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import DocumentEditor from '../Proyectos/Wizard/DocumentEditor';
+import { DocumentTemplateRegistry } from '../../../core/documents/registry/DocumentTemplateRegistry';
 
 interface Convocatoria {
+    id_convocatoria: number;
     uuid: string;
     titulo: string;
     descripcion: string;
@@ -21,6 +24,13 @@ const PublicConvocatoriasPage = () => {
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showNewProject, setShowNewProject] = useState(false);
+    const [preselectedConvocatoriaId, setPreselectedConvocatoriaId] = useState<number | null>(null);
+
+    const handlePostular = (idConvocatoria: number) => {
+        setPreselectedConvocatoriaId(idConvocatoria);
+        setShowNewProject(true);
+    };
 
     useEffect(() => {
         const fetchConvocatorias = async () => {
@@ -143,7 +153,10 @@ const PublicConvocatoriasPage = () => {
                                 </div>
 
                                 <div className="pt-6 flex items-center gap-4">
-                                    <button className="flex-1 bg-text-main text-bg-deep py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-text-main/10">
+                                    <button 
+                                        onClick={() => handlePostular(c.id_convocatoria)}
+                                        className="flex-1 bg-text-main text-bg-deep py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-text-main/10"
+                                    >
                                         Postular Ahora
                                     </button>
                                     <a 
@@ -180,6 +193,21 @@ const PublicConvocatoriasPage = () => {
                    </div>
                 </div>
             </footer>
+
+            {/* Lanzador de nuevo proyecto con Convocatoria preseleccionada */}
+            {showNewProject && (
+                <DocumentEditor
+                    templateCode="PROTOCOLO_INVESTIGACION"
+                    initialData={{
+                        ...DocumentTemplateRegistry.PROTOCOLO_INVESTIGACION.schema,
+                        IdConvocatoria: preselectedConvocatoriaId
+                    }}
+                    onClose={() => {
+                        setShowNewProject(false);
+                        setPreselectedConvocatoriaId(null);
+                    }}
+                />
+            )}
         </div>
     );
 };
