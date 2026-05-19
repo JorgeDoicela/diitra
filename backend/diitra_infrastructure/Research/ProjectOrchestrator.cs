@@ -739,5 +739,79 @@ namespace diitra_infrastructure.Research
                 });
             }
         }
+
+        public async Task<SyncResult> DeleteProjectAsync(string uuid, string? userIdRef)
+        {
+            var project = await _context.InvProyectos
+                .Include(p => p.InvProyectosCarreras)
+                .Include(p => p.InvProyectosProfesores)
+                .Include(p => p.InvProyectosAlumnos)
+                .Include(p => p.InvObjetivosProyecto)
+                .Include(p => p.InvPresupuestoItems)
+                .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
+                .Include(p => p.InvBibliografiasProyecto)
+                .Include(p => p.InvImpactosProyecto)
+                .Include(p => p.InvProductos)
+                .Include(p => p.MatrizMarcoLogico)
+                .Include(p => p.InvRecursosDisponibles)
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado o no existe." };
+            }
+
+            if (project.Estado != "Borrador" && project.Estado != "En Corrección")
+            {
+                return new SyncResult { Success = false, Message = "Solo se pueden eliminar borradores de proyectos académicos." };
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // Eliminar relaciones hijas
+                _context.InvProyectosCarreras.RemoveRange(project.InvProyectosCarreras);
+                _context.InvProyectosProfesores.RemoveRange(project.InvProyectosProfesores);
+                _context.InvProyectosAlumnos.RemoveRange(project.InvProyectosAlumnos);
+                _context.InvObjetivosProyecto.RemoveRange(project.InvObjetivosProyecto);
+                _context.InvPresupuestoItems.RemoveRange(project.InvPresupuestoItems);
+                
+                foreach (var crono in project.InvCronogramas)
+                {
+                    _context.InvCronogramaSemanas.RemoveRange(crono.InvCronogramaSemanas);
+                }
+                _context.InvCronogramas.RemoveRange(project.InvCronogramas);
+                _context.InvBibliografiasProyecto.RemoveRange(project.InvBibliografiasProyecto);
+                _context.InvImpactosProyecto.RemoveRange(project.InvImpactosProyecto);
+                _context.InvProductos.RemoveRange(project.InvProductos);
+                _context.InvProyectosMml.RemoveRange(project.MatrizMarcoLogico);
+                _context.InvRecursosDisponibles.RemoveRange(project.InvRecursosDisponibles);
+
+                // Eliminar la instancia de Yjs / Metadata
+                var docInstance = await _context.DocumentInstances.FirstOrDefaultAsync(di => di.EntityUuid == uuid);
+                if (docInstance != null)
+                {
+                    _context.DocumentInstances.Remove(docInstance);
+                }
+
+                // Eliminar proyecto principal
+                _context.InvProyectos.Remove(project);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
+                int? internalUserId = internalUser?.IdUsuario;
+                await _auditService.LogActionAsync(internalUserId, "ELIMINAR_PROYECTO", $"Eliminación física del borrador del proyecto: {project.Titulo}", "PROYECTOS");
+
+                return new SyncResult { Success = true };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error al eliminar físicamente borrador de proyecto UUID: {Uuid}", uuid);
+                return new SyncResult { Success = false, Message = $"Error interno al eliminar el proyecto: {ex.Message}" };
+            }
+        }
     }
 }

@@ -395,5 +395,21 @@ namespace diitra_api.Controllers
 
             return Ok(new { success = true, uri = dspaceUri });
         }
+
+        /// <summary>
+        /// Elimina físicamente un proyecto y todos sus registros relacionados en cascada.
+        /// Solo permitido para borradores de proyectos académicos.
+        /// </summary>
+        [HttpDelete("{uuid}")]
+        public async Task<IActionResult> DeleteProject(string uuid)
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _projectOrchestrator.DeleteProjectAsync(uuid, userIdRef);
+            if (!result.Success)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
     }
 }
