@@ -1,11 +1,13 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, History, ExternalLink, Shield, FileSearch } from 'lucide-react';
+import { CheckCircle2, AlertCircle, ExternalLink, Shield, FileSearch } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const RevisorDashboard: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const firstName = user?.nombre_completo?.split(' ')[0] || 'Evaluador';
 
     return (
@@ -16,13 +18,12 @@ export const RevisorDashboard: React.FC = () => {
                 roleName="Evaluador Externo"
                 actions={
                     <>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 md:px-5 py-2.5 md:py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all">
-                            <History size={14} />
-                            <span>Historial</span>
-                        </button>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all">
+                        <button 
+                            onClick={() => navigate('/revisiones')}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                        >
                             <Shield size={16} />
-                            <span>Código Ética</span>
+                            <span>Ver Asignaciones</span>
                         </button>
                     </>
                 }
@@ -36,7 +37,10 @@ export const RevisorDashboard: React.FC = () => {
                     className="md:col-span-2"
                 >
                     <div className="mt-4 space-y-3">
-                        <div className="p-3 rounded-md border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-text-main/30 transition-all">
+                        <div 
+                            onClick={() => navigate('/revisiones')}
+                            className="p-3 rounded-md border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-text-main/30 transition-all"
+                        >
                             <div>
                                 <p className="text-[10px] font-bold text-text-main uppercase tracking-tighter">Propuesta #2024-0012</p>
                                 <p className="text-[9px] text-text-dim mt-1">Límite: 24 May 2024</p>

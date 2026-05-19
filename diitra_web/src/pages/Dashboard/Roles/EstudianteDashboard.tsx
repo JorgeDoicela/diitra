@@ -3,9 +3,11 @@ import { Search, GraduationCap, Award, BookOpen, UserPlus, Star } from 'lucide-r
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export const EstudianteDashboard: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const firstName = user?.nombre_completo?.split(' ')[0] || 'Estudiante';
 
     return (
@@ -16,11 +18,10 @@ export const EstudianteDashboard: React.FC = () => {
                 roleName="Estudiante Colaborador"
                 actions={
                     <>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 md:px-5 py-2.5 md:py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all">
-                            <BookOpen size={14} />
-                            <span>Recursos</span>
-                        </button>
-                        <button className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all">
+                        <button 
+                            onClick={() => navigate('/convocatorias')}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                        >
                             <Search size={16} />
                             <span>Ver Convocatorias</span>
                         </button>
@@ -38,7 +39,12 @@ export const EstudianteDashboard: React.FC = () => {
                     <div className="mt-4 p-4 rounded-lg bg-surface border border-border-thin border-dashed flex flex-col items-center justify-center text-center">
                         <Star size={24} className="text-text-main/20 mb-2" />
                         <p className="text-[10px] text-text-dim uppercase font-bold">No tienes participaciones activas</p>
-                        <button className="mt-4 text-[9px] font-bold text-text-main underline decoration-text-main/30 underline-offset-4 uppercase tracking-widest">Postular a una vacante</button>
+                        <button 
+                            onClick={() => navigate('/convocatorias')}
+                            className="mt-4 text-[9px] font-bold text-text-main underline decoration-text-main/30 underline-offset-4 uppercase tracking-widest"
+                        >
+                            Postular a una vacante
+                        </button>
                     </div>
                 </BentoCard>
 
