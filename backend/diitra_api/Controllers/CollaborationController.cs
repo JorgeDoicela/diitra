@@ -30,7 +30,7 @@ namespace diitra_api.Controllers
         /// y retorna su URL estática para evitar incrustar Base64 en el Yjs.
         /// </summary>
         [HttpPost("upload")]
-        public async Task<IActionResult> UploadImage([Microsoft.AspNetCore.Http.FromForm] Microsoft.AspNetCore.Http.IFormFile file)
+        public async Task<IActionResult> UploadImage([FromForm] Microsoft.AspNetCore.Http.IFormFile file)
         {
             if (file == null || file.Length == 0)
                 return BadRequest(new { message = "No se proporcionó ningún archivo." });
