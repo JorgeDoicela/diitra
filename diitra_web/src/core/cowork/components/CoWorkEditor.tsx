@@ -13,6 +13,7 @@
 
 import React from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
+import api from '../../../api/axios_config';
 import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
 import type { CoWorkHandle, CoWorkUser } from '../types';
 import { RemoteCursors } from './RemoteCursors';
@@ -93,6 +94,68 @@ const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
             attributes: {
                 class: 'focus:outline-none',
             },
+            handlePaste: (view, event, slice) => {
+                const items = event.clipboardData?.items;
+                if (!items) return false;
+                
+                let handled = false;
+                for (const item of Array.from(items)) {
+                    if (item.type.indexOf('image') === 0) {
+                        handled = true;
+                        const file = item.getAsFile();
+                        if (file) {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            
+                            // Subida asíncrona (Upload-on-Paste)
+                            api.post('/collaboration/upload', formData, {
+                                headers: { 'Content-Type': 'multipart/form-data' }
+                            }).then(res => {
+                                const url = res.data.url;
+                                const { schema } = view.state;
+                                const node = schema.nodes.image.create({ src: url });
+                                const tr = view.state.tr.replaceSelectionWith(node);
+                                view.dispatch(tr);
+                            }).catch(err => {
+                                console.error('[DIITRA] Error subiendo imagen al pegar', err);
+                            });
+                        }
+                    }
+                }
+                return handled;
+            },
+            handleDrop: (view, event, slice, moved) => {
+                const files = event.dataTransfer?.files;
+                if (!files || files.length === 0) return false;
+                
+                let handled = false;
+                for (const file of Array.from(files)) {
+                    if (file.type.indexOf('image') === 0) {
+                        handled = true;
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        
+                        // Evitar que el navegador abra la imagen
+                        event.preventDefault();
+                        
+                        api.post('/collaboration/upload', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        }).then(res => {
+                            const url = res.data.url;
+                            const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY });
+                            if (coordinates) {
+                                const { schema } = view.state;
+                                const node = schema.nodes.image.create({ src: url });
+                                const tr = view.state.tr.insert(coordinates.pos, node);
+                                view.dispatch(tr);
+                            }
+                        }).catch(err => {
+                            console.error('[DIITRA] Error subiendo imagen al soltar', err);
+                        });
+                    }
+                }
+                return handled;
+            }
         },
         // Sincronizar selección completa (posición y resaltado) aislada por campo
         onSelectionUpdate: ({ editor }) => {

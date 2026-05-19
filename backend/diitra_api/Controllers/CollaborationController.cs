@@ -17,10 +17,44 @@ namespace diitra_api.Controllers
     public class CollaborationController : ControllerBase
     {
         private readonly DiitraContext _db;
+        private readonly Diitra.Infrastructure.Common.Storage.IFileStorageService _storageService;
 
-        public CollaborationController(DiitraContext db)
+        public CollaborationController(DiitraContext db, Diitra.Infrastructure.Common.Storage.IFileStorageService storageService)
         {
             _db = db;
+            _storageService = storageService;
+        }
+
+        /// <summary>
+        /// Recibe una imagen pegada en el editor colaborativo, la guarda en el servidor
+        /// y retorna su URL estática para evitar incrustar Base64 en el Yjs.
+        /// </summary>
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadImage([Microsoft.AspNetCore.Http.FromForm] Microsoft.AspNetCore.Http.IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest(new { message = "No se proporcionó ningún archivo." });
+
+            try
+            {
+                using var memoryStream = new System.IO.MemoryStream();
+                await file.CopyToAsync(memoryStream);
+                var content = memoryStream.ToArray();
+
+                // Guardar usando el servicio
+                var relativePath = await _storageService.SaveFileAsync(file.FileName, content, "cowork_images");
+
+                // Generar URL pública (asumiendo que la API se sirve en la ruta raíz o mapeada a frontend)
+                // Se reemplazan los "\" por "/" para compatibilidad de URL en navegadores.
+                var url = $"/api/storage/{relativePath.Replace('\\', '/')}";
+
+                return Ok(new { url = url });
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA ERROR] Fallo al subir imagen CoWork: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno al guardar la imagen", detail = ex.Message });
+            }
         }
 
         /// <summary>
