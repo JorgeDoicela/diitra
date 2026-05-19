@@ -33,12 +33,23 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     // Catalog states
     const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
-
+    
     // UI states
     const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [creationStepMsg, setCreationStepMsg] = useState('');
     const [error, setError] = useState<string | null>(null);
+
+    // Helper mapping functions to handle any field name variations (camelCase, snake_case, etc.)
+    const getCarreraId = (c: any): number => c.idCarrera ?? c.id_carrera ?? 0;
+    const getCarreraName = (c: any): string => c.carrera1 ?? c.nombre_carrera ?? c.carrera ?? 'Sin Nombre';
+
+    const getConvocatoriaId = (c: any): number => c.id_convocatoria ?? c.idConvocatoria ?? 0;
+    const getConvocatoriaName = (c: any): string => {
+        const code = c.codigo_convocatoria ?? c.codigoConvocatoria ?? '';
+        const title = c.titulo ?? '';
+        return code ? `${code} - ${title}` : title;
+    };
 
     // Load catalogs
     useEffect(() => {
@@ -50,7 +61,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 ]);
                 setCarreras(rCarreras.data || []);
                 setConvocatorias(rConvocatorias.data || []);
-
+                
                 // If convocatoria is pre-selected, lock it in
                 if (preselectedConvocatoriaId) {
                     setIdConvocatoria(preselectedConvocatoriaId);
@@ -91,9 +102,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         try {
             // Step 1: Create instance
             setCreationStepMsg("Generando expediente digital en el núcleo...");
-            const response = await api.post('/documents/instances', {
-                templateCode: 'PROTOCOLO_INVESTIGACION',
-                entityUuid: 'GLOBAL',
+            const response = await api.post('/documents/instances', { 
+                templateCode: 'PROTOCOLO_INVESTIGACION', 
+                entityUuid: 'GLOBAL', 
                 title: titulo.trim().toUpperCase()
             });
 
@@ -129,19 +140,20 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         }
     };
 
-    const selectedCarreraName = carreras.find(c => c.id_carrera === idCarrera)?.nombre_carrera || "Seleccione una carrera asociada...";
-    const selectedConvocatoriaLabel = convocatorias.find(c => c.id_convocatoria === idConvocatoria)
-        ? `${convocatorias.find(c => c.id_convocatoria === idConvocatoria).codigo_convocatoria} - ${convocatorias.find(c => c.id_convocatoria === idConvocatoria).titulo}`
-        : "Seleccione una convocatoria...";
+    const selectedCarrera = carreras.find(c => getCarreraId(c) === idCarrera);
+    const selectedCarreraName = selectedCarrera ? getCarreraName(selectedCarrera) : "Seleccione una carrera asociada...";
+
+    const selectedConvocatoria = convocatorias.find(c => getConvocatoriaId(c) === idConvocatoria);
+    const selectedConvocatoriaLabel = selectedConvocatoria ? getConvocatoriaName(selectedConvocatoria) : "Seleccione una convocatoria...";
 
     return (
         <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-surface border border-border-thin w-full max-w-md rounded-lg overflow-hidden shadow-2xl relative animate-fade-up bg-glow">
-
+                
                 {/* Close Button */}
                 {!isCreating && (
-                    <button
-                        onClick={onClose}
+                    <button 
+                        onClick={onClose} 
                         className="absolute top-6 right-6 p-2 rounded-full hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer"
                     >
                         <X size={16} />
@@ -150,7 +162,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
                 {/* Main Content */}
                 <div className="p-8">
-
+                    
                     {/* Header */}
                     <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border-thin">
                         <div className="text-text-main">
@@ -178,7 +190,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-5">
-
+                            
                             {/* Error Alert */}
                             {error && (
                                 <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-[10px] font-black uppercase tracking-wider">
@@ -196,7 +208,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     value={titulo}
                                     onChange={(e) => setTitulo(e.target.value)}
                                     placeholder="EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN CON METADATA-DRIVEN UI..."
-                                    className="w-full bg-bg-deep border border-border-thin text-text-main text-xs font-bold rounded-md px-4 py-3 h-20 focus:border-text-main outline-none transition-all placeholder:text-text-dim/30 resize-none uppercase"
+                                    className="w-full border border-border-thin text-xs font-bold rounded-md px-4 py-3 h-20 focus:border-text-main outline-none transition-all placeholder:text-text-dim/30 resize-none uppercase"
+                                    style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}
                                     required
                                 />
                             </div>
@@ -211,33 +224,43 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => setIsOpenCarrera(!isOpenCarrera)}
-                                        className="w-full flex items-center justify-between bg-bg-deep border border-border-thin text-text-main text-xs font-bold rounded-md px-4 py-3 focus:border-text-main outline-none transition-all text-left cursor-pointer"
+                                        className="w-full flex items-center justify-between border border-border-thin text-xs font-bold rounded-md px-4 py-3 focus:border-text-main outline-none transition-all text-left cursor-pointer"
+                                        style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}
                                     >
-                                        <span className={idCarrera === 0 ? 'text-text-dim/40' : 'text-text-main'}>
+                                        <span style={idCarrera === 0 ? { color: 'var(--text-dim)', opacity: 0.5 } : {}}>
                                             {selectedCarreraName}
                                         </span>
-                                        <ChevronDown size={14} className={`text-text-dim transition-transform duration-200 ${isOpenCarrera ? 'rotate-180' : ''}`} />
+                                        <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none', color: 'var(--text-dim)' }} />
                                     </button>
-
+                                    
                                     {isOpenCarrera && (
-                                        <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto bg-surface border border-border-thin rounded-md shadow-2xl py-1 custom-scrollbar">
-                                            {carreras.map(c => (
-                                                <button
-                                                    key={c.id_carrera}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setIdCarrera(c.id_carrera);
-                                                        setIsOpenCarrera(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer bg-transparent ${idCarrera === c.id_carrera
-                                                            ? 'bg-text-main text-bg-deep font-bold'
-                                                            : 'text-text-main hover:bg-surface-hover'
-                                                        }`}
-                                                >
-                                                    <span>{c.nombre_carrera}</span>
-                                                    {idCarrera === c.id_carrera && <Check size={12} />}
-                                                </button>
-                                            ))}
+                                        <div 
+                                            className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 custom-scrollbar"
+                                            style={{ backgroundColor: 'var(--surface)' }}
+                                        >
+                                            {carreras.map(c => {
+                                                const cid = getCarreraId(c);
+                                                const cname = getCarreraName(c);
+                                                return (
+                                                    <button
+                                                        key={cid}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIdCarrera(cid);
+                                                            setIsOpenCarrera(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none"
+                                                        style={
+                                                            idCarrera === cid 
+                                                                ? { backgroundColor: 'var(--fg)', color: 'var(--bg)', fontWeight: 'bold' } 
+                                                                : { backgroundColor: 'transparent', color: 'var(--fg)' }
+                                                        }
+                                                    >
+                                                        <span>{cname}</span>
+                                                        {idCarrera === cid && <Check size={12} />}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -254,35 +277,45 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         type="button"
                                         onClick={() => !preselectedConvocatoriaId && setIsOpenConvocatoria(!isOpenConvocatoria)}
                                         disabled={!!preselectedConvocatoriaId}
-                                        className="w-full flex items-center justify-between bg-bg-deep border border-border-thin text-text-main text-xs font-bold rounded-md px-4 py-3 focus:border-text-main outline-none transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                                        className="w-full flex items-center justify-between border border-border-thin text-xs font-bold rounded-md px-4 py-3 focus:border-text-main outline-none transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                                        style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}
                                     >
-                                        <span className={idConvocatoria === 0 ? 'text-text-dim/40' : 'text-text-main'}>
+                                        <span style={idConvocatoria === 0 ? { color: 'var(--text-dim)', opacity: 0.5 } : {}}>
                                             {selectedConvocatoriaLabel}
                                         </span>
                                         {!preselectedConvocatoriaId && (
-                                            <ChevronDown size={14} className={`text-text-dim transition-transform duration-200 ${isOpenConvocatoria ? 'rotate-180' : ''}`} />
+                                            <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenConvocatoria ? 'rotate(180deg)' : 'none', color: 'var(--text-dim)' }} />
                                         )}
                                     </button>
-
+                                    
                                     {isOpenConvocatoria && !preselectedConvocatoriaId && (
-                                        <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto bg-surface border border-border-thin rounded-md shadow-2xl py-1 custom-scrollbar">
-                                            {convocatorias.map(c => (
-                                                <button
-                                                    key={c.id_convocatoria}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setIdConvocatoria(c.id_convocatoria);
-                                                        setIsOpenConvocatoria(false);
-                                                    }}
-                                                    className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer bg-transparent ${idConvocatoria === c.id_convocatoria
-                                                            ? 'bg-text-main text-bg-deep font-bold'
-                                                            : 'text-text-main hover:bg-surface-hover'
-                                                        }`}
-                                                >
-                                                    <span>{c.codigo_convocatoria} - {c.titulo}</span>
-                                                    {idConvocatoria === c.id_convocatoria && <Check size={12} />}
-                                                </button>
-                                            ))}
+                                        <div 
+                                            className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 custom-scrollbar"
+                                            style={{ backgroundColor: 'var(--surface)' }}
+                                        >
+                                            {convocatorias.map(c => {
+                                                const coid = getConvocatoriaId(c);
+                                                const coname = getConvocatoriaName(c);
+                                                return (
+                                                    <button
+                                                        key={coid}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIdConvocatoria(coid);
+                                                            setIsOpenConvocatoria(false);
+                                                        }}
+                                                        className="w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none"
+                                                        style={
+                                                            idConvocatoria === coid 
+                                                                ? { backgroundColor: 'var(--fg)', color: 'var(--bg)', fontWeight: 'bold' } 
+                                                                : { backgroundColor: 'transparent', color: 'var(--fg)' }
+                                                        }
+                                                    >
+                                                        <span>{coname}</span>
+                                                        {idConvocatoria === coid && <Check size={12} />}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     )}
                                 </div>
@@ -293,13 +326,15 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 py-3 bg-transparent hover:bg-surface-hover border border-border-thin text-text-dim hover:text-text-main rounded-md text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                                    className="flex-1 py-3 bg-transparent hover:bg-surface-hover border border-border-thin rounded-md text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                                    style={{ color: 'var(--text-dim)' }}
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 py-3 bg-text-main hover:opacity-90 text-bg-deep rounded-md text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 cursor-pointer"
+                                    className="flex-1 py-3 hover:opacity-90 rounded-md text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 cursor-pointer border-none"
+                                    style={{ backgroundColor: 'var(--fg)', color: 'var(--bg)' }}
                                 >
                                     Iniciar Formulación
                                 </button>
