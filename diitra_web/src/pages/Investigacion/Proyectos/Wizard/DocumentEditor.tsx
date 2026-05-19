@@ -3,13 +3,26 @@ import api from '../../../../api/axios_config';
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
 import { useDIITRADocument } from '../../../../core/documents/hooks/useDIITRADocument';
 import { DocumentTemplateRegistry } from '../../../../core/documents/registry/DocumentTemplateRegistry';
+import { AgnosticSection } from '../../../../components/DIITRA/sections/AgnosticSection';
+import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart, Loader } from 'lucide-react';
+
+const iconMap: Record<string, any> = {
+    BookOpen,
+    FileText,
+    Users,
+    DollarSign,
+    Calendar,
+    Target,
+    CheckSquare,
+    BarChart
+};
 
 /**
  * DOCUMENT EDITOR - ARQUITECTURA PROFESIONAL DIITRA v3.0 (Workspace)
  * ------------------------------------------------------------------
- * Este componente es completamente agnóstico. Renderiza dinámicamente
- * el esquema y las secciones basándose en el templateCode inyectado
- * por el Workspace (ej: PROTOCOLO_INVESTIGACION, RUBRICA_EVALUACION).
+ * Este componente es completamente agnóstico y dinámico.
+ * 1. Intenta cargar la interfaz en caliente desde el backend (Metadata-Driven).
+ * 2. Si falla, hace fallback de forma segura a la configuración local (Registry).
  */
 
 interface DocumentEditorProps {
@@ -19,40 +32,31 @@ interface DocumentEditorProps {
 }
 
 const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, onClose }) => {
-    const templateConfig = DocumentTemplateRegistry[templateCode];
-    if (!templateConfig) {
-        return <div className="p-8 text-red-500">Error: Plantilla {templateCode} no encontrada en el Registry.</div>;
-    }
+    const [templateConfig, setTemplateConfig] = useState<any>(null);
+    const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
 
     // 1. Estados de Referencia (Catálogos globales)
     const [carreras, setCarreras] = useState([]);
     const [convocatorias, setConvocatorias] = useState([]);
     const [tiposProducto, setTiposProducto] = useState([]);
 
-    // 2. Hook Maestro con esquema dinámico
-    const { 
-        formData, 
-        setFormData, 
-        coworkRef, 
-        addItem, 
-        removeItem, 
-        updateItem, 
-        updateField 
-    } = useDIITRADocument(initialData || templateConfig.schema, {
-        lists: templateConfig.lists
-    });
-    
-    // 3. Lógica de Cálculos Especiales (Solo si aplica)
+    // 2. Cargar Configuración de la Plantilla en Caliente (Backend Metadata-Driven UI)
     useEffect(() => {
-        if (templateCode === 'PROTOCOLO_INVESTIGACION') {
-            const total = (formData.RecursosNecesarios || []).reduce((acc: number, curr: any) => acc + (Number(curr.CostoTotal) || 0), 0);
-            if (total !== formData.CostoTotal) {
-                updateField('CostoTotal', total);
+        const fetchConfig = async () => {
+            try {
+                const response = await api.get(`/documents/instances/templates/${templateCode}/ui-config`);
+                setTemplateConfig(response.data);
+            } catch (err) {
+                console.warn(`[DIITRA] Fallback a Registro local para plantilla ${templateCode}`);
+                setTemplateConfig(DocumentTemplateRegistry[templateCode]);
+            } finally {
+                setIsLoadingTemplate(false);
             }
-        }
-    }, [formData.RecursosNecesarios, formData.CostoTotal, updateField, templateCode]);
+        };
+        fetchConfig();
+    }, [templateCode]);
 
-    // 4. Carga de Catálogos (Agnóstico, se cargan si existen APIs)
+    // 3. Carga de Catálogos (Agnóstico, se cargan si existen APIs)
     useEffect(() => {
         const loadMetadata = async () => {
             try {
@@ -70,13 +74,41 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         loadMetadata();
     }, []);
 
+    // 4. Hook Maestro con esquema dinámico
+    const { 
+        formData, 
+        setFormData, 
+        coworkRef, 
+        addItem, 
+        removeItem, 
+        updateItem, 
+        updateField 
+    } = useDIITRADocument(initialData || (templateConfig?.schema || {}), {
+        lists: templateConfig?.lists || []
+    });
+    
+    // Sincronizar datos iniciales cuando el esquema termine de cargar
+    useEffect(() => {
+        if (templateConfig && !initialData) {
+            setFormData(templateConfig.schema);
+        }
+    }, [templateConfig, initialData, setFormData]);
+
+    // 5. Lógica de Cálculos Especiales (Solo si aplica)
+    useEffect(() => {
+        if (templateCode === 'PROTOCOLO_INVESTIGACION' && formData) {
+            const total = (formData.RecursosNecesarios || []).reduce((acc: number, curr: any) => acc + (Number(curr.CostoTotal) || 0), 0);
+            if (total !== formData.CostoTotal) {
+                updateField('CostoTotal', total);
+            }
+        }
+    }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateCode]);
+
     const handleSave = async (data: any) => {
         try {
             if (data.Uuid) {
-                // Actualización Agnóstica (Guarda el JSON puro en la base de datos sin mapeos forzados)
                 await api.patch(`/documents/instances/${data.Uuid}/metadata`, data);
             } else {
-                // Creación de nueva instancia agnóstica si no existe
                 const response = await api.post('/documents/instances', { 
                     templateCode, 
                     entityUuid: 'GLOBAL', 
@@ -88,15 +120,45 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             }
         } catch (error) {
             console.error("[DIITRA] Error al guardar documento agnóstico:", error);
-            throw error; // Lanzamos el error para que el DIITRABuilderShell muestre el toast rojo
+            throw error;
         }
     };
 
-    // Mapear los iconos del registry a elementos de React
-    const mappedSections = templateConfig.sections.map((sec: any) => ({
-        ...sec,
-        icon: <sec.icon size={18} />
-    }));
+    if (isLoadingTemplate) {
+        return (
+            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
+                <Loader size={48} className="animate-spin text-primary" />
+                <p className="text-text-dim text-sm font-black uppercase tracking-widest animate-pulse">
+                    Cargando Workspace Colaborativo...
+                </p>
+            </div>
+        );
+    }
+
+    if (!templateConfig) {
+        return (
+            <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center p-8 text-center">
+                <div className="bg-surface border border-red-500/30 p-8 rounded-3xl max-w-md shadow-2xl">
+                    <h3 className="text-red-500 text-lg font-black uppercase tracking-wider mb-2">Error de Inicialización</h3>
+                    <p className="text-text-dim text-sm font-medium mb-6">
+                        No se pudo resolver la estructura de la plantilla "{templateCode}" ni cargar el respaldo de seguridad local.
+                    </p>
+                    <button onClick={onClose} className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all text-xs uppercase tracking-widest">
+                        Volver
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // Mapear los iconos del registry (o nombres de iconos del backend) a elementos de React
+    const mappedSections = templateConfig.sections.map((sec: any) => {
+        const IconComponent = sec.icon || iconMap[sec.iconName] || FileText;
+        return {
+            ...sec,
+            icon: <IconComponent size={18} />
+        };
+    });
 
     return (
         <DIITRABuilderShell
@@ -115,9 +177,9 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 const activeSectionConfig = templateConfig.sections.find((s: any) => s.id === activeTab);
                 if (!activeSectionConfig) return null;
                 
-                const SectionComponent = activeSectionConfig.component;
+                const SectionComponent = activeSectionConfig.component || AgnosticSection;
 
-                // Specific list overrides for sections to resolve parameter mismatch
+                // Props específicas para compatibilidad
                 let sectionProps: any = {};
                 if (activeTab === 'equipo') {
                     sectionProps = {
@@ -144,14 +206,15 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                             carreras={carreras}
                             convocatorias={convocatorias}
                             tiposProducto={tiposProducto}
+                            config={activeSectionConfig.config} // Inyectar config dinámico del backend para AgnosticSection
                             
                             // Props específicas para compatibilidad con secciones actuales
-                            investigadores={formData.Investigadores}
-                            recursosDisponibles={formData.RecursosDisponibles}
-                            recursosNecesarios={formData.RecursosNecesarios}
-                            costoTotal={formData.CostoTotal}
-                            cronograma={formData.Cronograma}
-                            productosEsperados={formData.ProductosEsperados}
+                            investigadores={formData?.Investigadores || []}
+                            recursosDisponibles={formData?.RecursosDisponibles || []}
+                            recursosNecesarios={formData?.RecursosNecesarios || []}
+                            costoTotal={formData?.CostoTotal || 0}
+                            cronograma={formData?.Cronograma || []}
+                            productosEsperados={formData?.ProductosEsperados || []}
                             
                             // Handlers genéricos y específicos
                             onAdd={(list: string, tpl: any) => addItem(list, tpl)}
@@ -167,9 +230,9 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                             onAddProducto={() => addItem('ProductosEsperados', { tipo: '', cantidad: 1 })}
                             onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
                             onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
-                            onUpdateImpacto={(t: string, v: any) => updateField('Impacto', { ...formData.Impacto, [t.toLowerCase()]: v })}
+                            onUpdateImpacto={(t: string, v: any) => updateField('Impacto', { ...(formData?.Impacto || {}), [t.toLowerCase()]: v })}
                             
-                            // Overriding generic handlers for type-safe specific sections
+                            // Overriding generic handlers
                             {...sectionProps}
                         />
                     </div>

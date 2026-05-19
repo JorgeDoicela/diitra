@@ -40,6 +40,135 @@ namespace diitra_api.Controllers
             return Ok(instance);
         }
 
+        /// <summary>
+        /// RETORNA LA CONFIGURACIÓN DINÁMICA DE LA INTERFAZ DE USUARIO (Metadata-Driven UI).
+        /// Si la plantilla es una de las oficiales, retorna su estructura premium pre-mapeada.
+        /// Si es una nueva plantilla creada por base de datos, auto-genera la UI en caliente
+        /// basada en sus CollaborativeFieldsJson.
+        /// </summary>
+        [HttpGet("templates/{code}/ui-config")]
+        public async Task<IActionResult> GetUiConfig(string code, CancellationToken ct)
+        {
+            var templates = await _documentEngine.GetAvailableTemplatesAsync(ct);
+            var template = templates.FirstOrDefault(t => t.Code == code);
+
+            if (template == null)
+            {
+                return NotFound(new { message = $"La plantilla '{code}' no está activa o no existe en la base de datos." });
+            }
+
+            // 1. Esquema Premium Pre-Mapeado (Caso de Plantillas Oficiales)
+            if (code == "INFORME_FINAL_INVESTIGACION")
+            {
+                return Ok(new
+                {
+                    title = "Informe Final de Investigación",
+                    subtitle = "Cierre y Consolidación de Resultados - ISTPET",
+                    schema = new Dictionary<string, object>
+                    {
+                        { "resumen_ejecutivo", "" },
+                        { "cumplimiento_objetivos", "" },
+                        { "resultados", "" },
+                        { "discusion", "" },
+                        { "impacto_final", "" },
+                        { "transferencia_conocimiento", "" },
+                        { "conclusiones", "" },
+                        { "recomendaciones", "" },
+                        { "bibliografia_final", "" }
+                    },
+                    lists = new string[] { },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "resumen",
+                            label = "Resumen & Objetivos",
+                            iconName = "FileText",
+                            fields = new[]
+                            {
+                                new { name = "resumen_ejecutivo", label = "Resumen Ejecutivo", type = "rich-text", collaborative = true, placeholder = "Redacte el resumen ejecutivo de la investigación..." },
+                                new { name = "cumplimiento_objetivos", label = "Análisis de Cumplimiento de Objetivos", type = "rich-text", collaborative = true, placeholder = "Detalle cómo se cumplieron cada uno de los objetivos planteados..." }
+                            }
+                        },
+                        new
+                        {
+                            id = "resultados",
+                            label = "Resultados & Discusión",
+                            iconName = "BarChart",
+                            fields = new[]
+                            {
+                                new { name = "resultados", label = "Resultados Obtenidos", type = "rich-text", collaborative = true, placeholder = "Descripción técnica de los hallazgos y resultados..." },
+                                new { name = "discusion", label = "Discusión de Hallazgos", type = "rich-text", collaborative = true, placeholder = "Análisis crítico de los resultados frente al marco teórico inicial..." }
+                            }
+                        },
+                        new
+                        {
+                            id = "impacto",
+                            label = "Impacto & Cierre",
+                            iconName = "Target",
+                            fields = new[]
+                            {
+                                new { name = "impacto_final", label = "Impacto en la Sociedad / Sector Productivo", type = "rich-text", collaborative = true, placeholder = "Describir el impacto real observado tras la ejecución..." },
+                                new { name = "transferencia_conocimiento", label = "Transferencia de Tecnología / Conocimiento", type = "rich-text", collaborative = true, placeholder = "Convenios, prototipos o publicaciones derivadas..." },
+                                new { name = "conclusiones", label = "Conclusiones Generales", type = "rich-text", collaborative = true, placeholder = "Conclusiones finales del proyecto..." },
+                                new { name = "recomendaciones", label = "Recomendaciones", type = "rich-text", collaborative = true, placeholder = "Sugerencias para futuros desarrollos o líneas de investigación..." },
+                                new { name = "bibliografia_final", label = "Bibliografía Actualizada (APA)", type = "rich-text", collaborative = true, placeholder = "Listado completo de fuentes bibliográficas utilizadas..." }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Generación Dinámica en Caliente (Para plantillas custom creadas por DB)
+            var colFields = new List<string>();
+            if (!string.IsNullOrEmpty(template.CollaborativeFieldsJson))
+            {
+                try
+                {
+                    colFields = System.Text.Json.JsonSerializer.Deserialize<List<string>>(template.CollaborativeFieldsJson) ?? new List<string>();
+                }
+                catch { }
+            }
+
+            var dynamicSchema = new Dictionary<string, object>();
+            var dynamicFields = new List<object>();
+
+            foreach (var field in colFields)
+            {
+                dynamicSchema[field] = "";
+                var readableLabel = System.Text.RegularExpressions.Regex.Replace(field, @"([a-z])([A-Z])", "$1 $2");
+                readableLabel = readableLabel.Replace("_", " ");
+                readableLabel = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(readableLabel.ToLower());
+
+                dynamicFields.Add(new
+                {
+                    name = field,
+                    label = readableLabel,
+                    type = "rich-text",
+                    collaborative = true,
+                    placeholder = $"Redacte colaborativamente la sección {readableLabel}..."
+                });
+            }
+
+            return Ok(new
+            {
+                title = template.Name,
+                subtitle = template.Description ?? "Formulario Dinámico de Colaboración",
+                schema = dynamicSchema,
+                lists = new string[] { },
+                sections = new[]
+                {
+                    new
+                    {
+                        id = "edicion_colaborativa",
+                        label = "Colaboración",
+                        iconName = "FileText",
+                        fields = dynamicFields.ToArray()
+                    }
+                }
+            });
+        }
+
         [HttpGet("{uuid}")]
         public async Task<IActionResult> Get(string uuid, CancellationToken ct)
         {

@@ -145,5 +145,62 @@ export const DocumentTemplateRegistry: Record<string, any> = {
                 }
             }
         ]
+    },
+    INFORME_FINAL_INVESTIGACION: {
+        title: "Informe Final de Investigación",
+        subtitle: "Cierre y Consolidación de Resultados - ISTPET",
+        schema: {
+            resumen_ejecutivo: '',
+            cumplimiento_objetivos: '',
+            resultados: '',
+            discusion: '',
+            impacto_final: '',
+            transferencia_conocimiento: '',
+            conclusiones: '',
+            recomendaciones: '',
+            bibliografia_final: ''
+        },
+        lists: [],
+        sections: [
+            {
+                id: 'resumen',
+                label: 'Resumen & Objetivos',
+                icon: FileText,
+                component: AgnosticSection,
+                config: {
+                    fields: [
+                        { name: 'resumen_ejecutivo', label: 'Resumen Ejecutivo', type: 'rich-text', collaborative: true, placeholder: 'Redacte el resumen ejecutivo de la investigación...' },
+                        { name: 'cumplimiento_objetivos', label: 'Análisis de Cumplimiento de Objetivos', type: 'rich-text', collaborative: true, placeholder: 'Detalle cómo se cumplieron cada uno de los objetivos planteados...' }
+                    ]
+                }
+            },
+            {
+                id: 'resultados',
+                label: 'Resultados & Discusión',
+                icon: BarChart,
+                component: AgnosticSection,
+                config: {
+                    fields: [
+                        { name: 'resultados', label: 'Resultados Obtenidos', type: 'rich-text', collaborative: true, placeholder: 'Descripción técnica de los hallazgos y resultados...' },
+                        { name: 'discusion', label: 'Discusión de Hallazgos', type: 'rich-text', collaborative: true, placeholder: 'Análisis crítico de los resultados frente al marco teórico inicial...' }
+                    ]
+                }
+            },
+            {
+                id: 'impacto',
+                label: 'Impacto & Cierre',
+                icon: Target,
+                component: AgnosticSection,
+                config: {
+                    fields: [
+                        { name: 'impacto_final', label: 'Impacto en la Sociedad / Sector Productivo', type: 'rich-text', collaborative: true, placeholder: 'Describir el impacto real observado tras la ejecución...' },
+                        { name: 'transferencia_conocimiento', label: 'Transferencia de Tecnología / Conocimiento', type: 'rich-text', collaborative: true, placeholder: 'Convenios, prototipos o publicaciones derivadas...' },
+                        { name: 'conclusiones', label: 'Conclusiones Generales', type: 'rich-text', collaborative: true, placeholder: 'Conclusiones finales del proyecto...' },
+                        { name: 'recomendaciones', label: 'Recomendaciones', type: 'rich-text', collaborative: true, placeholder: 'Sugerencias para futuros desarrollos o líneas de investigación...' },
+                        { name: 'bibliografia_final', label: 'Bibliografía Actualizada (APA)', type: 'rich-text', collaborative: true, placeholder: 'Listado completo de fuentes bibliográficas utilizadas...' }
+                    ]
+                }
+            }
+        ]
     }
 };
