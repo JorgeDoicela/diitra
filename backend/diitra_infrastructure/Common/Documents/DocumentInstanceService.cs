@@ -83,6 +83,11 @@ namespace Diitra.Infrastructure.Common.Documents
             var instance = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
             if (instance == null) throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
             
+            if (instance.EntityUuid == "GLOBAL")
+            {
+                instance.SetEntityUuid(uuid);
+            }
+
             instance.UpdateDataSnapshot(metadataJson);
             await _context.SaveChangesAsync(ct);
             return instance;

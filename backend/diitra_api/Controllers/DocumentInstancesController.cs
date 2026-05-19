@@ -3,6 +3,10 @@ using Diitra.Domain.Common.Documents;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json.Serialization;
+using Diitra.Application.Research;
+using Diitra.Application.Research.Dtos;
+using System;
+using System.Security.Claims;
 
 namespace diitra_api.Controllers
 {
@@ -245,12 +249,48 @@ namespace diitra_api.Controllers
         /// depender de modelos rígidos como ProyectoDto.
         /// </summary>
         [HttpPatch("{uuid}/metadata")]
-        public async Task<IActionResult> UpdateMetadata(string uuid, [FromBody] System.Text.Json.JsonElement metadata, CancellationToken ct)
+        public async Task<IActionResult> UpdateMetadata(
+            string uuid, 
+            [FromBody] System.Text.Json.JsonElement metadata, 
+            [FromServices] IProjectOrchestrator projectOrchestrator,
+            CancellationToken ct)
         {
             try
             {
                 string metadataJson = metadata.GetRawText();
                 var instance = await _instanceService.UpdateMetadataAsync(uuid, metadataJson, ct);
+                Console.WriteLine($"[DIITRA DEBUG] UpdateMetadata called. instance.TemplateCode: '{instance.TemplateCode}', uuid: {uuid}");
+
+                if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION")
+                {
+                    try
+                    {
+                        Console.WriteLine($"[DIITRA DEBUG] Raw metadataJson: {metadataJson}");
+                        var options = new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        };
+                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(metadataJson, options);
+                        if (dto != null)
+                        {
+                            dto.Uuid = uuid;
+                            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                            Console.WriteLine($"[DIITRA DEBUG] DTO deserialized. Title: '{dto.Titulo}', IdCarrera: {dto.IdCarrera}, IdConvocatoria: {dto.IdConvocatoria}, userIdRef: '{userIdRef}'");
+                            var result = await projectOrchestrator.SyncProjectWizardDataAsync(dto, userIdRef);
+                            Console.WriteLine($"[DIITRA DEBUG] SyncProjectWizardDataAsync complete. Success: {result.Success}, Message: '{result.Message}'");
+                        }
+                        else
+                        {
+                            Console.WriteLine("[DIITRA DEBUG] Deserialized DTO is null!");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DIITRA DEBUG] Error syncing project metadata to inv_proyectos: {ex.Message}");
+                        Console.WriteLine($"[DIITRA DEBUG] Exception StackTrace: {ex.StackTrace}");
+                    }
+                }
+
                 return Ok(new { success = true, uuid = instance.Uuid });
             }
             catch (KeyNotFoundException)
