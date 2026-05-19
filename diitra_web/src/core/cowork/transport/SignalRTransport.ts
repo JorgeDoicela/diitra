@@ -31,6 +31,7 @@ export class SignalRTransport implements ICoWorkTransport {
         this.connection.on('ReceiveAwarenessUpdate', () => {});
         this.connection.on('ReceiveUpdateHistory', () => {});
         this.connection.on('UserJoined', () => {});
+        this.connection.on('TriggerCompaction', () => {});
 
         this.connection.onreconnecting(() => { 
             console.warn("[SignalR] Reconectando...");
@@ -191,6 +192,11 @@ export class SignalRTransport implements ICoWorkTransport {
     onUserJoined(handler: (userName: string, userRole: string) => void): void {
         this.connection.off('UserJoined');
         this.connection.on('UserJoined', handler);
+    }
+
+    onCompactionTrigger(handler: () => void): void {
+        this.connection.off('TriggerCompaction');
+        this.connection.on('TriggerCompaction', handler);
     }
 
     // ── COORDINACIÓN (Team Pulse) ──────────────────────────────────────

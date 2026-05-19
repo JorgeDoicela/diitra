@@ -93,6 +93,11 @@ export interface ICoWorkTransport {
      */
     onUserJoined?(handler: (userName: string, userRole: string) => void): void;
 
+    /**
+     * Se dispara cuando el servidor solicita una compactación automática de deltas.
+     */
+    onCompactionTrigger?(handler: () => void): void;
+
     // ── COORDINACIÓN (Team Pulse) ──────────────────────────────────────
 
     /** Notifica actividad en una sección (ej: "Juan está editando Resumen") */

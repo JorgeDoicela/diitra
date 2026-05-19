@@ -9,6 +9,7 @@ import type { CoWorkConfig, CoWorkHandle, CoWorkSession, CoWorkUser } from '../t
 import type { ICoWorkTransport } from '../transport/ICoWorkTransport';
 import { SignalRTransport } from '../transport/SignalRTransport';
 import { getUserColor, getUserInitials } from '../config';
+import { uint8ArrayToBase64, base64ToUint8Array } from '../utils/binary';
 
 export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     // 1. Estado de la sesión
@@ -39,7 +40,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     const compact = useCallback(async () => {
         if (!ydocRef.current) return;
         const update = Y.encodeStateAsUpdate(ydocRef.current);
-        const base64 = btoa(String.fromCharCode(...update));
+        const base64 = uint8ArrayToBase64(update);
         await getTransport().submitFullSnapshot(config.documentId, base64);
     }, [config.documentId]);
 
@@ -137,7 +138,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
             transport.onYjsUpdate((base64) => {
                 if (!isMounted || ydocRef.current !== ydoc) return;
-                const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                const update = base64ToUint8Array(base64);
                 Y.applyUpdate(ydoc, update, 'remote');
             });
 
@@ -146,7 +147,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 console.log(`[useCoWork] Sincronizando historial (${updates.length} deltas)`);
                 ydoc.transact(() => {
                     updates.forEach(base64 => {
-                        const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                        const update = base64ToUint8Array(base64);
                         Y.applyUpdate(ydoc, update, 'remote');
                     });
                 }, 'remote');
@@ -155,7 +156,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
             transport.onAwarenessUpdate((base64) => {
                 if (!isMounted || awarenessRef.current !== awareness) return;
-                const update = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                const update = base64ToUint8Array(base64);
                 awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
                 syncUserList();
             });
@@ -178,7 +179,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             // C) EVENTOS DE SALIDA
             ydoc.on('update', (update, origin) => {
                 if (origin !== 'remote' && isMounted) {
-                    const base64 = btoa(String.fromCharCode(...update));
+                    const base64 = uint8ArrayToBase64(update);
                     transport.sendYjsUpdate(config.documentId, base64);
                 }
             });
@@ -190,7 +191,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                         const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [
                             ...added, ...updated, ...removed
                         ]);
-                        const base64 = btoa(String.fromCharCode(...update));
+                        const base64 = uint8ArrayToBase64(update);
                         transport.sendAwarenessUpdate(config.documentId, base64);
                     }
                 }
@@ -245,6 +246,14 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }, 1000);
 
                 if (handshake.deltaCount > 500) compact();
+
+                transport.onCompactionTrigger?.(() => {
+                    if (isMounted) {
+                        console.log("[useCoWork] Servidor solicitó compactación reactiva automática por acumulación de deltas.");
+                        compact();
+                    }
+                });
+
                 config.onSynced?.();
 
             } catch (err: any) {
