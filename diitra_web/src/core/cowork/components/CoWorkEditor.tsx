@@ -42,7 +42,20 @@ interface CoWorkEditorProps {
     className?: string;
 }
 
-export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
+export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
+    if (!props.cowork.ydoc || !props.cowork.awareness) {
+        return (
+            <div className="flex flex-col items-center justify-center p-20 bg-bg-deep rounded-lg border border-border-thin">
+                <Loader2 className="animate-spin text-text-main mb-4" size={24} />
+                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Inicializando editor colaborativo...</span>
+            </div>
+        );
+    }
+    
+    return <InnerCoWorkEditor {...props} />;
+};
+
+const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
     cowork,
     field = 'default',
     onChange,
@@ -50,8 +63,8 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
     readonly = false,
     className = '',
 }) => {
-    const ydoc = cowork.ydoc;
-    const awareness = cowork.awareness;
+    const ydoc = cowork.ydoc!;
+    const awareness = cowork.awareness!;
 
     // Guardar referencias a callbacks e inputs volátiles para evitar la destrucción/re-creación de Tiptap
     const onChangeRef = React.useRef(onChange);
@@ -63,15 +76,6 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = ({
         coworkRef.current = cowork;
         fieldRef.current = field;
     });
-
-    if (!ydoc || !awareness) {
-        return (
-            <div className="flex flex-col items-center justify-center p-20 bg-bg-deep rounded-lg border border-border-thin">
-                <Loader2 className="animate-spin text-text-main mb-4" size={24} />
-                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Inicializando editor colaborativo...</span>
-            </div>
-        );
-    }
 
     // Memorizar las extensiones para evitar re-creaciones del editor innecesarias
     const extensions = React.useMemo(() => {
