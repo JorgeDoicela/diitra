@@ -44,7 +44,7 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
                 ? (double)proyecto.InvCronogramas.Average(c => c.Progreso) 
                 : 0;
 
-            var director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true);
+            var director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true && p.Activo != false);
 
             return new
             {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Diitra.Application.Research.Dtos
@@ -201,6 +202,10 @@ namespace Diitra.Application.Research.Dtos
         public string? Telefono { get; set; }
         public string? NivelAcademico { get; set; }
         public string? Rol { get; set; }
+        public bool? Activo { get; set; } = true;
+        public DateTime? FechaInicio { get; set; }
+        public DateTime? FechaFin { get; set; }
+        public string? MotivoCambio { get; set; }
     }
 
     public class RecursoDisponibleDto

@@ -39,14 +39,14 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
                 proyecto.Estado,
                 proyecto.FechaPresentacion,
                 Convocatoria = proyecto.IdConvocatoriaNavigation?.Titulo ?? "N/A",
-                Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true)?.IdUsuarioNavigation?.Nombre ?? "No asignado",
+                Director = proyecto.InvProyectosProfesores.FirstOrDefault(p => p.EsDirector == true && p.Activo != false)?.IdUsuarioNavigation?.Nombre ?? "No asignado",
                 
-                EquipoDocente = proyecto.InvProyectosProfesores.Select(p => new {
+                EquipoDocente = proyecto.InvProyectosProfesores.Where(p => p.Activo != false).Select(p => new {
                     Nombre = p.IdUsuarioNavigation?.Nombre ?? "Desconocido",
                     p.Rol,
                     p.HorasSemanales
                 }),
-                EquipoEstudiantes = proyecto.InvProyectosAlumnos.Select(a => new {
+                EquipoEstudiantes = proyecto.InvProyectosAlumnos.Where(a => a.Activo != false).Select(a => new {
                     Nombre = a.IdUsuarioNavigation?.Nombre ?? "Desconocido",
                     a.Rol
                 }),
