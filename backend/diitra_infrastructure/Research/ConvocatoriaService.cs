@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using diitra_infrastructure.data.models;
@@ -9,11 +10,16 @@ public class ConvocatoriaService : IConvocatoriaService
 {
     private readonly DiitraContext _context;
     private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
+    private readonly ILogger<ConvocatoriaService> _logger;
 
-    public ConvocatoriaService(DiitraContext context, diitra_application.Common.Notifications.INotificationService notificationService)
+    public ConvocatoriaService(
+        DiitraContext context,
+        diitra_application.Common.Notifications.INotificationService notificationService,
+        ILogger<ConvocatoriaService> logger)
     {
         _context = context;
         _notificationService = notificationService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<ConvocatoriaDto>> GetAllAsync()
@@ -275,21 +281,27 @@ public class ConvocatoriaService : IConvocatoriaService
         conv.Estado = newState;
         await _context.SaveChangesAsync();
 
-        // Notificación Profesional
         if (newState == "Abierta" && oldState != "Abierta")
         {
-            await _notificationService.BroadcastAsync(
-                "Nueva Convocatoria Abierta",
-                $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
-                "DOCENTE",
-                "/convocatorias",
-                new Dictionary<string, string>
-                {
-                    { "Año", conv.Anio.ToString() },
-                    { "Código", conv.CodigoConvocatoria ?? "N/A" },
-                    { "Fecha Cierre", conv.FechaCierre.ToString("dd/MM/yyyy") }
-                }
-            );
+            try
+            {
+                await _notificationService.BroadcastAsync(
+                    "Nueva Convocatoria Abierta",
+                    $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
+                    "DOCENTE",
+                    "/convocatorias",
+                    new Dictionary<string, string>
+                    {
+                        { "Año", conv.Anio.ToString() },
+                        { "Código", conv.CodigoConvocatoria ?? "N/A" },
+                        { "Fecha Cierre", conv.FechaCierre.ToString("dd/MM/yyyy") }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificaciones de publicacion para convocatoria {Uuid}", uuid);
+            }
         }
 
         return true;
