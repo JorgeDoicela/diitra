@@ -1,37 +1,70 @@
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.3/index.css");
+@import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.3/index.css");
 @import "tailwindcss";
 
 :root {
-  /* Default: Dark Theme (Vercel Style) */
+  /* Default: Dark Theme (Vercel Style System) */
   --bg: #000000;
   --fg: #ffffff;
   --surface: #0a0a0a;
-  --surface-hover: #111111;
+  --surface-hover: #171717;
   --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.16);
   --text-dim: #888888;
   --accent: #ffffff;
   --radius: 8px;
-  --grid-color: rgba(255, 255, 255, 0.03);
+  --grid-color: rgba(255, 255, 255, 0.04);
   --selection-bg: #ffffff;
   --selection-fg: #000000;
-  --brand: #3b82f6;
-  --brand-dark: #2563eb;
-  --brand-light: #60a5fa;
+  
+  /* Vercel Branding Colors */
+  --brand: #0070f3;
+  --brand-dark: #0051c3;
+  --brand-light: #3291ff;
+  
+  /* Semantic Feedback Colors */
+  --error: #ff0000;
+  --success: #00e054;
+  --warning: #f5a623;
+  
+  /* Grayscale Accents (Geist Grays) */
+  --accents-1: #111111;
+  --accents-2: #333333;
+  --accents-3: #444444;
+  --accents-4: #666666;
+  --accents-5: #888888;
+  --accents-6: #999999;
+  --accents-7: #eaeaea;
+  --accents-8: #fafafa;
 }
 
 [data-theme="light"] {
   --bg: #ffffff;
   --fg: #000000;
   --surface: #fafafa;
-  --surface-hover: #f5f5f5;
+  --surface-hover: #eaeaea;
   --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.16);
   --text-dim: #666666;
   --accent: #000000;
-  --grid-color: rgba(0, 0, 0, 0.03);
+  --grid-color: rgba(0, 0, 0, 0.04);
   --selection-bg: #000000;
   --selection-fg: #ffffff;
-  --brand: #2563eb;
-  --brand-dark: #1d4ed8;
-  --brand-light: #3b82f6;
+  
+  /* Vercel Branding Colors */
+  --brand: #0070f3;
+  --brand-dark: #0051c3;
+  --brand-light: #3291ff;
+  
+  /* Grayscale Accents (Geist Grays in Light Mode) */
+  --accents-1: #fafafa;
+  --accents-2: #eaeaea;
+  --accents-3: #999999;
+  --accents-4: #888888;
+  --accents-5: #666666;
+  --accents-6: #444444;
+  --accents-7: #333333;
+  --accents-8: #111111;
 }
 
 @theme {
@@ -40,17 +73,19 @@
   --color-surface-hover: var(--surface-hover);
   --color-accent-vercel: var(--accent);
   --color-border-thin: var(--border);
+  --color-border-hover: var(--border-hover);
   --color-text-main: var(--fg);
   --color-text-dim: var(--text-dim);
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
   --color-brand-light: var(--brand-light);
   
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
+  /* Premium Geist Fonts */
+  --font-sans: "Geist Sans", "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", monospace;
   
-  --animate-fade-up: fadeUp 0.5s ease-out forwards;
-  --animate-fade-in: fadeIn 0.3s ease-out forwards;
+  --animate-fade-up: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-fade-in: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fadeUp {
@@ -68,16 +103,44 @@
   color: var(--fg);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s ease, color 0.4s ease;
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
   margin: 0;
   padding: 0;
   background-color: var(--bg);
+  min-height: 100vh;
 }
 
-/* Premium Vercel Utilities */
+/* Premium Vercel Grid Backgrounds */
+.vercel-grid {
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.vercel-grid-fade {
+  position: relative;
+  overflow: hidden;
+}
+
+.vercel-grid-fade::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
+  -webkit-mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Premium Vercel Glow Effect */
 .bg-glow {
   position: relative;
   overflow: hidden;
@@ -99,31 +162,45 @@ body {
   background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.05), transparent 70%);
 }
 
+/* Vercel Bento Card styling */
 .bento-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(10px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
 }
 
 .bento-card:hover {
-  border-color: var(--text-dim);
+  border-color: var(--border-hover);
   background-color: var(--surface-hover);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
 }
 
+[data-theme="light"] .bento-card:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* Vercel Button styling */
 .btn-vercel-primary {
   background-color: var(--fg);
   color: var(--bg);
+  border: 1px solid var(--fg);
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 500;
   padding: 0.5rem 1.25rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-vercel-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background-color: var(--bg);
+  color: var(--fg);
 }
 
 .btn-vercel-secondary {
@@ -131,9 +208,13 @@ body {
   color: var(--fg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 500;
   padding: 0.5rem 1.25rem;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-vercel-secondary:hover {
@@ -142,25 +223,211 @@ body {
 }
 
 .btn-brand {
-  background-color: var(--brand-dark);
-  color: var(--fg);
+  background-color: var(--brand);
+  color: #ffffff;
+  border: 1px solid var(--brand);
   border-radius: var(--radius);
-  font-weight: 600;
+  font-weight: 500;
   padding: 0.5rem 1.25rem;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.1);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 112, 243, 0.15);
 }
 
 .btn-brand:hover {
-  opacity: 0.9;
+  background-color: transparent;
+  color: var(--brand);
+  box-shadow: 0 6px 20px rgba(0, 112, 243, 0.2);
   transform: translateY(-1px);
 }
 
-[data-theme="light"] .btn-brand {
-  color: #ffffff;
+/* Premium Vercel selection styles */
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
 }
 
-::selection {
-  background: var(--fg);
-  color: var(--bg);
+/* Keyboard accessibility styles */
+*:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Premium Vercel Form Inputs */
+.input-vercel {
+  background-color: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  width: 100%;
+}
+
+.input-vercel:hover {
+  border-color: var(--border-hover);
+}
+
+.input-vercel:focus {
+  border-color: var(--fg);
+  box-shadow: 0 0 0 1px var(--fg);
+}
+
+.input-vercel::placeholder {
+  color: var(--text-dim);
+}
+
+/* Premium Vercel Badges */
+.badge-vercel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1rem;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--fg);
+}
+
+.badge-vercel-success {
+  background-color: rgba(0, 224, 84, 0.06);
+  border-color: rgba(0, 224, 84, 0.3);
+  color: #00e054;
+}
+
+[data-theme="light"] .badge-vercel-success {
+  background-color: rgba(0, 224, 84, 0.04);
+  color: #008f37;
+}
+
+.badge-vercel-error {
+  background-color: rgba(255, 0, 0, 0.06);
+  border-color: rgba(255, 0, 0, 0.3);
+  color: #ff3333;
+}
+
+[data-theme="light"] .badge-vercel-error {
+  background-color: rgba(255, 0, 0, 0.04);
+  color: #cc0000;
+}
+
+.badge-vercel-warning {
+  background-color: rgba(245, 166, 35, 0.06);
+  border-color: rgba(245, 166, 35, 0.3);
+  color: #f5a623;
+}
+
+[data-theme="light"] .badge-vercel-warning {
+  background-color: rgba(245, 166, 35, 0.04);
+  color: #b87200;
+}
+
+.badge-vercel-info {
+  background-color: rgba(0, 112, 243, 0.06);
+  border-color: rgba(0, 112, 243, 0.3);
+  color: #3291ff;
+}
+
+[data-theme="light"] .badge-vercel-info {
+  background-color: rgba(0, 112, 243, 0.04);
+  color: #0070f3;
+}
+
+/* Premium Vercel Toast Notifications */
+.toast-container-vercel {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  z-index: 9999;
+  max-width: 380px;
+  width: calc(100% - 3rem);
+}
+
+.toast-vercel {
+  background-color: var(--surface);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  backdrop-filter: blur(16px);
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="light"] .toast-vercel {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Premium Vercel Tabs */
+.tabs-vercel {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.tab-vercel-item {
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.75rem 0;
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: transparent;
+  border: none;
+}
+
+.tab-vercel-item:hover {
+  color: var(--fg);
+}
+
+.tab-vercel-item.active {
+  color: var(--fg);
+}
+
+.tab-vercel-item.active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--fg);
+  border-radius: 9999px;
+}
+
+/* Elegant Premium Dividers */
+.divider-vercel {
+  height: 1px;
+  background-color: var(--border);
+  width: 100%;
+  margin: 1.5rem 0;
 }
