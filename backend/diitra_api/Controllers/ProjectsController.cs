@@ -19,8 +19,8 @@ namespace diitra_api.Controllers
         private readonly IProjectOrchestrator _projectOrchestrator;
 
         public ProjectsController(
-            IDocumentEngine documentEngine, 
-            IDocumentInstanceService documentInstanceService, 
+            IDocumentEngine documentEngine,
+            IDocumentInstanceService documentInstanceService,
             diitra_application.Security.IAuthService authService,
             IProjectOrchestrator projectOrchestrator)
         {
@@ -54,7 +54,7 @@ namespace diitra_api.Controllers
             var result = await _documentEngine.GenerateAsync(request);
 
             // AUTO-TRAZABILIDAD: Registramos esta emisión en la bandeja de instancias
-            try 
+            try
             {
                 await _documentInstanceService.CreateAsync(
                     request.TemplateCode,
@@ -64,9 +64,9 @@ namespace diitra_api.Controllers
                     "Proyecto"
                 );
             }
-            catch (Exception ex) 
-            { 
-                Console.WriteLine($"[DIITRA DEBUG] Error al registrar instancia: {ex.Message}"); 
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIITRA DEBUG] Error al registrar instancia: {ex.Message}");
             }
 
             return File(result.PdfBytes, "application/pdf", result.FileName);
@@ -141,13 +141,13 @@ namespace diitra_api.Controllers
             // Bypass de prueba para el USER (Modo Demo)
             if (password == "diitra2026")
             {
-                try 
+                try
                 {
                     var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
                     var workflowService = HttpContext.RequestServices.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
-                    
+
                     var project = await context.InvProyectos.OrderByDescending(p => p.IdProyecto).FirstOrDefaultAsync();
-                    
+
                     if (project != null)
                     {
                         if (project.Estado != "Borrador") {
@@ -157,7 +157,7 @@ namespace diitra_api.Controllers
 
                         // Intentamos la transición
                         bool success = await workflowService.TransicionarEstadoAsync(project.Uuid, "Enviado", 1, "Sello Digital de Integridad - Firma Jorge Doicela");
-                        
+
                         if (!success) {
                              Console.WriteLine("DIITRA DEBUG: TransicionarEstadoAsync devolvió FALSE");
                         }
@@ -322,15 +322,15 @@ namespace diitra_api.Controllers
         /// </summary>
         [HttpPost("{uuid}/publish-dspace")]
         public async Task<IActionResult> PublishDSpace(
-            string uuid, 
-            [FromServices] Diitra.Application.Common.Repositories.IRepositoryConnector repositoryConnector, 
+            string uuid,
+            [FromServices] Diitra.Application.Common.Repositories.IRepositoryConnector repositoryConnector,
             [FromServices] Diitra.Infrastructure.Common.Storage.IFileStorageService fileStorageService)
         {
             var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
             if (project == null) return NotFound(new { error = "Proyecto no encontrado" });
 
             byte[] pdfBytes;
-            
+
             // Intentamos buscar una instancia de documento finalizada
             var instances = await _documentInstanceService.GetByEntityAsync(uuid);
             var finalizedInstance = instances.FirstOrDefault(i => !string.IsNullOrEmpty(i.FinalPdfPath) && i.State == Diitra.Domain.Common.Documents.DocumentState.Signed);
@@ -339,7 +339,7 @@ namespace diitra_api.Controllers
             {
                 try
                 {
-                    pdfBytes = await fileStorageService.GetFileAsync(finalizedInstance.FinalPdfPath);
+                    pdfBytes = await fileStorageService.GetFileAsync(finalizedInstance.FinalPdfPath!);
                 }
                 catch
                 {
