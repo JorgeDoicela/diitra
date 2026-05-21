@@ -155,7 +155,7 @@ export const CommandPalette = () => {
 
                 <div className="bg-surface/30 px-4 py-3 border-t border-border-thin flex items-center justify-between">
                     <span className="text-[10px] text-text-dim font-mono tracking-tighter uppercase">DIITRA_ISTPET_BUILD_v1.0.0</span>
-                    <div className="flex items-center gap-1.5 text-[10px] text-text-active bg-white text-black px-2 py-0.5 rounded-sm font-bold">
+                    <div className="flex items-center gap-1.5 text-[10px] bg-text-main text-bg-deep px-2 py-0.5 rounded-sm font-bold">
                         <Command size={10} />
                         <span>COMANDOS</span>
                     </div>

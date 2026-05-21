@@ -18,64 +18,66 @@ const ProjectForm = () => {
   };
 
   return (
-    <div className="glass p-8 rounded-2xl border border-glass-border max-w-2xl mx-auto mt-10">
-      <h3 className="text-2xl font-bold text-white mb-6">Postulación Digital</h3>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div>
-          <label className="block text-gray-400 mb-2">Título del Proyecto</label>
-          <input
-            {...register('titulo', { required: 'El título es obligatorio' })}
-            className="w-full bg-white/5 border border-glass-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all"
-            placeholder="Ej. Análisis de impacto tecnológico..."
-          />
-          {errors.titulo && <span className="text-red-400 text-sm mt-1">{errors.titulo.message}</span>}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+    <div className="max-w-2xl mx-auto mt-10">
+      <div className="bento-card p-8">
+        <h3 className="text-2xl font-bold text-text-main mb-6">Postulación Digital</h3>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
-            <label className="block text-gray-400 mb-2">Línea de Investigación</label>
-            <select
-              {...register('lineaInvestigacion', { required: 'Selecciona una línea' })}
-              className="w-full bg-white/5 border border-glass-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all"
-            >
-              <option value="">Seleccionar...</option>
-              <option value="TIC">Tecnologías de Información</option>
-              <option value="INN">Innovación Social</option>
-              <option value="MAE">Medio Ambiente</option>
-            </select>
-            {errors.lineaInvestigacion && <span className="text-red-400 text-sm mt-1">{errors.lineaInvestigacion.message}</span>}
-          </div>
-          <div>
-            <label className="block text-gray-400 mb-2">Presupuesto ($)</label>
+            <label className="section-label text-text-dim" style={{ marginBottom: '0.5rem' }}>Título del Proyecto</label>
             <input
-              type="number"
-              {...register('presupuesto', { required: 'Monto obligatorio', min: 0, max: 5000 })}
-              className="w-full bg-white/5 border border-glass-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all"
-              placeholder="0.00"
+              {...register('titulo', { required: 'El título es obligatorio' })}
+              className="input-vercel"
+              placeholder="Ej. Análisis de impacto tecnológico..."
             />
-            {errors.presupuesto && <span className="text-red-400 text-sm mt-1">{errors.presupuesto.message}</span>}
+            {errors.titulo && <p className="text-[10px] text-error font-mono mt-1">{errors.titulo.message}</p>}
           </div>
-        </div>
 
-        <div>
-          <label className="block text-gray-400 mb-2">Resumen Ejecutivo</label>
-          <textarea
-            {...register('resumen', { required: 'El resumen es obligatorio' })}
-            rows={4}
-            className="w-full bg-white/5 border border-glass-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-all"
-            placeholder="Breve descripción del alcance..."
-          />
-          {errors.resumen && <span className="text-red-400 text-sm mt-1">{errors.resumen.message}</span>}
-        </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="section-label text-text-dim" style={{ marginBottom: '0.5rem' }}>Línea de Investigación</label>
+              <select
+                {...register('lineaInvestigacion', { required: 'Selecciona una línea' })}
+                className="input-vercel"
+              >
+                <option value="">Seleccionar...</option>
+                <option value="TIC">Tecnologías de Información</option>
+                <option value="INN">Innovación Social</option>
+                <option value="MAE">Medio Ambiente</option>
+              </select>
+              {errors.lineaInvestigacion && <p className="text-[10px] text-error font-mono mt-1">{errors.lineaInvestigacion.message}</p>}
+            </div>
+            <div>
+              <label className="section-label text-text-dim" style={{ marginBottom: '0.5rem' }}>Presupuesto ($)</label>
+              <input
+                type="number"
+                {...register('presupuesto', { required: 'Monto obligatorio', min: 0, max: 5000 })}
+                className="input-vercel"
+                placeholder="0.00"
+              />
+              {errors.presupuesto && <p className="text-[10px] text-error font-mono mt-1">{errors.presupuesto.message}</p>}
+            </div>
+          </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full py-4 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transform hover:scale-[1.02] transition-all shadow-xl shadow-primary/20 disabled:opacity-50"
-        >
-          {isSubmitting ? 'Enviando...' : 'Enviar Protocolo'}
-        </button>
-      </form>
+          <div>
+            <label className="section-label text-text-dim" style={{ marginBottom: '0.5rem' }}>Resumen Ejecutivo</label>
+            <textarea
+              {...register('resumen', { required: 'El resumen es obligatorio' })}
+              rows={4}
+              className="input-vercel"
+              placeholder="Breve descripción del alcance..."
+            />
+            {errors.resumen && <p className="text-[10px] text-error font-mono mt-1">{errors.resumen.message}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-vercel-primary w-full"
+          >
+            {isSubmitting ? 'Enviando...' : 'Enviar Protocolo'}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
