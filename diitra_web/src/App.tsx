@@ -90,8 +90,6 @@ function App() {
               <Login currentTheme={theme} />
             </AuthenticatedRedirect>
           } />
-          <Route path="/verify/:code" element={<VerifyDocument />} />
-          <Route path="/verify" element={<VerifyDocument />} />
           
           {/* Internal Pages with Layout (Stable) */}
           <Route element={
@@ -119,6 +117,8 @@ function App() {
             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
             <Route path="/revisiones" element={<PeerReviewPage />} />
+            <Route path="/verify/:code" element={<VerifyDocument />} />
+            <Route path="/verify" element={<VerifyDocument />} />
           </Route>
           
           <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={

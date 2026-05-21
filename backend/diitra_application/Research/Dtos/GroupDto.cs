@@ -32,6 +32,7 @@ public class GroupMemberDto
     public int IdGrupoMiembro { get; set; }
     public int IdUsuario { get; set; }
     public string? NombreCompleto { get; set; }
+    public string? Cedula { get; set; }
     public string? Rol { get; set; }
     public bool Activo { get; set; }
     public DateOnly? FechaInicio { get; set; }
