@@ -5,6 +5,8 @@ import 'react-native-reanimated';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Tokens } from '@/constants/theme';
 import { ThemeProvider } from '@/contexts/theme-context';
+import { useGeistFonts } from '@/hooks/use-geist-fonts';
+import { View } from 'react-native';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -13,6 +15,13 @@ export const unstable_settings = {
 export default function RootLayout() {
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Tokens[colorScheme];
+  const fontsLoaded = useGeistFonts();
+
+  if (!fontsLoaded) {
+    return (
+      <View style={{ flex: 1, backgroundColor: theme.bg }} />
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>

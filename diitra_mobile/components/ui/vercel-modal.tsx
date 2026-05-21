@@ -1,12 +1,7 @@
 import React from 'react';
 import { Pressable, View, type ViewStyle } from 'react-native';
-import Animated, {
-  FadeIn,
-  FadeInUp,
-  FadeOut,
-  SlideInUp,
-  SlideOutDown,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInUp, FadeOut, SlideOutDown } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
 
 import { useThemeContext } from '@/contexts/theme-context';
 import { Shadows } from '@/constants/theme';
@@ -40,13 +35,22 @@ export function VercelModal({ visible, onClose, children, style, size = 'md' }: 
         alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
-        backgroundColor: theme.bg + 'E6', // ~90% opacity
       }}
     >
+      {/* Overlay con blur nativo */}
+      <BlurView
+        intensity={scheme === 'dark' ? 40 : 20}
+        tint={scheme === 'dark' ? 'dark' : 'light'}
+        style={{
+          position: 'absolute',
+          inset: 0,
+        }}
+      />
       <Pressable style={{ flex: 1, width: '100%', height: '100%' }} onPress={onClose}>
         <View style={{ flex: 1 }} />
       </Pressable>
 
+      {/* Modal card */}
       <AnimatedView
         entering={FadeInUp.duration(300).springify()}
         exiting={SlideOutDown.duration(200)}

@@ -61,7 +61,6 @@ const ConvocatoriasPage = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
     
-    // Form State
     const [formData, setFormData] = useState({
         codigo_convocatoria: '',
         titulo: '',
@@ -233,22 +232,23 @@ const ConvocatoriasPage = () => {
         }));
     };
 
-    const getStatusColor = (estado: string) => {
+    const getStatusBadgeClass = (estado: string) => {
         switch (estado) {
-            case 'Abierta': return 'text-green-500 bg-green-500/10 border-green-500/20';
-            case 'Borrador': return 'text-text-dim bg-surface border-border-thin';
-            case 'Cerrada': return 'text-red-500 bg-red-500/10 border-red-500/20';
-            default: return 'text-text-dim bg-surface border-border-thin';
+            case 'Abierta': return 'badge-vercel-success';
+            case 'Borrador': return 'badge-vercel-neutral';
+            case 'Cerrada': return 'badge-vercel-error';
+            case 'Anulada': return 'badge-vercel-error';
+            default: return 'badge-vercel-neutral';
         }
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             {/* Header */}
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 px-2 animate-fade-up gap-8 lg:gap-0">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                        <Activity size={10} strokeWidth={2} className="text-text-main" />
+                    <div className="section-label">
+                        <Activity size={10} strokeWidth={2} />
                         <span>Gestión de Investigación - Convocatorias</span>
                     </div>
                     <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Ciclos de Investigación</h2>
@@ -261,14 +261,14 @@ const ConvocatoriasPage = () => {
                 <div className="w-full lg:w-auto flex gap-4">
                     <button 
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex-1 lg:flex-none flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 lg:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95"
+                        className="btn-vercel-primary flex-1 lg:flex-none"
                     >
                         <Plus size={14} strokeWidth={3} />
                         Nueva Convocatoria
                     </button>
                     <button 
                         onClick={fetchConvocatorias}
-                        className="p-3 border border-border-thin rounded-md hover:bg-surface text-text-dim hover:text-text-main transition-all"
+                        className="p-3 border border-border-thin rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-all"
                     >
                         <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
@@ -276,28 +276,28 @@ const ConvocatoriasPage = () => {
             </header>
 
             {/* Grid of Stats (Quick View) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-up [animation-delay:100ms]">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
                 <StatCard label="Total Anual" value={convocatorias.length} icon={CalendarDays} />
-                <StatCard label="Abiertas" value={convocatorias.filter(c => c.estado === 'Abierta').length} icon={CheckCircle} color="text-green-500" />
+                <StatCard label="Abiertas" value={convocatorias.filter(c => c.estado === 'Abierta').length} icon={CheckCircle} color="text-success" />
                 <StatCard label="Presupuesto Total" value={`$${convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0).toLocaleString()}`} icon={DollarSign} />
                 <StatCard label="Próximas a Cerrar" value={convocatorias.filter(c => c.estado === 'Abierta').length} icon={Clock} />
             </div>
 
             {/* List View */}
-            <div className="space-y-4 animate-fade-up [animation-delay:200ms]">
+            <div className="space-y-4 animate-fade-up" style={{ animationDelay: '200ms' }}>
                 {convocatorias.map((conv) => (
                     <div 
                         key={conv.uuid} 
                         onClick={() => setSelectedConvocatoria(conv)}
-                        className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group hover:border-text-main transition-all gap-6 md:gap-0 cursor-pointer"
+                        className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group cursor-pointer"
                     >
                         <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
-                            <div className="p-3 rounded-lg bg-surface border border-border-thin group-hover:border-text-main transition-colors text-text-dim group-hover:text-text-main shrink-0">
+                            <div className="icon-circle-brand shrink-0">
                                 <FileText size={20} strokeWidth={1.5} />
                             </div>
                             <div className="space-y-1 min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter border ${getStatusColor(conv.estado)}`}>
+                                    <span className={getStatusBadgeClass(conv.estado)}>
                                         {conv.estado}
                                     </span>
                                     <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{conv.codigo_convocatoria}</span>
@@ -325,7 +325,7 @@ const ConvocatoriasPage = () => {
                                             e.stopPropagation();
                                             handleStatusChange(conv.uuid, 'Abierta');
                                         }}
-                                        className="p-2 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                                        className="p-2 text-text-dim hover:text-success hover:bg-surface-hover rounded transition-colors"
                                         title="Publicar Convocatoria"
                                     >
                                         <CheckCircle size={18} />
@@ -337,7 +337,7 @@ const ConvocatoriasPage = () => {
                                         e.stopPropagation();
                                         handleEdit(conv);
                                     }}
-                                    className="p-2 text-text-dim hover:text-text-main hover:bg-surface rounded transition-colors"
+                                    className="p-2 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors"
                                     title="Editar"
                                 >
                                     <Edit2 size={18} />
@@ -348,7 +348,7 @@ const ConvocatoriasPage = () => {
                                         e.stopPropagation();
                                         handleDelete(conv.uuid);
                                     }}
-                                    className="p-2 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                    className="p-2 text-text-dim hover:text-error hover:bg-surface-hover rounded transition-colors"
                                     title="Eliminar"
                                 >
                                     <Trash2 size={18} />
@@ -359,8 +359,8 @@ const ConvocatoriasPage = () => {
                 ))}
 
                 {convocatorias.length === 0 && !loading && (
-                    <div className="py-20 text-center space-y-4 bento-card border-dashed">
-                        <div className="inline-flex p-4 rounded-full bg-surface border border-border-thin text-text-dim">
+                    <div className="empty-state py-20">
+                        <div className="icon-circle-neutral mb-4">
                             <AlertCircle size={24} />
                         </div>
                         <div className="space-y-1">
@@ -373,9 +373,9 @@ const ConvocatoriasPage = () => {
 
             {/* Modal - Create/Edit */}
             {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-6 bg-bg-deep/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-bg-deep border border-border-thin w-full max-w-2xl md:rounded-lg shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col h-full md:max-h-[90vh]">
-                        <header className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30 shrink-0">
+                <div className="modal-overlay">
+                    <div className="modal-card modal-card--lg flex flex-col h-full md:max-h-[90vh]">
+                        <div className="modal-header">
                             <div>
                                 <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
                                     {isEditing ? 'Editar Convocatoria' : 'Nueva Convocatoria'}
@@ -385,15 +385,15 @@ const ConvocatoriasPage = () => {
                             <button onClick={() => setShowModal(false)} className="p-2 text-text-dim hover:text-text-main transition-colors">
                                 <X size={20} />
                             </button>
-                        </header>
+                        </div>
 
-                        <form onSubmit={handleSave} className="p-4 md:p-8 space-y-6 overflow-y-auto">
+                        <form onSubmit={handleSave} className="modal-body space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
                                     <input 
                                         required
-                                        className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                        className="input-vercel"
                                         placeholder="EJ: CONV-2024-TEC"
                                         value={formData.codigo_convocatoria}
                                         onChange={e => setFormData({...formData, codigo_convocatoria: e.target.value})}
@@ -404,7 +404,7 @@ const ConvocatoriasPage = () => {
                                     <input 
                                         type="number"
                                         required
-                                        className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                        className="input-vercel"
                                         value={isNaN(formData.anio) ? '' : formData.anio}
                                         onChange={e => {
                                             const val = parseInt(e.target.value);
@@ -418,7 +418,7 @@ const ConvocatoriasPage = () => {
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Título de la Convocatoria</label>
                                 <input 
                                     required
-                                    className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                    className="input-vercel"
                                     placeholder="Nombre oficial de la convocatoria..."
                                     value={formData.titulo}
                                     onChange={e => setFormData({...formData, titulo: e.target.value})}
@@ -429,7 +429,7 @@ const ConvocatoriasPage = () => {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
                                     <select 
-                                        className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all appearance-none"
+                                        className="input-vercel"
                                         value={formData.id_periodo}
                                         onChange={e => setFormData({...formData, id_periodo: e.target.value})}
                                     >
@@ -444,7 +444,7 @@ const ConvocatoriasPage = () => {
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={14} />
                                         <input 
                                             type="number"
-                                            className="w-full bg-surface border border-border-thin rounded pl-9 pr-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                            className="input-vercel pl-9"
                                             value={isNaN(formData.presupuesto_total) ? '' : formData.presupuesto_total}
                                             onChange={e => {
                                                 const val = parseFloat(e.target.value);
@@ -461,7 +461,7 @@ const ConvocatoriasPage = () => {
                                     <input 
                                         type="date"
                                         required
-                                        className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all [color-scheme:dark]"
+                                        className="input-vercel"
                                         value={formData.fecha_apertura}
                                         onChange={e => setFormData({...formData, fecha_apertura: e.target.value})}
                                     />
@@ -471,7 +471,7 @@ const ConvocatoriasPage = () => {
                                     <input 
                                         type="date"
                                         required
-                                        className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all [color-scheme:dark]"
+                                        className="input-vercel"
                                         value={formData.fecha_cierre}
                                         onChange={e => setFormData({...formData, fecha_cierre: e.target.value})}
                                     />
@@ -514,12 +514,12 @@ const ConvocatoriasPage = () => {
                             </div>
 
                             {showAdvanced && (
-                                <div className="space-y-6 animate-in slide-in-from-top-2 duration-200">
+                                <div className="space-y-6 animate-fade-up">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Rúbrica de Evaluación</label>
                                             <select 
-                                                className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all appearance-none"
+                                                className="input-vercel"
                                                 value={formData.id_rubrica || ''}
                                                 onChange={e => setFormData({...formData, id_rubrica: e.target.value ? parseInt(e.target.value) : undefined})}
                                             >
@@ -533,7 +533,7 @@ const ConvocatoriasPage = () => {
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Puntaje Mínimo (Aprobación)</label>
                                             <input 
                                                 type="number"
-                                                className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                                className="input-vercel"
                                                 value={isNaN(formData.puntaje_minimo_aprobacion) ? '' : formData.puntaje_minimo_aprobacion}
                                                 onChange={e => {
                                                     const val = parseFloat(e.target.value);
@@ -547,7 +547,7 @@ const ConvocatoriasPage = () => {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
                                             <select 
-                                                className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all appearance-none"
+                                                className="input-vercel"
                                                 value={formData.id_tipo_convocatoria || ''}
                                                 onChange={e => setFormData({...formData, id_tipo_convocatoria: e.target.value ? parseInt(e.target.value) : undefined})}
                                             >
@@ -560,7 +560,7 @@ const ConvocatoriasPage = () => {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Agenda Zonal Prioritaria</label>
                                             <select 
-                                                className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all appearance-none"
+                                                className="input-vercel"
                                                 value={formData.id_agenda_zonal || ''}
                                                 onChange={e => setFormData({...formData, id_agenda_zonal: e.target.value ? parseInt(e.target.value) : undefined})}
                                             >
@@ -575,14 +575,14 @@ const ConvocatoriasPage = () => {
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Meta de Producción Esperada</label>
                                         <input 
-                                            className="w-full bg-surface border border-border-thin rounded px-4 py-2.5 text-sm text-text-main focus:border-text-main outline-none transition-all"
+                                            className="input-vercel"
                                             placeholder="EJ: Artículo Scopus / Patente SENADI"
                                             value={formData.meta_produccion}
                                             onChange={e => setFormData({...formData, meta_produccion: e.target.value})}
                                         />
                                     </div>
 
-                                    <div className="flex items-center gap-3 bg-surface/30 p-4 rounded-md border border-border-thin">
+                                    <div className="flex items-center gap-3 bg-surface p-4 rounded-md border border-border-thin">
                                         <input 
                                             type="checkbox"
                                             id="financiamiento_ext"
@@ -604,17 +604,17 @@ const ConvocatoriasPage = () => {
                                             <button 
                                                 type="button"
                                                 onClick={() => setFormData({...formData, hitos: [...formData.hitos, { nombre_hito: '', fecha_hito: '', es_critico: false }]})}
-                                                className="text-[10px] font-bold text-text-main uppercase hover:underline"
+                                                className="btn-vercel-secondary"
                                             >
                                                 + Añadir Hito
                                             </button>
                                         </div>
                                         <div className="space-y-3">
                                             {formData.hitos.map((hito, idx) => (
-                                                <div key={idx} className="grid grid-cols-12 gap-3 bg-surface/30 p-3 rounded border border-border-thin relative group">
+                                                <div key={idx} className="grid grid-cols-12 gap-3 bg-surface p-3 rounded border border-border-thin relative group">
                                                     <div className="col-span-6">
                                                         <input 
-                                                            className="w-full bg-bg-deep border border-border-thin rounded px-3 py-1.5 text-xs text-text-main outline-none"
+                                                            className="input-vercel text-xs py-1.5"
                                                             placeholder="Nombre del hito (Ej: Resultados)"
                                                             value={hito.nombre_hito}
                                                             onChange={e => {
@@ -627,7 +627,7 @@ const ConvocatoriasPage = () => {
                                                     <div className="col-span-4">
                                                         <input 
                                                             type="date"
-                                                            className="w-full bg-bg-deep border border-border-thin rounded px-3 py-1.5 text-xs text-text-main outline-none [color-scheme:dark]"
+                                                            className="input-vercel text-xs py-1.5"
                                                             value={hito.fecha_hito}
                                                             onChange={e => {
                                                                 const newHitos = [...formData.hitos];
@@ -640,7 +640,7 @@ const ConvocatoriasPage = () => {
                                                         <button 
                                                             type="button"
                                                             onClick={() => setFormData({...formData, hitos: formData.hitos.filter((_, i) => i !== idx)})}
-                                                            className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            className="text-text-dim hover:text-error transition-colors"
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -659,16 +659,16 @@ const ConvocatoriasPage = () => {
                                             <button 
                                                 type="button"
                                                 onClick={() => setFormData({...formData, documentos_req: [...formData.documentos_req, { nombre_documento: '', es_obligatorio: true }]})}
-                                                className="text-[10px] font-bold text-text-main uppercase hover:underline"
+                                                className="btn-vercel-secondary"
                                             >
                                                 + Añadir Documento
                                             </button>
                                         </div>
                                         <div className="space-y-3">
                                             {formData.documentos_req.map((doc, idx) => (
-                                                <div key={idx} className="flex items-center gap-3 bg-surface/30 p-3 rounded border border-border-thin relative group">
+                                                <div key={idx} className="flex items-center gap-3 bg-surface p-3 rounded border border-border-thin relative group">
                                                     <input 
-                                                        className="flex-1 bg-bg-deep border border-border-thin rounded px-3 py-1.5 text-xs text-text-main outline-none"
+                                                        className="input-vercel flex-1 text-xs py-1.5"
                                                         placeholder="Nombre del documento (Ej: Certificado de Título)"
                                                         value={doc.nombre_documento}
                                                         onChange={e => {
@@ -692,7 +692,7 @@ const ConvocatoriasPage = () => {
                                                     <button 
                                                         type="button"
                                                         onClick={() => setFormData({...formData, documentos_req: formData.documentos_req.filter((_, i) => i !== idx)})}
-                                                        className="text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        className="text-text-dim hover:text-error transition-colors"
                                                     >
                                                         <Trash2 size={14} />
                                                     </button>
@@ -703,17 +703,17 @@ const ConvocatoriasPage = () => {
                                 </div>
                             )}
 
-                            <div className="pt-6 flex justify-end gap-4 border-t border-border-thin shrink-0">
+                            <div className="modal-footer">
                                 <button 
                                     type="button"
                                     onClick={() => setShowModal(false)}
-                                    className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-colors"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center gap-2"
+                                    className="btn-vercel-primary"
                                 >
                                     <Save size={14} />
                                     {isEditing ? 'Actualizar Convocatoria' : 'Guardar Convocatoria'}
@@ -724,30 +724,25 @@ const ConvocatoriasPage = () => {
                 </div>
             )}
 
-            {/* Vercel-style Slide-over Detail Panel */}
+            {/* Detail Panel */}
             {selectedConvocatoria && createPortal(
-                <div className="fixed inset-0 z-[9999] flex justify-end animate-in fade-in duration-300">
-                    {/* Backdrop */}
+                <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div 
-                        className="absolute inset-0 bg-black/30 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
                         onClick={() => setSelectedConvocatoria(null)}
                     />
                     
-                    {/* Panel */}
-                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin shadow-2xl flex flex-col z-10 animate-in slide-in-from-right duration-300 ease-out">
-                        {/* Close button & top bar */}
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                             <div className="flex items-center gap-3">
                                 <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
                                     {selectedConvocatoria.codigo_convocatoria}
                                 </span>
-                                <div className={`flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider ${
-                                    selectedConvocatoria.estado === 'Abierta' ? 'text-green-500' : 'text-amber-500'
-                                }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-                                        selectedConvocatoria.estado === 'Abierta' ? 'bg-green-500' : 'bg-amber-500'
-                                    }`} />
-                                    {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
+                                <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
+                                    <span className={`dot dot-pulse ${selectedConvocatoria.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
+                                    <span className={selectedConvocatoria.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
+                                        {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
+                                    </span>
                                 </div>
                             </div>
                             <button 
@@ -758,9 +753,7 @@ const ConvocatoriasPage = () => {
                             </button>
                         </div>
                         
-                        {/* Contents */}
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
-                            {/* Title & Description */}
                             <div className="space-y-4">
                                 <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
                                     {selectedConvocatoria.titulo}
@@ -770,35 +763,34 @@ const ConvocatoriasPage = () => {
                                 </p>
                             </div>
                             
-                            {/* Key Metrics Grid */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                <div className="bento-card p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <Calendar size={12} className="text-text-dim" /> Fecha de Apertura
+                                        <Calendar size={12} /> Fecha de Apertura
                                     </div>
                                     <div className="text-sm font-bold text-text-main font-mono">
                                         {selectedConvocatoria.fecha_apertura}
                                     </div>
                                 </div>
-                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                <div className="bento-card p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <Calendar size={12} className="text-red-500/80" /> Fecha de Cierre (Límite)
+                                        <Calendar size={12} className="text-error" /> Fecha de Cierre (Límite)
                                     </div>
-                                    <div className="text-sm font-bold text-red-500 font-mono">
+                                    <div className="text-sm font-bold text-error font-mono">
                                         {selectedConvocatoria.fecha_cierre}
                                     </div>
                                 </div>
-                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                <div className="bento-card p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <DollarSign size={12} className="text-green-500/80" /> Financiamiento Máximo
+                                        <DollarSign size={12} className="text-success" /> Financiamiento Máximo
                                     </div>
-                                    <div className="text-sm font-bold text-green-500 font-mono">
+                                    <div className="text-sm font-bold text-success font-mono">
                                         ${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
                                     </div>
                                 </div>
-                                <div className="p-5 rounded-2xl bg-bg-deep/40 border border-border-thin space-y-1.5">
+                                <div className="bento-card p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <Layers size={12} className="text-text-dim" /> Rúbrica Evaluativa
+                                        <Layers size={12} /> Rúbrica Evaluativa
                                     </div>
                                     <div className="text-sm font-bold text-text-main truncate">
                                         {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
@@ -806,49 +798,44 @@ const ConvocatoriasPage = () => {
                                 </div>
                             </div>
                             
-                            {/* Academic Alignment Section */}
-                            <div className="space-y-4 p-6 rounded-2xl bg-bg-deep/40 border border-border-thin">
+                            <div className="bento-card p-6 space-y-4">
                                 <div className="flex items-center gap-2 text-xs font-bold text-text-main uppercase tracking-wider">
-                                    <BookOpen size={14} className="text-text-main" /> Configuración Académica & Auditoría
+                                    <BookOpen size={14} /> Configuración Académica & Auditoría
                                 </div>
                                 <p className="text-xs text-text-dim leading-relaxed font-medium">
                                     Esta convocatoria tiene un puntaje mínimo de aprobación de <strong>{selectedConvocatoria.puntaje_minimo_aprobacion}%</strong> para el proceso de pares doble ciego. Cualquier cambio de estado a "Abierta" publicará las bases a los docentes inmediatamente.
                                 </p>
                             </div>
                             
-                            {/* Requirements List */}
                             <div className="space-y-4">
                                 <h4 className="text-xs font-bold text-text-main uppercase tracking-widest">Requisitos & Documentos Exigidos</h4>
                                 <div className="space-y-2">
                                     {selectedConvocatoria.documentos_req && selectedConvocatoria.documentos_req.length > 0 ? (
                                         selectedConvocatoria.documentos_req.map((doc, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-bg-deep/40 border border-border-thin text-xs">
+                                            <div key={idx} className="flex items-center justify-between p-3 bento-card text-xs">
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-text-main">{doc.nombre_documento}</span>
                                                     {doc.descripcion && <span className="text-[10px] text-text-dim">{doc.descripcion}</span>}
                                                 </div>
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tight ${
-                                                    doc.es_obligatorio ? 'bg-red-950/40 text-red-400 border border-red-900/30' : 'bg-bg-deep text-text-dim'
-                                                }`}>
+                                                <span className={doc.es_obligatorio ? 'badge-vercel-error' : 'badge-vercel-neutral'}>
                                                     {doc.es_obligatorio ? 'Obligatorio' : 'Opcional'}
                                                 </span>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="text-xs text-text-dim italic">No se configuraron documentos específicos.</p>
+                                        <p className="text-xs text-text-dim">No se configuraron documentos específicos.</p>
                                     )}
                                 </div>
                             </div>
                         </div>
                         
-                        {/* Action buttons */}
                         <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
                             <button 
                                 onClick={() => {
                                     handleEdit(selectedConvocatoria);
                                     setSelectedConvocatoria(null);
                                 }}
-                                className="flex-1 bg-text-main text-bg-deep py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-90 active:scale-95 transition-all"
+                                className="btn-vercel-primary flex-1"
                             >
                                 Editar Convocatoria
                             </button>
@@ -858,7 +845,7 @@ const ConvocatoriasPage = () => {
                                         handleStatusChange(selectedConvocatoria.uuid, 'Abierta');
                                         setSelectedConvocatoria(null);
                                     }}
-                                    className="flex-1 bg-green-500 text-black py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] hover:opacity-90 active:scale-95 transition-all"
+                                    className="btn-brand flex-1"
                                 >
                                     Publicar Ahora
                                 </button>
@@ -873,9 +860,9 @@ const ConvocatoriasPage = () => {
 };
 
 const StatCard = ({ label, value, icon: Icon, color = 'text-text-main' }: any) => (
-    <div className="bento-card p-5 flex items-center gap-4 hover:border-text-main transition-all">
-        <div className="p-2.5 rounded bg-surface border border-border-thin">
-            <Icon size={16} className="text-text-dim" />
+    <div className="bento-card p-5 flex items-center gap-4">
+        <div className="icon-circle-brand">
+            <Icon size={16} />
         </div>
         <div>
             <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">{label}</p>
