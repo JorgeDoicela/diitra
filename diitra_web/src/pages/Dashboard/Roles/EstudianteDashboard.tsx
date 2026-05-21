@@ -20,7 +20,7 @@ export const EstudianteDashboard: React.FC = () => {
                     <>
                         <button 
                             onClick={() => navigate('/convocatorias')}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                            className="btn-vercel-primary flex-1 md:flex-none"
                         >
                             <Search size={16} />
                             <span>Ver Convocatorias</span>
@@ -36,12 +36,12 @@ export const EstudianteDashboard: React.FC = () => {
                     icon={<UserPlus size={14} />}
                     className="md:col-span-2"
                 >
-                    <div className="mt-4 p-4 rounded-lg bg-surface border border-border-thin border-dashed flex flex-col items-center justify-center text-center">
+                    <div className="mt-4 empty-state">
                         <Star size={24} className="text-text-main/20 mb-2" />
                         <p className="text-[10px] text-text-dim uppercase font-bold">No tienes participaciones activas</p>
                         <button 
                             onClick={() => navigate('/convocatorias')}
-                            className="mt-4 text-[9px] font-bold text-text-main underline decoration-text-main/30 underline-offset-4 uppercase tracking-widest"
+                            className="btn-vercel-secondary mt-4"
                         >
                             Postular a una vacante
                         </button>
@@ -54,7 +54,7 @@ export const EstudianteDashboard: React.FC = () => {
                     icon={<GraduationCap size={14} />}
                 >
                     <div className="mt-4">
-                        <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">1,250</p>
+                        <p className="stat-number">1,250</p>
                         <p className="text-[10px] text-text-dim mt-2 uppercase font-medium">Investigador Bronce</p>
                     </div>
                 </BentoCard>
@@ -65,7 +65,7 @@ export const EstudianteDashboard: React.FC = () => {
                     icon={<Award size={14} />}
                 >
                     <div className="mt-4 flex flex-col gap-1">
-                        <p className="text-2xl font-bold font-mono text-text-main tracking-tighter">00</p>
+                        <p className="stat-number stat-number--sm">00</p>
                         <p className="text-[9px] text-text-dim mt-4">Próximo: Finalización Proyecto IA</p>
                     </div>
                 </BentoCard>
@@ -78,9 +78,7 @@ export const EstudianteDashboard: React.FC = () => {
                 >
                     <div className="mt-4 flex flex-wrap gap-2">
                         {['Metodología Ágil', 'Python for Science', 'Escritura APA 7', 'Gestión de Datos', 'IA Generativa'].map(tag => (
-                            <span key={tag} className="px-2 py-1 bg-surface border border-border-thin rounded-full text-[9px] font-bold text-text-main uppercase tracking-tighter">
-                                {tag}
-                            </span>
+                            <span key={tag} className="badge-vercel">{tag}</span>
                         ))}
                     </div>
                 </BentoCard>

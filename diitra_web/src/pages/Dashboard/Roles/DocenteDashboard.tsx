@@ -67,14 +67,14 @@ export const DocenteDashboard: React.FC = () => {
                     <>
                         <button
                             onClick={() => navigate('/investigacion/mis-proyectos')}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 md:px-5 py-2.5 md:py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
+                            className="btn-vercel-secondary flex-1 md:flex-none"
                         >
                             <ClipboardList size={14} />
                             <span>Mis Proyectos</span>
                         </button>
                         <button
                             onClick={() => navigate('/investigacion')}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                            className="btn-vercel-primary flex-1 md:flex-none"
                         >
                             <Plus size={16} />
                             <span>Nuevo Proyecto</span>
@@ -99,7 +99,7 @@ export const DocenteDashboard: React.FC = () => {
                     >
                         <div className="mt-6 flex items-end gap-6">
                             <div>
-                                <p className="text-5xl font-bold text-text-main font-mono tracking-tighter">
+                                <p className="stat-number stat-number--lg text-text-main">
                                     {stats?.mis_proyectos_activos ?? 0}
                                 </p>
                                 <p className="text-[10px] text-text-dim uppercase tracking-widest mt-1">
@@ -108,7 +108,7 @@ export const DocenteDashboard: React.FC = () => {
                             </div>
                             {stats?.mis_proyectos_borrador != null && stats.mis_proyectos_borrador > 0 && (
                                 <div className="pb-1">
-                                    <p className="text-2xl font-bold text-text-dim font-mono tracking-tighter">
+                                    <p className="stat-number stat-number--sm text-text-dim">
                                         +{stats.mis_proyectos_borrador}
                                     </p>
                                     <p className="text-[10px] text-text-dim uppercase tracking-widest">
@@ -119,7 +119,7 @@ export const DocenteDashboard: React.FC = () => {
                         </div>
                         <button
                             onClick={() => navigate('/investigacion/mis-proyectos')}
-                            className="mt-6 flex items-center gap-2 text-[10px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors group"
+                            className="mt-6 btn-vercel-secondary"
                         >
                             Ver todos mis proyectos
                             <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
@@ -133,9 +133,7 @@ export const DocenteDashboard: React.FC = () => {
                         icon={<Clock size={14} />}
                     >
                         <div className="mt-4">
-                            <p className={`text-4xl font-bold font-mono tracking-tighter ${
-                                (stats?.mis_informes_pendientes ?? 0) > 0 ? 'text-amber-400' : 'text-text-main'
-                            }`}>
+                            <p className={`stat-number ${(stats?.mis_informes_pendientes ?? 0) > 0 ? 'text-amber-400' : 'text-text-main'}`}>
                                 {stats?.mis_informes_pendientes ?? 0}
                             </p>
                             {(stats?.mis_informes_pendientes ?? 0) > 0 && (
@@ -159,7 +157,7 @@ export const DocenteDashboard: React.FC = () => {
                         icon={<BarChart3 size={14} />}
                     >
                         <div className="mt-2 flex items-center justify-between">
-                            <p className="text-4xl font-bold font-mono text-text-main tracking-tighter">
+                            <p className="stat-number stat-number--sm">
                                 {String(stats?.mis_productos_registrados ?? 0).padStart(2, '0')}
                             </p>
                         </div>
@@ -177,12 +175,14 @@ export const DocenteDashboard: React.FC = () => {
                     >
                         <div className="mt-4 space-y-2">
                             {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
-                                <p className="text-[11px] text-text-dim py-4 text-center">
-                                    Aún no hay actividad registrada.
-                                </p>
+                                <div className="empty-state py-4">
+                                    <p className="text-[11px] text-text-dim">
+                                        Aún no hay actividad registrada.
+                                    </p>
+                                </div>
                             ) : (
                                 stats.actividad_reciente.slice(0, 5).map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin hover:border-text-dim transition-colors cursor-pointer group">
+                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-colors cursor-pointer group">
                                         <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ESTADO_DOT[item.estado ?? ''] ?? 'bg-text-dim'}`} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[11px] font-bold text-text-main truncate">{item.descripcion}</p>
@@ -191,7 +191,7 @@ export const DocenteDashboard: React.FC = () => {
                                             </p>
                                         </div>
                                         {item.estado && (
-                                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-wide shrink-0">
+                                            <span className="status-tag text-text-dim border-border-thin">
                                                 {item.estado}
                                             </span>
                                         )}

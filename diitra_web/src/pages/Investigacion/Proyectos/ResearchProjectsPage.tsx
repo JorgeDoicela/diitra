@@ -19,8 +19,8 @@ const ResearchProjectsPage = () => {
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-brand uppercase tracking-[0.3em]">
-                        <ClipboardList size={10} className="text-brand" />
+                    <div className="section-label text-brand">
+                        <ClipboardList size={10} />
                         <span>Mis Investigaciones</span>
                     </div>
                     <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Proyectos de I+D+i</h2>
@@ -31,7 +31,7 @@ const ResearchProjectsPage = () => {
 
                 <button 
                     onClick={() => setShowWizard(true)}
-                    className="btn-vercel-primary w-full md:w-auto gap-2 text-[10px] font-black uppercase tracking-widest active:scale-95 shadow-xl px-6 py-3 md:py-2.5"
+                    className="btn-vercel-primary w-full md:w-auto active:scale-95 shadow-xl px-6 py-3 md:py-2.5"
                 >
                     <Plus size={14} strokeWidth={3} />
                     Nueva Postulación
@@ -60,7 +60,7 @@ const ResearchProjectsPage = () => {
                             <p className="text-text-dim text-sm max-w-md font-medium leading-relaxed mb-8">
                                 Inicie el proceso de creación de su proyecto de investigación utilizando el núcleo de renderizado oficial de la institución.
                             </p>
-                            <div className="btn-vercel-primary gap-3 text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3 shadow-lg group-hover:translate-x-1 transition-transform">
+                            <div className="btn-vercel-primary gap-3 px-8 py-3 shadow-lg group-hover:translate-x-1 transition-transform">
                                 Comenzar ahora <ArrowRight size={14} strokeWidth={3} />
                             </div>
                         </div>
@@ -154,9 +154,9 @@ const ResearchProjectsPage = () => {
                         <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">Auditoría LOPDP y Trazabilidad en tiempo real</p>
                     </div>
                     <div className="w-full md:w-auto flex gap-2">
-                         <button 
-                            className="btn-vercel-secondary flex-1 md:flex-none gap-2 text-[10px] font-black uppercase tracking-widest px-4 h-10 cursor-pointer"
-                         >
+<button 
+                             className="btn-vercel-secondary flex-1 md:flex-none px-4 h-10 cursor-pointer"
+                          >
                             <Filter size={14} /> Filtrar Expedientes
                          </button>
                     </div>

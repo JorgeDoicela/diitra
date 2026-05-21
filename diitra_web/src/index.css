@@ -189,37 +189,54 @@ body {
   color: var(--bg);
   border: 1px solid var(--fg);
   border-radius: var(--radius);
-  font-weight: 500;
-  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.625rem 1.25rem;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .btn-vercel-primary:hover {
-  background-color: var(--bg);
-  color: var(--fg);
+  opacity: 0.9;
+}
+
+.btn-vercel-primary:active {
+  transform: scale(0.97);
 }
 
 .btn-vercel-secondary {
-  background-color: var(--bg);
+  background-color: var(--surface);
   color: var(--fg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-weight: 500;
-  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.625rem 1.25rem;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
 }
 
 .btn-vercel-secondary:hover {
-  background-color: var(--surface);
   border-color: var(--fg);
+  background-color: var(--surface-hover);
+}
+
+.btn-vercel-secondary:active {
+  transform: scale(0.97);
 }
 
 .btn-brand {
@@ -227,13 +244,18 @@ body {
   color: #ffffff;
   border: 1px solid var(--brand);
   border-radius: var(--radius);
-  font-weight: 500;
-  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.625rem 1.25rem;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
   box-shadow: 0 4px 14px rgba(0, 112, 243, 0.15);
 }
 
@@ -342,6 +364,23 @@ body {
   color: #0070f3;
 }
 
+.badge-vercel-violet {
+  background-color: rgba(139, 92, 246, 0.06);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #a78bfa;
+}
+
+[data-theme="light"] .badge-vercel-violet {
+  background-color: rgba(139, 92, 246, 0.04);
+  color: #7c3aed;
+}
+
+.badge-vercel-neutral {
+  background-color: var(--surface);
+  border-color: var(--border);
+  color: var(--text-dim);
+}
+
 /* Premium Vercel Toast Notifications */
 .toast-container-vercel {
   position: fixed;
@@ -430,4 +469,126 @@ body {
   background-color: var(--border);
   width: 100%;
   margin: 1.5rem 0;
+}
+
+/* Premium Vercel Modal / Dialog */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background-color: color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter: blur(12px);
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-card {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 32rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme="light"] .modal-card {
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+}
+
+.modal-card--lg {
+  max-width: 42rem;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: color-mix(in srgb, var(--surface) 30%, transparent);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  background-color: color-mix(in srgb, var(--surface) 20%, transparent);
+}
+
+/* Premium Vercel Select element */
+select.input-vercel {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+/* Premium Vercel Section Label */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  color: var(--text-dim);
+}
+
+/* Premium Vercel Stat Number */
+.stat-number {
+  font-size: 3rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--fg);
+}
+
+.stat-number--lg {
+  font-size: 3.75rem;
+}
+
+.stat-number--sm {
+  font-size: 1.5rem;
+}
+
+/* Premium Vercel Status Tag */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+
+/* Premium Vercel Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
 }
