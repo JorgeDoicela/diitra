@@ -1,6 +1,8 @@
+import React from 'react';
 import { View, type ViewProps, type ViewStyle } from 'react-native';
 
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeContext } from '@/contexts/theme-context';
+import { BackgroundGlow } from '@/components/ui/background-glow';
 
 export type ThemedViewProps = ViewProps & {
   lightColor?: string;
@@ -9,6 +11,7 @@ export type ThemedViewProps = ViewProps & {
   border?: boolean;
   borderHover?: boolean;
   radius?: boolean;
+  glow?: boolean;
 };
 
 export function ThemedView({
@@ -19,23 +22,30 @@ export function ThemedView({
   border = false,
   borderHover = false,
   radius = false,
+  glow = false,
   ...otherProps
 }: ThemedViewProps) {
-  const backgroundColor = useThemeColor(
-    { light: lightColor, dark: darkColor },
-    variant === 'transparent' ? 'bg' : variant
-  ) as string;
-  const borderColor = useThemeColor({}, border ? 'border' : 'bg') as string;
-  const actualBorderColor = border ? borderColor : undefined;
+  const theme = useThemeContext();
 
-  const hoverBorderColor = borderHover ? (useThemeColor({}, 'borderHover') as string) : undefined;
+  const backgroundColor = (variant === 'transparent' ? 'transparent' : theme[variant === 'bg' ? 'bg' : variant]) as string;
+  const borderColor = (border ? theme.border : undefined) as string | undefined;
+  const hoverBorderColor = (borderHover ? theme.borderHover : undefined) as string | undefined;
 
   const themedStyle: ViewStyle = {
-    backgroundColor: variant === 'transparent' ? 'transparent' : backgroundColor,
-    ...(actualBorderColor ? { borderColor: actualBorderColor, borderWidth: 1 } : {}),
+    backgroundColor,
+    ...(borderColor ? { borderColor: borderColor, borderWidth: 1 } : {}),
     ...(hoverBorderColor ? { borderColor: hoverBorderColor, borderWidth: 1 } : {}),
     ...(radius ? { borderRadius: 8 } : {}),
   };
+
+  if (glow) {
+    return (
+      <View style={[themedStyle, style]} {...otherProps}>
+        <BackgroundGlow />
+        {otherProps.children}
+      </View>
+    );
+  }
 
   return <View style={[themedStyle, style]} {...otherProps} />;
 }

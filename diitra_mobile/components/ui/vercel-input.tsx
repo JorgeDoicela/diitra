@@ -7,12 +7,13 @@ export type VercelInputProps = TextInputProps & {
   style?: ViewStyle | ViewStyle[];
 };
 
-export function VercelInput({ style, placeholderTextColor, ...rest }: VercelInputProps) {
+export function VercelInput({ style, placeholderTextColor, selectionColor, ...rest }: VercelInputProps) {
   const theme = useThemeContext();
 
   return (
     <TextInput
       placeholderTextColor={placeholderTextColor ?? theme.textDim}
+      selectionColor={selectionColor ?? theme.brand}
       style={[
         {
           backgroundColor: theme.bg,

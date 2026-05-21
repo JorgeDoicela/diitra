@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, View, StyleSheet, Pressable } from 'react-native';
+import { ScrollView, View, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Dot, DotPulse } from '@/components/ui/dot';
 import { IconCircle } from '@/components/ui/icon-circle';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { BackgroundGlow } from '@/components/ui/background-glow';
 import { useFadeUp, useFadeIn } from '@/hooks/use-vercel-animations';
 
 export default function HomeScreen() {
@@ -39,13 +40,15 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, gap: 16 }}>
-      {/* Header */}
-      <Animated.View style={[fadeUpStyle, styles.header]}>
-        <ThemedText type="title">DIITRA</ThemedText>
-        <ThemedText type="caption" style={{ color: '#888' }}>
-          Sistema de Diseño Vercel Mobile
-        </ThemedText>
-      </Animated.View>
+      {/* Header con Background Glow */}
+      <ThemedView glow style={{ borderRadius: 16, padding: 24, marginBottom: 8 }}>
+        <Animated.View style={[fadeUpStyle, styles.header]}>
+          <ThemedText type="title">DIITRA</ThemedText>
+          <ThemedText type="caption" style={{ opacity: 0.6 }}>
+            Sistema de Diseño Vercel Mobile
+          </ThemedText>
+        </Animated.View>
+      </ThemedView>
 
       {/* Tabs */}
       <VercelTabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
@@ -53,26 +56,26 @@ export default function HomeScreen() {
       {/* Bento Cards */}
       <View style={styles.grid}>
         <BentoCard style={{ flex: 1 }} onPress={() => setProgress((p) => (p >= 100 ? 0 : p + 10))}>
-          <ThemedText type="sectionLabel" style={{ color: '#888' }}>
+          <ThemedText type="sectionLabel" style={{ opacity: 0.6 }}>
             Usuarios
           </ThemedText>
           <StatNumber size="sm">1,248</StatNumber>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
             <Dot variant="success" />
-            <ThemedText type="caption" style={{ color: '#888' }}>
+            <ThemedText type="caption" style={{ opacity: 0.6 }}>
               12% vs mes pasado
             </ThemedText>
           </View>
         </BentoCard>
 
         <BentoCard style={{ flex: 1 }}>
-          <ThemedText type="sectionLabel" style={{ color: '#888' }}>
+          <ThemedText type="sectionLabel" style={{ opacity: 0.6 }}>
             Proyectos
           </ThemedText>
           <StatNumber size="sm">84</StatNumber>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
             <Dot variant="brand" />
-            <ThemedText type="caption" style={{ color: '#888' }}>
+            <ThemedText type="caption" style={{ opacity: 0.6 }}>
               3 activos
             </ThemedText>
           </View>
@@ -136,7 +139,7 @@ export default function HomeScreen() {
         <SectionLabel>Progreso</SectionLabel>
         <ProgressBar progress={progress} variant="brand" />
         <ProgressBar progress={progress} variant="success" />
-        <ThemedText type="caption" style={{ color: '#888' }}>
+        <ThemedText type="caption" style={{ opacity: 0.6 }}>
           Toca la primera tarjeta Bento para animar el progreso
         </ThemedText>
       </View>
@@ -181,7 +184,7 @@ export default function HomeScreen() {
         </ModalHeader>
         <ModalBody>
           <ThemedText>
-            Este es un modal con el estilo de diseño Vercel adaptado para React Native.
+            Este es un modal con el estilo de diseño Vercel adaptado para React Native. Incluye blur nativo y animaciones suaves.
           </ThemedText>
         </ModalBody>
         <ModalFooter>
@@ -208,7 +211,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   header: {
     gap: 4,
-    marginBottom: 8,
   },
   grid: {
     flexDirection: 'row',

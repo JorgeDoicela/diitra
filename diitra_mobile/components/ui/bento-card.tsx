@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  interpolateColor,
 } from 'react-native-reanimated';
 
 import { useThemeContext } from '@/contexts/theme-context';
@@ -22,36 +23,51 @@ export function BentoCard({ children, style, onPress, ...rest }: BentoCardProps)
   const scheme = useColorScheme() ?? 'light';
   const shadows = Shadows[scheme];
 
-  const elevation = useSharedValue(0);
+  const isHovered = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [{ translateY: withTiming(elevation.value === 1 ? -1 : 0, { duration: 200 }) }],
-      shadowOpacity: withTiming(elevation.value === 1 ? shadows.md.shadowOpacity : shadows.sm.shadowOpacity, {
-        duration: 200,
-      }),
-      shadowRadius: withTiming(elevation.value === 1 ? shadows.md.shadowRadius : shadows.sm.shadowRadius, {
-        duration: 200,
-      }),
-      elevation: withTiming(elevation.value === 1 ? shadows.md.elevation : shadows.sm.elevation, { duration: 200 }),
+      transform: [
+        { translateY: withTiming(isHovered.value === 1 ? -1 : 0, { duration: 200 }) },
+      ],
+      borderColor: interpolateColor(
+        isHovered.value,
+        [0, 1],
+        [theme.border, theme.borderHover]
+      ),
+      backgroundColor: interpolateColor(
+        isHovered.value,
+        [0, 1],
+        [theme.surface, theme.surfaceHover]
+      ),
+      shadowOpacity: withTiming(
+        isHovered.value === 1 ? shadows.md.shadowOpacity : shadows.sm.shadowOpacity,
+        { duration: 200 }
+      ),
+      shadowRadius: withTiming(
+        isHovered.value === 1 ? shadows.md.shadowRadius : shadows.sm.shadowRadius,
+        { duration: 200 }
+      ),
+      elevation: withTiming(
+        isHovered.value === 1 ? shadows.md.elevation : shadows.sm.elevation,
+        { duration: 200 }
+      ),
     };
   });
 
   return (
     <AnimatedPressable
       onPressIn={() => {
-        elevation.value = 1;
+        isHovered.value = 1;
       }}
       onPressOut={() => {
-        elevation.value = 0;
+        isHovered.value = 0;
       }}
       onPress={onPress}
       {...rest}
       style={[
         {
-          backgroundColor: theme.surface,
           borderWidth: 1,
-          borderColor: theme.border,
           borderRadius: theme.radius,
           padding: 16,
           overflow: 'hidden',

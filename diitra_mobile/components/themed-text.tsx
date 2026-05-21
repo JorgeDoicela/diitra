@@ -1,7 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { Fonts } from '@/constants/theme';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -30,10 +29,12 @@ export function ThemedText({
 }: ThemedTextProps) {
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'fg') as string;
 
+  const fontFamily = type?.startsWith('stat') ? 'Geist Mono' : 'Geist Sans';
+
   return (
     <Text
       style={[
-        { color, fontFamily: (Fonts?.sans ?? 'sans-serif') as string },
+        { color, fontFamily },
         type === 'default' ? styles.default : undefined,
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'title' ? styles.title : undefined,

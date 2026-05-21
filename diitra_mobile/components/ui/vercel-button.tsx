@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, type PressableProps, type ViewStyle, type TextStyle } from 'react-native';
+import { Pressable, type PressableProps, type ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -17,7 +17,7 @@ export type VercelButtonProps = PressableProps & {
   children: React.ReactNode;
   variant?: VercelButtonVariant;
   style?: ViewStyle | ViewStyle[];
-  textStyle?: TextStyle;
+  textStyle?: object;
 };
 
 export function VercelButton({
