@@ -762,6 +762,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ResolucionAprobacion).HasColumnName("resolucionAprobacion").HasMaxLength(100);
             entity.Property(e => e.FechaCreacion).HasColumnName("fechaCreacion");
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
+            entity.Property(e => e.Estado).HasColumnName("estado").HasMaxLength(20).HasDefaultValue("Aprobado");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
 
             entity.HasOne(d => d.IdCoordinadorNavigation).WithMany()

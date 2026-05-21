@@ -397,6 +397,22 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// Actualiza dinámicamente el equipo de investigadores asignado al proyecto.
+        /// </summary>
+        [HttpPatch("{uuid}/team")]
+        public async Task<IActionResult> UpdateProjectTeam(string uuid, [FromBody] System.Collections.Generic.List<InvestigadorDto> investigadores)
+        {
+            if (investigadores == null) return BadRequest("Lista de investigadores nula.");
+
+            var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores);
+            if (!result.Success)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
+
+        /// <summary>
         /// Elimina físicamente un proyecto y todos sus registros relacionados en cascada.
         /// Solo permitido para borradores de proyectos académicos.
         /// </summary>

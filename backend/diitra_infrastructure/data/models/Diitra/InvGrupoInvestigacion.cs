@@ -19,6 +19,7 @@ public partial class InvGrupoInvestigacion
     public string? ResolucionAprobacion { get; set; }
     public DateOnly? FechaCreacion { get; set; }
     public bool? Activo { get; set; }
+    public string? Estado { get; set; } = "Aprobado";
     public DateTime? FechaRegistro { get; set; }
 
     public virtual User? IdCoordinadorNavigation { get; set; }
