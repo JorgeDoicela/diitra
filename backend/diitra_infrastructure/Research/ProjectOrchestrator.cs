@@ -1055,7 +1055,14 @@ namespace diitra_infrastructure.Research
                         "Relevo de Dirección de Proyecto",
                         $"Has sido relevado como director en el proyecto: {project.Titulo}. Motivo: {request.Motivo}",
                         "INVESTIGACION",
-                        $"/proyectos/{project.Uuid}"
+                        $"/proyectos/{project.Uuid}",
+                        new Dictionary<string, string>
+                        {
+                            { "Proyecto", project.Titulo ?? "Sin título" },
+                            { "Rol Anterior", "Director de Proyecto" },
+                            { "Motivo del Relevo", request.Motivo },
+                            { "Fecha de Cambio", DateTime.Now.ToString("dd/MM/yyyy HH:mm") }
+                        }
                     );
                 }
 
@@ -1100,7 +1107,14 @@ namespace diitra_infrastructure.Research
                     "Designación como Director de Proyecto",
                     $"Has sido designado como el nuevo Director del proyecto: {project.Titulo}",
                     "INVESTIGACION",
-                    $"/proyectos/{project.Uuid}"
+                    $"/proyectos/{project.Uuid}",
+                    new Dictionary<string, string>
+                    {
+                        { "Proyecto", project.Titulo ?? "Sin título" },
+                        { "Nuevo Rol", "Director de Proyecto" },
+                        { "Motivo de Designación", request.Motivo },
+                        { "Fecha de Designación", DateTime.Now.ToString("dd/MM/yyyy HH:mm") }
+                    }
                 );
 
                 // 6. Registrar en el Audit Trail del Workflow

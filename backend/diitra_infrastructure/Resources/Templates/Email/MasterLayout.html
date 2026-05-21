@@ -1,0 +1,159 @@
+<!--
+    =================================================================================
+    PLANTILLA MAESTRA DE CORREO ELECTRÓNICO INSTITUCIONAL - DIITRA (ISTPET)
+    =================================================================================
+    
+    Esta plantilla define el diseño visual unificado, responsivo y adaptativo de DIITRA.
+    Fue maquetada utilizando tablas tradicionales y estilos en línea (inline-styles) 
+    para garantizar máxima compatibilidad con clientes de correo (Gmail, Outlook, etc.).
+    
+    PLACEHOLDERS DINÁMICOS DISPONIBLES (HANDLEBARS):
+    ---------------------------------------------------------------------------------
+    - {{title}}              : El asunto o título destacado del correo.
+    - {{recipient_name}}     : El nombre completo del docente o investigador receptor.
+    - {{{body_text}}}         : El mensaje principal. ¡Importante usar triple llave para admitir HTML!
+    - {{has_extra_data}}     : Booleano que controla si se renderiza la tarjeta de detalles.
+    - {{extra_data}}         : Lista de objetos clave-valor (cada uno con {{key}} y {{value}})
+                               para desplegar información detallada del evento.
+    - {{has_action}}         : Booleano que controla si se muestra el botón de llamado a la acción.
+    - {{action_url}}         : URL hacia donde redirige el botón.
+    - {{action_text}}        : Texto visible en el botón (ej. "VER DETALLES EN DIITRA").
+    - {{anio_actual}}        : Inyectado automáticamente por el servidor para el pie de firma y LOPDP.
+    
+    CONSEJO PARA FUTURAS MODIFICACIONES:
+    ---------------------------------------------------------------------------------
+    Puedes cambiar colores, logos, direcciones físicas o la cláusula de la LOPDP directamente
+    en este archivo HTML. Los cambios se reflejarán instantáneamente sin tener que recompilar el backend.
+-->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        /* Estilos generales responsivos */
+        @media only screen and (max-width: 620px) {
+            .container-table {
+                width: 100% !important;
+                border-radius: 0 !important;
+                border-left: none !important;
+                border-right: none !important;
+            }
+            .content-td {
+                padding: 40px 30px !important;
+            }
+            .action-btn {
+                display: block !important;
+                width: 100% !important;
+                text-align: center !important;
+                box-sizing: border-box;
+            }
+            .header-td {
+                padding: 40px 30px !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+    <div style="background-color: #f8fafc; padding: 40px 0; min-height: 100%;">
+        <!-- Contenedor Maestro Centrado -->
+        <table class="container-table" align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); border: 1px solid #e2e8f0; border-collapse: separate;">
+            
+            <!-- Cabecera de Marca (Branding ISTPET | DIITRA) -->
+            <tr>
+                <td class="header-td" align="center" style="padding: 45px 40px; background-color: #111827; background-image: radial-gradient(circle at top right, #1f2937 0%, #111827 100%);">
+                    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="center">
+                                <div style="background-color: rgba(255, 255, 255, 0.04); padding: 12px 28px; border-radius: 12px; display: inline-block; border: 1px solid rgba(255, 255, 255, 0.08);">
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 4px; font-weight: 800; text-transform: uppercase; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
+                                        <span style="color: #b9975b;">ISTPET</span><span style="margin: 0 10px; opacity: 0.3; color: #ffffff;">|</span>DIITRA
+                                    </h1>
+                                </div>
+                                <p style="color: #94a3b8; margin: 14px 0 0 0; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;">Departamento de Investigación e Innovación Tecnológica</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+
+            <!-- Contenido Principal -->
+            <tr>
+                <td class="content-td" style="padding: 50px 60px;">
+                    <h2 style="color: #0f172a; font-size: 22px; margin: 0 0 20px 0; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">Hola {{recipient_name}},</h2>
+                    
+                    <div style="color: #334155; font-size: 15px; line-height: 1.8; margin: 0 0 30px 0;">
+                        {{{body_text}}}
+                    </div>
+
+                    <!-- Bloque de Detalles de la Notificación (ExtraData) -->
+                    {{#if has_extra_data}}
+                    <div style="margin: 35px 0; background-color: #f8fafc; border-radius: 16px; padding: 22px; border: 1px solid #e2e8f0;">
+                        <h3 style="margin: 0 0 15px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;">Detalles de la Notificación</h3>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            {{#each extra_data}}
+                            <tr>
+                                <td style="padding: 10px 0; color: #475569; font-weight: 600; font-size: 13.5px; width: 35%; vertical-align: top; border-bottom: 1px solid #f1f5f9;">{{key}}:</td>
+                                <td style="padding: 10px 0; color: #0f172a; font-size: 13.5px; border-bottom: 1px solid #f1f5f9; vertical-align: top;">{{value}}</td>
+                            </tr>
+                            {{/each}}
+                        </table>
+                    </div>
+                    {{/if}}
+
+                    <!-- Botón de Acción Principal (Call to Action) -->
+                    {{#if has_action}}
+                    <div style="text-align: center; margin: 40px 0 35px 0;">
+                        <!--[if mso]>
+                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{action_url}}" style="height:54px;v-text-anchor:middle;width:240px;" arcsize="20%" stroke="f" fillcolor="#111827">
+                          <w:anchorlock/>
+                          <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:bold;">{{action_text}}</center>
+                        </v:roundrect>
+                        <![endif]-->
+                        <a class="action-btn" href="{{action_url}}" style="background-color: #111827; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: background-color 0.2s ease, transform 0.2s ease;">
+                            {{action_text}}
+                        </a>
+                    </div>
+                    {{/if}}
+
+                    <!-- Nota adicional -->
+                    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin-top: 30px;">Si tiene alguna duda sobre esta notificación, puede responder directamente a este correo o contactarnos a través de nuestra plataforma institucional.</p>
+
+                    <!-- Pie de Página Institucional -->
+                    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #f1f5f9;">
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td style="text-align: left; vertical-align: top;">
+                                    <p style="color: #0f172a; font-size: 12.5px; margin: 0 0 4px 0; font-weight: 700;">Instituto Superior Tecnológico Traversari</p>
+                                    <p style="color: #94a3b8; font-size: 11px; margin: 0;">Excelencia Académica y Tecnológica</p>
+                                </td>
+                                <td style="text-align: right; vertical-align: top;">
+                                    <div style="color: #b9975b; font-weight: 700; font-size: 11px; letter-spacing: 1px;">ISTPET {{anio_actual}}</div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Advertencia LOPDP Ecuador -->
+                        <div style="margin-top: 25px; background-color: #f8fafc; border-radius: 12px; padding: 18px; border: 1px solid #e2e8f0;">
+                            <p style="color: #94a3b8; font-size: 10.5px; line-height: 1.6; margin: 0;">
+                                <strong>Aviso de Confidencialidad y Protección de Datos:</strong> Conforme a lo establecido en la Ley Orgánica de Protección de Datos Personales (LOPDP) de la República del Ecuador, le informamos que la información contenida en esta comunicación es confidencial y para uso exclusivo del destinatario. Sus datos personales son tratados con el único fin de gestionar actividades de investigación en el sistema DIITRA. Para ejercer sus derechos de acceso, rectificación, eliminación o limitación, puede dirigirse por escrito al correo institucional <a href="mailto:admisiones@istpet.edu.ec" style="color: #b9975b; text-decoration: none; font-weight: 600;">admisiones@istpet.edu.ec</a>.
+                            </p>
+                        </div>
+
+                        <!-- Dirección física -->
+                        <div style="text-align: center; margin-top: 25px;">
+                            <p style="color: #cbd5e1; font-size: 9.5px; margin: 0;">Av. Matilde Álvarez y Hugo Díaz Romero. Sector Chillogallo. Quito, Ecuador.</p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        
+        <!-- Derechos reservados final -->
+        <div style="text-align: center; padding: 25px 0 0 0;">
+            <p style="color: #94a3b8; font-size: 11px; margin: 0;">&copy; {{anio_actual}} Sistema DIITRA. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
