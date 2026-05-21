@@ -12,6 +12,7 @@ public class GroupDto
     public string TipoGrupo { get; set; } = "Investigación";
     public int? IdDominio { get; set; }
     public int? IdCoordinador { get; set; }
+    public string? IdProfesorCoordinador { get; set; }
     public string? NombreCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
     public string? Mision { get; set; }
@@ -19,6 +20,7 @@ public class GroupDto
     public string? ResolucionAprobacion { get; set; }
     public DateOnly? FechaCreacion { get; set; }
     public bool Activo { get; set; }
+    public string? Estado { get; set; }
     
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
@@ -48,6 +50,7 @@ public class CreateGroupDto
     public string? Mision { get; set; }
     public string? Vision { get; set; }
     public string? ResolucionAprobacion { get; set; }
+    public string? Estado { get; set; }
     public DateOnly? FechaCreacion { get; set; }
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();

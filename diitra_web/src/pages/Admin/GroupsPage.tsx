@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
     Users, Plus, Search, Edit2, 
     Trash2, CheckCircle, XCircle,
-    BookOpen, Shield, Award, Calendar, FileText
+    BookOpen, Shield, Award, Calendar, FileText, Eye
 } from 'lucide-react';
 import api from '../../api/axios_config';
+import { useAuth } from '../../api/AuthContext';
 
 interface Group {
     id_grupo: number;
@@ -22,6 +23,7 @@ interface Group {
     tipo_grupo: string;
     id_dominio: number | null;
     activo: boolean;
+    estado?: string; // "Pendiente", "Aprobado", "Rechazado"
     lineas_ids: number[];
     carreras_ids: number[];
 }
@@ -48,6 +50,8 @@ interface Career {
 }
 
 const GroupsPage = () => {
+    const { user, isAdmin } = useAuth();
+    
     const [groups, setGroups] = useState<Group[]>([]);
     const [lines, setLines] = useState<ResearchLine[]>([]);
     const [teachers, setTeachers] = useState<Teacher[]>([]);
@@ -56,7 +60,13 @@ const GroupsPage = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isReadOnly, setIsReadOnly] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+
+    // Review states (Admin)
+    const [reviewingGroup, setReviewingGroup] = useState<Group | null>(null);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [reviewResolution, setReviewResolution] = useState('');
 
     // Form states
     const [formData, setFormData] = useState({
@@ -77,16 +87,29 @@ const GroupsPage = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [groupsRes, linesRes, teachersRes, dominiosRes, carrerasRes] = await Promise.all([
+            const promises: Promise<any>[] = [
                 api.get(`/Groups?search=${search}`),
                 api.get('/Convocatorias/catalogos/lineas'),
-                api.get('/Admin/users'),
+                isAdmin ? api.get('/Admin/users') : Promise.resolve({ data: { items: [] } }),
                 api.get('/catalogs/dominios'),
                 api.get('/catalogs/carreras')
-            ]);
+            ];
+            
+            const [groupsRes, linesRes, teachersRes, dominiosRes, carrerasRes] = await Promise.all(promises);
             setGroups(groupsRes.data);
             setLines(linesRes.data);
-            setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : (teachersRes.data.items || []));
+            
+            if (isAdmin) {
+                setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : (teachersRes.data.items || []));
+            } else if (user) {
+                // Mock single element for the current teacher to display cleanly in dropdown
+                setTeachers([{
+                    id_usuario: user.id_usuario || null,
+                    id_profesor: user.id_referencia,
+                    nombre_completo: user.nombre_completo
+                }]);
+            }
+            
             setDominios(dominiosRes.data);
             setCarreras(carrerasRes.data);
         } catch (error) {
@@ -98,9 +121,10 @@ const GroupsPage = () => {
 
     useEffect(() => {
         fetchData();
-    }, [search]);
+    }, [search, user, isAdmin]);
 
-    const handleOpenModal = (group: Group | null = null) => {
+    const handleOpenModal = (group: Group | null = null, readOnly = false) => {
+        setIsReadOnly(readOnly);
         if (group) {
             setEditingGroup(group);
             setFormData({
@@ -124,12 +148,12 @@ const GroupsPage = () => {
                 siglas: '',
                 tipo_grupo: 'Investigación',
                 id_dominio: '',
-                id_profesor_coordinador: '',
+                id_profesor_coordinador: !isAdmin ? (user?.id_referencia || '') : '',
                 objetivo_general: '',
                 mision: '',
                 vision: '',
                 resolucion_aprobacion: '',
-                fecha_creacion: '',
+                fecha_creacion: new Date().toISOString().split('T')[0],
                 lineas_ids: [],
                 carreras_ids: []
             });
@@ -139,6 +163,10 @@ const GroupsPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isReadOnly) {
+            setIsModalOpen(false);
+            return;
+        }
         try {
             const payload = {
                 ...formData,
@@ -179,14 +207,58 @@ const GroupsPage = () => {
     };
 
     const handleDelete = async (uuid: string, name: string) => {
-        if (!window.confirm(`¿Está seguro de desactivar el grupo "${name}"?`)) return;
+        const confirmMsg = isAdmin 
+            ? `¿Está seguro de desactivar el grupo "${name}"?` 
+            : `¿Está seguro de eliminar su propuesta de grupo "${name}"?`;
+            
+        if (!window.confirm(confirmMsg)) return;
         
         try {
             await api.delete(`/Groups/${uuid}`);
             fetchData();
         } catch (error: any) {
-            console.error('Error deactivating group:', error);
-            alert('No se pudo desactivar el grupo: ' + error.message);
+            console.error('Error deactivating/deleting group:', error);
+            alert('No se pudo procesar la acción: ' + error.message);
+        }
+    };
+
+    // Review Handlers (Admin)
+    const handleOpenReview = (group: Group) => {
+        setReviewingGroup(group);
+        setReviewResolution('');
+        setIsReviewModalOpen(true);
+    };
+
+    const handleApprove = async () => {
+        if (!reviewingGroup) return;
+        if (!reviewResolution.trim()) {
+            alert('Por favor ingrese la resolución institucional de aprobación.');
+            return;
+        }
+        try {
+            await api.patch(`/Groups/${reviewingGroup.uuid}/review`, {
+                aprobado: true,
+                resolucion: reviewResolution.trim()
+            });
+            setIsReviewModalOpen(false);
+            setReviewingGroup(null);
+            fetchData();
+        } catch (error: any) {
+            console.error('Error approving group:', error);
+            alert('Error al aprobar el grupo: ' + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleReject = async (group: Group) => {
+        if (!window.confirm(`¿Está seguro de rechazar la propuesta del grupo "${group.nombre}"?`)) return;
+        try {
+            await api.patch(`/Groups/${group.uuid}/review`, {
+                aprobado: false
+            });
+            fetchData();
+        } catch (error: any) {
+            console.error('Error rejecting group:', error);
+            alert('Error al rechazar el grupo: ' + (error.response?.data?.message || error.message));
         }
     };
 
@@ -196,11 +268,15 @@ const GroupsPage = () => {
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                         <Shield size={10} className="text-text-main" />
-                        <span>Administración Institucional</span>
+                        <span>{isAdmin ? 'Administración Institucional' : 'Investigación Académica'}</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Grupos de Investigación</h2>
+                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                        {isAdmin ? 'Grupos de Investigación' : 'Propuestas de Grupos'}
+                    </h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Configure las unidades organizativas de I+D+i y sus líneas de acción.
+                        {isAdmin 
+                            ? 'Configure las unidades organizativas de I+D+i y sus líneas de acción, y gestione las propuestas de los docentes.'
+                            : 'Proponga nuevos grupos de investigación académica o semilleros para la validación y registro institucional.'}
                     </p>
                 </div>
 
@@ -217,10 +293,10 @@ const GroupsPage = () => {
                     </div>
                     <button 
                         onClick={() => handleOpenModal()}
-                        className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                        className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-text-main/10"
                     >
                         <Plus size={14} strokeWidth={3} />
-                        Crear Grupo
+                        {isAdmin ? 'Crear Grupo' : 'Proponer Grupo'}
                     </button>
                 </div>
             </header>
@@ -232,7 +308,7 @@ const GroupsPage = () => {
                             <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
                                 <th className="p-4 font-bold tracking-widest">Grupo / Identidad</th>
                                 <th className="p-4 font-bold tracking-widest">Coordinador</th>
-                                <th className="p-4 font-bold tracking-widest">Estado</th>
+                                <th className="p-4 font-bold tracking-widest">Estado / Aprobación</th>
                                 <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -241,85 +317,158 @@ const GroupsPage = () => {
                                 <tr key={g.uuid} className="hover:bg-surface/30 transition-colors group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded bg-text-main/10 border border-text-main/20 flex items-center justify-center text-text-main group-hover:scale-105 transition-transform">
+                                            <div className="w-10 h-10 rounded bg-text-main/10 border border-text-main/20 flex items-center justify-center text-text-main group-hover:scale-105 transition-transform shrink-0">
                                                 <Award size={18} />
                                             </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-sm font-bold text-text-main tracking-tight uppercase">{g.nombre}</p>
-                                                <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${
-                                                    g.tipo_grupo === 'Semillero' 
-                                                        ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' 
-                                                        : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                                }`}>
-                                                    {g.tipo_grupo?.toUpperCase() || 'INVESTIGACIÓN'}
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-2 items-center">
-                                                <span className="text-[10px] text-text-dim font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">{g.siglas || 'SIN_SIGLAS'}</span>
-                                                {g.resolucion_aprobacion && (
-                                                    <span className="text-[9px] text-text-dim/80 font-bold uppercase tracking-tighter flex items-center gap-1">
-                                                        <FileText size={8} /> {g.resolucion_aprobacion}
+                                            <div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <p className="text-sm font-bold text-text-main tracking-tight uppercase">{g.nombre}</p>
+                                                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${
+                                                        g.tipo_grupo === 'Semillero' 
+                                                            ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' 
+                                                            : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                                                    }`}>
+                                                        {g.tipo_grupo?.toUpperCase() || 'INVESTIGACIÓN'}
                                                     </span>
-                                                )}
+                                                </div>
+                                                <div className="flex gap-2 items-center mt-1">
+                                                    <span className="text-[10px] text-text-dim font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">{g.siglas || 'SIN_SIGLAS'}</span>
+                                                    {g.resolucion_aprobacion && (
+                                                        <span className="text-[9px] text-text-dim/80 font-bold uppercase tracking-tighter flex items-center gap-1">
+                                                            <FileText size={8} /> {g.resolucion_aprobacion}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-full bg-surface border border-border-thin flex items-center justify-center text-text-dim">
-                                            <Users size={12} />
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-6 rounded-full bg-surface border border-border-thin flex items-center justify-center text-text-dim shrink-0">
+                                                <Users size={12} />
+                                            </div>
+                                            <span className="text-xs text-text-main font-medium uppercase truncate max-w-[160px]">{g.nombre_coordinador || 'No asignado'}</span>
                                         </div>
-                                        <span className="text-xs text-text-main font-medium uppercase">{g.nombre_coordinador || 'No asignado'}</span>
-                                    </div>
-                                </td>
-                                <td className="p-4">
-                                    {g.activo ? (
-                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
-                                            <CheckCircle size={10} strokeWidth={3} /> Activo
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20">
-                                            <XCircle size={10} strokeWidth={3} /> Inactivo
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="p-4 text-right">
-                                    <div className="flex justify-end gap-2">
-                                        <button 
-                                            onClick={() => handleOpenModal(g)}
-                                            className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-text-main transition-all"
-                                            title="Editar Grupo"
-                                        >
-                                            <Edit2 size={14} />
-                                        </button>
-                                        <button 
-                                            onClick={() => handleDelete(g.uuid, g.nombre)}
-                                            className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
-                                            title="Desactivar"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-                {groups.length === 0 && !loading && (
-                    <div className="py-20 text-center space-y-4">
-                        <Users size={32} className="mx-auto text-text-dim/30" />
-                        <p className="text-sm text-text-dim font-medium uppercase tracking-widest">No se encontraron grupos registrados</p>
-                    </div>
-                )}
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="flex flex-col gap-1">
+                                            {(!g.estado || g.estado === 'Aprobado') && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[9px] font-bold uppercase tracking-tighter border border-emerald-500/20 w-fit">
+                                                    <CheckCircle size={10} strokeWidth={3} /> Aprobado
+                                                </span>
+                                            )}
+                                            {g.estado === 'Pendiente' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 text-[9px] font-bold uppercase tracking-tighter border border-amber-500/20 w-fit animate-pulse">
+                                                    <Calendar size={10} strokeWidth={3} /> Pendiente
+                                                </span>
+                                            )}
+                                            {g.estado === 'Rechazado' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 text-[9px] font-bold uppercase tracking-tighter border border-red-500/20 w-fit">
+                                                    <XCircle size={10} strokeWidth={3} /> Rechazado
+                                                </span>
+                                            )}
+                                            <span className={`text-[8px] font-mono tracking-wider uppercase ${g.activo ? 'text-green-500/80' : 'text-text-dim/60'}`}>
+                                                ● {g.activo ? 'Vigente' : 'Inactivo'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td className="p-4 text-right">
+                                        <div className="flex justify-end items-center gap-2 flex-wrap">
+                                            {/* Admin Quick Review Actions for Pending proposals */}
+                                            {isAdmin && g.estado === 'Pendiente' && (
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleOpenReview(g)}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 hover:border-emerald-500/40 rounded-md text-[9px] font-bold uppercase tracking-wider text-emerald-400 transition-all"
+                                                        title="Aprobar Propuesta"
+                                                    >
+                                                        <CheckCircle size={11} strokeWidth={3} /> Aprobar
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleReject(g)}
+                                                        className="flex items-center gap-1 px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-md text-[9px] font-bold uppercase tracking-wider text-red-400 transition-all"
+                                                        title="Rechazar Propuesta"
+                                                    >
+                                                        <XCircle size={11} strokeWidth={3} /> Rechazar
+                                                    </button>
+                                                </>
+                                            )}
+
+                                            {/* General Actions Logic */}
+                                            {isAdmin ? (
+                                                <>
+                                                    <button 
+                                                        onClick={() => handleOpenModal(g, false)}
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-text-main transition-all"
+                                                        title="Editar Grupo"
+                                                    >
+                                                        <Edit2 size={14} />
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDelete(g.uuid, g.nombre)}
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                        title="Desactivar"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                // Teacher Flow
+                                                (() => {
+                                                    const esCoordinador = g.id_profesor_coordinador === user?.id_referencia;
+                                                    const esEditable = esCoordinador && g.estado !== 'Aprobado';
+
+                                                    if (esEditable) {
+                                                        return (
+                                                            <>
+                                                                <button 
+                                                                    onClick={() => handleOpenModal(g, false)}
+                                                                    className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-text-main transition-all"
+                                                                    title="Editar Propuesta"
+                                                                >
+                                                                    <Edit2 size={14} />
+                                                                </button>
+                                                                <button 
+                                                                    onClick={() => handleDelete(g.uuid, g.nombre)}
+                                                                    className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                                    title="Eliminar Propuesta"
+                                                                >
+                                                                    <Trash2 size={14} />
+                                                                </button>
+                                                            </>
+                                                        );
+                                                    } else {
+                                                        return (
+                                                            <button 
+                                                                onClick={() => handleOpenModal(g, true)}
+                                                                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-surface border border-border-thin rounded-md text-[10px] font-bold uppercase tracking-wider text-text-dim hover:text-text-main transition-all"
+                                                                title="Ver Detalles (Solo Lectura)"
+                                                            >
+                                                                <Eye size={12} /> Ver
+                                                            </button>
+                                                        );
+                                                    }
+                                                })()
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    {groups.length === 0 && !loading && (
+                        <div className="py-20 text-center space-y-4">
+                            <Users size={32} className="mx-auto text-text-dim/30" />
+                            <p className="text-sm text-text-dim font-medium uppercase tracking-widest">No se encontraron grupos registrados</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Modal de Creación/Edición */}
+            {/* Creation / Edition / View Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-scale-up">
                         <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
@@ -327,7 +476,7 @@ const GroupsPage = () => {
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
-                                        {editingGroup ? 'Editar Grupo de Investigación' : 'Nuevo Grupo de Investigación'}
+                                        {isReadOnly ? 'Ver Grupo de Investigación' : (editingGroup ? 'Editar Grupo de Investigación' : 'Nuevo Grupo de Investigación')}
                                     </h3>
                                     <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Configuración administrativa y normativa</p>
                                 </div>
@@ -338,16 +487,26 @@ const GroupsPage = () => {
                         </div>
 
                         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
-                            {/* Datos Básicos */}
+                            {!isAdmin && !isReadOnly && (
+                                <div className="bg-text-main/5 border border-text-main/15 rounded-xl p-4 flex items-center gap-3 animate-fade-up">
+                                    <Shield size={16} className="text-text-main shrink-0" />
+                                    <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
+                                        Las propuestas se envían en estado <span className="text-text-main">PENDIENTE</span> para su revisión y requieren aprobación formal del administrador antes de su activación.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Basic Data */}
                             <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="col-span-2 space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Nombre del Grupo</label>
                                     <input 
                                         required
+                                        disabled={isReadOnly}
                                         type="text" 
                                         value={formData.nombre}
                                         onChange={(e) => setFormData({...formData, nombre: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium disabled:opacity-60 disabled:cursor-not-allowed"
                                         placeholder="Ej: GRUPO DE INVESTIGACIÓN EN SISTEMAS INTELIGENTES"
                                     />
                                 </div>
@@ -355,9 +514,10 @@ const GroupsPage = () => {
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Siglas / Acrónimo</label>
                                     <input 
                                         type="text" 
+                                        disabled={isReadOnly}
                                         value={formData.siglas}
                                         onChange={(e) => setFormData({...formData, siglas: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono disabled:opacity-60 disabled:cursor-not-allowed"
                                         placeholder="GISI"
                                     />
                                 </div>
@@ -365,9 +525,10 @@ const GroupsPage = () => {
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Tipo de Grupo</label>
                                     <select 
                                         required
+                                        disabled={isReadOnly}
                                         value={formData.tipo_grupo}
                                         onChange={(e) => setFormData({...formData, tipo_grupo: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                         <option value="Investigación">Grupo de Investigación</option>
                                         <option value="Semillero">Semillero de Investigación</option>
@@ -377,9 +538,10 @@ const GroupsPage = () => {
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Dominio Académico</label>
                                     <select 
                                         required
+                                        disabled={isReadOnly}
                                         value={formData.id_dominio}
                                         onChange={(e) => setFormData({...formData, id_dominio: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
                                     >
                                         <option value="">Seleccione Dominio...</option>
                                         {dominios.map(d => (
@@ -391,9 +553,10 @@ const GroupsPage = () => {
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Coordinador Responsable</label>
                                     <select 
                                         required
+                                        disabled={isReadOnly || !isAdmin}
                                         value={formData.id_profesor_coordinador}
                                         onChange={(e) => setFormData({...formData, id_profesor_coordinador: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
                                     >
                                         <option value="">Seleccione un docente...</option>
                                         {teachers.map(t => (
@@ -403,7 +566,7 @@ const GroupsPage = () => {
                                 </div>
                             </section>
 
-                            {/* Normativa */}
+                            {/* Regulations / Normative */}
                             <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
@@ -411,34 +574,42 @@ const GroupsPage = () => {
                                     </label>
                                     <input 
                                         type="text" 
+                                        disabled={isReadOnly || !isAdmin}
                                         value={formData.resolucion_aprobacion}
                                         onChange={(e) => setFormData({...formData, resolucion_aprobacion: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase"
-                                        placeholder="ACTA-DI-2026-001"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed font-medium"
+                                        placeholder={!isAdmin ? "ASIGNADO TRAS APROBACIÓN" : "ACTA-DI-2026-001"}
                                     />
+                                    {!isAdmin && (
+                                        <p className="text-[8px] text-text-dim/60 uppercase font-bold tracking-wider">
+                                            Solo el administrador puede definir este valor tras la aprobación de la propuesta.
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} /> Fecha de Creación
+                                        <Calendar size={12} /> Fecha de Creación / Propuesta
                                     </label>
                                     <input 
                                         type="date" 
+                                        disabled={isReadOnly}
                                         value={formData.fecha_creacion}
                                         onChange={(e) => setFormData({...formData, fecha_creacion: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                     />
                                 </div>
                             </section>
 
-                            {/* Identidad */}
+                            {/* Identity Statements */}
                             <section className="space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Objetivo General</label>
                                     <textarea 
                                         rows={3}
+                                        disabled={isReadOnly}
                                         value={formData.objetivo_general}
                                         onChange={(e) => setFormData({...formData, objetivo_general: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none"
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
                                     />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -446,24 +617,26 @@ const GroupsPage = () => {
                                         <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
                                         <textarea 
                                             rows={3}
+                                            disabled={isReadOnly}
                                             value={formData.mision}
                                             onChange={(e) => setFormData({...formData, mision: e.target.value})}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none"
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Visión</label>
                                         <textarea 
                                             rows={3}
+                                            disabled={isReadOnly}
                                             value={formData.vision}
                                             onChange={(e) => setFormData({...formData, vision: e.target.value})}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none"
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
                                         />
                                     </div>
                                 </div>
                             </section>
 
-                            {/* Carreras Asociadas */}
+                            {/* Careers */}
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
@@ -477,14 +650,16 @@ const GroupsPage = () => {
                                     {carreras.map(career => (
                                         <div 
                                             key={career.id_carrera}
-                                            onClick={() => toggleCarrera(career.id_carrera)}
-                                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-2 ${
+                                            onClick={() => !isReadOnly && toggleCarrera(career.id_carrera)}
+                                            className={`p-3 rounded-xl border transition-all flex items-center gap-2 ${
+                                                isReadOnly ? 'cursor-default' : 'cursor-pointer'
+                                            } ${
                                                 formData.carreras_ids.includes(career.id_carrera)
                                                     ? 'bg-blue-500/10 border-blue-500 text-blue-500'
                                                     : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
                                             }`}
                                         >
-                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center ${
+                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center shrink-0 ${
                                                 formData.carreras_ids.includes(career.id_carrera) ? 'border-blue-500 bg-blue-500' : 'border-border-thin'
                                             }`}>
                                                 {formData.carreras_ids.includes(career.id_carrera) && <CheckCircle size={8} className="text-bg-deep" />}
@@ -495,7 +670,7 @@ const GroupsPage = () => {
                                 </div>
                             </section>
 
-                            {/* Líneas de Investigación (M:N) */}
+                            {/* Research Lines */}
                             <section className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
@@ -509,14 +684,16 @@ const GroupsPage = () => {
                                     {lines.map(line => (
                                         <div 
                                             key={line.id}
-                                            onClick={() => toggleLine(line.id)}
-                                            className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${
+                                            onClick={() => !isReadOnly && toggleLine(line.id)}
+                                            className={`p-3 rounded-xl border transition-all flex items-center gap-3 ${
+                                                isReadOnly ? 'cursor-default' : 'cursor-pointer'
+                                            } ${
                                                 formData.lineas_ids.includes(line.id)
                                                     ? 'bg-text-main/10 border-text-main text-text-main'
                                                     : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
                                             }`}
                                         >
-                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                                                 formData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
                                             }`}>
                                                 {formData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
@@ -533,13 +710,79 @@ const GroupsPage = () => {
                                 onClick={() => setIsModalOpen(false)}
                                 className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
                             >
+                                {isReadOnly ? 'Cerrar' : 'Cancelar'}
+                            </button>
+                            {!isReadOnly && (
+                                <button 
+                                    onClick={handleSubmit}
+                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-text-main/10 animate-fade-in"
+                                >
+                                    {editingGroup ? 'Guardar Cambios' : 'Proponer Grupo'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Admin Resolution & Review Dialog */}
+            {isReviewModalOpen && reviewingGroup && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
+                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-scale-up">
+                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                    <CheckCircle size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
+                                        Aprobar Grupo de Investigación
+                                    </h3>
+                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Oficialización de Propuesta Académica</p>
+                                </div>
+                            </div>
+                            <button onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }} className="text-text-dim hover:text-text-main p-2">
+                                <Plus className="rotate-45" size={24} />
+                            </button>
+                        </div>
+
+                        <div className="p-6 md:p-8 space-y-6">
+                            <div className="space-y-2">
+                                <p className="text-xs text-text-dim font-medium leading-relaxed">
+                                    Está a punto de aprobar el grupo <span className="text-text-main font-bold uppercase">"{reviewingGroup.nombre}"</span> propuesto por el docente <span className="text-text-main font-bold uppercase">{reviewingGroup.nombre_coordinador}</span>.
+                                </p>
+                                <p className="text-xs text-text-dim font-medium leading-relaxed">
+                                    Para registrar formalmente este grupo en el instituto, ingrese el identificador de la Resolución de Aprobación institucional:
+                                </p>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                    <FileText size={12} /> Resolución de Aprobación
+                                </label>
+                                <input 
+                                    required
+                                    type="text" 
+                                    value={reviewResolution}
+                                    onChange={(e) => setReviewResolution(e.target.value)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono tracking-wider"
+                                    placeholder="Ej: ACTA-DI-2026-004"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-border-thin bg-bg-deep/50 flex justify-end gap-4">
+                            <button 
+                                onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }}
+                                className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                            >
                                 Cancelar
                             </button>
                             <button 
-                                onClick={handleSubmit}
-                                className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-text-main/10"
+                                onClick={handleApprove}
+                                className="bg-emerald-500 text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all font-black"
                             >
-                                {editingGroup ? 'Guardar Cambios' : 'Crear Grupo'}
+                                Confirmar y Aprobar
                             </button>
                         </div>
                     </div>

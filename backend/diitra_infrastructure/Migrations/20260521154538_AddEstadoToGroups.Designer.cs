@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using diitra_infrastructure.data.models;
 
@@ -11,9 +12,11 @@ using diitra_infrastructure.data.models;
 namespace diitra_infrastructure.Migrations
 {
     [DbContext(typeof(DiitraContext))]
-    partial class DiitraContextModelSnapshot : ModelSnapshot
+    [Migration("20260521154538_AddEstadoToGroups")]
+    partial class AddEstadoToGroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
