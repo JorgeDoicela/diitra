@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShieldCheck, ShieldAlert, FileText, Calendar, User, Loader2 } from 'lucide-react';
+import { ShieldCheck, ShieldAlert, FileText, Calendar, User, Loader2, ArrowLeft } from 'lucide-react';
 import api from '../../api/axios_config';
 
 const VerifyDocument = () => {
@@ -30,29 +30,30 @@ const VerifyDocument = () => {
     }, [code]);
 
     return (
-        <div className="min-h-screen bg-bg-deep text-text-main flex flex-col font-sans">
-            {/* Header Minimalista */}
-            <header className="p-8 flex justify-between items-center border-b border-border-thin bg-surface backdrop-blur-md sticky top-0 z-50">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#0070f3] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(0,112,243,0.4)]">
-                        <ShieldCheck size={24} className="text-text-main" />
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto selection:bg-primary/20">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
+                        <ShieldCheck size={10} className="text-primary" />
+                        <span>Verificador Documental</span>
                     </div>
-                    <div>
-                        <h1 className="text-lg font-black tracking-tighter uppercase leading-none">DIITRA <span className="text-text-dim font-light text-sm">Integrity</span></h1>
-                        <p className="text-[9px] font-bold text-text-dim uppercase tracking-[0.2em] mt-1">Validador de Trazabilidad Institucional</p>
-                    </div>
+                    <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Verificación Forense</h2>
+                    <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
+                        Ingrese el código de trazabilidad impreso en el documento o escaneado vía QR para validar su autenticidad y estado legal ante el CACES.
+                    </p>
                 </div>
-                <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-text-dim hover:text-text-main transition-colors">Volver al Portal</Link>
+                <Link
+                    to="/"
+                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-xl"
+                >
+                    <ArrowLeft size={14} strokeWidth={3} />
+                    Volver al Portal
+                </Link>
             </header>
 
-            <main className="flex-1 flex flex-col items-center justify-center p-6 max-w-4xl mx-auto w-full">
+            <section className="flex flex-col items-center justify-center p-6 max-w-4xl mx-auto w-full">
                 {!result && !loading && (
                     <div className="w-full max-w-xl animate-fade-in text-center">
-                        <div className="mb-12">
-                            <h2 className="text-4xl font-black tracking-tighter mb-4">Verificación Forense</h2>
-                            <p className="text-text-dim text-sm leading-relaxed">Ingrese el código de trazabilidad impreso en el documento o escaneado vía QR para validar su autenticidad y estado legal ante el CACES.</p>
-                        </div>
-                        
                         <div className="relative group">
                             <input 
                                 type="text" 
@@ -129,12 +130,12 @@ const VerifyDocument = () => {
                         </div>
                     </div>
                 )}
-            </main>
+            </section>
 
             <footer className="p-12 text-center">
                 <p className="text-[9px] font-bold text-text-dim uppercase tracking-[0.5em]">DIITRA Trust Architecture • IST Traversari • Quito, Ecuador</p>
             </footer>
-        </div>
+        </main>
     );
 };
 
