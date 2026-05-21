@@ -193,7 +193,32 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         enabled: true,
     });
 
-    // ── 4. Hook Maestro con ydoc REACTIVO (v3.0 — corrección bug reconexión) ──
+    // ── 4. Resolver campos de texto enriquecido (Rich-Text) para evitar colisión de constructores Yjs ──
+    const richTexts = React.useMemo(() => {
+        const list: string[] = [];
+        if (templateCode === 'PROTOCOLO_INVESTIGACION') {
+            return [
+                'Antecedentes', 'DescripcionProyecto', 'Justificacion', 
+                'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 
+                'Metodologia', 'Evaluacion', 'Bibliografia'
+            ];
+        }
+        if (templateConfig?.sections) {
+            templateConfig.sections.forEach((sec: any) => {
+                const fields = sec.config?.fields || sec.fields;
+                if (Array.isArray(fields)) {
+                    fields.forEach((f: any) => {
+                        if (f.type === 'rich-text') {
+                            list.push(f.name);
+                        }
+                    });
+                }
+            });
+        }
+        return list;
+    }, [templateConfig, templateCode]);
+
+    // ── 5. Hook Maestro con ydoc REACTIVO (v3.0 — corrección bug reconexión) ──
     const {
         formData,
         setFormData,
@@ -204,10 +229,13 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     } = useDIITRADocument(
         mergedInitial,
         cowork.ydoc,        // ← parámetro reactivo: React detecta cambios si SignalR reconecta
-        { lists: templateConfig?.lists || [] }
+        { 
+            lists: templateConfig?.lists || [],
+            richTexts
+        }
     );
 
-    // ── 5. Cálculos derivados específicos del Protocolo de Investigación ──
+    // ── 6. Cálculos derivados específicos del Protocolo de Investigación ──
     useEffect(() => {
         if (templateCode === 'PROTOCOLO_INVESTIGACION' && formData?.RecursosNecesarios) {
             const total = (formData.RecursosNecesarios as any[]).reduce(
@@ -220,7 +248,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         }
     }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateCode]);
 
-    // ── 6. Persistencia en el backend ──
+    // ── 7. Persistencia en el backend ──
     const handleSave = async (data: any) => {
         try {
             if (data.Uuid) {
@@ -243,10 +271,11 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         } catch (error) {
             console.error('[DIITRA] Error al guardar documento:', error);
             throw error;
+            // eslint-disable-next-line no-unreachable
         }
     };
 
-    // ── 7. Resolución de secciones: datos (Registry) + componentes (ComponentRegistry) ──
+    // ── 8. Resolución de secciones: datos (Registry) + componentes (ComponentRegistry) ──
     const mappedSections = React.useMemo(() => {
         return (templateConfig.sections as any[]).map((sec: any) => {
             // Ícono: puede ser componente directo (legacy) o nombre string (nuevo)

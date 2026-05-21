@@ -32,6 +32,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
     ydoc: Y.Doc | null,             // ← Parámetro reactivo (v3.0)
     options: {
         lists?: string[];
+        richTexts?: string[];
     } = {}
 ) {
     // Inicializar el estado enriqueciendo los arrays con IDs únicos estables si no existen
@@ -52,8 +53,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
     // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
     const updateField = useCallback((name: string, value: any) => {
-        // Sincronizar en Yjs si existe ydoc y no es una lista trackeada
-        if (ydoc && !options.lists?.includes(name)) {
+        // Sincronizar en Yjs si existe ydoc y no es una lista trackeada ni un rich-text
+        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name)) {
             const ytext = ydoc.getText(name);
             const stringVal = String(value);
             if (ytext.toString() !== stringVal) {
@@ -70,7 +71,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             return { ...prev, [name]: value };
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ydoc, options.lists]);
+    }, [ydoc, options.lists, options.richTexts]);
 
     // --- LÓGICA DE LISTAS (Y.Array) ---
     const addItem = useCallback((listName: string, template: any) => {
@@ -139,6 +140,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
         // 1. Vincular Primitivos (Campos de texto, select, etc)
         Object.keys(initialData).forEach(key => {
             if (options.lists?.includes(key)) return; // Se maneja como array
+            if (options.richTexts?.includes(key)) return; // Se maneja como XMLFragment en Tiptap
 
             const ytext = ydoc.getText(key);
             const observer = (event: Y.YTextEvent) => {
