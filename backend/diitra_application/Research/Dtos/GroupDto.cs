@@ -21,7 +21,7 @@ public class GroupDto
     public DateOnly? FechaCreacion { get; set; }
     public bool Activo { get; set; }
     public string? Estado { get; set; }
-    
+
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
