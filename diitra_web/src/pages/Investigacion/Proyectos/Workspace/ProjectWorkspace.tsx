@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History } from 'lucide-react';
+import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
@@ -32,7 +32,6 @@ export const ProjectWorkspace: React.FC = () => {
     const [showProductModal, setShowProductModal] = useState(false);
     const [productTypes, setProductTypes] = useState<any[]>([]);
     
-    // Modal Form States
     const [newProduct, setNewProduct] = useState({
         id_tipo_producto: 1,
         titulo: '',
@@ -43,7 +42,6 @@ export const ProjectWorkspace: React.FC = () => {
         fecha_registro_senadi: ''
     });
 
-    // --- Dynamic Team Management States ---
     const [investigadores, setInvestigadores] = useState<any[]>([]);
     const [tieneGrupo, setTieneGrupo] = useState<boolean>(false);
     const [isSavingTeam, setIsSavingTeam] = useState(false);
@@ -53,7 +51,6 @@ export const ProjectWorkspace: React.FC = () => {
     const [showResults, setShowResults] = useState(false);
     const [teamMessage, setTeamMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    // --- Leadership Transition States (Relevo / Renuncia) ---
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [transferDirector, setTransferDirector] = useState<any>(null);
     const [newDirectorCedula, setNewDirectorCedula] = useState('');
@@ -80,7 +77,7 @@ export const ProjectWorkspace: React.FC = () => {
                     console.warn(`[DIITRA] Productos no encontrados (404), reintentando en 1s... (${retries} intentos restantes)`);
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 } else {
-                    retries = 0; // abortar otros errores o intentos agotados
+                    retries = 0;
                     console.error("[DIITRA] Error al cargar productos", err);
                 }
             }
@@ -172,7 +169,7 @@ export const ProjectWorkspace: React.FC = () => {
                         console.warn(`[DIITRA] Detalle de proyecto no encontrado (404), reintentando en 1s... (${retries} intentos restantes)`);
                         await new Promise(resolve => setTimeout(resolve, 1000));
                     } else {
-                        retries = 0; // abortar otros errores o intentos agotados
+                        retries = 0;
                         console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
                     }
                 }
@@ -190,7 +187,6 @@ export const ProjectWorkspace: React.FC = () => {
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
             } else {
-                // Fallback graceful
                 setCurrentProject({
                     id: documentUuid?.substring(0,8).toUpperCase() || 'NEW',
                     uuid: documentUuid || '',
@@ -208,13 +204,11 @@ export const ProjectWorkspace: React.FC = () => {
         if (documentUuid) fetchProject();
     }, [documentUuid]);
 
-    // --- Autocomplete search effect for working groups ---
     useEffect(() => {
         if (!searchQuery.trim()) {
             setSearchResults([]);
             return;
         }
-
         const delayDebounceFn = setTimeout(async () => {
             setIsSearching(true);
             try {
@@ -227,17 +221,14 @@ export const ProjectWorkspace: React.FC = () => {
                 setIsSearching(false);
             }
         }, 300);
-
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery]);
 
-    // --- Autocomplete search effect for new director ---
     useEffect(() => {
         if (!transferSearchQuery.trim()) {
             setTransferSearchResults([]);
             return;
         }
-
         const delayDebounceFn = setTimeout(async () => {
             setIsTransferSearching(true);
             try {
@@ -250,7 +241,6 @@ export const ProjectWorkspace: React.FC = () => {
                 setIsTransferSearching(false);
             }
         }, 300);
-
         return () => clearTimeout(delayDebounceFn);
     }, [transferSearchQuery]);
 
@@ -279,8 +269,6 @@ export const ProjectWorkspace: React.FC = () => {
             if (res.data.success) {
                 setTeamMessage({ type: 'success', text: '¡Transferencia de dirección realizada con éxito!' });
                 setShowTransferModal(false);
-                
-                // Recargar proyecto y equipo
                 const updatedProjectRes = await api.get(`/projects/${currentProject.uuid}/detail`);
                 setInvestigadores(updatedProjectRes.data.investigadores || []);
                 setTieneGrupo(updatedProjectRes.data.tieneGrupoInvestigacion || false);
@@ -288,7 +276,6 @@ export const ProjectWorkspace: React.FC = () => {
                     ...prev,
                     tieneGrupoInvestigacion: updatedProjectRes.data.tieneGrupoInvestigacion
                 }));
-                
                 setTimeout(() => setTeamMessage(null), 5000);
             } else {
                 alert(res.data.message || "Error al realizar la transferencia.");
@@ -304,10 +291,10 @@ export const ProjectWorkspace: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-bg-deep flex items-center justify-center">
+            <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 rounded-full"></div>
-                    <span className="text-text-dim font-mono text-sm">Cargando Workspace...</span>
+                    <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
+                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">Cargando Workspace...</p>
                 </div>
             </div>
         );
@@ -318,7 +305,6 @@ export const ProjectWorkspace: React.FC = () => {
             alert("Esta persona ya está registrada en el equipo de trabajo.");
             return;
         }
-
         const newMember = {
             nombre: selectedUser.nombre,
             cedula: selectedUser.cedula,
@@ -326,16 +312,13 @@ export const ProjectWorkspace: React.FC = () => {
             nivelAcademico: selectedUser.nivelAcademico || "Tercer Nivel",
             telefono: selectedUser.telefono || ""
         };
-
         setInvestigadores(prev => [...prev, newMember]);
         setSearchQuery('');
         setShowResults(false);
     };
 
     const handleUpdateMember = (cedula: string, field: string, value: any) => {
-        setInvestigadores(prev => {
-            return prev.map(inv => inv.cedula === cedula ? { ...inv, [field]: value } : inv);
-        });
+        setInvestigadores(prev => prev.map(inv => inv.cedula === cedula ? { ...inv, [field]: value } : inv));
     };
 
     const handleRemoveMember = (cedula: string) => {
@@ -353,16 +336,12 @@ export const ProjectWorkspace: React.FC = () => {
                 nivelAcademico: inv.nivelAcademico,
                 telefono: inv.telefono || ""
             }));
-
             const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload);
             if (res.data.success) {
                 setTeamMessage({ type: 'success', text: '¡Equipo de trabajo guardado y sincronizado con éxito!' });
                 const isGroup = investigadores.length > 1;
                 setTieneGrupo(isGroup);
-                setCurrentProject(prev => ({
-                    ...prev,
-                    tieneGrupoInvestigacion: isGroup
-                }));
+                setCurrentProject(prev => ({ ...prev, tieneGrupoInvestigacion: isGroup }));
                 setTimeout(() => setTeamMessage(null), 4000);
             } else {
                 setTeamMessage({ type: 'error', text: res.data.message || 'Error al guardar los cambios.' });
@@ -397,7 +376,6 @@ export const ProjectWorkspace: React.FC = () => {
         navigate(`/investigacion/workspace/${templateCode}/${documentUuid}`, { replace: true });
     };
 
-    // Render del Editor Genérico estructurado (Oculta el Dashboard)
     if (activeDocument) {
         return (
             <DocumentEditor 
@@ -409,20 +387,32 @@ export const ProjectWorkspace: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-blue-500/30">
-            <header className="border-b border-border-thin bg-bg-deep px-8 py-4 sticky top-0 z-10 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/investigacion')} className="p-1.5 hover:bg-surface-hover rounded text-text-dim transition-colors">
-                        <ArrowLeft size={16} />
+        <div className="flex-1 bg-bg-deep overflow-y-auto selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
+            {/* ── Header ── */}
+            <header className="hidden lg:flex items-center justify-between px-10 py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-10">
+                <div className="flex items-center gap-4">
+                    <button onClick={() => navigate('/investigacion')} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
+                        <ArrowLeft size={14} />
                     </button>
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-sm shadow-[0_0_15px_rgba(59,130,246,0.5)]">
-                        DI
+                    <div className="h-4 w-[1px] bg-border-thin" />
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-main uppercase">
+                            DI
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">
+                                <Activity size={10} strokeWidth={2} className="text-brand" />
+                                <span>Workspace · ISTPET</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-[10px] text-text-dim">
+                                <span>diitra</span>
+                                <ChevronRight size={10} />
+                                <span className="text-text-main font-mono">{currentProject.id}</span>
+                            </div>
+                        </div>
                     </div>
-                    <span className="text-text-dim font-mono text-sm">diitra / workspace</span>
-                    <ChevronRight size={14} className="text-text-dim" />
-                    <span className="font-semibold text-sm">{currentProject.id}</span>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex items-center gap-3">
                     <button 
                         onClick={async () => {
                             try {
@@ -439,11 +429,11 @@ export const ProjectWorkspace: React.FC = () => {
                                 alert("No se pudo realizar la exportación de metadatos CACES");
                             }
                         }}
-                        className="px-4 py-1.5 text-sm font-medium bg-accent-vercel text-bg-deep rounded-md hover:opacity-90 transition-colors shadow-sm"
+                        className="flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
                     >
-                        Exportar Metadatos CACES
+                        <FileText size={14} />
+                        <span>Exportar CACES</span>
                     </button>
-
                     <button 
                         disabled={isPublishingDSpace}
                         onClick={async () => {
@@ -459,376 +449,316 @@ export const ProjectWorkspace: React.FC = () => {
                                 setIsPublishingDSpace(false);
                             }
                         }}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors shadow-sm flex items-center gap-1.5 ${
-                            isPublishingDSpace 
-                                ? 'bg-surface-hover text-text-dim cursor-not-allowed border border-border-thin' 
-                                : 'bg-blue-600 hover:bg-blue-500 text-text-main'
-                        }`}
+                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${isPublishingDSpace ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep'}`}
                     >
-                        <UploadCloud size={16} className={isPublishingDSpace ? "animate-pulse" : ""} />
-                        {isPublishingDSpace ? 'Publicando...' : 'Publicar en DSpace'}
+                        <UploadCloud size={14} className={isPublishingDSpace ? "animate-pulse" : ""} />
+                        <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
                     </button>
                 </div>
             </header>
 
-            <main className="max-w-6xl mx-auto px-8 py-12 animate-fade-in">
-                <div className="mb-12">
-                    <h1 className="text-4xl font-bold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-text-main to-text-dim">
-                        {currentProject.title}
-                    </h1>
-                    <div className="flex items-center gap-4 text-sm text-text-dim font-mono">
-                        <span className="px-2.5 py-1 bg-surface-hover border border-border-thin rounded-md flex items-center gap-2 shadow-inner">
-                            <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.8)]"></span>
-                            {currentProject.status}
-                        </span>
-                        <span>UUID: {currentProject.uuid.split('-')[0]}...</span>
-                        <span>Rol: <strong className="text-text-main bg-surface-hover px-2 py-0.5 rounded border border-border-thin">{user?.role || 'Investigador'}</strong></span>
-                    </div>
+            {/* ── Mobile Header ── */}
+            <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-bg-deep border-b border-border-thin z-50">
+                <button onClick={() => navigate('/investigacion')} className="p-2 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
+                    <ArrowLeft size={16} />
+                </button>
+                <div className="text-[10px] font-bold text-text-dim uppercase tracking-[0.2em]">
+                    Workspace · {currentProject.id}
                 </div>
+                <div className="px-2.5 py-1 bg-surface border border-border-thin rounded-md flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">{currentProject.status}</span>
+                </div>
+            </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-6">
-                        <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                            <Settings size={20} className="text-text-dim" />
-                            Flujo Institucional CACES
-                        </h2>
-                        
-                        <div className="border border-border-thin rounded-xl bg-surface overflow-hidden shadow-2xl">
-                            {WorkflowPhases.map((phase, idx) => {
-                                const currentIdx = getPhaseIndex(currentProject.status);
-                                const isCurrent = currentIdx === idx;
-                                const isPast = currentIdx > idx;
-                                
-                                return (
-                                    <div key={phase.id} className={`p-6 border-b border-border-thin last:border-b-0 flex items-start gap-4 transition-all duration-300 ${isCurrent ? 'bg-surface-hover border-l-2 border-l-blue-500' : ''}`}>
-                                        <div className={`mt-1 transition-colors duration-300 ${isCurrent ? 'text-blue-500' : isPast ? 'text-green-500' : 'text-text-dim'}`}>
-                                            {isPast ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+            {/* ── Main Content ── */}
+            <main className="max-w-[1600px] mx-auto p-4 md:p-10 animate-fade-up">
+                {/* ── Page Title (DashboardHeader pattern) ── */}
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 gap-6 md:gap-0">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
+                            <span className="px-2.5 py-0.5 bg-surface border border-border-thin rounded-md flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                {currentProject.status}
+                            </span>
+                            <span className="text-text-dim">·</span>
+                            <span className="text-text-dim font-mono">{currentProject.uuid.split('-')[0]}</span>
+                            <span className="text-text-dim">·</span>
+                            <span className="text-text-dim">{user?.role || 'Investigador'}</span>
+                        </div>
+                        <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter">{currentProject.title}</h2>
+                        <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
+                    </div>
+                </header>
+
+                <div className="px-2 grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    <div className="lg:col-span-2 flex flex-col gap-3">
+                        {/* ── Flujo Institucional CACES ── */}
+                        <div className="bento-card p-6 flex flex-col justify-between group">
+                            <div className="flex items-center gap-2.5 mb-1.5">
+                                <Settings size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
+                                <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Flujo Institucional CACES</h3>
+                            </div>
+                            <div className="mt-4 space-y-0">
+                                {WorkflowPhases.map((phase, idx) => {
+                                    const currentIdx = getPhaseIndex(currentProject.status);
+                                    const isCurrent = currentIdx === idx;
+                                    const isPast = currentIdx > idx;
+                                    
+                                    return (
+                                        <div key={phase.id} className={`p-4 border-b border-border-thin last:border-b-0 flex items-start gap-3 transition-all duration-300 ${isCurrent ? 'bg-surface-hover border-l-2 border-l-brand' : ''}`}>
+                                            <div className={`mt-0.5 transition-colors duration-300 ${isCurrent ? 'text-brand' : isPast ? 'text-emerald-500' : 'text-text-dim'}`}>
+                                                {isPast ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className={`text-xs font-bold tracking-wider uppercase ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
+                                                <p className="text-[11px] text-text-dim mt-1 leading-relaxed">
+                                                    {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
+                                                    {phase.id === 'En Revisión' && 'Revisión técnica doble ciego por pares evaluadores asignados por el Director.'}
+                                                    {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
+                                                    {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
+                                                </p>
+                                                
+                                                {phase.id === 'Borrador' && (
+                                                    <div className="mt-4">
+                                                        <button 
+                                                            onClick={() => setActiveDocument(templateCode || 'PROTOCOLO_INVESTIGACION')}
+                                                            className="flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                        >
+                                                            <FileText size={14} />
+                                                            <span>{isPast ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                
+                                                {phase.id === 'En Revisión' && (isCurrent || isPast) && (
+                                                    <div className="mt-4 animate-fade-in">
+                                                        <button 
+                                                            onClick={() => setActiveDocument('RUBRICA_EVALUACION')}
+                                                            className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                        >
+                                                            <CheckSquare size={14} />
+                                                            <span>{isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica'}</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                                
+                                                {phase.id === 'En Ejecución' && isCurrent && (
+                                                    <div className="mt-4 animate-fade-in">
+                                                        <button 
+                                                            onClick={() => setActiveDocument('INFORME_AVANCE')}
+                                                            className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                        >
+                                                            <BarChart size={14} />
+                                                            <span>Generar Informe</span>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="flex-1">
-                                            <h3 className={`font-semibold ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
-                                            <p className="text-sm text-text-dim mt-1 leading-relaxed">
-                                                {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
-                                                {phase.id === 'En Revisión' && 'Revisión técnica doble ciego por pares evaluadores asignados por el Director.'}
-                                                {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
-                                                {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
-                                            </p>
-                                            
-                                            {phase.id === 'Borrador' && (
-                                                <div className="mt-5 flex gap-3">
-                                                    <button 
-                                                        onClick={() => setActiveDocument(templateCode || 'PROTOCOLO_INVESTIGACION')}
-                                                        className="px-4 py-2 bg-surface-hover border border-border-thin hover:border-text-dim hover:bg-surface-hover text-sm rounded-lg transition-all flex items-center gap-2 shadow-sm"
-                                                    >
-                                                        <FileText size={16} className="text-text-dim" />
-                                                        {isPast ? 'Ver Protocolo' : 'Editar Protocolo'}
-                                                    </button>
-                                                </div>
-                                            )}
-                                            
-                                            {phase.id === 'En Revisión' && (isCurrent || isPast) && (
-                                                <div className="mt-5 flex gap-3 animate-fade-in">
-                                                    <button 
-                                                        onClick={() => setActiveDocument('RUBRICA_EVALUACION')}
-                                                        className="px-4 py-2 bg-accent-vercel text-bg-deep hover:opacity-90 text-sm font-medium rounded-lg transition-all flex items-center gap-2 shadow-sm"
-                                                    >
-                                                        <CheckSquare size={16} />
-                                                        {isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica de Pares'}
-                                                    </button>
-                                                </div>
-                                            )}
-                                            
-                                            {phase.id === 'En Ejecución' && isCurrent && (
-                                                <div className="mt-5 flex gap-3 animate-fade-in">
-                                                    <button 
-                                                        onClick={() => setActiveDocument('INFORME_AVANCE')}
-                                                        className="px-4 py-2 bg-accent-vercel text-bg-deep hover:opacity-90 text-sm font-medium rounded-lg transition-all flex items-center gap-2 shadow-sm"
-                                                    >
-                                                        <BarChart size={16} />
-                                                        Generar Informe de Avance
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                            </div>
                         </div>
 
-                        {/* EQUIPO DE TRABAJO (Gestión de Grupo / Solo) */}
-                        <div className="border border-border-thin rounded-xl bg-surface p-6 shadow-2xl space-y-6 mt-6 relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
-
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-border-thin">
-                                <div>
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                                        <Users size={22} className="text-blue-400" />
-                                        Equipo de Trabajo
-                                    </h2>
-                                    <p className="text-xs text-text-dim mt-1 font-mono">
-                                        Gestión dinámica del talento humano del proyecto
-                                    </p>
+                        {/* ── Equipo de Trabajo ── */}
+                        <div className="bento-card p-6 flex flex-col justify-between group">
+                            <div>
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                    <Users size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
+                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Equipo de Trabajo</h3>
                                 </div>
-                                
-                                {/* Dynamic Toggle (Solo vs. Team) */}
-                                <div className="flex bg-surface-hover p-1 rounded-lg border border-border-thin">
+                                <p className="text-xs text-text-dim font-normal leading-relaxed">Gestión dinámica del talento humano del proyecto</p>
+                            </div>
+
+                            <div className="mt-6 space-y-4">
+                                {/* Toggle Individual / Grupo */}
+                                <div className="flex bg-surface-hover p-1 rounded-md border border-border-thin">
                                     <button 
                                         type="button"
                                         onClick={() => handleToggleTieneGrupo(false)}
-                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-300 ${!tieneGrupo ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-text-main shadow-md' : 'text-text-dim hover:text-text-main'}`}
+                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
-                                        Trabajo Individual
+                                        Individual
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={() => handleToggleTieneGrupo(true)}
-                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-300 ${tieneGrupo ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-text-main shadow-md' : 'text-text-dim hover:text-text-main'}`}
+                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
-                                        Grupo de Trabajo
+                                        Grupo
                                     </button>
                                 </div>
-                            </div>
 
-                            {/* Banner Informativo */}
-                            {!tieneGrupo ? (
-                                <div className="p-4 rounded-xl border border-yellow-500/10 bg-yellow-500/5 text-yellow-400/90 text-xs flex gap-3 leading-relaxed">
-                                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                                    <div>
-                                        <span className="font-semibold text-yellow-400">Modalidad Individual:</span> El proyecto está asignado para ser ejecutado únicamente por el Director del proyecto. Para agregar más docentes, co-investigadores o estudiantes de apoyo, cambia la modalidad a <strong>Grupo de Trabajo</strong> en el selector superior.
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="p-4 rounded-xl border border-blue-500/10 bg-blue-500/5 text-blue-400/90 text-xs flex gap-3 leading-relaxed">
-                                    <Sparkles size={18} className="shrink-0 mt-0.5 text-blue-400 animate-pulse" />
-                                    <div>
-                                        <span className="font-semibold text-blue-300">Modalidad Grupal:</span> Puedes invitar a otros docentes e investigadores como co-investigadores, o a estudiantes de la institución como ayudantes de investigación o tesistas. Utiliza el buscador a continuación.
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Autocomplete Search input (only visible in Group Mode) */}
-                            {tieneGrupo && (
-                                <div className="relative space-y-2">
-                                    <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider block">Agregar Miembros del IST</label>
-                                    <div className="relative">
-                                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-dim" />
-                                        <input 
-                                            type="text"
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            onFocus={() => setShowResults(true)}
-                                            placeholder="Buscar docente o estudiante por nombre o cédula..."
-                                            className="w-full bg-surface-hover border border-border-thin hover:border-text-dim focus:border-blue-500 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none transition-colors text-text-main placeholder:text-text-dim"
-                                        />
-                                        {isSearching && (
-                                            <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-                                                <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full"></div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Dropdown Suggestions */}
-                                    {showResults && searchQuery.trim() && (
-                                        <>
-                                            <div className="fixed inset-0 z-20" onClick={() => setShowResults(false)}></div>
-                                            <div className="absolute left-0 right-0 top-full mt-2 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-60 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
-                                                {searchResults.length === 0 ? (
-                                                    <div className="p-4 text-center text-xs text-text-dim font-mono">
-                                                        No se encontraron resultados institucionales.
-                                                    </div>
-                                                ) : (
-                                                    searchResults.map((selectedUser: any) => (
-                                                        <button 
-                                                            key={selectedUser.cedula}
-                                                            type="button"
-                                                            onClick={() => handleAddMember(selectedUser)}
-                                                            className="w-full p-3.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
-                                                        >
-                                                            <div className="space-y-1">
-                                                                <p className="font-bold text-text-main text-sm">{selectedUser.nombre}</p>
-                                                                <p className="text-text-dim font-mono text-[10px]">C.I. {selectedUser.cedula} | {selectedUser.email}</p>
-                                                            </div>
-                                                            <span className={`px-2 py-1 rounded text-[9px] font-bold tracking-wider uppercase border ${
-                                                                selectedUser.tipo === 'profesor' 
-                                                                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' 
-                                                                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                                            }`}>
-                                                                {selectedUser.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
-                                                            </span>
-                                                        </button>
-                                                    ))
-                                                )}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* Investigators List */}
-                            <div className="space-y-4">
-                                <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider block">Integrantes Activos del Equipo ({investigadores.filter((m: any) => m.activo !== false).length})</label>
-                                
-                                {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
-                                    <div className="text-center py-8 text-text-dim border border-dashed border-border-thin rounded-xl font-mono text-xs">
-                                        No hay investigadores activos asignados a este proyecto.
+                                {/* Banner Informativo */}
+                                {!tieneGrupo ? (
+                                    <div className="p-3 rounded-md border border-amber-500/20 bg-amber-500/5 text-amber-400 text-[11px] flex gap-2 leading-relaxed">
+                                        <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                                        <span><span className="font-bold">Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Grupo para agregar colaboradores.</span>
                                     </div>
                                 ) : (
-                                    <div className="space-y-3">
-                                        {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
-                                            const isDirector = member.rol?.toLowerCase().includes('director');
-                                            const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
-                                            
-                                            return (
-                                                <div 
-                                                    key={member.cedula || idx} 
-                                                    className="p-4 border border-border-thin rounded-xl bg-surface-hover/50 hover:bg-surface-hover transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 relative group animate-fade-in"
-                                                >
-                                                    <div className="flex items-center gap-3.5">
-                                                        <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-sm border uppercase shadow-sm ${
-                                                            isDirector 
-                                                                ? 'bg-gradient-to-br from-blue-500 to-purple-600 border-blue-400/30 text-text-main' 
-                                                                : isEstudiante 
-                                                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
-                                                                    : 'bg-surface-hover border-border-thin text-text-dim'
-                                                        }`}>
-                                                            {member.nombre ? member.nombre.substring(0, 2) : 'IN'}
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-sm text-text-main flex items-center gap-2">
-                                                                {member.nombre}
-                                                                {isDirector && (
-                                                                    <div className="flex items-center gap-2">
-                                                                        <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[8px] font-black uppercase tracking-widest rounded-md">
-                                                                            Director
-                                                                        </span>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleOpenTransferModal(member)}
-                                                                            className="px-2 py-0.5 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[9px] font-bold uppercase tracking-wider rounded-md transition-all flex items-center gap-1 shrink-0 cursor-pointer shadow-sm hover:scale-105 active:scale-95"
-                                                                            title="Transferir Dirección (Relevo / Renuncia)"
-                                                                        >
-                                                                            <RefreshCw size={10} />
-                                                                            Relevo
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </h4>
-                                                            <div className="text-[11px] text-text-dim font-mono mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                                <span>C.I. {member.cedula || 'N/A'}</span>
-                                                                <span>•</span>
-                                                                <div className="flex items-center gap-1">
-                                                                    <span>Tel:</span>
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={member.telefono || ''} 
-                                                                        onChange={(e) => handleUpdateMember(member.cedula, 'telefono', e.target.value)}
-                                                                        placeholder="Añadir..." 
-                                                                        className="bg-transparent text-text-dim placeholder:text-text-dim focus:outline-none border-b border-border-thin hover:border-text-dim focus:border-blue-500 w-24 inline-block px-1 py-0.5 text-[11px] transition-colors" 
-                                                                    />
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex flex-wrap items-center gap-4 self-end md:self-auto">
-                                                        {/* Role Dropdown */}
-                                                        <div className="flex flex-col gap-1">
-                                                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Rol</span>
-                                                            <select
-                                                                value={member.rol}
-                                                                onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                                className="bg-surface border border-border-thin rounded-lg py-1.5 px-2.5 text-xs text-text-dim focus:outline-none focus:border-blue-500 transition-colors w-44"
-                                                            >
-                                                                <option value="Director de Proyecto">Director de Proyecto</option>
-                                                                <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
-                                                                <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
-                                                                <option value="Técnico de Apoyo">Técnico de Apoyo</option>
-                                                            </select>
-                                                        </div>
-
-                                                        {/* Academic Level Dropdown */}
-                                                        <div className="flex flex-col gap-1">
-                                                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Nivel Académico</span>
-                                                            <select
-                                                                value={member.nivelAcademico}
-                                                                onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                                className="bg-surface border border-border-thin rounded-lg py-1.5 px-2.5 text-xs text-text-dim focus:outline-none focus:border-blue-500 transition-colors w-40"
-                                                            >
-                                                                <option value="Tercer Nivel">Tercer Nivel</option>
-                                                                <option value="Cuarto Nivel (Maestría)">Cuarto Nivel (Maestría)</option>
-                                                                <option value="Cuarto Nivel (PhD)">Cuarto Nivel (PhD)</option>
-                                                                <option value="Pregrado">Pregrado</option>
-                                                            </select>
-                                                        </div>
-
-                                                        {/* Delete member button (only if not the only member or if it is group mode) */}
-                                                        {(!isDirector || tieneGrupo) && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRemoveMember(member.cedula)}
-                                                                className="p-2 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all md:mt-4"
-                                                                title="Remover integrante"
-                                                            >
-                                                                <Trash2 size={14} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                    <div className="p-3 rounded-md border border-brand/20 bg-brand/5 text-brand-light text-[11px] flex gap-2 leading-relaxed">
+                                        <Sparkles size={14} className="shrink-0 mt-0.5" />
+                                        <span><span className="font-bold">Grupo:</span> Usa el buscador para invitar docentes y estudiantes al equipo.</span>
                                     </div>
                                 )}
-                            </div>
 
-                            {/* HISTORIAL DE MIEMBROS Y LIDERAZGO (Soft-deleted members for CACES compliance) */}
-                            {investigadores.some((member: any) => member.activo === false) && (
-                                <div className="mt-6 border-t border-border-thin pt-6">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-                                        className="w-full flex items-center justify-between text-xs font-bold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-2 focus:outline-none"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <History size={14} className="text-purple-400 animate-pulse" />
-                                            Historial de Cambios y Ex-Integrantes ({investigadores.filter((m: any) => m.activo === false).length})
+                                {/* Buscador */}
+                                {tieneGrupo && (
+                                    <div className="relative space-y-1.5">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Agregar Miembros</label>
+                                        <div className="relative">
+                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                            <input 
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                onFocus={() => setShowResults(true)}
+                                                placeholder="Buscar por nombre o cédula..."
+                                                className="w-full bg-surface border border-border-thin rounded p-3 pl-9 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
+                                            />
+                                            {isSearching && (
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-brand rounded-full"></div>
+                                                </div>
+                                            )}
                                         </div>
-                                        <span className="font-mono text-[10px]">{isHistoryExpanded ? '▲ COLAPSAR' : '▼ EXPANDIR'}</span>
-                                    </button>
+                                        {showResults && searchQuery.trim() && (
+                                            <>
+                                                <div className="fixed inset-0 z-20" onClick={() => setShowResults(false)}></div>
+                                                <div className="absolute left-0 right-0 top-full mt-1 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-48 overflow-y-auto z-30">
+                                                    {searchResults.length === 0 ? (
+                                                        <div className="p-4 text-center text-[10px] text-text-dim font-mono uppercase tracking-wider">Sin resultados</div>
+                                                    ) : (
+                                                        searchResults.map((su: any) => (
+                                                            <button 
+                                                                key={su.cedula}
+                                                                type="button"
+                                                                onClick={() => handleAddMember(su)}
+                                                                className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
+                                                            >
+                                                                <div>
+                                                                    <p className="font-bold text-text-main text-xs">{su.nombre}</p>
+                                                                    <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
+                                                                </div>
+                                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase border ${
+                                                                    su.tipo === 'profesor' ? 'bg-brand/10 border-brand/20 text-brand-light' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                                }`}>
+                                                                    {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
+                                                                </span>
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
 
-                                    {isHistoryExpanded && (
-                                        <div className="mt-4 space-y-3 animate-fade-in">
-                                            {investigadores.filter((member: any) => member.activo === false).map((member: any, idx: number) => {
-                                                const isExDirector = member.rol?.toLowerCase().includes('director');
+                                {/* Lista de Integrantes */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">
+                                        Activos ({investigadores.filter((m: any) => m.activo !== false).length})
+                                    </label>
+                                    
+                                    {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
+                                        <div className="p-4 rounded-md border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider">
+                                            Sin investigadores activos
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
+                                                const isDirector = member.rol?.toLowerCase().includes('director');
+                                                const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
+                                                
                                                 return (
                                                     <div 
                                                         key={member.cedula || idx} 
-                                                        className="p-4 border border-border-thin/40 rounded-xl bg-surface-hover/30 hover:bg-surface-hover/50 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                                        className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all flex flex-col md:flex-row md:items-center justify-between gap-3"
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center font-bold text-xs border uppercase ${
-                                                                isExDirector 
-                                                                    ? 'bg-purple-500/10 border-purple-500/20 text-purple-400 shadow-sm' 
-                                                                    : 'bg-surface-hover/50 border-border-thin/50 text-text-dim'
+                                                            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold border uppercase ${
+                                                                isDirector 
+                                                                    ? 'bg-gradient-to-br from-brand to-purple-600 border-brand/30 text-text-main' 
+                                                                    : isEstudiante 
+                                                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                                                                        : 'bg-surface border-border-thin text-text-dim'
                                                             }`}>
-                                                                {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
+                                                                {member.nombre ? member.nombre.substring(0, 2) : 'IN'}
                                                             </div>
                                                             <div>
-                                                                <h4 className="font-bold text-sm text-text-main flex items-center gap-2">
-                                                                    {member.nombre}
-                                                                    <span className="px-2 py-0.5 bg-surface-hover border border-border-thin text-[8px] font-bold uppercase tracking-wider rounded-md text-text-dim">
-                                                                        Ex-{member.rol || 'Integrante'}
-                                                                    </span>
-                                                                </h4>
-                                                                <div className="text-[10px] text-text-dim font-mono mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-xs font-bold text-text-main">{member.nombre}</span>
+                                                                    {isDirector && (
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className="px-1.5 py-0.5 bg-brand/10 border border-brand/20 text-brand-light text-[8px] font-bold uppercase tracking-wider rounded-sm">
+                                                                                Director
+                                                                            </span>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => handleOpenTransferModal(member)}
+                                                                                className="px-1.5 py-0.5 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer"
+                                                                                title="Transferir Dirección"
+                                                                            >
+                                                                                <RefreshCw size={9} className="inline" /> Relevo
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-[10px] text-text-dim font-mono mt-0.5 flex items-center gap-x-2">
                                                                     <span>C.I. {member.cedula || 'N/A'}</span>
-                                                                    {member.fechaInicio && <span>• Ingreso: {new Date(member.fechaInicio).toLocaleDateString()}</span>}
-                                                                    {member.fechaFin && <span>• Egreso: {new Date(member.fechaFin).toLocaleDateString()}</span>}
+                                                                    <span>·</span>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span>Tel:</span>
+                                                                        <input 
+                                                                            type="text" 
+                                                                            value={member.telefono || ''} 
+                                                                            onChange={(e) => handleUpdateMember(member.cedula, 'telefono', e.target.value)}
+                                                                            placeholder="Añadir..." 
+                                                                            className="bg-transparent text-text-dim placeholder:text-text-dim outline-none border-b border-border-thin hover:border-text-dim focus:border-text-main w-20 inline-block px-0.5 py-0 text-[10px] transition-colors" 
+                                                                        />
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        <div className="text-left sm:text-right shrink-0">
-                                                            <span className="px-2.5 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-medium rounded-lg inline-block">
-                                                                Baja: {member.motivoCambio || 'Retiro de equipo'}
-                                                            </span>
+
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Rol</span>
+                                                                <select
+                                                                    value={member.rol}
+                                                                    onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-40"
+                                                                >
+                                                                    <option value="Director de Proyecto">Director</option>
+                                                                    <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
+                                                                    <option value="Co-Investigador (Estudiante)">Co-Investigador (Est.)</option>
+                                                                    <option value="Técnico de Apoyo">Técnico de Apoyo</option>
+                                                                </select>
+                                                            </div>
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Nivel</span>
+                                                                <select
+                                                                    value={member.nivelAcademico}
+                                                                    onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-36"
+                                                                >
+                                                                    <option value="Tercer Nivel">Tercer Nivel</option>
+                                                                    <option value="Cuarto Nivel (Maestría)">Maestría</option>
+                                                                    <option value="Cuarto Nivel (PhD)">PhD</option>
+                                                                    <option value="Pregrado">Pregrado</option>
+                                                                </select>
+                                                            </div>
+                                                            {(!isDirector || tieneGrupo) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveMember(member.cedula)}
+                                                                    className="p-1.5 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                                                    title="Remover"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );
@@ -836,138 +766,183 @@ export const ProjectWorkspace: React.FC = () => {
                                         </div>
                                     )}
                                 </div>
-                            )}
 
-                            {/* Notifications / Toast Area */}
-                            {teamMessage && (
-                                <div className={`p-4 rounded-xl border text-xs flex gap-3 items-center leading-relaxed animate-in fade-in duration-200 ${
-                                    teamMessage.type === 'success' 
-                                        ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' 
-                                        : 'border-red-500/20 bg-red-500/5 text-red-400'
-                                }`}>
-                                    <CheckSquare size={16} className="shrink-0" />
-                                    <span className="font-medium">{teamMessage.text}</span>
-                                </div>
-                            )}
-
-                            {/* Glowing Save Button */}
-                            <div className="flex justify-end pt-4 border-t border-border-thin">
-                                <button
-                                    type="button"
-                                    disabled={isSavingTeam}
-                                    onClick={handleSaveTeam}
-                                    className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg ${
-                                        isSavingTeam 
-                                            ? 'bg-surface-hover text-text-dim border border-border-thin cursor-not-allowed shadow-none' 
-                                            : 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-text-main hover:shadow-blue-500/20 shadow-blue-500/10'
-                                    }`}
-                                >
-                                    {isSavingTeam ? (
-                                        <>
-                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-gray-500 rounded-full"></div>
-                                            Guardando...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <UserPlus size={14} />
-                                            Guardar Cambios del Equipo
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* MÓDULO DE PRODUCTOS DE INVESTIGACIÓN (CACES Compliance) */}
-                        <div className="border border-border-thin rounded-xl bg-surface p-6 shadow-2xl space-y-6 mt-6">
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-xl font-semibold flex items-center gap-2">
-                                    <BookOpen size={20} className="text-text-dim" />
-                                    Productos de Investigación Registrados
-                                </h2>
-                                <button 
-                                    onClick={() => setShowProductModal(true)}
-                                    className="px-3 py-1.5 bg-blue-600 text-text-main rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-blue-500 transition-all flex items-center gap-1.5 shadow-lg shadow-blue-500/10"
-                                >
-                                    + Registrar Producto
-                                </button>
-                            </div>
-                            
-                            {products.length === 0 ? (
-                                <div className="text-center py-8 text-text-dim border border-dashed border-border-thin rounded-xl font-mono text-xs">
-                                    No hay productos declarados para este proyecto de investigación.
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {products.map((prod: any) => (
-                                        <div key={prod.id_producto} className="p-4 border border-border-thin rounded-xl bg-surface-hover space-y-2 relative group hover:border-text-dim transition-all">
-                                            <div className="flex justify-between items-start">
-                                                <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[9px] font-black uppercase tracking-widest rounded">
-                                                    {prod.tipo_producto_nombre}
-                                                </span>
-                                                <button 
-                                                    onClick={() => handleDeleteProduct(prod.id_producto)}
-                                                    className="p-1 hover:bg-red-500/20 hover:text-red-500 text-text-dim rounded transition-all"
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
+                                {/* Historial de Ex-Integrantes */}
+                                {investigadores.some((member: any) => member.activo === false) && (
+                                    <div className="border-t border-border-thin pt-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                                            className="w-full flex items-center justify-between text-[10px] font-bold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-1 outline-none"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <History size={12} className="text-purple-400" />
+                                                <span>Ex-Integrantes ({investigadores.filter((m: any) => m.activo === false).length})</span>
                                             </div>
-                                            <h3 className="font-bold text-sm text-text-main line-clamp-1">{prod.titulo}</h3>
-                                            <div className="text-[11px] text-text-dim space-y-1 font-mono">
-                                                {prod.url_producto && (
-                                                    <a href={prod.url_producto} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 hover:underline">
-                                                        <ExternalLink size={10} /> {prod.url_producto.length > 30 ? prod.url_producto.substring(0, 30) + '...' : prod.url_producto}
-                                                    </a>
-                                                )}
-                                                {prod.es_propiedad_intelectual && (
-                                                    <p className="text-emerald-500 flex items-center gap-1">
-                                                        <span>★ SENADI:</span> {prod.numero_registro || 'En trámite'}
-                                                    </p>
-                                                )}
+                                            <span className="font-mono text-[10px]">{isHistoryExpanded ? '▲' : '▼'}</span>
+                                        </button>
+                                        {isHistoryExpanded && (
+                                            <div className="mt-3 space-y-2 animate-fade-in">
+                                                {investigadores.filter((member: any) => member.activo === false).map((member: any, idx: number) => {
+                                                    const isExDirector = member.rol?.toLowerCase().includes('director');
+                                                    return (
+                                                        <div key={member.cedula || idx} className="p-3 rounded-md bg-bg-deep border border-border-thin/50 flex items-center justify-between gap-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold border uppercase ${isExDirector ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' : 'bg-surface border-border-thin text-text-dim'}`}>
+                                                                    {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-[11px] font-bold text-text-main">{member.nombre}</span>
+                                                                    <span className="text-[9px] text-text-dim font-mono ml-1.5">C.I. {member.cedula || 'N/A'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <span className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-bold uppercase tracking-wider rounded-sm">
+                                                                Baja
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <div className="border border-border-thin rounded-xl bg-surface p-6 shadow-xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                            
-                            <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                                <FileSignature size={18} className="text-blue-400" />
-                                Bóveda de Firmas (.p12)
-                            </h2>
-                            <p className="text-xs text-text-dim mb-6 leading-relaxed">
-                                Sube tu archivo PAdES. La firma será auditada e insertada permanentemente por el DocumentEngine.
-                            </p>
-                            
-                            <div className="space-y-3">
-                                <div className="p-4 border border-border-thin rounded-lg bg-surface-hover flex items-center justify-between group hover:border-blue-500/50 transition-colors">
-                                    <div>
-                                        <p className="text-sm font-medium">Director de Investigación</p>
-                                        <p className="text-[11px] text-yellow-500 mt-0.5 flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Pendiente de Firma
-                                        </p>
+                                        )}
                                     </div>
-                                    <button className="p-2.5 bg-surface-hover text-text-dim hover:text-text-main hover:bg-blue-600 border border-border-thin hover:border-blue-500 rounded-md transition-all shadow-sm">
-                                        <UploadCloud size={16} />
+                                )}
+
+                                {/* Toast */}
+                                {teamMessage && (
+                                    <div className={`p-3 rounded-md border text-[11px] flex gap-2 items-center leading-relaxed animate-fade-in ${
+                                        teamMessage.type === 'success' 
+                                            ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' 
+                                            : 'border-red-500/20 bg-red-500/5 text-red-400'
+                                    }`}>
+                                        <CheckSquare size={14} className="shrink-0" />
+                                        <span className="font-medium">{teamMessage.text}</span>
+                                    </div>
+                                )}
+
+                                {/* Guardar equipo */}
+                                <div className="flex justify-end pt-4 border-t border-border-thin">
+                                    <button
+                                        type="button"
+                                        disabled={isSavingTeam}
+                                        onClick={handleSaveTeam}
+                                        className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${isSavingTeam ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep'}`}
+                                    >
+                                        {isSavingTeam ? (
+                                            <>
+                                                <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-gray-500 rounded-full"></div>
+                                                <span>Guardando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <UserPlus size={12} />
+                                                <span>Guardar Equipo</span>
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="border border-border-thin rounded-xl bg-surface p-6 shadow-xl">
-                            <h2 className="text-lg font-semibold mb-4">Metadata Normativa</h2>
-                            <div className="space-y-3 text-sm font-mono">
-                                <div className="flex justify-between border-b border-border-thin pb-2">
-                                    <span className="text-text-dim">Línea Inv.</span>
+                        {/* ── Productos de Investigación ── */}
+                        <div className="bento-card p-6 flex flex-col justify-between group">
+                            <div>
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                    <BookOpen size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
+                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Productos de Investigación</h3>
+                                </div>
+                            </div>
+                            <div className="mt-4 flex-1">
+                                <div className="flex justify-end mb-4">
+                                    <button 
+                                        onClick={() => setShowProductModal(true)}
+                                        className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                    >
+                                        <Plus size={12} />
+                                        <span>Registrar</span>
+                                    </button>
+                                </div>
+                                
+                                {products.length === 0 ? (
+                                    <div className="p-8 text-center text-[10px] text-text-dim uppercase tracking-wider border border-dashed border-border-thin rounded-md font-mono">
+                                        Sin productos registrados
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {products.map((prod: any) => (
+                                            <div key={prod.id_producto} className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all group">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <span className="px-1.5 py-0.5 bg-brand/10 border border-brand/20 text-brand-light text-[8px] font-bold uppercase tracking-widest rounded-sm">
+                                                        {prod.tipo_producto_nombre}
+                                                    </span>
+                                                    <button 
+                                                        onClick={() => handleDeleteProduct(prod.id_producto)}
+                                                        className="p-1 hover:bg-red-500/20 hover:text-red-500 text-text-dim rounded transition-all"
+                                                    >
+                                                        <Trash2 size={11} />
+                                                    </button>
+                                                </div>
+                                                <p className="text-xs font-bold text-text-main line-clamp-1">{prod.titulo}</p>
+                                                <div className="text-[10px] text-text-dim font-mono mt-1">
+                                                    {prod.url_producto && (
+                                                        <a href={prod.url_producto} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand-light hover:underline">
+                                                            <ExternalLink size={9} /> {prod.url_producto.length > 25 ? prod.url_producto.substring(0, 25) + '...' : prod.url_producto}
+                                                        </a>
+                                                    )}
+                                                    {prod.es_propiedad_intelectual && (
+                                                        <span className="flex items-center gap-1 text-emerald-500">★ SENADI: {prod.numero_registro || 'En trámite'}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── Sidebar (1 col) ── */}
+                    <div className="flex flex-col gap-3">
+                        {/* Firmas */}
+                        <div className="bento-card p-6 flex flex-col justify-between group relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-brand/10 rounded-full blur-3xl -mr-8 -mt-8 pointer-events-none"></div>
+                            <div>
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                    <FileSignature size={16} className="text-brand group-hover:text-text-main transition-colors" />
+                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Bóveda de Firmas</h3>
+                                </div>
+                                <p className="text-[10px] text-text-dim leading-relaxed mt-1">Sube tu archivo PAdES · Firma auditada permanentemente por DocumentEngine.</p>
+                            </div>
+                            <div className="mt-4">
+                                <div className="p-3 rounded-md bg-bg-deep border border-border-thin flex items-center justify-between hover:border-text-dim transition-colors">
+                                    <div>
+                                        <p className="text-xs font-bold text-text-main">Director</p>
+                                        <p className="text-[10px] text-amber-400 mt-0.5 flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pendiente
+                                        </p>
+                                    </div>
+                                    <button className="p-2 bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main rounded-md transition-all">
+                                        <UploadCloud size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Metadata */}
+                        <div className="bento-card p-6 flex flex-col justify-between group">
+                            <div>
+                                <div className="flex items-center gap-2.5 mb-1.5">
+                                    <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
+                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Metadata Normativa</h3>
+                                </div>
+                            </div>
+                            <div className="mt-4 space-y-2 text-[11px] font-mono">
+                                <div className="flex justify-between p-2 rounded-md bg-bg-deep border border-border-thin">
+                                    <span className="text-text-dim uppercase tracking-wider text-[10px]">Línea Inv.</span>
                                     <span className="text-text-dim">{currentProject.linea || 'N/A'}</span>
                                 </div>
-                                <div className="flex justify-between border-b border-border-thin pb-2">
-                                    <span className="text-text-dim">Presupuesto</span>
-                                    <span className="text-blue-400">${currentProject.presupuesto || '0.00'}</span>
+                                <div className="flex justify-between p-2 rounded-md bg-bg-deep border border-border-thin">
+                                    <span className="text-text-dim uppercase tracking-wider text-[10px]">Presupuesto</span>
+                                    <span className="text-brand-light font-bold">${currentProject.presupuesto || '0.00'}</span>
                                 </div>
                             </div>
                         </div>
@@ -975,27 +950,25 @@ export const ProjectWorkspace: React.FC = () => {
                 </div>
             </main>
 
-            {/* Modal de Registro de Producto */}
+            {/* ══ Modal: Registrar Producto ══ */}
             {showProductModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-surface border border-border-thin w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-text-main">
-                        <div className="flex justify-between items-center border-b border-border-thin pb-4">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <BookOpen size={18} className="text-blue-500" />
-                                Registrar Producto de Investigación
-                            </h3>
-                            <button onClick={() => setShowProductModal(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                ✕
-                            </button>
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
+                    <div className="bg-bg-deep border border-border-thin w-full max-w-lg rounded-lg shadow-2xl overflow-hidden flex flex-col">
+                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                            <div className="flex items-center gap-2">
+                                <BookOpen size={16} className="text-brand" />
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest">Registrar Producto</h3>
+                            </div>
+                            <button onClick={() => setShowProductModal(false)} className="text-text-dim hover:text-text-main transition-colors text-sm">✕</button>
                         </div>
                         
-                        <form onSubmit={handleCreateProduct} className="space-y-4 text-sm">
+                        <form onSubmit={handleCreateProduct} className="p-6 space-y-4">
                             <div className="space-y-1">
-                                <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Tipo de Producto</label>
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Tipo de Producto</label>
                                 <select 
                                     value={newProduct.id_tipo_producto}
                                     onChange={(e) => setNewProduct({ ...newProduct, id_tipo_producto: Number(e.target.value) })}
-                                    className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-text-main"
+                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
                                 >
                                     {productTypes.map((type) => (
                                         <option key={type.id_tipo_producto} value={type.id_tipo_producto}>
@@ -1006,73 +979,71 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
                             
                             <div className="space-y-1">
-                                <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Título del Producto / Artículo</label>
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Título del Producto</label>
                                 <input 
                                     type="text"
                                     required
-                                    placeholder="Ej: Análisis comparativo de algoritmos CNN en cultivos..."
+                                    placeholder="Ej: Análisis comparativo de algoritmos CNN..."
                                     value={newProduct.titulo}
                                     onChange={(e) => setNewProduct({ ...newProduct, titulo: e.target.value })}
-                                    className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-text-main placeholder:text-text-dim"
+                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
                                 />
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Cantidad</label>
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Cantidad</label>
                                     <input 
                                         type="number"
                                         min="1"
                                         required
                                         value={newProduct.cantidad}
                                         onChange={(e) => setNewProduct({ ...newProduct, cantidad: Number(e.target.value) })}
-                                        className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-text-main"
+                                        className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">URL / DOI / ISSN</label>
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">URL / DOI</label>
                                     <input 
                                         type="text"
-                                        placeholder="Ej: https://doi.org/10..."
+                                        placeholder="https://doi.org/..."
                                         value={newProduct.url_producto}
                                         onChange={(e) => setNewProduct({ ...newProduct, url_producto: e.target.value })}
-                                        className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-text-main placeholder:text-text-dim"
+                                        className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
                                     />
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-2 pt-2">
+                            <div className="flex items-center gap-2 pt-1">
                                 <input 
                                     type="checkbox"
                                     id="es_propiedad_intelectual"
                                     checked={newProduct.es_propiedad_intelectual}
                                     onChange={(e) => setNewProduct({ ...newProduct, es_propiedad_intelectual: e.target.checked })}
-                                    className="rounded bg-surface-hover border-border-thin text-blue-500 focus:ring-0 focus:ring-offset-0"
+                                    className="w-4 h-4 rounded border-border-thin bg-surface text-brand accent-text-main"
                                 />
-                                <label htmlFor="es_propiedad_intelectual" className="text-xs font-medium text-text-dim select-none">
-                                    ¿Es Propiedad Intelectual Registrada (SENADI)?
-                                </label>
+                                <label htmlFor="es_propiedad_intelectual" className="text-xs text-text-dim select-none">Propiedad Intelectual (SENADI)</label>
                             </div>
                             
                             {newProduct.es_propiedad_intelectual && (
-                                <div className="grid grid-cols-2 gap-4 pt-2 border-t border-border-thin animate-in fade-in duration-200">
+                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border-thin animate-fade-in">
                                     <div className="space-y-1">
-                                        <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Número de Registro</label>
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">N. Registro</label>
                                         <input 
                                             type="text"
-                                            placeholder="Ej: SENADI-2026-0045"
+                                            placeholder="SENADI-2026-0045"
                                             value={newProduct.numero_registro}
                                             onChange={(e) => setNewProduct({ ...newProduct, numero_registro: e.target.value })}
-                                            className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-text-main placeholder:text-text-dim"
+                                            className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Fecha de Registro</label>
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Fecha de Registro</label>
                                         <input 
                                             type="date"
                                             value={newProduct.fecha_registro_senadi}
                                             onChange={(e) => setNewProduct({ ...newProduct, fecha_registro_senadi: e.target.value })}
-                                            className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 transition-colors text-text-main"
+                                            className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
                                         />
                                     </div>
                                 </div>
@@ -1082,13 +1053,13 @@ export const ProjectWorkspace: React.FC = () => {
                                 <button 
                                     type="button" 
                                     onClick={() => setShowProductModal(false)}
-                                    className="px-4 py-2 border border-border-thin hover:bg-surface-hover hover:text-text-main text-text-dim text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
+                                    className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-text-main text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-lg shadow-blue-500/10"
+                                    className="bg-text-main text-bg-deep px-6 py-2.5 rounded text-[10px] font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all"
                                 >
                                     Guardar
                                 </button>
@@ -1098,81 +1069,70 @@ export const ProjectWorkspace: React.FC = () => {
                 </div>
             )}
 
-            {/* Modal de Transferencia de Dirección (Relevo / Renuncia) */}
+            {/* ══ Modal: Transferencia de Dirección ══ */}
             {showTransferModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-surface border border-border-thin w-full max-w-xl rounded-2xl p-6 shadow-2xl space-y-6 animate-in zoom-in-95 duration-200 text-text-main relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-                        
-                        <div className="flex justify-between items-center border-b border-border-thin pb-4">
-                            <h3 className="text-lg font-bold flex items-center gap-2">
-                                <RefreshCw size={18} className="text-purple-400" />
-                                Transferencia de Dirección / Relevo
-                            </h3>
-                            <button 
-                                onClick={() => setShowTransferModal(false)} 
-                                className="text-text-dim hover:text-text-main transition-colors text-lg font-semibold"
-                            >
-                                ✕
-                            </button>
+                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
+                    <div className="bg-bg-deep border border-border-thin w-full max-w-xl rounded-lg shadow-2xl overflow-hidden flex flex-col relative">
+                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                            <div className="flex items-center gap-2">
+                                <RefreshCw size={16} className="text-purple-400" />
+                                <h3 className="text-[10px] font-bold uppercase tracking-widest">Transferencia de Dirección</h3>
+                            </div>
+                            <button onClick={() => setShowTransferModal(false)} className="text-text-dim hover:text-text-main transition-colors text-sm">✕</button>
                         </div>
 
                         {transferDirector && (
-                            <div className="p-3 bg-purple-500/5 border border-purple-500/10 rounded-xl text-xs space-y-1">
+                            <div className="mx-6 mt-4 p-3 bg-purple-500/5 border border-purple-500/10 rounded-md text-[11px] space-y-1">
                                 <span className="font-semibold text-purple-400 block uppercase tracking-wider text-[10px]">Director a Relevar:</span>
-                                <p className="font-bold text-text-main text-sm">{transferDirector.nombre}</p>
+                                <p className="font-bold text-text-main text-xs">{transferDirector.nombre}</p>
                                 <p className="text-text-dim font-mono text-[10px]">C.I. {transferDirector.cedula} | {transferDirector.rol}</p>
                             </div>
                         )}
 
-                        <form onSubmit={handleConfirmTransfer} className="space-y-4 text-sm">
-                            {/* Buscar Nuevo Director */}
+                        <form onSubmit={handleConfirmTransfer} className="p-6 space-y-4">
                             <div className="relative space-y-1">
-                                <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider block">Buscar Nuevo Director</label>
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Buscar Nuevo Director</label>
                                 <div className="relative">
-                                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
                                     <input 
                                         type="text"
                                         value={transferSearchQuery}
                                         onChange={(e) => setTransferSearchQuery(e.target.value)}
                                         onFocus={() => setShowTransferSearchResults(true)}
-                                        placeholder="Buscar por nombre o cédula del nuevo director..."
-                                        className="w-full bg-surface-hover border border-border-thin hover:border-text-dim focus:border-purple-500 rounded-xl py-2.5 pl-9 pr-4 text-sm focus:outline-none transition-colors text-text-main placeholder:text-text-dim"
+                                        placeholder="Buscar por nombre o cédula..."
+                                        className="w-full bg-surface border border-border-thin rounded p-3 pl-9 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
                                     />
                                     {isTransferSearching && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-purple-500 rounded-full"></div>
+                                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-purple-500 rounded-full"></div>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Autocomplete Suggestions */}
                                 {showTransferSearchResults && transferSearchQuery.trim() && (
                                     <>
                                         <div className="fixed inset-0 z-20" onClick={() => setShowTransferSearchResults(false)}></div>
-                                        <div className="absolute left-0 right-0 top-full mt-2 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-48 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                        <div className="absolute left-0 right-0 top-full mt-1 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-48 overflow-y-auto z-30">
                                             {transferSearchResults.length === 0 ? (
-                                                <div className="p-4 text-center text-xs text-text-dim font-mono">
-                                                    No se encontraron resultados institucionales.
-                                                </div>
+                                                <div className="p-4 text-center text-[10px] text-text-dim uppercase tracking-wider">Sin resultados</div>
                                             ) : (
-                                                transferSearchResults.map((selectedUser: any) => (
+                                                transferSearchResults.map((su: any) => (
                                                     <button 
-                                                        key={selectedUser.cedula}
+                                                        key={su.cedula}
                                                         type="button"
                                                         onClick={() => {
-                                                            setNewDirectorCedula(selectedUser.cedula);
-                                                            setTransferSearchQuery(selectedUser.nombre);
+                                                            setNewDirectorCedula(su.cedula);
+                                                            setTransferSearchQuery(su.nombre);
                                                             setShowTransferSearchResults(false);
                                                         }}
-                                                        className="w-full p-3 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                        className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
                                                     >
-                                                        <div className="space-y-1">
-                                                            <p className="font-bold text-text-main text-sm">{selectedUser.nombre}</p>
-                                                            <p className="text-text-dim font-mono text-[10px]">C.I. {selectedUser.cedula} | {selectedUser.email}</p>
+                                                        <div>
+                                                            <p className="font-bold text-text-main">{su.nombre}</p>
+                                                            <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
                                                         </div>
-                                                        <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase border bg-purple-500/10 border-purple-500/20 text-purple-400">
-                                                            {selectedUser.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
+                                                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase border bg-purple-500/10 border-purple-500/20 text-purple-400">
+                                                            {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
                                                         </span>
                                                     </button>
                                                 ))
@@ -1182,34 +1142,29 @@ export const ProjectWorkspace: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Mostrar seleccionado si existe */}
                             {newDirectorCedula && (
-                                <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl text-xs flex justify-between items-center animate-fade-in">
+                                <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-md text-[11px] flex justify-between items-center animate-fade-in">
                                     <div>
-                                        <span className="font-semibold text-emerald-400 block uppercase tracking-wider text-[10px]">Nuevo Director Asignado:</span>
-                                        <p className="font-bold text-text-main text-sm">{transferSearchQuery}</p>
+                                        <span className="font-semibold text-emerald-400 block uppercase tracking-wider text-[10px]">Nuevo Director:</span>
+                                        <p className="font-bold text-text-main text-xs">{transferSearchQuery}</p>
                                         <p className="text-text-dim font-mono text-[10px]">C.I. {newDirectorCedula}</p>
                                     </div>
                                     <button 
                                         type="button" 
-                                        onClick={() => {
-                                            setNewDirectorCedula('');
-                                            setTransferSearchQuery('');
-                                        }}
-                                        className="text-xs text-red-400 hover:text-red-300 font-bold uppercase tracking-wider"
+                                        onClick={() => { setNewDirectorCedula(''); setTransferSearchQuery(''); }}
+                                        className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider"
                                     >
                                         Quitar
                                     </button>
                                 </div>
                             )}
 
-                            {/* Motivo del Cambio */}
                             <div className="space-y-1">
-                                <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider block">Motivo del Cambio</label>
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Motivo</label>
                                 <select 
                                     value={transferMotivo}
                                     onChange={(e) => setTransferMotivo(e.target.value)}
-                                    className="w-full bg-surface-hover border border-border-thin rounded-lg py-2.5 px-3 focus:outline-none focus:border-purple-500 transition-colors text-text-main"
+                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
                                 >
                                     <option value="Reasignación institucional">Reasignación institucional</option>
                                     <option value="Renuncia voluntaria">Renuncia voluntaria</option>
@@ -1218,16 +1173,15 @@ export const ProjectWorkspace: React.FC = () => {
                                 </select>
                             </div>
 
-                            {/* Descripción/Justificación */}
                             <div className="space-y-1">
-                                <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider block">Justificación / Descripción Detallada</label>
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Justificación</label>
                                 <textarea 
                                     rows={3}
                                     required
-                                    placeholder="Justifica el relevo del liderazgo institucional. Esto quedará registrado para fines de auditoría de CACES y SENESCYT..."
+                                    placeholder="Describe el motivo del relevo institucional..."
                                     value={transferDescripcion}
                                     onChange={(e) => setTransferDescripcion(e.target.value)}
-                                    className="w-full bg-surface-hover border border-border-thin rounded-lg py-2 px-3 focus:outline-none focus:border-purple-500 transition-colors text-text-main placeholder:text-text-dim resize-none"
+                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim resize-none"
                                 />
                             </div>
 
@@ -1235,28 +1189,24 @@ export const ProjectWorkspace: React.FC = () => {
                                 <button 
                                     type="button" 
                                     onClick={() => setShowTransferModal(false)}
-                                    className="px-4 py-2.5 border border-border-thin hover:bg-surface-hover hover:text-text-main text-text-dim text-xs font-bold uppercase tracking-wider rounded-lg transition-colors"
+                                    className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit" 
                                     disabled={isTransferring || !newDirectorCedula}
-                                    className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-2 shadow-lg ${
-                                        isTransferring || !newDirectorCedula
-                                            ? 'bg-surface-hover text-text-dim border border-border-thin cursor-not-allowed shadow-none'
-                                            : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-text-main shadow-purple-500/10'
-                                    }`}
+                                    className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded text-[10px] font-bold uppercase tracking-widest transition-all ${isTransferring || !newDirectorCedula ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep active:scale-95'}`}
                                 >
                                     {isTransferring ? (
                                         <>
-                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-gray-500 rounded-full"></div>
-                                            Procesando...
+                                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-gray-500 rounded-full"></div>
+                                            <span>Procesando...</span>
                                         </>
                                     ) : (
                                         <>
-                                            <RefreshCw size={14} />
-                                            Confirmar Relevo
+                                            <RefreshCw size={12} />
+                                            <span>Confirmar Relevo</span>
                                         </>
                                     )}
                                 </button>

@@ -113,45 +113,37 @@ namespace diitra_infrastructure.Common.Notifications
                     </div>
                 </div>";
 
-            try
+            var host = _configuration["Email:Host"];
+            var port = int.Parse(_configuration["Email:Port"] ?? "587");
+            var user = _configuration["Email:Username"];
+            var pass = _configuration["Email:Password"];
+
+            if (string.IsNullOrEmpty(host))
             {
-                // Configuración desde appsettings.json
-                var host = _configuration["Email:Host"];
-                var port = int.Parse(_configuration["Email:Port"] ?? "587");
-                var user = _configuration["Email:Username"];
-                var pass = _configuration["Email:Password"];
-
-                if (string.IsNullOrEmpty(host))
-                {
-                    _logger.LogWarning($"[MOCK EMAIL] Para: {recipient} | Título: {title}");
-                    return;
-                }
-
-                var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
-                var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
-
-                using var client = new SmtpClient(host, port)
-                {
-                    Credentials = new NetworkCredential(user, pass),
-                    EnableSsl = true
-                };
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(fromEmail, fromName),
-                    Subject = title,
-                    Body = htmlBody,
-                    IsBodyHtml = true
-                };
-                mailMessage.To.Add(recipient);
-
-                await client.SendMailAsync(mailMessage);
-                _logger.LogInformation($"Email enviado con éxito a {recipient}");
+                _logger.LogWarning("[MOCK EMAIL] Para: {Recipient} | Titulo: {Title}", recipient, title);
+                return;
             }
-            catch (Exception ex)
+
+            var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
+            var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
+
+            using var client = new SmtpClient(host, port)
             {
-                _logger.LogError(ex, $"Error enviando email a {recipient}");
-            }
+                Credentials = new NetworkCredential(user, pass),
+                EnableSsl = true
+            };
+
+            var mailMessage = new MailMessage
+            {
+                From = new MailAddress(fromEmail, fromName),
+                Subject = title,
+                Body = htmlBody,
+                IsBodyHtml = true
+            };
+            mailMessage.To.Add(recipient);
+
+            await client.SendMailAsync(mailMessage);
+            _logger.LogInformation("Email enviado con exito a {Recipient}", recipient);
         }
     }
 }

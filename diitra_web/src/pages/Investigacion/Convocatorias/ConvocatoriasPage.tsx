@@ -182,9 +182,17 @@ const ConvocatoriasPage = () => {
     const handleStatusChange = async (uuid: string, newStatus: string) => {
         try {
             await api.patch(`/Convocatorias/${uuid}/status?status=${newStatus}`);
+            if (newStatus === 'Abierta') {
+                alert('Convocatoria publicada exitosamente. Se ha notificado a los docentes.');
+            } else {
+                alert(`Estado actualizado a ${newStatus}.`);
+            }
             fetchConvocatorias();
-        } catch (error) {
-            console.error('Error changing status:', error);
+        } catch (error: any) {
+            const message = error?.response?.status === 403
+                ? 'No tienes permisos para realizar esta accion.'
+                : `Error al cambiar el estado: ${error?.response?.data?.message || error.message}`;
+            alert(message);
         }
     };
 

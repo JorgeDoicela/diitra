@@ -260,13 +260,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         <div className="flex gap-2 md:gap-3">
                             <button
                                 onClick={handleSave}
-                                className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-green-600 hover:bg-green-500 rounded-lg text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-white transition-all shadow-lg flex items-center justify-center gap-2"
+                                className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-text-main hover:opacity-90 rounded-md text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-bg-deep transition-all flex items-center justify-center gap-2"
                             >
                                 <Save size={12} /> <span className="hidden xs:inline">Guardar</span>
                             </button>
                             <button
                                 onClick={onClose}
-                                className="hidden lg:flex px-6 py-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-lg text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors"
+                                className="hidden lg:flex px-6 py-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-md text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors"
                             >
                                 Cerrar
                             </button>
@@ -298,7 +298,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 ))}
                                 <button
                                     onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-blue-600 text-white border-blue-500 shadow-blue-500/20' : 'text-blue-500 border-blue-500/20 hover:bg-blue-500/10'}`}
+                                    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-brand-dark text-text-main border-brand shadow-brand/20' : 'text-brand-light border-brand/20 hover:bg-brand/10'}`}
                                 >
                                     <FileText size={18} /> Finalizar y Firmar
                                 </button>
@@ -374,7 +374,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         </div>
 
                                         {/* Firma Digital PAdES */}
-                                        <div className="p-8 bg-surface border border-border-thin rounded-2xl shadow-sm border-t-4 border-t-blue-600">
+                                        <div className="p-8 bg-surface border border-border-thin rounded-2xl shadow-sm border-t-4 border-t-brand-dark">
                                             <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Digital PAdES</h4>
                                             <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a Ley de Comercio Electrónico.</p>
                                             <div className="space-y-4">
@@ -388,7 +388,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 <button
                                                     onClick={handleSign}
                                                     disabled={!pdfBlob || isSigning}
-                                                    className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${!pdfBlob ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-xl'}`}
+                                                    className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${!pdfBlob ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-brand-dark text-text-main hover:bg-brand shadow-xl'}`}
                                                 >
                                                     {isSigning ? <><Clock size={18} className="animate-spin" /> Firmando...</> : <><Shield size={18} /> Aplicar Firma Digital</>}
                                                 </button>

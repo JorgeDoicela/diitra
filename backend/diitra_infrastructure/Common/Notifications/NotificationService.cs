@@ -28,7 +28,6 @@ namespace diitra_infrastructure.Common.Notifications
 
         public async Task NotifyUserAsync(int userId, string title, string body, string category = "SISTEMA", string? url = null, Dictionary<string, string>? extraData = null)
         {
-            // 1. Persistencia Interna (In-App Notification)
             var notif = new InvNotificacion
             {
                 Uuid = Guid.NewGuid(),
@@ -44,44 +43,133 @@ namespace diitra_infrastructure.Common.Notifications
             _context.InvNotificaciones.Add(notif);
             await _context.SaveChangesAsync();
 
-            // 2. Buscar Email del Usuario
             var user = await _context.Users.FindAsync(userId);
             var recipientContact = user?.EmailInstitucional ?? "";
             var recipientName = user?.Nombre ?? "Usuario";
 
-            // 3. Notificación Externa vía Drivers (Email, SignalR, Push)
+            await DispatchToDriversAsync(userId, recipientContact, recipientName, title, body, url, extraData);
+        }
+
+        public async Task BroadcastAsync(string title, string body, string? role = null, string? url = null, Dictionary<string, string>? extraData = null)
+        {
+            _logger.LogInformation("Iniciando Broadcast: {Title} (Filtro Rol: {Role})", title, role ?? "TODOS");
+
+            IQueryable<User> query = _context.Users;
+
+            if (!string.IsNullOrEmpty(role))
+            {
+                var tablaSigafi = MapRoleToTablaSigafi(role);
+                if (tablaSigafi != null)
+                {
+                    query = query.Where(u => u.TablaSigafi == tablaSigafi);
+                }
+                else
+                {
+                    _logger.LogWarning("Rol desconocido '{Role}' en Broadcast, se notificara a todos los usuarios", role);
+                }
+            }
+
+            var recipients = await query
+                .Select(u => new
+                {
+                    u.IdUsuario,
+                    u.EmailInstitucional,
+                    u.Nombre
+                })
+                .ToListAsync();
+
+            if (recipients.Count == 0)
+            {
+                _logger.LogWarning("Broadcast sin destinatarios para rol: {Role}", role);
+                return;
+            }
+
+            var notifications = recipients.Select(u => new InvNotificacion
+            {
+                Uuid = Guid.NewGuid(),
+                Destinatario = u.IdUsuario,
+                Titulo = title,
+                Mensaje = body,
+                Categoria = "INVESTIGACION",
+                UrlAccion = url,
+                FechaEnvio = DateTime.UtcNow,
+                Leido = false
+            }).ToList();
+
+            _context.InvNotificaciones.AddRange(notifications);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Notificaciones internas creadas para {Count} usuarios. Iniciando envio externo...", recipients.Count);
+
+            var failedCount = 0;
+            foreach (var user in recipients)
+            {
+                try
+                {
+                    await DispatchToDriversAsync(
+                        user.IdUsuario,
+                        user.EmailInstitucional ?? "",
+                        user.Nombre ?? "Usuario",
+                        title,
+                        body,
+                        url,
+                        extraData);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error critico en broadcast para usuario {UserId}", user.IdUsuario);
+                    failedCount++;
+                }
+
+                await Task.Delay(100);
+            }
+
+            _logger.LogInformation(
+                "Broadcast completado: {Total} destinatarios, {Exitosos} exitosos, {Fallidos} con error",
+                recipients.Count,
+                recipients.Count - failedCount,
+                failedCount);
+        }
+
+        private async Task DispatchToDriversAsync(
+            int userId,
+            string recipientContact,
+            string recipientName,
+            string title,
+            string body,
+            string? url,
+            Dictionary<string, string>? extraData)
+        {
             foreach (var driver in _drivers)
             {
                 try
                 {
-                    // El driver de SignalR usa el ID, el de Email usa el correo, el de Push usa el ID para buscar tokens
-                    string contact = (driver.Name == "Email") ? recipientContact : userId.ToString();
-                    
-                    if (string.IsNullOrEmpty(contact) && driver.Name == "Email") continue;
+                    string contact = driver.Name == "Email" ? recipientContact : userId.ToString();
+
+                    if (string.IsNullOrEmpty(contact) && driver.Name == "Email")
+                    {
+                        _logger.LogWarning("Usuario {UserId} sin email institucional, omitiendo envio Email", userId);
+                        continue;
+                    }
 
                     await driver.SendAsync(contact, title, body, url, recipientName, extraData);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"Error enviando notificación vía driver {driver.Name}");
+                    _logger.LogError(ex, "Error enviando notificacion via driver {Driver} a usuario {UserId}", driver.Name, userId);
                 }
             }
         }
 
-        public async Task BroadcastAsync(string title, string body, string? role = null, string? url = null, Dictionary<string, string>? extraData = null)
+        private static string? MapRoleToTablaSigafi(string role)
         {
-            _logger.LogInformation($"Iniciando Broadcast: {title} (Filtro Rol: {role ?? "TODOS"})");
-
-            // 1. Obtener lista de destinatarios
-            IQueryable<User> query = _context.Users;
-            
-            var recipients = await query.ToListAsync();
-
-            // 2. Procesar cada uno
-            foreach (var user in recipients)
+            return role.ToUpperInvariant() switch
             {
-                await NotifyUserAsync(user.IdUsuario, title, body, "INVESTIGACION", url, extraData);
-            }
+                "DOCENTE" => "profesor",
+                "ESTUDIANTE" => "alumno",
+                "EXTERNO" => "otros",
+                _ => null
+            };
         }
 
         public async Task<IEnumerable<object>> GetMyNotificationsAsync(int userId)
