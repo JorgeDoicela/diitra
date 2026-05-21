@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink } from 'lucide-react';
+import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
@@ -42,6 +42,16 @@ export const ProjectWorkspace: React.FC = () => {
         numero_registro: '',
         fecha_registro_senadi: ''
     });
+
+    // --- Dynamic Team Management States ---
+    const [investigadores, setInvestigadores] = useState<any[]>([]);
+    const [tieneGrupo, setTieneGrupo] = useState<boolean>(false);
+    const [isSavingTeam, setIsSavingTeam] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [showResults, setShowResults] = useState(false);
+    const [teamMessage, setTeamMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const fetchProducts = async () => {
         let retries = 3;
@@ -164,6 +174,8 @@ export const ProjectWorkspace: React.FC = () => {
                     presupuesto: res.data.costo_total || 0,
                     linea: res.data.linea_investigacion || 'No definida'
                 });
+                setInvestigadores(res.data.investigadores || []);
+                setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
             } else {
                 // Fallback graceful
                 setCurrentProject({
@@ -174,6 +186,8 @@ export const ProjectWorkspace: React.FC = () => {
                     presupuesto: 0,
                     linea: 'No definida'
                 });
+                setInvestigadores([]);
+                setTieneGrupo(false);
             }
             setIsLoading(false);
         };
@@ -191,6 +205,110 @@ export const ProjectWorkspace: React.FC = () => {
             </div>
         );
     }
+
+    // --- Autocomplete search effect for working groups ---
+    useEffect(() => {
+        if (!searchQuery.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        const delayDebounceFn = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(searchQuery)}`);
+                setSearchResults(res.data || []);
+                setShowResults(true);
+            } catch (err) {
+                console.error("[DIITRA] Error al buscar usuarios", err);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery]);
+
+    const handleAddMember = (selectedUser: any) => {
+        if (investigadores.some(inv => inv.cedula?.trim() === selectedUser.cedula?.trim())) {
+            alert("Esta persona ya está registrada en el equipo de trabajo.");
+            return;
+        }
+
+        const newMember = {
+            nombre: selectedUser.nombre,
+            cedula: selectedUser.cedula,
+            rol: selectedUser.rol || "Co-Investigador (Docente)",
+            nivelAcademico: selectedUser.nivelAcademico || "Tercer Nivel",
+            telefono: selectedUser.telefono || ""
+        };
+
+        setInvestigadores(prev => [...prev, newMember]);
+        setSearchQuery('');
+        setShowResults(false);
+    };
+
+    const handleUpdateMember = (index: number, field: string, value: any) => {
+        setInvestigadores(prev => {
+            const copy = [...prev];
+            copy[index] = { ...copy[index], [field]: value };
+            return copy;
+        });
+    };
+
+    const handleRemoveMember = (index: number) => {
+        setInvestigadores(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSaveTeam = async () => {
+        setIsSavingTeam(true);
+        setTeamMessage(null);
+        try {
+            const payload = investigadores.map(inv => ({
+                nombre: inv.nombre,
+                cedula: inv.cedula,
+                rol: inv.rol,
+                nivelAcademico: inv.nivelAcademico,
+                telefono: inv.telefono || ""
+            }));
+
+            const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload);
+            if (res.data.success) {
+                setTeamMessage({ type: 'success', text: '¡Equipo de trabajo guardado y sincronizado con éxito!' });
+                const isGroup = investigadores.length > 1;
+                setTieneGrupo(isGroup);
+                setCurrentProject(prev => ({
+                    ...prev,
+                    tieneGrupoInvestigacion: isGroup
+                }));
+                setTimeout(() => setTeamMessage(null), 4000);
+            } else {
+                setTeamMessage({ type: 'error', text: res.data.message || 'Error al guardar los cambios.' });
+            }
+        } catch (err: any) {
+            console.error("[DIITRA] Error al guardar equipo de trabajo", err);
+            const errMsg = err.response?.data?.message || err.response?.data?.error || 'Ocurrió un error inesperado al guardar.';
+            setTeamMessage({ type: 'error', text: errMsg });
+        } finally {
+            setIsSavingTeam(false);
+        }
+    };
+
+    const handleToggleTieneGrupo = (val: boolean) => {
+        if (!val) {
+            const director = investigadores.find(inv => inv.rol?.toLowerCase().includes('director')) || investigadores[0];
+            if (investigadores.length > 1) {
+                if (window.confirm("Al cambiar a Trabajo Individual, se removerán los demás co-investigadores y estudiantes. ¿Deseas continuar?")) {
+                    setInvestigadores(director ? [director] : []);
+                    setTieneGrupo(false);
+                }
+            } else {
+                setTieneGrupo(false);
+            }
+        } else {
+            setTieneGrupo(true);
+        }
+    };
 
     const handleCloseEditor = () => {
         setActiveDocument(null);
@@ -352,6 +470,259 @@ export const ProjectWorkspace: React.FC = () => {
                                     </div>
                                 );
                             })}
+                        </div>
+
+                        {/* EQUIPO DE TRABAJO (Gestión de Grupo / Solo) */}
+                        <div className="border border-[#333] rounded-xl bg-[#0a0a0a] p-6 shadow-2xl space-y-6 mt-6 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-[#222]">
+                                <div>
+                                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                                        <Users size={22} className="text-blue-400" />
+                                        Equipo de Trabajo
+                                    </h2>
+                                    <p className="text-xs text-gray-500 mt-1 font-mono">
+                                        Gestión dinámica del talento humano del proyecto
+                                    </p>
+                                </div>
+                                
+                                {/* Dynamic Toggle (Solo vs. Team) */}
+                                <div className="flex bg-[#111] p-1 rounded-lg border border-[#222]">
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleToggleTieneGrupo(false)}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-300 ${!tieneGrupo ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Trabajo Individual
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => handleToggleTieneGrupo(true)}
+                                        className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-300 ${tieneGrupo ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md' : 'text-gray-400 hover:text-white'}`}
+                                    >
+                                        Grupo de Trabajo
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Banner Informativo */}
+                            {!tieneGrupo ? (
+                                <div className="p-4 rounded-xl border border-yellow-500/10 bg-yellow-500/5 text-yellow-400/90 text-xs flex gap-3 leading-relaxed">
+                                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                    <div>
+                                        <span className="font-semibold text-yellow-400">Modalidad Individual:</span> El proyecto está asignado para ser ejecutado únicamente por el Director del proyecto. Para agregar más docentes, co-investigadores o estudiantes de apoyo, cambia la modalidad a <strong>Grupo de Trabajo</strong> en el selector superior.
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl border border-blue-500/10 bg-blue-500/5 text-blue-400/90 text-xs flex gap-3 leading-relaxed">
+                                    <Sparkles size={18} className="shrink-0 mt-0.5 text-blue-400 animate-pulse" />
+                                    <div>
+                                        <span className="font-semibold text-blue-300">Modalidad Grupal:</span> Puedes invitar a otros docentes e investigadores como co-investigadores, o a estudiantes de la institución como ayudantes de investigación o tesistas. Utiliza el buscador a continuación.
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Autocomplete Search input (only visible in Group Mode) */}
+                            {tieneGrupo && (
+                                <div className="relative space-y-2">
+                                    <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Agregar Miembros del IST</label>
+                                    <div className="relative">
+                                        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
+                                        <input 
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onFocus={() => setShowResults(true)}
+                                            placeholder="Buscar docente o estudiante por nombre o cédula..."
+                                            className="w-full bg-[#111] border border-[#222] hover:border-[#444] focus:border-blue-500 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none transition-colors text-white placeholder:text-gray-600"
+                                        />
+                                        {isSearching && (
+                                            <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                                                <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-blue-500 rounded-full"></div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Dropdown Suggestions */}
+                                    {showResults && searchQuery.trim() && (
+                                        <>
+                                            <div className="fixed inset-0 z-20" onClick={() => setShowResults(false)}></div>
+                                            <div className="absolute left-0 right-0 top-full mt-2 bg-[#0e0e0e] border border-[#333] rounded-xl shadow-2xl max-h-60 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                {searchResults.length === 0 ? (
+                                                    <div className="p-4 text-center text-xs text-gray-500 font-mono">
+                                                        No se encontraron resultados institucionales.
+                                                    </div>
+                                                ) : (
+                                                    searchResults.map((selectedUser: any) => (
+                                                        <button 
+                                                            key={selectedUser.cedula}
+                                                            type="button"
+                                                            onClick={() => handleAddMember(selectedUser)}
+                                                            className="w-full p-3.5 flex items-center justify-between hover:bg-[#161616] text-left text-xs transition-colors"
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <p className="font-bold text-white text-sm">{selectedUser.nombre}</p>
+                                                                <p className="text-gray-500 font-mono text-[10px]">C.I. {selectedUser.cedula} | {selectedUser.email}</p>
+                                                            </div>
+                                                            <span className={`px-2 py-1 rounded text-[9px] font-bold tracking-wider uppercase border ${
+                                                                selectedUser.tipo === 'profesor' 
+                                                                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' 
+                                                                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                            }`}>
+                                                                {selectedUser.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
+                                                            </span>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Investigators List */}
+                            <div className="space-y-4">
+                                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block">Integrantes del Equipo ({investigadores.length})</label>
+                                
+                                {investigadores.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500 border border-dashed border-[#222] rounded-xl font-mono text-xs">
+                                        No hay investigadores asignados a este proyecto.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {investigadores.map((member: any, index: number) => {
+                                            const isDirector = member.rol?.toLowerCase().includes('director');
+                                            const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
+                                            
+                                            return (
+                                                <div 
+                                                    key={member.cedula || index} 
+                                                    className="p-4 border border-[#222] rounded-xl bg-[#111]/50 hover:bg-[#111] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 relative group animate-fade-in"
+                                                >
+                                                    <div className="flex items-center gap-3.5">
+                                                        <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-sm border uppercase shadow-sm ${
+                                                            isDirector 
+                                                                ? 'bg-gradient-to-br from-blue-500 to-purple-600 border-blue-400/30 text-white' 
+                                                                : isEstudiante 
+                                                                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                                                                    : 'bg-[#222] border-[#333] text-gray-400'
+                                                        }`}>
+                                                            {member.nombre ? member.nombre.substring(0, 2) : 'IN'}
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="font-bold text-sm text-white flex items-center gap-2">
+                                                                {member.nombre}
+                                                                {isDirector && (
+                                                                    <span className="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[8px] font-black uppercase tracking-widest rounded-md">
+                                                                        Director
+                                                                    </span>
+                                                                )}
+                                                            </h4>
+                                                            <div className="text-[11px] text-gray-500 font-mono mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                                <span>C.I. {member.cedula || 'N/A'}</span>
+                                                                <span>•</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <span>Tel:</span>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={member.telefono || ''} 
+                                                                        onChange={(e) => handleUpdateMember(index, 'telefono', e.target.value)}
+                                                                        placeholder="Añadir..." 
+                                                                        className="bg-transparent text-gray-300 placeholder:text-gray-700 focus:outline-none border-b border-[#333] hover:border-gray-500 focus:border-blue-500 w-24 inline-block px-1 py-0.5 text-[11px] transition-colors" 
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap items-center gap-4 self-end md:self-auto">
+                                                        {/* Role Dropdown */}
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Rol</span>
+                                                            <select
+                                                                value={member.rol}
+                                                                onChange={(e) => handleUpdateMember(index, 'rol', e.target.value)}
+                                                                className="bg-[#0e0e0e] border border-[#222] rounded-lg py-1.5 px-2.5 text-xs text-gray-300 focus:outline-none focus:border-blue-500 transition-colors w-44"
+                                                            >
+                                                                <option value="Director de Proyecto">Director de Proyecto</option>
+                                                                <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
+                                                                <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
+                                                                <option value="Técnico de Apoyo">Técnico de Apoyo</option>
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Academic Level Dropdown */}
+                                                        <div className="flex flex-col gap-1">
+                                                            <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Nivel Académico</span>
+                                                            <select
+                                                                value={member.nivelAcademico}
+                                                                onChange={(e) => handleUpdateMember(index, 'nivelAcademico', e.target.value)}
+                                                                className="bg-[#0e0e0e] border border-[#222] rounded-lg py-1.5 px-2.5 text-xs text-gray-300 focus:outline-none focus:border-blue-500 transition-colors w-40"
+                                                            >
+                                                                <option value="Tercer Nivel">Tercer Nivel</option>
+                                                                <option value="Cuarto Nivel (Maestría)">Cuarto Nivel (Maestría)</option>
+                                                                <option value="Cuarto Nivel (PhD)">Cuarto Nivel (PhD)</option>
+                                                                <option value="Pregrado">Pregrado</option>
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Delete member button (only if not the only member or if it is group mode) */}
+                                                        {(!isDirector || tieneGrupo) && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveMember(index)}
+                                                                className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all md:mt-4"
+                                                                title="Remover integrante"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Notifications / Toast Area */}
+                            {teamMessage && (
+                                <div className={`p-4 rounded-xl border text-xs flex gap-3 items-center leading-relaxed animate-in fade-in duration-200 ${
+                                    teamMessage.type === 'success' 
+                                        ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' 
+                                        : 'border-red-500/20 bg-red-500/5 text-red-400'
+                                }`}>
+                                    <CheckSquare size={16} className="shrink-0" />
+                                    <span className="font-medium">{teamMessage.text}</span>
+                                </div>
+                            )}
+
+                            {/* Glowing Save Button */}
+                            <div className="flex justify-end pt-4 border-t border-[#222]">
+                                <button
+                                    type="button"
+                                    disabled={isSavingTeam}
+                                    onClick={handleSaveTeam}
+                                    className={`px-5 py-2.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg ${
+                                        isSavingTeam 
+                                            ? 'bg-[#222] text-gray-500 border border-[#333] cursor-not-allowed shadow-none' 
+                                            : 'bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white hover:shadow-blue-500/20 shadow-blue-500/10'
+                                    }`}
+                                >
+                                    {isSavingTeam ? (
+                                        <>
+                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-gray-500 rounded-full"></div>
+                                            Guardando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus size={14} />
+                                            Guardar Cambios del Equipo
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
                         {/* MÓDULO DE PRODUCTOS DE INVESTIGACIÓN (CACES Compliance) */}

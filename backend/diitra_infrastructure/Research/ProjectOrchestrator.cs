@@ -318,6 +318,7 @@ namespace diitra_infrastructure.Research
                 MarcoTeorico = p.MarcoTeorico,
                 Metodologia = p.Metodologia,
                 TiempoEjecucion = p.TiempoEjecucion,
+                TieneGrupoInvestigacion = p.TieneGrupo,
                 TrlInicial = (int?)p.TrlInicial,
                 TrlActual = (int?)p.TrlActual,
                 TrlMeta = (int?)p.TrlMeta,
@@ -326,12 +327,14 @@ namespace diitra_infrastructure.Research
                 Investigadores = p.InvProyectosProfesores.Select(pp => new InvestigadorDto
                 {
                     Nombre = pp.IdUsuarioNavigation?.Nombre,
+                    Cedula = pp.IdUsuarioNavigation?.IdSigafi,
                     Rol = pp.Rol,
                     NivelAcademico = pp.NivelAcademico,
                     Telefono = pp.Telefono
                 }).Concat(p.InvProyectosAlumnos.Select(pa => new InvestigadorDto
                 {
                     Nombre = pa.IdUsuarioNavigation?.Nombre,
+                    Cedula = pa.IdUsuarioNavigation?.IdSigafi,
                     Rol = pa.Rol,
                     NivelAcademico = pa.NivelAcademico,
                     Telefono = pa.Telefono
@@ -811,6 +814,64 @@ namespace diitra_infrastructure.Research
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error al eliminar físicamente borrador de proyecto UUID: {Uuid}", uuid);
                 return new SyncResult { Success = false, Message = $"Error interno al eliminar el proyecto: {ex.Message}" };
+            }
+        }
+
+        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores)
+        {
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == uuid);
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 1. Sincronizar en Tablas Relacionales (Profesores / Alumnos)
+                await SyncInvestigadoresAsync(project.IdProyecto, investigadores);
+
+                // 2. Sincronizar en Metadata JSON del CACES para mantener concordancia
+                ProyectoDto? dto = null;
+                if (!string.IsNullOrEmpty(project.MetadataCacesJson))
+                {
+                    try
+                    {
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson);
+                    }
+                    catch
+                    {
+                        // Fallback
+                    }
+                }
+
+                if (dto == null)
+                {
+                    dto = new ProyectoDto
+                    {
+                        Uuid = project.Uuid,
+                        Titulo = project.Titulo,
+                        Estado = project.Estado,
+                        CodigoInstitucional = project.CodigoInstitucional
+                    };
+                }
+
+                dto.Investigadores = investigadores;
+                dto.TieneGrupoInvestigacion = investigadores.Count > 1;
+                project.TieneGrupo = investigadores.Count > 1;
+                project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
+                project.FechaModificacion = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new SyncResult { Success = true, Uuid = uuid };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error al actualizar equipo del proyecto UUID: {Uuid}", uuid);
+                return new SyncResult { Success = false, Message = $"Error interno al actualizar el equipo: {ex.Message}" };
             }
         }
     }
