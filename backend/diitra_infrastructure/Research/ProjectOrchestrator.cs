@@ -572,7 +572,7 @@ namespace diitra_infrastructure.Research
             // Guardar cédulas activas recibidas
             var activeCedulas = investigadores
                 .Where(i => !string.IsNullOrEmpty(i.Cedula))
-                .Select(i => i.Cedula.Trim())
+                .Select(i => i.Cedula!.Trim())
                 .ToHashSet();
 
             // 2. Procesar Profesores Existentes: Desactivar los que ya no vienen en la lista
