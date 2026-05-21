@@ -25,13 +25,13 @@ interface DashboardStats {
 }
 
 const ESTADO_DOT: Record<string, string> = {
-    'Borrador': 'bg-gray-500',
-    'Enviado': 'bg-blue-500',
-    'En Revisión': 'bg-amber-500 animate-pulse',
-    'Aprobado': 'bg-emerald-500',
-    'En Ejecución': 'bg-violet-500 animate-pulse',
-    'Finalizado': 'bg-teal-500',
-    'Pendiente': 'bg-amber-500',
+    'Borrador': 'dot-neutral',
+    'Enviado': 'dot-info',
+    'En Revisión': 'dot-warning dot-pulse',
+    'Aprobado': 'dot-success',
+    'En Ejecución': 'dot-brand dot-pulse',
+    'Finalizado': 'dot-success',
+    'Pendiente': 'dot-warning',
 };
 
 export const DocenteDashboard: React.FC = () => {
@@ -133,11 +133,11 @@ export const DocenteDashboard: React.FC = () => {
                         icon={<Clock size={14} />}
                     >
                         <div className="mt-4">
-                            <p className={`stat-number ${(stats?.mis_informes_pendientes ?? 0) > 0 ? 'text-amber-400' : 'text-text-main'}`}>
+                            <p className={`stat-number ${(stats?.mis_informes_pendientes ?? 0) > 0 ? 'text-warning' : 'text-text-main'}`}>
                                 {stats?.mis_informes_pendientes ?? 0}
                             </p>
                             {(stats?.mis_informes_pendientes ?? 0) > 0 && (
-                                <div className="flex items-center gap-1.5 mt-3 text-[10px] text-amber-400 font-bold uppercase">
+                                <div className="flex items-center gap-1.5 mt-3 text-[10px] text-warning font-bold uppercase">
                                     <AlertCircle size={10} />
                                     Acción requerida
                                 </div>
@@ -183,7 +183,7 @@ export const DocenteDashboard: React.FC = () => {
                             ) : (
                                 stats.actividad_reciente.slice(0, 5).map((item, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-colors cursor-pointer group">
-                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${ESTADO_DOT[item.estado ?? ''] ?? 'bg-text-dim'}`} />
+                                        <div className={`dot ${ESTADO_DOT[item.estado ?? ''] ?? 'dot-neutral'}`} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[11px] font-bold text-text-main truncate">{item.descripcion}</p>
                                             <p className="text-[9px] text-text-dim uppercase tracking-wide">

@@ -79,9 +79,9 @@ export const RevisorDashboard: React.FC = () => {
                     className="md:col-span-4"
                 >
                     <div className="mt-4 flex items-center gap-6 p-4 rounded-lg bg-surface/50 border border-border-thin">
-                        <div className="p-3 rounded-full bg-green-500/10 text-green-500">
+<div className="icon-circle icon-circle-success">
                              <Shield size={24} />
-                        </div>
+                         </div>
                         <div>
                             <p className="text-[11px] font-bold text-text-main uppercase tracking-widest">Protocolo Doble Ciego Activo</p>
                             <p className="text-[10px] text-text-dim mt-1 max-w-xl">
