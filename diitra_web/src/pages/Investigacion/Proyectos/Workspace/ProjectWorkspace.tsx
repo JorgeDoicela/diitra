@@ -12,6 +12,19 @@ const WorkflowPhases = [
     { id: 'En Ejecución', label: 'Ejecución y Avance', icon: Settings },
 ];
 
+const ESTADO_CONFIG: Record<string, { badge: string; dot: string }> = {
+    'Borrador':     { badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
+    'Enviado':      { badge: 'badge-vercel-info',    dot: 'dot-info' },
+    'En Revisión':  { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
+    'Aprobado':     { badge: 'badge-vercel-success', dot: 'dot-success' },
+    'En Ejecución': { badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
+    'Finalizado':   { badge: 'badge-vercel-success', dot: 'dot-success' },
+    'Rechazado':    { badge: 'badge-vercel-error',   dot: 'dot-error' },
+};
+
+const estadoConfig = (estado: string) =>
+    ESTADO_CONFIG[estado] ?? { badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
+
 export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
     const { user } = useAuth();
@@ -432,7 +445,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 alert("No se pudo realizar la exportación de metadatos CACES");
                             }
                         }}
-                        className="flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
+                        className="btn-vercel-secondary !py-2"
                     >
                         <FileText size={14} />
                         <span>Exportar CACES</span>
@@ -452,7 +465,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 setIsPublishingDSpace(false);
                             }
                         }}
-                        className={`flex items-center justify-center gap-2 px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${isPublishingDSpace ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep'}`}
+                        className={`btn-vercel-primary !py-2 ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <UploadCloud size={14} className={isPublishingDSpace ? "animate-pulse" : ""} />
                         <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
@@ -468,10 +481,10 @@ export const ProjectWorkspace: React.FC = () => {
                 <div className="text-[10px] font-bold text-text-dim uppercase tracking-[0.2em]">
                     Workspace · {currentProject.id}
                 </div>
-                <div className="px-2.5 py-1 bg-surface border border-border-thin rounded-md flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
-                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">{currentProject.status}</span>
-                </div>
+                <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-bold`}>
+                    <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
+                    {currentProject.status}
+                </span>
             </header>
 
             {/* ── Main Content ── */}
@@ -480,8 +493,8 @@ export const ProjectWorkspace: React.FC = () => {
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 gap-6 md:gap-0">
                     <div className="space-y-2">
                         <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                            <span className="px-2.5 py-0.5 bg-surface border border-border-thin rounded-md flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                            <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px]`}>
+                                <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
                                 {currentProject.status}
                             </span>
                             <span className="text-text-dim">·</span>
@@ -510,7 +523,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     
                                     return (
                                         <div key={phase.id} className={`p-4 border-b border-border-thin last:border-b-0 flex items-start gap-3 transition-all duration-300 ${isCurrent ? 'bg-surface-hover border-l-2 border-l-brand' : ''}`}>
-                                            <div className={`mt-0.5 transition-colors duration-300 ${isCurrent ? 'text-brand' : isPast ? 'text-emerald-500' : 'text-text-dim'}`}>
+                                            <div className={`mt-0.5 transition-colors duration-300 ${isCurrent ? 'text-brand' : isPast ? 'text-success' : 'text-text-dim'}`}>
                                                 {isPast ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -526,7 +539,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                     <div className="mt-4">
                                                         <button 
                                                             onClick={() => setActiveDocument(templateCode || 'PROTOCOLO_INVESTIGACION')}
-                                                            className="flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                            className="btn-vercel-secondary !py-2"
                                                         >
                                                             <FileText size={14} />
                                                             <span>{(currentProject.puedeEditar === false || isPast) ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
@@ -538,7 +551,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                     <div className="mt-4 animate-fade-in">
                                                         <button 
                                                             onClick={() => setActiveDocument('RUBRICA_EVALUACION')}
-                                                            className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                            className="btn-vercel-primary !py-2"
                                                         >
                                                             <CheckSquare size={14} />
                                                             <span>{isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica'}</span>
@@ -550,7 +563,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                     <div className="mt-4 animate-fade-in">
                                                         <button 
                                                             onClick={() => setActiveDocument('INFORME_AVANCE')}
-                                                            className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                                            className="btn-vercel-primary !py-2"
                                                         >
                                                             <BarChart size={14} />
                                                             <span>Generar Informe</span>
@@ -597,12 +610,12 @@ export const ProjectWorkspace: React.FC = () => {
 
                                 {/* Banner Informativo */}
                                 {!tieneGrupo ? (
-                                    <div className="p-3 rounded-md border border-amber-500/20 bg-amber-500/5 text-amber-400 text-[11px] flex gap-2 leading-relaxed">
+                                    <div className="badge-vercel badge-vercel-warning !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <AlertCircle size={14} className="shrink-0 mt-0.5" />
                                         <span><span className="font-bold">Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Grupo para agregar colaboradores.</span>
                                     </div>
                                 ) : (
-                                    <div className="p-3 rounded-md border border-brand/20 bg-brand/5 text-brand-light text-[11px] flex gap-2 leading-relaxed">
+                                    <div className="badge-vercel badge-vercel-info !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <Sparkles size={14} className="shrink-0 mt-0.5" />
                                         <span><span className="font-bold">Grupo:</span> Usa el buscador para invitar docentes y estudiantes al equipo.</span>
                                     </div>
@@ -620,7 +633,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                 onChange={(e) => setSearchQuery(e.target.value)}
                                                 onFocus={() => setShowResults(true)}
                                                 placeholder="Buscar por nombre o cédula..."
-                                                className="w-full bg-surface border border-border-thin rounded p-3 pl-9 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
+                                                className="input-vercel !text-xs !py-3 !pl-9"
                                             />
                                             {isSearching && (
                                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -646,8 +659,8 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <p className="font-bold text-text-main text-xs">{su.nombre}</p>
                                                                     <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
                                                                 </div>
-                                                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase border ${
-                                                                    su.tipo === 'profesor' ? 'bg-brand/10 border-brand/20 text-brand-light' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                                <span className={`badge-vercel text-[8px] font-bold ${
+                                                                    su.tipo === 'profesor' ? 'badge-vercel-info' : 'badge-vercel-success'
                                                                 }`}>
                                                                     {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
                                                                 </span>
@@ -662,7 +675,7 @@ export const ProjectWorkspace: React.FC = () => {
 
                                 {/* Modo Solo Lectura Banner */}
                                 {currentProject.puedeEditar === false && (
-                                    <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-500 text-[11px] flex gap-2.5 leading-relaxed animate-fade-in mb-4">
+                                    <div className="badge-vercel badge-vercel-warning !rounded-xl !p-4 !text-[11px] !font-normal flex gap-2.5 leading-relaxed animate-fade-in mb-4 w-full items-start">
                                         <Shield size={14} className="shrink-0 mt-0.5" />
                                         <div>
                                             <span className="font-bold uppercase tracking-wider text-[10px] block">Modo Sólo Lectura</span>
@@ -695,9 +708,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                         <div className="flex items-center gap-3">
                                                             <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold border uppercase ${
                                                                 isDirector 
-                                                                    ? 'bg-gradient-to-br from-brand to-purple-600 border-brand/30 text-text-main' 
+                                                                    ? 'icon-circle-brand !p-0 !w-8 !h-8 border border-brand/30' 
                                                                     : isEstudiante 
-                                                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' 
+                                                                        ? 'icon-circle-success !p-0 !w-8 !h-8' 
                                                                         : 'bg-surface border-border-thin text-text-dim'
                                                             }`}>
                                                                 {member.nombre ? member.nombre.substring(0, 2) : 'IN'}
@@ -707,14 +720,14 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <span className="text-xs font-bold text-text-main">{member.nombre}</span>
                                                                     {isDirector && (
                                                                         <div className="flex items-center gap-1.5">
-                                                                            <span className="px-1.5 py-0.5 bg-brand/10 border border-brand/20 text-brand-light text-[8px] font-bold uppercase tracking-wider rounded-sm">
+                                                                            <span className="badge-vercel badge-vercel-info text-[8px] font-bold">
                                                                                 Director
                                                                             </span>
                                                                             {currentProject.puedeEditar !== false && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleOpenTransferModal(member)}
-                                                                                    className="px-1.5 py-0.5 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer"
+                                                                                    className="badge-vercel badge-vercel-violet text-[8px] font-bold hover:opacity-80 transition-all cursor-pointer"
                                                                                     title="Transferir Dirección"
                                                                                 >
                                                                                     <RefreshCw size={9} className="inline" /> Relevo
@@ -774,7 +787,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveMember(member.cedula)}
-                                                                    className="p-1.5 text-text-dim hover:text-red-500 hover:bg-red-500/10 rounded transition-all"
+                                                                    className="p-1.5 text-text-dim hover:text-error hover:bg-error-subtle rounded transition-all"
                                                                     title="Remover"
                                                                 >
                                                                     <Trash2 size={12} />
@@ -797,7 +810,7 @@ export const ProjectWorkspace: React.FC = () => {
                                             className="w-full flex items-center justify-between text-[10px] font-bold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-1 outline-none"
                                         >
                                             <div className="flex items-center gap-2">
-                                                <History size={12} className="text-purple-400" />
+                                                <History size={12} className="text-brand-light" />
                                                 <span>Ex-Integrantes ({investigadores.filter((m: any) => m.activo === false).length})</span>
                                             </div>
                                             <span className="font-mono text-[10px]">{isHistoryExpanded ? '▲' : '▼'}</span>
@@ -809,7 +822,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                     return (
                                                         <div key={member.cedula || idx} className="p-3 rounded-md bg-bg-deep border border-border-thin/50 flex items-center justify-between gap-3">
                                                             <div className="flex items-center gap-2">
-                                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold border uppercase ${isExDirector ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' : 'bg-surface border-border-thin text-text-dim'}`}>
+                                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold border uppercase ${isExDirector ? 'icon-circle-brand !p-0 !w-7 !h-7' : 'bg-surface border-border-thin text-text-dim'}`}>
                                                                     {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
                                                                 </div>
                                                                 <div>
@@ -817,7 +830,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <span className="text-[9px] text-text-dim font-mono ml-1.5">C.I. {member.cedula || 'N/A'}</span>
                                                                 </div>
                                                             </div>
-                                                            <span className="px-1.5 py-0.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[9px] font-bold uppercase tracking-wider rounded-sm">
+                                                            <span className="badge-vercel badge-vercel-error text-[9px] font-bold">
                                                                 Baja
                                                             </span>
                                                         </div>
@@ -830,10 +843,10 @@ export const ProjectWorkspace: React.FC = () => {
 
                                 {/* Toast */}
                                 {teamMessage && (
-                                    <div className={`p-3 rounded-md border text-[11px] flex gap-2 items-center leading-relaxed animate-fade-in ${
+                                    <div className={`badge-vercel !rounded-md !p-3 !text-[11px] flex gap-2 items-center leading-relaxed animate-fade-in w-full ${
                                         teamMessage.type === 'success' 
-                                            ? 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400' 
-                                            : 'border-red-500/20 bg-red-500/5 text-red-400'
+                                            ? 'badge-vercel-success' 
+                                            : 'badge-vercel-error'
                                     }`}>
                                         <CheckSquare size={14} className="shrink-0" />
                                         <span className="font-medium">{teamMessage.text}</span>
@@ -847,11 +860,11 @@ export const ProjectWorkspace: React.FC = () => {
                                             type="button"
                                             disabled={isSavingTeam}
                                             onClick={handleSaveTeam}
-                                            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${isSavingTeam ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep'}`}
+                                            className={`btn-vercel-primary !py-2.5 ${isSavingTeam ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             {isSavingTeam ? (
                                                 <>
-                                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-gray-500 rounded-full"></div>
+                                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-text-dim rounded-full"></div>
                                                     <span>Guardando...</span>
                                                 </>
                                             ) : (
@@ -879,7 +892,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     <div className="flex justify-end mb-4">
                                         <button 
                                             onClick={() => setShowProductModal(true)}
-                                            className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                            className="btn-vercel-primary !py-2"
                                         >
                                             <Plus size={12} />
                                             <span>Registrar</span>
@@ -896,13 +909,13 @@ export const ProjectWorkspace: React.FC = () => {
                                         {products.map((prod: any) => (
                                             <div key={prod.id_producto} className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all group">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <span className="px-1.5 py-0.5 bg-brand/10 border border-brand/20 text-brand-light text-[8px] font-bold uppercase tracking-widest rounded-sm">
+                                                    <span className="badge-vercel badge-vercel-info text-[8px] font-bold">
                                                         {prod.tipo_producto_nombre}
                                                     </span>
                                                     {currentProject.puedeEditar !== false && (
                                                         <button 
                                                             onClick={() => handleDeleteProduct(prod.id_producto)}
-                                                            className="p-1 hover:bg-red-500/20 hover:text-red-500 text-text-dim rounded transition-all"
+                                                            className="p-1 hover:bg-error-subtle hover:text-error text-text-dim rounded transition-all"
                                                         >
                                                             <Trash2 size={11} />
                                                         </button>
@@ -916,7 +929,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                         </a>
                                                     )}
                                                     {prod.es_propiedad_intelectual && (
-                                                        <span className="flex items-center gap-1 text-emerald-500">★ SENADI: {prod.numero_registro || 'En trámite'}</span>
+                                                        <span className="flex items-center gap-1 text-success">★ SENADI: {prod.numero_registro || 'En trámite'}</span>
                                                     )}
                                                 </div>
                                             </div>
@@ -943,8 +956,8 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="p-3 rounded-md bg-bg-deep border border-border-thin flex items-center justify-between hover:border-text-dim transition-colors">
                                     <div>
                                         <p className="text-xs font-bold text-text-main">Director</p>
-                                        <p className="text-[10px] text-amber-400 mt-0.5 flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pendiente
+                                        <p className="text-[10px] text-warning mt-0.5 flex items-center gap-1">
+                                            <span className="dot dot-warning dot-pulse"></span> Pendiente
                                         </p>
                                     </div>
                                     <button className="p-2 bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main rounded-md transition-all">
@@ -979,9 +992,9 @@ export const ProjectWorkspace: React.FC = () => {
 
             {/* ══ Modal: Registrar Producto ══ */}
             {showProductModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
-                    <div className="bg-bg-deep border border-border-thin w-full max-w-lg rounded-lg shadow-2xl overflow-hidden flex flex-col">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                <div className="modal-overlay animate-fade-in">
+                    <div className="modal-card animate-fade-up">
+                        <div className="modal-header">
                             <div className="flex items-center gap-2">
                                 <BookOpen size={16} className="text-brand" />
                                 <h3 className="text-[10px] font-bold uppercase tracking-widest">Registrar Producto</h3>
@@ -989,13 +1002,13 @@ export const ProjectWorkspace: React.FC = () => {
                             <button onClick={() => setShowProductModal(false)} className="text-text-dim hover:text-text-main transition-colors text-sm">✕</button>
                         </div>
                         
-                        <form onSubmit={handleCreateProduct} className="p-6 space-y-4">
+                        <form onSubmit={handleCreateProduct} className="modal-body space-y-4">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Tipo de Producto</label>
                                 <select 
                                     value={newProduct.id_tipo_producto}
                                     onChange={(e) => setNewProduct({ ...newProduct, id_tipo_producto: Number(e.target.value) })}
-                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
+                                    className="input-vercel !text-xs"
                                 >
                                     {productTypes.map((type) => (
                                         <option key={type.id_tipo_producto} value={type.id_tipo_producto}>
@@ -1013,7 +1026,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     placeholder="Ej: Análisis comparativo de algoritmos CNN..."
                                     value={newProduct.titulo}
                                     onChange={(e) => setNewProduct({ ...newProduct, titulo: e.target.value })}
-                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
+                                    className="input-vercel !text-xs"
                                 />
                             </div>
                             
@@ -1026,7 +1039,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         required
                                         value={newProduct.cantidad}
                                         onChange={(e) => setNewProduct({ ...newProduct, cantidad: Number(e.target.value) })}
-                                        className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
+                                        className="input-vercel !text-xs"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -1036,7 +1049,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         placeholder="https://doi.org/..."
                                         value={newProduct.url_producto}
                                         onChange={(e) => setNewProduct({ ...newProduct, url_producto: e.target.value })}
-                                        className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
+                                        className="input-vercel !text-xs"
                                     />
                                 </div>
                             </div>
@@ -1061,7 +1074,7 @@ export const ProjectWorkspace: React.FC = () => {
                                             placeholder="SENADI-2026-0045"
                                             value={newProduct.numero_registro}
                                             onChange={(e) => setNewProduct({ ...newProduct, numero_registro: e.target.value })}
-                                            className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
+                                            className="input-vercel !text-xs"
                                         />
                                     </div>
                                     <div className="space-y-1">
@@ -1070,23 +1083,22 @@ export const ProjectWorkspace: React.FC = () => {
                                             type="date"
                                             value={newProduct.fecha_registro_senadi}
                                             onChange={(e) => setNewProduct({ ...newProduct, fecha_registro_senadi: e.target.value })}
-                                            className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
+                                            className="input-vercel !text-xs"
                                         />
                                     </div>
                                 </div>
                             )}
-                            
-                            <div className="flex justify-end gap-3 pt-4 border-t border-border-thin">
+                            <div className="modal-footer !px-0 !pb-0 !border-0 !bg-transparent">
                                 <button 
                                     type="button" 
                                     onClick={() => setShowProductModal(false)}
-                                    className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-colors"
+                                    className="btn-vercel-secondary !py-2"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit" 
-                                    className="bg-text-main text-bg-deep px-6 py-2.5 rounded text-[10px] font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all"
+                                    className="btn-vercel-primary !py-2"
                                 >
                                     Guardar
                                 </button>
@@ -1098,25 +1110,25 @@ export const ProjectWorkspace: React.FC = () => {
 
             {/* ══ Modal: Transferencia de Dirección ══ */}
             {showTransferModal && (
-                <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
-                    <div className="bg-bg-deep border border-border-thin w-full max-w-xl rounded-lg shadow-2xl overflow-hidden flex flex-col relative">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                <div className="modal-overlay animate-fade-in">
+                    <div className="modal-card modal-card--lg animate-fade-up">
+                        <div className="modal-header">
                             <div className="flex items-center gap-2">
-                                <RefreshCw size={16} className="text-purple-400" />
+                                <RefreshCw size={16} className="text-brand-light" />
                                 <h3 className="text-[10px] font-bold uppercase tracking-widest">Transferencia de Dirección</h3>
                             </div>
                             <button onClick={() => setShowTransferModal(false)} className="text-text-dim hover:text-text-main transition-colors text-sm">✕</button>
                         </div>
 
                         {transferDirector && (
-                            <div className="mx-6 mt-4 p-3 bg-purple-500/5 border border-purple-500/10 rounded-md text-[11px] space-y-1">
-                                <span className="font-semibold text-purple-400 block uppercase tracking-wider text-[10px]">Director a Relevar:</span>
+                            <div className="mx-6 mt-4 badge-vercel badge-vercel-violet !rounded-md !p-3 !text-[11px] space-y-1">
+                                <span className="font-semibold block uppercase tracking-wider text-[10px]">Director a Relevar:</span>
                                 <p className="font-bold text-text-main text-xs">{transferDirector.nombre}</p>
                                 <p className="text-text-dim font-mono text-[10px]">C.I. {transferDirector.cedula} | {transferDirector.rol}</p>
                             </div>
                         )}
 
-                        <form onSubmit={handleConfirmTransfer} className="p-6 space-y-4">
+                        <form onSubmit={handleConfirmTransfer} className="modal-body space-y-4">
                             <div className="relative space-y-1">
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Buscar Nuevo Director</label>
                                 <div className="relative">
@@ -1127,11 +1139,11 @@ export const ProjectWorkspace: React.FC = () => {
                                         onChange={(e) => setTransferSearchQuery(e.target.value)}
                                         onFocus={() => setShowTransferSearchResults(true)}
                                         placeholder="Buscar por nombre o cédula..."
-                                        className="w-full bg-surface border border-border-thin rounded p-3 pl-9 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim"
+                                        className="input-vercel !text-xs !py-3 !pl-9"
                                     />
                                     {isTransferSearching && (
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-purple-500 rounded-full"></div>
+                                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-brand rounded-full"></div>
                                         </div>
                                     )}
                                 </div>
@@ -1158,7 +1170,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             <p className="font-bold text-text-main">{su.nombre}</p>
                                                             <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
                                                         </div>
-                                                        <span className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider uppercase border bg-purple-500/10 border-purple-500/20 text-purple-400">
+                                                        <span className={`badge-vercel text-[8px] font-bold ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
                                                             {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
                                                         </span>
                                                     </button>
@@ -1170,16 +1182,16 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
 
                             {newDirectorCedula && (
-                                <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-md text-[11px] flex justify-between items-center animate-fade-in">
+                                <div className="badge-vercel badge-vercel-success !rounded-md !p-3 !text-[11px] flex justify-between items-center animate-fade-in w-full">
                                     <div>
-                                        <span className="font-semibold text-emerald-400 block uppercase tracking-wider text-[10px]">Nuevo Director:</span>
+                                        <span className="font-semibold block uppercase tracking-wider text-[10px]">Nuevo Director:</span>
                                         <p className="font-bold text-text-main text-xs">{transferSearchQuery}</p>
                                         <p className="text-text-dim font-mono text-[10px]">C.I. {newDirectorCedula}</p>
                                     </div>
                                     <button 
                                         type="button" 
                                         onClick={() => { setNewDirectorCedula(''); setTransferSearchQuery(''); }}
-                                        className="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-wider"
+                                        className="text-[10px] text-error hover:opacity-80 font-bold uppercase tracking-wider"
                                     >
                                         Quitar
                                     </button>
@@ -1191,7 +1203,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 <select 
                                     value={transferMotivo}
                                     onChange={(e) => setTransferMotivo(e.target.value)}
-                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
+                                    className="input-vercel !text-xs"
                                 >
                                     <option value="Reasignación institucional">Reasignación institucional</option>
                                     <option value="Renuncia voluntaria">Renuncia voluntaria</option>
@@ -1208,26 +1220,26 @@ export const ProjectWorkspace: React.FC = () => {
                                     placeholder="Describe el motivo del relevo institucional..."
                                     value={transferDescripcion}
                                     onChange={(e) => setTransferDescripcion(e.target.value)}
-                                    className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all placeholder:text-text-dim resize-none"
+                                    className="input-vercel !text-xs resize-none"
                                 />
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-border-thin">
+                            <div className="modal-footer !px-0 !pb-0 !border-0 !bg-transparent">
                                 <button 
                                     type="button" 
                                     onClick={() => setShowTransferModal(false)}
-                                    className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-colors"
+                                    className="btn-vercel-secondary !py-2"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit" 
                                     disabled={isTransferring || !newDirectorCedula}
-                                    className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded text-[10px] font-bold uppercase tracking-widest transition-all ${isTransferring || !newDirectorCedula ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep active:scale-95'}`}
+                                    className={`btn-vercel-primary !py-2 ${isTransferring || !newDirectorCedula ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {isTransferring ? (
                                         <>
-                                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-gray-500 rounded-full"></div>
+                                            <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-text-dim rounded-full"></div>
                                             <span>Procesando...</span>
                                         </>
                                     ) : (

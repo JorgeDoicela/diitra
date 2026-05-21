@@ -31,7 +31,7 @@ const ResearchProjectsPage = () => {
 
                 <button 
                     onClick={() => setShowWizard(true)}
-                    className="btn-vercel-primary w-full md:w-auto active:scale-95 shadow-xl px-6 py-3 md:py-2.5"
+                    className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
                 >
                     <Plus size={14} strokeWidth={3} />
                     Nueva Postulación
@@ -44,14 +44,14 @@ const ResearchProjectsPage = () => {
                 <div className="col-span-1 lg:col-span-8 flex flex-col gap-6">
                     <div 
                         onClick={() => setShowWizard(true)}
-                        className="bento-card group relative overflow-hidden p-6 md:p-10 cursor-pointer active:scale-95 bg-glow"
+                        className="bento-card group relative overflow-hidden p-6 md:p-10 cursor-pointer bg-glow"
                     >
                         <div className="absolute top-0 right-0 p-12 text-text-main opacity-5 group-hover:scale-110 transition-transform">
                             <Target size={180} />
                         </div>
                         <div className="relative z-10">
                             <div className="flex items-center gap-3 text-brand mb-4">
-                                <div className="p-1 bg-brand/10 rounded-sm">
+                                <div className="p-1 bg-brand-subtle rounded-sm">
                                     <Plus size={16} strokeWidth={3} className="text-brand" />
                                 </div>
                                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Nueva Postulación Activa</span>
@@ -60,7 +60,7 @@ const ResearchProjectsPage = () => {
                             <p className="text-text-dim text-sm max-w-md font-medium leading-relaxed mb-8">
                                 Inicie el proceso de creación de su proyecto de investigación utilizando el núcleo de renderizado oficial de la institución.
                             </p>
-                            <div className="btn-vercel-primary gap-3 px-8 py-3 shadow-lg group-hover:translate-x-1 transition-transform">
+                            <div className="btn-vercel-primary gap-3 px-8 py-3 group-hover:translate-x-1 transition-transform">
                                 Comenzar ahora <ArrowRight size={14} strokeWidth={3} />
                             </div>
                         </div>
@@ -106,7 +106,7 @@ const ResearchProjectsPage = () => {
                 <div className="col-span-1 lg:col-span-4 flex flex-col gap-6">
                     <div className="bento-card p-8">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="p-2 bg-brand/10 rounded-lg text-brand">
+                            <div className="p-2 bg-brand-subtle rounded-lg text-brand">
                                 <ClipboardList size={18} />
                             </div>
                             <div>
@@ -132,7 +132,7 @@ const ResearchProjectsPage = () => {
                             ))}
                         </div>
 
-                        <div className="mt-10 pt-8 border-t border-border">
+                        <div className="mt-10 pt-8 divider-vercel !mx-0">
                             <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest mb-4">Plantillas Disponibles</p>
                             <div className="flex flex-wrap gap-2">
                                 {['PROTOCOLO', 'ACTA', 'INFORME', 'CERTIFICADO'].map(t => (

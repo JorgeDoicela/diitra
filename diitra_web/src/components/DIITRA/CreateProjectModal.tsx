@@ -17,30 +17,24 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const navigate = useNavigate();
     const { user } = useAuth();
 
-    // Form states
     const [titulo, setTitulo] = useState('');
     const [idCarrera, setIdCarrera] = useState<number>(0);
     const [idConvocatoria, setIdConvocatoria] = useState<number>(preselectedConvocatoriaId || 0);
 
-    // Custom dropdown states
     const [isOpenCarrera, setIsOpenCarrera] = useState(false);
     const [isOpenConvocatoria, setIsOpenConvocatoria] = useState(false);
 
-    // Refs for click outside detection
     const carreraRef = useRef<HTMLDivElement>(null);
     const convocatoriaRef = useRef<HTMLDivElement>(null);
 
-    // Catalog states
     const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     
-    // UI states
     const [isLoadingCatalogs, setIsLoadingCatalogs] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [creationStepMsg, setCreationStepMsg] = useState('');
     const [error, setError] = useState<string | null>(null);
 
-    // Helper mapping functions to handle any field name variations (camelCase, snake_case, etc.)
     const getCarreraId = (c: any): number => c.idCarrera ?? c.id_carrera ?? 0;
     const getCarreraName = (c: any): string => c.carrera1 ?? c.nombre_carrera ?? c.carrera ?? 'Sin Nombre';
 
@@ -51,7 +45,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         return code ? `${code} - ${title}` : title;
     };
 
-    // Load catalogs
     useEffect(() => {
         const loadCatalogs = async () => {
             try {
@@ -62,7 +55,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 setCarreras(rCarreras.data || []);
                 setConvocatorias(rConvocatorias.data || []);
                 
-                // If convocatoria is pre-selected, lock it in
                 if (preselectedConvocatoriaId) {
                     setIdConvocatoria(preselectedConvocatoriaId);
                 }
@@ -76,7 +68,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         loadCatalogs();
     }, [preselectedConvocatoriaId]);
 
-    // Click outside handler to close custom dropdowns
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (carreraRef.current && !carreraRef.current.contains(event.target as Node)) {
@@ -100,7 +91,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         setError(null);
 
         try {
-            // Step 1: Create instance
             setCreationStepMsg("Generando expediente digital en el núcleo...");
             const response = await api.post('/documents/instances', { 
                 templateCode: 'PROTOCOLO_INVESTIGACION', 
@@ -113,7 +103,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 throw new Error("No se recibió el identificador único del proyecto.");
             }
 
-            // Step 2: Inject metadata and initial template schema
             setCreationStepMsg("Vinculando convocatoria y estructurando secciones CACES...");
             const initialMetadata = {
                 ...DocumentTemplateRegistry.PROTOCOLO_INVESTIGACION.schema,
@@ -126,7 +115,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             await api.patch(`/documents/instances/${newUuid}/metadata`, initialMetadata);
 
-            // Step 3: Establish environment & redirect
             setCreationStepMsg("Estableciendo entorno colaborativo en CoWork...");
             setTimeout(() => {
                 navigate(`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${newUuid}?edit=true`, { replace: true });
@@ -147,10 +135,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const selectedConvocatoriaLabel = selectedConvocatoria ? getConvocatoriaName(selectedConvocatoria) : "Seleccione una convocatoria...";
 
     return (
-        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-surface border border-border-thin w-full max-w-md rounded-lg overflow-hidden shadow-2xl relative animate-fade-up bg-glow">
+        <div className="modal-overlay">
+            <div className="modal-card bg-glow animate-fade-up">
                 
-                {/* Close Button */}
                 {!isCreating && (
                     <button 
                         onClick={onClose} 
@@ -160,21 +147,18 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     </button>
                 )}
 
-                {/* Main Content */}
                 <div className="p-8">
                     
-                    {/* Header */}
-                    <div className="flex items-center gap-3 mb-8 pb-4 border-b border-border-thin">
+                    <div className="flex items-center gap-3 mb-8 pb-4 divider-vercel !my-0">
                         <div className="text-text-main">
                             <Shield size={20} />
                         </div>
                         <div>
-                            <span className="text-[9px] font-black text-text-dim uppercase tracking-[0.3em]">DIITRA Builder</span>
+                            <span className="section-label text-text-dim !gap-0">DIITRA Builder</span>
                             <h3 className="text-sm font-black text-text-main uppercase tracking-widest leading-none mt-1">Iniciar Nueva Postulación</h3>
                         </div>
                     </div>
 
-                    {/* Loader overlay during creation */}
                     {isCreating ? (
                         <div className="py-16 flex flex-col items-center justify-center gap-6 animate-fade-in text-center">
                             <div className="w-10 h-10 border-2 border-text-main border-t-transparent rounded-full animate-spin" />
@@ -191,14 +175,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-5">
                             
-                            {/* Error Alert */}
                             {error && (
-                                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-md text-red-500 text-[10px] font-black uppercase tracking-wider">
+                                <div className="badge-vercel-error !rounded-md !p-3 text-[10px] font-black uppercase tracking-wider w-full">
                                     {error}
                                 </div>
                             )}
 
-                            {/* Campo 1: Título / Tema */}
                             <div className="space-y-2">
                                 <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
                                     <BookOpen size={10} className="text-text-dim" />
@@ -208,13 +190,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     value={titulo}
                                     onChange={(e) => setTitulo(e.target.value)}
                                     placeholder="EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN CON METADATA-DRIVEN UI..."
-                                    className="w-full border border-border-thin text-xs font-bold rounded-md px-4 py-3 h-20 focus:border-text-main outline-none transition-all placeholder:text-text-dim/30 resize-none uppercase"
-                                    style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}
+                                    className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none !placeholder:text-text-dim/30"
                                     required
                                 />
                             </div>
 
-                            {/* Campo 2: Carrera (Custom Dropdown) */}
                             <div className="space-y-2" ref={carreraRef}>
                                 <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
                                     <Briefcase size={10} className="text-text-dim" />
@@ -224,20 +204,16 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     <button
                                         type="button"
                                         onClick={() => setIsOpenCarrera(!isOpenCarrera)}
-                                        className="w-full flex items-center justify-between border border-border-thin text-xs font-bold rounded-md px-4 py-3 focus:border-text-main outline-none transition-all text-left cursor-pointer"
-                                        style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}
+                                        className="input-vercel !font-bold !text-xs text-left cursor-pointer flex items-center justify-between"
                                     >
-                                        <span style={idCarrera === 0 ? { color: 'var(--text-dim)', opacity: 0.5 } : {}}>
+                                        <span className={idCarrera === 0 ? 'text-text-dim opacity-50' : ''}>
                                             {selectedCarreraName}
                                         </span>
-                                        <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none', color: 'var(--text-dim)' }} />
+                                        <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none' }} />
                                     </button>
                                     
                                     {isOpenCarrera && (
-                                        <div 
-                                            className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 custom-scrollbar"
-                                            style={{ backgroundColor: 'var(--surface)' }}
-                                        >
+                                        <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
                                             {carreras.map(c => {
                                                 const cid = getCarreraId(c);
                                                 const cname = getCarreraName(c);
@@ -249,12 +225,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                                             setIdCarrera(cid);
                                                             setIsOpenCarrera(false);
                                                         }}
-                                                        className="w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none"
-                                                        style={
-                                                            idCarrera === cid 
-                                                                ? { backgroundColor: 'var(--fg)', color: 'var(--bg)', fontWeight: 'bold' } 
-                                                                : { backgroundColor: 'transparent', color: 'var(--fg)' }
-                                                        }
+                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none ${idCarrera === cid ? 'bg-text-main text-bg-deep font-bold' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}
                                                     >
                                                         <span>{cname}</span>
                                                         {idCarrera === cid && <Check size={12} />}
@@ -266,7 +237,6 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 </div>
                             </div>
 
-                            {/* Campo 3: Convocatoria (Custom Dropdown) */}
                             <div className="space-y-2" ref={convocatoriaRef}>
                                 <label className="flex items-center gap-2 text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">
                                     <Award size={10} className="text-text-dim" />
@@ -277,22 +247,18 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                         type="button"
                                         onClick={() => !preselectedConvocatoriaId && setIsOpenConvocatoria(!isOpenConvocatoria)}
                                         disabled={!!preselectedConvocatoriaId}
-                                        className="w-full flex items-center justify-between border border-border-thin text-xs font-bold rounded-md px-4 py-3 focus:border-text-main outline-none transition-all text-left disabled:opacity-60 disabled:cursor-not-allowed"
-                                        style={{ backgroundColor: 'var(--bg)', color: 'var(--fg)' }}
+                                        className="input-vercel !font-bold !text-xs text-left disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-between"
                                     >
-                                        <span style={idConvocatoria === 0 ? { color: 'var(--text-dim)', opacity: 0.5 } : {}}>
+                                        <span className={idConvocatoria === 0 ? 'text-text-dim opacity-50' : ''}>
                                             {selectedConvocatoriaLabel}
                                         </span>
                                         {!preselectedConvocatoriaId && (
-                                            <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenConvocatoria ? 'rotate(180deg)' : 'none', color: 'var(--text-dim)' }} />
+                                            <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenConvocatoria ? 'rotate(180deg)' : 'none' }} />
                                         )}
                                     </button>
                                     
                                     {isOpenConvocatoria && !preselectedConvocatoriaId && (
-                                        <div 
-                                            className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 custom-scrollbar"
-                                            style={{ backgroundColor: 'var(--surface)' }}
-                                        >
+                                        <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
                                             {convocatorias.map(c => {
                                                 const coid = getConvocatoriaId(c);
                                                 const coname = getConvocatoriaName(c);
@@ -304,12 +270,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                                             setIdConvocatoria(coid);
                                                             setIsOpenConvocatoria(false);
                                                         }}
-                                                        className="w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none"
-                                                        style={
-                                                            idConvocatoria === coid 
-                                                                ? { backgroundColor: 'var(--fg)', color: 'var(--bg)', fontWeight: 'bold' } 
-                                                                : { backgroundColor: 'transparent', color: 'var(--fg)' }
-                                                        }
+                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none ${idConvocatoria === coid ? 'bg-text-main text-bg-deep font-bold' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}
                                                     >
                                                         <span>{coname}</span>
                                                         {idConvocatoria === coid && <Check size={12} />}
@@ -321,20 +282,17 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 </div>
                             </div>
 
-                            {/* Actions */}
                             <div className="pt-4 flex gap-3">
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="flex-1 py-3 bg-transparent hover:bg-surface-hover border border-border-thin rounded-md text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
-                                    style={{ color: 'var(--text-dim)' }}
+                                    className="btn-vercel-secondary flex-1 py-3"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 py-3 hover:opacity-90 rounded-md text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 cursor-pointer border-none"
-                                    style={{ backgroundColor: 'var(--fg)', color: 'var(--bg)' }}
+                                    className="btn-vercel-primary flex-1 py-3"
                                 >
                                     Iniciar Formulación
                                 </button>
