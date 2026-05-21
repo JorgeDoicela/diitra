@@ -413,6 +413,27 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// Transfiere la dirección de un proyecto formalmente a un nuevo docente con justificación.
+        /// </summary>
+        [HttpPost("{uuid}/transfer-director")]
+        public async Task<IActionResult> TransferDirector(string uuid, [FromBody] TransferDirectorRequest request)
+        {
+            if (request == null) return BadRequest("Petición nula.");
+            if (string.IsNullOrEmpty(request.NuevoDirectorCedula) || string.IsNullOrEmpty(request.Motivo))
+            {
+                return BadRequest(new { success = false, message = "La cédula del nuevo director y el motivo son obligatorios." });
+            }
+
+            var result = await _projectOrchestrator.TransferDirectorAsync(uuid, request);
+            if (!result.Success)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+            return Ok(new { success = true });
+        }
+
+
+        /// <summary>
         /// Elimina físicamente un proyecto y todos sus registros relacionados en cascada.
         /// Solo permitido para borradores de proyectos académicos.
         /// </summary>

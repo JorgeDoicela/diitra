@@ -330,14 +330,22 @@ namespace diitra_infrastructure.Research
                     Cedula = pp.IdUsuarioNavigation?.IdSigafi,
                     Rol = pp.Rol,
                     NivelAcademico = pp.NivelAcademico,
-                    Telefono = pp.Telefono
+                    Telefono = pp.Telefono,
+                    Activo = pp.Activo ?? true,
+                    FechaInicio = pp.FechaInicio,
+                    FechaFin = pp.FechaFin,
+                    MotivoCambio = pp.MotivoCambio
                 }).Concat(p.InvProyectosAlumnos.Select(pa => new InvestigadorDto
                 {
                     Nombre = pa.IdUsuarioNavigation?.Nombre,
                     Cedula = pa.IdUsuarioNavigation?.IdSigafi,
                     Rol = pa.Rol,
                     NivelAcademico = pa.NivelAcademico,
-                    Telefono = pa.Telefono
+                    Telefono = pa.Telefono,
+                    Activo = pa.Activo ?? true,
+                    FechaInicio = pa.FechaInicio,
+                    FechaFin = pa.FechaFin,
+                    MotivoCambio = pa.MotivoCambio
                 })).ToList(),
                 ObjetivosEspecificos = p.InvObjetivosProyecto
                     .Where(o => !o.EsGeneral)
@@ -494,40 +502,124 @@ namespace diitra_infrastructure.Research
         {
             if (investigadores == null) return;
 
-            var currentProfs = _context.InvProyectosProfesores.Where(p => p.IdProyecto == projectId);
-            var currentAlums = _context.InvProyectosAlumnos.Where(p => p.IdProyecto == projectId);
-            _context.InvProyectosProfesores.RemoveRange(currentProfs);
-            _context.InvProyectosAlumnos.RemoveRange(currentAlums);
+            // 1. Obtener los integrantes actuales de la base de datos (tanto activos como inactivos)
+            var currentProfs = await _context.InvProyectosProfesores
+                .Include(pp => pp.IdUsuarioNavigation)
+                .Where(p => p.IdProyecto == projectId)
+                .ToListAsync();
 
+            var currentAlums = await _context.InvProyectosAlumnos
+                .Include(pa => pa.IdUsuarioNavigation)
+                .Where(p => p.IdProyecto == projectId)
+                .ToListAsync();
+
+            // Guardar cédulas activas recibidas
+            var activeCedulas = investigadores
+                .Where(i => !string.IsNullOrEmpty(i.Cedula))
+                .Select(i => i.Cedula.Trim())
+                .ToHashSet();
+
+            // 2. Procesar Profesores Existentes: Desactivar los que ya no vienen en la lista
+            foreach (var prof in currentProfs)
+            {
+                var cedula = prof.IdUsuarioNavigation?.IdSigafi?.Trim();
+                if (cedula != null && prof.Activo != false && !activeCedulas.Contains(cedula))
+                {
+                    prof.Activo = false;
+                    prof.FechaFin = DateTime.Now;
+                    prof.MotivoCambio = "Retirado del equipo";
+                    prof.EsDirector = false; // Al desactivarlo deja de ser director activo
+                }
+            }
+
+            // 3. Procesar Alumnos Existentes: Desactivar los que ya no vienen en la lista
+            foreach (var alum in currentAlums)
+            {
+                var cedula = alum.IdUsuarioNavigation?.IdSigafi?.Trim();
+                if (cedula != null && alum.Activo != false && !activeCedulas.Contains(cedula))
+                {
+                    alum.Activo = false;
+                    alum.FechaFin = DateTime.Now;
+                    alum.MotivoCambio = "Retirado del equipo";
+                }
+            }
+
+            // 4. Procesar la lista entrante (Agregar nuevos o Reactivar/Actualizar existentes)
             foreach (var inv in investigadores)
             {
                 if (string.IsNullOrEmpty(inv.Cedula)) continue;
 
-                var persona = await _authService.GetOrProvisionUserByCedulaAsync(inv.Cedula);
+                var cedulaTrim = inv.Cedula.Trim();
+                var persona = await _authService.GetOrProvisionUserByCedulaAsync(cedulaTrim);
                 if (persona == null) continue;
+
+                bool esDirector = inv.Rol?.Contains("Director") == true;
 
                 if (persona.TablaSigafi == "alumno")
                 {
-                    _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
+                    var existingAlum = currentAlums.FirstOrDefault(pa => pa.IdUsuario == persona.IdUsuario);
+                    if (existingAlum != null)
                     {
-                        IdProyecto = projectId,
-                        IdUsuario = persona.IdUsuario,
-                        Rol = inv.Rol,
-                        NivelAcademico = inv.NivelAcademico,
-                        Telefono = inv.Telefono
-                    });
+                        // Reactivar o actualizar
+                        existingAlum.Rol = inv.Rol;
+                        existingAlum.NivelAcademico = inv.NivelAcademico;
+                        existingAlum.Telefono = inv.Telefono;
+                        if (existingAlum.Activo == false)
+                        {
+                            existingAlum.Activo = true;
+                            existingAlum.FechaInicio = DateTime.Now;
+                            existingAlum.FechaFin = null;
+                            existingAlum.MotivoCambio = null;
+                        }
+                    }
+                    else
+                    {
+                        // Agregar nuevo
+                        _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
+                        {
+                            IdProyecto = projectId,
+                            IdUsuario = persona.IdUsuario,
+                            Rol = inv.Rol,
+                            NivelAcademico = inv.NivelAcademico,
+                            Telefono = inv.Telefono,
+                            Activo = true,
+                            FechaInicio = DateTime.Now
+                        });
+                    }
                 }
                 else
                 {
-                    _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                    var existingProf = currentProfs.FirstOrDefault(pp => pp.IdUsuario == persona.IdUsuario);
+                    if (existingProf != null)
                     {
-                        IdProyecto = projectId,
-                        IdUsuario = persona.IdUsuario,
-                        Rol = inv.Rol,
-                        NivelAcademico = inv.NivelAcademico,
-                        Telefono = inv.Telefono,
-                        EsDirector = inv.Rol?.Contains("Director") == true
-                    });
+                        // Reactivar o actualizar
+                        existingProf.Rol = inv.Rol;
+                        existingProf.NivelAcademico = inv.NivelAcademico;
+                        existingProf.Telefono = inv.Telefono;
+                        existingProf.EsDirector = esDirector;
+                        if (existingProf.Activo == false)
+                        {
+                            existingProf.Activo = true;
+                            existingProf.FechaInicio = DateTime.Now;
+                            existingProf.FechaFin = null;
+                            existingProf.MotivoCambio = null;
+                        }
+                    }
+                    else
+                    {
+                        // Agregar nuevo
+                        _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                        {
+                            IdProyecto = projectId,
+                            IdUsuario = persona.IdUsuario,
+                            Rol = inv.Rol,
+                            NivelAcademico = inv.NivelAcademico,
+                            Telefono = inv.Telefono,
+                            EsDirector = esDirector,
+                            Activo = true,
+                            FechaInicio = DateTime.Now
+                        });
+                    }
                 }
 
                 // Notificar al investigador sobre su asignación/actualización
@@ -872,6 +964,189 @@ namespace diitra_infrastructure.Research
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "Error al actualizar equipo del proyecto UUID: {Uuid}", uuid);
                 return new SyncResult { Success = false, Message = $"Error interno al actualizar el equipo: {ex.Message}" };
+            }
+        }
+
+        public async Task<SyncResult> TransferDirectorAsync(string uuid, TransferDirectorRequest request)
+        {
+            var project = await _context.InvProyectos
+                .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
+            }
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                // 1. Obtener director activo actual
+                var currentDirector = project.InvProyectosProfesores
+                    .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false);
+
+                // 2. Registrar baja del director actual (si hay uno)
+                if (currentDirector != null)
+                {
+                    currentDirector.Activo = false;
+                    currentDirector.FechaFin = DateTime.Now;
+                    currentDirector.MotivoCambio = $"Relevado por: {request.Motivo}";
+                    currentDirector.EsDirector = false; // Ya no es el director activo
+                    
+                    // Notificar al director anterior
+                    await _notificationService.NotifyUserAsync(
+                        currentDirector.IdUsuario,
+                        "Relevo de Dirección de Proyecto",
+                        $"Has sido relevado como director en el proyecto: {project.Titulo}. Motivo: {request.Motivo}",
+                        "INVESTIGACION",
+                        $"/proyectos/{project.Uuid}"
+                    );
+                }
+
+                // 3. Obtener o aprovisionar al nuevo director
+                var nuevoDirectorUser = await _authService.GetOrProvisionUserByCedulaAsync(request.NuevoDirectorCedula.Trim());
+                if (nuevoDirectorUser == null)
+                {
+                    return new SyncResult { Success = false, Message = "No se pudo encontrar o registrar al nuevo director institucional." };
+                }
+
+                // 4. Designar al nuevo director
+                var existingProf = project.InvProyectosProfesores
+                    .FirstOrDefault(pp => pp.IdUsuario == nuevoDirectorUser.IdUsuario);
+
+                if (existingProf != null)
+                {
+                    existingProf.Rol = "Director de Proyecto";
+                    existingProf.EsDirector = true;
+                    existingProf.Activo = true;
+                    existingProf.FechaInicio = DateTime.Now;
+                    existingProf.FechaFin = null;
+                    existingProf.MotivoCambio = null;
+                }
+                else
+                {
+                    _context.InvProyectosProfesores.Add(new InvProyectoProfesor
+                    {
+                        IdProyecto = project.IdProyecto,
+                        IdUsuario = nuevoDirectorUser.IdUsuario,
+                        Rol = "Director de Proyecto",
+                        NivelAcademico = "Tercer Nivel", // Valor inicial, actualizable por el usuario
+                        Telefono = "",
+                        EsDirector = true,
+                        Activo = true,
+                        FechaInicio = DateTime.Now
+                    });
+                }
+
+                // 5. Notificar al nuevo director
+                await _notificationService.NotifyUserAsync(
+                    nuevoDirectorUser.IdUsuario,
+                    "Designación como Director de Proyecto",
+                    $"Has sido designado como el nuevo Director del proyecto: {project.Titulo}",
+                    "INVESTIGACION",
+                    $"/proyectos/{project.Uuid}"
+                );
+
+                // 6. Registrar en el Audit Trail del Workflow
+                var trazabilidad = new InvTrazabilidadProyecto
+                {
+                    Uuid = Guid.NewGuid().ToString(),
+                    IdProyecto = project.IdProyecto,
+                    IdUsuario = nuevoDirectorUser.IdUsuario, 
+                    EstadoAnterior = project.Estado,
+                    EstadoNuevo = project.Estado, 
+                    Observacion = $"Cambio de Dirección: {request.Motivo}. {request.Descripcion}",
+                    FechaTransicion = DateTime.Now
+                };
+                
+                var ultimaTransicion = await _context.InvTrazabilidadProyectos
+                    .Where(t => t.IdProyecto == project.IdProyecto)
+                    .OrderByDescending(t => t.FechaTransicion)
+                    .FirstOrDefaultAsync();
+                
+                trazabilidad.HashAnterior = ultimaTransicion?.HashActual;
+                string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion}";
+                using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                {
+                    byte[] bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataToHash));
+                    trazabilidad.HashActual = Convert.ToHexString(bytes).ToLower();
+                }
+
+                _context.InvTrazabilidadProyectos.Add(trazabilidad);
+
+                // Guardar cambios intermedios para sincronizar DB antes de actualizar CACES
+                await _context.SaveChangesAsync();
+
+                // 7. Sincronizar en Metadata JSON del CACES
+                ProyectoDto? dto = null;
+                if (!string.IsNullOrEmpty(project.MetadataCacesJson))
+                {
+                    try
+                    {
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson);
+                    }
+                    catch { }
+                }
+
+                if (dto == null)
+                {
+                    dto = new ProyectoDto
+                    {
+                        Uuid = project.Uuid,
+                        Titulo = project.Titulo,
+                        Estado = project.Estado,
+                        CodigoInstitucional = project.CodigoInstitucional
+                    };
+                }
+
+                // Volver a leer la lista de investigadores activos e inactivos para actualizar el JSON
+                var updatedProfs = await _context.InvProyectosProfesores
+                    .Include(pp => pp.IdUsuarioNavigation)
+                    .Where(pp => pp.IdProyecto == project.IdProyecto)
+                    .ToListAsync();
+                
+                var updatedAlums = await _context.InvProyectosAlumnos
+                    .Include(pa => pa.IdUsuarioNavigation)
+                    .Where(pa => pa.IdProyecto == project.IdProyecto)
+                    .ToListAsync();
+
+                dto.Investigadores = updatedProfs.Select(pp => new InvestigadorDto
+                {
+                    Nombre = pp.IdUsuarioNavigation?.Nombre,
+                    Cedula = pp.IdUsuarioNavigation?.IdSigafi,
+                    Rol = pp.Rol,
+                    NivelAcademico = pp.NivelAcademico,
+                    Telefono = pp.Telefono,
+                    Activo = pp.Activo ?? true,
+                    FechaInicio = pp.FechaInicio,
+                    FechaFin = pp.FechaFin,
+                    MotivoCambio = pp.MotivoCambio
+                }).Concat(updatedAlums.Select(pa => new InvestigadorDto
+                {
+                    Nombre = pa.IdUsuarioNavigation?.Nombre,
+                    Cedula = pa.IdUsuarioNavigation?.IdSigafi,
+                    Rol = pa.Rol,
+                    NivelAcademico = pa.NivelAcademico,
+                    Telefono = pa.Telefono,
+                    Activo = pa.Activo ?? true,
+                    FechaInicio = pa.FechaInicio,
+                    FechaFin = pa.FechaFin,
+                    MotivoCambio = pa.MotivoCambio
+                })).ToList();
+
+                project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
+                project.FechaModificacion = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return new SyncResult { Success = true, Uuid = uuid };
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error al transferir la dirección del proyecto UUID: {Uuid}", uuid);
+                return new SyncResult { Success = false, Message = $"Error interno al realizar la transferencia: {ex.Message}" };
             }
         }
     }

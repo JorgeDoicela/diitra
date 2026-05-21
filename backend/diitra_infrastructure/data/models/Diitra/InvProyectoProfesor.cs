@@ -14,6 +14,10 @@ public partial class InvProyectoProfesor
     public string? NivelAcademico { get; set; }
     public string? Telefono { get; set; }
     public decimal? HorasSemanales { get; set; }
+    public bool? Activo { get; set; } = true;
+    public DateTime? FechaInicio { get; set; }
+    public DateTime? FechaFin { get; set; }
+    public string? MotivoCambio { get; set; }
 
     public virtual InvProyecto IdProyectoNavigation { get; set; } = null!;
     public virtual User IdUsuarioNavigation { get; set; } = null!;

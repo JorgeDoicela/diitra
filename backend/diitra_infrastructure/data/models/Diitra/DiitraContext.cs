@@ -992,6 +992,10 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
             entity.Property(e => e.HorasSemanales).HasColumnName("horasSemanales").HasPrecision(4, 1);
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(false);
+            entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio").HasColumnType("datetime");
+            entity.Property(e => e.FechaFin).HasColumnName("fecha_fin").HasColumnType("datetime");
+            entity.Property(e => e.MotivoCambio).HasColumnName("motivo_cambio").HasMaxLength(150);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosProfesores).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pp_proyecto");
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pp_usuario");
@@ -1007,6 +1011,10 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(false);
+            entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio").HasColumnType("datetime");
+            entity.Property(e => e.FechaFin).HasColumnName("fecha_fin").HasColumnType("datetime");
+            entity.Property(e => e.MotivoCambio).HasColumnName("motivo_cambio").HasMaxLength(150);
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvProyectosAlumnos).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_pa_proyecto");
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany().HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Restrict).HasConstraintName("fk_pa_usuario");

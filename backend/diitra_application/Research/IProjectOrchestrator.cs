@@ -44,6 +44,18 @@ namespace Diitra.Application.Research
         /// Sincroniza y actualiza dinámicamente el equipo de investigadores de un proyecto en cualquier fase.
         /// </summary>
         Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores);
+
+        /// <summary>
+        /// Transfiere la dirección de un proyecto de forma formal a un nuevo docente con justificación.
+        /// </summary>
+        Task<SyncResult> TransferDirectorAsync(string uuid, TransferDirectorRequest request);
+    }
+
+    public class TransferDirectorRequest
+    {
+        public string NuevoDirectorCedula { get; set; } = null!;
+        public string Motivo { get; set; } = null!;
+        public string? Descripcion { get; set; }
     }
 
     public class SyncResult
