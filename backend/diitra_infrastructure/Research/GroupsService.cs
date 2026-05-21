@@ -139,8 +139,26 @@ public class GroupsService : IGroupsService
         group.ObjetivoGeneral = dto.ObjetivoGeneral;
         group.Mision = dto.Mision;
         group.Vision = dto.Vision;
-        group.ResolucionAprobacion = dto.ResolucionAprobacion;
         group.FechaCreacion = dto.FechaCreacion;
+
+        if (!string.IsNullOrEmpty(dto.Estado))
+        {
+            group.Estado = dto.Estado;
+            if (dto.Estado == "Pendiente")
+            {
+                group.Activo = false;
+                group.ResolucionAprobacion = null;
+            }
+            else
+            {
+                group.Activo = true;
+                group.ResolucionAprobacion = dto.ResolucionAprobacion;
+            }
+        }
+        else
+        {
+            group.ResolucionAprobacion = dto.ResolucionAprobacion;
+        }
 
         // Actualizar líneas (M:N)
         group.IdLineas.Clear();

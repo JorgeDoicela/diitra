@@ -42,7 +42,10 @@ public class GroupsController : ControllerBase
             if (!isAdmin)
             {
                 dto.Estado = "Pendiente";
-                dto.IdProfesorCoordinador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(dto.IdProfesorCoordinador))
+                {
+                    dto.IdProfesorCoordinador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                }
             }
             
             var group = await _groupsService.CreateAsync(dto);
@@ -65,13 +68,11 @@ public class GroupsController : ControllerBase
             var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
             if (!isAdmin)
             {
-                if (existingGroup.Estado == "Aprobado")
-                {
-                    return Forbid();
-                }
-                
                 dto.Estado = "Pendiente";
-                dto.IdProfesorCoordinador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(dto.IdProfesorCoordinador))
+                {
+                    dto.IdProfesorCoordinador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                }
             }
 
             var group = await _groupsService.UpdateAsync(uuid, dto);

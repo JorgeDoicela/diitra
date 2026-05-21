@@ -84,6 +84,45 @@ const GroupsPage = () => {
         carreras_ids: [] as number[]
     });
 
+    // --- Coordinator Autocomplete States & Search ---
+    const [coordSearchQuery, setCoordSearchQuery] = useState('');
+    const [coordSearchResults, setCoordSearchResults] = useState<any[]>([]);
+    const [isCoordSearching, setIsCoordSearching] = useState(false);
+    const [showCoordResults, setShowCoordResults] = useState(false);
+
+    useEffect(() => {
+        if (!coordSearchQuery.trim() || coordSearchQuery === (editingGroup?.nombre_coordinador || '')) {
+            setCoordSearchResults([]);
+            return;
+        }
+
+        const delayDebounceFn = setTimeout(async () => {
+            setIsCoordSearching(true);
+            try {
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(coordSearchQuery)}`);
+                // Filtrar solo docentes (tipo === 'profesor')
+                const teachersOnly = (res.data || []).filter((u: any) => u.tipo === 'profesor');
+                setCoordSearchResults(teachersOnly);
+                setShowCoordResults(true);
+            } catch (err) {
+                console.error("Error al buscar docentes coordinadores:", err);
+            } finally {
+                setIsCoordSearching(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [coordSearchQuery, editingGroup]);
+
+    const handleSelectCoordinator = (teacher: any) => {
+        setFormData(prev => ({
+            ...prev,
+            id_profesor_coordinador: teacher.cedula
+        }));
+        setCoordSearchQuery(teacher.nombre);
+        setShowCoordResults(false);
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -125,6 +164,8 @@ const GroupsPage = () => {
 
     const handleOpenModal = (group: Group | null = null, readOnly = false) => {
         setIsReadOnly(readOnly);
+        setCoordSearchResults([]);
+        setShowCoordResults(false);
         if (group) {
             setEditingGroup(group);
             setFormData({
@@ -141,6 +182,7 @@ const GroupsPage = () => {
                 lineas_ids: group.lineas_ids || [],
                 carreras_ids: group.carreras_ids || []
             });
+            setCoordSearchQuery(group.nombre_coordinador || '');
         } else {
             setEditingGroup(null);
             setFormData({
@@ -148,7 +190,7 @@ const GroupsPage = () => {
                 siglas: '',
                 tipo_grupo: 'Investigación',
                 id_dominio: '',
-                id_profesor_coordinador: !isAdmin ? (user?.id_referencia || '') : '',
+                id_profesor_coordinador: '',
                 objetivo_general: '',
                 mision: '',
                 vision: '',
@@ -157,6 +199,7 @@ const GroupsPage = () => {
                 lineas_ids: [],
                 carreras_ids: []
             });
+            setCoordSearchQuery('');
         }
         setIsModalOpen(true);
     };
@@ -416,7 +459,7 @@ const GroupsPage = () => {
                                                 // Teacher Flow
                                                 (() => {
                                                     const esCoordinador = g.id_profesor_coordinador === user?.id_referencia;
-                                                    const esEditable = esCoordinador && g.estado !== 'Aprobado';
+                                                    const esEditable = esCoordinador;
 
                                                     if (esEditable) {
                                                         return (
@@ -488,11 +531,21 @@ const GroupsPage = () => {
 
                         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
                             {!isAdmin && !isReadOnly && (
-                                <div className="bg-text-main/5 border border-text-main/15 rounded-xl p-4 flex items-center gap-3 animate-fade-up">
-                                    <Shield size={16} className="text-text-main shrink-0" />
-                                    <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
-                                        Las propuestas se envían en estado <span className="text-text-main">PENDIENTE</span> para su revisión y requieren aprobación formal del administrador antes de su activación.
-                                    </p>
+                                <div className="space-y-3 animate-fade-up">
+                                    <div className="bg-text-main/5 border border-text-main/15 rounded-xl p-4 flex items-center gap-3">
+                                        <Shield size={16} className="text-text-main shrink-0" />
+                                        <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
+                                            Las propuestas se envían en estado <span className="text-text-main">PENDIENTE</span> para su revisión y requieren aprobación formal del administrador antes de su activación.
+                                        </p>
+                                    </div>
+                                    {editingGroup && editingGroup.estado === 'Aprobado' && (
+                                        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
+                                            <Calendar size={16} className="text-amber-400 shrink-0" />
+                                            <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
+                                                <span className="text-amber-400 font-extrabold">¡Atención!</span> Este grupo de investigación ya se encuentra <span className="text-emerald-400 font-extrabold">APROBADO</span>. Si guarda los cambios, su estado volverá a <span className="text-amber-400 font-extrabold">PENDIENTE</span> y requerirá una nueva aprobación del administrador para ser reactivado.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -549,20 +602,70 @@ const GroupsPage = () => {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Coordinador Responsable</label>
-                                    <select 
-                                        required
-                                        disabled={isReadOnly || !isAdmin}
-                                        value={formData.id_profesor_coordinador}
-                                        onChange={(e) => setFormData({...formData, id_profesor_coordinador: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none disabled:opacity-75 disabled:cursor-not-allowed"
-                                    >
-                                        <option value="">Seleccione un docente...</option>
-                                        {teachers.map(t => (
-                                            <option key={t.id_profesor} value={t.id_profesor}>{t.nombre_completo}</option>
-                                        ))}
-                                    </select>
+                                <div className="space-y-2 relative">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest block">Coordinador Responsable</label>
+                                    <div className="relative">
+                                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                        <input 
+                                            required
+                                            type="text"
+                                            disabled={isReadOnly}
+                                            value={coordSearchQuery}
+                                            onChange={(e) => {
+                                                setCoordSearchQuery(e.target.value);
+                                                if (formData.id_profesor_coordinador) {
+                                                    setFormData(prev => ({ ...prev, id_profesor_coordinador: '' }));
+                                                }
+                                            }}
+                                            onFocus={() => !isReadOnly && setShowCoordResults(true)}
+                                            placeholder="Buscar docente por nombre o cédula..."
+                                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-3 pl-10 text-sm text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 disabled:opacity-75 disabled:cursor-not-allowed font-medium"
+                                        />
+                                        {isCoordSearching && (
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                <div className="animate-spin h-4 w-4 border-2 border-t-transparent border-text-main rounded-full"></div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Selected Badge */}
+                                    {formData.id_profesor_coordinador && (
+                                        <div className="mt-1 px-3 py-1.5 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[10px] flex justify-between items-center animate-fade-in font-mono text-emerald-400">
+                                            <span>Docente Vinculado: C.I. {formData.id_profesor_coordinador}</span>
+                                            <span className="text-[8px] bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 uppercase font-bold">Verificado</span>
+                                        </div>
+                                    )}
+
+                                    {/* Autocomplete Suggestions */}
+                                    {!isReadOnly && showCoordResults && coordSearchQuery.trim() && (
+                                        <>
+                                            <div className="fixed inset-0 z-20" onClick={() => setShowCoordResults(false)}></div>
+                                            <div className="absolute left-0 right-0 top-full mt-2 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-48 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                {coordSearchResults.length === 0 ? (
+                                                    <div className="p-4 text-center text-xs text-text-dim font-mono">
+                                                        No se encontraron docentes con ese nombre/cédula.
+                                                    </div>
+                                                ) : (
+                                                    coordSearchResults.map((selectedUser: any) => (
+                                                        <button 
+                                                            key={selectedUser.cedula}
+                                                            type="button"
+                                                            onClick={() => handleSelectCoordinator(selectedUser)}
+                                                            className="w-full p-3 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <p className="font-bold text-text-main text-sm">{selectedUser.nombre}</p>
+                                                                <p className="text-text-dim font-mono text-[10px]">C.I. {selectedUser.cedula} | {selectedUser.email}</p>
+                                                            </div>
+                                                            <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase border bg-text-main/10 border-text-main/20 text-text-main">
+                                                                Docente
+                                                            </span>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             </section>
 
