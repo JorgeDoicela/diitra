@@ -22,7 +22,13 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         error: null,
     });
 
-    // 2. Referencias persistentes
+    // 2. Estado reactivo del Yjs Doc y Awareness (CORRECCIÓN: no son simples refs)
+    // Deben ser estado para que el useMemo del return y los consumers (useDIITRADocument)
+    // reciban el nuevo ydoc cuando SignalR reconecta y crea nuevas instancias.
+    const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+    const [awareness, setAwareness] = useState<awarenessProtocol.Awareness | null>(null);
+
+    // Referencias internas para uso dentro del efecto (sin causar loops)
     const ydocRef = useRef<Y.Doc | null>(null);
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
     const activeTransportRef = useRef<ICoWorkTransport | null>(null);
@@ -101,10 +107,14 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         const transport = new SignalRTransport();
         activeTransportRef.current = transport;
 
-        const ydoc = new Y.Doc();
-        const awareness = new awarenessProtocol.Awareness(ydoc);
-        ydocRef.current = ydoc;
-        awarenessRef.current = awareness;
+        const newYdoc = new Y.Doc();
+        const newAwareness = new awarenessProtocol.Awareness(newYdoc);
+        ydocRef.current = newYdoc;
+        awarenessRef.current = newAwareness;
+
+        // Notificar a React que tenemos nuevas instancias reactivas
+        setYdoc(newYdoc);
+        setAwareness(newAwareness);
 
         let cleanupInterval: any;
         let statusCleanup: (() => void) | undefined;
@@ -137,36 +147,36 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             }
 
             transport.onYjsUpdate((base64) => {
-                if (!isMounted || ydocRef.current !== ydoc) return;
+                if (!isMounted || ydocRef.current !== newYdoc) return;
                 const update = base64ToUint8Array(base64);
-                Y.applyUpdate(ydoc, update, 'remote');
+                Y.applyUpdate(newYdoc, update, 'remote');
             });
 
             transport.onUpdateHistory((updates) => {
-                if (!isMounted || ydocRef.current !== ydoc) return;
+                if (!isMounted || ydocRef.current !== newYdoc) return;
                 console.log(`[useCoWork] Sincronizando historial (${updates.length} deltas)`);
-                ydoc.transact(() => {
+                newYdoc.transact(() => {
                     updates.forEach(base64 => {
                         const update = base64ToUint8Array(base64);
-                        Y.applyUpdate(ydoc, update, 'remote');
+                        Y.applyUpdate(newYdoc, update, 'remote');
                     });
                 }, 'remote');
                 setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
             });
 
             transport.onAwarenessUpdate((base64) => {
-                if (!isMounted || awarenessRef.current !== awareness) return;
+                if (!isMounted || awarenessRef.current !== newAwareness) return;
                 const update = base64ToUint8Array(base64);
-                awarenessProtocol.applyAwarenessUpdate(awareness, update, 'remote');
+                awarenessProtocol.applyAwarenessUpdate(newAwareness, update, 'remote');
                 syncUserList();
             });
 
             transport.onUserJoined?.((name) => {
-                if (!isMounted || awarenessRef.current !== awareness) return;
+                if (!isMounted || awarenessRef.current !== newAwareness) return;
                 console.log(`[useCoWork] Nuevo usuario detectado (${name}), re-anunciando presencia local...`);
-                const localState = awareness.getLocalState();
+                const localState = newAwareness.getLocalState();
                 if (localState) {
-                    awareness.setLocalState(localState);
+                    newAwareness.setLocalState(localState);
                 }
             });
 
@@ -177,18 +187,18 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             }, 5000);
 
             // C) EVENTOS DE SALIDA
-            ydoc.on('update', (update, origin) => {
+            newYdoc.on('update', (update, origin) => {
                 if (origin !== 'remote' && isMounted) {
                     const base64 = uint8ArrayToBase64(update);
                     transport.sendYjsUpdate(config.documentId, base64);
                 }
             });
 
-            awareness.on('update', ({ added, updated, removed }: any, origin: any) => {
+            newAwareness.on('update', ({ added, updated, removed }: any, origin: any) => {
                 if (isMounted) {
                     syncUserList();
                     if (origin !== 'remote') {
-                        const update = awarenessProtocol.encodeAwarenessUpdate(awareness, [
+                        const update = awarenessProtocol.encodeAwarenessUpdate(newAwareness, [
                             ...added, ...updated, ...removed
                         ]);
                         const base64 = uint8ArrayToBase64(update);
@@ -233,7 +243,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     userToAnnounce.name = `${prefix} #${tabId.substring(0, 3)}`;
                 }
 
-                awareness.setLocalStateField('user', {
+                newAwareness.setLocalStateField('user', {
                     ...userToAnnounce,
                     color: getUserColor(config.user.id, tabId),
                     initials: getUserInitials(userToAnnounce.name),
@@ -272,12 +282,18 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             if (statusCleanup) statusCleanup();
             if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
 
-            ydoc.destroy();
-            awareness.destroy();
+            newYdoc.destroy();
+            newAwareness.destroy();
 
-            // Nullificar la referencia central únicamente si no ha sido ya suplantada por un efecto posterior
-            if (ydocRef.current === ydoc) ydocRef.current = null;
-            if (awarenessRef.current === awareness) awarenessRef.current = null;
+            // Nullificar referencias internas y estado reactivo
+            if (ydocRef.current === newYdoc) {
+                ydocRef.current = null;
+                setYdoc(null);
+            }
+            if (awarenessRef.current === newAwareness) {
+                awarenessRef.current = null;
+                setAwareness(null);
+            }
 
             transport.disconnect();
             if (activeTransportRef.current === transport) activeTransportRef.current = null;
@@ -286,8 +302,8 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
     return useMemo(() => ({
         session,
-        ydoc: ydocRef.current,
-        awareness: awarenessRef.current,
+        ydoc,        // ← Estado reactivo: React re-renderiza cuando cambia
+        awareness,   // ← Estado reactivo: React re-renderiza cuando cambia
         compact,
         submitFinalContent,
         disconnect,
@@ -298,7 +314,8 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         onSectionStatusUpdated,
         onNewCommentReceived
     }), [
-        session, compact, submitFinalContent, disconnect,
+        session, ydoc, awareness,   // ← ydoc y awareness son dependencias reactivas
+        compact, submitFinalContent, disconnect,
         notifySectionActivity, updateSectionStatus, postComment,
         onSectionActivity, onSectionStatusUpdated, onNewCommentReceived
     ]);
