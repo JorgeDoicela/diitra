@@ -131,6 +131,71 @@ namespace diitra_infrastructure.Common.Notifications
                 failedCount);
         }
 
+        public async Task NotifyByRoleCodesAsync(string title, string body, IEnumerable<string> roleCodes, string? url = null, Dictionary<string, string>? extraData = null)
+        {
+            var roleCodesList = roleCodes.ToList();
+
+            _logger.LogInformation("Iniciando NotifyByRoleCodes: {Title} (Roles: {Roles})", title, string.Join(", ", roleCodesList));
+
+            var recipients = await _context.UserRoles
+                .Include(ur => ur.User)
+                .Include(ur => ur.Role)
+                .Where(ur => roleCodesList.Contains(ur.Role.CodigoRol) && (ur.EsActivo ?? true))
+                .Where(ur => ur.User != null && ur.User.Activo)
+                .Select(ur => new
+                {
+                    ur.User.IdUsuario,
+                    ur.User.EmailInstitucional,
+                    ur.User.Nombre
+                })
+                .Distinct()
+                .ToListAsync();
+
+            if (recipients.Count == 0)
+            {
+                _logger.LogWarning("NotifyByRoleCodes sin destinatarios para roles: {Roles}", string.Join(", ", roleCodesList));
+                return;
+            }
+
+            var notifications = recipients.Select(u => new InvNotificacion
+            {
+                Uuid = Guid.NewGuid(),
+                Destinatario = u.IdUsuario,
+                Titulo = title,
+                Mensaje = body,
+                Categoria = "INVESTIGACION",
+                UrlAccion = url,
+                FechaEnvio = DateTime.UtcNow,
+                Leido = false
+            }).ToList();
+
+            _context.InvNotificaciones.AddRange(notifications);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Notificaciones internas creadas para {Count} admins. Iniciando envio externo...", recipients.Count);
+
+            foreach (var user in recipients)
+            {
+                try
+                {
+                    await DispatchToDriversAsync(
+                        user.IdUsuario,
+                        user.EmailInstitucional ?? "",
+                        user.Nombre ?? "Usuario",
+                        title,
+                        body,
+                        url,
+                        extraData);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error en NotifyByRoleCodes para usuario {UserId}", user.IdUsuario);
+                }
+
+                await Task.Delay(100);
+            }
+        }
+
         private async Task DispatchToDriversAsync(
             int userId,
             string recipientContact,
