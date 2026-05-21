@@ -32,18 +32,18 @@ interface ProyectoResumen {
     trl_meta?: number;
 }
 
-const ESTADO_CONFIG: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-    'Borrador':     { label: 'Borrador',      color: 'text-gray-400',   bg: 'bg-gray-500/10',   dot: 'bg-gray-500' },
-    'Enviado':      { label: 'Enviado',        color: 'text-blue-400',   bg: 'bg-blue-500/10',   dot: 'bg-blue-500' },
-    'En Revisión':  { label: 'En Revisión',    color: 'text-amber-400',  bg: 'bg-amber-500/10',  dot: 'bg-amber-500 animate-pulse' },
-    'Aprobado':     { label: 'Aprobado',       color: 'text-emerald-400',bg: 'bg-emerald-500/10',dot: 'bg-emerald-500' },
-    'En Ejecución': { label: 'En Ejecución',   color: 'text-violet-400', bg: 'bg-violet-500/10', dot: 'bg-violet-500 animate-pulse' },
-    'Finalizado':   { label: 'Finalizado',     color: 'text-teal-400',   bg: 'bg-teal-500/10',   dot: 'bg-teal-500' },
-    'Rechazado':    { label: 'Rechazado',      color: 'text-red-400',    bg: 'bg-red-500/10',    dot: 'bg-red-500' },
+const ESTADO_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
+    'Borrador':     { label: 'Borrador',      badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
+    'Enviado':      { label: 'Enviado',        badge: 'badge-vercel-info',    dot: 'dot-info' },
+    'En Revisión':  { label: 'En Revisión',    badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
+    'Aprobado':     { label: 'Aprobado',       badge: 'badge-vercel-success', dot: 'dot-success' },
+    'En Ejecución': { label: 'En Ejecución',   badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
+    'Finalizado':   { label: 'Finalizado',     badge: 'badge-vercel-success', dot: 'dot-success' },
+    'Rechazado':    { label: 'Rechazado',      badge: 'badge-vercel-error',   dot: 'dot-error' },
 };
 
 const estadoConfig = (estado: string) =>
-    ESTADO_CONFIG[estado] ?? { label: estado, color: 'text-gray-400', bg: 'bg-gray-500/10', dot: 'bg-gray-500' };
+    ESTADO_CONFIG[estado] ?? { label: estado, badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
 
 const MyProjectsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -115,11 +115,10 @@ const MyProjectsPage: React.FC = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 animate-fade-up">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                        <ClipboardList size={10} className="text-primary" />
+                    <div className="section-label text-brand">
+                        <ClipboardList size={10} />
                         <span>Mis Investigaciones</span>
                     </div>
                     <h2 className="text-3xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
@@ -131,14 +130,13 @@ const MyProjectsPage: React.FC = () => {
                 </div>
                 <button
                     onClick={() => setShowNewProject(true)}
-                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-xl"
+                    className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
                 >
                     <Plus size={14} strokeWidth={3} />
                     Nueva Postulación
                 </button>
             </header>
 
-            {/* Barra de búsqueda y filtros */}
             <div className="flex flex-col sm:flex-row gap-3 mb-8 animate-fade-up [animation-delay:100ms]">
                 <div className="relative flex-1">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
@@ -146,7 +144,7 @@ const MyProjectsPage: React.FC = () => {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar por título o código..."
-                        className="w-full pl-9 pr-4 py-2.5 bg-surface border border-border-thin rounded-xl text-sm text-text-main placeholder:text-text-dim focus:outline-none focus:border-primary transition-colors"
+                        className="input-vercel !pl-9 !rounded-xl !py-2.5 !text-sm !placeholder:text-text-dim"
                     />
                 </div>
                 <div className="flex gap-2 items-center">
@@ -154,7 +152,7 @@ const MyProjectsPage: React.FC = () => {
                     <select
                         value={filterEstado}
                         onChange={e => setFilterEstado(e.target.value)}
-                        className="bg-surface border border-border-thin rounded-xl px-3 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary cursor-pointer"
+                        className="input-vercel !rounded-xl !py-2.5 !text-sm !w-auto"
                     >
                         <option value="todos">Todos los estados</option>
                         {Object.keys(ESTADO_CONFIG).map(e => (
@@ -164,19 +162,17 @@ const MyProjectsPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Estado de error */}
             {error && (
-                <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl mb-6 text-red-400 text-sm">
+                <div className="badge-vercel-error !rounded-xl !p-4 mb-6 w-full text-sm">
                     <AlertCircle size={16} />
                     {error}
                 </div>
             )}
 
-            {/* Sin proyectos */}
             {!error && filtered.length === 0 && (
                 <div className="flex flex-col items-center justify-center py-24 text-center animate-fade-up">
-                    <div className="w-16 h-16 bg-surface border border-border-thin rounded-2xl flex items-center justify-center text-text-dim mb-6">
-                        <Target size={28} />
+                    <div className="icon-circle !p-4 bg-surface mb-6">
+                        <Target size={28} className="text-text-dim" />
                     </div>
                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">
                         {search || filterEstado !== 'todos' ? 'Sin resultados' : 'Aún no tienes proyectos'}
@@ -189,7 +185,7 @@ const MyProjectsPage: React.FC = () => {
                     {filterEstado === 'todos' && !search && (
                         <button
                             onClick={() => setShowNewProject(true)}
-                            className="flex items-center gap-2 bg-text-main text-bg-deep px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                            className="btn-vercel-primary px-6 py-2.5"
                         >
                             <Plus size={14} strokeWidth={3} /> Crear primer proyecto
                         </button>
@@ -197,7 +193,6 @@ const MyProjectsPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Grid de proyectos */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 animate-fade-up [animation-delay:150ms]">
                 {filtered.map((p) => {
                     const cfg = estadoConfig(p.estado);
@@ -209,12 +204,10 @@ const MyProjectsPage: React.FC = () => {
                         <div
                             key={p.uuid}
                             onClick={() => abrirWorkspace(p)}
-                            className="group relative bg-surface border border-border-thin rounded-2xl p-6 cursor-pointer hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 active:scale-[0.99] overflow-hidden"
+                            className="bento-card group relative p-6 cursor-pointer overflow-hidden"
                         >
-                            {/* Glow de fondo */}
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-subtle rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                            {/* Cabecera */}
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1 min-w-0">
                                     {p.codigo_institucional && (
@@ -222,7 +215,7 @@ const MyProjectsPage: React.FC = () => {
                                             {p.codigo_institucional}
                                         </p>
                                     )}
-                                    <h3 className="font-bold text-text-main text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                                    <h3 className="font-bold text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
                                         {p.titulo}
                                     </h3>
                                 </div>
@@ -233,7 +226,7 @@ const MyProjectsPage: React.FC = () => {
                                                 e.stopPropagation();
                                                 confirmarEliminar(p.uuid, p.titulo);
                                             }}
-                                            className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-dim hover:text-red-400 transition-colors"
+                                            className="p-1.5 rounded-lg hover:bg-error-subtle text-text-dim hover:text-error transition-colors"
                                             title="Eliminar borrador"
                                         >
                                             <Trash2 size={13} />
@@ -241,21 +234,19 @@ const MyProjectsPage: React.FC = () => {
                                     )}
                                     <ArrowRight
                                         size={14}
-                                        className="text-text-dim group-hover:text-primary group-hover:translate-x-1 transition-all"
+                                        className="text-text-dim group-hover:text-brand group-hover:translate-x-1 transition-all"
                                     />
                                 </div>
                             </div>
 
-                            {/* Badge de estado */}
-                            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${cfg.bg} ${cfg.color} mb-4`}>
-                                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                            <div className={`badge-vercel ${cfg.badge} mb-4`}>
+                                <span className={`dot ${cfg.dot}`} />
                                 {cfg.label}
                                 {p.rol_en_proyecto && (
                                     <span className="opacity-60 ml-1">· {p.rol_en_proyecto}</span>
                                 )}
                             </div>
 
-                            {/* Línea de investigación */}
                             {p.linea_investigacion && (
                                 <div className="flex items-center gap-1.5 text-[10px] text-text-dim mb-4">
                                     <BookOpen size={10} />
@@ -263,25 +254,23 @@ const MyProjectsPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* Métricas */}
                             <div className="grid grid-cols-3 gap-2 mb-4">
                                 <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                    <p className="text-base font-bold text-text-main font-mono">{p.total_investigadores}</p>
+                                    <p className="stat-number--sm !text-base font-bold text-text-main font-mono">{p.total_investigadores}</p>
                                     <p className="text-[9px] text-text-dim uppercase tracking-wide">Invest.</p>
                                 </div>
                                 <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                    <p className="text-base font-bold text-text-main font-mono">{p.total_productos}</p>
+                                    <p className="stat-number--sm !text-base font-bold text-text-main font-mono">{p.total_productos}</p>
                                     <p className="text-[9px] text-text-dim uppercase tracking-wide">Produc.</p>
                                 </div>
                                 <div className="text-center p-2 bg-bg-deep rounded-lg border border-border-thin">
-                                    <p className="text-base font-bold text-text-main font-mono">
+                                    <p className="stat-number--sm !text-base font-bold text-text-main font-mono">
                                         {p.informes_aprobados}/{p.total_informes}
                                     </p>
                                     <p className="text-[9px] text-text-dim uppercase tracking-wide">Informes</p>
                                 </div>
                             </div>
 
-                            {/* Barra de ejecución presupuestaria */}
                             {p.presupuesto_total !== undefined && p.presupuesto_total > 0 && (
                                 <div className="mb-3">
                                     <div className="flex justify-between text-[10px] font-mono text-text-dim mb-1">
@@ -290,7 +279,7 @@ const MyProjectsPage: React.FC = () => {
                                     </div>
                                     <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
                                         <div
-                                            className="h-full bg-gradient-to-r from-primary to-violet-500 rounded-full transition-all duration-700"
+                                            className="progress-fill progress-fill--brand"
                                             style={{ width: `${presupuestoPorc}%` }}
                                         />
                                     </div>
@@ -301,8 +290,7 @@ const MyProjectsPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {/* TRL y fecha */}
-                            <div className="flex items-center justify-between pt-3 border-t border-border-thin text-[10px] text-text-dim">
+                            <div className="flex items-center justify-between pt-3 divider-vercel !my-0 text-[10px] text-text-dim">
                                 <div className="flex items-center gap-1">
                                     <Calendar size={10} />
                                     <span>
@@ -315,14 +303,14 @@ const MyProjectsPage: React.FC = () => {
                                 </div>
                                 {p.trl_actual != null && (
                                     <div className="flex items-center gap-1">
-                                        <Zap size={10} className="text-amber-400" />
+                                        <Zap size={10} className="text-warning" />
                                         <span>TRL {p.trl_actual}/{p.trl_meta ?? '—'}</span>
                                     </div>
                                 )}
                                 {p.puntaje_evaluacion != null && (
                                     <div className="flex items-center gap-1">
-                                        <BarChart3 size={10} className="text-emerald-400" />
-                                        <span className="text-emerald-400 font-bold">{p.puntaje_evaluacion}/100</span>
+                                        <BarChart3 size={10} className="text-success" />
+                                        <span className="text-success font-bold">{p.puntaje_evaluacion}/100</span>
                                     </div>
                                 )}
                             </div>
@@ -331,47 +319,47 @@ const MyProjectsPage: React.FC = () => {
                 })}
             </div>
 
-            {/* Lanzador de nuevo proyecto */}
             {showNewProject && (
                 <CreateProjectModal
                     onClose={() => setShowNewProject(false)}
                 />
             )}
 
-            {/* Modal de Confirmación de Eliminación */}
             {deletingUuid && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="relative w-full max-w-md bg-surface border border-border-thin rounded-2xl p-6 shadow-2xl animate-scale-up">
-                        <div className="flex items-start gap-4">
-                            <div className="p-3 bg-red-500/10 text-red-400 rounded-full shrink-0 animate-pulse">
-                                <AlertCircle size={24} />
-                            </div>
-                            <div className="space-y-2">
-                                <h4 className="font-bold text-text-main text-base">¿Eliminar borrador de investigación?</h4>
-                                <p className="text-text-dim text-xs leading-relaxed">
-                                    Esta acción eliminará de forma permanente el borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
-                                </p>
-                                {deletionError && (
-                                    <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-[11px] leading-relaxed">
-                                        {deletionError}
-                                    </div>
-                                )}
+                <div className="modal-overlay !z-50 animate-fade-in">
+                    <div className="modal-card animate-fade-up">
+                        <div className="modal-body">
+                            <div className="flex items-start gap-4">
+                                <div className="icon-circle-error !p-3 shrink-0">
+                                    <AlertCircle size={24} />
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-bold text-text-main text-base">¿Eliminar borrador de investigación?</h4>
+                                    <p className="text-text-dim text-xs leading-relaxed">
+                                        Esta acción eliminará de forma permanente el borrador <strong className="text-text-main">"{deletingTitle}"</strong>, incluyendo todos sus objetivos, cronograma, presupuesto y participantes de la base de datos de DIITRA. Esta acción no se puede deshacer.
+                                    </p>
+                                    {deletionError && (
+                                        <div className="badge-vercel-error !rounded-lg !p-3 text-[11px] leading-relaxed w-full">
+                                            {deletionError}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border-thin">
+                        <div className="modal-footer">
                             <button
                                 onClick={() => {
                                     setDeletingUuid(null);
                                     setDeletingTitle('');
                                     setDeletionError(null);
                                 }}
-                                className="px-4 py-2 rounded-lg text-xs font-bold bg-bg-deep border border-border-thin hover:border-text-dim/30 text-text-dim hover:text-text-main transition-colors"
+                                className="btn-vercel-secondary py-2"
                             >
                                 Cancelar
                             </button>
                             <button
                                 onClick={ejecutarEliminacion}
-                                className="px-4 py-2 rounded-lg text-xs font-bold bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20 hover:shadow-red-600/30 transition-all active:scale-[0.98]"
+                                className="btn-brand !bg-error !border-error hover:!text-error hover:!bg-transparent py-2"
                             >
                                 Confirmar y Eliminar
                             </button>
