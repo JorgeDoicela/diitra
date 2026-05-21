@@ -15,12 +15,12 @@ const ResearchProjectsPage = () => {
     const [showReportLauncher, setShowReportLauncher] = useState(false);
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto selection:bg-primary/20">
+        <main className="flex-1 bg-bg-deep vercel-grid-fade p-4 md:p-10 overflow-y-auto">
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                        <ClipboardList size={10} className="text-primary" />
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-brand uppercase tracking-[0.3em]">
+                        <ClipboardList size={10} className="text-brand" />
                         <span>Mis Investigaciones</span>
                     </div>
                     <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Proyectos de I+D+i</h2>
@@ -31,7 +31,7 @@ const ResearchProjectsPage = () => {
 
                 <button 
                     onClick={() => setShowWizard(true)}
-                    className="w-full md:w-auto flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 shadow-xl"
+                    className="btn-vercel-primary w-full md:w-auto gap-2 text-[10px] font-black uppercase tracking-widest active:scale-95 shadow-xl px-6 py-3 md:py-2.5"
                 >
                     <Plus size={14} strokeWidth={3} />
                     Nueva Postulación
@@ -44,15 +44,15 @@ const ResearchProjectsPage = () => {
                 <div className="col-span-1 lg:col-span-8 flex flex-col gap-6">
                     <div 
                         onClick={() => setShowWizard(true)}
-                        className="group relative overflow-hidden bg-surface border border-border-thin p-6 md:p-10 rounded-2xl cursor-pointer shadow-sm transition-all hover:shadow-xl hover:scale-[1.01] active:scale-95 bg-glow"
+                        className="bento-card group relative overflow-hidden p-6 md:p-10 cursor-pointer active:scale-95 bg-glow"
                     >
                         <div className="absolute top-0 right-0 p-12 text-text-main opacity-5 group-hover:scale-110 transition-transform">
                             <Target size={180} />
                         </div>
                         <div className="relative z-10">
-                            <div className="flex items-center gap-3 text-text-main/60 mb-4">
-                                <div className="p-1 bg-text-main/10 rounded-sm">
-                                    <Plus size={16} strokeWidth={3} className="text-text-main" />
+                            <div className="flex items-center gap-3 text-brand mb-4">
+                                <div className="p-1 bg-brand/10 rounded-sm">
+                                    <Plus size={16} strokeWidth={3} className="text-brand" />
                                 </div>
                                 <span className="text-[10px] font-black uppercase tracking-[0.4em]">Nueva Postulación Activa</span>
                             </div>
@@ -60,7 +60,7 @@ const ResearchProjectsPage = () => {
                             <p className="text-text-dim text-sm max-w-md font-medium leading-relaxed mb-8">
                                 Inicie el proceso de creación de su proyecto de investigación utilizando el núcleo de renderizado oficial de la institución.
                             </p>
-                            <div className="w-full md:w-auto inline-flex items-center justify-center gap-3 bg-text-main text-bg-deep px-8 py-3 rounded-md text-[10px] font-black uppercase tracking-[0.2em] shadow-lg group-hover:translate-x-1 transition-transform">
+                            <div className="btn-vercel-primary gap-3 text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3 shadow-lg group-hover:translate-x-1 transition-transform">
                                 Comenzar ahora <ArrowRight size={14} strokeWidth={3} />
                             </div>
                         </div>
@@ -69,23 +69,23 @@ const ResearchProjectsPage = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div 
                             onClick={() => navigate('/investigacion/mis-proyectos')}
-                            className="bg-surface border border-primary/40 p-8 rounded-2xl hover:border-primary transition-colors cursor-pointer group shadow-sm hover:shadow-lg"
+                            className="bento-card p-8 cursor-pointer group"
                         >
-                            <ListChecks className="text-primary mb-6 group-hover:scale-110 transition-transform" size={28} />
+                            <ListChecks className="text-brand mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Mis Proyectos</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Expediente Personal</p>
                         </div>
                         <div 
                             onClick={() => setShowReportLauncher(true)}
-                            className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-primary transition-colors cursor-pointer group shadow-sm hover:shadow-lg bg-glow"
+                            className="bento-card p-8 cursor-pointer group bg-glow"
                         >
-                            <FileCheck className="text-primary mb-6 group-hover:scale-110 transition-transform" size={28} />
+                            <FileCheck className="text-brand mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Informe Final</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Consolidación de Resultados</p>
                         </div>
                         <div 
                             onClick={() => navigate('/investigacion/mis-proyectos')}
-                            className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-text-main transition-colors cursor-pointer group shadow-sm bg-glow hover:border-primary hover:shadow-lg"
+                            className="bento-card p-8 cursor-pointer group bg-glow"
                         >
                             <Users className="text-text-main mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Colaboración</h4>
@@ -93,9 +93,9 @@ const ResearchProjectsPage = () => {
                         </div>
                         <div 
                             onClick={() => window.open('/verify', '_blank')}
-                            className="bg-surface border border-border-thin p-8 rounded-2xl hover:border-green-500 transition-colors cursor-pointer group shadow-sm hover:shadow-lg bg-glow"
+                            className="bento-card p-8 cursor-pointer group bg-glow"
                         >
-                            <ShieldCheck className="text-green-500 mb-6 group-hover:scale-110 transition-transform" size={28} />
+                            <ShieldCheck className="text-success mb-6 group-hover:scale-110 transition-transform" size={28} />
                             <h4 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">Verificar Firma</h4>
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Trazabilidad & CACES</p>
                         </div>
@@ -104,9 +104,9 @@ const ResearchProjectsPage = () => {
 
                 {/* Lado Derecho: Capacidades del Núcleo */}
                 <div className="col-span-1 lg:col-span-4 flex flex-col gap-6">
-                    <div className="bg-bg-deep border border-border-thin p-8 rounded-2xl shadow-inner">
+                    <div className="bento-card p-8">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                            <div className="p-2 bg-brand/10 rounded-lg text-brand">
                                 <ClipboardList size={18} />
                             </div>
                             <div>
@@ -117,27 +117,26 @@ const ResearchProjectsPage = () => {
 
                         <div className="space-y-6">
                             {[
-                                { label: "Renderizado PDF/A", status: "Óptimo", icon: <CheckCircle size={14} className="text-green-500" /> },
-                                { label: "Inyección QR & LOPDP", status: "Activo", icon: <CheckCircle size={14} className="text-green-500" /> },
-                                { label: "Doble Ciego (Anonimizado)", status: "Listo", icon: <CheckCircle size={14} className="text-green-500" /> },
-                                { label: "Firma Electrónica PAdES", status: "Habilitado", icon: <CheckCircle size={14} className="text-blue-500" /> },
-                                { label: "Sincronización CoWork", status: "En Línea", icon: <CheckCircle size={14} className="text-green-500" /> }
+                                { label: "Renderizado PDF/A", status: "Óptimo", theme: "success" },
+                                { label: "Inyección QR & LOPDP", status: "Activo", theme: "success" },
+                                { label: "Doble Ciego (Anonimizado)", status: "Listo", theme: "success" },
+                                { label: "Firma Electrónica PAdES", status: "Habilitado", theme: "info" },
+                                { label: "Sincronización CoWork", status: "En Línea", theme: "success" }
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center justify-between group">
                                     <span className="text-[11px] font-bold text-text-dim uppercase tracking-tight">{item.label}</span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-black text-text-main uppercase">{item.status}</span>
-                                        {item.icon}
-                                    </div>
+                                    <span className={`badge-vercel badge-vercel-${item.theme} text-[8px] font-black`}>
+                                        {item.status}
+                                    </span>
                                 </div>
                             ))}
                         </div>
 
-                        <div className="mt-10 pt-8 border-t border-border-thin">
+                        <div className="mt-10 pt-8 border-t border-border">
                             <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest mb-4">Plantillas Disponibles</p>
                             <div className="flex flex-wrap gap-2">
                                 {['PROTOCOLO', 'ACTA', 'INFORME', 'CERTIFICADO'].map(t => (
-                                    <span key={t} className="px-2 py-1 bg-surface border border-border-thin rounded text-[8px] font-black text-text-main uppercase tracking-tighter">{t}</span>
+                                    <span key={t} className="badge-vercel text-[8px] font-black tracking-wider">{t}</span>
                                 ))}
                             </div>
                         </div>
@@ -155,9 +154,11 @@ const ResearchProjectsPage = () => {
                         <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">Auditoría LOPDP y Trazabilidad en tiempo real</p>
                     </div>
                     <div className="w-full md:w-auto flex gap-2">
-                         <div className="flex-1 md:flex-none flex h-10 items-center justify-center gap-3 px-4 bg-surface border border-border-thin rounded-xl text-text-dim text-[10px] font-black uppercase tracking-widest hover:border-text-main cursor-pointer transition-colors">
+                         <button 
+                            className="btn-vercel-secondary flex-1 md:flex-none gap-2 text-[10px] font-black uppercase tracking-widest px-4 h-10 cursor-pointer"
+                         >
                             <Filter size={14} /> Filtrar Expedientes
-                         </div>
+                         </button>
                     </div>
                 </div>
                 
@@ -172,12 +173,5 @@ const ResearchProjectsPage = () => {
         </main>
     );
 };
-
-const CheckCircle = ({ size, className }: { size: number, className: string }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={className}>
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-        <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-);
 
 export default ResearchProjectsPage;
