@@ -195,17 +195,6 @@ export const ProjectWorkspace: React.FC = () => {
         if (documentUuid) fetchProject();
     }, [documentUuid]);
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 rounded-full"></div>
-                    <span className="text-gray-500 font-mono text-sm">Cargando Workspace...</span>
-                </div>
-            </div>
-        );
-    }
-
     // --- Autocomplete search effect for working groups ---
     useEffect(() => {
         if (!searchQuery.trim()) {
@@ -228,6 +217,17 @@ export const ProjectWorkspace: React.FC = () => {
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchQuery]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin h-8 w-8 border-t-2 border-blue-500 rounded-full"></div>
+                    <span className="text-gray-500 font-mono text-sm">Cargando Workspace...</span>
+                </div>
+            </div>
+        );
+    }
 
     const handleAddMember = (selectedUser: any) => {
         if (investigadores.some(inv => inv.cedula?.trim() === selectedUser.cedula?.trim())) {
