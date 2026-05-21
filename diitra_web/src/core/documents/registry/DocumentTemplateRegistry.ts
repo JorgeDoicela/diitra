@@ -1,17 +1,53 @@
-import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart } from 'lucide-react';
-import { GeneralSection } from '../../../components/DIITRA/sections/GeneralSection';
-import { TechnicalSection } from '../../../components/DIITRA/sections/TechnicalSection';
-import { TeamSection } from '../../../components/DIITRA/sections/TeamSection';
-import { BudgetSection } from '../../../components/DIITRA/sections/BudgetSection';
-import { TimelineSection } from '../../../components/DIITRA/sections/TimelineSection';
-import { ImpactSection } from '../../../components/DIITRA/sections/ImpactSection';
-import { AgnosticSection } from '../../../components/DIITRA/sections/AgnosticSection';
-import { ProgressReportSection } from '../../../components/DIITRA/sections/ProgressReportSection';
+// ═══════════════════════════════════════════════════════════════════
+// DIITRA — Document Template Registry (Esquemas de Datos)
+//
+// RESPONSABILIDAD ÚNICA: Definir la ESTRUCTURA de cada tipo de documento.
+//   - Esquema inicial de campos (schema)
+//   - Listas colaborativas (lists)
+//   - Secciones con sus IDs y labels
+//   - Configuración de campos para AgnosticSection (config.fields)
+//
+// ESTE ARCHIVO NO IMPORTA COMPONENTES REACT.
+// Los componentes de React para cada sección están en:
+//   → DocumentComponentRegistry.ts
+//
+// Esto permite que este archivo se use en:
+//   - Tests unitarios sin necesidad de React/DOM
+//   - Generadores de scripts del backend
+//   - Validadores de esquemas
+//   - Documentación generada automáticamente
+// ═══════════════════════════════════════════════════════════════════
 
-// Nota: Las secciones de Rúbrica se irán creando luego, por ahora dejamos placeholders 
-// para demostrar el poder del enrutamiento dinámico (CACES / CES Compliance).
+export interface FieldConfig {
+    name: string;
+    label: string;
+    type: 'text' | 'textarea' | 'select' | 'checkbox' | 'number' | 'rich-text' | 'list';
+    collaborative: boolean;
+    placeholder?: string;
+    min?: number;
+    max?: number;
+    options?: string[];
+}
 
-export const DocumentTemplateRegistry: Record<string, any> = {
+export interface SectionSchema {
+    id: string;
+    label: string;
+    iconName: string;         // Nombre del ícono de Lucide (ej: 'BookOpen')
+    config?: {
+        referenceTemplateCode?: string;
+        fields?: FieldConfig[];
+    };
+}
+
+export interface DocumentSchema {
+    title: string;
+    subtitle: string;
+    schema: Record<string, any>;
+    lists: string[];
+    sections: SectionSchema[];
+}
+
+export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
     PROTOCOLO_INVESTIGACION: {
         title: "Proyecto de Investigación",
         subtitle: "Formulación del Proyecto de Investigación - ISTPET",
@@ -23,12 +59,12 @@ export const DocumentTemplateRegistry: Record<string, any> = {
             Periodo: '',
             TiempoEjecucion: '',
             Programa: '',
-            GrupoInvestigacionTipo: 'NO', // 'NO' | 'SI'
+            GrupoInvestigacionTipo: 'NO',       // 'NO' | 'SI'
             GrupoInvestigacionNombre: '',
             Dominio: '',
             LineaInvestigacion: '',
             SublineaInvestigacion: '',
-            TipoInvestigacion: 'APLICADA', // 'BÁSICA' | 'APLICADA' | 'DESARROLLO EXPERIMENTAL'
+            TipoInvestigacion: 'APLICADA',       // 'BÁSICA' | 'APLICADA' | 'DESARROLLO EXPERIMENTAL'
             CampoAmplio: '',
             CampoEspecifico: '',
             CampoDetallado: '',
@@ -41,15 +77,15 @@ export const DocumentTemplateRegistry: Record<string, any> = {
             Investigadores: [],
 
             // Sección 3: Especificación Técnica
-            Antecedentes: '', // Antecedentes Específicos
-            DescripcionProyecto: '', // Descripción del Proyecto
-            Justificacion: '', // Justificación
-            ObjetivoGeneral: '', // Objetivo General
-            ObjetivosEspecificos: '', // Objetivos Específicos
-            ObjetivosDesarrolloSostenible: '', // ODS
-            MarcoTeorico: '', // Marco Teórico
-            Metodologia: '', // Metodología
-            Evaluacion: '', // Evaluación
+            Antecedentes: '',
+            DescripcionProyecto: '',
+            Justificacion: '',
+            ObjetivoGeneral: '',
+            ObjetivosEspecificos: '',
+            ObjetivosDesarrolloSostenible: '',
+            MarcoTeorico: '',
+            Metodologia: '',
+            Evaluacion: '',
 
             // Sección 4: Recursos, Costo y Financiamiento
             RecursosDisponibles: [],
@@ -81,17 +117,18 @@ export const DocumentTemplateRegistry: Record<string, any> = {
         },
         lists: ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'Cronograma', 'ProductosEsperados'],
         sections: [
-            { id: 'identificacion', label: 'Identificación', icon: BookOpen, component: GeneralSection },
-            { id: 'tecnico', label: 'Plan Técnico', icon: FileText, component: TechnicalSection },
-            { id: 'equipo', label: 'Equipo Humano', icon: Users, component: TeamSection },
-            { id: 'recursos', label: 'Recursos & Financiamiento', icon: DollarSign, component: BudgetSection },
-            { id: 'cronograma', label: 'Cronograma (Gantt)', icon: Calendar, component: TimelineSection },
-            { id: 'impactos', label: 'Impacto & Productos', icon: Target, component: ImpactSection }
+            { id: 'identificacion', label: 'Identificación',          iconName: 'BookOpen'   },
+            { id: 'tecnico',        label: 'Plan Técnico',             iconName: 'FileText'   },
+            { id: 'equipo',         label: 'Equipo Humano',            iconName: 'Users'      },
+            { id: 'recursos',       label: 'Recursos & Financiamiento', iconName: 'DollarSign' },
+            { id: 'cronograma',     label: 'Cronograma (Gantt)',        iconName: 'Calendar'   },
+            { id: 'impactos',       label: 'Impacto & Productos',      iconName: 'Target'     },
         ]
     },
+
     RUBRICA_EVALUACION: {
         title: "Rúbrica de Evaluación por Pares",
-        subtitle: "Revisión doble ciego (Fase 2)",
+        subtitle: "Revisión doble ciego (Fase 2) — Normativa CACES",
         schema: {
             Pertinencia: 0,
             Metodologia: 0,
@@ -102,25 +139,25 @@ export const DocumentTemplateRegistry: Record<string, any> = {
         },
         lists: [],
         sections: [
-            { 
-                id: 'evaluacion', 
-                label: 'Evaluación Técnica', 
-                icon: CheckSquare, 
-                component: AgnosticSection,
+            {
+                id: 'evaluacion',
+                label: 'Evaluación Técnica',
+                iconName: 'CheckSquare',
                 config: {
                     referenceTemplateCode: 'PROTOCOLO_INVESTIGACION',
                     fields: [
-                        { name: 'Pertinencia', label: 'Pertinencia Social (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
-                        { name: 'Metodologia', label: 'Metodología Científica (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
-                        { name: 'Viabilidad', label: 'Viabilidad y Presupuesto (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
-                        { name: 'Impacto', label: 'Impacto y Transferencia (0-25)', type: 'number', collaborative: false, min: 0, max: 25 },
+                        { name: 'Pertinencia',          label: 'Pertinencia Social (0-25)',               type: 'number',   collaborative: false, min: 0, max: 25 },
+                        { name: 'Metodologia',          label: 'Metodología Científica (0-25)',            type: 'number',   collaborative: false, min: 0, max: 25 },
+                        { name: 'Viabilidad',           label: 'Viabilidad y Presupuesto (0-25)',          type: 'number',   collaborative: false, min: 0, max: 25 },
+                        { name: 'Impacto',              label: 'Impacto y Transferencia (0-25)',           type: 'number',   collaborative: false, min: 0, max: 25 },
                         { name: 'ComentariosGenerales', label: 'Observaciones y comentarios institucionales', type: 'textarea', collaborative: false, placeholder: 'Escriba un informe cualitativo para fundamentar las puntuaciones...' },
-                        { name: 'RecomendacionFinal', label: 'Recomendación Final de Comisión', type: 'select', collaborative: false, options: ['Aprobado sin modificaciones', 'Aprobado con observaciones menores', 'Requiere re-estructuración mayor', 'Rechazado'] }
+                        { name: 'RecomendacionFinal',   label: 'Recomendación Final de Comisión',         type: 'select',   collaborative: false, options: ['Aprobado sin modificaciones', 'Aprobado con observaciones menores', 'Requiere re-estructuración mayor', 'Rechazado'] }
                     ]
                 }
             }
         ]
     },
+
     INFORME_AVANCE: {
         title: "Informe de Avance de Proyecto",
         subtitle: "Ejecución y Monitoreo (Fase 3)",
@@ -135,11 +172,11 @@ export const DocumentTemplateRegistry: Record<string, any> = {
             {
                 id: 'ejecucion',
                 label: 'Avance de Ejecución',
-                icon: BarChart,
-                component: ProgressReportSection
+                iconName: 'BarChart'
             }
         ]
     },
+
     INFORME_FINAL_INVESTIGACION: {
         title: "Informe Final de Investigación",
         subtitle: "Cierre y Consolidación de Resultados - ISTPET",
@@ -159,39 +196,36 @@ export const DocumentTemplateRegistry: Record<string, any> = {
             {
                 id: 'resumen',
                 label: 'Resumen & Objetivos',
-                icon: FileText,
-                component: AgnosticSection,
+                iconName: 'FileText',
                 config: {
                     fields: [
-                        { name: 'resumen_ejecutivo', label: 'Resumen Ejecutivo', type: 'rich-text', collaborative: true, placeholder: 'Redacte el resumen ejecutivo de la investigación...' },
-                        { name: 'cumplimiento_objetivos', label: 'Análisis de Cumplimiento de Objetivos', type: 'rich-text', collaborative: true, placeholder: 'Detalle cómo se cumplieron cada uno de los objetivos planteados...' }
+                        { name: 'resumen_ejecutivo',      label: 'Resumen Ejecutivo',                        type: 'rich-text', collaborative: true, placeholder: 'Redacte el resumen ejecutivo de la investigación...' },
+                        { name: 'cumplimiento_objetivos', label: 'Análisis de Cumplimiento de Objetivos',    type: 'rich-text', collaborative: true, placeholder: 'Detalle cómo se cumplieron cada uno de los objetivos planteados...' }
                     ]
                 }
             },
             {
                 id: 'resultados',
                 label: 'Resultados & Discusión',
-                icon: BarChart,
-                component: AgnosticSection,
+                iconName: 'BarChart',
                 config: {
                     fields: [
-                        { name: 'resultados', label: 'Resultados Obtenidos', type: 'rich-text', collaborative: true, placeholder: 'Descripción técnica de los hallazgos y resultados...' },
-                        { name: 'discusion', label: 'Discusión de Hallazgos', type: 'rich-text', collaborative: true, placeholder: 'Análisis crítico de los resultados frente al marco teórico inicial...' }
+                        { name: 'resultados', label: 'Resultados Obtenidos',   type: 'rich-text', collaborative: true, placeholder: 'Descripción técnica de los hallazgos y resultados...' },
+                        { name: 'discusion',  label: 'Discusión de Hallazgos', type: 'rich-text', collaborative: true, placeholder: 'Análisis crítico de los resultados frente al marco teórico inicial...' }
                     ]
                 }
             },
             {
                 id: 'impacto',
                 label: 'Impacto & Cierre',
-                icon: Target,
-                component: AgnosticSection,
+                iconName: 'Target',
                 config: {
                     fields: [
-                        { name: 'impacto_final', label: 'Impacto en la Sociedad / Sector Productivo', type: 'rich-text', collaborative: true, placeholder: 'Describir el impacto real observado tras la ejecución...' },
-                        { name: 'transferencia_conocimiento', label: 'Transferencia de Tecnología / Conocimiento', type: 'rich-text', collaborative: true, placeholder: 'Convenios, prototipos o publicaciones derivadas...' },
-                        { name: 'conclusiones', label: 'Conclusiones Generales', type: 'rich-text', collaborative: true, placeholder: 'Conclusiones finales del proyecto...' },
-                        { name: 'recomendaciones', label: 'Recomendaciones', type: 'rich-text', collaborative: true, placeholder: 'Sugerencias para futuros desarrollos o líneas de investigación...' },
-                        { name: 'bibliografia_final', label: 'Bibliografía Actualizada (APA)', type: 'rich-text', collaborative: true, placeholder: 'Listado completo de fuentes bibliográficas utilizadas...' }
+                        { name: 'impacto_final',              label: 'Impacto en la Sociedad / Sector Productivo', type: 'rich-text', collaborative: true, placeholder: 'Describir el impacto real observado tras la ejecución...' },
+                        { name: 'transferencia_conocimiento', label: 'Transferencia de Tecnología / Conocimiento',  type: 'rich-text', collaborative: true, placeholder: 'Convenios, prototipos o publicaciones derivadas...' },
+                        { name: 'conclusiones',               label: 'Conclusiones Generales',                      type: 'rich-text', collaborative: true, placeholder: 'Conclusiones finales del proyecto...' },
+                        { name: 'recomendaciones',            label: 'Recomendaciones',                             type: 'rich-text', collaborative: true, placeholder: 'Sugerencias para futuros desarrollos o líneas de investigación...' },
+                        { name: 'bibliografia_final',         label: 'Bibliografía Actualizada (APA)',               type: 'rich-text', collaborative: true, placeholder: 'Listado completo de fuentes bibliográficas utilizadas...' }
                     ]
                 }
             }

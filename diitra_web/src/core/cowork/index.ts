@@ -37,3 +37,6 @@ export type { ICoWorkTransport } from './transport/ICoWorkTransport';
 
 // ── Utilidades de configuración ──
 export { getUserColor, getUserInitials, COWORK_CONFIG } from './config';
+
+// ── Null Object Pattern: CoWork desactivado para documentos sin colaboración ──
+export { createNoOpCoWork } from './noOpCoWork';

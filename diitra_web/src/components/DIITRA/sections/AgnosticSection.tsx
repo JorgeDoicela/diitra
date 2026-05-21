@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { 
     Sliders, 
     Eye, 
@@ -12,6 +13,13 @@ import api from '../../../api/axios_config';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { DocumentTemplateRegistry } from '../../../core/documents/registry/DocumentTemplateRegistry';
+
+/**
+ * Limpia HTML del servidor antes de insertarlo en el DOM.
+ * Previene ataques XSS en el Dossier de Referencia del modo Doble Ciego.
+ */
+const sanitize = (html: string): string =>
+    DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 
 interface FieldConfig {
     name: string;
@@ -30,6 +38,7 @@ interface AgnosticSectionProps {
     onUpdate: (field: string, value: any) => void;
     activeTab: string;
     templateCode: string;
+    label?: string;           // Label de la sección (prop directo, opcional)
     config?: any;             // Prop directo para carga dinámica desde backend
     carreras?: any[];
     convocatorias?: any[];
@@ -44,6 +53,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
     onUpdate,
     activeTab,
     templateCode,
+    label: labelProp,
     carreras = [],
     convocatorias = [],
     tiposProducto = [],
@@ -307,7 +317,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                         <span className="text-[8px] font-black text-text-dim uppercase block mb-1">Antecedentes y Justificación</span>
                                         <div 
                                             className="p-4 bg-bg-deep/50 border border-border-thin rounded-xl prose prose-invert max-w-none text-[11px]"
-                                            dangerouslySetInnerHTML={{ __html: referenceData.Antecedentes || "<i>No se cargaron antecedentes.</i>" }}
+                                            dangerouslySetInnerHTML={{ __html: sanitize(referenceData.Antecedentes || "<i>No se cargaron antecedentes.</i>") }}
                                         />
                                     </div>
 
@@ -315,7 +325,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                         <span className="text-[8px] font-black text-text-dim uppercase block mb-1">Objetivo General</span>
                                         <div 
                                             className="p-4 bg-bg-deep/50 border border-border-thin rounded-xl prose prose-invert max-w-none text-[11px]"
-                                            dangerouslySetInnerHTML={{ __html: referenceData.ObjetivoGeneral || "<i>No se cargó objetivo general.</i>" }}
+                                            dangerouslySetInnerHTML={{ __html: sanitize(referenceData.ObjetivoGeneral || "<i>No se cargó objetivo general.</i>") }}
                                         />
                                     </div>
 
@@ -350,7 +360,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                         <Sliders size={16} className="text-text-main" />
                         <div>
                             <h5 className="text-[10px] font-black uppercase tracking-widest text-text-main">
-                                {sectionConfig.label}
+                                {labelProp || sectionConfig?.label || activeTab}
                             </h5>
                             <p className="text-[8px] text-text-dim uppercase mt-0.5">
                                 Formulario de Carga Dinámica
