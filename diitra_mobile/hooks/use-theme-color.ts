@@ -1,21 +1,23 @@
 /**
- * Learn more about light and dark modes:
+ * Hook para obtener colores del tema Vercel/Geist basado en el esquema de color actual.
  * https://docs.expo.dev/guides/color-schemes/
  */
 
-import { Colors } from '@/constants/theme';
+import { Tokens, type ThemeTokens } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
+export type ThemeColorName = keyof ThemeTokens;
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
-  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+  colorName: ThemeColorName
 ) {
   const theme = useColorScheme() ?? 'light';
   const colorFromProps = props[theme];
 
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
   }
+
+  return Tokens[theme][colorName];
 }
