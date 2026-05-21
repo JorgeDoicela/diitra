@@ -83,11 +83,11 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                             </label>
                             <input
                                 {...register('username')}
-                                className="flex h-11 w-full rounded-md border border-border-thin bg-surface/40 px-4 py-2 text-sm text-text-main placeholder:text-text-dim focus:border-text-main focus:outline-none transition-all duration-200"
+                                className="input-vercel h-11"
                                 placeholder="Cédula de identidad"
                                 autoComplete="username"
                             />
-                            {errors.username && <p className="text-[10px] text-red-500 font-mono mt-1 ml-1">{(errors.username as any).message}</p>}
+                            {errors.username && <p className="text-[10px] text-error font-mono mt-1 ml-1">{(errors.username as any).message}</p>}
                         </div>
 
                         <div className="space-y-2">
@@ -106,15 +106,15 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 {...register('password')}
-                                className="flex h-11 w-full rounded-md border border-border-thin bg-surface/40 px-4 py-2 text-sm text-text-main placeholder:text-text-dim focus:border-text-main focus:outline-none transition-all duration-200"
+                                className="input-vercel h-11"
                                 placeholder="Contraseña de SIGAFI"
                                 autoComplete="current-password"
                             />
-                            {errors.password && <p className="text-[10px] text-red-500 font-mono mt-1 ml-1">{(errors.password as any).message}</p>}
+                            {errors.password && <p className="text-[10px] text-error font-mono mt-1 ml-1">{(errors.password as any).message}</p>}
                         </div>
 
                         {error && (
-                            <div className="p-3 rounded-md bg-red-500/5 border border-red-500/20 text-red-500 text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
+                            <div className="p-3 rounded-md bg-error/5 border border-error/20 text-error text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
                                 {error}
                             </div>
                         )}
@@ -123,7 +123,7 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="bg-text-main text-bg-deep w-full h-11 flex items-center justify-center gap-2 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-[0.98] disabled:opacity-50"
+                                className="btn-vercel-primary w-full h-11"
                             >
                                 {isSubmitting ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />

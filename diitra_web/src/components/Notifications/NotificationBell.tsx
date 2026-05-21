@@ -21,10 +21,10 @@ const NotificationBell = () => {
 
     const getIcon = (category: string) => {
         switch (category) {
-            case 'INVESTIGACION': return <ExternalLink size={14} className="text-blue-500" />;
-            case 'SISTEMA': return <Info size={14} className="text-gray-500" />;
-            case 'URGENTE': return <AlertTriangle size={14} className="text-red-500" />;
-            default: return <Mail size={14} className="text-gray-500" />;
+            case 'INVESTIGACION': return <ExternalLink size={14} className="text-info" />;
+            case 'SISTEMA': return <Info size={14} className="text-text-dim" />;
+            case 'URGENTE': return <AlertTriangle size={14} className="text-error" />;
+            default: return <Mail size={14} className="text-text-dim" />;
         }
     };
 
