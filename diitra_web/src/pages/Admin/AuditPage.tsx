@@ -195,7 +195,7 @@ const AuditPage: React.FC = () => {
 
                     <button 
                         type="submit"
-                        className="w-full py-2.5 btn-vercel-primary rounded-xl text-sm font-bold hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-text-main/10"
+                        className="w-full btn-vercel-primary rounded-xl hover:scale-[1.02] active:scale-95 shadow-lg shadow-text-main/10"
                     >
                         FILTRAR LOGS
                     </button>

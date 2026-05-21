@@ -12,8 +12,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, subtitl
     return (
         <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
             <div className="space-y-2">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                    <Activity size={10} strokeWidth={2} className="text-text-main" />
+                <div className="section-label text-text-main">
+                    <Activity size={10} strokeWidth={2} />
                     <span>{roleName} - ISTPET</span>
                 </div>
                 <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter">{title}</h2>

@@ -134,14 +134,14 @@ export const AdminDashboard: React.FC = () => {
                     <>
                         <button
                             onClick={() => navigate('/admin')}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 md:px-5 py-2.5 md:py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
+                            className="btn-vercel-secondary flex-1 md:flex-none"
                         >
                             <Users size={14} />
                             <span>Gestionar Usuarios</span>
                         </button>
                         <button
                             onClick={() => navigate('/convocatorias')}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 md:px-6 py-2.5 md:py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                            className="btn-vercel-primary flex-1 md:flex-none"
                         >
                             <Megaphone size={16} />
                             <span>Convocatorias</span>
@@ -182,12 +182,13 @@ export const AdminDashboard: React.FC = () => {
                                             }}
                                         />
                                     </div>
-                                    <span className="text-[11px] font-bold text-text-main font-mono w-6 text-right">
+                                    <span className="stat-number--sm text-text-main font-mono w-6 text-right">
                                         {est.cantidad}
                                     </span>
                                 </div>
                             ))}
-                            <div className="pt-3 border-t border-border-thin flex justify-between text-[10px] font-mono">
+                            <div className="divider-vercel my-3" />
+                            <div className="flex justify-between text-[10px] font-mono">
                                 <span className="text-text-dim">Total proyectos</span>
                                 <span className="font-bold text-text-main">{stats?.total_proyectos ?? 0}</span>
                             </div>
@@ -201,9 +202,7 @@ export const AdminDashboard: React.FC = () => {
                         icon={<Megaphone size={14} />}
                     >
                         <div className="mt-4">
-                            <p className={`text-5xl font-bold font-mono tracking-tighter ${
-                                (stats?.total_convocatorias_abiertas ?? 0) > 0 ? 'text-emerald-400' : 'text-text-dim'
-                            }`}>
+                            <p className={`stat-number ${(stats?.total_convocatorias_abiertas ?? 0) > 0 ? 'text-emerald-400' : 'text-text-dim'}`}>
                                 {stats?.total_convocatorias_abiertas ?? 0}
                             </p>
                             <p className="text-[10px] text-text-dim mt-2 uppercase tracking-wide">
@@ -231,7 +230,8 @@ export const AdminDashboard: React.FC = () => {
                                 <span className="text-text-dim">Ponencias</span>
                                 <span className="font-bold text-text-main font-mono">{stats?.ponencias ?? 0}</span>
                             </div>
-                            <div className="pt-2 border-t border-border-thin flex justify-between text-[10px] font-mono">
+                            <div className="divider-vercel" style={{ marginTop: '0.5rem', marginBottom: '0' }} />
+                            <div className="flex justify-between text-[10px] font-mono">
                                 <span className="text-text-dim">Total productos</span>
                                 <span className="font-bold text-text-main">{stats?.total_productos_periodo ?? 0}</span>
                             </div>
@@ -248,7 +248,7 @@ export const AdminDashboard: React.FC = () => {
                         <div className="mt-6">
                             <div className="flex items-end justify-between mb-3">
                                 <div>
-                                    <p className="text-4xl font-bold text-text-main font-mono tracking-tighter">
+                                    <p className="stat-number text-text-main">
                                         {ejecucionPorc.toFixed(1)}%
                                     </p>
                                     <p className="text-[10px] text-text-dim mt-1 uppercase tracking-wide">
@@ -278,9 +278,11 @@ export const AdminDashboard: React.FC = () => {
                     >
                         <div className="mt-4 space-y-2">
                             {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
-                                <p className="text-[11px] text-text-dim py-4 text-center">
-                                    No hay actividad reciente registrada.
-                                </p>
+                                <div className="empty-state py-4">
+                                    <p className="text-[11px] text-text-dim">
+                                        No hay actividad reciente registrada.
+                                    </p>
+                                </div>
                             ) : (
                                 stats.actividad_reciente.slice(0, 6).map((item, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin">
@@ -294,7 +296,7 @@ export const AdminDashboard: React.FC = () => {
                                             </p>
                                         </div>
                                         {item.estado && (
-                                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-wide shrink-0 border border-border-thin px-2 py-0.5 rounded">
+                                            <span className="status-tag text-text-dim border-border-thin">
                                                 {item.estado}
                                             </span>
                                         )}
@@ -306,9 +308,9 @@ export const AdminDashboard: React.FC = () => {
 
                 </BentoGrid>
 
-                {/* 🔬 Consola de Arbitraje Científico (Peer Review) */}
+                {/* Consola de Arbitraje Científico (Peer Review) */}
                 <section className="mt-8 px-2 animate-fade-up [animation-delay:300ms]">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em] mb-2">
+                    <div className="section-label mb-2">
                         <Award size={12} className="text-text-main" />
                         <span>Comité Institucional de Selección</span>
                     </div>
@@ -324,16 +326,16 @@ export const AdminDashboard: React.FC = () => {
 
                             <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                                 {projects.filter(p => p.estado === 'Enviado' || p.estado === 'En Revisión').length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-2 border border-dashed border-border-thin rounded-lg p-6">
+                                    <div className="empty-state h-full">
                                         <p className="text-xs text-text-dim font-bold uppercase tracking-wider">No hay proyectos postulados pendientes</p>
                                     </div>
                                 ) : (
                                     projects.filter(p => p.estado === 'Enviado' || p.estado === 'En Revisión').map((proj) => (
-                                        <div key={proj.uuid} className="p-4 rounded-lg bg-bg-deep border border-border-thin hover:border-text-main transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <div key={proj.uuid} className="p-4 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
-                                                        proj.estado === 'Enviado' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                    <span className={`status-tag ${
+                                                        proj.estado === 'Enviado' ? 'badge-vercel-warning' : 'badge-vercel-info'
                                                     }`}>
                                                         {proj.estado}
                                                     </span>
@@ -346,7 +348,7 @@ export const AdminDashboard: React.FC = () => {
                                             </div>
                                             <button 
                                                 onClick={() => handleOpenAssignModal(proj)}
-                                                className="shrink-0 flex items-center gap-1.5 bg-surface border border-border-thin hover:border-text-main text-text-main px-3 py-1.5 rounded text-[9px] font-bold uppercase tracking-widest transition-all"
+                                                className="btn-vercel-secondary shrink-0"
                                             >
                                                 <UserPlus size={12} />
                                                 <span>Asignar Par</span>
@@ -366,18 +368,18 @@ export const AdminDashboard: React.FC = () => {
 
                             <div className="flex-1 overflow-y-auto space-y-4 pr-2">
                                 {projects.filter(p => ['En Revisión', 'Aprobado', 'Rechazado'].includes(p.estado)).length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-2 border border-dashed border-border-thin rounded-lg p-6">
+                                    <div className="empty-state h-full">
                                         <p className="text-xs text-text-dim font-bold uppercase tracking-wider">No hay evaluaciones registradas</p>
                                     </div>
                                 ) : (
                                     projects.filter(p => ['En Revisión', 'Aprobado', 'Rechazado'].includes(p.estado)).map((proj) => (
-                                        <div key={proj.uuid} className="p-4 rounded-lg bg-bg-deep border border-border-thin hover:border-text-main transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                        <div key={proj.uuid} className="p-4 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                             <div className="flex-1 min-w-0">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-wider ${
-                                                        proj.estado === 'Aprobado' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                                                        proj.estado === 'Rechazado' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                                        'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                                    <span className={`status-tag ${
+                                                        proj.estado === 'Aprobado' ? 'badge-vercel-success' : 
+                                                        proj.estado === 'Rechazado' ? 'badge-vercel-error' :
+                                                        'badge-vercel-info'
                                                     }`}>
                                                         {proj.estado}
                                                     </span>
@@ -388,7 +390,7 @@ export const AdminDashboard: React.FC = () => {
                                             </div>
                                             <button 
                                                 onClick={() => handleViewReviews(proj)}
-                                                className="shrink-0 flex items-center gap-1.5 bg-surface border border-border-thin hover:border-text-main text-text-main px-3 py-1.5 rounded text-[9px] font-bold uppercase tracking-widest transition-all"
+                                                className="btn-vercel-secondary shrink-0"
                                             >
                                                 <Eye size={12} />
                                                 <span>Ver Detalle</span>
@@ -403,9 +405,9 @@ export const AdminDashboard: React.FC = () => {
 
                 {/* MODAL: ASIGNAR REVISOR */}
                 {showAssignModal && selectedProject && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-bg-deep border border-border-thin w-full max-w-lg rounded-lg shadow-2xl overflow-hidden flex flex-col">
-                            <header className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                    <div className="modal-overlay">
+                        <div className="modal-card">
+                            <header className="modal-header">
                                 <div>
                                     <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
                                         Asignación de Par Evaluador
@@ -417,11 +419,11 @@ export const AdminDashboard: React.FC = () => {
                                 </button>
                             </header>
 
-                            <form onSubmit={handleAssignReviewer} className="p-6 space-y-6">
+                            <form onSubmit={handleAssignReviewer} className="modal-body space-y-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Seleccionar Revisor (Docente)</label>
+                                    <label className="section-label text-text-dim">Seleccionar Revisor (Docente)</label>
                                     <select 
-                                        className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
+                                        className="input-vercel"
                                         value={assignForm.idRevisor}
                                         onChange={(e) => setAssignForm({ ...assignForm, idRevisor: Number(e.target.value) })}
                                     >
@@ -438,17 +440,17 @@ export const AdminDashboard: React.FC = () => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Fecha Límite</label>
+                                        <label className="section-label text-text-dim">Fecha Límite</label>
                                         <input 
                                             type="date"
-                                            className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all"
+                                            className="input-vercel"
                                             value={assignForm.fechaLimite}
                                             onChange={(e) => setAssignForm({ ...assignForm, fechaLimite: e.target.value })}
                                         />
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Tipo de Arbitraje</label>
+                                        <label className="section-label text-text-dim">Tipo de Arbitraje</label>
                                         <div className="flex items-center h-11">
                                             <label className="flex items-center gap-2 cursor-pointer">
                                                 <input 
@@ -463,17 +465,17 @@ export const AdminDashboard: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="pt-4 flex justify-end gap-3 border-t border-border-thin">
+                                <div className="modal-footer" style={{ margin: '0 -1.5rem', padding: '1rem 1.5rem' }}>
                                     <button 
                                         type="button"
                                         onClick={() => setShowAssignModal(false)}
-                                        className="px-5 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main"
+                                        className="btn-vercel-secondary"
                                     >
                                         Cancelar
                                     </button>
                                     <button 
                                         type="submit"
-                                        className="bg-text-main text-bg-deep px-6 py-2.5 rounded text-[10px] font-bold uppercase tracking-widest hover:opacity-90 active:scale-95 transition-all"
+                                        className="btn-vercel-primary"
                                     >
                                         Confirmar Asignación
                                     </button>
@@ -485,9 +487,9 @@ export const AdminDashboard: React.FC = () => {
 
                 {/* MODAL: VER EVALUACIONES */}
                 {showReviewsModal && selectedProject && (
-                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-in fade-in duration-200">
-                        <div className="bg-bg-deep border border-border-thin w-full max-w-2xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
-                            <header className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                    <div className="modal-overlay">
+                        <div className="modal-card modal-card--lg" style={{ maxHeight: '85vh' }}>
+                            <header className="modal-header">
                                 <div>
                                     <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
                                         Dictámenes de Evaluación por Pares
@@ -499,7 +501,7 @@ export const AdminDashboard: React.FC = () => {
                                 </button>
                             </header>
 
-                            <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                            <div className="modal-body space-y-6">
                                 {selectedProjectReviews.length === 0 ? (
                                     <p className="text-xs text-text-dim py-8 text-center uppercase font-bold tracking-wider">No se han registrado evaluaciones para este proyecto.</p>
                                 ) : (
@@ -510,8 +512,8 @@ export const AdminDashboard: React.FC = () => {
                                                     <p className="text-xs text-text-main font-bold uppercase">Revisor ID: {rev.id_revisor} {rev.es_externo && <span className="text-blue-400 font-bold ml-2">[EXTERNO]</span>}</p>
                                                     <p className="text-[9px] text-text-dim uppercase tracking-wider">Límite: {new Date(rev.fecha_limite).toLocaleDateString()}</p>
                                                 </div>
-                                                <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase border ${
-                                                    rev.estado === 'Completada' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                <span className={`status-tag ${
+                                                    rev.estado === 'Completada' ? 'badge-vercel-success' : 'badge-vercel-warning'
                                                 }`}>
                                                     {rev.estado}
                                                 </span>
@@ -520,7 +522,7 @@ export const AdminDashboard: React.FC = () => {
                                             {rev.estado === 'Completada' && (
                                                 <div className="space-y-4">
                                                     <div className="rounded bg-surface/20 p-3">
-                                                        <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider mb-1">Dictamen General:</p>
+                                                        <p className="text-[10px] section-label text-text-dim" style={{ marginBottom: '0.25rem' }}>Dictamen General:</p>
                                                         <p className="text-xs text-text-main italic font-medium leading-relaxed">"{rev.observaciones_gral || 'Sin observaciones'}"</p>
                                                     </div>
                                                 </div>
@@ -530,10 +532,10 @@ export const AdminDashboard: React.FC = () => {
                                 )}
                             </div>
 
-                            <footer className="p-4 bg-surface/20 border-t border-border-thin flex justify-end">
+                            <footer className="modal-footer">
                                 <button 
                                     onClick={() => setShowReviewsModal(false)}
-                                    className="bg-surface border border-border-thin text-text-main px-6 py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:border-text-main transition-all"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cerrar Ventana
                                 </button>
