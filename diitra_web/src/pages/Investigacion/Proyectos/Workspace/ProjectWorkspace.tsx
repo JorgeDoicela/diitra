@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity } from 'lucide-react';
+import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
@@ -182,7 +182,8 @@ export const ProjectWorkspace: React.FC = () => {
                     title: res.data.titulo || 'Proyecto de Investigación (Sin Título)',
                     status: res.data.estado || 'Borrador',
                     presupuesto: res.data.costo_total || 0,
-                    linea: res.data.linea_investigacion || 'No definida'
+                    linea: res.data.linea_investigacion || 'No definida',
+                    puedeEditar: res.data.puedeEditar ?? true
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
@@ -193,7 +194,8 @@ export const ProjectWorkspace: React.FC = () => {
                     title: 'Nuevo Proyecto de Investigación',
                     status: 'Borrador',
                     presupuesto: 0,
-                    linea: 'No definida'
+                    linea: 'No definida',
+                    puedeEditar: true
                 });
                 setInvestigadores([]);
                 setTieneGrupo(false);
@@ -272,7 +274,7 @@ export const ProjectWorkspace: React.FC = () => {
                 const updatedProjectRes = await api.get(`/projects/${currentProject.uuid}/detail`);
                 setInvestigadores(updatedProjectRes.data.investigadores || []);
                 setTieneGrupo(updatedProjectRes.data.tieneGrupoInvestigacion || false);
-                setCurrentProject(prev => ({
+                setCurrentProject((prev: any) => ({
                     ...prev,
                     tieneGrupoInvestigacion: updatedProjectRes.data.tieneGrupoInvestigacion
                 }));
@@ -341,7 +343,7 @@ export const ProjectWorkspace: React.FC = () => {
                 setTeamMessage({ type: 'success', text: '¡Equipo de trabajo guardado y sincronizado con éxito!' });
                 const isGroup = investigadores.length > 1;
                 setTieneGrupo(isGroup);
-                setCurrentProject(prev => ({ ...prev, tieneGrupoInvestigacion: isGroup }));
+                setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: isGroup }));
                 setTimeout(() => setTeamMessage(null), 4000);
             } else {
                 setTeamMessage({ type: 'error', text: res.data.message || 'Error al guardar los cambios.' });
@@ -382,6 +384,7 @@ export const ProjectWorkspace: React.FC = () => {
                 templateCode={activeDocument} 
                 initialData={{ Uuid: currentProject.uuid }}
                 onClose={handleCloseEditor} 
+                readOnly={!currentProject.puedeEditar}
             />
         );
     }
@@ -526,7 +529,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             className="flex items-center justify-center gap-2 bg-bg-deep hover:bg-surface text-text-main px-4 py-2 rounded-md border border-border-thin text-[10px] font-bold uppercase tracking-widest transition-all"
                                                         >
                                                             <FileText size={14} />
-                                                            <span>{isPast ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
+                                                            <span>{(currentProject.puedeEditar === false || isPast) ? 'Ver Protocolo' : 'Editar Protocolo'}</span>
                                                         </button>
                                                     </div>
                                                 )}
@@ -576,15 +579,17 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="flex bg-surface-hover p-1 rounded-md border border-border-thin">
                                     <button 
                                         type="button"
+                                        disabled={currentProject.puedeEditar === false}
                                         onClick={() => handleToggleTieneGrupo(false)}
-                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
+                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
                                         Individual
                                     </button>
                                     <button 
                                         type="button"
+                                        disabled={currentProject.puedeEditar === false}
                                         onClick={() => handleToggleTieneGrupo(true)}
-                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
+                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
                                         Grupo
                                     </button>
@@ -604,7 +609,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 )}
 
                                 {/* Buscador */}
-                                {tieneGrupo && (
+                                {tieneGrupo && currentProject.puedeEditar !== false && (
                                     <div className="relative space-y-1.5">
                                         <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Agregar Miembros</label>
                                         <div className="relative">
@@ -655,6 +660,17 @@ export const ProjectWorkspace: React.FC = () => {
                                     </div>
                                 )}
 
+                                {/* Modo Solo Lectura Banner */}
+                                {currentProject.puedeEditar === false && (
+                                    <div className="p-4 rounded-xl border border-amber-500/20 bg-amber-500/5 text-amber-500 text-[11px] flex gap-2.5 leading-relaxed animate-fade-in mb-4">
+                                        <Shield size={14} className="shrink-0 mt-0.5" />
+                                        <div>
+                                            <span className="font-bold uppercase tracking-wider text-[10px] block">Modo Sólo Lectura</span>
+                                            <span className="text-text-dim">No tienes permisos para modificar el equipo de investigadores o transferir la dirección del proyecto.</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Lista de Integrantes */}
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">
@@ -694,14 +710,16 @@ export const ProjectWorkspace: React.FC = () => {
                                                                             <span className="px-1.5 py-0.5 bg-brand/10 border border-brand/20 text-brand-light text-[8px] font-bold uppercase tracking-wider rounded-sm">
                                                                                 Director
                                                                             </span>
-                                                                            <button
-                                                                                type="button"
-                                                                                onClick={() => handleOpenTransferModal(member)}
-                                                                                className="px-1.5 py-0.5 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer"
-                                                                                title="Transferir Dirección"
-                                                                            >
-                                                                                <RefreshCw size={9} className="inline" /> Relevo
-                                                                            </button>
+                                                                            {currentProject.puedeEditar !== false && (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleOpenTransferModal(member)}
+                                                                                    className="px-1.5 py-0.5 border border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-[8px] font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer"
+                                                                                    title="Transferir Dirección"
+                                                                                >
+                                                                                    <RefreshCw size={9} className="inline" /> Relevo
+                                                                                </button>
+                                                                            )}
                                                                         </div>
                                                                     )}
                                                                 </div>
@@ -713,8 +731,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                                         <input 
                                                                             type="text" 
                                                                             value={member.telefono || ''} 
+                                                                            disabled={currentProject.puedeEditar === false}
                                                                             onChange={(e) => handleUpdateMember(member.cedula, 'telefono', e.target.value)}
-                                                                            placeholder="Añadir..." 
+                                                                            placeholder={currentProject.puedeEditar === false ? "No asignado" : "Añadir..."} 
                                                                             className="bg-transparent text-text-dim placeholder:text-text-dim outline-none border-b border-border-thin hover:border-text-dim focus:border-text-main w-20 inline-block px-0.5 py-0 text-[10px] transition-colors" 
                                                                         />
                                                                     </div>
@@ -727,8 +746,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Rol</span>
                                                                 <select
                                                                     value={member.rol}
+                                                                    disabled={currentProject.puedeEditar === false}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-40"
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-40 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 >
                                                                     <option value="Director de Proyecto">Director</option>
                                                                     <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
@@ -740,8 +760,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Nivel</span>
                                                                 <select
                                                                     value={member.nivelAcademico}
+                                                                    disabled={currentProject.puedeEditar === false}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-36"
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-36 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 >
                                                                     <option value="Tercer Nivel">Tercer Nivel</option>
                                                                     <option value="Cuarto Nivel (Maestría)">Maestría</option>
@@ -749,7 +770,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <option value="Pregrado">Pregrado</option>
                                                                 </select>
                                                             </div>
-                                                            {(!isDirector || tieneGrupo) && (
+                                                            {currentProject.puedeEditar !== false && (!isDirector || tieneGrupo) && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveMember(member.cedula)}
@@ -820,26 +841,28 @@ export const ProjectWorkspace: React.FC = () => {
                                 )}
 
                                 {/* Guardar equipo */}
-                                <div className="flex justify-end pt-4 border-t border-border-thin">
-                                    <button
-                                        type="button"
-                                        disabled={isSavingTeam}
-                                        onClick={handleSaveTeam}
-                                        className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${isSavingTeam ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep'}`}
-                                    >
-                                        {isSavingTeam ? (
-                                            <>
-                                                <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-gray-500 rounded-full"></div>
-                                                <span>Guardando...</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <UserPlus size={12} />
-                                                <span>Guardar Equipo</span>
-                                            </>
-                                        )}
-                                    </button>
-                                </div>
+                                {currentProject.puedeEditar !== false && (
+                                    <div className="flex justify-end pt-4 border-t border-border-thin">
+                                        <button
+                                            type="button"
+                                            disabled={isSavingTeam}
+                                            onClick={handleSaveTeam}
+                                            className={`flex items-center justify-center gap-2 px-6 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all ${isSavingTeam ? 'bg-surface text-text-dim border border-border-thin cursor-not-allowed' : 'bg-text-main hover:opacity-90 text-bg-deep'}`}
+                                        >
+                                            {isSavingTeam ? (
+                                                <>
+                                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-gray-500 rounded-full"></div>
+                                                    <span>Guardando...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <UserPlus size={12} />
+                                                    <span>Guardar Equipo</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -852,15 +875,17 @@ export const ProjectWorkspace: React.FC = () => {
                                 </div>
                             </div>
                             <div className="mt-4 flex-1">
-                                <div className="flex justify-end mb-4">
-                                    <button 
-                                        onClick={() => setShowProductModal(true)}
-                                        className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
-                                    >
-                                        <Plus size={12} />
-                                        <span>Registrar</span>
-                                    </button>
-                                </div>
+                                {currentProject.puedeEditar !== false && (
+                                    <div className="flex justify-end mb-4">
+                                        <button 
+                                            onClick={() => setShowProductModal(true)}
+                                            className="flex items-center justify-center gap-2 bg-text-main hover:opacity-90 text-bg-deep px-4 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest transition-all"
+                                        >
+                                            <Plus size={12} />
+                                            <span>Registrar</span>
+                                        </button>
+                                    </div>
+                                )}
                                 
                                 {products.length === 0 ? (
                                     <div className="p-8 text-center text-[10px] text-text-dim uppercase tracking-wider border border-dashed border-border-thin rounded-md font-mono">
@@ -874,12 +899,14 @@ export const ProjectWorkspace: React.FC = () => {
                                                     <span className="px-1.5 py-0.5 bg-brand/10 border border-brand/20 text-brand-light text-[8px] font-bold uppercase tracking-widest rounded-sm">
                                                         {prod.tipo_producto_nombre}
                                                     </span>
-                                                    <button 
-                                                        onClick={() => handleDeleteProduct(prod.id_producto)}
-                                                        className="p-1 hover:bg-red-500/20 hover:text-red-500 text-text-dim rounded transition-all"
-                                                    >
-                                                        <Trash2 size={11} />
-                                                    </button>
+                                                    {currentProject.puedeEditar !== false && (
+                                                        <button 
+                                                            onClick={() => handleDeleteProduct(prod.id_producto)}
+                                                            className="p-1 hover:bg-red-500/20 hover:text-red-500 text-text-dim rounded transition-all"
+                                                        >
+                                                            <Trash2 size={11} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 <p className="text-xs font-bold text-text-main line-clamp-1">{prod.titulo}</p>
                                                 <div className="text-[10px] text-text-dim font-mono mt-1">

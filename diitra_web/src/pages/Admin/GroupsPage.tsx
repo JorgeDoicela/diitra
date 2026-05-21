@@ -46,11 +46,7 @@ interface ResearchLine {
     nombre: string;
 }
 
-interface Teacher {
-    id_usuario: number | null;
-    id_profesor: string;
-    nombre_completo: string;
-}
+
 
 interface Domain {
     id_dominio: number;
@@ -67,7 +63,6 @@ const GroupsPage = () => {
     
     const [groups, setGroups] = useState<Group[]>([]);
     const [lines, setLines] = useState<ResearchLine[]>([]);
-    const [teachers, setTeachers] = useState<Teacher[]>([]);
     const [dominios, setDominios] = useState<Domain[]>([]);
     const [carreras, setCarreras] = useState<Career[]>([]);
     const [loading, setLoading] = useState(false);
@@ -236,25 +231,13 @@ const GroupsPage = () => {
             const promises: Promise<any>[] = [
                 api.get(`/Groups?search=${search}`),
                 api.get('/Convocatorias/catalogos/lineas'),
-                isAdmin ? api.get('/Admin/users') : Promise.resolve({ data: { items: [] } }),
                 api.get('/catalogs/dominios'),
                 api.get('/catalogs/carreras')
             ];
             
-            const [groupsRes, linesRes, teachersRes, dominiosRes, carrerasRes] = await Promise.all(promises);
+            const [groupsRes, linesRes, dominiosRes, carrerasRes] = await Promise.all(promises);
             setGroups(groupsRes.data);
             setLines(linesRes.data);
-            
-            if (isAdmin) {
-                setTeachers(Array.isArray(teachersRes.data) ? teachersRes.data : (teachersRes.data.items || []));
-            } else if (user) {
-                // Mock single element for the current teacher to display cleanly in dropdown
-                setTeachers([{
-                    id_usuario: user.id_usuario || null,
-                    id_profesor: user.id_referencia,
-                    nombre_completo: user.nombre_completo
-                }]);
-            }
             
             setDominios(dominiosRes.data);
             setCarreras(carrerasRes.data);

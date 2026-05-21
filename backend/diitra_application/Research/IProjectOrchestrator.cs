@@ -49,6 +49,16 @@ namespace Diitra.Application.Research
         /// Transfiere la dirección de un proyecto de forma formal a un nuevo docente con justificación.
         /// </summary>
         Task<SyncResult> TransferDirectorAsync(string uuid, TransferDirectorRequest request);
+
+        /// <summary>
+        /// Valida si un usuario tiene permisos para modificar un proyecto según su vinculación y membresía.
+        /// </summary>
+        Task<bool> UserCanModifyProjectAsync(string projectUuid, string userSigafiId);
+
+        /// <summary>
+        /// Valida si un usuario tiene permisos para ver un proyecto según su vinculación y membresía.
+        /// </summary>
+        Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId);
     }
 
     public class TransferDirectorRequest

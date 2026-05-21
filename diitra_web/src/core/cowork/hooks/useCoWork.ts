@@ -218,7 +218,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
                 if (!handshake) throw new Error("Handshake fallido");
 
-                const isReadOnly = (handshake as any).readOnly ?? (handshake as any).ReadOnly ?? false;
+                const isReadOnly = config.readonly || (handshake as any).readOnly || (handshake as any).ReadOnly || false;
                 const isBlindMode = (handshake as any).isBlindMode ?? (handshake as any).IsBlindMode ?? false;
 
                 setSession(s => ({

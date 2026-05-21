@@ -5,8 +5,6 @@ import {
     TrendingUp, 
     Trash2, 
     Plus, 
-    AlertCircle, 
-    DollarSign,
     CheckCircle2
 } from 'lucide-react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';

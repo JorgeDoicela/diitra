@@ -71,6 +71,22 @@ namespace diitra_infrastructure.Research
                 project.MetodoEvaluacion = dto.Evaluacion;
                 project.TiempoEjecucion = dto.TiempoEjecucion;
                 project.TieneGrupo = dto.TieneGrupoInvestigacion;
+
+                // Mapear el Grupo de Investigación por nombre/siglas
+                if (dto.TieneGrupoInvestigacion == true && !string.IsNullOrEmpty(dto.GrupoInvestigacion))
+                {
+                    var group = await _context.InvGruposInvestigacion
+                        .FirstOrDefaultAsync(g => g.Nombre == dto.GrupoInvestigacion || g.Siglas == dto.GrupoInvestigacion);
+                    if (group != null)
+                    {
+                        project.IdGrupo = group.IdGrupo;
+                    }
+                }
+                else
+                {
+                    project.IdGrupo = null;
+                }
+
                 project.IdConvocatoria = (dto.IdConvocatoria.HasValue && dto.IdConvocatoria.Value > 0) ? dto.IdConvocatoria.Value : null;
                 project.IdObjetivoPnd = (dto.IdObjetivoPnd.HasValue && dto.IdObjetivoPnd.Value > 0) ? dto.IdObjetivoPnd.Value : null;
 
@@ -97,6 +113,44 @@ namespace diitra_infrastructure.Research
                         IdProyecto = project.IdProyecto,
                         IdCarrera = dto.IdCarrera.Value
                     });
+                }
+
+                // Sincronización automática de miembros de grupo (CACES Requirement)
+                if (project.TieneGrupo == true && project.IdGrupo.HasValue)
+                {
+                    var groupMembers = await _context.InvGruposMiembros
+                        .Include(m => m.IdUsuarioNavigation)
+                        .Where(m => m.IdGrupo == project.IdGrupo.Value && m.Activo != false)
+                        .ToListAsync();
+
+                    if (dto.Investigadores == null)
+                    {
+                        dto.Investigadores = new List<InvestigadorDto>();
+                    }
+
+                    foreach (var member in groupMembers)
+                    {
+                        var user = member.IdUsuarioNavigation;
+                        if (user == null) continue;
+
+                        var alreadyAdded = dto.Investigadores.Any(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim() == user.IdSigafi.Trim());
+                        if (!alreadyAdded)
+                        {
+                            dto.Investigadores.Add(new InvestigadorDto
+                            {
+                                Nombre = user.Nombre,
+                                Cedula = user.IdSigafi,
+                                Rol = member.Rol ?? "Co-Investigador",
+                                NivelAcademico = user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
+                                Telefono = "",
+                                Activo = true,
+                                FechaInicio = DateTime.Now
+                            });
+                        }
+                    }
+
+                    // Asegurar que el JSON guardado también refleje la lista sincronizada
+                    project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 }
 
                 // 3. Sincronización de Equipo (Anti-Corruption Layer provisionada por AuthService)
@@ -288,6 +342,7 @@ namespace diitra_infrastructure.Research
             var p = await _context.InvProyectos
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.IdGrupoNavigation)
                 .Include(p => p.InvProyectosCarreras)
                 .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
@@ -323,6 +378,7 @@ namespace diitra_infrastructure.Research
                 TrlActual = (int?)p.TrlActual,
                 TrlMeta = (int?)p.TrlMeta,
                 LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
+                GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null,
                 CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad),
                 Investigadores = p.InvProyectosProfesores.Select(pp => new InvestigadorDto
                 {
@@ -1148,6 +1204,41 @@ namespace diitra_infrastructure.Research
                 _logger.LogError(ex, "Error al transferir la dirección del proyecto UUID: {Uuid}", uuid);
                 return new SyncResult { Success = false, Message = $"Error interno al realizar la transferencia: {ex.Message}" };
             }
+        }
+
+        public async Task<bool> UserCanModifyProjectAsync(string projectUuid, string userSigafiId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
+            if (user == null) return false;
+
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+            if (project == null) return true;
+
+            if (project.TieneGrupo == true && project.IdGrupo.HasValue)
+            {
+                return await _context.InvGruposMiembros.AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
+            }
+            return await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
+                   await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+        }
+
+        public async Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
+            if (user == null) return false;
+
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+            if (project == null) return true;
+
+            if (project.Estado != "Borrador") return true;
+
+            if (project.TieneGrupo == true && project.IdGrupo.HasValue)
+            {
+                var isGroupMember = await _context.InvGruposMiembros.AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                if (isGroupMember) return true;
+            }
+            return await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario) ||
+                   await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario);
         }
     }
 }
