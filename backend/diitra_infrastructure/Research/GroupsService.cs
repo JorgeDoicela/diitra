@@ -1,7 +1,9 @@
+using diitra_application.Common.Notifications;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using diitra_infrastructure.data.models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace diitra_infrastructure.Research;
 
@@ -10,15 +12,21 @@ public class GroupsService : IGroupsService
     private readonly DiitraContext _context;
     private readonly diitra_application.Security.IAuditService _auditService;
     private readonly diitra_application.Security.IAuthService _authService;
+    private readonly INotificationService _notificationService;
+    private readonly ILogger<GroupsService> _logger;
 
     public GroupsService(
         DiitraContext context, 
         diitra_application.Security.IAuditService auditService,
-        diitra_application.Security.IAuthService authService)
+        diitra_application.Security.IAuthService authService,
+        INotificationService notificationService,
+        ILogger<GroupsService> logger)
     {
         _context = context;
         _auditService = auditService;
         _authService = authService;
+        _notificationService = notificationService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null)
@@ -114,6 +122,42 @@ public class GroupsService : IGroupsService
 
         await _auditService.LogActionAsync(null, "CREAR_GRUPO", $"Creación del grupo {group.Nombre}", "INVESTIGACION");
 
+        if (group.Estado == "Pendiente")
+        {
+            try
+            {
+                string? coordinadorNombre = null;
+                if (group.IdCoordinador.HasValue)
+                {
+                    var coordinador = await _context.Users.FindAsync(group.IdCoordinador.Value);
+                    coordinadorNombre = coordinador?.Nombre;
+                }
+
+                await _notificationService.NotifyByRoleCodesAsync(
+                    "Nueva Propuesta de Grupo de Investigación",
+                    $"Se ha recibido una nueva propuesta de grupo: {group.Nombre}. El coordinador {coordinadorNombre ?? "No asignado"} ha enviado la solicitud para su revisión.",
+                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                    "/admin/groups",
+                    new Dictionary<string, string>
+                    {
+                        { "Nombre del Grupo", group.Nombre },
+                        { "Siglas", group.Siglas ?? "N/A" },
+                        { "Tipo", group.TipoGrupo },
+                        { "Coordinador", coordinadorNombre ?? "No asignado" },
+                        { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
+                        { "Misión", group.Mision ?? "No especificada" },
+                        { "Visión", group.Vision ?? "No especificada" },
+                        { "Estado", group.Estado },
+                        { "Fecha de Creación", group.FechaCreacion?.ToString("dd/MM/yyyy") ?? DateTime.UtcNow.ToString("dd/MM/yyyy") }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificaciones de propuesta de grupo {Uuid}", group.Uuid);
+            }
+        }
+
         return MapToDto(group);
     }
 
@@ -180,6 +224,40 @@ public class GroupsService : IGroupsService
 
         await _context.SaveChangesAsync();
         await _auditService.LogActionAsync(null, "EDITAR_GRUPO", $"Edición del grupo {group.Nombre}", "INVESTIGACION");
+
+        if (dto.Estado == "Pendiente")
+        {
+            try
+            {
+                string? coordinadorNombre = null;
+                if (group.IdCoordinador.HasValue)
+                {
+                    var coordinador = await _context.Users.FindAsync(group.IdCoordinador.Value);
+                    coordinadorNombre = coordinador?.Nombre;
+                }
+
+                await _notificationService.NotifyByRoleCodesAsync(
+                    "Propuesta de Grupo Actualizada",
+                    $"El grupo \"{group.Nombre}\" ha sido modificado y requiere revisión nuevamente.",
+                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                    "/admin/groups",
+                    new Dictionary<string, string>
+                    {
+                        { "Nombre del Grupo", group.Nombre },
+                        { "Siglas", group.Siglas ?? "N/A" },
+                        { "Tipo", group.TipoGrupo },
+                        { "Coordinador", coordinadorNombre ?? "No asignado" },
+                        { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
+                        { "Estado", group.Estado ?? "Pendiente" }
+                    }
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificaciones de actualización de grupo {Uuid}", group.Uuid);
+            }
+        }
+
         return MapToDto(group);
     }
 
