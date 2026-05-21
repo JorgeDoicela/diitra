@@ -55,6 +55,7 @@ public class GroupsService : IGroupsService
             IdGrupoMiembro = m.IdGrupoMiembro,
             IdUsuario = m.IdUsuario,
             NombreCompleto = m.IdUsuarioNavigation?.Nombre ?? "Desconocido",
+            Cedula = m.IdUsuarioNavigation?.IdSigafi,
             Rol = m.Rol,
             Activo = m.Activo ?? false,
             FechaInicio = m.FechaInicio,
@@ -197,10 +198,29 @@ public class GroupsService : IGroupsService
         var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == groupUuid);
         if (group == null) return false;
 
+        int userId = memberDto.IdUsuario;
+        if (!string.IsNullOrEmpty(memberDto.Cedula))
+        {
+            var user = await _authService.GetOrProvisionUserByCedulaAsync(memberDto.Cedula);
+            if (user == null) return false;
+            userId = user.IdUsuario;
+        }
+
+        if (userId == 0) return false;
+
+        // Evitar duplicados activos
+        var existingMember = await _context.InvGruposMiembros
+            .FirstOrDefaultAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == userId && m.Activo == true);
+
+        if (existingMember != null)
+        {
+            return true;
+        }
+
         var member = new InvGrupoMiembro
         {
             IdGrupo = group.IdGrupo,
-            IdUsuario = memberDto.IdUsuario,
+            IdUsuario = userId,
             Rol = memberDto.Rol,
             Activo = true,
             FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now)

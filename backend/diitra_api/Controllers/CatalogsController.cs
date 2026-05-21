@@ -299,13 +299,38 @@ namespace diitra_api.Controllers
 
             var query = q.Trim().ToLower();
 
+            // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var currentPeriod = await _context.Periodos
+                .OrderByDescending(p => p.Periodoactivoinstituto == 1) // 1. Marcado explícitamente para el sistema
+                .ThenByDescending(p => p.Activo == true)             // 2. Marcado como activo genérico
+                .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today) // 3. El que cubre la fecha de hoy
+                .ThenByDescending(p => p.FechaInicial)               // 4. El más reciente cronológicamente
+                .FirstOrDefaultAsync();
+
+            var periodId = currentPeriod?.IdPeriodo;
+
             // 1. Buscar en Profesores
-            var profesoresQuery = _context.Profesores
-                .Where(p => p.IdProfesor.Contains(query) ||
+            var profesoresQuery = _context.Profesores.AsQueryable();
+
+            profesoresQuery = profesoresQuery.Where(p => p.Activo == 1);
+
+            // Solo docentes que tengan actividades de investigación (idSubcategoria = 7) en el periodo actual
+            if (!string.IsNullOrEmpty(periodId))
+            {
+                profesoresQuery = profesoresQuery.Where(p => _context.ProfesoresActividades.Any(pa =>
+                    pa.IdProfesor == p.IdProfesor &&
+                    pa.IdSubcategoria == 7 &&
+                    pa.IdPeriodo == periodId));
+            }
+
+            profesoresQuery = profesoresQuery.Where(p => p.IdProfesor.Contains(query) ||
                             (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(query)) ||
                             (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(query)) ||
                             (p.Nombres != null && p.Nombres.ToLower().Contains(query)) ||
-                            (p.Apellidos != null && p.Apellidos.ToLower().Contains(query)))
+                            (p.Apellidos != null && p.Apellidos.ToLower().Contains(query)));
+
+            var profesoresSelect = profesoresQuery
                 .Take(10)
                 .Select(p => new
                 {
@@ -319,10 +344,23 @@ namespace diitra_api.Controllers
                 });
 
             // 2. Buscar en Alumnos
-            var alumnosQuery = _context.Alumnos
-                .Where(a => a.IdAlumno.Contains(query) ||
+            var alumnosQuery = _context.Alumnos.AsQueryable();
+
+            // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
+            if (!string.IsNullOrEmpty(periodId))
+            {
+                alumnosQuery = alumnosQuery.Where(a => _context.Matriculas.Any(m =>
+                    m.IdAlumno == a.IdAlumno &&
+                    m.IdPeriodo == periodId &&
+                    (m.Retirado == null || m.Retirado == false) &&
+                    (m.Valida == 1)));
+            }
+
+            alumnosQuery = alumnosQuery.Where(a => a.IdAlumno.Contains(query) ||
                             (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(query)) ||
-                            (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)))
+                            (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)));
+
+            var alumnosSelect = alumnosQuery
                 .Take(10)
                 .Select(a => new
                 {
@@ -335,8 +373,8 @@ namespace diitra_api.Controllers
                     tipo = "alumno"
                 });
 
-            var profs = await profesoresQuery.ToListAsync();
-            var alums = await alumnosQuery.ToListAsync();
+            var profs = await profesoresSelect.ToListAsync();
+            var alums = await alumnosSelect.ToListAsync();
 
             // Combinar y limpiar dobles espacios que puedan quedar en el nombre
             var results = profs.Select(p => new {

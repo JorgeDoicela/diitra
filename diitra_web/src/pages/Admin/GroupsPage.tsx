@@ -2,10 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { 
     Users, Plus, Search, Edit2, 
     Trash2, CheckCircle, XCircle,
-    BookOpen, Shield, Award, Calendar, FileText, Eye
+    BookOpen, Shield, Award, Calendar, FileText, Eye,
+    UserPlus, UserMinus, GraduationCap, User
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
+
+interface GroupMember {
+    id_grupo_miembro: number;
+    id_usuario: number;
+    nombre_completo: string;
+    cedula?: string;
+    rol: string;
+    activo: boolean;
+    fecha_inicio?: string;
+    fecha_fin?: string;
+}
 
 interface Group {
     id_grupo: number;
@@ -26,6 +38,7 @@ interface Group {
     estado?: string; // "Pendiente", "Aprobado", "Rechazado"
     lineas_ids: number[];
     carreras_ids: number[];
+    miembros?: GroupMember[];
 }
 
 interface ResearchLine {
@@ -67,6 +80,17 @@ const GroupsPage = () => {
     const [reviewingGroup, setReviewingGroup] = useState<Group | null>(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewResolution, setReviewResolution] = useState('');
+
+    // Member states
+    const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+
+    // Member Autocomplete States & Search
+    const [memberSearchQuery, setMemberSearchQuery] = useState('');
+    const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
+    const [isMemberSearching, setIsMemberSearching] = useState(false);
+    const [showMemberResults, setShowMemberResults] = useState(false);
+    const [selectedMember, setSelectedMember] = useState<any | null>(null);
+    const [memberRol, setMemberRol] = useState('Co-Investigador');
 
     // Form states
     const [formData, setFormData] = useState({
@@ -123,6 +147,89 @@ const GroupsPage = () => {
         setShowCoordResults(false);
     };
 
+    useEffect(() => {
+        if (!memberSearchQuery.trim()) {
+            setMemberSearchResults([]);
+            return;
+        }
+
+        const delayDebounceFn = setTimeout(async () => {
+            setIsMemberSearching(true);
+            try {
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(memberSearchQuery)}`);
+                setMemberSearchResults(res.data || []);
+                setShowMemberResults(true);
+            } catch (err) {
+                console.error("Error al buscar integrantes:", err);
+            } finally {
+                setIsMemberSearching(false);
+            }
+        }, 300);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [memberSearchQuery]);
+
+    const handleSelectMember = (member: any) => {
+        setSelectedMember(member);
+        setMemberSearchQuery(member.nombre);
+        setShowMemberResults(false);
+        
+        if (member.tipo === 'alumno') {
+            setMemberRol('Semillerista');
+        } else {
+            setMemberRol('Co-Investigador');
+        }
+    };
+
+    const handleAddMember = async () => {
+        if (!editingGroup || !selectedMember) return;
+        
+        try {
+            const memberDto = {
+                id_usuario: 0,
+                cedula: selectedMember.cedula,
+                nombre_completo: selectedMember.nombre,
+                rol: memberRol,
+                activo: true
+            };
+            
+            await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
+            
+            const res = await api.get(`/Groups/${editingGroup.uuid}`);
+            const fullGroup = res.data;
+            if (fullGroup && fullGroup.miembros) {
+                const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
+                setGroupMembers(activeMembers);
+            }
+            
+            setSelectedMember(null);
+            setMemberSearchQuery('');
+            setMemberRol('Co-Investigador');
+        } catch (error: any) {
+            console.error("Error al agregar integrante:", error);
+            alert("No se pudo agregar al integrante: " + (error.response?.data?.message || error.message));
+        }
+    };
+
+    const handleRemoveMember = async (idGrupoMiembro: number) => {
+        if (!editingGroup) return;
+        if (!window.confirm("¿Está seguro de retirar a este integrante del grupo?")) return;
+        
+        try {
+            await api.delete(`/Groups/members/${idGrupoMiembro}`);
+            
+            const res = await api.get(`/Groups/${editingGroup.uuid}`);
+            const fullGroup = res.data;
+            if (fullGroup && fullGroup.miembros) {
+                const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
+                setGroupMembers(activeMembers);
+            }
+        } catch (error: any) {
+            console.error("Error al retirar integrante:", error);
+            alert("No se pudo retirar al integrante: " + (error.response?.data?.message || error.message));
+        }
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -162,10 +269,14 @@ const GroupsPage = () => {
         fetchData();
     }, [search, user, isAdmin]);
 
-    const handleOpenModal = (group: Group | null = null, readOnly = false) => {
+    const handleOpenModal = async (group: Group | null = null, readOnly = false) => {
         setIsReadOnly(readOnly);
         setCoordSearchResults([]);
         setShowCoordResults(false);
+        setGroupMembers([]);
+        setSelectedMember(null);
+        setMemberSearchQuery('');
+
         if (group) {
             setEditingGroup(group);
             setFormData({
@@ -183,6 +294,35 @@ const GroupsPage = () => {
                 carreras_ids: group.carreras_ids || []
             });
             setCoordSearchQuery(group.nombre_coordinador || '');
+
+            try {
+                const res = await api.get(`/Groups/${group.uuid}`);
+                const fullGroup = res.data;
+                if (fullGroup) {
+                    setFormData({
+                        nombre: fullGroup.nombre,
+                        siglas: fullGroup.siglas || '',
+                        tipo_grupo: fullGroup.tipo_grupo || 'Investigación',
+                        id_dominio: fullGroup.id_dominio?.toString() || '',
+                        id_profesor_coordinador: fullGroup.id_profesor_coordinador || '',
+                        objetivo_general: fullGroup.objetivo_general || '',
+                        mision: fullGroup.mision || '',
+                        vision: fullGroup.vision || '',
+                        resolucion_aprobacion: fullGroup.resolucion_aprobacion || '',
+                        fecha_creacion: fullGroup.fecha_creacion ? fullGroup.fecha_creacion.split('T')[0] : '',
+                        lineas_ids: fullGroup.lineas_ids || [],
+                        carreras_ids: fullGroup.carreras_ids || []
+                    });
+                    setCoordSearchQuery(fullGroup.nombre_coordinador || '');
+                    
+                    if (fullGroup.miembros) {
+                        const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
+                        setGroupMembers(activeMembers);
+                    }
+                }
+            } catch (err) {
+                console.error("Error al cargar detalles del grupo:", err);
+            }
         } else {
             setEditingGroup(null);
             setFormData({
@@ -806,6 +946,208 @@ const GroupsPage = () => {
                                     ))}
                                 </div>
                             </section>
+
+                            {/* Bento Section: Group Members */}
+                            {editingGroup ? (
+                                <section className="p-6 bg-surface rounded-2xl border border-border-thin space-y-6 animate-fade-up">
+                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-border-thin">
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2 text-[10px] font-black text-text-main uppercase tracking-widest">
+                                                <Users size={12} />
+                                                <span>Integrantes del Grupo de Investigación</span>
+                                            </div>
+                                            <p className="text-[10px] text-text-dim uppercase font-bold">Docentes con horas vigentes y Estudiantes matriculados</p>
+                                        </div>
+                                        <span className="text-[9px] font-bold text-text-main bg-text-main/10 border border-text-main/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                                            {groupMembers.length} Miembros Activos
+                                        </span>
+                                    </div>
+
+                                    {/* Members Grid (Bento Style) */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {groupMembers.map((member) => {
+                                            const isStudent = member.rol?.toLowerCase().includes("semillerista") || member.rol?.toLowerCase().includes("estudiante");
+                                            return (
+                                                <div 
+                                                    key={member.id_grupo_miembro} 
+                                                    className="p-4 bg-bg-deep/40 rounded-xl border border-border-thin hover:border-border-thin/80 hover:bg-bg-deep/60 transition-all flex justify-between items-center group/member"
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
+                                                            isStudent 
+                                                                ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' 
+                                                                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                                                        }`}>
+                                                            {isStudent ? <GraduationCap size={16} /> : <User size={16} />}
+                                                        </div>
+                                                        <div className="min-w-0 space-y-0.5">
+                                                            <p className="text-xs font-extrabold text-text-main uppercase truncate max-w-[200px]" title={member.nombre_completo}>
+                                                                {member.nombre_completo}
+                                                            </p>
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                                    C.I. {member.cedula || 'S/D'}
+                                                                </span>
+                                                                <span className={`text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full ${
+                                                                    isStudent
+                                                                        ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
+                                                                        : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                                                                }`}>
+                                                                    {member.rol}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Delete action button */}
+                                                    {!isReadOnly && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleRemoveMember(member.id_grupo_miembro)}
+                                                            className="p-1.5 rounded-md hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-text-dim hover:text-red-500 opacity-0 group-hover/member:opacity-100 focus:opacity-100 transition-all shrink-0"
+                                                            title="Dar de baja miembro"
+                                                        >
+                                                            <UserMinus size={13} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+
+                                        {groupMembers.length === 0 && (
+                                            <div className="col-span-2 py-8 text-center bg-bg-deep/20 rounded-xl border border-dashed border-border-thin space-y-2">
+                                                <Users size={20} className="mx-auto text-text-dim/40" />
+                                                <p className="text-[10px] text-text-dim font-black uppercase tracking-widest">No hay integrantes registrados en este grupo</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Add Member form (Bento Card within) */}
+                                    {!isReadOnly && (
+                                        <div className="p-4 bg-bg-deep/30 rounded-xl border border-border-thin space-y-4">
+                                            <div className="flex items-center gap-1.5 text-[9px] font-black text-text-main uppercase tracking-wider">
+                                                <UserPlus size={12} className="text-text-main" />
+                                                <span>Vincular Nuevo Integrante (Docente o Estudiante)</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                                {/* Autocomplete Input */}
+                                                <div className="md:col-span-6 space-y-1.5 relative">
+                                                    <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscador Académico</label>
+                                                    <div className="relative">
+                                                        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                                        <input 
+                                                            type="text"
+                                                            value={memberSearchQuery}
+                                                            onChange={(e) => {
+                                                                setMemberSearchQuery(e.target.value);
+                                                                if (selectedMember) {
+                                                                    setSelectedMember(null);
+                                                                }
+                                                            }}
+                                                            onFocus={() => setShowMemberResults(true)}
+                                                            placeholder="Ingrese nombre o cédula..."
+                                                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-2.5 pl-9 text-xs text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 font-medium"
+                                                        />
+                                                        {isMemberSearching && (
+                                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                                <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-text-main rounded-full"></div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Selected Member Verification Badge */}
+                                                    {selectedMember && (
+                                                        <div className="mt-1 px-2.5 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[9px] flex justify-between items-center font-mono text-emerald-400">
+                                                            <span>Persona: {selectedMember.nombre}</span>
+                                                            <span className="text-[7px] bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20 uppercase font-bold tracking-widest">{selectedMember.tipo === 'alumno' ? 'Estudiante' : 'Docente'}</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Autocomplete Suggestions Panel */}
+                                                    {showMemberResults && memberSearchQuery.trim() && (
+                                                        <>
+                                                            <div className="fixed inset-0 z-20" onClick={() => setShowMemberResults(false)}></div>
+                                                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                                {memberSearchResults.length === 0 ? (
+                                                                    <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                        Sin coincidencias en el periodo activo.
+                                                                    </div>
+                                                                ) : (
+                                                                    memberSearchResults.map((userResult: any) => (
+                                                                        <button 
+                                                                            key={userResult.cedula}
+                                                                            type="button"
+                                                                            onClick={() => handleSelectMember(userResult)}
+                                                                            className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                                        >
+                                                                            <div className="space-y-0.5">
+                                                                                <p className="font-bold text-text-main text-xs uppercase">{userResult.nombre}</p>
+                                                                                <p className="text-text-dim font-mono text-[9px]">C.I. {userResult.cedula} | {userResult.email}</p>
+                                                                            </div>
+                                                                            <span className={`px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border ${
+                                                                                userResult.tipo === 'alumno' 
+                                                                                    ? 'bg-blue-500/15 border-blue-500/25 text-blue-400' 
+                                                                                    : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400'
+                                                                            }`}>
+                                                                                {userResult.tipo === 'alumno' ? 'Estudiante' : 'Docente'}
+                                                                            </span>
+                                                                        </button>
+                                                                    ))
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+
+                                                {/* Role Selector dropdown */}
+                                                <div className="md:col-span-4 space-y-1.5">
+                                                    <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                                    <select
+                                                        value={memberRol}
+                                                        onChange={(e) => setMemberRol(e.target.value)}
+                                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all appearance-none font-medium"
+                                                    >
+                                                        {selectedMember?.tipo === 'alumno' ? (
+                                                            <>
+                                                                <option value="Semillerista">Semillerista de Apoyo</option>
+                                                                <option value="Co-Investigador (Estudiante)">Co-Investigador Estudiantil</option>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <option value="Co-Investigador">Co-Investigador</option>
+                                                                <option value="Investigador Principal">Investigador Principal</option>
+                                                                <option value="Asesor Externo">Asesor Científico Externo</option>
+                                                            </>
+                                                        )}
+                                                    </select>
+                                                </div>
+
+                                                {/* Action Button */}
+                                                <div className="md:col-span-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleAddMember}
+                                                        disabled={!selectedMember}
+                                                        className="w-full bg-text-main text-bg-deep disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 font-bold px-3 py-2.5 rounded-lg text-[9px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <Plus size={12} strokeWidth={3} />
+                                                        Agregar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </section>
+                            ) : (
+                                <section className="p-6 bg-surface rounded-2xl border border-dashed border-border-thin flex flex-col items-center justify-center text-center space-y-2 animate-fade-up">
+                                    <Users size={24} className="text-text-dim/40" />
+                                    <p className="text-[10px] text-text-dim font-black uppercase tracking-widest">Gestión de Miembros Integrantes</p>
+                                    <p className="text-[9px] text-text-dim/80 max-w-sm uppercase font-bold tracking-wider leading-relaxed">
+                                        Los integrantes (docentes investigadores y estudiantes semilleristas) podrán ser agregados y vinculados al grupo una vez guardada e instituida formalmente la propuesta.
+                                    </p>
+                                </section>
+                            )}
                         </form>
 
                         <div className="p-6 border-t border-border-thin bg-bg-deep/50 flex justify-end gap-4">
