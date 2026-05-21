@@ -43,6 +43,7 @@ interface DIITRABuilderShellProps {
     cowork: CoWorkHandle;                                // ← Inyectado desde el padre (v2.0)
     onSave?: (data: any) => Promise<void>;
     onClose: () => void;
+    readOnly?: boolean;                                  // ← Bandera de sólo lectura
     children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
 }
 
@@ -55,6 +56,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     onSave,
     onClose,
     cowork,      // ← Recibido como prop
+    readOnly = false, // ← Bandera de sólo lectura
     children
 }) => {
     const [activeTab, setActiveTab]               = useState(sections[0]?.id || 'general');
@@ -98,6 +100,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     };
 
     const handleSave = useCallback(async () => {
+        if (readOnly) return; // Bloquear guardado en sólo lectura
         const data   = formDataRef.current;
         const saveFn = onSaveRef.current;
         if (!saveFn) return;
@@ -117,15 +120,16 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         } finally {
             setIsSaving(false);
         }
-    }, [addAudit]);
+    }, [addAudit, readOnly]);
 
     useEffect(() => {
+        if (readOnly) return; // No programar autoguardado en sólo lectura
         const currentSnap = snapshotForm(formData);
         if (currentSnap === lastSavedSnapshotRef.current) return;
         if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         saveTimeoutRef.current = setTimeout(() => { handleSave(); }, 3000);
         return () => { if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current); };
-    }, [formData, handleSave]);
+    }, [formData, handleSave, readOnly]);
 
     // ── Generación de PDF ──
     const handleGeneratePdf = async (blind = false) => {
@@ -248,7 +252,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         <div className="hidden sm:flex flex-col items-end">
                             <span className="text-[7px] md:text-[9px] font-bold text-text-dim uppercase tracking-widest mb-1">Sincronización</span>
                             <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-text-main font-black uppercase">
-                                {isSyncing ? (
+                                {readOnly ? (
+                                    <span className="text-amber-500 font-bold">Desactivada</span>
+                                ) : isSyncing ? (
                                     <><Clock size={10} className="animate-spin" /> ...</>
                                 ) : (
                                     <><CheckCircle size={10} className="text-green-500" /> {lastSaved ? lastSaved : 'Listo'}</>
@@ -258,12 +264,18 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
                         {/* Acciones de cabecera */}
                         <div className="flex gap-2 md:gap-3">
-                            <button
-                                onClick={handleSave}
-                                className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-text-main hover:opacity-90 rounded-md text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-bg-deep transition-all flex items-center justify-center gap-2"
-                            >
-                                <Save size={12} /> <span className="hidden xs:inline">Guardar</span>
-                            </button>
+                            {readOnly ? (
+                                <div className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-md text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-amber-500 flex items-center justify-center gap-2 cursor-default select-none animate-pulse">
+                                    <Shield size={12} className="text-amber-500" /> <span>Sólo Lectura</span>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleSave}
+                                    className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-text-main hover:opacity-90 rounded-md text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-bg-deep transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Save size={12} /> <span className="hidden xs:inline">Guardar</span>
+                                </button>
+                            )}
                             <button
                                 onClick={onClose}
                                 className="hidden lg:flex px-6 py-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-md text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors"
@@ -336,6 +348,21 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         <p className="text-[10px] md:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
                                         <div className="w-16 md:w-20 h-1 md:h-1.5 bg-text-main mt-4 md:mt-6 rounded-full" />
                                     </div>
+                                    
+                                    {readOnly && (
+                                        <div className="mb-8 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex items-start gap-4 animate-fade-in shadow-inner">
+                                            <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shrink-0">
+                                                <Shield size={16} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-amber-500">Vista de Sólo Lectura Activa</h4>
+                                                <p className="text-[9px] md:text-[10px] text-text-dim font-medium leading-relaxed mt-1">
+                                                    Has accedido a este documento en modalidad de sólo lectura debido a que no figuras como un miembro activo del grupo de investigación asignado a este proyecto. No podrás realizar modificaciones en este protocolo de investigación.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* El cowork se pasa a los children para que los campos colaborativos lo consuman */}
                                     {children(activeTab, cowork)}
                                 </div>

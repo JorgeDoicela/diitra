@@ -4,6 +4,8 @@ using diitra_infrastructure.data.models;
 using System.Threading.Tasks;
 using System.Linq;
 using System;
+using System.Security.Claims;
+using Diitra.Application.Research;
 
 namespace diitra_api.Controllers
 {
@@ -12,10 +14,12 @@ namespace diitra_api.Controllers
     public class ResearchProductsController : ControllerBase
     {
         private readonly DiitraContext _context;
+        private readonly IProjectOrchestrator _projectOrchestrator;
 
-        public ResearchProductsController(DiitraContext context)
+        public ResearchProductsController(DiitraContext context, IProjectOrchestrator projectOrchestrator)
         {
             _context = context;
+            _projectOrchestrator = projectOrchestrator;
         }
 
         [HttpGet("project/{projectUuid}")]
@@ -49,6 +53,12 @@ namespace diitra_api.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
+            if (dto == null) return BadRequest("Datos nulos");
+            if (!await CanCurrentUserModifyProjectAsync(dto.ProjectUuid))
+            {
+                return Forbid("No tienes permisos para agregar productos a este proyecto de investigación.");
+            }
+
             var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == dto.ProjectUuid);
             if (project == null) return NotFound(new { error = "Proyecto no encontrado" });
 
@@ -77,6 +87,14 @@ namespace diitra_api.Controllers
             var product = await _context.InvProductos.FindAsync(id);
             if (product == null) return NotFound();
 
+            var project = await _context.InvProyectos.FindAsync(product.IdProyecto);
+            if (project == null) return NotFound(new { error = "Proyecto asociado no encontrado" });
+
+            if (!await CanCurrentUserModifyProjectAsync(project.Uuid))
+            {
+                return Forbid("No tienes permisos para modificar productos de este proyecto de investigación.");
+            }
+
             product.IdTipoProducto = dto.IdTipoProducto;
             product.Titulo = dto.Titulo;
             product.Cantidad = dto.Cantidad <= 0 ? 1 : dto.Cantidad;
@@ -96,10 +114,33 @@ namespace diitra_api.Controllers
             var product = await _context.InvProductos.FindAsync(id);
             if (product == null) return NotFound();
 
+            var project = await _context.InvProyectos.FindAsync(product.IdProyecto);
+            if (project == null) return NotFound(new { error = "Proyecto asociado no encontrado" });
+
+            if (!await CanCurrentUserModifyProjectAsync(project.Uuid))
+            {
+                return Forbid("No tienes permisos para eliminar productos de este proyecto de investigación.");
+            }
+
             _context.InvProductos.Remove(product);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Producto eliminado con éxito" });
+        }
+
+        private async Task<bool> CanCurrentUserModifyProjectAsync(string uuid)
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return false;
+
+            var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
+                          User.IsInRole("DIITRA_ADMIN") ||
+                          User.IsInRole("ADMIN_SISTEMA") ||
+                          User.IsInRole("DIRECTOR_INV");
+
+            if (isAdmin) return true;
+
+            return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
         }
     }
 

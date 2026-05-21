@@ -189,14 +189,22 @@ namespace diitra_api.Controllers
         }
 
         [HttpPatch("{id}/section")]
-        public IActionResult UpdateSection(string id, [FromBody] System.Collections.Generic.Dictionary<string, object> sectionData)
+        public async Task<IActionResult> UpdateSection(string id, [FromBody] System.Collections.Generic.Dictionary<string, object> sectionData)
         {
+            if (!await CanCurrentUserModifyProjectAsync(id))
+            {
+                return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
+            }
             return Ok(new { message = "Sección guardada correctamente", projectId = id });
         }
 
         [HttpPost("{id}/transition")]
         public async Task<IActionResult> TransitionState(string id, [FromQuery] string newState, [FromQuery] string observation, [FromServices] IWorkflowEngineService workflowEngine)
         {
+            if (!await CanCurrentUserModifyProjectAsync(id))
+            {
+                return Forbid("No tienes permisos para transicionar el estado de este proyecto.");
+            }
             try
             {
                 int idUsuarioSimulado = 1;
@@ -213,6 +221,10 @@ namespace diitra_api.Controllers
         [HttpGet("{id}/traceability")]
         public async Task<IActionResult> GetTraceability(string id, [FromServices] IWorkflowEngineService workflowEngine)
         {
+            if (!await CanCurrentUserViewProjectAsync(id))
+            {
+                return Forbid("No tienes permisos para visualizar la trazabilidad de este proyecto.");
+            }
             var history = await workflowEngine.GetTrazabilidadAsync(id);
             return Ok(history);
         }
@@ -227,6 +239,12 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> SavePreviewData([FromBody] ProyectoDto dto)
         {
             if (dto == null) return BadRequest("Datos nulos");
+            if (string.IsNullOrEmpty(dto.Uuid)) return BadRequest("El UUID del proyecto es requerido");
+
+            if (!await CanCurrentUserModifyProjectAsync(dto.Uuid))
+            {
+                return Forbid("No tienes permisos para modificar este proyecto de investigación.");
+            }
 
             var result = await _projectOrchestrator.SyncProjectWizardDataAsync(dto);
 
@@ -263,8 +281,15 @@ namespace diitra_api.Controllers
         [HttpGet("{uuid}/detail")]
         public async Task<IActionResult> GetDetail(string uuid)
         {
+            if (!await CanCurrentUserViewProjectAsync(uuid))
+            {
+                return Forbid("No tienes permisos para visualizar este proyecto de investigación borrador.");
+            }
+
             var detail = await _projectOrchestrator.GetProjectDetailAsync(uuid);
             if (detail == null) return NotFound();
+
+            detail.PuedeEditar = await CanCurrentUserModifyProjectAsync(uuid);
             return Ok(detail);
         }
 
@@ -404,6 +429,11 @@ namespace diitra_api.Controllers
         {
             if (investigadores == null) return BadRequest("Lista de investigadores nula.");
 
+            if (!await CanCurrentUserModifyProjectAsync(uuid))
+            {
+                return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
+            }
+
             var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores);
             if (!result.Success)
             {
@@ -424,6 +454,11 @@ namespace diitra_api.Controllers
                 return BadRequest(new { success = false, message = "La cédula del nuevo director y el motivo son obligatorios." });
             }
 
+            if (!await CanCurrentUserModifyProjectAsync(uuid))
+            {
+                return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
+            }
+
             var result = await _projectOrchestrator.TransferDirectorAsync(uuid, request);
             if (!result.Success)
             {
@@ -440,6 +475,11 @@ namespace diitra_api.Controllers
         [HttpDelete("{uuid}")]
         public async Task<IActionResult> DeleteProject(string uuid)
         {
+            if (!await CanCurrentUserModifyProjectAsync(uuid))
+            {
+                return Forbid("No tienes permisos para eliminar este proyecto de investigación.");
+            }
+
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var result = await _projectOrchestrator.DeleteProjectAsync(uuid, userIdRef);
             if (!result.Success)
@@ -447,6 +487,36 @@ namespace diitra_api.Controllers
                 return BadRequest(new { success = false, message = result.Message });
             }
             return Ok(new { success = true });
+        }
+
+        private async Task<bool> CanCurrentUserModifyProjectAsync(string uuid)
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return false;
+
+            var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
+                          User.IsInRole("DIITRA_ADMIN") ||
+                          User.IsInRole("ADMIN_SISTEMA") ||
+                          User.IsInRole("DIRECTOR_INV");
+
+            if (isAdmin) return true;
+
+            return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
+        }
+
+        private async Task<bool> CanCurrentUserViewProjectAsync(string uuid)
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return false;
+
+            var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
+                          User.IsInRole("DIITRA_ADMIN") ||
+                          User.IsInRole("ADMIN_SISTEMA") ||
+                          User.IsInRole("DIRECTOR_INV");
+
+            if (isAdmin) return true;
+
+            return await _projectOrchestrator.UserCanViewProjectAsync(uuid, userIdRef);
         }
     }
 }

@@ -48,9 +48,10 @@ interface DocumentEditorProps {
     templateCode: string;
     initialData?: any;
     onClose: () => void;
+    readOnly?: boolean;                                  // ← Bandera de sólo lectura
 }
 
-const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, onClose }) => {
+const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, onClose, readOnly = false }) => {
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
 
@@ -140,6 +141,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             convocatorias={convocatorias}
             tiposProducto={tiposProducto}
             onClose={onClose}
+            readOnly={readOnly}
         />
     );
 };
@@ -158,6 +160,7 @@ interface DocumentEditorCoreProps {
     convocatorias: any[];
     tiposProducto: any[];
     onClose: () => void;
+    readOnly?: boolean;                                  // ← Bandera de sólo lectura
 }
 
 const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
@@ -167,7 +170,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     carreras,
     convocatorias,
     tiposProducto,
-    onClose
+    onClose,
+    readOnly = false
 }) => {
     const navigate  = useNavigate();
     const { user }  = useAuth();
@@ -182,8 +186,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
     // ── 3. Instanciar CoWork (v3.0: se hace AQUÍ, en el padre del Shell) ──
     const coworkUser = React.useMemo(() => coworkUserFromAuth({
-        userUuid:       user?.uuid       || 'anonymous',
-        nombreCompleto: user?.nombre_completo || user?.name || 'Usuario DIITRA',
+        userUuid:       user?.id_referencia       || 'anonymous',
+        nombreCompleto: user?.nombre_completo || 'Usuario DIITRA',
         role:           user?.role       || 'Investigador',
     }), [user]);
 
@@ -191,6 +195,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         documentId,
         user:    coworkUser,
         enabled: true,
+        readonly: readOnly,
     });
 
     // ── 4. Resolver campos de texto enriquecido (Rich-Text) para evitar colisión de constructores Yjs ──
@@ -305,6 +310,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             cowork={cowork}      // ← Inyectado al Shell (no lo crea él)
             onSave={handleSave}
             onClose={onClose}
+            readOnly={readOnly}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);
@@ -331,6 +337,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 return (
                     <div className="pb-20">
                         <SectionComponent
+                            readOnly={readOnly}
                             formData={formData}
                             cowork={coworkHandle}
                             onUpdate={updateField}

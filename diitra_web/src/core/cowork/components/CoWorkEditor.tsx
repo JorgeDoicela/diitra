@@ -94,7 +94,7 @@ const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
             attributes: {
                 class: 'focus:outline-none',
             },
-            handlePaste: (view, event, slice) => {
+            handlePaste: (view, event) => {
                 const items = event.clipboardData?.items;
                 if (!items) return false;
                 
@@ -124,7 +124,7 @@ const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
                 }
                 return handled;
             },
-            handleDrop: (view, event, slice, moved) => {
+            handleDrop: (view, event) => {
                 const files = event.dataTransfer?.files;
                 if (!files || files.length === 0) return false;
                 
