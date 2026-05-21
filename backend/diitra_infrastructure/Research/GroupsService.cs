@@ -88,7 +88,8 @@ public class GroupsService : IGroupsService
             Vision = dto.Vision,
             ResolucionAprobacion = dto.ResolucionAprobacion,
             FechaCreacion = dto.FechaCreacion,
-            Activo = true
+            Activo = dto.Estado == "Pendiente" ? false : true,
+            Estado = dto.Estado ?? "Aprobado"
         };
 
         if (dto.LineasIds.Any())
@@ -203,6 +204,30 @@ public class GroupsService : IGroupsService
         return true;
     }
 
+    public async Task<bool> ReviewGroupAsync(string uuid, bool aprobado, string? resolucion)
+    {
+        var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
+        if (group == null) return false;
+
+        if (aprobado)
+        {
+            group.Estado = "Aprobado";
+            group.Activo = true;
+            group.ResolucionAprobacion = resolucion;
+            await _auditService.LogActionAsync(null, "APROBAR_GRUPO", $"Aprobación del grupo {group.Nombre} con resolución {resolucion}", "INVESTIGACION");
+        }
+        else
+        {
+            group.Estado = "Rechazado";
+            group.Activo = false;
+            group.ResolucionAprobacion = null;
+            await _auditService.LogActionAsync(null, "RECHAZAR_GRUPO", $"Rechazo del grupo {group.Nombre}", "INVESTIGACION");
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
     private GroupDto MapToDto(InvGrupoInvestigacion g)
     {
         return new GroupDto
@@ -214,13 +239,15 @@ public class GroupsService : IGroupsService
             TipoGrupo = g.TipoGrupo,
             IdDominio = g.IdDominio,
             IdCoordinador = g.IdCoordinador,
+            IdProfesorCoordinador = g.IdCoordinadorNavigation?.IdSigafi,
             NombreCoordinador = g.IdCoordinadorNavigation?.Nombre,
             ObjetivoGeneral = g.ObjetivoGeneral,
             Mision = g.Mision,
             Vision = g.Vision,
             ResolucionAprobacion = g.ResolucionAprobacion,
             FechaCreacion = g.FechaCreacion,
-            Activo = g.Activo ?? false
+            Activo = g.Activo ?? false,
+            Estado = g.Estado
         };
     }
 }

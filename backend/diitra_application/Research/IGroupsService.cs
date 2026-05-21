@@ -11,4 +11,5 @@ public interface IGroupsService
     Task<bool> DeactivateAsync(string uuid);
     Task<bool> AddMemberAsync(string groupUuid, GroupMemberDto memberDto);
     Task<bool> RemoveMemberAsync(int memberId);
+    Task<bool> ReviewGroupAsync(string uuid, bool aprobado, string? resolucion);
 }

@@ -2,6 +2,7 @@ using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace diitra_api.Controllers;
 
@@ -33,11 +34,17 @@ public class GroupsController : ControllerBase
     }
 
     [HttpPost]
-    // [Authorize(Roles = "ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> Create([FromBody] CreateGroupDto dto)
     {
         try 
         {
+            var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
+            if (!isAdmin)
+            {
+                dto.Estado = "Pendiente";
+                dto.IdProfesorCoordinador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            }
+            
             var group = await _groupsService.CreateAsync(dto);
             return CreatedAtAction(nameof(GetByUuid), new { uuid = group.Uuid }, group);
         }
@@ -52,6 +59,21 @@ public class GroupsController : ControllerBase
     {
         try
         {
+            var existingGroup = await _groupsService.GetByUuidAsync(uuid);
+            if (existingGroup == null) return NotFound();
+
+            var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
+            if (!isAdmin)
+            {
+                if (existingGroup.Estado == "Aprobado")
+                {
+                    return Forbid();
+                }
+                
+                dto.Estado = "Pendiente";
+                dto.IdProfesorCoordinador = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            }
+
             var group = await _groupsService.UpdateAsync(uuid, dto);
             return Ok(group);
         }
@@ -84,4 +106,27 @@ public class GroupsController : ControllerBase
         if (!result) return NotFound();
         return NoContent();
     }
+
+    [HttpPatch("{uuid}/review")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    public async Task<IActionResult> ReviewGroup(string uuid, [FromBody] ReviewGroupRequest request)
+    {
+        try
+        {
+            var result = await _groupsService.ReviewGroupAsync(uuid, request.Aprobado, request.Resolucion);
+            if (!result) return NotFound(new { message = "Grupo no encontrado" });
+            return Ok(new { message = "Grupo revisado exitosamente" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }
+
+public class ReviewGroupRequest
+{
+    public bool Aprobado { get; set; }
+    public string? Resolucion { get; set; }
+}
+

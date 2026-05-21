@@ -24,7 +24,7 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
     { name: 'Usuarios', icon: Users, path: '/admin', permission: 'USUARIOS:VER' },
     { name: 'Auditoría', icon: Activity, path: '/admin/audit', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
-    { name: 'Grupos', icon: Award, path: '/admin/groups', permission: 'GRUPOS:VER' },
+    { name: 'Grupos', icon: Award, path: '/admin/groups', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
     { name: 'Configuración', icon: Settings, path: '/admin/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
   ];
 

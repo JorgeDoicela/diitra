@@ -113,7 +113,7 @@ function App() {
             } />
             <Route path="/admin" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AuditPage /></AdminRoute>} />
-            <Route path="/admin/groups" element={<AdminRoute><GroupsPage /></AdminRoute>} />
+            <Route path="/admin/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
             <Route path="/admin/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
             <Route path="/investigacion" element={<ResearchProjectsPage />} />
             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
