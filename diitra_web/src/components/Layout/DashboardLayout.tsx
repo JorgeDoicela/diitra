@@ -31,7 +31,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 <header className="hidden lg:flex items-center justify-between px-10 py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-[40]">
                     <div className="flex items-center gap-4">
                         <div className="h-4 w-[1px] bg-border-thin mx-2" />
-                        <span className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">Instituto Superior Tecnológico Traversari</span>
+                        <span className="section-label text-text-dim">Instituto Superior Tecnológico Traversari</span>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3 pr-6 border-r border-border-thin">

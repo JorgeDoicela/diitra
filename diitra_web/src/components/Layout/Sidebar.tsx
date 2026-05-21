@@ -159,9 +159,9 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
               await logout();
               handleNavigation('/');
             }}
-            className="flex items-center gap-3 px-3 py-2 text-text-dim cursor-pointer hover:bg-red-500/10 hover:text-red-500 rounded-md transition-all group"
+            className="flex items-center gap-3 px-3 py-2 text-text-dim cursor-pointer hover:bg-error/10 hover:text-error rounded-md transition-all group"
           >
-            <LogOut size={16} strokeWidth={1.5} className="group-hover:text-red-500 transition-colors" />
+            <LogOut size={16} strokeWidth={1.5} className="group-hover:text-error transition-colors" />
             <span className="text-sm font-medium transition-colors">Cerrar Sesión</span>
           </div>
         </div>

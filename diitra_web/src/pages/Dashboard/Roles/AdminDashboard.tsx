@@ -202,7 +202,7 @@ export const AdminDashboard: React.FC = () => {
                         icon={<Megaphone size={14} />}
                     >
                         <div className="mt-4">
-                            <p className={`stat-number ${(stats?.total_convocatorias_abiertas ?? 0) > 0 ? 'text-emerald-400' : 'text-text-dim'}`}>
+                            <p className={`stat-number ${(stats?.total_convocatorias_abiertas ?? 0) > 0 ? 'text-success' : 'text-text-dim'}`}>
                                 {stats?.total_convocatorias_abiertas ?? 0}
                             </p>
                             <p className="text-[10px] text-text-dim mt-2 uppercase tracking-wide">
@@ -262,7 +262,7 @@ export const AdminDashboard: React.FC = () => {
                             </div>
                             <div className="w-full h-2 bg-border-thin rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-700"
+                                    className="progress-fill progress-fill--success"
                                     style={{ width: `${ejecucionPorc}%` }}
                                 />
                             </div>
@@ -286,8 +286,8 @@ export const AdminDashboard: React.FC = () => {
                             ) : (
                                 stats.actividad_reciente.slice(0, 6).map((item, i) => (
                                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin">
-                                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                            item.tipo === 'informe' ? 'bg-violet-500' : 'bg-blue-500'
+                                        <div className={`dot ${
+                                            item.tipo === 'informe' ? 'dot-brand' : 'dot-info'
                                         }`} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-[11px] font-bold text-text-main truncate">{item.descripcion}</p>
@@ -465,7 +465,7 @@ export const AdminDashboard: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="modal-footer" style={{ margin: '0 -1.5rem', padding: '1rem 1.5rem' }}>
+                                <div className="modal-footer" style={{ margin: '0 -1.5rem' }}>
                                     <button 
                                         type="button"
                                         onClick={() => setShowAssignModal(false)}
@@ -509,7 +509,7 @@ export const AdminDashboard: React.FC = () => {
                                         <div key={i} className="p-4 rounded bg-surface/10 border border-border-thin space-y-4">
                                             <div className="flex justify-between items-center border-b border-border-thin pb-2">
                                                 <div>
-                                                    <p className="text-xs text-text-main font-bold uppercase">Revisor ID: {rev.id_revisor} {rev.es_externo && <span className="text-blue-400 font-bold ml-2">[EXTERNO]</span>}</p>
+                                                    <p className="text-xs text-text-main font-bold uppercase">Revisor ID: {rev.id_revisor} {rev.es_externo && <span className="text-info font-bold ml-2">[EXTERNO]</span>}</p>
                                                     <p className="text-[9px] text-text-dim uppercase tracking-wider">Límite: {new Date(rev.fecha_limite).toLocaleDateString()}</p>
                                                 </div>
                                                 <span className={`status-tag ${
