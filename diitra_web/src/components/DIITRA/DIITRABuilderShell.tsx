@@ -11,16 +11,16 @@ import type { CoWorkHandle } from '../../core/cowork/types';
  * -------------------------------------------------------------------------
  * Este componente es el "Marco Profesional" de la institución. Su responsabilidad
  * es manejar la infraestructura visual y técnica común:
- * 
+ *
  * - Renderizado en tiempo real (vía DocumentsController)
  * - Persistencia automática (Auto-save)
  * - Auditoría de Sesión (Audit Log)
  * - Firma Electrónica Certificada (PAdES)
  * - Modos de visualización (Borrador / Doble Ciego)
- * 
+ *
  * GUÍA DE REUSABILIDAD:
- * Para crear un nuevo documento, NO modifiques este archivo. 
- * Crea un componente nuevo (ej: ActaWizard.tsx) e invoca a <DIITRABuilderShell> 
+ * Para crear un nuevo documento, NO modifiques este archivo.
+ * Crea un componente nuevo (ej: ActaWizard.tsx) e invoca a <DIITRABuilderShell>
  * pasando los campos específicos del nuevo documento como 'children'.
  */
 
@@ -53,10 +53,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     children
 }) => {
     const { user } = useAuth();
-    
+
     // Generamos un ID estable para la sesión si el documento aún no tiene UUID (ej: Nueva Postulación)
     const sessionTempIdRef = useRef<string>(`temp_${Math.random().toString(36).substring(2, 9)}`);
-    
+
     // Bloqueamos el ID de la sala al montar el componente para evitar que CoWork se reinicie
     // cuando el backend asigna un UUID real tras el primer guardado.
     const stableRoomIdRef = useRef<string>(formData.Uuid || sessionTempIdRef.current);
@@ -82,7 +82,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [isGenerating, setIsGenerating] = useState(false);
     const [signaturePassword, setSignaturePassword] = useState('');
     const [isSigning, setIsSigning] = useState(false);
-    const [auditLogs, setAuditLogs] = useState<{msg: string, type: string}[]>([]);
+    const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
 
@@ -97,7 +97,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     }, [pdfBlob]);
 
     const addAudit = (msg: string, type: string = 'info') => {
-        setAuditLogs(prev => [{msg, type}, ...prev].slice(0, 8));
+        setAuditLogs(prev => [{ msg, type }, ...prev].slice(0, 8));
     };
 
     // ── Auto-save inteligente del núcleo (con debounce y dirty-check) ──
@@ -164,8 +164,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         addAudit(`Renderizando ${templateCode} [${blind ? 'BLIND' : 'NORMAL'}]...`);
         try {
             const response = await api.post(
-                `/documents/render?templateCode=${templateCode}&isDraft=${isDraftMode}&isBlind=${blind}`, 
-                formData, 
+                `/documents/render?templateCode=${templateCode}&isDraft=${isDraftMode}&isBlind=${blind}`,
+                formData,
                 { responseType: 'blob' }
             );
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
@@ -195,7 +195,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     return (
         <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
             <div className="bg-surface w-full h-full flex flex-col shadow-2xl overflow-hidden animate-fade-in">
-                
+
                 {/* Header Universal */}
                 <div className="px-4 md:px-8 py-3 md:py-5 border-b border-border-thin bg-bg-deep/50 flex flex-col lg:flex-row justify-between items-center gap-4 lg:gap-0">
                     <div className="flex items-center justify-between w-full lg:w-auto gap-4 md:gap-6">
@@ -207,7 +207,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 <h2 className="text-sm md:text-xl font-black text-text-main tracking-tighter uppercase leading-none">
                                     DIITRA <span className="text-text-dim font-light hidden sm:inline">Builder Core</span>
                                 </h2>
-                                <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v4.1.0</p>
+                                <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v1.0.0</p>
                             </div>
                             <div className="h-6 md:h-8 w-[1px] bg-border-thin mx-1 md:mx-2" />
                             <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1 md:py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
@@ -217,7 +217,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         </div>
 
                         <div className="lg:hidden flex items-center gap-2">
-                             <button 
+                            <button
                                 onClick={() => setShowMobileSections(!showMobileSections)}
                                 className={`p-2 rounded-lg border transition-all ${showMobileSections ? 'bg-text-main text-bg-deep border-text-main' : 'bg-surface text-text-dim border-border-thin'}`}
                             >
@@ -228,7 +228,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             </button>
                         </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between w-full lg:w-auto gap-4 md:gap-8">
                         {/* Indicadores de CoWork */}
                         <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-1.5 md:py-2 bg-bg-deep rounded-xl border border-border-thin">
@@ -245,12 +245,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                     </>
                                 )}
                             </div>
-                            
+
                             {cowork.session.connectedUsers.length > 0 && (
                                 <div className="flex -space-x-1.5 md:-space-x-2">
                                     {cowork.session.connectedUsers.map((u, i) => (
-                                        <div 
-                                            key={i} 
+                                        <div
+                                            key={i}
                                             className="w-5 h-5 md:w-7 md:h-7 rounded-full border border-surface flex items-center justify-center text-[7px] md:text-[10px] font-black text-white shadow-lg cursor-help transition-transform hover:-translate-y-1"
                                             style={{ backgroundColor: u.color }}
                                             title={`${u.name} (${u.role})`}
@@ -266,9 +266,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             <span className="text-[7px] md:text-[9px] font-bold text-text-dim uppercase tracking-widest mb-1">Sincronización</span>
                             <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-text-main font-black uppercase">
                                 {isSaving || cowork.session.isSyncing ? (
-                                    <><Clock size={10} className="animate-spin"/> ...</>
+                                    <><Clock size={10} className="animate-spin" /> ...</>
                                 ) : (
-                                    <><CheckCircle size={10} className="text-green-500"/> {lastSaved ? lastSaved : 'Listo'}</>
+                                    <><CheckCircle size={10} className="text-green-500" /> {lastSaved ? lastSaved : 'Listo'}</>
                                 )}
                             </div>
                         </div>
@@ -295,22 +295,22 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em] mb-4 lg:ml-2">Navegación del Documento</p>
                             <div className="space-y-1">
                                 {sections.map(section => (
-                                    <button 
+                                    <button
                                         key={section.id}
                                         onClick={() => {
                                             setActiveTab(section.id);
                                             setShowMobileSections(false);
-                                        }} 
+                                        }}
                                         className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
                                     >
                                         {section.icon} {section.label}
                                     </button>
                                 ))}
-                                <button 
+                                <button
                                     onClick={() => {
                                         setActiveTab('output');
                                         setShowMobileSections(false);
-                                    }} 
+                                    }}
                                     className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-blue-600 text-white border-blue-500 shadow-blue-500/20' : 'text-blue-500 border-blue-500/20 hover:bg-blue-500/10'}`}
                                 >
                                     <FileText size={18} /> Finalizar y Firmar
@@ -327,16 +327,14 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                     {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Esperando acciones del núcleo...</p>}
                                     {auditLogs.map((log, i) => (
                                         <div key={i} className="flex gap-3">
-                                            <div className={`w-1 h-auto rounded-full ${
-                                                log.type === 'success' ? 'bg-green-500' :
-                                                log.type === 'error' ? 'bg-red-500' :
-                                                log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'
-                                            }`} />
-                                            <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${
-                                                log.type === 'success' ? 'text-green-500/80' :
-                                                log.type === 'error' ? 'text-red-500/80' :
-                                                log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'
-                                            }`}>
+                                            <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' :
+                                                    log.type === 'error' ? 'bg-red-500' :
+                                                        log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'
+                                                }`} />
+                                            <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${log.type === 'success' ? 'text-green-500/80' :
+                                                    log.type === 'error' ? 'text-red-500/80' :
+                                                        log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'
+                                                }`}>
                                                 {log.msg}
                                             </p>
                                         </div>
@@ -348,7 +346,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
                     {/* Editor & Preview Area */}
                     <div className="flex-1 bg-bg-deep overflow-hidden flex">
-                        
+
                         {activeTab !== 'output' ? (
                             <div className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar">
                                 <div className="max-w-5xl mx-auto">
@@ -382,10 +380,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-3">
                                                     <button onClick={() => handleGeneratePdf(false)} className="w-full bg-text-main text-bg-deep px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:opacity-90 flex items-center justify-center gap-3 transition-all">
-                                                        <FileText size={18}/> Generar Vista Previa
+                                                        <FileText size={18} /> Generar Vista Previa
                                                     </button>
                                                     <button onClick={() => handleGeneratePdf(true)} className="w-full border border-text-main/30 text-text-main/60 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-text-main hover:text-bg-deep transition-all flex items-center justify-center gap-3">
-                                                        <Users size={18}/> Modo Doble Ciego
+                                                        <Users size={18} /> Modo Doble Ciego
                                                     </button>
                                                 </div>
                                             </div>
@@ -395,21 +393,20 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Digital PAdES</h4>
                                             <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a Ley de Comercio Electrónico.</p>
                                             <div className="space-y-4">
-                                                <input 
-                                                    type="password" 
-                                                    placeholder="Contraseña Certificado (.p12)" 
+                                                <input
+                                                    type="password"
+                                                    placeholder="Contraseña Certificado (.p12)"
                                                     value={signaturePassword}
                                                     onChange={(e) => setSignaturePassword(e.target.value)}
                                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"
                                                 />
-                                                <button 
+                                                <button
                                                     onClick={handleSign}
                                                     disabled={!pdfBlob || isSigning}
-                                                    className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${
-                                                        !pdfBlob ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-xl'
-                                                    }`}
+                                                    className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${!pdfBlob ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-500 shadow-xl'
+                                                        }`}
                                                 >
-                                                    {isSigning ? <><Clock size={18} className="animate-spin"/> Firmando...</> : <><Shield size={18}/> Aplicar Firma Digital</>}
+                                                    {isSigning ? <><Clock size={18} className="animate-spin" /> Firmando...</> : <><Shield size={18} /> Aplicar Firma Digital</>}
                                                 </button>
                                             </div>
                                         </div>
