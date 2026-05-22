@@ -30,6 +30,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly ImageData? _stationaryImageData;
         private readonly Image? _stationaryImage;
         private readonly PdfFont? _watermarkFont;
+        private readonly string _verificationBaseUrl;
 
         public DocumentEventHandler(
             string traceabilityCode, 
@@ -37,12 +38,16 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             string lopdpClause = "Tratamiento de datos conforme a LOPDP (R.O. 459, 2021).",
             bool isDraft = false,
             string? stationaryImageBase64 = null,
-            ImageData? stationaryImageData = null)
+            ImageData? stationaryImageData = null,
+            string? verificationBaseUrl = null)
         {
             _traceabilityCode = traceabilityCode;
             _institutionName = institutionName;
             _lopdpClause = lopdpClause;
             _isDraft = isDraft;
+            _verificationBaseUrl = string.IsNullOrWhiteSpace(verificationBaseUrl)
+                ? "https://diitra.ist.edu.ec"
+                : verificationBaseUrl.TrimEnd('/');
 
             if (stationaryImageData != null)
             {
@@ -132,7 +137,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // canvas.SetFontSize(7);
             // ...
 
-
             // 3. Pie de Página Global + QR de Verificación
             canvas.ShowTextAligned(new Paragraph(_lopdpClause), 
                 36, 25, TextAlignment.LEFT);
@@ -142,7 +146,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             // 4. QR de Verificación Nativo (Esquina inferior derecha)
             // Usamos el estándar iText 9 Professional para asegurar visibilidad en todos los visores
-            BarcodeQRCode qrCode = new BarcodeQRCode($"https://diitra.ist.edu.ec/verify/{_traceabilityCode}");
+            BarcodeQRCode qrCode = new BarcodeQRCode($"{_verificationBaseUrl}/verify/{_traceabilityCode}");
             PdfFormXObject qrObject = qrCode.CreateFormXObject(iText.Kernel.Colors.ColorConstants.BLACK, pdfDoc);
             
             // Creamos un objeto Image para posicionamiento preciso y escalado automático
