@@ -88,16 +88,33 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private string FindSourceRoot()
         {
             var dir = new DirectoryInfo(AppContext.BaseDirectory);
-            while (dir != null && dir.Name != "diitra_infrastructure")
+            while (dir != null)
             {
+                // check if the current directory contains the sibling "diitra_infrastructure" subfolder
+                var infraPath = Path.Combine(dir.FullName, "diitra_infrastructure");
+                if (Directory.Exists(infraPath))
+                {
+                    var targetPath = Path.Combine(infraPath, ImagesRelativePath);
+                    if (Directory.Exists(targetPath))
+                    {
+                        return targetPath;
+                    }
+                }
+
+                // or if we are already inside "diitra_infrastructure"
+                if (dir.Name.Equals("diitra_infrastructure", StringComparison.OrdinalIgnoreCase))
+                {
+                    var targetPath = Path.Combine(dir.FullName, ImagesRelativePath);
+                    if (Directory.Exists(targetPath))
+                    {
+                        return targetPath;
+                    }
+                }
+
                 dir = dir.Parent;
-                if (dir?.Parent == null)
-                    return Path.Combine(AppContext.BaseDirectory, ImagesRelativePath);
             }
 
-            return dir != null
-                ? Path.Combine(dir.FullName, ImagesRelativePath)
-                : Path.Combine(AppContext.BaseDirectory, ImagesRelativePath);
+            return Path.Combine(AppContext.BaseDirectory, ImagesRelativePath);
         }
     }
 }
