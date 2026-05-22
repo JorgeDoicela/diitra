@@ -85,8 +85,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 font-weight: bold;
                 text-transform: uppercase;
                 margin: 15px 0 10px 0;
-                border-bottom: 2px solid #1e2a4a;
-                padding-bottom: 3px;
             }
             
             /* ── Tablas de Identificación (Info) ── */
