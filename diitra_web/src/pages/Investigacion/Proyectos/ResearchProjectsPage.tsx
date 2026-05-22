@@ -132,7 +132,8 @@ const ResearchProjectsPage = () => {
                             ))}
                         </div>
 
-                        <div className="mt-10 pt-8 divider-vercel !mx-0">
+                        <div className="divider-vercel mt-10 mb-8" />
+                        <div>
                             <p className="text-[9px] font-bold text-text-dim uppercase tracking-widest mb-4">Plantillas Disponibles</p>
                             <div className="flex flex-wrap gap-2">
                                 {['PROTOCOLO', 'ACTA', 'INFORME', 'CERTIFICADO'].map(t => (
