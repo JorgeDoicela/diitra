@@ -183,8 +183,10 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     // ── Merge estable del esquema + datos iniciales (uuid, título, etc.) ──
     const mergedInitial = React.useMemo(() => ({
         ...(templateConfig?.schema || {}),
+        EntityUuid: entityUuid,
+        entityUuid: entityUuid,
         ...initialData
-    }), [templateConfig, initialData]);
+    }), [templateConfig, initialData, entityUuid]);
 
     const documentId = initialData?.Uuid || `temp_${Math.random().toString(36).substring(2, 9)}`;
 

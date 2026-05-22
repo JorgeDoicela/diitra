@@ -54,8 +54,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
     // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
     const updateField = useCallback((name: string, value: any) => {
         // Sincronizar en Yjs si existe ydoc y no es una lista trackeada ni un rich-text
-        // Excluimos 'Uuid' y 'uuid' de la sincronización de Yjs para evitar que se pise el identificador estático
-        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && name.toLowerCase() !== 'uuid') {
+        // Excluimos 'Uuid'/'uuid' y 'EntityUuid'/'entityuuid' de Yjs para proteger los identificadores estáticos de persistencia relacional
+        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && name.toLowerCase() !== 'uuid' && name.toLowerCase() !== 'entityuuid') {
             const ytext = ydoc.getText(name);
             const stringVal = String(value);
             if (ytext.toString() !== stringVal) {
@@ -142,7 +142,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
         Object.keys(initialData).forEach(key => {
             if (options.lists?.includes(key)) return; // Se maneja como array
             if (options.richTexts?.includes(key)) return; // Se maneja como XMLFragment en Tiptap
-            if (key.toLowerCase() === 'uuid') return; // El UUID es inmutable y no se sincroniza via Yjs
+            if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return; // El UUID y EntityUuid son inmutables y no se sincronizan via Yjs
 
             const ytext = ydoc.getText(key);
             const observer = (event: Y.YTextEvent) => {
