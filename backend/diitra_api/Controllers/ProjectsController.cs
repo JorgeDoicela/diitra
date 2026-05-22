@@ -494,6 +494,14 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return false;
 
+            // 1. Si el proyecto ya fue enviado o aprobado, está blindado de forma absoluta para todos en el editor colaborativo
+            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+            if (project != null && project.Estado != "Borrador" && project.Estado != "En Corrección")
+            {
+                return false;
+            }
+
+            // 2. Administradores o Directores de Investigación pueden editar cualquier proyecto NO blindado (Borrador/En Corrección)
             var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
                           User.IsInRole("DIITRA_ADMIN") ||
                           User.IsInRole("ADMIN_SISTEMA") ||
@@ -501,6 +509,7 @@ namespace diitra_api.Controllers
 
             if (isAdmin) return true;
 
+            // 3. Usuarios regulares requieren pertenecer al equipo del proyecto
             return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
         }
 

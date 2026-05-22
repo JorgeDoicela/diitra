@@ -180,6 +180,11 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     const navigate = useNavigate();
     const { user } = useAuth();
 
+    // Log para depuración en caliente
+    useEffect(() => {
+        console.log(`[DIITRA] DocumentEditorCore cargado para la plantilla: ${templateCode}, ID: ${initialData?.Uuid || 'NUEVO'}, readOnly: ${readOnly}`);
+    }, [templateCode, initialData?.Uuid, readOnly]);
+
     // ── Merge estable del esquema + datos iniciales (uuid, título, etc.) ──
     const mergedInitial = React.useMemo(() => ({
         ...(templateConfig?.schema || {}),
@@ -279,10 +284,12 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     }
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('[DIITRA] Error al guardar documento:', error);
+            if (error.response?.data) {
+                console.error('[DIITRA] Detalles de respuesta del servidor (400 Bad Request):', error.response.data);
+            }
             throw error;
-            // eslint-disable-next-line no-unreachable
         }
     };
 

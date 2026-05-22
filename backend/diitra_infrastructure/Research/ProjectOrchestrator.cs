@@ -194,8 +194,8 @@ namespace diitra_infrastructure.Research
                     }
                 }
 
-                // 4. Sincronización de Objetivos Específicos
-                await SyncObjetivosAsync(project.IdProyecto, dto.ObjetivosEspecificos);
+                // 4. Sincronización de Objetivos
+                int defaultObjetivoId = await SyncObjetivosAsync(project.IdProyecto, dto.ObjetivoGeneral, dto.ObjetivosEspecificos);
 
                 // 5. Sincronización de Presupuesto
                 await SyncPresupuestoAsync(project.IdProyecto, dto.RecursosNecesarios);
@@ -210,7 +210,7 @@ namespace diitra_infrastructure.Research
                 await SyncProductosAsync(project.IdProyecto, dto.ProductosEsperados);
 
                 // 9. Sincronización de Cronograma
-                await SyncCronogramaAsync(project.IdProyecto, dto.Cronograma);
+                await SyncCronogramaAsync(project.IdProyecto, defaultObjetivoId, dto.Cronograma);
 
                 // 10. Sincronización de Bibliografía
                 await SyncBibliografiaAsync(project.IdProyecto, dto.Bibliografia);
@@ -696,24 +696,49 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        private async Task SyncObjetivosAsync(int projectId, System.Collections.Generic.List<string>? objetivos)
+        private async Task<int> SyncObjetivosAsync(int projectId, string? objetivoGeneral, System.Collections.Generic.List<string>? objetivos)
         {
-            if (objetivos == null) return;
-            var old = _context.InvObjetivosProyecto.Where(o => o.IdProyecto == projectId && !o.EsGeneral);
-            _context.InvObjetivosProyecto.RemoveRange(old);
-
-            int orden = 1;
-            foreach (var obj in objetivos)
+            // Sincronizar Objetivo General
+            var generalOpt = await _context.InvObjetivosProyecto.FirstOrDefaultAsync(o => o.IdProyecto == projectId && o.EsGeneral);
+            if (generalOpt != null)
             {
-                if (string.IsNullOrWhiteSpace(obj)) continue;
-                _context.InvObjetivosProyecto.Add(new InvObjetivoProyecto
+                generalOpt.Descripcion = !string.IsNullOrWhiteSpace(objetivoGeneral) ? objetivoGeneral : "Objetivo General por definir";
+            }
+            else
+            {
+                generalOpt = new InvObjetivoProyecto
                 {
                     IdProyecto = projectId,
-                    Descripcion = obj,
-                    EsGeneral = false,
-                    Orden = orden++
-                });
+                    Descripcion = !string.IsNullOrWhiteSpace(objetivoGeneral) ? objetivoGeneral : "Objetivo General por definir",
+                    EsGeneral = true,
+                    Orden = 0
+                };
+                _context.InvObjetivosProyecto.Add(generalOpt);
             }
+            await _context.SaveChangesAsync();
+            int generalId = generalOpt.IdObjetivo;
+
+            // Sincronizar Objetivos Específicos
+            if (objetivos != null)
+            {
+                var old = _context.InvObjetivosProyecto.Where(o => o.IdProyecto == projectId && !o.EsGeneral);
+                _context.InvObjetivosProyecto.RemoveRange(old);
+
+                int orden = 1;
+                foreach (var obj in objetivos)
+                {
+                    if (string.IsNullOrWhiteSpace(obj)) continue;
+                    _context.InvObjetivosProyecto.Add(new InvObjetivoProyecto
+                    {
+                        IdProyecto = projectId,
+                        Descripcion = obj,
+                        EsGeneral = false,
+                        Orden = orden++
+                    });
+                }
+            }
+
+            return generalId;
         }
 
         private async Task SyncPresupuestoAsync(int projectId, System.Collections.Generic.List<RecursoNecesarioDto>? recursos)
@@ -806,7 +831,7 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        private async Task SyncCronogramaAsync(int projectId, System.Collections.Generic.List<ActividadCronogramaDto>? cronograma)
+        private async Task SyncCronogramaAsync(int projectId, int defaultObjetivoId, System.Collections.Generic.List<ActividadCronogramaDto>? cronograma)
         {
             if (cronograma == null) return;
             
@@ -827,7 +852,7 @@ namespace diitra_infrastructure.Research
                 var nuevaAct = new InvCronograma
                 {
                     IdProyecto = projectId,
-                    IdObjetivo = 0, // TODO: Vincular con objetivo específico si se requiere
+                    IdObjetivo = defaultObjetivoId, // Usar el ID del objetivo general real para mantener la FK
                     NumeroActividad = act.Numero,
                     Descripcion = act.Actividad,
                     RecursosNecesarios = act.RecursosNecesarios,
@@ -1227,6 +1252,12 @@ namespace diitra_infrastructure.Research
 
             var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
             if (project == null) return true;
+
+            // Si el proyecto ya fue enviado o aprobado, está blindado para el usuario regular
+            if (project.Estado != "Borrador" && project.Estado != "En Corrección")
+            {
+                return false;
+            }
 
             if (project.TieneGrupo == true && project.IdGrupo.HasValue)
             {
