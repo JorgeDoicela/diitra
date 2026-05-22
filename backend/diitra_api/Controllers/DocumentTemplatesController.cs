@@ -92,85 +92,36 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
-        /// Aplica la migración del formato oficial del Protocolo de Investigación
-        /// (9 secciones SENESCYT/ISTPET) al motor de documentos.
-        /// Reemplaza la plantilla base del seed con el formato completo y fiel.
+        /// [DEPRECADO] Las plantillas ahora se cargan desde archivos .html físicos (TemplateFileLoader).
+        /// Este endpoint se mantiene por compatibilidad hacia atrás.
+        /// Para modificar el diseño edita: Templates/Investigacion/ProyectoInvestigacion.html
         /// </summary>
         [HttpPost("migrate-protocolo-investigacion")]
-        public async Task<IActionResult> MigrateProtocolo(CancellationToken ct)
+        public IActionResult MigrateProtocolo()
         {
-            try
+            return Ok(new
             {
-                var html = ProyectoInvestigacionTemplate.GetHtml();
-                var updatedBy = User.Identity?.Name ?? "migration-script";
-
-                await _documentEngine.UpdateTemplateAsync(
-                    ProyectoInvestigacionTemplate.CODE,
-                    html,
-                    customCss: null,
-                    updatedBy,
-                    ct);
-
-                return Ok(new
-                {
-                    message = "Plantilla 'PROTOCOLO_INVESTIGACION' migrada exitosamente al formato oficial SENESCYT/ISTPET.",
-                    templateCode = ProyectoInvestigacionTemplate.CODE,
-                    sections = new[]
-                    {
-                        "1. Identificación del Proyecto",
-                        "2. Investigadores",
-                        "3. Especificación (Antecedentes, Descripción, Justificación, Objetivos, ODS, Marco Teórico, Metodología, Evaluación)",
-                        "4. Recursos, Costo y Financiamiento",
-                        "5. Productos Esperados",
-                        "6. Impacto del Proyecto",
-                        "7. Cronograma de Actividades (Gantt 6 meses)",
-                        "8. Bibliografía (APA 7ª edición)",
-                        "9. Firmas de Responsabilidad"
-                    }
-                });
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { error = "La plantilla 'PROTOCOLO_INVESTIGACION' no existe en BD. Ejecute primero el seed." });
-            }
+                message = "Las plantillas ahora se cargan automáticamente desde archivos .html físicos. No se requiere migración manual.",
+                templateCode = ProyectoInvestigacionTemplate.CODE,
+                htmlFile = "Templates/Investigacion/ProyectoInvestigacion.html",
+                info = "Edita el archivo .html y genera el documento. El cambio aplica sin recompilar."
+            });
         }
 
+        /// <summary>
+        /// [DEPRECADO] Las plantillas ahora se cargan desde archivos .html físicos (TemplateFileLoader).
+        /// Para modificar el diseño edita: Templates/Investigacion/InformeFinal.html
+        /// </summary>
         [HttpPost("migrate-informe-final")]
-        public async Task<IActionResult> MigrateInformeFinal(CancellationToken ct)
+        public IActionResult MigrateInformeFinal()
         {
-            try
+            return Ok(new
             {
-                var html = InformeFinalTemplate.GetHtml();
-                var updatedBy = User.Identity?.Name ?? "migration-script";
-
-                await _documentEngine.UpdateTemplateAsync(
-                    InformeFinalTemplate.CODE,
-                    html,
-                    customCss: null,
-                    updatedBy,
-                    ct);
-
-                return Ok(new
-                {
-                    message = "Plantilla 'INFORME_FINAL_INVESTIGACION' migrada exitosamente al formato oficial CACES 2026.",
-                    templateCode = InformeFinalTemplate.CODE,
-                    sections = new[]
-                    {
-                        "Resumen Ejecutivo",
-                        "Cumplimiento de Objetivos",
-                        "Resultados Obtenidos",
-                        "Discusión de Hallazgos",
-                        "Impacto Final",
-                        "Transferencia de Conocimiento",
-                        "Conclusiones y Recomendaciones",
-                        "Bibliografía Final"
-                    }
-                });
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound(new { error = "La plantilla 'INFORME_FINAL_INVESTIGACION' no existe en BD. Ejecute primero el seed." });
-            }
+                message = "Las plantillas ahora se cargan automáticamente desde archivos .html físicos. No se requiere migración manual.",
+                templateCode = InformeFinalTemplate.CODE,
+                htmlFile = "Templates/Investigacion/InformeFinal.html",
+                info = "Edita el archivo .html y genera el documento. El cambio aplica sin recompilar."
+            });
         }
     }
 

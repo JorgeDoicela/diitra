@@ -59,16 +59,16 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     readOnly = false, // ← Bandera de sólo lectura
     children
 }) => {
-    const [activeTab, setActiveTab]               = useState(sections[0]?.id || 'general');
-    const [isSaving, setIsSaving]                 = useState(false);
-    const [lastSaved, setLastSaved]               = useState<string | null>(null);
-    const [pdfBlob, setPdfBlob]                   = useState<Blob | null>(null);
-    const [isDraftMode, setIsDraftMode]           = useState(true);
-    const [isGenerating, setIsGenerating]         = useState(false);
+    const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState<string | null>(null);
+    const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+    const [isDraftMode, setIsDraftMode] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(false);
     const [signaturePassword, setSignaturePassword] = useState('');
-    const [isSigning, setIsSigning]               = useState(false);
-    const [auditLogs, setAuditLogs]               = useState<{ msg: string, type: string }[]>([]);
-    const [pdfUrl, setPdfUrl]                     = useState<string | null>(null);
+    const [isSigning, setIsSigning] = useState(false);
+    const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
@@ -85,9 +85,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     // ── Auto-save inteligente del núcleo (dirty-check + debounce 3s) ──
     const lastSavedSnapshotRef = useRef<string>('');
-    const saveTimeoutRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const formDataRef          = useRef(formData);
-    const onSaveRef            = useRef(onSave);
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const formDataRef = useRef(formData);
+    const onSaveRef = useRef(onSave);
 
     useEffect(() => { formDataRef.current = formData; }, [formData]);
     useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
@@ -101,7 +101,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     const handleSave = useCallback(async () => {
         if (readOnly) return; // Bloquear guardado en sólo lectura
-        const data   = formDataRef.current;
+        const data = formDataRef.current;
         const saveFn = onSaveRef.current;
         if (!saveFn) return;
 
@@ -171,9 +171,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     };
 
     // ── Indicadores de estado del CoWork (memoizados para evitar re-renders) ──
-    const isOnline   = cowork.session.isConnected;
-    const isSyncing  = isSaving || cowork.session.isSyncing;
-    const users      = cowork.session.connectedUsers;
+    const isOnline = cowork.session.isConnected;
+    const isSyncing = isSaving || cowork.session.isSyncing;
+    const users = cowork.session.connectedUsers;
 
     return (
         <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
@@ -190,7 +190,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 <h2 className="text-sm md:text-xl font-black text-text-main tracking-tighter uppercase leading-none">
                                     DIITRA <span className="text-text-dim font-light hidden sm:inline">Builder Core</span>
                                 </h2>
-                                <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v2.0.0</p>
+                                <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v1.0.0</p>
                             </div>
                             <div className="h-6 md:h-8 w-[1px] bg-border-thin mx-1 md:mx-2" />
                             <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1 md:py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
@@ -348,7 +348,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         <p className="text-[10px] md:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
                                         <div className="w-16 md:w-20 h-1 md:h-1.5 bg-text-main mt-4 md:mt-6 rounded-full" />
                                     </div>
-                                    
+
                                     {readOnly && (
                                         <div className="mb-8 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex items-start gap-4 animate-fade-in shadow-inner">
                                             <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shrink-0">

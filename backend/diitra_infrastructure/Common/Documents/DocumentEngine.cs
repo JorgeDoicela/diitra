@@ -1,6 +1,7 @@
 using Diitra.Application.Common.Documents;
 using Diitra.Application.Common;
 using Diitra.Domain.Common.Documents;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using System;
@@ -46,6 +47,7 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly IDocumentAuditRepository _auditRepository;
         private readonly ILogger<DocumentEngine> _logger;
         private readonly IConfiguration _configuration;
+        private readonly TemplateFileLoader _templateFileLoader;
 
         // PERFORMANCE OPTIMIZATION: Heavy engines are shared across requests
         private static readonly ScribanTemplateEngine _scribanEngine = new();
@@ -67,12 +69,15 @@ namespace Diitra.Infrastructure.Common.Documents
             IDocumentTemplateRepository templateRepository,
             IDocumentAuditRepository auditRepository,
             ILogger<DocumentEngine> logger,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IHostEnvironment environment,
+            ILogger<TemplateFileLoader>? templateFileLoaderLogger = null)
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
             _logger = logger;
             _configuration = configuration;
+            _templateFileLoader = new TemplateFileLoader(environment, templateFileLoaderLogger);
         }
 
         public async Task<DocumentResult> GenerateAsync(
@@ -115,20 +120,29 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 var traceabilityCode = GenerateTraceabilityCode(template.Category);
 
-                // 3. Orquestar Datos
-                var renderedHtml = await _scribanEngine.RenderAsync(template.HtmlContent, request.Data, null, request.IsBlindMode);
+                // 3. Cargar HTML desde archivo físico (hot-reload en desarrollo)
+                //    Si el archivo .html existe en disco, su contenido tiene prioridad sobre el de la BD.
+                //    Esto permite editar el diseño sin recompilar ni reiniciar la API.
+                var fileHtml = await _templateFileLoader.LoadAsync(template.Code);
+                var htmlToRender = fileHtml ?? template.HtmlContent;
+
+                if (fileHtml != null)
+                    _logger.LogDebug("DIITRA DocumentEngine: Usando HTML desde archivo físico para '{Code}'.", template.Code);
+
+                // 4. Inyectar datos con Handlebars
+                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender, request.Data, null, request.IsBlindMode);
                 
-                // 4. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
+                // 5. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
                 var optimizedHtml = ProcessAndOptimizeHtml(renderedHtml);
 
-                // 5. Inyectar Cumplimiento Legal (Header/Footer, QR, Traceability)
+                // 6. Inyectar Cumplimiento Legal (Header/Footer, QR, Traceability)
                 var finalHtml = _complianceInjector.InjectLegalFooter(optimizedHtml, template, traceabilityCode, request.IsBlindMode);
 
                 var verificationBaseUrl = _configuration["FrontendUrl"] 
                                            ?? _configuration["Email:FrontendUrl"] 
                                            ?? "https://diitra.ist.edu.ec";
 
-                // 5. Renderizado a PDF
+                // 7. Renderizado a PDF
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
                 {
                     TraceabilityCode = traceabilityCode,

@@ -45,7 +45,6 @@ const UsersPage = () => {
     const [search, setSearch] = useState('');
     const [userType, setUserType] = useState<'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO'>('DOCENTE');
     
-    // Estado de Paginación
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -104,7 +103,7 @@ const UsersPage = () => {
     }, []);
 
     useEffect(() => {
-        setPage(1); // Resetear a la primera página al cambiar tipo o búsqueda
+        setPage(1);
     }, [search, userType]);
 
     useEffect(() => {
@@ -145,12 +144,12 @@ const UsersPage = () => {
     };
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300 relative">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300">
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 px-2 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
-                        <Shield size={10} strokeWidth={2} className="text-text-main" />
-                        <span>Administración Central - DIITRA Production</span>
+                    <div className="section-label text-text-main">
+                        <Shield size={10} strokeWidth={2} />
+                        <span>Administración Central - DIITRA</span>
                     </div>
                     <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Gestión Institucional</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
@@ -162,8 +161,7 @@ const UsersPage = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={() => setShowAudit(!showAudit)}
-                            className={`flex-1 md:flex-none p-2.5 border rounded-md transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'bg-text-main text-bg-deep border-text-main' : 'border-border-thin text-text-dim hover:text-text-main'
-                                }`}
+                            className={`flex-1 md:flex-none p-2.5 border rounded-md transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'btn-vercel-primary' : 'btn-vercel-secondary'}`}
                         >
                             <History size={14} /> Auditoría
                         </button>
@@ -171,7 +169,7 @@ const UsersPage = () => {
                         {userType === 'EXTERNO' && (
                             <button
                                 onClick={() => setShowExternalForm(true)}
-                                className="flex-1 md:flex-none bg-text-main text-bg-deep px-4 py-2.5 rounded-md text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-text-main/10"
+                                className="btn-brand flex-1 md:flex-none flex items-center justify-center gap-2"
                             >
                                 <UserPlus size={14} /> Nuevo Externo
                             </button>
@@ -181,22 +179,19 @@ const UsersPage = () => {
                     <div className="bg-surface border border-border-thin p-1 rounded-lg flex overflow-x-auto custom-scrollbar">
                         <button
                             onClick={() => setUserType('DOCENTE')}
-                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
-                                }`}
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
                         >
                             Docentes
                         </button>
                         <button
                             onClick={() => setUserType('ESTUDIANTE')}
-                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
-                                }`}
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
                         >
                             Alumnos
                         </button>
                         <button
                             onClick={() => setUserType('EXTERNO')}
-                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-elevated text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'
-                                }`}
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
                         >
                             <Globe size={12} /> Externos
                         </button>
@@ -209,7 +204,7 @@ const UsersPage = () => {
                             placeholder={`Buscar en ${userType}...`}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all uppercase tracking-wider font-mono placeholder:lowercase"
+                            className="input-vercel !pl-10 !py-2.5 !text-xs uppercase tracking-wider !font-mono placeholder:!lowercase"
                         />
                     </div>
                 </div>
@@ -230,26 +225,28 @@ const UsersPage = () => {
                         <tbody className="divide-y divide-border-thin">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-xs font-bold uppercase text-text-dim tracking-widest animate-pulse">
-                                        Cargando Personal...
+                                    <td colSpan={4} className="p-8 text-center">
+                                        <p className="section-label text-text-dim justify-center">Cargando Personal...</p>
                                     </td>
                                 </tr>
                             ) : users.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="p-8 text-center text-xs font-bold uppercase text-text-dim tracking-widest">
-                                        No se encontraron registros
+                                    <td colSpan={4}>
+                                        <div className="empty-state py-20">
+                                            <p className="text-text-dim font-bold uppercase tracking-widest">No se encontraron registros</p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : users.map((u) => (
                                 <tr key={u.id_profesor} className="hover:bg-surface/30 transition-colors group">
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-lg bg-surface border border-border-thin flex items-center justify-center text-text-dim group-hover:text-text-main group-hover:border-text-main transition-all shadow-inner">
+                                            <div className="w-10 h-10 rounded-lg bg-surface border border-border-thin flex items-center justify-center text-text-dim group-hover:text-text-main group-hover:border-border-hover transition-all shrink-0">
                                                 <UserIcon size={18} />
                                             </div>
                                             <div>
                                                 <p className="text-sm font-bold text-text-main tracking-tight uppercase">{u.nombre_completo}</p>
-                                                <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">{u.id_profesor} • {u.email}</p>
+                                                <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">{u.id_profesor} &bull; {u.email}</p>
                                             </div>
                                         </div>
                                     </td>
@@ -257,11 +254,10 @@ const UsersPage = () => {
                                         {u.type === 'DOCENTE' ? (
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter ${(u.horas_investigacion || 0) > 0 ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                                                        }`}>
-                                                        <Activity size={10} className="inline mr-1" />
+                                                    <span className={`badge-vercel ${(u.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
+                                                        <Activity size={10} />
                                                         {u.horas_investigacion || 0}h Investigación
-                                                    </div>
+                                                    </span>
                                                 </div>
                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
                                                     {u.tipo_dedicacion || 'Sin contrato activo'}
@@ -270,10 +266,10 @@ const UsersPage = () => {
                                         ) : u.type === 'ESTUDIANTE' ? (
                                             <div className="space-y-1.5">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="px-2 py-0.5 rounded bg-surface-elevated text-text-main text-[9px] font-black uppercase tracking-tighter border border-border-thin">
-                                                        <GraduationCap size={10} className="inline mr-1" />
+                                                    <span className="badge-vercel badge-vercel-neutral">
+                                                        <GraduationCap size={10} />
                                                         {u.carrera || 'Sin Carrera'}
-                                                    </div>
+                                                    </span>
                                                 </div>
                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
                                                     {u.nivel || 'Nivel no definido'}
@@ -283,10 +279,11 @@ const UsersPage = () => {
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
                                                     <div
-                                                        className={`h-full transition-all duration-1000 ${u.orcid_id ? 'w-full bg-green-500' : 'w-1/3 bg-red-500/50'}`}
+                                                        className={`progress-fill ${u.orcid_id ? 'progress-fill--success' : 'progress-fill--brand'}`}
+                                                        style={{ width: u.orcid_id ? '100%' : '33%' }}
                                                     />
                                                 </div>
-                                                <span className="text-[9px] font-black uppercase tracking-widest text-text-dim">
+                                                <span className="status-tag text-text-dim border-border-thin">
                                                     {u.orcid_id ? 'Completado' : 'Perfil Incompleto'}
                                                 </span>
                                             </div>
@@ -301,10 +298,7 @@ const UsersPage = () => {
                                                     <button
                                                         key={r.id_rol}
                                                         onClick={() => toggleRole(u.id_profesor, r.codigo_rol, isActive)}
-                                                        className={`px-2 py-1 rounded border text-[8px] font-black uppercase tracking-tighter transition-all flex items-center gap-1.5 ${isActive
-                                                                ? 'bg-text-main text-bg-deep border-text-main'
-                                                                : 'bg-transparent text-text-dim border-border-thin hover:border-text-dim'
-                                                            } ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
+                                                        className={`${isActive ? 'btn-vercel-primary' : 'btn-vercel-secondary'} !py-1 !px-2 !text-[8px] !tracking-tighter flex items-center gap-1.5 ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                                     >
                                                         {r.nombre}
                                                     </button>
@@ -327,7 +321,6 @@ const UsersPage = () => {
                     </table>
                 </div>
 
-                    {/* Controles de Paginación Profesionales */}
                     <footer className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
                         <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest text-center md:text-left">
                             Mostrando <span className="text-text-main">{(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)}</span> de <span className="text-text-main">{totalCount}</span> {userType.toLowerCase()}s
@@ -337,7 +330,7 @@ const UsersPage = () => {
                             <button
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="px-2 md:px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <span className="hidden md:inline">Anterior</span>
                                 <span className="md:hidden">{"<"}</span>
@@ -346,15 +339,13 @@ const UsersPage = () => {
                             <div className="flex items-center gap-1">
                                 {[...Array(totalPages)].map((_, i) => {
                                     const p = i + 1;
-                                    // Mostrar solo algunas páginas si hay muchas
                                     if (totalPages > 7 && Math.abs(p - page) > 2 && p !== 1 && p !== totalPages) return null;
-                                    
                                     return (
                                         <button
                                             key={p}
                                             onClick={() => setPage(p)}
-                                            className={`w-8 h-8 rounded-md text-[10px] font-black transition-all flex items-center justify-center ${
-                                                page === p ? 'bg-text-main text-bg-deep shadow-lg shadow-text-main/10' : 'text-text-dim hover:text-text-main hover:bg-surface'
+                                            className={`w-8 h-8 rounded-md text-[10px] font-bold transition-all flex items-center justify-center ${
+                                                page === p ? 'btn-vercel-primary' : 'text-text-dim hover:text-text-main hover:bg-surface'
                                             }`}
                                         >
                                             {p}
@@ -366,7 +357,7 @@ const UsersPage = () => {
                             <button
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages || totalPages === 0}
-                                className="px-2 md:px-3 py-1.5 border border-border-thin rounded-md text-[10px] font-black uppercase tracking-tighter hover:bg-surface disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                                 <span className="hidden md:inline">Siguiente</span>
                                 <span className="md:hidden">{">"}</span>
@@ -375,11 +366,10 @@ const UsersPage = () => {
                     </footer>
                 </div>
 
-                {/* Sidebar de Auditoría */}
                 {showAudit && (
-                    <aside className="bento-card bg-surface/50 border-l border-border-thin p-6 animate-fade-left flex flex-col gap-6">
+                    <aside className="bento-card static p-6 animate-fade-left flex flex-col gap-6">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-black text-text-main uppercase tracking-widest flex items-center gap-2">
+                            <h4 className="section-label text-text-main">
                                 <History size={14} /> Registro de Actividad
                             </h4>
                             <button onClick={fetchAuditLogs} className="text-text-dim hover:text-text-main transition-colors">
@@ -388,9 +378,9 @@ const UsersPage = () => {
                         </div>
                         <div className="space-y-4 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
                             {auditLogs.map((log) => (
-                                <div key={log.id_audit} className="p-3 bg-bg-deep/50 rounded-lg border border-border-thin space-y-2 group hover:border-text-main/20 transition-all">
+                                <div key={log.id_audit} className="p-3 bg-bg-deep/50 rounded-lg border border-border-thin space-y-2 group hover:border-border-hover transition-all">
                                     <div className="flex justify-between items-start">
-                                        <span className="text-[9px] font-black text-text-main bg-text-main/10 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                        <span className="status-tag text-text-dim border-border-thin">
                                             {log.action}
                                         </span>
                                         <span className="text-[8px] text-text-dim font-mono">{new Date(log.date).toLocaleTimeString()}</span>
@@ -411,52 +401,51 @@ const UsersPage = () => {
                 )}
             </div>
 
-            {/* Modal Registro Externo */}
             {showExternalForm && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden">
-                        <form onSubmit={handleRegisterExternal}>
-                            <header className="p-6 border-b border-border-thin bg-bg-deep/50 flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-text-main/10 text-text-main rounded-lg"><Globe size={20} /></div>
-                                    <div>
-                                        <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">Registro de Evaluador Académico</h3>
-                                        <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Personal Externo DIITRA - IST Quito</p>
-                                    </div>
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowExternalForm(false); }}>
+                    <div className="modal-card modal-card--lg animate-fade-up">
+                        <div className="modal-header">
+                            <div className="flex items-center gap-3">
+                                <div className="icon-circle icon-circle-info !p-2"><Globe size={20} /></div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">Registro de Evaluador Académico</h3>
+                                    <p className="section-label text-text-dim">Personal Externo DIITRA - IST Quito</p>
                                 </div>
-                                <button type="button" onClick={() => setShowExternalForm(false)} className="text-text-dim hover:text-text-main"><X size={20} /></button>
-                            </header>
-                            
-                            <div className="p-8 grid grid-cols-2 gap-6">
-                                {/* Datos Personales */}
+                            </div>
+                            <button type="button" onClick={() => setShowExternalForm(false)} className="text-text-dim hover:text-text-main transition-colors"><X size={20} /></button>
+                        </div>
+                        
+                        <form onSubmit={handleRegisterExternal} className="modal-body">
+                            <div className="grid grid-cols-2 gap-6">
                                 <div className="col-span-2 space-y-4">
-                                    <h4 className="text-[10px] font-black text-text-main uppercase tracking-widest border-b border-border-thin pb-2">Identificación y Contacto</h4>
+                                    <label className="section-label text-text-main">Identificación y Contacto</label>
+                                    <div className="divider-vercel !my-0" />
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Cédula / Pasaporte</label>
-                                            <input required type="text" value={externalForm.cedula} onChange={e => setExternalForm({ ...externalForm, cedula: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="1712345678" />
+                                            <label className="section-label text-text-dim">Cédula / Pasaporte</label>
+                                            <input required type="text" value={externalForm.cedula} onChange={e => setExternalForm({ ...externalForm, cedula: e.target.value })} className="input-vercel" placeholder="1712345678" />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Correo Electrónico</label>
-                                            <input required type="email" value={externalForm.email} onChange={e => setExternalForm({ ...externalForm, email: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="dr.perez@universidad.edu.ec" />
+                                            <label className="section-label text-text-dim">Correo Electrónico</label>
+                                            <input required type="email" value={externalForm.email} onChange={e => setExternalForm({ ...externalForm, email: e.target.value })} className="input-vercel" placeholder="dr.perez@universidad.edu.ec" />
                                         </div>
                                         <div className="col-span-2 space-y-2">
-                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Nombres Completos (Grado Académico + Nombres)</label>
-                                            <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({ ...externalForm, full_name: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main uppercase focus:border-text-main transition-colors" placeholder="Ej: PhD. Juan Pérez Arrieta" />
+                                            <label className="section-label text-text-dim">Nombres Completos (Grado Académico + Nombres)</label>
+                                            <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({ ...externalForm, full_name: e.target.value })} className="input-vercel !uppercase" placeholder="Ej: PhD. Juan Pérez Arrieta" />
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Perfil Académico */}
                                 <div className="col-span-2 space-y-4 mt-4">
-                                    <h4 className="text-[10px] font-black text-text-main uppercase tracking-widest border-b border-border-thin pb-2">Perfil Profesional (Contexto SENESCYT)</h4>
+                                    <label className="section-label text-text-main">Perfil Profesional (Contexto SENESCYT)</label>
+                                    <div className="divider-vercel !my-0" />
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Grado Máximo</label>
+                                            <label className="section-label text-text-dim">Grado Máximo</label>
                                             <select 
                                                 value={externalForm.grado_academico} 
                                                 onChange={e => setExternalForm({ ...externalForm, grado_academico: e.target.value })}
-                                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors appearance-none"
+                                                className="input-vercel"
                                             >
                                                 <option value="">Seleccionar...</option>
                                                 <option value="PHD">Doctorado / PhD</option>
@@ -466,28 +455,28 @@ const UsersPage = () => {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Especialidad (Línea de Inv.)</label>
-                                            <input type="text" value={externalForm.especialidad} onChange={e => setExternalForm({ ...externalForm, especialidad: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="Ej: Inteligencia Artificial" />
+                                            <label className="section-label text-text-dim">Especialidad (Línea de Inv.)</label>
+                                            <input type="text" value={externalForm.especialidad} onChange={e => setExternalForm({ ...externalForm, especialidad: e.target.value })} className="input-vercel" placeholder="Ej: Inteligencia Artificial" />
                                         </div>
                                         <div className="col-span-2 space-y-2">
-                                            <label className="text-[9px] font-black text-text-dim uppercase tracking-widest">Institución de Origen</label>
-                                            <input type="text" value={externalForm.institucion} onChange={e => setExternalForm({ ...externalForm, institucion: e.target.value })} className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:border-text-main transition-colors" placeholder="Ej: Escuela Politécnica Nacional" />
+                                            <label className="section-label text-text-dim">Institución de Origen</label>
+                                            <input type="text" value={externalForm.institucion} onChange={e => setExternalForm({ ...externalForm, institucion: e.target.value })} className="input-vercel" placeholder="Ej: Escuela Politécnica Nacional" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <footer className="p-6 bg-bg-deep/50 border-t border-border-thin flex justify-between items-center">
-                                <div className="flex items-center gap-2 text-text-dim italic text-[9px]">
-                                    <Shield size={10} />
-                                    <span>Se asignará automáticamente el rol de Revisor Externo DIITRA</span>
-                                </div>
-                                <div className="flex gap-3">
-                                    <button type="button" onClick={() => setShowExternalForm(false)} className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main">Cancelar</button>
-                                    <button type="submit" className="bg-text-main text-bg-deep px-6 py-2 rounded-md text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all">Registrar Evaluador</button>
-                                </div>
-                            </footer>
                         </form>
+
+                        <div className="modal-footer">
+                            <div className="flex items-center gap-2 text-text-dim text-[9px]">
+                                <Shield size={10} />
+                                <span>Se asignará automáticamente el rol de Revisor Externo DIITRA</span>
+                            </div>
+                            <div className="flex gap-3">
+                                <button type="button" onClick={() => setShowExternalForm(false)} className="btn-vercel-secondary">Cancelar</button>
+                                <button type="submit" className="btn-vercel-primary">Registrar Evaluador</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
