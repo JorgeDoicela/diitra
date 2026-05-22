@@ -36,6 +36,20 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 output.WriteSafeString(string.IsNullOrWhiteSpace(value) ? fallback : value);
             });
 
+            // Helper: sumar múltiples valores numéricos (útil para totalizar rúbricas en el motor Handlebars)
+            _handlebars.RegisterHelper("sum", (output, context, arguments) =>
+            {
+                decimal total = 0;
+                foreach (var arg in arguments)
+                {
+                    if (decimal.TryParse(arg?.ToString(), out var val))
+                    {
+                        total += val;
+                    }
+                }
+                output.WriteSafeString(total.ToString(CultureInfo.InvariantCulture));
+            });
+
             // Helper: formatear fecha en español ecuatoriano
             _handlebars.RegisterHelper("fecha_larga", (output, context, arguments) =>
             {
