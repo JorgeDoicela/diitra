@@ -15,7 +15,7 @@ const ResearchProjectsPage = () => {
     const [showReportLauncher, setShowReportLauncher] = useState(false);
 
     return (
-        <main className="flex-1 bg-bg-deep vercel-grid-fade p-4 md:p-10 overflow-y-auto">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
                 <div className="space-y-2">
