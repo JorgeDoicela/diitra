@@ -16,8 +16,8 @@ import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
 import ConfiguracionPage from './pages/Admin/ConfiguracionPage';
 import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
-import { Settings2 } from 'lucide-react';
 import VerifyDocument from './pages/Public/VerifyDocument';
+import UnderDevelopment from './components/Common/UnderDevelopment';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -100,15 +100,8 @@ function App() {
             </ProtectedRoute>
           }>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={
-              <div className="flex-1 flex flex-col items-center justify-center p-10 text-center space-y-4">
-                <div className="w-16 h-16 bg-surface border border-border-thin rounded-2xl flex items-center justify-center text-text-dim">
-                  <Settings2 size={32} />
-                </div>
-                <h2 className="text-xl font-bold text-text-main uppercase tracking-tighter">Módulo en Desarrollo</h2>
-                <p className="text-sm text-text-dim max-w-xs">La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización.</p>
-              </div>
-            } />
+            <Route path="/settings" element={<UnderDevelopment title="Módulo en Desarrollo" description="La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización." />} />
+            <Route path="/analiticas" element={<UnderDevelopment title="Módulo en Desarrollo" description="El panel de analíticas y métricas institucionales estará disponible en la próxima actualización." />} />
             <Route path="/admin" element={<AdminRoute><UsersPage /></AdminRoute>} />
             <Route path="/admin/audit" element={<AdminRoute><AuditPage /></AdminRoute>} />
             <Route path="/admin/groups" element={<ProtectedRoute><GroupsPage /></ProtectedRoute>} />
@@ -120,14 +113,12 @@ function App() {
             <Route path="/verify/:code" element={<VerifyDocument />} />
             <Route path="/verify" element={<VerifyDocument />} />
           </Route>
-          
+
           <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
             <ProtectedRoute>
-                <ProjectWorkspace />
+              <ProjectWorkspace />
             </ProtectedRoute>
           } />
-
-          <Route path="/analiticas" element={<Navigate to="/dashboard" replace />} />
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

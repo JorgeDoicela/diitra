@@ -18,12 +18,12 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     return (
         <div className="flex h-screen w-full bg-bg-deep overflow-hidden font-sans selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
             <CommandPalette />
-            
-            <Sidebar 
-                currentTheme={theme} 
-                toggleTheme={toggleTheme} 
-                isOpen={isSidebarOpen} 
-                onClose={() => setIsSidebarOpen(false)} 
+
+            <Sidebar
+                currentTheme={theme}
+                toggleTheme={toggleTheme}
+                isOpen={isSidebarOpen}
+                onClose={() => setIsSidebarOpen(false)}
             />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -31,7 +31,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 <header className="hidden lg:flex items-center justify-between px-10 py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-[40]">
                     <div className="flex items-center gap-4">
                         <div className="h-4 w-[1px] bg-border-thin mx-2" />
-                        <span className="section-label text-text-dim">Instituto Superior Tecnológico Traversari</span>
+                        <span className="section-label text-text-dim">Tecnológico Traversari</span>
                     </div>
                     <div className="flex items-center gap-6">
                         <div className="flex items-center gap-3 pr-6 border-r border-border-thin">
@@ -51,15 +51,15 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
                 {/* Mobile Header */}
                 <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-bg-deep border-b border-border-thin z-50">
-                    <button 
+                    <button
                         onClick={() => setIsSidebarOpen(true)}
                         className="p-2 -ml-2 text-text-dim hover:text-text-main transition-colors"
                     >
                         <Menu size={24} />
                     </button>
-                    <img 
-                        src={theme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
-                        alt="DIITRA" 
+                    <img
+                        src={theme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                        alt="DIITRA"
                         className="h-7 w-auto object-contain"
                     />
                     <NotificationBell />
