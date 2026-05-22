@@ -231,7 +231,8 @@ export const ProjectWorkspace: React.FC = () => {
                     status: res.data.estado || 'Borrador',
                     presupuesto: res.data.costo_total || 0,
                     linea: res.data.linea_investigacion || 'No definida',
-                    puedeEditar: res.data.puedeEditar ?? true
+                    puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? true) &&
+                                 (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección')
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
