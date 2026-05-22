@@ -35,7 +35,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
         { id: 'marco_teorico', label: '6. Marco Teórico', icon: Book },
         { id: 'metodologia', label: '7. Metodología', icon: Settings },
         { id: 'evaluacion', label: '8. Evaluación', icon: ClipboardCheck },
-        { id: 'bibliografia', label: '9. Bibliografía', icon: Library }
+        { id: 'bibliografia', label: '8. Bibliografía', icon: Library }
     ];
 
     return (
