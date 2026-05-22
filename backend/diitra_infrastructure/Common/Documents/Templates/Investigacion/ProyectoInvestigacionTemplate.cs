@@ -17,12 +17,20 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
     * {{ box-sizing: border-box; }}
     .page-break {{ page-break-after: always; }}
     
-    /* PORTADA (COVER PAGE) FULL BLEED - Breaking out of 1.5cm margins */
+    @page {{
+        size: A4;
+        margin-top: 3cm;
+        margin-bottom: 2cm;
+        margin-left: 2cm;
+        margin-right: 2cm;
+    }}
+    
+    /* PORTADA (COVER PAGE) FULL BLEED - Breaking out of the page margins to span 100% A4 */
     .cover-page {{ 
         font-family: 'Century Gothic', 'Inter', Arial, sans-serif;
         position: absolute;
-        top: -1cm;
-        left: -1.5cm;
+        top: -3cm;
+        left: -2cm;
         width: 210mm;
         height: 297mm;
         background-image: url('data:image/jpeg;base64,{TemplateImages.PortadaProyectoBase64}');
@@ -116,7 +124,7 @@ namespace Diitra.Infrastructure.Common.Documents.Templates.Investigacion
         font-family: 'Calibri', 'Open Sans', Arial, sans-serif; 
         color: #222c57; 
         line-height: 1.4; 
-        padding: 50px 40px; 
+        padding: 0; 
         background: transparent;
     }}
     .section-title {{ 
