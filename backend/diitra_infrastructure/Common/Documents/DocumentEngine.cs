@@ -119,7 +119,19 @@ namespace Diitra.Infrastructure.Common.Documents
                 var htmlToRender = fileHtml ?? template.HtmlContent;
 
                 if (fileHtml != null)
+                {
                     _logger.LogDebug("DIITRA DocumentEngine: Usando HTML desde archivo físico para '{Code}'.", template.Code);
+
+                    // Sincronización inteligente hacia la Base de Datos:
+                    // Si el contenido del archivo físico cambió respecto a lo que hay en BD,
+                    // lo actualizamos en la BD para que el fallback siempre esté al día.
+                    if (fileHtml != template.HtmlContent)
+                    {
+                        _logger.LogInformation("DIITRA DocumentEngine: Detectado cambio en el archivo físico de '{Code}'. Sincronizando en BD para consistencia de Fallback...", template.Code);
+                        template.UpdateHtmlContentOnly(fileHtml);
+                        await _templateRepository.SaveAsync(template, cancellationToken);
+                    }
+                }
 
                 // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.

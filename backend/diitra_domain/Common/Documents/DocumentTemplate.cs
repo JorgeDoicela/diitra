@@ -96,6 +96,13 @@ namespace Diitra.Domain.Common.Documents
             UpdatedBy = updatedBy;
         }
 
+        public void UpdateHtmlContentOnly(string newHtmlContent)
+        {
+            HtmlContent = newHtmlContent;
+            UpdatedAt = DateTime.UtcNow;
+            UpdatedBy = "PHYSICAL_FILE_SYNC";
+        }
+
         public void SyncWithSeed(DocumentTemplate seed)
         {
             HtmlContent = seed.HtmlContent;
