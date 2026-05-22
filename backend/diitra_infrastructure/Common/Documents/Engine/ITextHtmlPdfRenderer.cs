@@ -195,7 +195,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 metadata.TraceabilityCode,
                 isDraft: metadata.IsDraft,
                 stationaryImageBase64: metadata.StationaryImageBase64,
-                stationaryImageData: metadata.StationaryImageData
+                stationaryImageData: metadata.StationaryImageData,
+                verificationBaseUrl: metadata.VerificationBaseUrl
             );
 
             try 
@@ -244,5 +245,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         public string? LopdpClause { get; set; }
         public string? StationaryImageBase64 { get; set; }
         public iText.IO.Image.ImageData? StationaryImageData { get; set; }
+        public string? VerificationBaseUrl { get; set; }
     }
 }

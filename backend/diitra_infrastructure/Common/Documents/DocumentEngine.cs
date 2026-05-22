@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using Diitra.Infrastructure.Common.Documents.Engine;
 using Diitra.Infrastructure.Common.Documents.Resources;
 using iText.IO.Image;
+using Microsoft.Extensions.Configuration;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -44,6 +45,7 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly IDocumentTemplateRepository _templateRepository;
         private readonly IDocumentAuditRepository _auditRepository;
         private readonly ILogger<DocumentEngine> _logger;
+        private readonly IConfiguration _configuration;
 
         // PERFORMANCE OPTIMIZATION: Heavy engines are shared across requests
         private static readonly ScribanTemplateEngine _scribanEngine = new();
@@ -64,11 +66,13 @@ namespace Diitra.Infrastructure.Common.Documents
         public DocumentEngine(
             IDocumentTemplateRepository templateRepository,
             IDocumentAuditRepository auditRepository,
-            ILogger<DocumentEngine> logger)
+            ILogger<DocumentEngine> logger,
+            IConfiguration configuration)
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
             _logger = logger;
+            _configuration = configuration;
         }
 
         public async Task<DocumentResult> GenerateAsync(
@@ -120,6 +124,10 @@ namespace Diitra.Infrastructure.Common.Documents
                 // 5. Inyectar Cumplimiento Legal (Header/Footer, QR, Traceability)
                 var finalHtml = _complianceInjector.InjectLegalFooter(optimizedHtml, template, traceabilityCode, request.IsBlindMode);
 
+                var verificationBaseUrl = _configuration["FrontendUrl"] 
+                                           ?? _configuration["Email:FrontendUrl"] 
+                                           ?? "https://diitra.ist.edu.ec";
+
                 // 5. Renderizado a PDF
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
                 {
@@ -127,7 +135,8 @@ namespace Diitra.Infrastructure.Common.Documents
                     IsDraft = request.IsDraftMode,
                     StationaryImageData = template.Code == "PROTOCOLO_INVESTIGACION" 
                         ? _fondoHojasInvestigacionImageData.Value 
-                        : null
+                        : null,
+                    VerificationBaseUrl = verificationBaseUrl
                 }, template.CustomCss);
 
                 // 6. Sello de Integridad (SHA-256)
