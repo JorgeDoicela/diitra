@@ -105,7 +105,11 @@ namespace Diitra.Domain.Common.Documents
 
         public void SyncWithSeed(DocumentTemplate seed)
         {
-            HtmlContent = seed.HtmlContent;
+            if (seed.HtmlContent != null && 
+                !seed.HtmlContent.TrimStart().StartsWith("<!--", StringComparison.OrdinalIgnoreCase))
+            {
+                HtmlContent = seed.HtmlContent;
+            }
             Version = seed.Version;
             RequiresLopdpClause = seed.RequiresLopdpClause;
             SupportsBlindMode = seed.SupportsBlindMode;
