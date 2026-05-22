@@ -483,87 +483,93 @@ export const ProjectWorkspace: React.FC = () => {
 
     return (
         <div className="flex-1 bg-bg-deep overflow-y-auto selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
-            {/* ── Header ── */}
-            <header className="hidden lg:flex items-center justify-between px-10 py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-10">
-                <div className="flex items-center gap-4">
-                    <button onClick={() => navigate('/investigacion')} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
-                        <ArrowLeft size={14} />
-                    </button>
-                    <div className="h-4 w-[1px] bg-border-thin" />
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-main uppercase">
-                            DI
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">
-                                <Activity size={10} strokeWidth={2} className="text-brand" />
-                                <span>Workspace · ISTPET</span>
+            {/* ── Header Único Responsivo ── */}
+            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-50 gap-4 sm:gap-0">
+                <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate('/investigacion')} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
+                            <ArrowLeft size={14} />
+                        </button>
+                        <div className="h-4 w-[1px] bg-border-thin" />
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-main uppercase">
+                                DI
                             </div>
-                            <div className="flex items-center gap-1 text-[10px] text-text-dim">
-                                <span>diitra</span>
-                                <ChevronRight size={10} />
-                                <span className="text-text-main font-mono">{currentProject.id}</span>
+                            <div>
+                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">
+                                    <Activity size={10} strokeWidth={2} className="text-brand" />
+                                    <span>Workspace · ISTPET</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-[10px] text-text-dim">
+                                    <span>diitra</span>
+                                    <ChevronRight size={10} />
+                                    <span className="text-text-main font-mono">{currentProject.id}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    {/* Badge de estado en dispositivos móviles */}
+                    <div className="sm:hidden">
+                        <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-bold`}>
+                            <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
+                            {currentProject.status}
+                        </span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button 
-                        onClick={async () => {
-                            try {
-                                const response = await api.get(`/projects/${currentProject.uuid}/export-caces`, { responseType: 'blob' });
-                                const url = window.URL.createObjectURL(new Blob([response.data]));
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.setAttribute('download', `CACES_METADATA_${currentProject.id}.csv`);
-                                document.body.appendChild(link);
-                                link.click();
-                                link.remove();
-                            } catch (err) {
-                                console.error("[DIITRA] Error al exportar metadatos CACES", err);
-                                alert("No se pudo realizar la exportación de metadatos CACES");
-                            }
-                        }}
-                        className="btn-vercel-secondary !py-2"
-                    >
-                        <FileText size={14} />
-                        <span>Exportar CACES</span>
-                    </button>
-                    <button 
-                        disabled={isPublishingDSpace}
-                        onClick={async () => {
-                            try {
-                                setIsPublishingDSpace(true);
-                                const res = await api.post(`/projects/${currentProject.uuid}/publish-dspace`);
-                                alert(`¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`);
-                            } catch (err: any) {
-                                console.error("[DIITRA] Error al publicar en DSpace", err);
-                                const errMsg = err.response?.data?.error || "No se pudo realizar la publicación en DSpace";
-                                alert(errMsg);
-                            } finally {
-                                setIsPublishingDSpace(false);
-                            }
-                        }}
-                        className={`btn-vercel-primary !py-2 ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                        <UploadCloud size={14} className={isPublishingDSpace ? "animate-pulse" : ""} />
-                        <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
-                    </button>
+                
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto justify-end">
+                    {/* Badge de estado en pantallas medianas y grandes */}
+                    <div className="hidden sm:block mr-1">
+                        <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-bold`}>
+                            <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
+                            {currentProject.status}
+                        </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                        <button 
+                            onClick={async () => {
+                                try {
+                                    const response = await api.get(`/projects/${currentProject.uuid}/export-caces`, { responseType: 'blob' });
+                                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.setAttribute('download', `CACES_METADATA_${currentProject.id}.csv`);
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    link.remove();
+                                } catch (err) {
+                                    console.error("[DIITRA] Error al exportar metadatos CACES", err);
+                                    alert("No se pudo realizar la exportación de metadatos CACES");
+                                }
+                            }}
+                            className="btn-vercel-secondary !py-2 text-xs flex-1 sm:flex-none justify-center"
+                        >
+                            <FileText size={14} />
+                            <span>Exportar CACES</span>
+                        </button>
+                        <button 
+                            disabled={isPublishingDSpace}
+                            onClick={async () => {
+                                try {
+                                    setIsPublishingDSpace(true);
+                                    const res = await api.post(`/projects/${currentProject.uuid}/publish-dspace`);
+                                    alert(`¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`);
+                                } catch (err: any) {
+                                    console.error("[DIITRA] Error al publicar en DSpace", err);
+                                    const errMsg = err.response?.data?.error || "No se pudo realizar la publicación en DSpace";
+                                    alert(errMsg);
+                                } finally {
+                                    setIsPublishingDSpace(false);
+                                }
+                            }}
+                            className={`btn-vercel-primary !py-2 text-xs flex-1 sm:flex-none justify-center ${isPublishingDSpace ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            <UploadCloud size={14} className={isPublishingDSpace ? "animate-pulse" : ""} />
+                            <span>{isPublishingDSpace ? 'Publicando...' : 'DSpace'}</span>
+                        </button>
+                    </div>
                 </div>
-            </header>
-
-            {/* ── Mobile Header ── */}
-            <header className="lg:hidden flex items-center justify-between px-6 py-4 bg-bg-deep border-b border-border-thin z-50">
-                <button onClick={() => navigate('/investigacion')} className="p-2 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
-                    <ArrowLeft size={16} />
-                </button>
-                <div className="text-[10px] font-bold text-text-dim uppercase tracking-[0.2em]">
-                    Workspace · {currentProject.id}
-                </div>
-                <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-bold`}>
-                    <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
-                    {currentProject.status}
-                </span>
             </header>
 
             {/* ── Main Content ── */}
@@ -571,7 +577,7 @@ export const ProjectWorkspace: React.FC = () => {
                 {/* ── Page Title (DashboardHeader pattern) ── */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 gap-6 md:gap-0">
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                             <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px]`}>
                                 <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
                                 {currentProject.status}
@@ -838,14 +844,14 @@ export const ProjectWorkspace: React.FC = () => {
                                                             </div>
                                                         </div>
 
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="flex flex-col gap-1">
+                                                        <div className="flex flex-wrap sm:flex-nowrap items-end sm:items-center gap-3 w-full sm:w-auto">
+                                                            <div className="flex flex-col gap-1 w-full sm:w-auto">
                                                                 <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Rol</span>
                                                                 <select
                                                                     value={member.rol}
                                                                     disabled={currentProject.puedeEditar === false}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-40 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-40 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 >
                                                                     <option value="Director de Proyecto">Director</option>
                                                                     <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
@@ -853,13 +859,13 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <option value="Técnico de Apoyo">Técnico de Apoyo</option>
                                                                 </select>
                                                             </div>
-                                                            <div className="flex flex-col gap-1">
+                                                            <div className="flex flex-col gap-1 w-full sm:w-auto">
                                                                 <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Nivel</span>
                                                                 <select
                                                                     value={member.nivelAcademico}
                                                                     disabled={currentProject.puedeEditar === false}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-36 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-36 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 >
                                                                     <option value="Tercer Nivel">Tercer Nivel</option>
                                                                     <option value="Cuarto Nivel (Maestría)">Maestría</option>
@@ -871,7 +877,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveMember(member.cedula)}
-                                                                    className="p-1.5 text-text-dim hover:text-error hover:bg-error-subtle rounded transition-all"
+                                                                    className="p-1.5 text-text-dim hover:text-error hover:bg-error-subtle rounded transition-all sm:self-center self-end mb-1.5 sm:mb-0"
                                                                     title="Remover"
                                                                 >
                                                                     <Trash2 size={12} />
@@ -1114,7 +1120,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 />
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Cantidad</label>
                                     <input 
@@ -1150,7 +1156,7 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
                             
                             {newProduct.es_propiedad_intelectual && (
-                                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border-thin animate-fade-in">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border-thin animate-fade-in">
                                     <div className="space-y-1">
                                         <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">N. Registro</label>
                                         <input 
