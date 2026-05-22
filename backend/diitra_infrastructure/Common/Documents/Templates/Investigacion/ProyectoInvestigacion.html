@@ -1,3 +1,36 @@
+<!--
+    =============================================================================
+    DIITRA TEMPLATE DOCUMENTATION & FORMATTING RULES (HTML-to-PDF)
+    =============================================================================
+    Este archivo es el diseño oficial del documento en HTML/CSS estándar.
+    iText 9 (pdfHTML) compila este archivo en un PDF con calidad de imprenta.
+    
+    REGLAS DE ORO PARA EVITAR QUE SE DESCONFIGURE EL FORMATO:
+    
+    1. CSS ESTÁNDAR Y COMPATIBLE:
+       - Usa maquetación clásica: tablas (<table>), bloques (<div>), márgenes y paddings.
+       - Flexbox es compatible, pero evita CSS Grid complejo o propiedades de animación.
+       - Mantén la estructura semántica y limpia.
+       
+    2. UNIDADES FÍSICAS DE IMPRESIÓN:
+       - Estás diseñando para hojas físicas (A4: 210mm x 297mm).
+       - Usa medidas absolutas en el CSS: 'mm', 'cm', 'in', o 'pt' (puntos para fuentes).
+       - Ejemplo: 'font-size: 11pt;', 'margin-bottom: 5mm;'.
+       
+    3. CONTROL DE SALTOS DE PÁGINA (Especialmente para firmas o tablas):
+       - Si tienes una sección que jamás debe dividirse por la mitad al final de una hoja:
+         Añade al CSS: 'page-break-inside: avoid; break-inside: avoid;'.
+       - Ejemplo:
+         .firma-box { page-break-inside: avoid; break-inside: avoid; }
+       - Para forzar un salto de página manual, usa un elemento con: 'page-break-after: always;'.
+       
+    4. CÓMO PROBAR AL INSTANTE (HOT-RELOAD):
+       - Edita este archivo .html en VS Code y guarda (Ctrl + S).
+       - Haz clic en "Generar PDF" en el sistema DIITRA y verás los cambios en 1 segundo.
+       - Puedes hacer doble clic en este archivo para abrirlo en Chrome y depurarlo 
+         visualmente con las Herramientas de Desarrollador (F12) antes de probarlo en la API.
+    =============================================================================
+-->
 <style>
     /* RESET & CORE */
     * { box-sizing: border-box; }
