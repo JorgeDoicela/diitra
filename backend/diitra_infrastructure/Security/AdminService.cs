@@ -330,6 +330,17 @@ public class AdminService : IAdminService
 
         if (meta == null) return false;
 
+        var beforeState = new
+        {
+            OrcidId = meta.OrcidId,
+            ScopusId = meta.ScopusId,
+            GoogleScholarUrl = meta.GoogleScholarUrl,
+            ResearchGateUrl = meta.ResearchGateUrl,
+            Especialidad = meta.Especialidad,
+            GradoAcademicoMaximo = meta.GradoAcademicoMaximo
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
         meta.OrcidId = dto.OrcidId;
         meta.ScopusId = dto.ScopusId;
         meta.GoogleScholarUrl = dto.GoogleScholarUrl;
@@ -339,7 +350,26 @@ public class AdminService : IAdminService
         meta.Version++;
 
         await _context.SaveChangesAsync();
-        await _auditService.LogActionAsync(meta.IdUsuario, "ACTUALIZAR_METADATA", $"Actualización de perfil científico y académico.", "USUARIOS");
+
+        var afterState = new
+        {
+            OrcidId = meta.OrcidId,
+            ScopusId = meta.ScopusId,
+            GoogleScholarUrl = meta.GoogleScholarUrl,
+            ResearchGateUrl = meta.ResearchGateUrl,
+            Especialidad = meta.Especialidad,
+            GradoAcademicoMaximo = meta.GradoAcademicoMaximo
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(
+            meta.IdUsuario, 
+            "ACTUALIZAR_METADATA", 
+            $"Actualización de perfil científico y académico.", 
+            "USUARIOS",
+            beforeJson,
+            afterJson
+        );
 
         return true;
     }
