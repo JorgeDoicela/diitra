@@ -38,7 +38,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // En producción, el .csproj ya se encarga de copiar los .html al directorio de salida.
             _sourceRoot = _isDevelopment
                 ? FindSourceRoot()
-                : Path.Combine(AppContext.BaseDirectory, "Templates");
+                : Path.Combine(AppContext.BaseDirectory, TemplatesRelativePath);
         }
 
         /// <summary>
@@ -101,13 +101,13 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 // Salvaguarda: si llegamos a la raíz del disco, usamos BaseDirectory
                 if (dir?.Parent == null)
                 {
-                    return Path.Combine(AppContext.BaseDirectory, "Templates");
+                    return Path.Combine(AppContext.BaseDirectory, TemplatesRelativePath);
                 }
             }
 
             return dir != null
                 ? Path.Combine(dir.FullName, TemplatesRelativePath)
-                : Path.Combine(AppContext.BaseDirectory, "Templates");
+                : Path.Combine(AppContext.BaseDirectory, TemplatesRelativePath);
         }
     }
 }
