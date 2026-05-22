@@ -216,7 +216,7 @@ const UsersPage = () => {
             </header>
 
             <div className={`grid transition-all duration-500 gap-6 ${showAudit ? 'lg:grid-cols-[1fr,350px]' : 'grid-cols-1'}`}>
-                <div className="bento-card overflow-hidden animate-fade-up">
+                <div className="bento-card static overflow-hidden animate-fade-up">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
