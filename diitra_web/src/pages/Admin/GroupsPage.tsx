@@ -3,7 +3,7 @@ import {
     Users, Plus, Search, Edit2, 
     Trash2, CheckCircle, XCircle,
     BookOpen, Shield, Award, Calendar, FileText, Eye,
-    UserPlus, UserMinus, GraduationCap, User
+    UserPlus, UserMinus, GraduationCap, User, ChevronRight, Target, EyeOff
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
@@ -70,6 +70,10 @@ const GroupsPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+
+    // Detail drawer
+    const [detailGroup, setDetailGroup] = useState<Group | null>(null);
+    const [detailMembers, setDetailMembers] = useState<GroupMember[]>([]);
 
     // Review states (Admin)
     const [reviewingGroup, setReviewingGroup] = useState<Group | null>(null);
@@ -225,6 +229,25 @@ const GroupsPage = () => {
         }
     };
 
+    const handleOpenDetail = async (group: Group) => {
+        setDetailGroup(group);
+        try {
+            const res = await api.get(`/Groups/${group.uuid}`);
+            const fullGroup = res.data;
+            if (fullGroup) {
+                setDetailGroup(prev => prev ? { ...prev, ...fullGroup } : fullGroup);
+                if (fullGroup.miembros) {
+                    setDetailMembers(fullGroup.miembros.filter((m: any) => m.activo));
+                } else {
+                    setDetailMembers([]);
+                }
+            }
+        } catch (err) {
+            console.error("Error loading group detail:", err);
+            setDetailMembers([]);
+        }
+    };
+
     const fetchData = async () => {
         setLoading(true);
         try {
@@ -241,6 +264,22 @@ const GroupsPage = () => {
             
             setDominios(dominiosRes.data);
             setCarreras(carrerasRes.data);
+
+            if (detailGroup) {
+                const updated = groupsRes.data.find((g: Group) => g.uuid === detailGroup.uuid);
+                if (updated) {
+                    setDetailGroup(prev => prev ? { ...prev, ...updated } : updated);
+                    try {
+                        const detailRes = await api.get(`/Groups/${updated.uuid}`);
+                        if (detailRes.data) {
+                            setDetailGroup(prev => prev ? { ...prev, ...detailRes.data } : detailRes.data);
+                            if (detailRes.data.miembros) {
+                                setDetailMembers(detailRes.data.miembros.filter((m: any) => m.activo));
+                            }
+                        }
+                    } catch {}
+                }
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -480,7 +519,7 @@ const GroupsPage = () => {
                         </thead>
                         <tbody className="divide-y divide-border-thin">
                             {groups.map((g) => (
-                                <tr key={g.uuid} className="hover:bg-surface/30 transition-colors group">
+                                <tr key={g.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => handleOpenDetail(g)}>
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded bg-text-main/10 border border-text-main/20 flex items-center justify-center text-text-main group-hover:scale-105 transition-transform shrink-0">
@@ -538,7 +577,7 @@ const GroupsPage = () => {
                                             </span>
                                         </div>
                                     </td>
-                                    <td className="p-4 text-right">
+                                    <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex justify-end items-center gap-2 flex-wrap">
                                             {/* Admin Quick Review Actions for Pending proposals */}
                                             {isAdmin && g.estado === 'Pendiente' && (
@@ -631,24 +670,28 @@ const GroupsPage = () => {
                 </div>
             </div>
 
-            {/* Creation / Edition / View Modal */}
+            {/* Creation / Edition / View Drawer */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-scale-up">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                                <div className="icon-circle icon-circle-brand">
                                     <Award size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {isReadOnly ? 'Ver Grupo de Investigación' : (editingGroup ? 'Editar Grupo de Investigación' : 'Nuevo Grupo de Investigación')}
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Configuración administrativa y normativa</p>
+                                    <p className="section-label text-text-dim">Configuración administrativa y normativa</p>
                                 </div>
                             </div>
-                            <button onClick={() => setIsModalOpen(false)} className="text-text-dim hover:text-text-main p-2">
-                                <Plus className="rotate-45" size={24} />
+                            <button onClick={() => setIsModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
@@ -1133,17 +1176,17 @@ const GroupsPage = () => {
                             )}
                         </form>
 
-                        <div className="p-6 border-t border-border-thin bg-bg-deep/50 flex justify-end gap-4">
+                        <div className="modal-footer">
                             <button 
                                 onClick={() => setIsModalOpen(false)}
-                                className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                className="btn-vercel-secondary"
                             >
                                 {isReadOnly ? 'Cerrar' : 'Cancelar'}
                             </button>
                             {!isReadOnly && (
                                 <button 
                                     onClick={handleSubmit}
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg shadow-text-main/10 animate-fade-in"
+                                    className="btn-vercel-primary flex items-center gap-2"
                                 >
                                     {editingGroup ? 'Guardar Cambios' : 'Proponer Grupo'}
                                 </button>
@@ -1153,28 +1196,265 @@ const GroupsPage = () => {
                 </div>
             )}
 
-            {/* Admin Resolution & Review Dialog */}
-            {isReviewModalOpen && reviewingGroup && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-bg-deep/90 backdrop-blur-md animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-scale-up">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+            {/* Right-side Detail Drawer */}
+            {detailGroup && (
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => { setDetailGroup(null); setDetailMembers([]); }}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
+                                <div className="icon-circle icon-circle-brand">
+                                    <Award size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">{detailGroup.nombre}</h3>
+                                    <p className="section-label text-text-dim">
+                                        {detailGroup.tipo_grupo === 'Semillero' ? 'Semillero' : 'Grupo de Investigación'} — {detailGroup.siglas || 'SIN_SIGLAS'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => { setDetailGroup(null); setDetailMembers([]); }} className="text-text-dim hover:text-text-main transition-colors">
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* Status & Type */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bento-card static p-4">
+                                    <label className="section-label text-text-dim mb-2">
+                                        <Shield size={12} /> Estado
+                                    </label>
+                                    {(!detailGroup.estado || detailGroup.estado === 'Aprobado') && (
+                                        <span className="badge-vercel badge-vercel-success">
+                                            <CheckCircle size={10} /> Aprobado
+                                        </span>
+                                    )}
+                                    {detailGroup.estado === 'Pendiente' && (
+                                        <span className="badge-vercel badge-vercel-warning">
+                                            <Calendar size={10} /> Pendiente
+                                        </span>
+                                    )}
+                                    {detailGroup.estado === 'Rechazado' && (
+                                        <span className="badge-vercel badge-vercel-error">
+                                            <XCircle size={10} /> Rechazado
+                                        </span>
+                                    )}
+                                    <p className={`text-[8px] font-mono tracking-wider uppercase mt-1 ${detailGroup.activo ? 'text-success' : 'text-text-dim/60'}`}>
+                                        ● {detailGroup.activo ? 'Vigente' : 'Inactivo'}
+                                    </p>
+                                </div>
+                                <div className="bento-card static p-4">
+                                    <label className="section-label text-text-dim mb-2">
+                                        <Award size={12} /> Tipo
+                                    </label>
+                                    <span className="badge-vercel badge-vercel-brand">
+                                        {detailGroup.tipo_grupo || 'Investigación'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Coordinator */}
+                            <div className="bento-card static p-4 space-y-3">
+                                <label className="section-label text-text-main">
+                                    <User size={12} /> Coordinador Responsable
+                                </label>
+                                <div className="divider-vercel !my-0" />
+                                <p className="text-sm font-bold text-text-main uppercase">{detailGroup.nombre_coordinador || 'No asignado'}</p>
+                                {detailGroup.id_profesor_coordinador && (
+                                    <p className="text-[10px] font-mono text-text-dim">C.I. {detailGroup.id_profesor_coordinador}</p>
+                                )}
+                            </div>
+
+                            {/* Domain */}
+                            {detailGroup.id_dominio && (
+                                <div className="bento-card static p-4 space-y-3">
+                                    <label className="section-label text-text-main">
+                                        <Target size={12} /> Dominio Académico
+                                    </label>
+                                    <div className="divider-vercel !my-0" />
+                                    <p className="text-sm font-bold text-text-main">
+                                        {dominios.find(d => d.id_dominio === detailGroup.id_dominio)?.nombre || 'Sin dominio'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Identity Statements */}
+                            <div className="bento-card static p-4 space-y-4">
+                                <label className="section-label text-text-main">
+                                    <BookOpen size={12} /> Identidad Institucional
+                                </label>
+                                <div className="divider-vercel !my-0" />
+                                {detailGroup.objetivo_general && (
+                                    <div>
+                                        <p className="section-label text-text-dim mb-1">Objetivo General</p>
+                                        <p className="text-sm text-text-main leading-relaxed">{detailGroup.objetivo_general}</p>
+                                    </div>
+                                )}
+                                {detailGroup.mision && (
+                                    <div>
+                                        <p className="section-label text-text-dim mb-1">Misión</p>
+                                        <p className="text-sm text-text-main leading-relaxed">{detailGroup.mision}</p>
+                                    </div>
+                                )}
+                                {detailGroup.vision && (
+                                    <div>
+                                        <p className="section-label text-text-dim mb-1">Visión</p>
+                                        <p className="text-sm text-text-main leading-relaxed">{detailGroup.vision}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Resolution & Date */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {detailGroup.resolucion_aprobacion && (
+                                    <div className="bento-card static p-4">
+                                        <label className="section-label text-text-dim mb-2">
+                                            <FileText size={12} /> Resolución
+                                        </label>
+                                        <p className="text-sm font-bold text-text-main font-mono">{detailGroup.resolucion_aprobacion}</p>
+                                    </div>
+                                )}
+                                {detailGroup.fecha_creacion && (
+                                    <div className="bento-card static p-4">
+                                        <label className="section-label text-text-dim mb-2">
+                                            <Calendar size={12} /> Fecha de Creación
+                                        </label>
+                                        <p className="text-sm font-bold text-text-main font-mono">{new Date(detailGroup.fecha_creacion).toLocaleDateString()}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Research Lines */}
+                            {detailGroup.lineas_ids && detailGroup.lineas_ids.length > 0 && (
+                                <div className="bento-card static p-4 space-y-3">
+                                    <label className="section-label text-text-main">
+                                        <BookOpen size={12} /> Líneas de Investigación
+                                    </label>
+                                    <div className="divider-vercel !my-0" />
+                                    <div className="flex flex-wrap gap-2">
+                                        {detailGroup.lineas_ids.map(lineId => {
+                                            const line = lines.find(l => l.id === lineId);
+                                            return line ? (
+                                                <span key={lineId} className="badge-vercel badge-vercel-brand">{line.nombre}</span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Careers */}
+                            {detailGroup.carreras_ids && detailGroup.carreras_ids.length > 0 && (
+                                <div className="bento-card static p-4 space-y-3">
+                                    <label className="section-label text-text-main">
+                                        <GraduationCap size={12} /> Carreras / Programas
+                                    </label>
+                                    <div className="divider-vercel !my-0" />
+                                    <div className="flex flex-wrap gap-2">
+                                        {detailGroup.carreras_ids.map(carrId => {
+                                            const career = carreras.find(c => c.id_carrera === carrId);
+                                            return career ? (
+                                                <span key={carrId} className="badge-vercel badge-vercel-info">{career.carrera1}</span>
+                                            ) : null;
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Members */}
+                            <div className="bento-card static p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <label className="section-label text-text-main">
+                                        <Users size={12} /> Integrantes
+                                    </label>
+                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                        {detailMembers.length} activos
+                                    </span>
+                                </div>
+                                <div className="divider-vercel !my-0" />
+                                {detailMembers.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {detailMembers.map(member => {
+                                            const isStudent = member.rol?.toLowerCase().includes('semillerista') || member.rol?.toLowerCase().includes('estudiante');
+                                            return (
+                                                <div key={member.id_grupo_miembro} className="flex items-center justify-between p-2.5 bg-bg-deep/40 rounded-lg border border-border-thin">
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <div className={`w-7 h-7 rounded flex items-center justify-center shrink-0 border ${isStudent ? 'bg-info-subtle border-info/20 text-info' : 'bg-success-subtle border-success/20 text-success'}`}>
+                                                            {isStudent ? <GraduationCap size={14} /> : <User size={14} />}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-text-main uppercase truncate">{member.nombre_completo}</p>
+                                                            <span className={`text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-full ${isStudent ? 'bg-info-subtle text-info border border-info/20' : 'bg-success-subtle text-success border border-success/20'}`}>
+                                                                {member.rol}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    {member.cedula && (
+                                                        <span className="text-[9px] font-mono text-text-dim">{member.cedula}</span>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="py-6 text-center">
+                                        <Users size={20} className="mx-auto text-text-dim/30 mb-2" />
+                                        <p className="text-[10px] text-text-dim font-medium uppercase tracking-widest">Sin integrantes registrados</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="modal-footer">
+                            <button onClick={() => { setDetailGroup(null); setDetailMembers([]); }} className="btn-vercel-secondary">Cerrar</button>
+                            <button 
+                                onClick={() => { handleOpenModal(detailGroup, !isAdmin); setDetailGroup(null); setDetailMembers([]); }}
+                                className="btn-vercel-primary flex items-center gap-2"
+                            >
+                                <Eye size={14} /> Ver Completo
+                            </button>
+                            {isAdmin && (
+                                <button 
+                                    onClick={() => { handleOpenModal(detailGroup, false); setDetailGroup(null); setDetailMembers([]); }}
+                                    className="btn-vercel-brand flex items-center gap-2"
+                                >
+                                    <Edit2 size={14} /> Editar
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Admin Resolution & Review Drawer */}
+            {isReviewModalOpen && reviewingGroup && (
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                        <div className="modal-header">
+                            <div className="flex items-center gap-3">
+                                <div className="icon-circle icon-circle-success">
                                     <CheckCircle size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         Aprobar Grupo de Investigación
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">Oficialización de Propuesta Académica</p>
+                                    <p className="section-label text-text-dim">Oficialización de Propuesta Académica</p>
                                 </div>
                             </div>
-                            <button onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }} className="text-text-dim hover:text-text-main p-2">
-                                <Plus className="rotate-45" size={24} />
+                            <button onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }} className="text-text-dim hover:text-text-main transition-colors">
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <div className="p-6 md:p-8 space-y-6">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             <div className="space-y-2">
                                 <p className="text-xs text-text-dim font-medium leading-relaxed">
                                     Está a punto de aprobar el grupo <span className="text-text-main font-bold uppercase">"{reviewingGroup.nombre}"</span> propuesto por el docente <span className="text-text-main font-bold uppercase">{reviewingGroup.nombre_coordinador}</span>.
@@ -1184,33 +1464,34 @@ const GroupsPage = () => {
                                 </p>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                            <div className="bento-card static p-4 space-y-3">
+                                <label className="section-label text-text-main">
                                     <FileText size={12} /> Resolución de Aprobación
                                 </label>
+                                <div className="divider-vercel !my-0" />
                                 <input 
                                     required
                                     type="text" 
                                     value={reviewResolution}
                                     onChange={(e) => setReviewResolution(e.target.value)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono tracking-wider"
+                                    className="input-vercel"
                                     placeholder="Ej: ACTA-DI-2026-004"
                                 />
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-border-thin bg-bg-deep/50 flex justify-end gap-4">
+                        <div className="modal-footer">
                             <button 
                                 onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }}
-                                className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                className="btn-vercel-secondary"
                             >
                                 Cancelar
                             </button>
                             <button 
                                 onClick={handleApprove}
-                                className="bg-emerald-500 text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:bg-emerald-400 transition-all font-black"
+                                className="btn-vercel-primary flex items-center gap-2"
                             >
-                                Confirmar y Aprobar
+                                <CheckCircle size={14} /> Confirmar y Aprobar
                             </button>
                         </div>
                     </div>
