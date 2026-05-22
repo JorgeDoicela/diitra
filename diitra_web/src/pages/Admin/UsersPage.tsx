@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Search, Shield, User as UserIcon, X, RefreshCw,
     Settings2, GraduationCap, UserPlus, History, Globe,
-    Activity, ChevronRight, Mail, Hash, Clock, Award,
-    Fingerprint, BookOpen, Users
+    Activity, ChevronRight, Mail, Hash,
+    Fingerprint
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import UserProfileModal from './components/UserProfileModal';

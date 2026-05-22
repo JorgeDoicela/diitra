@@ -110,9 +110,11 @@ function App() {
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
-                            <Route path="/verify/:code" element={<VerifyDocument />} />
-                            <Route path="/verify" element={<VerifyDocument />} />
                         </Route>
+
+                        {/* Public Verification Pages (Accessible without authentication) */}
+                        <Route path="/verify/:code" element={<VerifyDocument />} />
+                        <Route path="/verify" element={<VerifyDocument />} />
 
                         <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
                             <ProtectedRoute>
