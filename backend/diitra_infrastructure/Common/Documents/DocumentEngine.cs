@@ -137,10 +137,22 @@ namespace Diitra.Infrastructure.Common.Documents
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
                 var extraImageVars = new Dictionary<string, object?>();
 
-                if (template.Code == ProyectoInvestigacionTemplate.CODE)
+                // CARGA DE PORTADA DESACOPLADA (Por convención de nombres o fallback histórico)
+                var possibleCoverNames = new[]
                 {
-                    var portadaBase64 = await _imageLoader.LoadAsBase64Async("portada_proyecto");
-                    if (portadaBase64 != null) extraImageVars["portada_base64"] = portadaBase64;
+                    $"portada_{template.Code.ToLower()}",
+                    $"portada_{template.Category.ToString().ToLower()}",
+                    template.Code == ProyectoInvestigacionTemplate.CODE ? "portada_proyecto" : null
+                }.Where(n => n != null).Cast<string>();
+
+                foreach (var coverName in possibleCoverNames)
+                {
+                    var coverBase64 = await _imageLoader.LoadAsBase64Async(coverName);
+                    if (coverBase64 != null)
+                    {
+                        extraImageVars["portada_base64"] = coverBase64;
+                        break;
+                    }
                 }
 
                 // 5. Inyectar datos + imágenes con Handlebars
@@ -157,11 +169,24 @@ namespace Diitra.Infrastructure.Common.Documents
                                            ?? "https://diitra.ist.edu.ec";
 
                 // 7. Renderizado a PDF
-                //    Para el protocolo de investigación, cargamos el fondo de hojas desde disco.
-                ImageData? stationaryImage = null;
-                if (template.Code == ProyectoInvestigacionTemplate.CODE)
+                //    Carga de fondo de hojas (stationary) desacoplada (Por convención de nombres o fallback histórico)
+                var possibleBackgroundNames = new[]
                 {
-                    stationaryImage = await _imageLoader.LoadAsImageDataAsync("fondo_hojas_investigacion");
+                    $"fondo_{template.Code.ToLower()}",
+                    $"fondo_hojas_{template.Code.ToLower()}",
+                    $"fondo_hojas_{template.Category.ToString().ToLower()}",
+                    template.Code == ProyectoInvestigacionTemplate.CODE ? "fondo_hojas_investigacion" : null
+                }.Where(n => n != null).Cast<string>();
+
+                ImageData? stationaryImage = null;
+                foreach (var bgName in possibleBackgroundNames)
+                {
+                    var img = await _imageLoader.LoadAsImageDataAsync(bgName);
+                    if (img != null)
+                    {
+                        stationaryImage = img;
+                        break;
+                    }
                 }
 
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
