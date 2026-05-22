@@ -68,6 +68,16 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     if (onClose) onClose();
   };
 
+  // Determine the most specific active item to avoid multiple highlights
+  const activeItem = menuItems.reduce<typeof menuItems[0] | null>((best, item) => {
+    const isMatch = location.pathname === item.path
+      || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+    if (isMatch && (!best || item.path.length > best.path.length)) {
+      return item;
+    }
+    return best;
+  }, null);
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -111,8 +121,7 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
         
         <nav className="flex-1 px-3 space-y-1">
           {menuItems.map((item) => {
-            const isActive = location.pathname === item.path
-                || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+            const isActive = item === activeItem;
             return (
               <div
                 key={item.name}
