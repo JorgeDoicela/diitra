@@ -28,7 +28,19 @@ namespace Diitra.Infrastructure.Common.Documents
                 .FirstOrDefaultAsync(t => t.Code == templateCode && t.IsActive, ct);
 
             if (template == null)
-                throw new KeyNotFoundException($"La plantilla '{templateCode}' no existe o no está activa.");
+            {
+                var seed = DocumentTemplateRegistry.GetByCode(templateCode);
+                if (seed != null)
+                {
+                    _context.DocumentTemplates.Add(seed);
+                    await _context.SaveChangesAsync(ct);
+                    template = seed;
+                }
+                else
+                {
+                    throw new KeyNotFoundException($"La plantilla '{templateCode}' no existe o no está activa.");
+                }
+            }
 
             var instance = DocumentInstance.Create(templateCode, template.Version, entityUuid, createdBy, title, entityType);
             
@@ -82,15 +94,22 @@ namespace Diitra.Infrastructure.Common.Documents
         {
             var instance = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
             if (instance == null) throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
-            
-            if (instance.EntityUuid == "GLOBAL")
-            {
-                instance.SetEntityUuid(uuid);
-            }
 
             instance.UpdateDataSnapshot(metadataJson);
             await _context.SaveChangesAsync(ct);
             return instance;
+        }
+
+        public async Task<DocumentInstance> ResolveAsync(string templateCode, string entityUuid, string createdBy, string? title = null, string entityType = "Proyecto", CancellationToken ct = default)
+        {
+            var existing = await _context.DocumentInstances
+                .FirstOrDefaultAsync(i => i.EntityUuid == entityUuid && i.TemplateCode == templateCode, ct);
+
+            if (existing != null)
+                return existing;
+
+            var created = await CreateAsync(templateCode, entityUuid, createdBy, title, entityType, ct);
+            return created;
         }
     }
 }

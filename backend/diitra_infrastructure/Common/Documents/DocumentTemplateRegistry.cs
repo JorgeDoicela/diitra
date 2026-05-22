@@ -68,6 +68,32 @@ namespace Diitra.Infrastructure.Common.Documents
                 collaborativeFields: "[\"resumen_ejecutivo\", \"cumplimiento_objetivos\", \"resultados\", \"discusion\", \"impacto_final\", \"transferencia_conocimiento\", \"conclusiones\", \"recomendaciones\", \"bibliografia_final\"]",
                 version: 1);
 
+            yield return DocumentTemplate.Create(
+                code: RubricaEvaluacionTemplate.CODE,
+                name: "Rúbrica de Evaluación por Pares",
+                description: "Revisión doble ciego (Fase 2) — Normativa CACES.",
+                category: DocumentCategory.Protocolo,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/RubricaEvaluacion.html -->",
+                requiresLopdp: true,
+                supportsBlind: true,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"Pertinencia\", \"Metodologia\", \"Viabilidad\", \"Impacto\", \"ComentariosGenerales\", \"RecomendacionFinal\"]",
+                version: 1);
+
+            yield return DocumentTemplate.Create(
+                code: InformeAvanceTemplate.CODE,
+                name: "Informe de Avance de Proyecto",
+                description: "Ejecución y Monitoreo (Fase 3).",
+                category: DocumentCategory.InformeAvance,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/InformeAvance.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"HitosCompletados\", \"Evidencias\", \"PresupuestoEjecutado\", \"ConclusionesParciales\"]",
+                version: 1);
+
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
             //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()

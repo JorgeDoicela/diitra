@@ -192,6 +192,33 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
+        /// RESOLVER ATÓMICO: Busca una instancia existente por (entityUuid, templateCode).
+        /// Si no existe, la crea con los datos proporcionados. Evita duplicados y race conditions.
+        /// </summary>
+        [HttpGet("resolve")]
+        public async Task<IActionResult> Resolve(
+            [FromQuery] string templateCode,
+            [FromQuery] string entityUuid,
+            [FromQuery] string? title = null,
+            CancellationToken ct = default)
+        {
+            try
+            {
+                var userUuid = User.Identity?.Name ?? "anon";
+                var instance = await _instanceService.ResolveAsync(templateCode, entityUuid, userUuid, title, ct: ct);
+                return Ok(instance);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Obtiene el historial global de los últimos documentos generados por el núcleo.
         /// Ideal para tableros de control y auditoría general.
         /// </summary>

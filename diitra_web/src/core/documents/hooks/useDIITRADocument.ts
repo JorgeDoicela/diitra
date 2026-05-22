@@ -2,18 +2,18 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
 
 /**
- * useDIITRADocument v3.0 (Reactive ydoc — Arquitectura Correcta)
+ * useDIITRADocument V1.0 (Reactive ydoc — Arquitectura Correcta)
  * ---------------------------------------------------------------
  * Hook maestro para la gestión de documentos colaborativos DIITRA.
  *
- * CAMBIO ARQUITECTÓNICO v3.0:
+ * CAMBIO ARQUITECTÓNICO V1.0:
  * ─────────────────────────────────────────────────────────────────
  * En v2.0, el ydoc se accedía via `coworkRef.current?.ydoc`, una referencia
  * mutable que React no observa. Esto causaba un bug crítico: si SignalR
  * caía y se reconectaba (generando un nuevo ydoc), los observadores de Yjs
  * NO se re-registraban y los cambios remotos dejaban de sincronizarse.
  *
- * En v3.0, el ydoc es un PARÁMETRO REACTIVO. El padre (DocumentEditor) lo
+ * En V1.0, el ydoc es un PARÁMETRO REACTIVO. El padre (DocumentEditor) lo
  * obtiene de `cowork.ydoc` (estado de React), lo pasa como prop, y React
  * re-ejecuta correctamente el efecto cuando ydoc cambia (reconexión, etc.).
  *
@@ -29,7 +29,7 @@ import * as Y from 'yjs';
  */
 export function useDIITRADocument<T extends Record<string, any>>(
     initialData: T,
-    ydoc: Y.Doc | null,             // ← Parámetro reactivo (v3.0)
+    ydoc: Y.Doc | null,             // ← Parámetro reactivo (V1.0)
     options: {
         lists?: string[];
         richTexts?: string[];
@@ -54,7 +54,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
     // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
     const updateField = useCallback((name: string, value: any) => {
         // Sincronizar en Yjs si existe ydoc y no es una lista trackeada ni un rich-text
-        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name)) {
+        // Excluimos 'Uuid' y 'uuid' de la sincronización de Yjs para evitar que se pise el identificador estático
+        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && name.toLowerCase() !== 'uuid') {
             const ytext = ydoc.getText(name);
             const stringVal = String(value);
             if (ytext.toString() !== stringVal) {
@@ -70,7 +71,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             if (JSON.stringify(prev[name]) === JSON.stringify(value)) return prev;
             return { ...prev, [name]: value };
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ydoc, options.lists, options.richTexts]);
 
     // --- LÓGICA DE LISTAS (Y.Array) ---
@@ -127,7 +128,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
     // ─── MOTOR DE SINCRONIZACIÓN OMNISCIENTE (Re-ejecuta cuando ydoc cambia) ───
     //
-    // CORRECCIÓN v3.0: Como `ydoc` es un parámetro de React (no una ref mutable),
+    // CORRECCIÓN V1.0: Como `ydoc` es un parámetro de React (no una ref mutable),
     // este efecto se re-ejecuta correctamente cuando:
     //   1. CoWork se conecta por primera vez (ydoc: null → Y.Doc)
     //   2. SignalR pierde la conexión y se reconecta (ydoc anterior destruido → nuevo Y.Doc)
@@ -141,6 +142,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
         Object.keys(initialData).forEach(key => {
             if (options.lists?.includes(key)) return; // Se maneja como array
             if (options.richTexts?.includes(key)) return; // Se maneja como XMLFragment en Tiptap
+            if (key.toLowerCase() === 'uuid') return; // El UUID es inmutable y no se sincroniza via Yjs
 
             const ytext = ydoc.getText(key);
             const observer = (event: Y.YTextEvent) => {
@@ -216,8 +218,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
         });
 
         return () => cleanups.forEach(c => c());
-    // options.lists se puede serializar de forma estable; initialData es estable por useMemo en el padre
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // options.lists se puede serializar de forma estable; initialData es estable por useMemo en el padre
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ydoc]);
 
     return {

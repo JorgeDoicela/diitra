@@ -76,6 +76,8 @@ export const ProjectWorkspace: React.FC = () => {
     const [showTransferSearchResults, setShowTransferSearchResults] = useState(false);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
+    const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
+    const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -424,11 +426,55 @@ export const ProjectWorkspace: React.FC = () => {
         navigate(`/investigacion/workspace/${templateCode}/${documentUuid}`, { replace: true });
     };
 
+    const resolveDocumentInstance = async (docTemplateCode: string) => {
+        if (subDocumentUuids[docTemplateCode]) {
+            setActiveDocument(docTemplateCode);
+            return;
+        }
+        if (!resolvedProjectUuid) return;
+        setResolvingDocument(docTemplateCode);
+        try {
+            const res = await api.get('/documents/instances/resolve', {
+                params: {
+                    templateCode: docTemplateCode,
+                    entityUuid: resolvedProjectUuid,
+                    title: `${docTemplateCode === 'RUBRICA_EVALUACION' ? 'Rúbrica de Evaluación' : docTemplateCode === 'INFORME_AVANCE' ? 'Informe de Avance' : docTemplateCode} — ${currentProject?.title || ''}`
+                }
+            });
+            const instanceUuid = res.data?.uuid || res.data?.Uuid;
+            if (instanceUuid) {
+                setSubDocumentUuids(prev => ({ ...prev, [docTemplateCode]: instanceUuid }));
+                setActiveDocument(docTemplateCode);
+            }
+        } catch (err) {
+            console.error(`[DIITRA] Error al resolver instancia de documento ${docTemplateCode}:`, err);
+            alert(`No se pudo abrir el documento. Inténtelo de nuevo.`);
+        } finally {
+            setResolvingDocument(null);
+        }
+    };
+
     if (activeDocument) {
+        const editorUuid = activeDocument === templateCode
+            ? documentUuid
+            : subDocumentUuids[activeDocument];
+
+        if (activeDocument !== templateCode && !editorUuid) {
+            return (
+                <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
+                        <p className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">Resolviendo documento...</p>
+                    </div>
+                </div>
+            );
+        }
+
         return (
             <DocumentEditor 
                 templateCode={activeDocument} 
-                initialData={{ Uuid: activeDocument === templateCode ? documentUuid : currentProject.uuid }}
+                initialData={{ Uuid: editorUuid }}
+                entityUuid={activeDocument === templateCode ? resolvedProjectUuid || undefined : resolvedProjectUuid || undefined}
                 onClose={handleCloseEditor} 
                 readOnly={!currentProject.puedeEditar}
             />
@@ -583,11 +629,15 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'En Revisión' && (isCurrent || isPast) && (
                                                     <div className="mt-4 animate-fade-in">
                                                         <button 
-                                                            onClick={() => setActiveDocument('RUBRICA_EVALUACION')}
+                                                            onClick={() => resolveDocumentInstance('RUBRICA_EVALUACION')}
+                                                            disabled={resolvingDocument === 'RUBRICA_EVALUACION'}
                                                             className="btn-vercel-primary !py-2"
                                                         >
-                                                            <CheckSquare size={14} />
-                                                            <span>{isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica'}</span>
+                                                            {resolvingDocument === 'RUBRICA_EVALUACION' ? (
+                                                                <><div className="animate-spin h-3 w-3 border-t-2 border-bg-deep rounded-full" /> Cargando...</>
+                                                            ) : (
+                                                                <><CheckSquare size={14} /><span>{isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica'}</span></>
+                                                            )}
                                                         </button>
                                                     </div>
                                                 )}
@@ -595,7 +645,8 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'En Ejecución' && isCurrent && (
                                                     <div className="mt-4 animate-fade-in">
                                                         <button 
-                                                            onClick={() => setActiveDocument('INFORME_AVANCE')}
+                                                            onClick={() => resolveDocumentInstance('INFORME_AVANCE')}
+                                                            disabled={resolvingDocument === 'INFORME_AVANCE'}
                                                             className="btn-vercel-primary !py-2"
                                                         >
                                                             <BarChart size={14} />
