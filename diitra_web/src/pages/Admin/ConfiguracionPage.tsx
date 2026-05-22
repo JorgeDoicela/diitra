@@ -959,12 +959,14 @@ const ConfiguracionPage = () => {
             )}
 
             {isLineaModalOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => setIsLineaModalOpen(false)}
-                    />
-                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                <div className={editingLinea ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
+                    {editingLinea && (
+                        <div 
+                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                            onClick={() => setIsLineaModalOpen(false)}
+                        />
+                    )}
+                    <div className={editingLinea ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -980,7 +982,7 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsLineaModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                <ChevronRight size={20} />
+                                {editingLinea ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
                             </button>
                         </div>
 
@@ -1044,12 +1046,14 @@ const ConfiguracionPage = () => {
             )}
 
             {isPeriodoModalOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => setIsPeriodoModalOpen(false)}
-                    />
-                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                <div className={editingPeriodo ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
+                    {editingPeriodo && (
+                        <div 
+                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                            onClick={() => setIsPeriodoModalOpen(false)}
+                        />
+                    )}
+                    <div className={editingPeriodo ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1065,7 +1069,7 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsPeriodoModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                <ChevronRight size={20} />
+                                {editingPeriodo ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
                             </button>
                         </div>
 
@@ -1143,12 +1147,14 @@ const ConfiguracionPage = () => {
             )}
 
             {isProductoModalOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => setIsProductoModalOpen(false)}
-                    />
-                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                <div className={editingProducto ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
+                    {editingProducto && (
+                        <div 
+                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                            onClick={() => setIsProductoModalOpen(false)}
+                        />
+                    )}
+                    <div className={editingProducto ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1164,7 +1170,7 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsProductoModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                <ChevronRight size={20} />
+                                {editingProducto ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
                             </button>
                         </div>
 
@@ -1231,12 +1237,14 @@ const ConfiguracionPage = () => {
             )}
 
             {isDominioModalOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => setIsDominioModalOpen(false)}
-                    />
-                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                <div className={editingDominio ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
+                    {editingDominio && (
+                        <div 
+                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                            onClick={() => setIsDominioModalOpen(false)}
+                        />
+                    )}
+                    <div className={editingDominio ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1252,7 +1260,7 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsDominioModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                <ChevronRight size={20} />
+                                {editingDominio ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
                             </button>
                         </div>
 
@@ -1292,12 +1300,14 @@ const ConfiguracionPage = () => {
             )}
 
             {isIndicadorModalOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => setIsIndicadorModalOpen(false)}
-                    />
-                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                <div className={editingIndicador ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
+                    {editingIndicador && (
+                        <div 
+                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                            onClick={() => setIsIndicadorModalOpen(false)}
+                        />
+                    )}
+                    <div className={editingIndicador ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1313,7 +1323,7 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsIndicadorModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                <ChevronRight size={20} />
+                                {editingIndicador ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
                             </button>
                         </div>
 
