@@ -672,14 +672,12 @@ const GroupsPage = () => {
 
             {/* Creation / Edition / View Modal/Drawer */}
             {isModalOpen && (
-                <div className={editingGroup || isReadOnly ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
-                    {editingGroup || isReadOnly ? (
-                        <div 
-                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                            onClick={() => setIsModalOpen(false)}
-                        />
-                    ) : null}
-                    <div className={editingGroup || isReadOnly ? "relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-3xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -693,11 +691,11 @@ const GroupsPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                {editingGroup || isReadOnly ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSubmit} className={editingGroup || isReadOnly ? "flex-1 overflow-y-auto p-4 md:p-8 space-y-8" : "modal-body space-y-8"}>
+                        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
                             {!isAdmin && !isReadOnly && (
                                 <div className="space-y-3 animate-fade-up">
                                     <div className="bg-text-main/5 border border-text-main/15 rounded-xl p-4 flex items-center gap-3">

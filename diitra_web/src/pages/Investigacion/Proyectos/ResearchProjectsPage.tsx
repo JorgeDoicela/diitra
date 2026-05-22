@@ -92,7 +92,7 @@ const ResearchProjectsPage = () => {
                             <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">DIITRA CoWork Activo</p>
                         </div>
                         <div 
-                            onClick={() => window.open('/verify', '_blank')}
+                            onClick={() => navigate('/verify')}
                             className="bento-card p-8 cursor-pointer group bg-glow"
                         >
                             <ShieldCheck className="text-success mb-6 group-hover:scale-110 transition-transform" size={28} />
