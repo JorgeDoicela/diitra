@@ -75,14 +75,44 @@ export const ProjectWorkspace: React.FC = () => {
     const [isTransferSearching, setIsTransferSearching] = useState(false);
     const [showTransferSearchResults, setShowTransferSearchResults] = useState(false);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+    const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
 
-    const fetchProducts = async () => {
+    useEffect(() => {
+        const resolveUuid = async () => {
+            if (!documentUuid) return;
+            
+            if (templateCode && templateCode !== 'PROTOCOLO_INVESTIGACION') {
+                try {
+                    const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
+                    const entityUuid = instanceRes.data?.entity_uuid || instanceRes.data?.entityUuid;
+                    if (entityUuid) {
+                        setResolvedProjectUuid(entityUuid);
+                    } else {
+                        console.error("[DIITRA] EntityUuid no encontrado en la instancia del documento", instanceRes.data);
+                        setResolvedProjectUuid(documentUuid);
+                    }
+                } catch (err) {
+                    console.error("[DIITRA] Error al resolver el UUID del proyecto", err);
+                    setResolvedProjectUuid(documentUuid);
+                }
+            } else {
+                setResolvedProjectUuid(documentUuid);
+            }
+        };
+
+        resolveUuid();
+    }, [documentUuid, templateCode]);
+
+    const fetchProducts = async (pUuid?: string) => {
+        const uuidToUse = pUuid || resolvedProjectUuid;
+        if (!uuidToUse) return;
+
         let retries = 3;
         let success = false;
         let res: any = null;
         while (retries > 0 && !success) {
             try {
-                res = await api.get(`/ResearchProducts/project/${documentUuid}`);
+                res = await api.get(`/ResearchProducts/project/${uuidToUse}`);
                 success = true;
             } catch (err: any) {
                 retries--;
@@ -113,17 +143,18 @@ export const ProjectWorkspace: React.FC = () => {
     };
 
     useEffect(() => {
-        if (documentUuid) {
-            fetchProducts();
+        if (resolvedProjectUuid) {
+            fetchProducts(resolvedProjectUuid);
             fetchProductTypes();
         }
-    }, [documentUuid]);
+    }, [resolvedProjectUuid]);
 
     const handleCreateProduct = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!resolvedProjectUuid) return;
         try {
             await api.post('/ResearchProducts', {
-                projectUuid: documentUuid,
+                projectUuid: resolvedProjectUuid,
                 idTipoProducto: Number(newProduct.id_tipo_producto),
                 titulo: newProduct.titulo,
                 cantidad: Number(newProduct.cantidad),
@@ -142,7 +173,7 @@ export const ProjectWorkspace: React.FC = () => {
                 numero_registro: '',
                 fecha_registro_senadi: ''
             });
-            fetchProducts();
+            fetchProducts(resolvedProjectUuid);
         } catch (err) {
             console.error("[DIITRA] Error al crear producto", err);
             alert("Error al registrar el producto");
@@ -153,7 +184,7 @@ export const ProjectWorkspace: React.FC = () => {
         if (!window.confirm("¿Está seguro de eliminar este producto de investigación?")) return;
         try {
             await api.delete(`/ResearchProducts/${id}`);
-            fetchProducts();
+            fetchProducts(resolvedProjectUuid || undefined);
         } catch (err) {
             console.error("[DIITRA] Error al eliminar producto", err);
         }
@@ -169,12 +200,14 @@ export const ProjectWorkspace: React.FC = () => {
 
     useEffect(() => {
         const fetchProject = async () => {
+            if (!resolvedProjectUuid) return;
+            
             let retries = 3;
             let success = false;
             let res: any = null;
             while (retries > 0 && !success) {
                 try {
-                    res = await api.get(`/projects/${documentUuid}/detail`);
+                    res = await api.get(`/projects/${resolvedProjectUuid}/detail`);
                     success = true;
                 } catch (e: any) {
                     retries--;
@@ -202,8 +235,8 @@ export const ProjectWorkspace: React.FC = () => {
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
             } else {
                 setCurrentProject({
-                    id: documentUuid?.substring(0,8).toUpperCase() || 'NEW',
-                    uuid: documentUuid || '',
+                    id: resolvedProjectUuid?.substring(0,8).toUpperCase() || 'NEW',
+                    uuid: resolvedProjectUuid || '',
                     title: 'Nuevo Proyecto de Investigación',
                     status: 'Borrador',
                     presupuesto: 0,
@@ -216,8 +249,8 @@ export const ProjectWorkspace: React.FC = () => {
             setIsLoading(false);
         };
         
-        if (documentUuid) fetchProject();
-    }, [documentUuid]);
+        fetchProject();
+    }, [resolvedProjectUuid]);
 
     useEffect(() => {
         if (!searchQuery.trim()) {
@@ -304,7 +337,7 @@ export const ProjectWorkspace: React.FC = () => {
         }
     };
 
-    if (isLoading) {
+    if (isLoading || !resolvedProjectUuid) {
         return (
             <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
@@ -395,7 +428,7 @@ export const ProjectWorkspace: React.FC = () => {
         return (
             <DocumentEditor 
                 templateCode={activeDocument} 
-                initialData={{ Uuid: currentProject.uuid }}
+                initialData={{ Uuid: activeDocument === templateCode ? documentUuid : currentProject.uuid }}
                 onClose={handleCloseEditor} 
                 readOnly={!currentProject.puedeEditar}
             />
