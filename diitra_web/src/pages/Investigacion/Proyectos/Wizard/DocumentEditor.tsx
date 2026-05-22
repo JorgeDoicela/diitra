@@ -26,16 +26,16 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
 };
 
 // ─────────────────────────────────────────────────────────────────
-// DOCUMENT EDITOR — ARQUITECTURA DIITRA v3.0 (Workspace Colaborativo)
+// DOCUMENT EDITOR — ARQUITECTURA DIITRA V1.0 (Workspace Colaborativo)
 // ─────────────────────────────────────────────────────────────────
 //
 // RESPONSABILIDADES:
 //   1. Resolver la configuración de la plantilla (Registry local > Backend dinámico)
 //   2. Cargar catálogos institucionales (carreras, convocatorias, tipos de producto)
-//   3. Instanciar useCoWork() con los datos del usuario autenticado  ← NUEVO v3.0
-//   4. Instanciar useDIITRADocument() con el ydoc reactivo           ← NUEVO v3.0
-//   5. Pasar el CoWorkHandle al DIITRABuilderShell como prop         ← NUEVO v3.0
-//   6. Resolver los componentes de sección via DocumentComponentRegistry ← NUEVO v3.0
+//   3. Instanciar useCoWork() con los datos del usuario autenticado  ← NUEVO V1.0
+//   4. Instanciar useDIITRADocument() con el ydoc reactivo           ← NUEVO V1.0
+//   5. Pasar el CoWorkHandle al DIITRABuilderShell como prop         ← NUEVO V1.0
+//   6. Resolver los componentes de sección via DocumentComponentRegistry ← NUEVO V1.0
 //
 // SEPARACIÓN DE CAPAS:
 //   DocumentTemplateRegistry → "qué campos y secciones existen" (puro JSON)
@@ -47,16 +47,17 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
 interface DocumentEditorProps {
     templateCode: string;
     initialData?: any;
+    entityUuid?: string;
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
 }
 
-const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, onClose, readOnly = false }) => {
+const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false }) => {
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
 
     // Catálogos institucionales (agnóstico por plantilla)
-    const [carreras, setCarreras]           = useState<any[]>([]);
+    const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [tiposProducto, setTiposProducto] = useState<any[]>([]);
 
@@ -137,6 +138,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             templateCode={templateCode}
             templateConfig={templateConfig}
             initialData={initialData}
+            entityUuid={entityUuid}
             carreras={carreras}
             convocatorias={convocatorias}
             tiposProducto={tiposProducto}
@@ -156,6 +158,7 @@ interface DocumentEditorCoreProps {
     templateCode: string;
     templateConfig: any;
     initialData: any;
+    entityUuid?: string;
     carreras: any[];
     convocatorias: any[];
     tiposProducto: any[];
@@ -167,14 +170,15 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     templateCode,
     templateConfig,
     initialData,
+    entityUuid,
     carreras,
     convocatorias,
     tiposProducto,
     onClose,
     readOnly = false
 }) => {
-    const navigate  = useNavigate();
-    const { user }  = useAuth();
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     // ── Merge estable del esquema + datos iniciales (uuid, título, etc.) ──
     const mergedInitial = React.useMemo(() => ({
@@ -184,16 +188,16 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
     const documentId = initialData?.Uuid || `temp_${Math.random().toString(36).substring(2, 9)}`;
 
-    // ── 3. Instanciar CoWork (v3.0: se hace AQUÍ, en el padre del Shell) ──
+    // ── 3. Instanciar CoWork (V1.0: se hace AQUÍ, en el padre del Shell) ──
     const coworkUser = React.useMemo(() => coworkUserFromAuth({
-        userUuid:       user?.id_referencia       || 'anonymous',
+        userUuid: user?.id_referencia || 'anonymous',
         nombreCompleto: user?.nombre_completo || 'Usuario DIITRA',
-        role:           user?.role       || 'Investigador',
+        role: user?.role || 'Investigador',
     }), [user]);
 
     const cowork = useCoWork({
         documentId,
-        user:    coworkUser,
+        user: coworkUser,
         enabled: true,
         readonly: readOnly,
     });
@@ -203,8 +207,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         const list: string[] = [];
         if (templateCode === 'PROTOCOLO_INVESTIGACION') {
             return [
-                'Antecedentes', 'DescripcionProyecto', 'Justificacion', 
-                'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico', 
+                'Antecedentes', 'DescripcionProyecto', 'Justificacion',
+                'ObjetivoGeneral', 'ObjetivosEspecificos', 'MarcoTeorico',
                 'Metodologia', 'Evaluacion', 'Bibliografia'
             ];
         }
@@ -223,7 +227,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         return list;
     }, [templateConfig, templateCode]);
 
-    // ── 5. Hook Maestro con ydoc REACTIVO (v3.0 — corrección bug reconexión) ──
+    // ── 5. Hook Maestro con ydoc REACTIVO (V1.0 — corrección bug reconexión) ──
     const {
         formData,
         setFormData,
@@ -234,7 +238,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     } = useDIITRADocument(
         mergedInitial,
         cowork.ydoc,        // ← parámetro reactivo: React detecta cambios si SignalR reconecta
-        { 
+        {
             lists: templateConfig?.lists || [],
             richTexts
         }
@@ -261,7 +265,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             } else {
                 const response = await api.post('/documents/instances', {
                     templateCode,
-                    entityUuid: 'GLOBAL',
+                    entityUuid: entityUuid || 'GLOBAL',
                     title: data.Titulo || data.title || `Documento ${templateCode}`
                 });
                 if (response.data?.uuid) {
@@ -292,8 +296,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
             return {
                 ...sec,
-                icon:      <IconComponent size={18} />,
-                config:    normalizedConfig,
+                icon: <IconComponent size={18} />,
+                config: normalizedConfig,
                 component: SectionComponent,    // Siempre resuelto
             };
         });
@@ -322,13 +326,13 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 let listProps: any = {};
                 if (activeTab === 'equipo') {
                     listProps = {
-                        onAdd:    () => addItem('Investigadores', { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '' }),
+                        onAdd: () => addItem('Investigadores', { Nombre: '', Cedula: '', Email: '', Telefono: '', NivelAcademico: '', Rol: '' }),
                         onRemove: (i: number) => removeItem('Investigadores', i),
                         onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
                     };
                 } else if (activeTab === 'cronograma') {
                     listProps = {
-                        onAdd:    () => addItem('Cronograma', { Actividad: '', Numero: 1, RecursosNecesarios: '' }),
+                        onAdd: () => addItem('Cronograma', { Actividad: '', Numero: 1, RecursosNecesarios: '' }),
                         onRemove: (i: number) => removeItem('Cronograma', i),
                         onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v)
                     };

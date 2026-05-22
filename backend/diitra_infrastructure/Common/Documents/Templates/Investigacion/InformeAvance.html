@@ -1,0 +1,109 @@
+<style>
+    .doc-container { font-family: 'Inter', 'Segoe UI', Arial, sans-serif; color: #1e2a4a; line-height: 1.6; padding: 30px; }
+    .main-title { font-size: 20pt; font-weight: 900; text-transform: uppercase; text-align: center; border-bottom: 5px solid #1e2a4a; margin-bottom: 10px; letter-spacing: -0.5px; }
+    .report-type { font-size: 13pt; font-weight: bold; text-align: center; color: #b8912e; text-transform: uppercase; margin-bottom: 20px; }
+    .project-name { font-size: 12pt; font-weight: 800; text-align: center; margin: 10px 0; border: 1px solid #e2e8f0; padding: 10px; background: #f8fafc; }
+    .section-title { background: #1e2a4a; color: #fff; padding: 10px 20px; font-weight: bold; font-size: 11pt; margin: 25px 0 15px 0; text-transform: uppercase; border-radius: 6px; }
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 10pt; }
+    .info-table td { border: 1px solid #cbd5e1; padding: 10px; vertical-align: top; }
+    .info-table .label { font-weight: bold; background: #f1f5f9; width: 30%; text-transform: uppercase; font-size: 8pt; color: #475569; }
+    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 9.5pt; }
+    .data-table th { background: #1e2a4a; color: #fff; padding: 8px; text-align: left; text-transform: uppercase; font-size: 8.5pt; border: 1px solid #1e2a4a; }
+    .data-table td { border: 1px solid #cbd5e1; padding: 8px; }
+    .content-box { border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 20px; text-align: justify; min-height: 80px; background: #fff; border-radius: 4px; font-size: 9.5pt; }
+    .firma-box { border-top: 1px solid #1e2a4a; margin-top: 60px; padding-top: 10px; text-align: center; width: 45%; font-size: 10pt; }
+</style>
+
+<div class="doc-container">
+    <div style="text-align:center">
+        <h1 class="main-title">INFORME DE AVANCE DE PROYECTO</h1>
+        <div class="report-type">Ejecución, Monitoreo e Hitos Parciales — Fase 3</div>
+    </div>
+
+    <div class="project-name">{{default titulo 'PROYECTO EN EJECUCIÓN'}}</div>
+
+    <div class="section-title">1. Datos Generales del Monitoreo</div>
+    <table class="info-table">
+        <tr><td class="label">Código de Entidad:</td><td>{{default entity_uuid '...'}}</td></tr>
+        <tr><td class="label">Periodo Evaluado:</td><td>{{default periodo '2026-05-22'}}</td></tr>
+        <tr><td class="label">Director del Proyecto:</td><td>{{default nombre_director '...'}}</td></tr>
+    </table>
+
+    <div class="section-title">2. Hitos y Actividades Completadas</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Descripción del Hito / Actividad</th>
+                <th style="width: 120px; text-align: center;">Porcentaje Avance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each HitosCompletados}}
+            <tr>
+                <td>{{this.descripcion}}</td>
+                <td style="text-align: center; font-weight: bold;">{{this.avance}}%</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registran hitos específicos en este avance.</td></tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="section-title">3. Evidencias Generadas</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Descripción de la Evidencia</th>
+                <th style="width: 150px;">Tipo de Archivo / Enlace</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each Evidencias}}
+            <tr>
+                <td>{{this.descripcion}}</td>
+                <td>{{this.tipo}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registran evidencias en este avance.</td></tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="section-title">4. Presupuesto Ejecutado</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Concepto / Rubro de Gasto</th>
+                <th style="width: 150px; text-align: right;">Monto Ejecutado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each PresupuestoEjecutado}}
+            <tr>
+                <td>{{this.descripcion}}</td>
+                <td style="text-align: right; font-weight: bold;">{{moneda this.monto}}</td>
+            </tr>
+            {{else}}
+            <tr><td colspan="2" style="text-align:center; color:#aaa; padding: 15px;">No se registra ejecución presupuestaria en este periodo.</td></tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="section-title">5. Conclusiones y Logros Parciales</div>
+    <div class="content-box">
+        {{default ConclusionesParciales 'Pendiente de redacción o sin conclusiones parciales registradas.'}}
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:80px">
+        <div class="firma-box">
+            <strong>Director / Investigador Principal</strong><br/>
+            DIITRA Leader<br/>
+            Responsable del Proyecto
+        </div>
+        <div class="firma-box">
+            <strong>Comisión de Acompañamiento</strong><br/>
+            DIITRA Monitor<br/>
+            Aprobación de Avance
+        </div>
+    </div>
+</div>

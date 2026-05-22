@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-    MessageSquare, 
-    CheckCircle, 
-    Clock, 
-    Send, 
+import {
+    MessageSquare,
+    CheckCircle,
+    Clock,
+    Send,
     User,
     Activity,
     ChevronRight,
@@ -20,12 +20,12 @@ interface CollaborationSidebarProps {
     onClose: () => void;
 }
 
-const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({ 
-    instanceUuid, 
-    sectionName, 
-    cowork, 
+const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
+    instanceUuid,
+    sectionName,
+    cowork,
     allSections,
-    onClose 
+    onClose
 }) => {
     const [activeTab, setActiveTab] = useState<'comments' | 'status' | 'activity'>('comments');
     const [comment, setComment] = useState('');
@@ -121,7 +121,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                     <Activity size={15} className="text-brand animate-pulse" />
                     <span className="text-[10px] font-black uppercase tracking-widest text-text-main">Team Pulse</span>
                 </div>
-                <button 
+                <button
                     onClick={onClose}
                     className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
                     title="Cerrar panel lateral"
@@ -132,29 +132,26 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
 
             {/* Tabs */}
             <div className="flex border-b border-border-thin bg-surface-hover/30">
-                <button 
+                <button
                     onClick={() => setActiveTab('comments')}
-                    className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${
-                        activeTab === 'comments' ? 'border-brand text-brand bg-brand/5' : 'border-transparent text-text-dim hover:text-text-main'
-                    }`}
+                    className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${activeTab === 'comments' ? 'border-brand text-brand bg-brand/5' : 'border-transparent text-text-dim hover:text-text-main'
+                        }`}
                 >
                     <MessageSquare size={14} />
                     <span>Chat</span>
                 </button>
-                <button 
+                <button
                     onClick={() => setActiveTab('status')}
-                    className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${
-                        activeTab === 'status' ? 'border-brand text-brand bg-brand/5' : 'border-transparent text-text-dim hover:text-text-main'
-                    }`}
+                    className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${activeTab === 'status' ? 'border-brand text-brand bg-brand/5' : 'border-transparent text-text-dim hover:text-text-main'
+                        }`}
                 >
                     <CheckCircle size={14} />
                     <span>Estado</span>
                 </button>
-                <button 
+                <button
                     onClick={() => setActiveTab('activity')}
-                    className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${
-                        activeTab === 'activity' ? 'border-brand text-brand bg-brand/5' : 'border-transparent text-text-dim hover:text-text-main'
-                    }`}
+                    className={`flex-1 py-3 text-[9px] font-black uppercase tracking-widest transition-all border-b-2 flex flex-col items-center gap-1 ${activeTab === 'activity' ? 'border-brand text-brand bg-brand/5' : 'border-transparent text-text-dim hover:text-text-main'
+                        }`}
                 >
                     <Clock size={14} />
                     <span>Actividad</span>
@@ -195,7 +192,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     <div ref={commentsEndRef} />
                                 </div>
                                 <div className="mt-auto relative pt-2">
-                                    <textarea 
+                                    <textarea
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
                                         onKeyDown={(e) => {
@@ -207,7 +204,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                         placeholder="Escribe un mensaje al equipo..."
                                         className="w-full bg-surface border border-border-thin rounded-xl p-3 pr-12 text-xs focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none resize-none h-20 transition-all custom-scrollbar placeholder:text-text-dim/60"
                                     />
-                                    <button 
+                                    <button
                                         onClick={handlePostComment}
                                         className="absolute bottom-5 right-3 p-2 bg-text-main hover:bg-brand text-bg-deep hover:text-text-main rounded-lg shadow-lg active:scale-95 transition-all"
                                         title="Enviar mensaje"
@@ -225,14 +222,13 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                     <p className="text-xs font-bold text-text-main mb-4 capitalize">{sectionName.replace(/_/g, ' ')}</p>
                                     <div className="grid grid-cols-1 gap-2">
                                         {['Borrador', 'Revisión', 'Aprobado'].map(s => (
-                                            <button 
+                                            <button
                                                 key={s}
                                                 onClick={() => handleUpdateStatus(s)}
-                                                className={`w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
-                                                    sectionStatuses[sectionName] === s 
-                                                    ? 'bg-brand text-bg-deep border-brand shadow-lg font-black' 
-                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
-                                                }`}
+                                                className={`w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${sectionStatuses[sectionName] === s
+                                                        ? 'bg-brand text-bg-deep border-brand shadow-lg font-black'
+                                                        : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                    }`}
                                             >
                                                 {s}
                                             </button>
@@ -247,8 +243,8 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                         <span className="text-brand font-mono font-black">{globalProgress}%</span>
                                     </div>
                                     <div className="w-full bg-bg-deep h-1.5 rounded-full overflow-hidden">
-                                        <div 
-                                            className="h-full bg-brand transition-all duration-500 rounded-full" 
+                                        <div
+                                            className="h-full bg-brand transition-all duration-500 rounded-full"
                                             style={{ width: `${globalProgress}%` }}
                                         ></div>
                                     </div>
@@ -302,7 +298,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                     Sincro Activa
                 </div>
                 <div className="text-[8px] text-text-dim font-mono font-bold">
-                    COWORK HUB v3.0
+                    COWORK HUB v1.0
                 </div>
             </div>
         </aside>

@@ -73,6 +73,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 ["PROTOCOLO_INVESTIGACION"]       = "Investigacion/ProyectoInvestigacion.html",
                 ["INFORME_FINAL_INVESTIGACION"]   = "Investigacion/InformeFinal.html",
+                ["RUBRICA_EVALUACION"]            = "Investigacion/RubricaEvaluacion.html",
+                ["INFORME_AVANCE"]                = "Investigacion/InformeAvance.html",
             };
 
             if (map.TryGetValue(templateCode, out var relativePath))
