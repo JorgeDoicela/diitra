@@ -557,13 +557,11 @@ const ConfiguracionPage = () => {
                 </div>
             </header>
 
-            <div className="flex border-b border-border-thin mb-8 px-2 gap-4 flex-wrap">
+            <div className="tabs-vercel px-2">
                 <button
                     onClick={() => { setActiveTab('lineas'); setSearch(''); }}
-                    className={`flex items-center gap-2 pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-                        activeTab === 'lineas'
-                            ? 'text-text-main border-text-main'
-                            : 'text-text-dim border-transparent hover:text-text-main'
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'lineas' ? 'active' : ''
                     }`}
                 >
                     <BookOpen size={14} />
@@ -571,10 +569,8 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('periodos'); setSearch(''); }}
-                    className={`flex items-center gap-2 pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-                        activeTab === 'periodos'
-                            ? 'text-text-main border-text-main'
-                            : 'text-text-dim border-transparent hover:text-text-main'
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'periodos' ? 'active' : ''
                     }`}
                 >
                     <Calendar size={14} />
@@ -582,10 +578,8 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('productos'); setSearch(''); }}
-                    className={`flex items-center gap-2 pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-                        activeTab === 'productos'
-                            ? 'text-text-main border-text-main'
-                            : 'text-text-dim border-transparent hover:text-text-main'
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'productos' ? 'active' : ''
                     }`}
                 >
                     <Tag size={14} />
@@ -593,10 +587,8 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('dominios'); setSearch(''); }}
-                    className={`flex items-center gap-2 pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-                        activeTab === 'dominios'
-                            ? 'text-text-main border-text-main'
-                            : 'text-text-dim border-transparent hover:text-text-main'
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'dominios' ? 'active' : ''
                     }`}
                 >
                     <Globe size={14} />
@@ -604,10 +596,8 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('indicadores'); setSearch(''); }}
-                    className={`flex items-center gap-2 pb-3 text-xs font-bold uppercase tracking-wider transition-all border-b-2 ${
-                        activeTab === 'indicadores'
-                            ? 'text-text-main border-text-main'
-                            : 'text-text-dim border-transparent hover:text-text-main'
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                        activeTab === 'indicadores' ? 'active' : ''
                     }`}
                 >
                     <BarChart2 size={14} />
@@ -647,11 +637,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {l.activo ? (
-                                                    <span className="status-tag badge-vercel-success">
+                                                    <span className="badge-vercel badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="status-tag badge-vercel-error">
+                                                    <span className="badge-vercel badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -716,11 +706,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {p.activo ? (
-                                                    <span className="status-tag badge-vercel-success">
+                                                    <span className="badge-vercel badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="status-tag badge-vercel-error">
+                                                    <span className="badge-vercel badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -781,11 +771,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {t.activo ? (
-                                                    <span className="status-tag badge-vercel-success">
+                                                    <span className="badge-vercel badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="status-tag badge-vercel-error">
+                                                    <span className="badge-vercel badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -842,11 +832,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {d.activo ? (
-                                                    <span className="status-tag badge-vercel-success">
+                                                    <span className="badge-vercel badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="status-tag badge-vercel-error">
+                                                    <span className="badge-vercel badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -915,11 +905,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {i.activo ? (
-                                                    <span className="status-tag badge-vercel-success">
+                                                    <span className="badge-vercel badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="status-tag badge-vercel-error">
+                                                    <span className="badge-vercel badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -959,14 +949,12 @@ const ConfiguracionPage = () => {
             )}
 
             {isLineaModalOpen && (
-                <div className={editingLinea ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
-                    {editingLinea && (
-                        <div 
-                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                            onClick={() => setIsLineaModalOpen(false)}
-                        />
-                    )}
-                    <div className={editingLinea ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsLineaModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -982,47 +970,49 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsLineaModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                {editingLinea ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveLinea} className="modal-body space-y-6">
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Código de Línea
-                                </label>
-                                <input 
-                                    type="text" 
-                                    value={lineaForm.codigoLinea}
-                                    onChange={(e) => setLineaForm({...lineaForm, codigoLinea: e.target.value})}
-                                    className="input-vercel uppercase font-mono"
-                                    placeholder="LIN-SOFTWARE (Opcional, se autogenera)"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Nombre de la Línea
-                                </label>
-                                <input 
-                                    required
-                                    type="text" 
-                                    value={lineaForm.nombreLinea}
-                                    onChange={(e) => setLineaForm({...lineaForm, nombreLinea: e.target.value})}
-                                    className="input-vercel uppercase font-medium"
-                                    placeholder="Ej: INTELIGENCIA ARTIFICIAL Y DESARROLLO DE SOFTWARE"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Descripción / Áreas de Enfoque
-                                </label>
-                                <textarea 
-                                    rows={3}
-                                    value={lineaForm.descripcion}
-                                    onChange={(e) => setLineaForm({...lineaForm, descripcion: e.target.value})}
-                                    className="input-vercel resize-none"
-                                    placeholder="Detalles sobre sublíneas y pertinencia..."
-                                />
+                        <form onSubmit={handleSaveLinea} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="modal-body space-y-6">
+                                <div className="space-y-2">
+                                    <label className="section-label text-text-dim">
+                                        Código de Línea
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        value={lineaForm.codigoLinea}
+                                        onChange={(e) => setLineaForm({...lineaForm, codigoLinea: e.target.value})}
+                                        className="input-vercel uppercase font-mono"
+                                        placeholder="LIN-SOFTWARE (Opcional, se autogenera)"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="section-label text-text-dim">
+                                        Nombre de la Línea
+                                    </label>
+                                    <input 
+                                        required
+                                        type="text" 
+                                        value={lineaForm.nombreLinea}
+                                        onChange={(e) => setLineaForm({...lineaForm, nombreLinea: e.target.value})}
+                                        className="input-vercel uppercase font-medium"
+                                        placeholder="Ej: INTELIGENCIA ARTIFICIAL Y DESARROLLO DE SOFTWARE"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="section-label text-text-dim">
+                                        Descripción / Áreas de Enfoque
+                                    </label>
+                                    <textarea 
+                                        rows={4}
+                                        value={lineaForm.descripcion}
+                                        onChange={(e) => setLineaForm({...lineaForm, descripcion: e.target.value})}
+                                        className="input-vercel resize-none"
+                                        placeholder="Detalles sobre sublíneas y pertinencia..."
+                                    />
+                                </div>
                             </div>
 
                             <div className="modal-footer">
@@ -1046,14 +1036,12 @@ const ConfiguracionPage = () => {
             )}
 
             {isPeriodoModalOpen && (
-                <div className={editingPeriodo ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
-                    {editingPeriodo && (
-                        <div 
-                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                            onClick={() => setIsPeriodoModalOpen(false)}
-                        />
-                    )}
-                    <div className={editingPeriodo ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsPeriodoModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1069,60 +1057,62 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsPeriodoModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                {editingPeriodo ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSavePeriodo} className="modal-body space-y-6">
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Identificador del Período
-                                </label>
-                                <input 
-                                    required
-                                    disabled={editingPeriodo !== null}
-                                    type="text" 
-                                    value={periodoForm.idPeriodo}
-                                    onChange={(e) => setPeriodoForm({...periodoForm, idPeriodo: e.target.value})}
-                                    className="input-vercel uppercase font-mono disabled:opacity-50"
-                                    placeholder="Ej: 2026-A"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Detalle / Nombre
-                                </label>
-                                <input 
-                                    required
-                                    type="text" 
-                                    value={periodoForm.detalle}
-                                    onChange={(e) => setPeriodoForm({...periodoForm, detalle: e.target.value})}
-                                    className="input-vercel uppercase font-medium"
-                                    placeholder="Ej: PERÍODO MAYO - OCTUBRE 2026"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSavePeriodo} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="modal-body space-y-6">
                                 <div className="space-y-2">
                                     <label className="section-label text-text-dim">
-                                        Fecha de Inicio
+                                        Identificador del Período
                                     </label>
                                     <input 
-                                        type="date" 
-                                        value={periodoForm.fechaInicial}
-                                        onChange={(e) => setPeriodoForm({...periodoForm, fechaInicial: e.target.value})}
-                                        className="input-vercel"
+                                        required
+                                        disabled={editingPeriodo !== null}
+                                        type="text" 
+                                        value={periodoForm.idPeriodo}
+                                        onChange={(e) => setPeriodoForm({...periodoForm, idPeriodo: e.target.value})}
+                                        className="input-vercel uppercase font-mono disabled:opacity-50"
+                                        placeholder="Ej: 2026-A"
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="section-label text-text-dim">
-                                        Fecha de Fin
+                                        Detalle / Nombre
                                     </label>
                                     <input 
-                                        type="date" 
-                                        value={periodoForm.fechaFinal}
-                                        onChange={(e) => setPeriodoForm({...periodoForm, fechaFinal: e.target.value})}
-                                        className="input-vercel"
+                                        required
+                                        type="text" 
+                                        value={periodoForm.detalle}
+                                        onChange={(e) => setPeriodoForm({...periodoForm, detalle: e.target.value})}
+                                        className="input-vercel uppercase font-medium"
+                                        placeholder="Ej: PERÍODO MAYO - OCTUBRE 2026"
                                     />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Fecha de Inicio
+                                        </label>
+                                        <input 
+                                            type="date" 
+                                            value={periodoForm.fechaInicial}
+                                            onChange={(e) => setPeriodoForm({...periodoForm, fechaInicial: e.target.value})}
+                                            className="input-vercel"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Fecha de Fin
+                                        </label>
+                                        <input 
+                                            type="date" 
+                                            value={periodoForm.fechaFinal}
+                                            onChange={(e) => setPeriodoForm({...periodoForm, fechaFinal: e.target.value})}
+                                            className="input-vercel"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
@@ -1147,14 +1137,12 @@ const ConfiguracionPage = () => {
             )}
 
             {isProductoModalOpen && (
-                <div className={editingProducto ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
-                    {editingProducto && (
-                        <div 
-                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                            onClick={() => setIsProductoModalOpen(false)}
-                        />
-                    )}
-                    <div className={editingProducto ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsProductoModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1170,50 +1158,52 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsProductoModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                {editingProducto ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveProducto} className="modal-body space-y-6">
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Nombre del Tipo de Producto
-                                </label>
-                                <input 
-                                    required
-                                    type="text" 
-                                    value={productoForm.nombre}
-                                    onChange={(e) => setProductoForm({...productoForm, nombre: e.target.value})}
-                                    className="input-vercel uppercase font-medium"
-                                    placeholder="Ej: Artículo Científico Indexado, Libro, Prototipo Industrial"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Categoría
-                                </label>
-                                <select 
-                                    value={productoForm.categoria}
-                                    onChange={(e) => setProductoForm({...productoForm, categoria: e.target.value})}
-                                    className="input-vercel font-medium"
-                                >
-                                    <option value="Académico">Académico</option>
-                                    <option value="Tecnológico">Tecnológico</option>
-                                    <option value="Innovación">Innovación</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-3 p-3 bg-bg-deep/50 rounded-lg border border-border-thin">
-                                <input 
-                                    type="checkbox"
-                                    id="requiereRegistro"
-                                    checked={productoForm.requiereRegistro}
-                                    onChange={(e) => setProductoForm({...productoForm, requiereRegistro: e.target.checked})}
-                                    className="accent-text-main w-4 h-4 rounded"
-                                />
-                                <label htmlFor="requiereRegistro" className="text-xs text-text-main font-bold uppercase tracking-wide cursor-pointer">
-                                    Requiere Registro de Propiedad Intelectual o Indexación (SENADI/ISSN)
-                                </label>
+                        <form onSubmit={handleSaveProducto} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="modal-body space-y-6">
+                                <div className="space-y-2">
+                                    <label className="section-label text-text-dim">
+                                        Nombre del Tipo de Producto
+                                    </label>
+                                    <input 
+                                        required
+                                        type="text" 
+                                        value={productoForm.nombre}
+                                        onChange={(e) => setProductoForm({...productoForm, nombre: e.target.value})}
+                                        className="input-vercel uppercase font-medium"
+                                        placeholder="Ej: Artículo Científico Indexado, Libro, Prototipo Industrial"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="section-label text-text-dim">
+                                        Categoría
+                                    </label>
+                                    <select 
+                                        value={productoForm.categoria}
+                                        onChange={(e) => setProductoForm({...productoForm, categoria: e.target.value})}
+                                        className="input-vercel font-medium"
+                                    >
+                                        <option value="Académico">Académico</option>
+                                        <option value="Tecnológico">Tecnológico</option>
+                                        <option value="Innovación">Innovación</option>
+                                        <option value="Transferencia">Transferencia</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-center gap-3 p-3 bg-bg-deep/50 rounded-lg border border-border-thin">
+                                    <input 
+                                        type="checkbox"
+                                        id="requiereRegistro"
+                                        checked={productoForm.requiereRegistro}
+                                        onChange={(e) => setProductoForm({...productoForm, requiereRegistro: e.target.checked})}
+                                        className="accent-text-main w-4 h-4 rounded"
+                                    />
+                                    <label htmlFor="requiereRegistro" className="text-xs text-text-main font-bold uppercase tracking-wide cursor-pointer select-none">
+                                        Requiere Registro de Propiedad Intelectual o Indexación (SENADI/ISSN)
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="modal-footer">
@@ -1237,14 +1227,12 @@ const ConfiguracionPage = () => {
             )}
 
             {isDominioModalOpen && (
-                <div className={editingDominio ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
-                    {editingDominio && (
-                        <div 
-                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                            onClick={() => setIsDominioModalOpen(false)}
-                        />
-                    )}
-                    <div className={editingDominio ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsDominioModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1260,23 +1248,25 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsDominioModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                {editingDominio ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveDominio} className="modal-body space-y-6">
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Nombre del Dominio Académico
-                                </label>
-                                <input 
-                                    required
-                                    type="text" 
-                                    value={dominioForm.nombre}
-                                    onChange={(e) => setDominioForm({...dominioForm, nombre: e.target.value})}
-                                    className="input-vercel uppercase font-medium"
-                                    placeholder="Ej: TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN, SERVICIOS SOCIALES"
-                                />
+                        <form onSubmit={handleSaveDominio} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="modal-body space-y-6">
+                                <div className="space-y-2">
+                                    <label className="section-label text-text-dim">
+                                        Nombre del Dominio Académico
+                                    </label>
+                                    <input 
+                                        required
+                                        type="text" 
+                                        value={dominioForm.nombre}
+                                        onChange={(e) => setDominioForm({...dominioForm, nombre: e.target.value})}
+                                        className="input-vercel uppercase font-medium"
+                                        placeholder="Ej: TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN, SERVICIOS SOCIALES"
+                                    />
+                                </div>
                             </div>
 
                             <div className="modal-footer">
@@ -1300,14 +1290,12 @@ const ConfiguracionPage = () => {
             )}
 
             {isIndicadorModalOpen && (
-                <div className={editingIndicador ? "fixed inset-0 z-[9999] flex justify-end" : "modal-overlay"}>
-                    {editingIndicador && (
-                        <div 
-                            className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                            onClick={() => setIsIndicadorModalOpen(false)}
-                        />
-                    )}
-                    <div className={editingIndicador ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsIndicadorModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1323,93 +1311,95 @@ const ConfiguracionPage = () => {
                                 </div>
                             </div>
                             <button onClick={() => setIsIndicadorModalOpen(false)} className="text-text-dim hover:text-text-main transition-colors">
-                                {editingIndicador ? <ChevronRight size={20} /> : <Plus className="rotate-45" size={20} />}
+                                <ChevronRight size={20} />
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveIndicador} className="modal-body space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={handleSaveIndicador} className="flex-1 flex flex-col overflow-hidden">
+                            <div className="modal-body space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Código de Indicador
+                                        </label>
+                                        <input 
+                                            required
+                                            type="text" 
+                                            value={indicadorForm.codigoIndicador}
+                                            onChange={(e) => setIndicadorForm({...indicadorForm, codigoIndicador: e.target.value})}
+                                            className="input-vercel uppercase font-mono"
+                                            placeholder="Ej: IND-PUB-ART"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Año de la Normativa
+                                        </label>
+                                        <input 
+                                            required
+                                            type="number" 
+                                            value={indicadorForm.añoNormativa}
+                                            onChange={(e) => setIndicadorForm({...indicadorForm, añoNormativa: Number(e.target.value)})}
+                                            className="input-vercel font-mono"
+                                            placeholder="Ej: 2026"
+                                        />
+                                    </div>
+                                </div>
                                 <div className="space-y-2">
                                     <label className="section-label text-text-dim">
-                                        Código de Indicador
+                                        Nombre del Indicador
                                     </label>
                                     <input 
                                         required
                                         type="text" 
-                                        value={indicadorForm.codigoIndicador}
-                                        onChange={(e) => setIndicadorForm({...indicadorForm, codigoIndicador: e.target.value})}
-                                        className="input-vercel uppercase font-mono"
-                                        placeholder="Ej: IND-PUB-ART"
+                                        value={indicadorForm.nombreIndicador}
+                                        onChange={(e) => setIndicadorForm({...indicadorForm, nombreIndicador: e.target.value})}
+                                        className="input-vercel uppercase font-medium"
+                                        placeholder="Ej: Tasa de Publicación Científica por Docente TC"
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="section-label text-text-dim">
-                                        Año de la Normativa
+                                        Descripción / Metodología de Cálculo
                                     </label>
-                                    <input 
-                                        required
-                                        type="number" 
-                                        value={indicadorForm.añoNormativa}
-                                        onChange={(e) => setIndicadorForm({...indicadorForm, añoNormativa: Number(e.target.value)})}
-                                        className="input-vercel font-mono"
-                                        placeholder="Ej: 2026"
+                                    <textarea 
+                                        rows={3}
+                                        value={indicadorForm.descripcion}
+                                        onChange={(e) => setIndicadorForm({...indicadorForm, descripcion: e.target.value})}
+                                        className="input-vercel resize-none"
+                                        placeholder="Detalle sobre el cálculo y pertinencia del indicador..."
                                     />
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Nombre del Indicador
-                                </label>
-                                <input 
-                                    required
-                                    type="text" 
-                                    value={indicadorForm.nombreIndicador}
-                                    onChange={(e) => setIndicadorForm({...indicadorForm, nombreIndicador: e.target.value})}
-                                    className="input-vercel uppercase font-medium"
-                                    placeholder="Ej: Tasa de Publicación Científica por Docente TC"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="section-label text-text-dim">
-                                    Descripción / Metodología de Cálculo
-                                </label>
-                                <textarea 
-                                    rows={2}
-                                    value={indicadorForm.descripcion}
-                                    onChange={(e) => setIndicadorForm({...indicadorForm, descripcion: e.target.value})}
-                                    className="input-vercel resize-none"
-                                    placeholder="Detalle sobre el cálculo y pertinencia del indicador..."
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="section-label text-text-dim">
-                                        Tipo de Dato
-                                    </label>
-                                    <select 
-                                        value={indicadorForm.tipoDato}
-                                        onChange={(e) => setIndicadorForm({...indicadorForm, tipoDato: e.target.value})}
-                                        className="input-vercel font-medium"
-                                    >
-                                        <option value="Cantidad">Cantidad</option>
-                                        <option value="Monto">Monto / Presupuesto</option>
-                                        <option value="Porcentaje">Porcentaje</option>
-                                        <option value="Booleano">Booleano</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="section-label text-text-dim">
-                                        Valor de Referencia / Meta
-                                    </label>
-                                    <input 
-                                        required
-                                        type="number" 
-                                        step="0.01"
-                                        value={indicadorForm.valorReferencia}
-                                        onChange={(e) => setIndicadorForm({...indicadorForm, valorReferencia: Number(e.target.value)})}
-                                        className="input-vercel font-mono"
-                                        placeholder="Ej: 0.50 o 80.00"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Tipo de Dato
+                                        </label>
+                                        <select 
+                                            value={indicadorForm.tipoDato}
+                                            onChange={(e) => setIndicadorForm({...indicadorForm, tipoDato: e.target.value})}
+                                            className="input-vercel font-medium"
+                                        >
+                                            <option value="Cantidad">Cantidad</option>
+                                            <option value="Monto">Monto / Presupuesto</option>
+                                            <option value="Porcentaje">Porcentaje</option>
+                                            <option value="Booleano">Booleano</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Valor de Referencia / Meta
+                                        </label>
+                                        <input 
+                                            required
+                                            type="number" 
+                                            step="0.01"
+                                            value={indicadorForm.valorReferencia}
+                                            onChange={(e) => setIndicadorForm({...indicadorForm, valorReferencia: Number(e.target.value)})}
+                                            className="input-vercel font-mono"
+                                            placeholder="Ej: 0.50 o 80.00"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 
