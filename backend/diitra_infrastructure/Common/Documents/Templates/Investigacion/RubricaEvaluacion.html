@@ -68,7 +68,7 @@
             <tr class="total-row">
                 <td style="text-align: right; text-transform: uppercase;"><strong>Puntaje Total Consolidado:</strong></td>
                 <td style="text-align: center;"><strong>100</strong></td>
-                <td style="text-align: center; background: #e2e8f0; font-size: 13pt;"><strong>{{ (Pertinencia | default 0) + (Metodologia | default 0) + (Viabilidad | default 0) + (Impacto | default 0) }}</strong></td>
+                <td style="text-align: center; background: #e2e8f0; font-size: 13pt;"><strong>{{sum Pertinencia Metodologia Viabilidad Impacto}}</strong></td>
             </tr>
         </tbody>
     </table>
