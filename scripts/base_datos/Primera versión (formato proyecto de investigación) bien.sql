@@ -195,6 +195,7 @@ CREATE TABLE inv_grupos_investigacion (
     vision               TEXT,
     resolucionAprobacion VARCHAR(100),
     fechaCreacion        DATE,
+    estado               VARCHAR(20)  DEFAULT 'Aprobado',
     activo               TINYINT(1)   DEFAULT 1,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idCoordinador) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
@@ -494,6 +495,10 @@ CREATE TABLE inv_proyectos_profesores (
     nivelAcademico     VARCHAR(150),
     telefono           VARCHAR(20),
     horasSemanales     DECIMAL(4,1),
+    activo             TINYINT(1)    DEFAULT 1,
+    fecha_inicio       DATETIME      NULL,
+    fecha_fin          DATETIME      NULL,
+    motivo_cambio      VARCHAR(150)  NULL,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -505,6 +510,10 @@ CREATE TABLE inv_proyectos_alumnos (
     rol              VARCHAR(100),
     nivelAcademico   VARCHAR(150),
     telefono         VARCHAR(20),
+    activo           TINYINT(1)    DEFAULT 1,
+    fecha_inicio     DATETIME      NULL,
+    fecha_fin        DATETIME      NULL,
+    motivo_cambio    VARCHAR(150)  NULL,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
