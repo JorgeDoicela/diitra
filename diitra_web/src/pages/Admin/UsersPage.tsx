@@ -407,7 +407,7 @@ const UsersPage = () => {
 
             {showExternalForm && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowExternalForm(false); }}>
-                    <div className="modal-card modal-card--lg animate-fade-up">
+                    <div className="modal-card modal-card--lg animate-scale-up">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-info !p-2"><Globe size={20} /></div>
@@ -498,7 +498,7 @@ const UsersPage = () => {
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                         onClick={() => setDetailUser(null)}
                     />
-                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
