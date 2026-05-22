@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import {
     Search, Shield, User as UserIcon, X, RefreshCw,
     Settings2, GraduationCap, UserPlus, History, Globe,
-    Activity
+    Activity, ChevronRight, Mail, Hash, Clock, Award,
+    Fingerprint, BookOpen, Users
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import UserProfileModal from './components/UserProfileModal';
@@ -53,6 +54,7 @@ const UsersPage = () => {
     const [loading, setLoading] = useState(false);
     const [updating, setUpdating] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
+    const [detailUser, setDetailUser] = useState<ManagedUser | null>(null);
     const [showExternalForm, setShowExternalForm] = useState(false);
     const [showAudit, setShowAudit] = useState(false);
 
@@ -238,7 +240,9 @@ const UsersPage = () => {
                                     </td>
                                 </tr>
                             ) : users.map((u) => (
-                                <tr key={u.id_profesor} className="hover:bg-surface/30 transition-colors group">
+                                <tr key={u.id_profesor} className="hover:bg-surface/30 transition-colors group cursor-pointer"
+                                    onClick={() => setDetailUser(u)}
+                                >
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded-lg bg-surface border border-border-thin flex items-center justify-center text-text-dim group-hover:text-text-main group-hover:border-border-hover transition-all shrink-0">
@@ -308,7 +312,7 @@ const UsersPage = () => {
                                     </td>
                                     <td className="p-4 text-right">
                                         <button
-                                            onClick={() => setSelectedUser(u)}
+                                            onClick={(e) => { e.stopPropagation(); setSelectedUser(u); }}
                                             className="p-2 hover:bg-surface rounded-md text-text-dim hover:text-text-main transition-all ml-auto"
                                             title="Editar Perfil Extendido"
                                         >
@@ -486,6 +490,153 @@ const UsersPage = () => {
                     user={selectedUser}
                     onClose={() => { setSelectedUser(null); fetchUsers(); fetchAuditLogs(); }}
                 />
+            )}
+
+            {detailUser && (
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div 
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setDetailUser(null)}
+                    />
+                    <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                        <div className="modal-header">
+                            <div className="flex items-center gap-3">
+                                <div className="icon-circle icon-circle-brand">
+                                    <UserIcon size={20} />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">{detailUser.nombre_completo}</h3>
+                                    <p className="section-label text-text-dim">
+                                        {detailUser.type === 'DOCENTE' ? 'Docente Investigador' : detailUser.type === 'ESTUDIANTE' ? 'Estudiante' : 'Evaluador Externo'} — DIITRA
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setDetailUser(null)} className="text-text-dim hover:text-text-main transition-colors">
+                                <ChevronRight size={20} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bento-card static p-4">
+                                    <label className="section-label text-text-dim mb-2">
+                                        <Mail size={12} /> Correo Electrónico
+                                    </label>
+                                    <p className="text-sm font-bold text-text-main break-all">{detailUser.email}</p>
+                                </div>
+                                <div className="bento-card static p-4">
+                                    <label className="section-label text-text-dim mb-2">
+                                        <Hash size={12} /> Cédula / ID
+                                    </label>
+                                    <p className="text-sm font-bold text-text-main font-mono">{detailUser.id_profesor}</p>
+                                </div>
+                            </div>
+
+                            {detailUser.type === 'DOCENTE' && (
+                                <div className="bento-card static p-4 space-y-3">
+                                    <label className="section-label text-text-main">
+                                        <Activity size={12} /> Capacidades Docentes
+                                    </label>
+                                    <div className="divider-vercel !my-0" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="section-label text-text-dim mb-1">Horas Investigación</p>
+                                            <div className={`badge-vercel ${(detailUser.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
+                                                <Activity size={10} />
+                                                {detailUser.horas_investigacion || 0}h
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="section-label text-text-dim mb-1">Dedicación</p>
+                                            <p className="text-sm font-bold text-text-main">{detailUser.tipo_dedicacion || 'Sin contrato'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {detailUser.type === 'ESTUDIANTE' && (
+                                <div className="bento-card static p-4 space-y-3">
+                                    <label className="section-label text-text-main">
+                                        <GraduationCap size={12} /> Información Académica
+                                    </label>
+                                    <div className="divider-vercel !my-0" />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="section-label text-text-dim mb-1">Carrera</p>
+                                            <p className="text-sm font-bold text-text-main">{detailUser.carrera || 'Sin carrera'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="section-label text-text-dim mb-1">Nivel</p>
+                                            <p className="text-sm font-bold text-text-main">{detailUser.nivel || 'Sin nivel'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {detailUser.type === 'EXTERNO' && (
+                                <div className="bento-card static p-4 space-y-3">
+                                    <label className="section-label text-text-main">
+                                        <Globe size={12} /> Perfil Externo
+                                    </label>
+                                    <div className="divider-vercel !my-0" />
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="section-label text-text-dim">ORCID</span>
+                                            <span className={`badge-vercel ${detailUser.orcid_id ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
+                                                {detailUser.orcid_id ? 'Verificado' : 'No registrado'}
+                                            </span>
+                                        </div>
+                                        {detailUser.orcid_id && (
+                                            <p className="text-xs font-mono text-text-dim break-all">{detailUser.orcid_id}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="bento-card static p-4 space-y-3">
+                                <label className="section-label text-text-main">
+                                    <Shield size={12} /> Permisos Asignados
+                                </label>
+                                <div className="divider-vercel !my-0" />
+                                <div className="flex flex-wrap gap-2">
+                                    {detailUser.role_codes && detailUser.role_codes.length > 0 ? (
+                                        detailUser.role_codes.map(code => (
+                                            <span key={code} className="badge-vercel badge-vercel-info">
+                                                {code}
+                                            </span>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-text-dim">Sin roles asignados</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bento-card static p-4 space-y-3">
+                                <label className="section-label text-text-main">
+                                    <Fingerprint size={12} /> Firma Electrónica
+                                </label>
+                                <div className="divider-vercel !my-0" />
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm text-text-dim">Estado del Certificado</span>
+                                    <span className={`badge-vercel ${detailUser.firma_habilitada ? 'badge-vercel-success' : 'badge-vercel-neutral'}`}>
+                                        <span className={`dot ${detailUser.firma_habilitada ? 'dot-success' : 'dot-neutral'}`} />
+                                        {detailUser.firma_habilitada ? 'Habilitada' : 'No cargada'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer">
+                            <button onClick={() => setDetailUser(null)} className="btn-vercel-secondary">Cerrar</button>
+                            <button 
+                                onClick={() => { setSelectedUser(detailUser); setDetailUser(null); }}
+                                className="btn-vercel-primary flex items-center gap-2"
+                            >
+                                <Settings2 size={14} /> Editar Perfil
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </main>
     );
