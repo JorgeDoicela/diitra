@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Award, Link, BookOpen, Fingerprint, Save, RefreshCw } from 'lucide-react';
+import { X, Award, Link, BookOpen, Fingerprint, Save, RefreshCw, ChevronRight } from 'lucide-react';
 import api from '../../../api/axios_config';
 
 interface UserProfileModalProps {
@@ -54,11 +54,15 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
     };
 
     return (
-        <div className="modal-overlay">
-            <div className="modal-card modal-card--lg">
-                <header className="modal-header">
+        <div className="fixed inset-0 z-[9999] flex justify-end">
+            <div 
+                className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                onClick={onClose}
+            />
+            <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden">
+                <div className="modal-header">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                        <div className="icon-circle icon-circle-brand">
                             <Award size={20} />
                         </div>
                         <div>
@@ -67,14 +71,14 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                         </div>
                     </div>
                     <button onClick={onClose} className="text-text-dim hover:text-text-main p-2 transition-colors">
-                        <X size={20} />
+                        <ChevronRight size={20} />
                     </button>
-                </header>
+                </div>
 
-                <div className="modal-body space-y-6">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {loading ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-4">
-                            <RefreshCw className="animate-spin text-text-main" size={24} />
+                            <RefreshCw className="animate-spin text-brand" size={24} />
                             <p className="section-label text-text-dim">Cargando perfiles externos...</p>
                         </div>
                     ) : (
@@ -88,7 +92,7 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                                         type="text" 
                                         value={metadata.orcid_id || ''}
                                         onChange={(e) => setMetadata({...metadata, orcid_id: e.target.value})}
-                                        className="input-vercel font-mono"
+                                        className="input-vercel !font-mono"
                                         placeholder="0000-0000-0000-0000"
                                     />
                                 </div>
@@ -100,7 +104,7 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                                         type="text" 
                                         value={metadata.scopus_id || ''}
                                         onChange={(e) => setMetadata({...metadata, scopus_id: e.target.value})}
-                                        className="input-vercel font-mono"
+                                        className="input-vercel !font-mono"
                                         placeholder="572189..."
                                     />
                                 </div>
@@ -133,7 +137,7 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                                 </div>
                             </section>
 
-                            <hr className="border-border-thin" />
+                            <div className="divider-vercel" />
 
                             <section className="grid grid-cols-2 gap-6">
                                 <div className="space-y-2 col-span-2">
@@ -166,7 +170,7 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                                     <label className="section-label text-text-dim">
                                         <Fingerprint size={12} /> Firma Electrónica
                                     </label>
-                                    <div className="bg-bg-deep/50 border border-border-thin rounded-lg p-3 text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center justify-between">
+                                    <div className="bento-card static p-3 text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center justify-between">
                                         <span>Estado del Certificado</span>
                                         <span className="text-error">No Cargado</span>
                                     </div>
@@ -176,13 +180,8 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                     )}
                 </div>
 
-                <footer className="modal-footer">
-                    <button 
-                        onClick={onClose}
-                        className="btn-vercel-secondary"
-                    >
-                        Cancelar
-                    </button>
+                <div className="modal-footer">
+                    <button onClick={onClose} className="btn-vercel-secondary">Cancelar</button>
                     <button 
                         onClick={handleSave}
                         disabled={saving || loading}
@@ -191,7 +190,7 @@ const UserProfileModal = ({ user, onClose }: UserProfileModalProps) => {
                         {saving ? <RefreshCw className="animate-spin" size={14} /> : <Save size={14} />}
                         {saving ? 'Guardando...' : 'Actualizar Perfil'}
                     </button>
-                </footer>
+                </div>
             </div>
         </div>
     );
