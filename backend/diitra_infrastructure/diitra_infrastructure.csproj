@@ -39,6 +39,10 @@
     <None Update="Common\Documents\Templates\**\*.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Imágenes institucionales: se copian al output para que ImageResourceLoader las lea en producción -->
+    <None Update="Common\Documents\Resources\Images\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

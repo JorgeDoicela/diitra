@@ -3,7 +3,7 @@ import {
     Users, Plus, Search, Edit2, 
     Trash2, CheckCircle, XCircle,
     BookOpen, Shield, Award, Calendar, FileText, Eye,
-    UserPlus, UserMinus, GraduationCap, User, ChevronRight, Target, EyeOff
+    UserPlus, UserMinus, GraduationCap, User, ChevronRight, Target
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';

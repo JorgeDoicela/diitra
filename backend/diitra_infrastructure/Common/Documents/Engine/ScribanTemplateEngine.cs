@@ -77,7 +77,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         public async Task<string> RenderAsync(
             string templateHtml,
             object data,
-            Dictionary<string, object>? extraVariables = null,
+            Dictionary<string, object?>? extraVariables = null,
             bool isBlindMode = false)
         {
             // Compilar la plantilla (Handlebars cachea internamente)
@@ -100,7 +100,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
         private Dictionary<string, object?> BuildContext(
             object data,
-            Dictionary<string, object>? extraVariables,
+            Dictionary<string, object?>? extraVariables,
             bool isBlindMode)
         {
             // 1. Serializar el DTO a JSON

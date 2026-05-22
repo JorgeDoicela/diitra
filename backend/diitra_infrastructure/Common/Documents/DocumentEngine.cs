@@ -12,7 +12,8 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Collections.Concurrent;
 using Diitra.Infrastructure.Common.Documents.Engine;
-using Diitra.Infrastructure.Common.Documents.Resources;
+// TemplateImages.cs eliminado — imágenes cargadas desde Resources/Images/ vía ImageResourceLoader
+using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using iText.IO.Image;
 using Microsoft.Extensions.Configuration;
 
@@ -48,6 +49,7 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly ILogger<DocumentEngine> _logger;
         private readonly IConfiguration _configuration;
         private readonly TemplateFileLoader _templateFileLoader;
+        private readonly ImageResourceLoader _imageLoader;
 
         // PERFORMANCE OPTIMIZATION: Heavy engines are shared across requests
         private static readonly ScribanTemplateEngine _scribanEngine = new();
@@ -55,29 +57,19 @@ namespace Diitra.Infrastructure.Common.Documents
         private static readonly PdfMergerService _mergerService = new();
         private static readonly LegalComplianceInjector _complianceInjector = new();
 
-        private static readonly Lazy<ImageData> _fondoHojasInvestigacionImageData = new(() =>
-        {
-            string base64 = TemplateImages.FondoHojasInvestigacionBase64;
-            string base64Data = base64.Contains(",") 
-                ? base64.Substring(base64.IndexOf(",") + 1) 
-                : base64;
-            byte[] imageBytes = Convert.FromBase64String(base64Data);
-            return ImageDataFactory.Create(imageBytes);
-        });
-
         public DocumentEngine(
             IDocumentTemplateRepository templateRepository,
             IDocumentAuditRepository auditRepository,
             ILogger<DocumentEngine> logger,
             IConfiguration configuration,
-            IHostEnvironment environment,
-            ILogger<TemplateFileLoader>? templateFileLoaderLogger = null)
+            IHostEnvironment environment)
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
             _logger = logger;
             _configuration = configuration;
-            _templateFileLoader = new TemplateFileLoader(environment, templateFileLoaderLogger);
+            _templateFileLoader = new TemplateFileLoader(environment);
+            _imageLoader = new ImageResourceLoader(environment);
         }
 
         public async Task<DocumentResult> GenerateAsync(
@@ -129,8 +121,18 @@ namespace Diitra.Infrastructure.Common.Documents
                 if (fileHtml != null)
                     _logger.LogDebug("DIITRA DocumentEngine: Usando HTML desde archivo físico para '{Code}'.", template.Code);
 
-                // 4. Inyectar datos con Handlebars
-                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender, request.Data, null, request.IsBlindMode);
+                // 4. Cargar imágenes desde disco e inyectar como variables extra en Handlebars
+                //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
+                var extraImageVars = new Dictionary<string, object?>();
+
+                if (template.Code == ProyectoInvestigacionTemplate.CODE)
+                {
+                    var portadaBase64 = await _imageLoader.LoadAsBase64Async("portada_proyecto");
+                    if (portadaBase64 != null) extraImageVars["portada_base64"] = portadaBase64;
+                }
+
+                // 5. Inyectar datos + imágenes con Handlebars
+                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender, request.Data, extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
                 
                 // 5. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
                 var optimizedHtml = ProcessAndOptimizeHtml(renderedHtml);
@@ -143,13 +145,18 @@ namespace Diitra.Infrastructure.Common.Documents
                                            ?? "https://diitra.ist.edu.ec";
 
                 // 7. Renderizado a PDF
+                //    Para el protocolo de investigación, cargamos el fondo de hojas desde disco.
+                ImageData? stationaryImage = null;
+                if (template.Code == ProyectoInvestigacionTemplate.CODE)
+                {
+                    stationaryImage = await _imageLoader.LoadAsImageDataAsync("fondo_hojas_investigacion");
+                }
+
                 var pdfBytes = await _pdfRenderer.RenderWithMetadataAsync(finalHtml, new DocumentRenderingMetadata
                 {
                     TraceabilityCode = traceabilityCode,
                     IsDraft = request.IsDraftMode,
-                    StationaryImageData = template.Code == "PROTOCOLO_INVESTIGACION" 
-                        ? _fondoHojasInvestigacionImageData.Value 
-                        : null,
+                    StationaryImageData = stationaryImage,
                     VerificationBaseUrl = verificationBaseUrl
                 }, template.CustomCss);
 

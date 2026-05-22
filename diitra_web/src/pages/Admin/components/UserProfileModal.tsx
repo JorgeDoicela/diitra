@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Award, Link, BookOpen, Fingerprint, Save, RefreshCw, ChevronRight } from 'lucide-react';
+import { Award, Link, BookOpen, Fingerprint, Save, RefreshCw, ChevronRight } from 'lucide-react';
 import api from '../../../api/axios_config';
 
 interface UserProfileModalProps {
