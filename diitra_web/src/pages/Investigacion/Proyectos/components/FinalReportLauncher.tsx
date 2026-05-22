@@ -21,6 +21,28 @@ interface FinalReportLauncherProps {
     onClose: () => void;
 }
 
+const getEstadoDotClass = (estado: string) => {
+    switch (estado?.toLowerCase()) {
+        case 'borrador':
+            return 'dot-neutral';
+        case 'enviado':
+            return 'dot-info';
+        case 'en revisión':
+        case 'en revision':
+            return 'dot-warning';
+        case 'aprobado':
+        case 'finalizado':
+            return 'dot-success';
+        case 'en ejecución':
+        case 'en ejecucion':
+            return 'dot-brand dot-pulse';
+        case 'rechazado':
+            return 'dot-error';
+        default:
+            return 'dot-success';
+    }
+};
+
 const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +96,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
 
     return (
         <div className="modal-overlay !items-end sm:!items-center !p-0 sm:!p-4">
-            <div className="modal-card !max-w-2xl !rounded-t-2xl sm:!rounded-2xl animate-fade-up h-[90vh] sm:!h-auto flex flex-col">
+            <div className="modal-card !max-w-2xl !rounded-t-2xl sm:!rounded-2xl animate-fade-up h-[90vh] sm:h-auto max-h-[90vh] sm:max-h-[80vh] flex flex-col">
                 <div className="modal-header bg-glow">
                     <div className="space-y-1">
                         <div className="section-label text-brand">
@@ -133,10 +155,10 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <div className="text-[9px] md:text-[10px] font-black text-brand uppercase tracking-widest mb-0.5 md:mb-1 truncate">{p.codigoInstitucional}</div>
-                                            <h4 className="text-xs md:text-sm font-bold text-text-main group-hover:translate-x-1 transition-transform truncate">{p.titulo}</h4>
+                                            <h4 className="text-xs md:text-sm font-bold text-text-main group-hover:translate-x-1 transition-transform truncate">{p.titulo || 'PROYECTO SIN TÍTULO'}</h4>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <span className="dot dot-success" />
-                                                <span className="text-[9px] md:text-[10px] text-text-dim font-bold uppercase">{p.estado}</span>
+                                                <span className={`dot ${getEstadoDotClass(p.estado)}`} />
+                                                <span className="text-[9px] md:text-[10px] text-text-dim font-bold uppercase">{p.estado || 'BORRADOR'}</span>
                                             </div>
                                         </div>
                                     </div>
