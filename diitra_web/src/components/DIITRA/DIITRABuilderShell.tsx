@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
+import CollaborationSidebar from './CollaborationSidebar';
 
 /**
  * DIITRA BUILDER CORE — SHELL UNIVERSAL DE DOCUMENTACIÓN v2.0
@@ -70,6 +71,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
     useEffect(() => {
@@ -247,6 +249,22 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 </div>
                             )}
                         </div>
+
+                        {/* Botón de alternancia de Chat / Team Pulse */}
+                        {activeTab !== 'output' && (
+                            <button
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                                className={`p-2 md:p-2.5 rounded-xl border transition-all flex items-center gap-2 ${
+                                    isSidebarOpen 
+                                    ? 'bg-text-main text-bg-deep border-text-main shadow-lg font-black' 
+                                    : 'bg-bg-deep hover:bg-surface border-border-thin text-text-dim hover:text-text-main'
+                                }`}
+                                title="Chat y Pulso de Trabajo (Team Pulse)"
+                            >
+                                <MessageSquare size={16} className={isOnline ? 'animate-pulse' : ''} />
+                                <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline">Team Pulse</span>
+                            </button>
+                        )}
 
                         {/* Estado de sincronización */}
                         <div className="hidden sm:flex flex-col items-end">
@@ -449,6 +467,21 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             </div>
                         )}
                     </div>
+
+                    {/* ── Collaboration Sidebar (Derecha) ── */}
+                    {activeTab !== 'output' && (
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden flex shrink-0 ${
+                            isSidebarOpen ? 'w-80 border-l border-border-thin' : 'w-0'
+                        }`}>
+                            <CollaborationSidebar
+                                instanceUuid={cowork.session.documentId}
+                                sectionName={activeTab}
+                                cowork={cowork}
+                                allSections={sections.map(s => s.id)}
+                                onClose={() => setIsSidebarOpen(false)}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
