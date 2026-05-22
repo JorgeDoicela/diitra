@@ -1,21 +1,44 @@
 /* 
 =================================================================================
-             SISTEMA DE DISEÑO GLOBAL DE VERCEL (GEIST SYSTEM) - DIITRA
+             DIITRA GLOBAL DESIGN SYSTEM (VERCEL GEIST PRESET)
 =================================================================================
-Este archivo CSS centraliza todo el diseño de alta gama inspirado en Vercel.com. 
-Cuentas con tipografías premium, escala de grises suave, colores de feedback 
-semántico, mallas y destellos de fondo interactivos, y componentes Bento preconfigurados.
+Este archivo centraliza la identidad visual premium de DIITRA, inspirada de forma
+estricta en las pautas minimalistas de Vercel.com (Geist System).
 
-A continuación se detallan las secciones y cómo puedes usar cada estilo en tu HTML:
+CARACTERÍSTICAS CORE:
+- Tipografías premium con soporte monospace de alto contraste.
+- Paleta semántica con adaptación automática de tema Claro/Oscuro.
+- Retículas infinitas y degradados radiales dinámicos de fondo.
+- Componentes Bento interactivos con micro-sombras y elevación física.
+
+DIRECTRICES DE USO:
+Todas las variables CSS están vinculadas directamente al compilador Tailwind CSS v4.
+Para alternar entre temas Claro/Oscuro, el sistema evalúa el atributo [data-theme] 
+en el elemento principal:
+  - Dark Mode (Defecto): <html data-theme="dark"> o sin atributo.
+  - Light Mode: <html data-theme="light">
+=================================================================================
 */
 
-/* 1. FUENTES PREMIUM DE VERCEL (GEIST SANS Y GEIST MONO) */
+/**
+ * 1. FUENTES PREMIUM DE VERCEL (GEIST SANS Y GEIST MONO)
+ * -----------------------------------------------------------------------------
+ * Importamos las fuentes nativas de Vercel. Se mapean en Tailwind v4 como:
+ * - font-sans (Geist Sans): Textos base, títulos, formularios.
+ * - font-mono (Geist Mono): Números de métricas, código, identificadores.
+ */
 @import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-sans@5.0.3/index.css");
 @import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.3/index.css");
 @import "tailwindcss";
 
+/**
+ * 2. VARIABLES DE COLOR Y FONDOS SEMÁNTICOS (ESCENARIOS VERCEL)
+ * -----------------------------------------------------------------------------
+ * Colección de variables de diseño adaptables.
+ * Utiliza estas variables o sus clases Tailwind asignadas correspondientes
+ * (ej: bg-surface, text-text-dim, border-border-thin) en lugar de colores rígidos.
+ */
 :root {
-  /* 2. VARIABLES DE COLOR Y FONDOS SEMÁNTICOS (ESCENARIOS VERCEL) */
   /* Fondo y color de texto base (Dark Mode por defecto) */
   --bg: #000000;
   --fg: #ffffff;
@@ -108,7 +131,26 @@ A continuación se detallan las secciones y cómo puedes usar cada estilo en tu 
   --accents-8: #111111;
 }
 
-/* 3. INTEGRACIÓN CON TEMAS Y CLASES DE TAILWIND CSS v4 */
+/**
+ * 3. INTEGRACIÓN CON TEMAS Y CLASES DE TAILWIND CSS v4
+ * -----------------------------------------------------------------------------
+ * Mapeamos nuestras variables CSS semánticas a nombres estándar de clases
+ * de Tailwind CSS para agilizar el desarrollo visual.
+ *
+ * EJEMPLOS DE APLICACIÓN EN REACT:
+ * - Color de Fondo: className="bg-surface" o className="bg-bg-deep"
+ * - Color de Texto: className="text-text-main" o className="text-text-dim"
+ * - Bordes Vercel:  className="border border-border-thin hover:border-border-hover"
+ * - Estados:        className="text-success bg-success/10 border-success/30"
+ *
+ * ANIMACIONES PRECONFIGURADAS (con "both" fill-mode para evitar parpadeos):
+ * - className="animate-fade-up"         -> Entrada desde abajo (10px) ideal para listas/tarjetas.
+ * - className="animate-fade-in"         -> Desvanecimiento sutil (ideal para overlays traslúcidos).
+ * - className="animate-spin-slow"       -> Giro infinito continuo (ej: iconos de carga o engranajes).
+ * - className="animate-fade-left"       -> Desvanecimiento hacia la izquierda.
+ * - className="animate-slide-in-right"  -> Entrada desde la derecha (para paneles laterales/drawers).
+ * - className="animate-scale-up"        -> Escalado progresivo de 95% a 100% (para diálogos/modales).
+ */
 @theme {
   --color-bg-deep: var(--bg);
   --color-surface: var(--surface);
@@ -184,7 +226,22 @@ body {
   min-height: 100vh;
 }
 
-/* 4. MALLAS Y EFECTOS DE FONDO DYNAMIC GRIDS DE VERCEL.COM */
+/**
+ * 4. MALLAS Y EFECTOS DE FONDO DYNAMIC GRIDS DE VERCEL.COM
+ * -----------------------------------------------------------------------------
+ * Generan fondos ornamentales interactivos de cuadrícula Geist.
+ * 
+ * Clases de fondo:
+ * - className="vercel-grid"       -> Rejilla base infinita atenuada (ideal para la base del app).
+ * - className="vercel-grid-fade"  -> Rejilla elegante con enmascaramiento radial (perfecto para headers).
+ * - className="bg-glow"            -> Agrega un destello de resplandor azul cobalto difuminado en la parte superior.
+ *
+ * Ejemplo de uso combinado en un Hero de landing o cabecera de panel:
+ *   <div className="relative vercel-grid-fade bg-glow min-h-[300px] flex items-center justify-center">
+ *     <h1 className="text-4xl font-extrabold text-text-main">Mi Dashboard</h1>
+ *   </div>
+ */
+
 /* Cuadrícula base infinita */
 .vercel-grid {
   background-image: 
@@ -235,19 +292,29 @@ body {
   background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.05), transparent 70%);
 }
 
-/* 5. COMPONENTE: TARJETA "BENTO-CARD" (REJILLA DE CORTESÍA VERCEL) */
-/* 
-   - .bento-card (INTERACTIVA/CON HOVER): 
-     Ideal para elementos clicables pequeños, accesos rápidos, botones grandes,
-     o bloques Bento individuales que deben reaccionar visualmente cuando pasas el mouse.
-     Genera un sombreado elevado, una transición de color de fondo a gris y se levanta 1px.
-
-   - .bento-card.static o .bento-card-static (ESTÁTICA/SIN HOVER): 
-     Ideal para contenedores grandes, secciones envolventes, formularios, y
-     tablas de datos (como la tabla de grupos, usuarios o configuraciones).
-     Mantiene la estética premium (bordes finos, glassmorphism, esquinas redondeadas)
-     pero deshabilita la transición gris, la elevación y las sombras dinámicas al pasar el mouse.
-*/
+/**
+ * 5. COMPONENTE: BENTO CARDS (REJILLA DE DISEÑO DE VERCEL)
+ * -----------------------------------------------------------------------------
+ * Divide la interfaz en compartimentos estéticos tipo Bento, ideal para dashboards complejos.
+ *
+ * VARIANTES DISPONIBLES:
+ * 1. .bento-card (Interactiva/Hover):
+ *    Ideal para accesos directos, módulos interactivos, o tarjetas clicables. Reacciona
+ *    al puntero del ratón levantando el elemento 1px, ampliando la sombra y aclarando el fondo.
+ * 2. .bento-card-static o .bento-card.static (Estática):
+ *    Recomendada para contenedores amplios, tablas, listados, formularios y bloques de lectura.
+ *    Conserva la estética pulida, glassmorphism y bordes finos pero elimina el hover interactivo.
+ *
+ * Ejemplo en React (Interactiva):
+ *   <div className="bento-card p-6 cursor-pointer">
+ *     <h3 className="font-bold text-text-main">Módulo Bento</h3>
+ *   </div>
+ *
+ * Ejemplo en React (Estática / Tabla):
+ *   <div className="bento-card-static p-4">
+ *     <table className="w-full">...</table>
+ *   </div>
+ */
 .bento-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
@@ -278,7 +345,25 @@ body {
   cursor: default;
 }
 
-/* 6. COMPONENTE: BOTONES CON LOGO Y ESTILO VERCEL DASHBOARD */
+/**
+ * 6. COMPONENTE: BOTONES CON LOGO Y ESTILO VERCEL DASHBOARD
+ * -----------------------------------------------------------------------------
+ * Botones que replican la consola de Vercel. Destacan por usar tipografía
+ * compacta en mayúsculas negritas con espaciado de letras expandido.
+ *
+ * VARIANTES:
+ * - .btn-vercel-primary   -> Botón sólido (Fondo blanco en dark / negro en light).
+ * - .btn-vercel-secondary -> Botón con borde minimalista (Fondo traslúcido).
+ * - .btn-brand            -> Botón azul de marca con resplandor cobalto.
+ *
+ * Ejemplo en React:
+ *   <button className="btn-vercel-primary">
+ *     Crear Proyecto
+ *   </button>
+ *   <button className="btn-vercel-secondary">
+ *     Cancelar
+ *   </button>
+ */
 .btn-vercel-primary {
   background-color: var(--fg);
   color: var(--bg);
@@ -362,7 +447,13 @@ body {
   transform: translateY(-1px);
 }
 
-/* 7. ESTILOS DE SELECCIÓN DE TEXTO Y ACCESIBILIDAD POR TECLADO */
+/**
+ * 7. ESTILOS DE SELECCIÓN DE TEXTO Y ACCESIBILIDAD POR TECLADO
+ * -----------------------------------------------------------------------------
+ * Mejora la accesibilidad global.
+ * - ::selection: Aplica un sombreado de texto de contraste ultra-alto sin color estridente.
+ * - *:focus-visible: Enfoque de alta visibilidad para navegación asistida por teclado.
+ */
 ::selection {
   background: var(--selection-bg);
   color: var(--selection-fg);
@@ -373,8 +464,22 @@ body {
   outline-offset: 2px;
 }
 
-/* 8. COMPONENTE: FORMULARIO PREMIUM E INPUTS VERCEL STYLE */
-/* Cajas de texto minimalistas con anillo de enfoque blanco fino */
+/**
+ * 8. COMPONENTE: FORMULARIO PREMIUM E INPUTS VERCEL STYLE
+ * -----------------------------------------------------------------------------
+ * Entradas de texto minimalistas. Tienen un borde oscuro base y reaccionan al
+ * enfoque proyectando una sombra interna muy fina y borde blanco/negro de alta gama.
+ *
+ * Ejemplo en React:
+ *   <div className="flex flex-col gap-2">
+ *     <label className="section-label">Nombre del Grupo</label>
+ *     <input 
+ *       type="text" 
+ *       className="input-vercel" 
+ *       placeholder="Escribe aquí..." 
+ *     />
+ *   </div>
+ */
 .input-vercel {
   background-color: var(--bg);
   color: var(--fg);
@@ -401,8 +506,25 @@ body {
   color: var(--text-dim);
 }
 
-/* 9. COMPONENTE: BADGES Y PÍLDORAS SEMÁNTICAS MULTI-ESCENARIO */
-/* Píldora base */
+/**
+ * 9. COMPONENTE: BADGES Y PÍLDORAS SEMÁNTICAS MULTI-ESCENARIO
+ * -----------------------------------------------------------------------------
+ * Pequeñas píldoras informativas traslúcidas que comunican estados del sistema.
+ *
+ * CLASES COMPLEMENTARIAS:
+ * - .badge-vercel-success -> Aprobados, Completados, Miembros Activos. (Verde)
+ * - .badge-vercel-error   -> Rechazados, Cancelados, Fallidos. (Rojo)
+ * - .badge-vercel-warning -> En Revisión, En Corrección, Pendientes de Pago. (Naranja)
+ * - .badge-vercel-info    -> Convocatorias, Novedades, Ayuda técnica. (Azul)
+ * - .badge-vercel-violet  -> Roles y Cargos Especiales (ej: Coordinador). (Violeta)
+ * - .badge-vercel-neutral -> Borradores, Deshabilitado, Sin Estado. (Gris)
+ *
+ * Ejemplo en React:
+ *   <span className="badge-vercel badge-vercel-success">
+ *     <span className="dot dot-success dot-pulse" />
+ *     Aprobado
+ *   </span>
+ */
 .badge-vercel {
   display: inline-flex;
   align-items: center;
@@ -484,7 +606,23 @@ body {
   color: var(--text-dim);
 }
 
-/* 10. COMPONENTE: NOTIFICACIONES EMERGENTES (TOASTS) DE VERCEL */
+/**
+ * 10. COMPONENTE: NOTIFICACIONES EMERGENTES (TOASTS) DE VERCEL
+ * -----------------------------------------------------------------------------
+ * Alertas flotantes en la esquina inferior derecha con diseño de cristal translúcido.
+ *
+ * Ejemplo en React:
+ *   <div className="toast-container-vercel">
+ *     <div className="toast-vercel">
+ *       <span className="dot dot-success mt-1.5" />
+ *       <div className="flex-1">
+ *         <h4 className="text-sm font-bold text-text-main">Grupo Creado</h4>
+ *         <p className="text-xs text-text-dim">Los cambios fueron registrados con éxito.</p>
+ *       </div>
+ *     </div>
+ *   </div>
+ */
+
 /* Contenedor flotante en la esquina inferior derecha */
 .toast-container-vercel {
   position: fixed;
@@ -529,7 +667,30 @@ body {
   }
 }
 
-/* 11. COMPONENTE: PESTAÑAS DE NAVEGACIÓN (TABS VERCEL STYLE) */
+/**
+ * 11. COMPONENTE: PESTAÑAS DE NAVEGACIÓN (TABS VERCEL STYLE)
+ * -----------------------------------------------------------------------------
+ * Menú de navegación horizontal de baja intrusión táctil con indicador inferior continuo.
+ *
+ * Ejemplo en React:
+ *   const [activeTab, setActiveTab] = useState("general");
+ *
+ *   <div className="tabs-vercel">
+ *     <button 
+ *       className={`tab-vercel-item ${activeTab === "general" ? "active" : ""}`}
+ *       onClick={() => setActiveTab("general")}
+ *     >
+ *       General
+ *     </button>
+ *     <button 
+ *       className={`tab-vercel-item ${activeTab === "seguridad" ? "active" : ""}`}
+ *       onClick={() => setActiveTab("seguridad")}
+ *     >
+ *       Seguridad
+ *     </button>
+ *   </div>
+ */
+
 /* Contenedor de pestañas alineado en la base con borde sutil */
 .tabs-vercel {
   display: flex;
@@ -570,7 +731,12 @@ body {
   border-radius: 9999px;
 }
 
-/* 12. SEPARADORES ELEGANTES (DIVIDERS) */
+/**
+ * 12. SEPARADORES ELEGANTES (DIVIDERS)
+ * -----------------------------------------------------------------------------
+ * Borde horizontal sutil de 1px para segmentar bloques dentro de tarjetas o paneles.
+ * className="divider-vercel"
+ */
 .divider-vercel {
   height: 1px;
   background-color: var(--border);
@@ -578,7 +744,30 @@ body {
   margin: 1.5rem 0;
 }
 
-/* 13. COMPONENTE: VENTANAS EMERGENTES (MODALES / DIALOGS) DE VERCEL */
+/**
+ * 13. COMPONENTE: VENTANAS EMERGENTES (MODALES / DIALOGS) DE VERCEL
+ * -----------------------------------------------------------------------------
+ * Bloques modales suspendidos sobre fondo traslúcido desenfocado.
+ *
+ * ESTRUCTURA EN REACT:
+ *   <div className="modal-overlay">
+ *     {/* Añadir animate-scale-up para animar la apertura * /}
+ *     <div className="modal-card modal-card--lg animate-scale-up">
+ *       <div className="modal-header">
+ *         <h3 className="font-bold text-text-main">Título del Modal</h3>
+ *         <button className="text-text-dim hover:text-text-main">✕</button>
+ *       </div>
+ *       <div className="modal-body custom-scrollbar">
+ *         Contenido scrollable...
+ *       </div>
+ *       <div className="modal-footer">
+ *         <button className="btn-vercel-secondary">Cancelar</button>
+ *         <button className="btn-vercel-primary">Confirmar</button>
+ *       </div>
+ *     </div>
+ *   </div>
+ */
+
 /* Fondo oscuro translúcido con desenfoque de fondo */
 .modal-overlay {
   position: fixed;
@@ -647,7 +836,24 @@ select.input-vercel {
   padding-right: 2rem;
 }
 
-/* 14. ETIQUETAS E HISTOGRAMAS DE DASHBOARD */
+/**
+ * 14. ETIQUETAS E HISTOGRAMAS DE DASHBOARD
+ * -----------------------------------------------------------------------------
+ * Elementos para visualizar métricas, estadísticas e informes.
+ *
+ * CLASES DISPONIBLES:
+ * - .section-label   -> Rótulos de sección pequeños, en mayúsculas y espaciados amplios.
+ * - .stat-number     -> Cifras de métricas en tipografía monospace Geist Mono.
+ * - .status-tag      -> Rótulo indicador atenuado (borde coloreado fino).
+ * - .empty-state     -> Contenedor punteado con texto para representar la ausencia de datos.
+ *
+ * Ejemplo en React (Bloque de métricas):
+ *   <div className="bento-card p-6 flex flex-col gap-2">
+ *     <span className="section-label">Proyectos Registrados</span>
+ *     <span className="stat-number stat-number--lg">1,248</span>
+ *   </div>
+ */
+
 /* Etiquetas de sección en mayúsculas pequeñas con tracking ancho */
 .section-label {
   display: flex;
@@ -703,7 +909,23 @@ select.input-vercel {
   border-radius: var(--radius);
 }
 
-/* 15. INDICADORES VISUALES SEMÁNTICOS (PULSOS Y CÍRCULOS) */
+/**
+ * 15. INDICADORES VISUALES SEMÁNTICOS (PULSOS Y CÍRCULOS)
+ * -----------------------------------------------------------------------------
+ * Pequeños puntos y círculos ornamentales para asociar estados rápidamente.
+ *
+ * CLASES DISPONIBLES:
+ * - .dot: Círculo de 6px. Añade .dot-success, .dot-warning, .dot-error, etc.
+ * - .dot-pulse: Aplica un parpadeo de latido infinito (indica tiempo real o proceso activo).
+ * - .icon-circle: Wrapper circular traslúcido para contener iconos SVG.
+ *
+ * Ejemplo en React:
+ *   <div className="flex items-center gap-2">
+ *     <span className="dot dot-success dot-pulse" />
+ *     <span>Servicio Activo</span>
+ *   </div>
+ */
+
 /* Pequeños círculos de estado (Ideal para tableros) */
 .dot {
   width: 0.375rem;
@@ -761,7 +983,16 @@ select.input-vercel {
   color: var(--brand);
 }
 
-/* 16. BARRAS DE PROGRESO DE ALTA COMPRESIÓN */
+/**
+ * 16. BARRAS DE PROGRESO DE ALTA COMPRESIÓN
+ * -----------------------------------------------------------------------------
+ * Barras de carga horizontales de degradados finos de Vercel.
+ *
+ * Ejemplo en React:
+ *   <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+ *     <div className="progress-fill progress-fill--brand" style={{ width: '65%' }} />
+ *   </div>
+ */
 .progress-fill {
   height: 100%;
   border-radius: 9999px;
@@ -774,4 +1005,97 @@ select.input-vercel {
 
 .progress-fill--brand {
   background: linear-gradient(to right, var(--brand), var(--brand-light));
+}
+
+/**
+ * 17. UTILIDADES PREMIUM Y ESTILOS GLOBALES DE VERCEL (GEIST)
+ * -----------------------------------------------------------------------------
+ * Conjunto de utilidades atómicas diseñadas para pulir visualmente
+ * scrollbars, shortcuts de teclado, anillos de enfoque avanzados y envoltura de textos.
+ *
+ * DETALLE DE CLASES:
+ * 1. .custom-scrollbar:
+ *    Aplica en contenedores con overflow (tablas, paneles laterales) para ocultar
+ *    la barra nativa del navegador e implementar una barra ultra-fina Geist.
+ *    - Ejemplo: <div className="overflow-x-auto custom-scrollbar">...</div>
+ *
+ * 2. .kbd-vercel:
+ *    Chapas para shortcuts de teclado atenuadas con relieve 3D sutil.
+ *    - Ejemplo: <kbd className="kbd-vercel">⌘K</kbd>
+ *
+ * 3. .focus-ring-vercel:
+ *    Enfoque premium de dos anillos (box-shadow) que cumple normas WCAG de contraste.
+ *    - Ejemplo: <button className="focus-ring-vercel focus:outline-none">Foco</button>
+ *
+ * 4. .vercel-card-glow:
+ *    Genera un degradado de micro-brillo superior lineal blanco traslúcido para Bento cards.
+ *    - Ejemplo: <div className="bento-card vercel-card-glow p-6">...</div>
+ *
+ * 5. .text-balance & .text-pretty:
+ *    Balanceo moderno de envoltura de palabras, evitando orfandad de sílabas solas al final.
+ *    - Ejemplo: <h1 className="text-balance text-2xl font-bold">Título de la Convocatoria</h1>
+ */
+
+/* Scrollbar Personalizado Vercel-Style */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* Soporte de scrollbar para Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* Placas KBD de Atajo de Teclado Geist-Style */
+.kbd-vercel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  box-shadow: 0 1px 0 var(--border);
+  min-width: 1.25rem;
+  user-select: none;
+}
+
+/* Anillo de Enfoque Accesible de Doble Anillo Geist */
+.focus-ring-vercel:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+
+/* Tarjeta Bento con Micro-Glow de Bordes Vercel */
+.vercel-card-glow {
+  position: relative;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--surface);
+}
+
+/* Utilidades de Ajuste de Texto */
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
 }
