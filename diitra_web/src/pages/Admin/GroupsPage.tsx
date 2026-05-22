@@ -679,7 +679,7 @@ const GroupsPage = () => {
                             onClick={() => setIsModalOpen(false)}
                         />
                     ) : null}
-                    <div className={editingGroup || isReadOnly ? "relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
+                    <div className={editingGroup || isReadOnly ? "relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">

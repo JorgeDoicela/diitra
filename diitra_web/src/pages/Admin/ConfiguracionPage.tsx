@@ -966,7 +966,7 @@ const ConfiguracionPage = () => {
                             onClick={() => setIsLineaModalOpen(false)}
                         />
                     )}
-                    <div className={editingLinea ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
+                    <div className={editingLinea ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1053,7 +1053,7 @@ const ConfiguracionPage = () => {
                             onClick={() => setIsPeriodoModalOpen(false)}
                         />
                     )}
-                    <div className={editingPeriodo ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
+                    <div className={editingPeriodo ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1154,7 +1154,7 @@ const ConfiguracionPage = () => {
                             onClick={() => setIsProductoModalOpen(false)}
                         />
                     )}
-                    <div className={editingProducto ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
+                    <div className={editingProducto ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1244,7 +1244,7 @@ const ConfiguracionPage = () => {
                             onClick={() => setIsDominioModalOpen(false)}
                         />
                     )}
-                    <div className={editingDominio ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
+                    <div className={editingDominio ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
@@ -1307,7 +1307,7 @@ const ConfiguracionPage = () => {
                             onClick={() => setIsIndicadorModalOpen(false)}
                         />
                     )}
-                    <div className={editingIndicador ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up overflow-hidden" : "modal-card"}>
+                    <div className={editingIndicador ? "relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden" : "modal-card animate-scale-up"}>
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-brand">
