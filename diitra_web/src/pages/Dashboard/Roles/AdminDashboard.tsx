@@ -83,8 +83,9 @@ export const AdminDashboard: React.FC = () => {
 
     const handleOpenAssignModal = (proj: any) => {
         setSelectedProject(proj);
+        const firstValidReviewer = reviewers.find(r => r.id_usuario !== null && r.id_usuario !== undefined);
         setAssignForm({
-            idRevisor: reviewers[0]?.id_usuario || 0,
+            idRevisor: firstValidReviewer?.id_usuario || 0,
             fechaLimite: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 días por defecto
             esExterno: false
         });
@@ -427,12 +428,14 @@ export const AdminDashboard: React.FC = () => {
                                         value={assignForm.idRevisor}
                                         onChange={(e) => setAssignForm({ ...assignForm, idRevisor: Number(e.target.value) })}
                                     >
-                                        {reviewers.map((rev) => (
-                                            <option key={rev.id_usuario} value={rev.id_usuario}>
-                                                {rev.nombre_completo} ({rev.email})
-                                            </option>
-                                        ))}
-                                        {reviewers.length === 0 && (
+                                        {reviewers
+                                            .filter((rev) => rev.id_usuario !== null && rev.id_usuario !== undefined)
+                                            .map((rev) => (
+                                                <option key={rev.id_usuario} value={rev.id_usuario}>
+                                                    {rev.nombre_completo} ({rev.email})
+                                                </option>
+                                            ))}
+                                        {reviewers.filter((rev) => rev.id_usuario !== null && rev.id_usuario !== undefined).length === 0 && (
                                             <option value={0}>No hay revisores disponibles</option>
                                         )}
                                     </select>
