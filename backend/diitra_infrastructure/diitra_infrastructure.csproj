@@ -35,6 +35,10 @@
     <None Update="Resources\Templates\Email\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <!-- Plantillas HTML de documentos: se copian al output para que TemplateFileLoader las lea en producción -->
+    <None Update="Common\Documents\Templates\**\*.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -20,14 +20,18 @@ namespace Diitra.Infrastructure.Common.Documents
             // ══════════════════════════════════════════════════════════════
             // ÁREA: INVESTIGACIÓN
             // ══════════════════════════════════════════════════════════════
+            // NOTA: El HTML de cada plantilla vive en su archivo .html correspondiente
+            // bajo Templates/{Categoria}/{Nombre}.html. El TemplateFileLoader lo carga
+            // automáticamente. El htmlContent aquí es solo un placeholder de arranque;
+            // en producción el .html copiado al output tiene prioridad.
 
-            // 1. FORMATO PROYECTO DE INVESTIGACIÓN (Oficial v14)
+            // 1. FORMATO PROYECTO DE INVESTIGACIÓN
             yield return DocumentTemplate.Create(
                 code: ProyectoInvestigacionTemplate.CODE,
                 name: "1. Formato Proyecto de Investigación",
                 description: "Documento oficial para postulación de proyectos I+D+i. Versión de Producción Final v14.0.",
                 category: DocumentCategory.Protocolo,
-                htmlContent: ProyectoInvestigacionTemplate.GetHtml(),
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/ProyectoInvestigacion.html -->",
                 requiresLopdp: true,
                 supportsBlind: true,
                 requiresTraceability: true,
@@ -48,7 +52,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresLopdp: true,
                 supportsBlind: false,
                 requiresTraceability: true,
-                requiresSignature: true, 
+                requiresSignature: true,
                 version: 10);
 
             yield return DocumentTemplate.Create(
@@ -56,7 +60,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 name: "Informe Final de Investigación",
                 description: "Documento de consolidación de resultados para acreditación CACES.",
                 category: DocumentCategory.InformeFinal,
-                htmlContent: InformeFinalTemplate.GetHtml(),
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/InformeFinal.html -->",
                 requiresLopdp: true,
                 supportsBlind: false,
                 requiresTraceability: true,
@@ -64,8 +68,11 @@ namespace Diitra.Infrastructure.Common.Documents
                 collaborativeFields: "[\"resumen_ejecutivo\", \"cumplimiento_objetivos\", \"resultados\", \"discusion\", \"impacto_final\", \"transferencia_conocimiento\", \"conclusiones\", \"recomendaciones\", \"bibliografia_final\"]",
                 version: 1);
 
-            // Nota: Conforme digitalicemos más documentos, se crearán sus carpetas
-            // correspondientes y se registrarán aquí de forma limpia.
+            // Nota: Para agregar una nueva plantilla:
+            //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
+            //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()
+            //   3. Registrar aquí con htmlContent vacío
         }
+
     }
 }

@@ -47,7 +47,7 @@ interface ConfigIndicador {
     codigoIndicador: string;
     nombreIndicador: string;
     descripcion?: string;
-    tipoDato?: string; // Cantidad, Monto, Booleano, Porcentaje
+    tipoDato?: string;
     valorReferencia?: number;
     añoNormativa: number;
     activo?: boolean;
@@ -58,14 +58,12 @@ const ConfiguracionPage = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     
-    // Data Lists
     const [lineas, setLineas] = useState<LineaInvestigacion[]>([]);
     const [periodos, setPeriodos] = useState<PeriodoAcademico[]>([]);
     const [productos, setProductos] = useState<TipoProducto[]>([]);
     const [dominios, setDominios] = useState<DominioAcademico[]>([]);
     const [indicadores, setIndicadores] = useState<ConfigIndicador[]>([]);
 
-    // Modals & Forms
     const [isLineaModalOpen, setIsLineaModalOpen] = useState(false);
     const [editingLinea, setEditingLinea] = useState<LineaInvestigacion | null>(null);
     const [lineaForm, setLineaForm] = useState({
@@ -185,7 +183,6 @@ const ConfiguracionPage = () => {
         fetchData();
     }, [activeTab]);
 
-    // Search filters
     const filteredLineas = lineas.filter(l => 
         (l.nombreLinea || '').toLowerCase().includes(search.toLowerCase()) || 
         (l.codigoLinea || '').toLowerCase().includes(search.toLowerCase())
@@ -211,7 +208,6 @@ const ConfiguracionPage = () => {
         (i.descripcion || '').toLowerCase().includes(search.toLowerCase())
     );
 
-    // LINEAS HANDLERS
     const handleOpenLineaModal = (item: LineaInvestigacion | null = null) => {
         if (item) {
             setEditingLinea(item);
@@ -265,7 +261,6 @@ const ConfiguracionPage = () => {
         }
     };
 
-    // PERIODOS HANDLERS
     const handleOpenPeriodoModal = (item: PeriodoAcademico | null = null) => {
         if (item) {
             setEditingPeriodo(item);
@@ -320,7 +315,6 @@ const ConfiguracionPage = () => {
         }
     };
 
-    // PRODUCTOS HANDLERS
     const handleOpenProductoModal = (item: TipoProducto | null = null) => {
         if (item) {
             setEditingProducto(item);
@@ -374,7 +368,6 @@ const ConfiguracionPage = () => {
         }
     };
 
-    // DOMINIOS HANDLERS
     const handleOpenDominioModal = (item: DominioAcademico | null = null) => {
         if (item) {
             setEditingDominio(item);
@@ -422,7 +415,6 @@ const ConfiguracionPage = () => {
         }
     };
 
-    // INDICADORES HANDLERS
     const handleOpenIndicadorModal = (item: ConfigIndicador | null = null) => {
         if (item) {
             setEditingIndicador(item);
@@ -489,7 +481,7 @@ const ConfiguracionPage = () => {
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 px-2 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
+                    <div className="section-label text-text-main">
                         <Settings2 size={10} className="text-text-main animate-spin-slow" />
                         <span>Configuración del Sistema</span>
                     </div>
@@ -509,13 +501,13 @@ const ConfiguracionPage = () => {
                             placeholder="Buscar parámetros..." 
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full bg-bg-deep border border-border-thin rounded-md pl-10 pr-4 py-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all uppercase tracking-wider font-mono"
+                            className="input-vercel pl-10 pr-4 py-2.5 text-xs uppercase tracking-wider font-mono"
                         />
                     </div>
                     {activeTab === 'lineas' && (
                         <button 
                             onClick={() => handleOpenLineaModal()}
-                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                            className="btn-vercel-primary"
                         >
                             <Plus size={14} strokeWidth={3} />
                             Nueva Línea
@@ -524,7 +516,7 @@ const ConfiguracionPage = () => {
                     {activeTab === 'periodos' && (
                         <button 
                             onClick={() => handleOpenPeriodoModal()}
-                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                            className="btn-vercel-primary"
                         >
                             <Plus size={14} strokeWidth={3} />
                             Nuevo Período
@@ -533,7 +525,7 @@ const ConfiguracionPage = () => {
                     {activeTab === 'productos' && (
                         <button 
                             onClick={() => handleOpenProductoModal()}
-                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                            className="btn-vercel-primary"
                         >
                             <Plus size={14} strokeWidth={3} />
                             Nuevo Tipo
@@ -542,7 +534,7 @@ const ConfiguracionPage = () => {
                     {activeTab === 'dominios' && (
                         <button 
                             onClick={() => handleOpenDominioModal()}
-                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                            className="btn-vercel-primary"
                         >
                             <Plus size={14} strokeWidth={3} />
                             Nuevo Dominio
@@ -551,7 +543,7 @@ const ConfiguracionPage = () => {
                     {activeTab === 'indicadores' && (
                         <button 
                             onClick={() => handleOpenIndicadorModal()}
-                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 md:py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all"
+                            className="btn-vercel-primary"
                         >
                             <Plus size={14} strokeWidth={3} />
                             Nuevo Indicador
@@ -560,7 +552,6 @@ const ConfiguracionPage = () => {
                 </div>
             </header>
 
-            {/* Premium Tabs */}
             <div className="flex border-b border-border-thin mb-8 px-2 gap-4 flex-wrap">
                 <button
                     onClick={() => { setActiveTab('lineas'); setSearch(''); }}
@@ -651,11 +642,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {l.activo ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                                    <span className="status-tag badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20">
+                                                    <span className="status-tag badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -671,7 +662,7 @@ const ConfiguracionPage = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleToggleLinea(l)}
-                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-error transition-all"
                                                         title="Activar/Desactivar"
                                                     >
                                                         <Trash2 size={14} />
@@ -720,11 +711,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {p.activo ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                                    <span className="status-tag badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20">
+                                                    <span className="status-tag badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -740,7 +731,7 @@ const ConfiguracionPage = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleTogglePeriodo(p)}
-                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-error transition-all"
                                                         title="Activar/Desactivar"
                                                     >
                                                         <Trash2 size={14} />
@@ -785,11 +776,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {t.activo ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                                    <span className="status-tag badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20">
+                                                    <span className="status-tag badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -805,7 +796,7 @@ const ConfiguracionPage = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleToggleProducto(t)}
-                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-error transition-all"
                                                         title="Activar/Desactivar"
                                                     >
                                                         <Trash2 size={14} />
@@ -846,11 +837,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {d.activo ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                                    <span className="status-tag badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20">
+                                                    <span className="status-tag badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -866,7 +857,7 @@ const ConfiguracionPage = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleToggleDominio(d)}
-                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-error transition-all"
                                                         title="Activar/Desactivar"
                                                     >
                                                         <Trash2 size={14} />
@@ -919,11 +910,11 @@ const ConfiguracionPage = () => {
                                             </td>
                                             <td className="p-4">
                                                 {i.activo ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase tracking-tighter border border-green-500/20">
+                                                    <span className="status-tag badge-vercel-success">
                                                         <CheckCircle size={10} strokeWidth={3} /> Activo
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-tighter border border-red-500/20">
+                                                    <span className="status-tag badge-vercel-error">
                                                         <XCircle size={10} strokeWidth={3} /> Inactivo
                                                     </span>
                                                 )}
@@ -939,7 +930,7 @@ const ConfiguracionPage = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleToggleIndicador(i)}
-                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-red-500 transition-all"
+                                                        className="p-2 hover:bg-surface border border-transparent hover:border-border-thin rounded-md text-text-dim hover:text-error transition-all"
                                                         title="Activar/Desactivar"
                                                     >
                                                         <Trash2 size={14} />
@@ -962,20 +953,19 @@ const ConfiguracionPage = () => {
                 </div>
             )}
 
-            {/* MODAL LINEA INVESTIGACION */}
             {isLineaModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                                <div className="icon-circle icon-circle-brand">
                                     <BookOpen size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {editingLinea ? 'Editar Línea de Investigación' : 'Nueva Línea de Investigación'}
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                                    <p className="section-label text-text-dim">
                                         Parámetros de catalogación CACES / SENESCYT
                                     </p>
                                 </div>
@@ -985,21 +975,21 @@ const ConfiguracionPage = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveLinea} className="p-6 space-y-6">
+                        <form onSubmit={handleSaveLinea} className="modal-body space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Código de Línea
                                 </label>
                                 <input 
                                     type="text" 
                                     value={lineaForm.codigoLinea}
                                     onChange={(e) => setLineaForm({...lineaForm, codigoLinea: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono"
+                                    className="input-vercel uppercase font-mono"
                                     placeholder="LIN-SOFTWARE (Opcional, se autogenera)"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Nombre de la Línea
                                 </label>
                                 <input 
@@ -1007,34 +997,34 @@ const ConfiguracionPage = () => {
                                     type="text" 
                                     value={lineaForm.nombreLinea}
                                     onChange={(e) => setLineaForm({...lineaForm, nombreLinea: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                    className="input-vercel uppercase font-medium"
                                     placeholder="Ej: INTELIGENCIA ARTIFICIAL Y DESARROLLO DE SOFTWARE"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Descripción / Áreas de Enfoque
                                 </label>
                                 <textarea 
                                     rows={3}
                                     value={lineaForm.descripcion}
                                     onChange={(e) => setLineaForm({...lineaForm, descripcion: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none"
+                                    className="input-vercel resize-none"
                                     placeholder="Detalles sobre sublíneas y pertinencia..."
                                 />
                             </div>
 
-                            <div className="border-t border-border-thin pt-6 flex justify-end gap-4">
+                            <div className="modal-footer">
                                 <button 
                                     type="button"
                                     onClick={() => setIsLineaModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
+                                    className="btn-vercel-primary"
                                 >
                                     {editingLinea ? 'Guardar Cambios' : 'Crear Línea'}
                                 </button>
@@ -1044,20 +1034,19 @@ const ConfiguracionPage = () => {
                 </div>
             )}
 
-            {/* MODAL PERIODO ACADEMICO */}
             {isPeriodoModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                                <div className="icon-circle icon-circle-brand">
                                     <Calendar size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {editingPeriodo ? 'Editar Período Académico' : 'Nuevo Período Académico'}
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                                    <p className="section-label text-text-dim">
                                         Calendario y asignaciones institucionales
                                     </p>
                                 </div>
@@ -1067,9 +1056,9 @@ const ConfiguracionPage = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSavePeriodo} className="p-6 space-y-6">
+                        <form onSubmit={handleSavePeriodo} className="modal-body space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Identificador del Período
                                 </label>
                                 <input 
@@ -1078,12 +1067,12 @@ const ConfiguracionPage = () => {
                                     type="text" 
                                     value={periodoForm.idPeriodo}
                                     onChange={(e) => setPeriodoForm({...periodoForm, idPeriodo: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono disabled:opacity-50"
+                                    className="input-vercel uppercase font-mono disabled:opacity-50"
                                     placeholder="Ej: 2026-A"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Detalle / Nombre
                                 </label>
                                 <input 
@@ -1091,46 +1080,46 @@ const ConfiguracionPage = () => {
                                     type="text" 
                                     value={periodoForm.detalle}
                                     onChange={(e) => setPeriodoForm({...periodoForm, detalle: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                    className="input-vercel uppercase font-medium"
                                     placeholder="Ej: PERÍODO MAYO - OCTUBRE 2026"
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    <label className="section-label text-text-dim">
                                         Fecha de Inicio
                                     </label>
                                     <input 
                                         type="date" 
                                         value={periodoForm.fechaInicial}
                                         onChange={(e) => setPeriodoForm({...periodoForm, fechaInicial: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all"
+                                        className="input-vercel"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    <label className="section-label text-text-dim">
                                         Fecha de Fin
                                     </label>
                                     <input 
                                         type="date" 
                                         value={periodoForm.fechaFinal}
                                         onChange={(e) => setPeriodoForm({...periodoForm, fechaFinal: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all"
+                                        className="input-vercel"
                                     />
                                 </div>
                             </div>
 
-                            <div className="border-t border-border-thin pt-6 flex justify-end gap-4">
+                            <div className="modal-footer">
                                 <button 
                                     type="button"
                                     onClick={() => setIsPeriodoModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
+                                    className="btn-vercel-primary"
                                 >
                                     {editingPeriodo ? 'Guardar Cambios' : 'Crear Período'}
                                 </button>
@@ -1140,20 +1129,19 @@ const ConfiguracionPage = () => {
                 </div>
             )}
 
-            {/* MODAL TIPO PRODUCTO */}
             {isProductoModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                                <div className="icon-circle icon-circle-brand">
                                     <Tag size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {editingProducto ? 'Editar Tipo de Producto' : 'Nuevo Tipo de Producto'}
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                                    <p className="section-label text-text-dim">
                                         Clasificación y Puntuación CACES / SENADI
                                     </p>
                                 </div>
@@ -1163,9 +1151,9 @@ const ConfiguracionPage = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveProducto} className="p-6 space-y-6">
+                        <form onSubmit={handleSaveProducto} className="modal-body space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Nombre del Tipo de Producto
                                 </label>
                                 <input 
@@ -1173,18 +1161,18 @@ const ConfiguracionPage = () => {
                                     type="text" 
                                     value={productoForm.nombre}
                                     onChange={(e) => setProductoForm({...productoForm, nombre: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                    className="input-vercel uppercase font-medium"
                                     placeholder="Ej: Artículo Científico Indexado, Libro, Prototipo Industrial"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Categoría
                                 </label>
                                 <select 
                                     value={productoForm.categoria}
                                     onChange={(e) => setProductoForm({...productoForm, categoria: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-medium"
+                                    className="input-vercel font-medium"
                                 >
                                     <option value="Académico">Académico</option>
                                     <option value="Tecnológico">Tecnológico</option>
@@ -1205,17 +1193,17 @@ const ConfiguracionPage = () => {
                                 </label>
                             </div>
 
-                            <div className="border-t border-border-thin pt-6 flex justify-end gap-4">
+                            <div className="modal-footer">
                                 <button 
                                     type="button"
                                     onClick={() => setIsProductoModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
+                                    className="btn-vercel-primary"
                                 >
                                     {editingProducto ? 'Guardar Cambios' : 'Crear Producto'}
                                 </button>
@@ -1225,20 +1213,19 @@ const ConfiguracionPage = () => {
                 </div>
             )}
 
-            {/* MODAL DOMINIO */}
             {isDominioModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                                <div className="icon-circle icon-circle-brand">
                                     <Globe size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {editingDominio ? 'Editar Dominio Académico' : 'Nuevo Dominio Académico'}
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                                    <p className="section-label text-text-dim">
                                         Líneas y Carreras aprobadas por el CES
                                     </p>
                                 </div>
@@ -1248,9 +1235,9 @@ const ConfiguracionPage = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveDominio} className="p-6 space-y-6">
+                        <form onSubmit={handleSaveDominio} className="modal-body space-y-6">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Nombre del Dominio Académico
                                 </label>
                                 <input 
@@ -1258,22 +1245,22 @@ const ConfiguracionPage = () => {
                                     type="text" 
                                     value={dominioForm.nombre}
                                     onChange={(e) => setDominioForm({...dominioForm, nombre: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                    className="input-vercel uppercase font-medium"
                                     placeholder="Ej: TECNOLOGÍAS DE LA INFORMACIÓN Y COMUNICACIÓN, SERVICIOS SOCIALES"
                                 />
                             </div>
 
-                            <div className="border-t border-border-thin pt-6 flex justify-end gap-4">
+                            <div className="modal-footer">
                                 <button 
                                     type="button"
                                     onClick={() => setIsDominioModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
+                                    className="btn-vercel-primary"
                                 >
                                     {editingDominio ? 'Guardar Cambios' : 'Crear Dominio'}
                                 </button>
@@ -1283,20 +1270,19 @@ const ConfiguracionPage = () => {
                 </div>
             )}
 
-            {/* MODAL INDICADOR */}
             {isIndicadorModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg-deep/80 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-surface border border-border-thin rounded-2xl w-full max-w-xl overflow-hidden flex flex-col shadow-2xl">
-                        <div className="p-6 border-b border-border-thin flex justify-between items-center bg-bg-deep/50">
+                <div className="modal-overlay">
+                    <div className="modal-card">
+                        <div className="modal-header">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-text-main/10 rounded-lg text-text-main">
+                                <div className="icon-circle icon-circle-brand">
                                     <BarChart2 size={20} />
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {editingIndicador ? 'Editar Indicador CACES' : 'Nuevo Indicador CACES'}
                                     </h3>
-                                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                                    <p className="section-label text-text-dim">
                                         Parámetros de Evaluación y Acreditación de Calidad
                                     </p>
                                 </div>
@@ -1306,10 +1292,10 @@ const ConfiguracionPage = () => {
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveIndicador} className="p-6 space-y-4">
+                        <form onSubmit={handleSaveIndicador} className="modal-body space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    <label className="section-label text-text-dim">
                                         Código de Indicador
                                     </label>
                                     <input 
@@ -1317,12 +1303,12 @@ const ConfiguracionPage = () => {
                                         type="text" 
                                         value={indicadorForm.codigoIndicador}
                                         onChange={(e) => setIndicadorForm({...indicadorForm, codigoIndicador: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-mono"
+                                        className="input-vercel uppercase font-mono"
                                         placeholder="Ej: IND-PUB-ART"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    <label className="section-label text-text-dim">
                                         Año de la Normativa
                                     </label>
                                     <input 
@@ -1330,13 +1316,13 @@ const ConfiguracionPage = () => {
                                         type="number" 
                                         value={indicadorForm.añoNormativa}
                                         onChange={(e) => setIndicadorForm({...indicadorForm, añoNormativa: Number(e.target.value)})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-mono"
+                                        className="input-vercel font-mono"
                                         placeholder="Ej: 2026"
                                     />
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Nombre del Indicador
                                 </label>
                                 <input 
@@ -1344,31 +1330,31 @@ const ConfiguracionPage = () => {
                                     type="text" 
                                     value={indicadorForm.nombreIndicador}
                                     onChange={(e) => setIndicadorForm({...indicadorForm, nombreIndicador: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase font-medium"
+                                    className="input-vercel uppercase font-medium"
                                     placeholder="Ej: Tasa de Publicación Científica por Docente TC"
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                <label className="section-label text-text-dim">
                                     Descripción / Metodología de Cálculo
                                 </label>
                                 <textarea 
                                     rows={2}
                                     value={indicadorForm.descripcion}
                                     onChange={(e) => setIndicadorForm({...indicadorForm, descripcion: e.target.value})}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none"
+                                    className="input-vercel resize-none"
                                     placeholder="Detalle sobre el cálculo y pertinencia del indicador..."
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    <label className="section-label text-text-dim">
                                         Tipo de Dato
                                     </label>
                                     <select 
                                         value={indicadorForm.tipoDato}
                                         onChange={(e) => setIndicadorForm({...indicadorForm, tipoDato: e.target.value})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-medium"
+                                        className="input-vercel font-medium"
                                     >
                                         <option value="Cantidad">Cantidad</option>
                                         <option value="Monto">Monto / Presupuesto</option>
@@ -1377,7 +1363,7 @@ const ConfiguracionPage = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">
+                                    <label className="section-label text-text-dim">
                                         Valor de Referencia / Meta
                                     </label>
                                     <input 
@@ -1386,23 +1372,23 @@ const ConfiguracionPage = () => {
                                         step="0.01"
                                         value={indicadorForm.valorReferencia}
                                         onChange={(e) => setIndicadorForm({...indicadorForm, valorReferencia: Number(e.target.value)})}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all font-mono"
+                                        className="input-vercel font-mono"
                                         placeholder="Ej: 0.50 o 80.00"
                                     />
                                 </div>
                             </div>
 
-                            <div className="border-t border-border-thin pt-6 flex justify-end gap-4">
+                            <div className="modal-footer">
                                 <button 
                                     type="button"
                                     onClick={() => setIsIndicadorModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main transition-all"
+                                    className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
                                 <button 
                                     type="submit"
-                                    className="bg-text-main text-bg-deep px-8 py-2.5 rounded-md text-[11px] font-bold uppercase tracking-widest hover:opacity-90 transition-all shadow-lg"
+                                    className="btn-vercel-primary"
                                 >
                                     {editingIndicador ? 'Guardar Cambios' : 'Crear Indicador'}
                                 </button>
