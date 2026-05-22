@@ -73,17 +73,39 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 ["PROTOCOLO_INVESTIGACION"]       = "Investigacion/ProyectoInvestigacion.html",
                 ["INFORME_FINAL_INVESTIGACION"]   = "Investigacion/InformeFinal.html",
-                // Al agregar una nueva plantilla, añadir aquí una línea más:
-                // ["MI_NUEVO_CODIGO"] = "Categoria/NombreArchivo.html",
             };
 
-            if (!map.TryGetValue(templateCode, out var relativePath))
+            if (map.TryGetValue(templateCode, out var relativePath))
             {
-                // Si no está en el mapa, intentar con el propio código como nombre de archivo
-                relativePath = $"{templateCode}.html";
+                return Path.Combine(_sourceRoot, relativePath);
             }
 
-            return Path.Combine(_sourceRoot, relativePath);
+            // BÚSQUEDA RECURSIVA DESACOPLADA (Zero-Configuration):
+            // Si no está mapeado explícitamente, buscamos de forma recursiva en el árbol de directorios 
+            // de templates si existe un archivo llamado "{templateCode}.html" (sin importar mayúsculas/minúsculas).
+            var targetFileName = $"{templateCode}.html";
+            try
+            {
+                if (Directory.Exists(_sourceRoot))
+                {
+                    var files = Directory.GetFiles(_sourceRoot, "*.html", SearchOption.AllDirectories);
+                    foreach (var file in files)
+                    {
+                        var name = Path.GetFileName(file);
+                        if (name.Equals(targetFileName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            return file;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "TemplateFileLoader: Error en la búsqueda recursiva de la plantilla '{Code}'.", templateCode);
+            }
+
+            // Fallback clásico por defecto
+            return Path.Combine(_sourceRoot, targetFileName);
         }
 
         /// <summary>
