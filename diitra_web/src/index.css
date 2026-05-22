@@ -212,6 +212,18 @@ body {
 }
 
 /* 5. COMPONENTE: TARJETA "BENTO-CARD" (REJILLA DE CORTESÍA VERCEL) */
+/* 
+   - .bento-card (INTERACTIVA/CON HOVER): 
+     Ideal para elementos clicables pequeños, accesos rápidos, botones grandes,
+     o bloques Bento individuales que deben reaccionar visualmente cuando pasas el mouse.
+     Genera un sombreado elevado, una transición de color de fondo a gris y se levanta 1px.
+
+   - .bento-card.static o .bento-card-static (ESTÁTICA/SIN HOVER): 
+     Ideal para contenedores grandes, secciones envolventes, formularios, y
+     tablas de datos (como la tabla de grupos, usuarios o configuraciones).
+     Mantiene la estética premium (bordes finos, glassmorphism, esquinas redondeadas)
+     pero deshabilita la transición gris, la elevación y las sombras dinámicas al pasar el mouse.
+*/
 .bento-card {
   background-color: var(--surface);
   border: 1px solid var(--border);
@@ -230,6 +242,16 @@ body {
 
 [data-theme="light"] .bento-card:hover {
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+}
+
+/* VARIANTE ESTÁTICA: Remueve los efectos interactivos manteniendo toda la estructura Bento */
+.bento-card.static,
+.bento-card-static {
+  transform: none !important;
+  background-color: var(--surface) !important;
+  border-color: var(--border) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01) !important;
+  cursor: default;
 }
 
 /* 6. COMPONENTE: BOTONES CON LOGO Y ESTILO VERCEL DASHBOARD */

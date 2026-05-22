@@ -467,7 +467,7 @@ const GroupsPage = () => {
                 </div>
             </header>
 
-            <div className="bento-card overflow-hidden animate-fade-up [animation-delay:200ms]">
+            <div className="bento-card static overflow-hidden animate-fade-up [animation-delay:200ms]">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>

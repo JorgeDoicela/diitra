@@ -100,7 +100,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
     };
 
     return (
-        <div className="bento-card overflow-hidden">
+        <div className="bento-card static overflow-hidden">
             <div className="modal-header !px-6 !py-4">
                 <div className="flex items-center gap-3">
                     <div className="icon-circle-brand !p-2">
