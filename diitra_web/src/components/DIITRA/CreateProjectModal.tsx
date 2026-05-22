@@ -149,7 +149,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
                 <div className="p-8">
                     
-                    <div className="flex items-center gap-3 mb-8 pb-4 divider-vercel !my-0">
+                    <div className="flex items-center gap-3 border-b border-border pb-4 mb-8">
                         <div className="text-text-main">
                             <Shield size={20} />
                         </div>

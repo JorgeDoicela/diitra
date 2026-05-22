@@ -290,7 +290,7 @@ const MyProjectsPage: React.FC = () => {
                                 </div>
                             )}
 
-                            <div className="flex items-center justify-between pt-3 divider-vercel !my-0 text-[10px] text-text-dim">
+                            <div className="flex items-center justify-between pt-3 border-t border-border mt-4 text-[10px] text-text-dim">
                                 <div className="flex items-center gap-1">
                                     <Calendar size={10} />
                                     <span>
