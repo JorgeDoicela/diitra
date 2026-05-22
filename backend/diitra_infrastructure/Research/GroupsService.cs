@@ -120,7 +120,24 @@ public class GroupsService : IGroupsService
         _context.InvGruposInvestigacion.Add(group);
         await _context.SaveChangesAsync();
 
-        await _auditService.LogActionAsync(null, "CREAR_GRUPO", $"Creación del grupo {group.Nombre}", "INVESTIGACION");
+        var afterState = new
+        {
+            Nombre = group.Nombre,
+            Siglas = group.Siglas,
+            TipoGrupo = group.TipoGrupo,
+            IdDominio = group.IdDominio,
+            IdCoordinador = group.IdCoordinador,
+            ObjetivoGeneral = group.ObjetivoGeneral,
+            Mision = group.Mision,
+            Vision = group.Vision,
+            ResolucionAprobacion = group.ResolucionAprobacion,
+            FechaCreacion = group.FechaCreacion,
+            Activo = group.Activo,
+            Estado = group.Estado
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(null, "CREAR_GRUPO", $"Creación del grupo {group.Nombre}", "INVESTIGACION", null, afterJson);
 
         if (group.Estado == "Pendiente")
         {
@@ -168,6 +185,23 @@ public class GroupsService : IGroupsService
             .FirstOrDefaultAsync(g => g.Uuid == uuid);
 
         if (group == null) throw new Exception("Grupo no encontrado");
+
+        var beforeState = new
+        {
+            Nombre = group.Nombre,
+            Siglas = group.Siglas,
+            TipoGrupo = group.TipoGrupo,
+            IdDominio = group.IdDominio,
+            IdCoordinador = group.IdCoordinador,
+            ObjetivoGeneral = group.ObjetivoGeneral,
+            Mision = group.Mision,
+            Vision = group.Vision,
+            ResolucionAprobacion = group.ResolucionAprobacion,
+            FechaCreacion = group.FechaCreacion,
+            Activo = group.Activo,
+            Estado = group.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
         int? coordinatorId = dto.IdCoordinador;
         if (!string.IsNullOrEmpty(dto.IdProfesorCoordinador))
@@ -223,7 +257,25 @@ public class GroupsService : IGroupsService
         }
 
         await _context.SaveChangesAsync();
-        await _auditService.LogActionAsync(null, "EDITAR_GRUPO", $"Edición del grupo {group.Nombre}", "INVESTIGACION");
+
+        var afterState = new
+        {
+            Nombre = group.Nombre,
+            Siglas = group.Siglas,
+            TipoGrupo = group.TipoGrupo,
+            IdDominio = group.IdDominio,
+            IdCoordinador = group.IdCoordinador,
+            ObjetivoGeneral = group.ObjetivoGeneral,
+            Mision = group.Mision,
+            Vision = group.Vision,
+            ResolucionAprobacion = group.ResolucionAprobacion,
+            FechaCreacion = group.FechaCreacion,
+            Activo = group.Activo,
+            Estado = group.Estado
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(null, "EDITAR_GRUPO", $"Edición del grupo {group.Nombre}", "INVESTIGACION", beforeJson, afterJson);
 
         if (dto.Estado == "Pendiente")
         {
@@ -325,19 +377,72 @@ public class GroupsService : IGroupsService
         var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
         if (group == null) return false;
 
+        var beforeState = new
+        {
+            Nombre = group.Nombre,
+            Siglas = group.Siglas,
+            TipoGrupo = group.TipoGrupo,
+            IdDominio = group.IdDominio,
+            IdCoordinador = group.IdCoordinador,
+            ObjetivoGeneral = group.ObjetivoGeneral,
+            Mision = group.Mision,
+            Vision = group.Vision,
+            ResolucionAprobacion = group.ResolucionAprobacion,
+            FechaCreacion = group.FechaCreacion,
+            Activo = group.Activo,
+            Estado = group.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
         if (aprobado)
         {
             group.Estado = "Aprobado";
             group.Activo = true;
             group.ResolucionAprobacion = resolucion;
-            await _auditService.LogActionAsync(null, "APROBAR_GRUPO", $"Aprobación del grupo {group.Nombre} con resolución {resolucion}", "INVESTIGACION");
+
+            var afterState = new
+            {
+                Nombre = group.Nombre,
+                Siglas = group.Siglas,
+                TipoGrupo = group.TipoGrupo,
+                IdDominio = group.IdDominio,
+                IdCoordinador = group.IdCoordinador,
+                ObjetivoGeneral = group.ObjetivoGeneral,
+                Mision = group.Mision,
+                Vision = group.Vision,
+                ResolucionAprobacion = group.ResolucionAprobacion,
+                FechaCreacion = group.FechaCreacion,
+                Activo = group.Activo,
+                Estado = group.Estado
+            };
+            string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+            await _auditService.LogActionAsync(null, "APROBAR_GRUPO", $"Aprobación del grupo {group.Nombre} con resolución {resolucion}", "INVESTIGACION", beforeJson, afterJson);
         }
         else
         {
             group.Estado = "Rechazado";
             group.Activo = false;
             group.ResolucionAprobacion = null;
-            await _auditService.LogActionAsync(null, "RECHAZAR_GRUPO", $"Rechazo del grupo {group.Nombre}", "INVESTIGACION");
+
+            var afterState = new
+            {
+                Nombre = group.Nombre,
+                Siglas = group.Siglas,
+                TipoGrupo = group.TipoGrupo,
+                IdDominio = group.IdDominio,
+                IdCoordinador = group.IdCoordinador,
+                ObjetivoGeneral = group.ObjetivoGeneral,
+                Mision = group.Mision,
+                Vision = group.Vision,
+                ResolucionAprobacion = group.ResolucionAprobacion,
+                FechaCreacion = group.FechaCreacion,
+                Activo = group.Activo,
+                Estado = group.Estado
+            };
+            string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+            await _auditService.LogActionAsync(null, "RECHAZAR_GRUPO", $"Rechazo del grupo {group.Nombre}", "INVESTIGACION", beforeJson, afterJson);
         }
 
         await _context.SaveChangesAsync();

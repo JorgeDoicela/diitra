@@ -41,6 +41,7 @@ namespace diitra_infrastructure.Research
                     project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == dto.Uuid);
                 }
 
+                string? beforeJson = null;
                 if (project != null)
                 {
                     // 1.1 Bloqueo de Integridad por Estado
@@ -48,6 +49,29 @@ namespace diitra_infrastructure.Research
                     {
                         return new SyncResult { Success = false, Message = $"El proyecto [{project.Estado}] está blindado y no permite modificaciones." };
                     }
+
+                    var beforeState = new
+                    {
+                        Titulo = project.Titulo,
+                        CodigoInstitucional = project.CodigoInstitucional,
+                        DescripcionProyecto = project.DescripcionProyecto,
+                        Antecedentes = project.Antecedentes,
+                        Justificacion = project.Justificacion,
+                        MarcoTeorico = project.MarcoTeorico,
+                        Metodologia = project.Metodologia,
+                        Evaluacion = project.MetodoEvaluacion,
+                        TiempoEjecucion = project.TiempoEjecucion,
+                        TieneGrupoInvestigacion = project.TieneGrupo,
+                        IdGrupo = project.IdGrupo,
+                        IdConvocatoria = project.IdConvocatoria,
+                        IdObjetivoPnd = project.IdObjetivoPnd,
+                        IdEntidadAliada = project.IdEntidadAliada,
+                        TrlInicial = project.TrlInicial,
+                        TrlActual = project.TrlActual,
+                        TrlMeta = project.TrlMeta,
+                        Estado = project.Estado
+                    };
+                    beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
                 }
                 else
                 {
@@ -221,7 +245,37 @@ namespace diitra_infrastructure.Research
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                await _auditService.LogActionAsync(null, project.Estado == "Borrador" && dto.Uuid == null ? "CREAR_PROYECTO" : "ACTUALIZAR_PROYECTO", $"Sincronización de datos del proyecto: {project.Titulo}", "PROYECTOS");
+                var afterState = new
+                {
+                    Titulo = project.Titulo,
+                    CodigoInstitucional = project.CodigoInstitucional,
+                    DescripcionProyecto = project.DescripcionProyecto,
+                    Antecedentes = project.Antecedentes,
+                    Justificacion = project.Justificacion,
+                    MarcoTeorico = project.MarcoTeorico,
+                    Metodologia = project.Metodologia,
+                    Evaluacion = project.MetodoEvaluacion,
+                    TiempoEjecucion = project.TiempoEjecucion,
+                    TieneGrupoInvestigacion = project.TieneGrupo,
+                    IdGrupo = project.IdGrupo,
+                    IdConvocatoria = project.IdConvocatoria,
+                    IdObjetivoPnd = project.IdObjetivoPnd,
+                    IdEntidadAliada = project.IdEntidadAliada,
+                    TrlInicial = project.TrlInicial,
+                    TrlActual = project.TrlActual,
+                    TrlMeta = project.TrlMeta,
+                    Estado = project.Estado
+                };
+                string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+                await _auditService.LogActionAsync(
+                    null, 
+                    project.Estado == "Borrador" && dto.Uuid == null ? "CREAR_PROYECTO" : "ACTUALIZAR_PROYECTO", 
+                    $"Sincronización de datos del proyecto: {project.Titulo}", 
+                    "PROYECTOS",
+                    beforeJson,
+                    afterJson
+                );
 
                 return new SyncResult { Success = true, Uuid = project.Uuid };
             }
