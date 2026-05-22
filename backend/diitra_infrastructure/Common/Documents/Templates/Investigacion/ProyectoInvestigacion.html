@@ -288,7 +288,7 @@
         </tr>
         <tr>
             <td class="label">PERIODO ACADÉMICO DE CONVOCATORIA:</td>
-            <td colspan="6">{{default periodo '...'}}</td>
+            <td colspan="6">{{default periodo_convocatoria (default periodo '...')}}</td>
         </tr>
         <tr>
             <td class="label">TIEMPO DE EJECUCIÓN:</td>
@@ -296,7 +296,7 @@
         </tr>
         <tr>
             <td class="label">DIRECTOR DEL PROYECTO:</td>
-            <td colspan="6"><strong>{{default nombre_director '...'}}</strong></td>
+            <td colspan="6"><strong>{{default director_proyecto (default firmas_responsabilidad.director_nombre (default nombre_director '...'))}}</strong></td>
         </tr>
         <tr>
             <td colspan="2" class="date-header" style="width: 33%;">FECHA DE PRESENTACIÓN DEL PROYECTO</td>
@@ -305,15 +305,15 @@
         </tr>
         <tr style="text-align: center;">
             <td colspan="2" style="padding: 8px;">{{default fecha_presentacion '[día/mes/año]'}}</td>
-            <td colspan="2" style="padding: 8px;">{{default fecha_inicio '[día/mes/año]'}}</td>
-            <td colspan="3" style="padding: 8px;">{{default fecha_fin '[día/mes/año]'}}</td>
+            <td colspan="2" style="padding: 8px;">{{default fecha_inicio_estimada (default fecha_inicio '[día/mes/año]')}}</td>
+            <td colspan="3" style="padding: 8px;">{{default fecha_fin_estimada (default fecha_fin '[día/mes/año]')}}</td>
         </tr>
     </table>
 
     <div class="section-title">2. INVESTIGADORES</div>
     <table class="data-table">
         <thead>
-            <tr><th>NOMBRE COMPLETO</th><th>CÉDULA</th><th>EMAIL</th><th>TELÉFONO</th><th>NIVEL ACAD.</th><th>ROL</th></tr>
+            <tr><th>NOMBRE</th><th>NÚMERO DE CÉDULA</th><th>EMAIL</th><th>TELÉFONO</th><th>NIVEL ACADÉMICO</th><th>ROL</th></tr>
         </thead>
         <tbody>
             {{#each investigadores}}
@@ -322,7 +322,7 @@
                 <td>{{this.cedula}}</td>
                 <td>{{this.email}}</td>
                 <td>{{this.telefono}}</td>
-                <td>{{this.nivel}}</td>
+                <td>{{default this.nivel_academico (default this.nivel '...')}}</td>
                 <td>{{this.rol}}</td>
             </tr>
             {{else}}
@@ -331,100 +331,361 @@
         </tbody>
     </table>
 
-    <div class="section-title">3. ESPECIFICACIÓN TÉCNICA</div>
-    <div style="font-weight:bold; margin-bottom:5px">3.1 Antecedentes</div>
-    <div style="border:1px solid #222c57; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;">{{default antecedentes 'Información no proporcionada.'}}</div>
-
-    <div style="font-weight:bold; margin-bottom:5px">3.2 Descripción del Proyecto</div>
-    <div style="border:1px solid #222c57; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;">{{default descripcion_proyecto 'Información no proporcionada.'}}</div>
-
-    <div style="font-weight:bold; margin-bottom:5px">3.3 Justificación</div>
-    <div style="border:1px solid #222c57; padding:15px; margin-bottom:15px; text-align:justify; min-height:60px;">{{default justificacion 'Información no proporcionada.'}}</div>
-
-    <table class="data-table">
-        <tr><th style="width:40%">OBJETIVO GENERAL</th><th>OBJETIVOS ESPECÍFICOS</th></tr>
+    <div class="section-title">3. ESPECIFICACIÓN DEL PROYECTO</div>
+    <table class="identificacion-table" style="width:100%; border-collapse:collapse; margin-bottom:20px;">
         <tr>
-            <td style="vertical-align:top">{{default objetivo_general 'No definido.'}}</td>
-            <td style="vertical-align:top">
-                <ul>
-                    {{#each objetivos_especificos}}
-                    <li>{{this}}</li>
-                    {{else}}
-                    <li>...</li>
-                    {{/each}}
-                </ul>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">ANTECEDENTES ESPECÍFICOS DE LA PROBLEMÁTICA</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                {{default antecedentes 'Información no proporcionada.'}}
+            </td>
+        </tr>
+        <tr>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">DESCRIPCIÓN DEL PROYECTO</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                {{default descripcion_proyecto 'Información no proporcionada.'}}
+            </td>
+        </tr>
+        <tr>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">JUSTIFICACIÓN</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                {{default justificacion 'Información no proporcionada.'}}
             </td>
         </tr>
     </table>
 
-    <div class="section-title">4. RECURSOS Y FINANCIAMIENTO</div>
-    <div style="display:flex; gap:15px">
-        <div style="flex:1">
-            <p style="font-weight:bold; font-size:9pt;">4.1 Recursos Disponibles</p>
-            <table class="data-table">
-                <tr><th>DESC.</th><th style="width:40px">CANT.</th></tr>
-                {{#each recursos_disponibles}}
-                <tr><td>{{this.descripcion}}</td><td style="text-align:center">{{this.cantidad}}</td></tr>
-                {{else}}
-                <tr><td colspan="2">&nbsp;</td></tr>
-                {{/each}}
-            </table>
-        </div>
-        <div style="flex:1">
-            <p style="font-weight:bold; font-size:9pt;">4.2 Recursos Necesarios (Gasto)</p>
-            <table class="data-table">
-                <tr><th>RUBRO</th><th>TOTAL</th></tr>
-                {{#each recursos_necesarios}}
-                <tr><td>{{this.descripcion}}</td><td style="text-align:right">{{moneda this.total}}</td></tr>
-                {{else}}
-                <tr><td colspan="2">&nbsp;</td></tr>
-                {{/each}}
-                <tr><td style="font-weight:bold">TOTAL PRESUPUESTO</td><td style="text-align:right; font-weight:bold">{{moneda costo_total}}</td></tr>
-            </table>
-        </div>
-    </div>
-
-    <div class="section-title">5. PRODUCTOS ESPERADOS</div>
-    <table class="data-table">
-        <tr><th>PRODUCTO / ENTREGABLE</th><th style="width:80px">CANTIDAD</th></tr>
-        {{#each productos}}
-        <tr><td>{{this.tipo}}</td><td style="text-align:center">{{this.cantidad}}</td></tr>
-        {{else}}
-        <tr><td colspan="2">&nbsp;</td></tr>
-        {{/each}}
+    <div style="font-weight:bold; text-align:center; padding:6px; background:#222c57; color:#fff; font-size:10.5pt; text-transform:uppercase; margin-bottom:10px; font-family:'Calibri', sans-serif;">OBJETIVOS</div>
+    
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+        <thead>
+            <tr>
+                <th style="width:40%; background:#222c57; color:#fff; font-weight:bold; padding:8px; border:1px solid #222c57; text-align:center; text-transform:uppercase; font-size:9.5pt;">GENERAL</th>
+                <th style="background:#222c57; color:#fff; font-weight:bold; padding:8px; border:1px solid #222c57; text-align:center; text-transform:uppercase; font-size:9.5pt;">ESPECÍFICOS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:10px; border:1px solid #222c57; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                    {{default objetivo_general 'No definido.'}}
+                </td>
+                <td style="padding:10px; border:1px solid #222c57; vertical-align:top; background:#fff; font-size:10pt;">
+                    <ul style="margin:0; padding-left:15px; text-align:justify;">
+                        {{#each objetivos_especificos}}
+                        <li>{{this}}</li>
+                        {{else}}
+                        <li>No definidos.</li>
+                        {{/each}}
+                    </ul>
+                </td>
+            </tr>
+        </tbody>
     </table>
 
-    <div class="section-title">6. MATRIZ DE IMPACTO</div>
-    <table class="data-table">
-        <tr><th style="width:120px">EJE DE IMPACTO</th><th style="width:60px">APLICA</th><th>DESCRIPCIÓN BREVE</th></tr>
-        <tr><td>SOCIAL</td><td style="text-align:center">{{#if impacto_social}}X{{/if}}</td><td>{{impacto_social_desc}}</td></tr>
-        <tr><td>CIENTÍFICO</td><td style="text-align:center">{{#if impacto_cientifico}}X{{/if}}</td><td>{{impacto_cientifico_desc}}</td></tr>
-        <tr><td>ECONÓMICO</td><td style="text-align:center">{{#if impacto_economico}}X{{/if}}</td><td>{{impacto_economico_desc}}</td></tr>
-        <tr><td>POLÍTICO</td><td style="text-align:center">{{#if impacto_politico}}X{{/if}}</td><td>{{impacto_politico_desc}}</td></tr>
-        <tr><td>AMBIENTAL</td><td style="text-align:center">{{#if impacto_ambiental}}X{{/if}}</td><td>{{impacto_ambiental_desc}}</td></tr>
+    <table class="identificacion-table" style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+        <tr>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">OBJETIVOS DE DESARROLLO SOSTENIBLE</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; font-size:10pt;">
+                {{default ods (default objetivos_desarrollo_sostenible 'No definidos.')}}
+            </td>
+        </tr>
+        <tr>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">MARCO TEÓRICO</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                {{default marco_teorico 'Información no proporcionada.'}}
+            </td>
+        </tr>
+        <tr>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">METODOLOGÍA</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                {{default metodologia 'Información no proporcionada.'}}
+            </td>
+        </tr>
+        <tr>
+            <td class="label" style="width:30%; font-weight:bold; background:#222c57; color:#fff; padding:8px; border:1px solid #000; text-align:left; vertical-align:middle; font-size:9.5pt;">EVALUACIÓN</td>
+            <td style="padding:10px; border:1px solid #000; vertical-align:top; background:#fff; text-align:justify; font-size:10pt;">
+                {{default evaluacion 'Información no proporcionada.'}}
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">4. RECURSOS, COSTO Y FINANCIAMIENTO</div>
+    
+    <div style="font-weight:bold; text-align:center; padding:5px; background:#222c57; color:#fff; font-size:9pt; text-transform:uppercase; margin-bottom:5px;">Recursos Disponibles</div>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="width:60%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">DESCRIPCIÓN</th>
+                <th style="width:15%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">CANTIDAD</th>
+                <th style="width:25%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">FUENTE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each recursos_disponibles}}
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff;">{{this.descripcion}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center;">{{this.cantidad}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff;">{{this.fuente}}</td>
+            </tr>
+            {{else}}
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div style="font-weight:bold; text-align:center; padding:5px; background:#222c57; color:#fff; font-size:9pt; text-transform:uppercase; margin-bottom:5px;">Recursos Necesarios</div>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:15px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="width:50%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">DESCRIPCIÓN</th>
+                <th style="width:15%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">CANTIDAD</th>
+                <th style="width:15%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">COSTO UNITARIO</th>
+                <th style="width:20%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">COSTO TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each recursos_necesarios}}
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff;">{{this.descripcion}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center;">{{this.cantidad}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:right;">{{moneda this.costo_unitario}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:right;">{{moneda this.costo_total}}</td>
+            </tr>
+            {{else}}
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+            </tr>
+            {{/each}}
+            <tr>
+                <td colspan="3" style="padding:6px; border:1px solid #222c57; background:#fff; font-weight:bold; text-transform:uppercase; text-align:left; font-size:8.5pt;">COSTO TOTAL DEL PROYECTO</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:right; font-weight:bold; color:#222c57;">{{moneda costo_total}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="font-weight:bold; text-align:center; padding:5px; background:#222c57; color:#fff; font-size:9pt; text-transform:uppercase; margin-bottom:5px;">Financiamiento (X)</div>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="width:30%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">ISTPET</th>
+                <th style="width:30%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">OTRAS FUENTES</th>
+                <th style="width:40%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">NOMBRES DE OTRAS FUENTES</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold; font-size:11pt;">
+                    {{#if (or (eq fuente_financiamiento 'ISTPET') (and (not (eq fuente_financiamiento 'OTRAS_FUENTES')) (eq (default financiamiento_istpet false) true)))}}X{{else}}&nbsp;{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold; font-size:11pt;">
+                    {{#if (or (eq fuente_financiamiento 'OTRAS_FUENTES') (eq (default financiamiento_otras_fuentes false) true))}}X{{else}}&nbsp;{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center;">
+                    {{#if (or (eq fuente_financiamiento 'OTRAS_FUENTES') (eq (default financiamiento_otras_fuentes false) true))}}
+                        {{default nombre_otra_fuente (default nombres_otras_fuentes '...')}}
+                    {{else}}
+                        &nbsp;
+                    {{/if}}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="section-title">5. PRODUCTOS ESPERADOS</div>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="background:#222c57; color:#fff; font-weight:bold; padding:8px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">TIPO</th>
+                <th style="width:150px; background:#222c57; color:#fff; font-weight:bold; padding:8px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">CANTIDAD</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each (default productos_esperados productos)}}
+            <tr>
+                <td style="padding:8px; border:1px solid #222c57; background:#fff;">{{this.tipo}}</td>
+                <td style="padding:8px; border:1px solid #222c57; background:#fff; text-align:center;">{{this.cantidad}}</td>
+            </tr>
+            {{else}}
+            <tr>
+                <td style="padding:8px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+                <td style="padding:8px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">-</td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+
+    <div class="section-title">6. IMPACTO DEL PROYECTO</div>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="width:25%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">IMPACTO DEL PROYECTO</th>
+                <th style="width:12%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">Aplica (X)</th>
+                <th style="width:12%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">No aplica (X)</th>
+                <th style="background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">DESCRIPCIÓN BREVE (Solamente si aplica)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Social -->
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; font-weight:bold; background:#fff;">Social</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.social ''))) (and (not (eq impacto_social '')) (not (eq impacto_social null))))}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.social ''))) (and (not (eq impacto_social '')) (not (eq impacto_social null))))}}{{else}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:justify;">
+                    {{default (default impacto.social '') (default impacto_social '')}}
+                </td>
+            </tr>
+            <!-- Científico -->
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; font-weight:bold; background:#fff;">Científico</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.cientifico ''))) (and (not (eq impacto_cientifico '')) (not (eq impacto_cientifico null))))}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.cientifico ''))) (and (not (eq impacto_cientifico '')) (not (eq impacto_cientifico null))))}}{{else}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:justify;">
+                    {{default (default impacto.cientifico '') (default impacto_cientifico '')}}
+                </td>
+            </tr>
+            <!-- Económico -->
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; font-weight:bold; background:#fff;">Económico</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.economico ''))) (and (not (eq impacto_economico '')) (not (eq impacto_economico null))))}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.economico ''))) (and (not (eq impacto_economico '')) (not (eq impacto_economico null))))}}{{else}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:justify;">
+                    {{default (default impacto.economico '') (default impacto_economico '')}}
+                </td>
+            </tr>
+            <!-- Político -->
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; font-weight:bold; background:#fff;">Político</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.politico ''))) (and (not (eq impacto_politico '')) (not (eq impacto_politico null))))}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.politico ''))) (and (not (eq impacto_politico '')) (not (eq impacto_politico null))))}}{{else}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:justify;">
+                    {{default (default impacto.politico '') (default impacto_politico '')}}
+                </td>
+            </tr>
+            <!-- Ambiental -->
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; font-weight:bold; background:#fff;">Ambiental</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.ambiental ''))) (and (not (eq impacto_ambiental '')) (not (eq impacto_ambiental null))))}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.ambiental ''))) (and (not (eq impacto_ambiental '')) (not (eq impacto_ambiental null))))}}{{else}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:justify;">
+                    {{default (default impacto.ambiental '') (default impacto_ambiental '')}}
+                </td>
+            </tr>
+            <!-- Otro -->
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; font-weight:bold; background:#fff;">Otro</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.otro ''))) (and (not (eq impacto_otro '')) (not (eq impacto_otro null))))}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{#if (or (and impacto (not (eq impacto.otro ''))) (and (not (eq impacto_otro '')) (not (eq impacto_otro null))))}}{{else}}X{{/if}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:justify;">
+                    {{default (default impacto.otro '') (default impacto_otro '')}}
+                </td>
+            </tr>
+        </tbody>
     </table>
 
     <div class="section-title">7. CRONOGRAMA DE ACTIVIDADES</div>
-    <table class="data-table">
-        <thead><tr><th>ACTIVIDAD</th><th style="width:100px">MES/SEMANA</th><th>RECURSOS</th></tr></thead>
+    <div style="font-style:italic; font-weight:bold; text-align:center; margin-bottom:10px; font-family:'Calibri', sans-serif;">Cronograma (Diagrama de Gantt)</div>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="width:5%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">N°</th>
+                <th style="width:50%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">Actividades</th>
+                <th style="width:25%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">Recursos Necesarios</th>
+                <th style="width:20%; background:#222c57; color:#fff; font-weight:bold; padding:6px; border:1px solid #222c57; text-align:center; font-size:8.5pt;">Período / Semanas</th>
+            </tr>
+        </thead>
         <tbody>
             {{#each cronograma}}
-            <tr><td>{{this.actividad}}</td><td style="text-align:center">{{this.mes}}</td><td>{{this.recursos}}</td></tr>
+            <tr>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center; font-weight:bold;">
+                    {{default this.numero (add @index 1)}}
+                </td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff;">{{this.actividad}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff;">{{default this.recursos_necesarios (default this.recursos '-')}}</td>
+                <td style="padding:6px; border:1px solid #222c57; background:#fff; text-align:center;">
+                    {{default this.mes (default this.periodo 'Semanas de ejecución')}}
+                </td>
+            </tr>
             {{else}}
-            <tr><td colspan="3" style="text-align:center">...</td></tr>
+            <tr>
+                <td colspan="4" style="padding:6px; border:1px solid #222c57; background:#fff; color:#aaa; text-align:center;">No hay actividades registradas en el cronograma.</td>
+            </tr>
             {{/each}}
         </tbody>
     </table>
 
     <div class="section-title">8. BIBLIOGRAFÍA</div>
-    <div style="font-size:9pt; min-height:80px; border:1px solid #222c57; padding:15px; text-align:justify;">{{default bibliografia 'Sin bibliografía registrada.'}}</div>
+    <div style="font-size:9.5pt; min-height:80px; border:1px solid #222c57; padding:15px; text-align:justify; background:#fff; color:#000;">
+        {{#if bibliografia}}
+            {{#if bibliografia.length}}
+                <ol style="margin:0; padding-left:20px; line-height:1.4;">
+                    {{#each bibliografia}}
+                    <li style="margin-bottom:6px;">{{this}}</li>
+                    {{/each}}
+                </ol>
+            {{else}}
+                <div style="white-space: pre-wrap; line-height:1.4;">{{bibliografia}}</div>
+            {{/if}}
+        {{else}}
+            <span style="color:#aaa;">Sin bibliografía registrada.</span>
+        {{/if}}
+    </div>
 
     <div class="section-title">9. FIRMAS DE RESPONSABILIDAD</div>
-    <table style="width:100%; border-collapse:collapse">
-        <tr>
-            <td class="firma-box" style="width:48%"><strong>{{default nombre_director 'DIRECTOR PROYECTO'}}</strong><br/>Firma</td>
-            <td style="width:4%"></td>
-            <td class="firma-box" style="width:48%"><strong>{{default coordinador 'COORDINADOR CARRERA'}}</strong><br/>Firma</td>
-        </tr>
+    <table class="data-table" style="width:100%; border-collapse:collapse; margin-top:10px; font-size:9.5pt;">
+        <thead>
+            <tr>
+                <th style="width:50%; text-align:center; font-weight:bold; background:#222c57; color:#fff; padding:6px; border:1px solid #222c57;">Elaborado por: Director del Proyecto</th>
+                <th style="width:50%; text-align:center; font-weight:bold; background:#222c57; color:#fff; padding:6px; border:1px solid #222c57;">Aprobado por: Coordinador de Carrera</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="height:100px; border:1px solid #222c57; vertical-align:bottom; padding:10px; background:#fff; text-align:center; color:#aaa; font-style:italic;">
+                    (espacio para firma)
+                </td>
+                <td style="height:100px; border:1px solid #222c57; vertical-align:bottom; padding:10px; background:#fff; text-align:center; color:#aaa; font-style:italic;">
+                    (espacio para firma)
+                </td>
+            </tr>
+            <tr>
+                <td style="border:1px solid #222c57; padding:8px; background:#fff; text-align:center; font-size:9.5pt; line-height:1.3; color:#000;">
+                    <strong>{{default firmas_responsabilidad.director_nombre (default nombre_director_firma (default director_proyecto 'DIRECTOR PROYECTO'))}}</strong><br/>
+                    {{default firmas_responsabilidad.director_cargo (default cargo_director_firma 'Director del Proyecto')}}
+                </td>
+                <td style="border:1px solid #222c57; padding:8px; background:#fff; text-align:center; font-size:9.5pt; line-height:1.3; color:#000;">
+                    <strong>{{default firmas_responsabilidad.coordinador_nombre (default nombre_coordinador_firma 'COORDINADOR CARRERA')}}</strong><br/>
+                    {{default firmas_responsabilidad.coordinador_cargo (default cargo_coordinador_firma 'Coordinador de Carrera')}}
+                </td>
+            </tr>
+        </tbody>
     </table>
 </div>
