@@ -16,13 +16,19 @@ interface PeerReview {
     es_externo: boolean;
 }
 
+const REVIEW_STATUS_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
+    'Pendiente':   { label: 'Pendiente',   badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
+    'Completada':  { label: 'Completada',   badge: 'badge-vercel-success', dot: 'dot-success' },
+    'Rechazada':   { label: 'Rechazada',    badge: 'badge-vercel-error',   dot: 'dot-error' },
+    'Expirada':    { label: 'Expirada',      badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
+};
+
 const PeerReviewPage = () => {
     const [reviews, setReviews] = useState<PeerReview[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedReview, setSelectedReview] = useState<PeerReview | null>(null);
     const [showModal, setShowModal] = useState(false);
     
-    // Evaluation Form State
     const [evaluation, setEvaluation] = useState({
         detalles: [
             { criterio: 'Pertinencia Científica', puntaje: 0, observaciones: '' },
@@ -84,11 +90,14 @@ const PeerReviewPage = () => {
         return sum.toFixed(2);
     };
 
+    const getStatusConfig = (estado: string) => {
+        return REVIEW_STATUS_CONFIG[estado] || REVIEW_STATUS_CONFIG['Pendiente'];
+    };
+
     return (
         <main className="flex-1 bg-bg-deep p-10 overflow-y-auto">
-            {/* Header */}
             <header className="mb-12 animate-fade-up">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em] mb-2">
+                <div className="section-label mb-2">
                     <ShieldCheck size={12} className="text-text-main" />
                     <span>Evaluación por Pares</span>
                 </div>
@@ -99,49 +108,52 @@ const PeerReviewPage = () => {
                 </p>
             </header>
 
-            {/* Content */}
             <div className="grid grid-cols-1 gap-4 animate-fade-up [animation-delay:100ms]">
-                {reviews.map((review) => (
-                    <div 
-                        key={review.uuid} 
-                        className="bento-card p-6 flex flex-col md:flex-row justify-between items-center group hover:border-text-main transition-all cursor-pointer"
-                        onClick={() => { setSelectedReview(review); setShowModal(true); }}
-                    >
-                        <div className="flex items-center gap-6 flex-1">
-                            <div className="p-3 rounded-lg bg-surface border border-border-thin group-hover:border-text-main transition-colors text-text-dim group-hover:text-text-main">
-                                <FileText size={24} strokeWidth={1.5} />
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-3">
-                                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter border border-border-thin text-text-dim">
-                                        ID: {review.id_proyecto}
-                                    </span>
-                                    <span className="flex items-center gap-1 text-[10px] text-text-dim font-medium uppercase tracking-widest">
-                                        <Clock size={10} /> Limite: {new Date(review.fecha_limite).toLocaleDateString()}
-                                    </span>
+                {reviews.map((review) => {
+                    const statusCfg = getStatusConfig(review.estado);
+                    return (
+                        <div 
+                            key={review.uuid} 
+                            className="bento-card p-6 flex flex-col md:flex-row justify-between items-center group cursor-pointer"
+                            onClick={() => { setSelectedReview(review); setShowModal(true); }}
+                        >
+                            <div className="flex items-center gap-6 flex-1">
+                                <div className="icon-circle-brand shrink-0 group-hover:scale-110 transition-transform">
+                                    <FileText size={24} strokeWidth={1.5} />
                                 </div>
-                                <h4 className="text-xl font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform">
-                                    {review.proyecto_titulo}
-                                </h4>
-                                <div className="flex items-center gap-4 text-[10px] text-text-dim font-medium uppercase tracking-tight">
-                                    <span className="flex items-center gap-1"><CheckCircle size={12} /> {review.estado}</span>
-                                    {review.es_externo && <span className="text-blue-500 font-bold tracking-widest">[PAR EXTERNO]</span>}
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <span className="status-tag text-text-dim border-border-thin">
+                                            ID: {review.id_proyecto}
+                                        </span>
+                                        <div className={`badge-vercel ${statusCfg.badge}`}>
+                                            <span className={`dot ${statusCfg.dot}`} />
+                                            {statusCfg.label}
+                                        </div>
+                                        <span className="flex items-center gap-1 text-[10px] text-text-dim font-medium uppercase tracking-widest">
+                                            <Clock size={10} /> Límite: {new Date(review.fecha_limite).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <h4 className="text-xl font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform">
+                                        {review.proyecto_titulo}
+                                    </h4>
+                                    {review.es_externo && <span className="badge-vercel badge-vercel-info text-[9px]">PAR EXTERNO</span>}
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex items-center gap-4 mt-4 md:mt-0">
-                            <button className="flex items-center gap-2 bg-surface border border-border-thin text-text-main px-4 py-2 rounded text-[11px] font-bold uppercase tracking-widest hover:border-text-main transition-all">
-                                Evaluar Proyecto
-                                <ChevronRight size={14} />
-                            </button>
+                            <div className="flex items-center gap-4 mt-4 md:mt-0">
+                                <button className="btn-vercel-secondary flex items-center gap-2">
+                                    Evaluar Proyecto
+                                    <ChevronRight size={14} />
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
 
                 {reviews.length === 0 && !loading && (
-                    <div className="py-20 text-center bento-card border-dashed space-y-4">
-                        <div className="inline-flex p-4 rounded-full bg-surface border border-border-thin text-text-dim">
+                    <div className="empty-state py-20">
+                        <div className="icon-circle icon-circle-neutral !p-4 mb-4">
                             <CheckCircle size={32} />
                         </div>
                         <p className="text-text-dim font-bold uppercase tracking-widest">No tiene revisiones pendientes</p>
@@ -149,11 +161,10 @@ const PeerReviewPage = () => {
                 )}
             </div>
 
-            {/* Evaluation Modal */}
             {showModal && selectedReview && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-bg-deep/90 backdrop-blur-md animate-in fade-in duration-200">
-                    <div className="bg-bg-deep border border-border-thin w-full max-w-4xl rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                        <header className="p-6 border-b border-border-thin flex justify-between items-center bg-surface/30">
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+                    <div className="modal-card modal-card--lg !max-w-4xl animate-fade-up max-h-[90vh]">
+                        <div className="modal-header">
                             <div>
                                 <h3 className="text-2xl font-bold tracking-tighter text-text-main uppercase">
                                     Rúbrica de Evaluación
@@ -163,31 +174,32 @@ const PeerReviewPage = () => {
                             <button onClick={() => setShowModal(false)} className="p-2 text-text-dim hover:text-text-main transition-colors">
                                 <X size={24} />
                             </button>
-                        </header>
+                        </div>
 
-                        <div className="flex-1 flex overflow-hidden">
-                            {/* Left: Project Details Placeholder */}
-                            <div className="w-1/3 border-r border-border-thin p-6 bg-surface/10 overflow-y-auto space-y-6">
-                                <h5 className="text-[10px] font-bold text-text-main uppercase tracking-widest border-b border-border-thin pb-2">Resumen del Protocolo</h5>
+                        <div className="modal-body !p-0 flex flex-1 overflow-hidden">
+                            <div className="w-1/3 border-r border-border-thin p-6 bg-surface/10 space-y-6 overflow-y-auto">
+                                <div className="section-label pb-2">
+                                    <ExternalLink size={10} />
+                                    <span>Resumen del Protocolo</span>
+                                </div>
                                 <div className="space-y-4">
                                     <p className="text-xs text-text-dim leading-relaxed">
                                         [En una implementación real, aquí se cargaría el PDF del proyecto o los campos principales: Justificación, Metodología, etc.]
                                     </p>
-                                    <button className="w-full flex items-center justify-center gap-2 bg-surface border border-border-thin text-text-main py-2 rounded text-[10px] font-bold uppercase tracking-widest hover:border-text-main">
+                                    <button className="btn-vercel-secondary w-full flex items-center justify-center gap-2">
                                         <ExternalLink size={14} /> Ver PDF Completo
                                     </button>
                                 </div>
                             </div>
 
-                            {/* Right: Evaluation Form */}
-                            <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto space-y-8">
+                            <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto space-y-6">
                                 {evaluation.detalles.map((det, idx) => (
                                     <div key={idx} className="space-y-4 p-4 rounded bg-surface/20 border border-border-thin">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-sm font-bold text-text-main uppercase tracking-tight">{det.criterio}</label>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg font-bold text-text-main">{det.puntaje}/25</span>
-                                            </div>
+                                            <label className="section-label text-text-main">
+                                                <span>{det.criterio}</span>
+                                            </label>
+                                            <span className="stat-number stat-number--sm !text-base">{det.puntaje}/25</span>
                                         </div>
                                         
                                         <input 
@@ -198,7 +210,7 @@ const PeerReviewPage = () => {
                                         />
 
                                         <textarea 
-                                            className="w-full bg-surface border border-border-thin rounded p-3 text-xs text-text-main outline-none focus:border-text-main transition-all h-20 resize-none"
+                                            className="input-vercel !text-xs h-20 resize-none"
                                             placeholder={`Observaciones sobre ${det.criterio.toLowerCase()}...`}
                                             value={det.observaciones}
                                             onChange={(e) => handleObsChange(idx, e.target.value)}
@@ -206,40 +218,43 @@ const PeerReviewPage = () => {
                                     </div>
                                 ))}
 
+                                <div className="divider-vercel" />
+
                                 <div className="space-y-3">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                    <label className="section-label text-text-dim">
                                         <MessageSquare size={12} /> Conclusión General
                                     </label>
                                     <textarea 
-                                        className="w-full bg-surface border border-border-thin rounded p-4 text-sm text-text-main outline-none focus:border-text-main transition-all h-32"
+                                        className="input-vercel h-32"
                                         placeholder="Dictamen final del revisor..."
                                         value={evaluation.observaciones_gral}
                                         onChange={(e) => setEvaluation({...evaluation, observaciones_gral: e.target.value})}
                                     ></textarea>
                                 </div>
-
-                                <div className="pt-6 flex justify-between items-center border-t border-border-thin">
-                                    <div className="text-right">
-                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Puntaje Total</p>
-                                        <p className="text-3xl font-bold tracking-tighter text-text-main">{calculateTotal()}/100</p>
-                                    </div>
-                                    <div className="flex gap-4">
-                                        <button 
-                                            type="button" 
-                                            onClick={() => setShowModal(false)}
-                                            className="px-6 py-2 text-[11px] font-bold uppercase tracking-widest text-text-dim hover:text-text-main"
-                                        >
-                                            Cancelar
-                                        </button>
-                                        <button 
-                                            type="submit"
-                                            className="bg-text-main text-bg-deep px-10 py-3 rounded text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 hover:opacity-90 active:scale-95 transition-all"
-                                        >
-                                            <Send size={14} /> Enviar Evaluación
-                                        </button>
-                                    </div>
-                                </div>
                             </form>
+                        </div>
+
+                        <div className="modal-footer">
+                            <p className="stat-number stat-number--sm text-text-main mr-2">
+                                {calculateTotal()}<span className="text-text-dim text-sm font-normal">/100</span>
+                            </p>
+                            <div className="flex gap-4">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowModal(false)}
+                                    className="btn-vercel-secondary"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    type="submit"
+                                    formNoValidate
+                                    onClick={handleSubmit}
+                                    className="btn-vercel-primary flex items-center gap-2"
+                                >
+                                    <Send size={14} /> Enviar Evaluación
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
