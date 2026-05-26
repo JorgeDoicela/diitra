@@ -83,6 +83,40 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 if (val is bool b) return !b;
                 return val == null;
             });
+
+            // Helper: conjunción lógica Y (and)
+            _handlebars.RegisterHelper("and", (context, arguments) =>
+            {
+                if (arguments.Length == 0) return false;
+                foreach (var arg in arguments)
+                {
+                    if (arg == null) return false;
+                    if (arg is bool b && !b) return false;
+                    if (arg is string s && string.IsNullOrEmpty(s)) return false;
+                    if (arg is int i && i == 0) return false;
+                    if (arg is long l && l == 0) return false;
+                    if (arg is decimal dec && dec == 0) return false;
+                    if (arg is double d && d == 0) return false;
+                }
+                return true;
+            });
+
+            // Helper: disyunción lógica O (or)
+            _handlebars.RegisterHelper("or", (context, arguments) =>
+            {
+                if (arguments.Length == 0) return false;
+                foreach (var arg in arguments)
+                {
+                    if (arg is bool b && b) return true;
+                    if (arg is string s && !string.IsNullOrEmpty(s)) return true;
+                    if (arg is int i && i != 0) return true;
+                    if (arg is long l && l != 0) return true;
+                    if (arg is decimal dec && dec != 0) return true;
+                    if (arg is double d && d != 0) return true;
+                    if (arg != null && !(arg is bool) && !(arg is string) && !(arg is int) && !(arg is long) && !(arg is decimal) && !(arg is double)) return true;
+                }
+                return false;
+            });
         }
 
         /// <summary>

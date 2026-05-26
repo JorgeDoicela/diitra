@@ -45,6 +45,8 @@ interface DIITRABuilderShellProps {
     onSave?: (data: any) => Promise<void>;
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
+    readOnlyReason?: string;
+    projectStatus?: string;
     children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
 }
 
@@ -58,6 +60,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     onClose,
     cowork,      // ← Recibido como prop
     readOnly = false, // ← Bandera de sólo lectura
+    readOnlyReason,
+    projectStatus,
     children
 }) => {
     const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
@@ -86,21 +90,21 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         setAuditLogs(prev => [{ msg, type }, ...prev].slice(0, 8));
     }, []);
 
-    // ── Auto-save inteligente del núcleo (dirty-check + debounce 3s) ──
-    const lastSavedSnapshotRef = useRef<string>('');
-    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const formDataRef = useRef(formData);
-    const onSaveRef = useRef(onSave);
-
-    useEffect(() => { formDataRef.current = formData; }, [formData]);
-    useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
-
     const snapshotForm = (data: any): string => {
         try {
             const { Uuid, Titulo, Nombre, ...rest } = data;
             return JSON.stringify({ Uuid, Titulo, Nombre, ...rest });
         } catch { return ''; }
     };
+
+    // ── Auto-save inteligente del núcleo (dirty-check + debounce 3s) ──
+    const lastSavedSnapshotRef = useRef<string>(snapshotForm(formData));
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const formDataRef = useRef(formData);
+    const onSaveRef = useRef(onSave);
+
+    useEffect(() => { formDataRef.current = formData; }, [formData]);
+    useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
 
     const handleSave = useCallback(async () => {
         if (readOnly) return; // Bloquear guardado en sólo lectura
@@ -387,7 +391,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             <div>
                                                 <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-amber-500">Vista de Sólo Lectura Activa</h4>
                                                 <p className="text-[9px] md:text-[10px] text-text-dim font-medium leading-relaxed mt-1">
-                                                    Has accedido a este documento en modalidad de sólo lectura debido a que no figuras como un miembro activo del grupo de investigación asignado a este proyecto. No podrás realizar modificaciones en este protocolo de investigación.
+                                                    {readOnlyReason === 'state' ? (
+                                                        `Este documento ha sido emitido y firmado formalmente (se encuentra en estado "${projectStatus || 'Oficial'}"), por lo que su contenido ha sido sellado para garantizar la integridad institucional. No se admiten modificaciones.`
+                                                    ) : readOnlyReason === 'review' ? (
+                                                        "Estás visualizando este documento en modo de sólo lectura para fines de revisión y auditoría académica."
+                                                    ) : (
+                                                        "Has accedido a este documento en modalidad de sólo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>

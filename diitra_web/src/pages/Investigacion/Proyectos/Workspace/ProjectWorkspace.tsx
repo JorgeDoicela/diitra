@@ -494,13 +494,29 @@ export const ProjectWorkspace: React.FC = () => {
             );
         }
 
+        const isMainProtocol = activeDocument === templateCode;
+        const isNotEditableState = currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección';
+        
+        // El protocolo principal se rige por puedeEditar.
+        // La rúbrica de evaluación en este workspace es de sólo lectura para el investigador.
+        // El informe de avance es editable a menos que el proyecto esté completamente finalizado.
+        const isReadOnly = isMainProtocol
+            ? !currentProject.puedeEditar
+            : (activeDocument === 'RUBRICA_EVALUACION' ? true : currentProject.status === 'Finalizado');
+
+        const readOnlyReason = isMainProtocol
+            ? (isNotEditableState ? 'state' : 'membership')
+            : (activeDocument === 'RUBRICA_EVALUACION' ? 'review' : 'state');
+
         return (
             <DocumentEditor 
                 templateCode={activeDocument} 
                 initialData={{ Uuid: editorUuid }}
                 entityUuid={activeDocument === templateCode ? resolvedProjectUuid || undefined : resolvedProjectUuid || undefined}
                 onClose={handleCloseEditor} 
-                readOnly={!currentProject.puedeEditar}
+                readOnly={isReadOnly}
+                readOnlyReason={readOnlyReason}
+                projectStatus={currentProject.status}
             />
         );
     }

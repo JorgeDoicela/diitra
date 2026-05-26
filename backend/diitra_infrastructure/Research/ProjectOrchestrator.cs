@@ -177,8 +177,11 @@ namespace diitra_infrastructure.Research
                     project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 }
 
-                // 3. Sincronización de Equipo (Anti-Corruption Layer provisionada por AuthService)
-                await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores);
+                // 3. Sincronización de Equipo (Anti-Corruption Layer de los Investigadores)
+                if (dto.Investigadores != null && dto.Investigadores.Count > 0)
+                {
+                    await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores);
+                }
 
                 // Auto-vincular al creador como Director si no hay investigadores registrados o no está ya vinculado
                 if (!string.IsNullOrEmpty(creatorUserIdRef))

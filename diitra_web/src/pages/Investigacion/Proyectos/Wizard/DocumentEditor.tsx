@@ -62,9 +62,11 @@ interface DocumentEditorProps {
     entityUuid?: string;
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
+    readOnlyReason?: string;
+    projectStatus?: string;
 }
 
-const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false }) => {
+const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false, readOnlyReason, projectStatus }) => {
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
 
@@ -156,6 +158,8 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             tiposProducto={tiposProducto}
             onClose={onClose}
             readOnly={readOnly}
+            readOnlyReason={readOnlyReason}
+            projectStatus={projectStatus}
         />
     );
 };
@@ -176,6 +180,8 @@ interface DocumentEditorCoreProps {
     tiposProducto: any[];
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
+    readOnlyReason?: string;
+    projectStatus?: string;
 }
 
 const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
@@ -187,7 +193,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     convocatorias,
     tiposProducto,
     onClose,
-    readOnly = false
+    readOnly = false,
+    readOnlyReason,
+    projectStatus
 }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -336,6 +344,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             onSave={handleSave}
             onClose={onClose}
             readOnly={readOnly}
+            readOnlyReason={readOnlyReason}
+            projectStatus={projectStatus}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);
