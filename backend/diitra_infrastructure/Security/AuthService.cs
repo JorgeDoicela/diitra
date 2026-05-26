@@ -88,7 +88,8 @@ public class AuthService : IAuthService
         if (p != null)
         {
             string fullNombre = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim();
-            return await ProvisionUserAsync(cedula, fullNombre, "cambiame", "profesor", cedula);
+            string pwd = !string.IsNullOrEmpty(p.Clave) ? p.Clave : "cambiame";
+            return await ProvisionUserAsync(cedula, fullNombre, pwd, "profesor", cedula);
         }
 
         // 3. Buscar en Alumnos
@@ -96,10 +97,17 @@ public class AuthService : IAuthService
         if (a != null)
         {
             string fullNombre = $"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}".Replace("  ", " ").Trim();
-            return await ProvisionUserAsync(cedula, fullNombre, "cambiame", "alumno", cedula);
+            string pwd = !string.IsNullOrEmpty(a.Password) ? a.Password : "cambiame";
+            return await ProvisionUserAsync(cedula, fullNombre, pwd, "alumno", cedula);
         }
 
         return null;
+    }
+
+    private bool IsBCryptHash(string password)
+    {
+        if (string.IsNullOrEmpty(password)) return false;
+        return password.Length == 60 && (password.StartsWith("$2a$") || password.StartsWith("$2b$") || password.StartsWith("$2y$"));
     }
 
     private bool VerifyPassword(User user, string password)
@@ -124,11 +132,12 @@ public class AuthService : IAuthService
 
     public async Task<User> ProvisionUserAsync(string username, string name, string password, string table, string sigafiId)
     {
+        string contraseniaHash = IsBCryptHash(password) ? password : BCrypt.Net.BCrypt.HashPassword(password, 11);
         var user = new User
         {
             IdSigafi = sigafiId,
             Nombre = name.Trim(),
-            Contrasenia = BCrypt.Net.BCrypt.HashPassword(password, 11),
+            Contrasenia = contraseniaHash,
             Activo = true,
             Administrador = (username == MASTER_ADMIN_ID),
             TablaSigafi = table
@@ -180,6 +189,22 @@ public class AuthService : IAuthService
             await _context.SaveChangesAsync();
         }
 
+        var roleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList();
+        var sistemas = await _context.RoleModuleOperations
+            .AsNoTracking()
+            .Include(rmo => rmo.Role)
+            .Include(rmo => rmo.ModuleOperation)
+                .ThenInclude(mo => mo.Module)
+                    .ThenInclude(m => m.Sistema)
+            .Where(rmo => rmo.EsActivo == true
+                       && roleCodes.Contains(rmo.Role.CodigoRol)
+                       && rmo.ModuleOperation.Module.Sistema != null)
+            .Select(rmo => rmo.ModuleOperation.Module.Sistema.Codigo)
+            .Distinct()
+            .ToListAsync();
+
+        var systemsClaim = string.Join(",", sistemas);
+
         var response = new AuthResponse
         {
             IdReferencia = user.IdSigafi.Trim(),
@@ -189,13 +214,16 @@ public class AuthService : IAuthService
             NombreCompleto = user.Nombre ?? "",
             Role = userRoles.FirstOrDefault()?.Role?.Nombre ?? "Usuario",
             Roles = userRoles.Select(ur => ur.Role.Nombre).ToList(),
-            RoleCodes = userRoles.Select(ur => ur.Role.CodigoRol).ToList(),
+            RoleCodes = roleCodes,
             TipoUsuario = user.TablaSigafi,
             Permissions = permissions,
-            Administrador = (user.IdSigafi == MASTER_ADMIN_ID) || user.Administrador
+            Administrador = (user.IdSigafi == MASTER_ADMIN_ID) || user.Administrador,
+            Email = user.EmailInstitucional ?? "",
+            Sistemas = systemsClaim
         };
 
         response.Token = GenerateToken(response);
+        response.RefreshToken = GenerateRefreshToken(response.IdReferencia);
         return response;
     }
 
@@ -251,29 +279,68 @@ public class AuthService : IAuthService
 
     public string GenerateToken(AuthResponse user)
     {
-        var jwtSettings = _configuration.GetSection("Jwt");
-        var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);
+        var jwtSettings = _configuration.GetSection("JWTSettings");
+        var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+        var key = Encoding.UTF8.GetBytes(secret);
+
+        var systemsClaim = user.Sistemas ?? string.Empty;
 
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, user.IdReferencia),
+            new Claim("sub", user.IdReferencia ?? ""),
+            new Claim(ClaimTypes.NameIdentifier, user.IdReferencia ?? ""),
+            new Claim("nombre", user.NombreCompleto ?? ""),
+            new Claim(ClaimTypes.Name, user.NombreCompleto ?? ""),
+            new Claim("email", user.Email ?? ""),
+            new Claim("tipo_usuario", user.Administrador ? "ADMIN" : "USUARIO"),
+            new Claim("sistemas", systemsClaim ?? ""),
             new Claim("id_usuario", user.IdUsuario.ToString()),
-            new Claim(ClaimTypes.Name, user.NombreCompleto),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim("user_uuid", user.UserUuid),
-            new Claim("tipo_usuario", user.TipoUsuario),
+            new Claim("user_uuid", user.UserUuid ?? ""),
             new Claim("es_admin", user.Administrador.ToString().ToLower())
         };
 
-        foreach (var roleCode in user.RoleCodes) claims.Add(new Claim(ClaimTypes.Role, roleCode));
-        foreach (var permission in user.Permissions) claims.Add(new Claim("permission", permission));
+        foreach (var roleCode in user.RoleCodes)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, roleCode));
+            claims.Add(new Claim("roles", roleCode));
+        }
+        foreach (var permission in user.Permissions)
+        {
+            claims.Add(new Claim("permission", permission));
+        }
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddHours(double.Parse(jwtSettings["ExpiryInHours"] ?? "12")),
-            Issuer = jwtSettings["Issuer"],
-            Audience = jwtSettings["Audience"],
+            Expires = DateTime.UtcNow.AddHours(8), // Vigencia de 8 horas para el acceso
+            Issuer = jwtSettings["Issuer"] ?? "auth_global_istpet",
+            Audience = jwtSettings["Audience"] ?? "all",
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    public string GenerateRefreshToken(string username)
+    {
+        var jwtSettings = _configuration.GetSection("JWTSettings");
+        var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+        var key = Encoding.UTF8.GetBytes(secret);
+
+        var claims = new List<Claim>
+        {
+            new Claim("sub", username),
+            new Claim("token_type", "refresh")
+        };
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.UtcNow.AddDays(7), // Válido por 7 días
+            Issuer = jwtSettings["Issuer"] ?? "auth_global_istpet",
+            Audience = jwtSettings["Audience"] ?? "all",
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
@@ -393,5 +460,12 @@ public class AuthService : IAuthService
             }
         }
         await _context.SaveChangesAsync();
+    }
+
+    public async Task<AuthResponse?> RefreshAuthResponseAsync(string username)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == username && u.Activo);
+        if (user == null) return null;
+        return await GetAuthResponseAsync(user);
     }
 }

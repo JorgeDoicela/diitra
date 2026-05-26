@@ -36,9 +36,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 1.1 Configurar Autenticación JWT y Cookies
-var jwtSettings = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtSettings["Secret"]!);
+// 1.1 Configurar Autenticación JWT y Cookies (SSO Stateless Compartido)
+var jwtSettings = builder.Configuration.GetSection("JWTSettings");
+var secret = jwtSettings["Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+var key = Encoding.UTF8.GetBytes(secret);
 
 builder.Services.AddAuthentication(options =>
 {
@@ -47,24 +48,34 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = true,
         ValidateAudience = true,
-        ValidIssuer = jwtSettings["Issuer"],
-        ValidAudience = jwtSettings["Audience"],
         ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"] ?? "auth_global_istpet",
+        ValidAudience = jwtSettings["Audience"] ?? "all",
+        IssuerSigningKey = new SymmetricSecurityKey(key),
         ClockSkew = TimeSpan.Zero
     };
     
-    // Configuración para leer el JWT desde una cookie
+    // Configuración para leer el JWT tanto desde cookie (DIITRA Local) como de Authorization Header (SSO Global)
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             context.Token = context.Request.Cookies["diitra_auth"];
+            if (string.IsNullOrEmpty(context.Token))
+            {
+                var authHeader = context.Request.Headers["Authorization"].ToString();
+                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                }
+            }
             return Task.CompletedTask;
         }
     };
