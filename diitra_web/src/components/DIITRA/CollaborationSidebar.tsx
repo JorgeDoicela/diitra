@@ -231,7 +231,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                             <button
                                                 key={s}
                                                 onClick={() => handleUpdateStatus(s)}
-                                                className={`w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${sectionStatuses[sectionName] === s
+                                                className={`w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${(sectionStatuses[sectionName] || 'Borrador') === s
                                                         ? 'bg-brand text-bg-deep border-brand shadow-lg font-black'
                                                         : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
                                                     }`}

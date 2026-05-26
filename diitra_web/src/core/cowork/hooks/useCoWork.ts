@@ -76,8 +76,8 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     }, [config.user.name]);
 
     const updateSectionStatus = useCallback((instanceUuid: string, sectionName: string, status: string) => {
-        return getTransport().updateSectionStatus(instanceUuid, sectionName, status, config.user.id);
-    }, [config.user.id]);
+        return getTransport().updateSectionStatus(instanceUuid, sectionName, status, config.user.id, config.user.name);
+    }, [config.user.id, config.user.name]);
 
     const postComment = useCallback((instanceUuid: string, content: string, parentId?: number) => {
         return getTransport().postComment(instanceUuid, config.user.id, config.user.name, content, parentId);

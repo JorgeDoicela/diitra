@@ -104,7 +104,7 @@ export interface ICoWorkTransport {
     notifySectionActivity(instanceUuid: string, sectionName: string, action: string, userName: string): Promise<void>;
     
     /** Actualiza el estado de una sección (Borrador, Revisión, Aprobado) */
-    updateSectionStatus(instanceUuid: string, sectionName: string, status: string, userUuid: string): Promise<void>;
+    updateSectionStatus(instanceUuid: string, sectionName: string, status: string, userUuid: string, userName: string): Promise<void>;
     
     /** Publica un comentario en el hilo de discusión del documento */
     postComment(instanceUuid: string, userUuid: string, userName: string, content: string, parentId?: number): Promise<void>;
