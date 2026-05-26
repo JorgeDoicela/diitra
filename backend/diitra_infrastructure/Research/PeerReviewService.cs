@@ -23,6 +23,7 @@ public class PeerReviewService : IPeerReviewService
             {
                 Uuid = r.Uuid,
                 IdProyecto = r.IdProyecto,
+                ProyectoUuid = r.Proyecto.Uuid,
                 ProyectoTitulo = r.Proyecto.Titulo,
                 IdRevisor = r.IdRevisor,
                 FechaAsignacion = r.FechaAsignacion,
@@ -107,11 +108,14 @@ public class PeerReviewService : IPeerReviewService
     public async Task<IEnumerable<PeerReviewDto>> GetProjectReviewsAsync(int projectId)
     {
         return await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Proyecto)
             .Where(r => r.IdProyecto == projectId)
             .Select(r => new PeerReviewDto
             {
                 Uuid = r.Uuid,
                 IdProyecto = r.IdProyecto,
+                ProyectoUuid = r.Proyecto.Uuid,
+                ProyectoTitulo = r.Proyecto.Titulo,
                 IdRevisor = r.IdRevisor,
                 FechaAsignacion = r.FechaAsignacion,
                 FechaLimite = r.FechaLimite,

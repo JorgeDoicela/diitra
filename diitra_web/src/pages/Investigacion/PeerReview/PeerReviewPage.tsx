@@ -10,6 +10,8 @@ interface PeerReview {
     uuid: string;
     id_proyecto: number;
     proyecto_titulo: string;
+    proyectoUuid?: string;
+    proyecto_uuid?: string;
     fecha_asignacion: string;
     fecha_limite: string;
     estado: 'Pendiente' | 'Completada' | 'Rechazada' | 'Expirada';
@@ -28,6 +30,10 @@ const PeerReviewPage = () => {
     const [loading, setLoading] = useState(true);
     const [selectedReview, setSelectedReview] = useState<PeerReview | null>(null);
     const [showModal, setShowModal] = useState(false);
+    
+    // Estados de cimiento para el detalle del protocolo a evaluar
+    const [projectDetail, setProjectDetail] = useState<any>(null);
+    const [loadingDetail, setLoadingDetail] = useState(false);
     
     const [evaluation, setEvaluation] = useState({
         detalles: [
@@ -54,6 +60,35 @@ const PeerReviewPage = () => {
     useEffect(() => {
         fetchReviews();
     }, []);
+
+    // Efecto satélite para cargar el protocolo del proyecto dinámicamente al seleccionar una revisión
+    useEffect(() => {
+        const fetchProjectDetail = async () => {
+            if (!selectedReview) {
+                setProjectDetail(null);
+                return;
+            }
+            
+            const pUuid = selectedReview.proyectoUuid || selectedReview.proyecto_uuid;
+            if (!pUuid) {
+                console.warn('[DIITRA] El peer review no contiene el UUID de referencia del proyecto.');
+                return;
+            }
+
+            setLoadingDetail(true);
+            try {
+                const res = await api.get(`/projects/${pUuid}/detail`);
+                setProjectDetail(res.data);
+            } catch (err) {
+                console.error('[DIITRA] Error al cargar detalles del proyecto para revisión:', err);
+                setProjectDetail(null);
+            } finally {
+                setLoadingDetail(false);
+            }
+        };
+
+        fetchProjectDetail();
+    }, [selectedReview]);
 
     const handleScoreChange = (index: number, score: number) => {
         const newDetalles = [...evaluation.detalles];
@@ -177,19 +212,83 @@ const PeerReviewPage = () => {
                         </div>
 
                         <div className="modal-body !p-0 flex flex-1 overflow-hidden">
-                            <div className="w-1/3 border-r border-border-thin p-6 bg-surface/10 space-y-6 overflow-y-auto">
-                                <div className="section-label pb-2">
-                                    <ExternalLink size={10} />
-                                    <span>Resumen del Protocolo</span>
+                            <div className="w-1/3 border-r border-border-thin p-6 bg-surface/10 space-y-6 overflow-y-auto flex flex-col justify-between">
+                                <div className="space-y-6">
+                                    <div className="section-label pb-2">
+                                        <FileText size={10} />
+                                        <span>Resumen del Protocolo</span>
+                                    </div>
+                                    
+                                    {loadingDetail ? (
+                                        <div className="flex flex-col items-center py-10 gap-3">
+                                            <div className="animate-spin h-6 w-6 border-t-2 border-brand rounded-full"></div>
+                                            <span className="text-[10px] text-text-dim font-bold uppercase tracking-wider">Cargando datos...</span>
+                                        </div>
+                                    ) : projectDetail ? (
+                                        <div className="space-y-5 text-xs text-text-dim leading-relaxed">
+                                            <div>
+                                                <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider mb-1">Título del Proyecto</h4>
+                                                <p className="font-semibold text-text-main">{projectDetail.titulo}</p>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider mb-1">Director</h4>
+                                                <p className="font-medium text-text-main">{projectDetail.directorProyecto || 'No especificado'}</p>
+                                            </div>
+                                            <div>
+                                                <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider mb-1">Línea de Investigación</h4>
+                                                <p className="font-medium text-text-main">{projectDetail.lineaInvestigacion || 'No especificada'}</p>
+                                            </div>
+                                            {projectDetail.justificacion && (
+                                                <div>
+                                                    <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider mb-1">Justificación</h4>
+                                                    <div 
+                                                        className="max-h-32 overflow-y-auto pr-1 scrollbar-thin bg-surface-hover/30 p-2 rounded border border-border-thin/40"
+                                                        dangerouslySetInnerHTML={{ __html: projectDetail.justificacion }} 
+                                                    />
+                                                </div>
+                                            )}
+                                            {projectDetail.metodologia && (
+                                                <div>
+                                                    <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider mb-1">Metodología</h4>
+                                                    <div 
+                                                        className="max-h-32 overflow-y-auto pr-1 scrollbar-thin bg-surface-hover/30 p-2 rounded border border-border-thin/40"
+                                                        dangerouslySetInnerHTML={{ __html: projectDetail.metodologia }} 
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-text-dim leading-relaxed">
+                                            No se pudo cargar la información estructurada del proyecto.
+                                        </p>
+                                    )}
                                 </div>
-                                <div className="space-y-4">
-                                    <p className="text-xs text-text-dim leading-relaxed">
-                                        [En una implementación real, aquí se cargaría el PDF del proyecto o los campos principales: Justificación, Metodología, etc.]
-                                    </p>
-                                    <button className="btn-vercel-secondary w-full flex items-center justify-center gap-2">
-                                        <ExternalLink size={14} /> Ver PDF Completo
-                                    </button>
-                                </div>
+
+                                {projectDetail && (
+                                    <div className="pt-4 border-t border-border-thin/40">
+                                        <button 
+                                            type="button"
+                                            onClick={async () => {
+                                                try {
+                                                    const response = await api.post(`/projects/generate-pdf?isDraft=false&isBlind=true`, projectDetail, { responseType: 'blob' });
+                                                    const url = window.URL.createObjectURL(new Blob([response.data]));
+                                                    const link = document.createElement('a');
+                                                    link.href = url;
+                                                    link.setAttribute('download', `PROTOCOLO_PEER_REVIEW_${projectDetail.uuid.split('-')[0].toUpperCase()}.pdf`);
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    link.remove();
+                                                } catch (err) {
+                                                    console.error("[DIITRA] Error al descargar PDF", err);
+                                                    alert("No se pudo descargar el PDF del protocolo.");
+                                                }
+                                            }}
+                                            className="btn-vercel-secondary w-full flex items-center justify-center gap-2"
+                                        >
+                                            <ExternalLink size={14} /> Descargar PDF Ciego
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <form onSubmit={handleSubmit} className="flex-1 p-8 overflow-y-auto space-y-6">
