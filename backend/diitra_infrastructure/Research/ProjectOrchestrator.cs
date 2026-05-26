@@ -735,22 +735,53 @@ namespace diitra_infrastructure.Research
                         });
                     }
                 }
+            }
+            await NotifyInvestigadoresAsync(projectId, investigadores);
+        }
 
-                // Notificar al investigador sobre su asignación/actualización
-                var project = await _context.InvProyectos.FindAsync(projectId);
-                await _notificationService.NotifyUserAsync(
-                    persona.IdUsuario,
-                    "Actualización de Proyecto",
-                    $"Se han sincronizado tus datos en el proyecto: {project?.Titulo}",
-                    "INVESTIGACION",
-                    $"/proyectos/{project?.Uuid}",
-                    new Dictionary<string, string>
-                    {
-                        { "Proyecto", project?.Titulo ?? "Sin título" },
-                        { "Rol Asignado", inv.Rol ?? "Investigador" },
-                        { "Fecha Sincronización", DateTime.Now.ToString("dd/MM/yyyy HH:mm") }
-                    }
-                );
+        // Notificar a cada investigador fuera del loop — un solo FindAsync y una sola query de usuarios (fix N+1 query)
+        private async Task NotifyInvestigadoresAsync(int projectId, List<InvestigadorDto> investigadores)
+        {
+            var project = await _context.InvProyectos.FindAsync(projectId);
+            if (project == null) return;
+
+            var cedulas = investigadores
+                .Where(i => !string.IsNullOrEmpty(i.Cedula))
+                .Select(i => i.Cedula!.Trim())
+                .Distinct()
+                .ToList();
+
+            if (cedulas.Count == 0) return;
+
+            var personas = await _context.Users
+                .Where(u => u.IdSigafi != null && cedulas.Contains(u.IdSigafi))
+                .ToListAsync();
+
+            var personasDict = personas
+                .Where(p => p.IdSigafi != null)
+                .ToDictionary(p => p.IdSigafi!, p => p);
+
+            foreach (var inv in investigadores)
+            {
+                if (string.IsNullOrEmpty(inv.Cedula)) continue;
+                var cedulaTrim = inv.Cedula.Trim();
+
+                if (personasDict.TryGetValue(cedulaTrim, out var persona))
+                {
+                    await _notificationService.NotifyUserAsync(
+                        persona.IdUsuario,
+                        "Actualización de Proyecto",
+                        $"Se han sincronizado tus datos en el proyecto: {project.Titulo}",
+                        "INVESTIGACION",
+                        $"/proyectos/{project.Uuid}",
+                        new Dictionary<string, string>
+                        {
+                            { "Proyecto", project.Titulo ?? "Sin título" },
+                            { "Rol Asignado", inv.Rol ?? "Investigador" },
+                            { "Fecha Sincronización", DateTime.Now.ToString("dd/MM/yyyy HH:mm") }
+                        }
+                    );
+                }
             }
         }
 
@@ -1317,10 +1348,19 @@ namespace diitra_infrastructure.Research
                 return false;
             }
 
+            // FIX: Para proyectos con grupo, verificamos membresía en el grupo Y también membresía
+            // directa en el proyecto. Esto garantiza que el Director asignado directamente
+            // (vía creatorUserIdRef o transferencia) nunca pierda permisos aunque el proyecto
+            // tenga un grupo de investigación vinculado.
             if (project.TieneGrupo == true && project.IdGrupo.HasValue)
             {
-                return await _context.InvGruposMiembros.AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                var isGroupMember = await _context.InvGruposMiembros
+                    .AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                if (isGroupMember) return true;
+                // Fallback: el Director del proyecto puede haber sido asignado directamente
+                // (antes de vincular el grupo o vía transferencia de dirección)
             }
+
             return await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
                    await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
         }
@@ -1337,11 +1377,135 @@ namespace diitra_infrastructure.Research
 
             if (project.TieneGrupo == true && project.IdGrupo.HasValue)
             {
-                var isGroupMember = await _context.InvGruposMiembros.AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                var isGroupMember = await _context.InvGruposMiembros
+                    .AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
                 if (isGroupMember) return true;
+                // Fallback: verificar membresía directa en el proyecto
             }
             return await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario) ||
                    await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario);
+        }
+
+        /// <summary>
+        /// Devuelve los últimos eventos de actividad de un proyecto:
+        /// sesiones CoWork, cambios de estado de sección y auditoría reciente.
+        /// Diseñado para consumo desacoplado desde el panel lateral del Workspace.
+        /// </summary>
+        public async Task<List<ProyectoActividadDto>> GetProjectActivityAsync(string projectUuid, int maxItems = 20)
+        {
+            var project = await _context.InvProyectos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+
+            if (project == null) return new List<ProyectoActividadDto>();
+
+            // Resolver los UUIDs de todas las DocumentInstances vinculadas a este proyecto
+            // (cada sección/documento colaborativo tiene su propio instanceUuid)
+            var instanceUuids = await _context.DocumentInstances
+                .AsNoTracking()
+                .Where(di => di.EntityUuid == projectUuid)
+                .Select(di => di.Uuid)
+                .ToListAsync();
+
+            var actividades = new List<ProyectoActividadDto>();
+
+            if (instanceUuids.Count > 0)
+            {
+                // Construir expresión dinámica para filtrar sesiones por prefijo o match exacto de instanceUuids,
+                // ya que EF Core no puede traducir .Any con StartsWith de una colección local.
+                var parameter = System.Linq.Expressions.Expression.Parameter(typeof(diitra_infrastructure.data.models.Cowork.InvCoworkSesion), "s");
+                System.Linq.Expressions.Expression? body = null;
+                var docUuidProp = System.Linq.Expressions.Expression.Property(parameter, nameof(diitra_infrastructure.data.models.Cowork.InvCoworkSesion.DocumentoUuid));
+                var startsWithMethod = typeof(string).GetMethod(nameof(string.StartsWith), new[] { typeof(string) })!;
+
+                foreach (var uuid in instanceUuids)
+                {
+                    var exactMatch = System.Linq.Expressions.Expression.Equal(docUuidProp, System.Linq.Expressions.Expression.Constant(uuid));
+                    var startsWithMatch = System.Linq.Expressions.Expression.Call(docUuidProp, startsWithMethod, System.Linq.Expressions.Expression.Constant(uuid + "_"));
+                    var combinedMatch = System.Linq.Expressions.Expression.OrElse(exactMatch, startsWithMatch);
+
+                    body = body == null ? combinedMatch : System.Linq.Expressions.Expression.OrElse(body, combinedMatch);
+                }
+
+                var querySesiones = _context.InvCoworkSesiones.AsNoTracking();
+                if (body != null)
+                {
+                    var lambda = System.Linq.Expressions.Expression.Lambda<Func<diitra_infrastructure.data.models.Cowork.InvCoworkSesion, bool>>(body, parameter);
+                    querySesiones = querySesiones.Where(lambda);
+                }
+                else
+                {
+                    querySesiones = querySesiones.Where(s => false);
+                }
+
+                var sesiones = await querySesiones
+                    .OrderByDescending(s => s.ConectadoEn)
+                    .Take(10)
+                    .ToListAsync();
+
+                foreach (var s in sesiones)
+                {
+                    actividades.Add(new ProyectoActividadDto
+                    {
+                        Tipo = "acceso",
+                        NombreUsuario = s.NombreUsuario,
+                        RolUsuario = s.RolUsuario,
+                        Descripcion = s.DesconectadoEn.HasValue
+                            ? $"Sesión de edición ({(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes:0} min)"
+                            : "Sesión activa",
+                        Fecha = s.ConectadoEn,
+                        Icono = "edit"
+                    });
+                }
+
+                // 2. Cambios de estado de secciones (quién aprobó qué)
+                // DocumentoUuid en metadata = instanceUuid (sin sufijo de sección, corregido en CollaborationHub)
+                var secciones = await _context.InvDocumentosSeccionesMetadata
+                    .AsNoTracking()
+                    .Where(m => instanceUuids.Contains(m.DocumentoUuid))
+                    .OrderByDescending(m => m.ActualizadoEn)
+                    .Take(10)
+                    .ToListAsync();
+
+                foreach (var sec in secciones)
+                {
+                    actividades.Add(new ProyectoActividadDto
+                    {
+                        Tipo = "seccion",
+                        NombreUsuario = sec.UltimoNombreUsuario ?? "Sistema",
+                        RolUsuario = "",
+                        Descripcion = $"Sección '{sec.SeccionNombre}' marcada como {sec.Estado}",
+                        Fecha = sec.ActualizadoEn,
+                        Icono = sec.Estado == "Aprobado" ? "check" : sec.Estado == "En Revisión" ? "eye" : "edit"
+                    });
+                }
+            }
+
+            // 3. Trazabilidad del workflow (transiciones de estado del proyecto — siempre disponibles)
+            var trazas = await _context.InvTrazabilidadProyectos
+                .AsNoTracking()
+                .Where(t => t.IdProyecto == project.IdProyecto)
+                .OrderByDescending(t => t.FechaTransicion)
+                .Take(5)
+                .ToListAsync();
+
+            foreach (var t in trazas)
+            {
+                actividades.Add(new ProyectoActividadDto
+                {
+                    Tipo = "workflow",
+                    NombreUsuario = "Sistema DIITRA",
+                    RolUsuario = "",
+                    Descripcion = $"Estado: {t.EstadoAnterior} → {t.EstadoNuevo}",
+                    Fecha = t.FechaTransicion ?? DateTime.Now,
+                    Icono = "workflow"
+                });
+            }
+
+            return actividades
+                .OrderByDescending(a => a.Fecha)
+                .Take(maxItems)
+                .ToList();
         }
     }
 }

@@ -1215,6 +1215,7 @@ CREATE TABLE IF NOT EXISTS inv_documentos_secciones_metadata (
     sectionName         VARCHAR(100)  NOT NULL COMMENT 'Nombre de la sección (ej: resumen, presupuesto)',
     status              VARCHAR(50)   NOT NULL DEFAULT 'Borrador' COMMENT 'Borrador, Revisión, Aprobado',
     lastUserUuid        VARCHAR(36)   NULL,
+    lastUserName        VARCHAR(255)  NULL,
     actualizadoEn       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE INDEX idx_instance_section (instanceUuid, sectionName)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

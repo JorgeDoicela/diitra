@@ -59,6 +59,12 @@ namespace Diitra.Application.Research
         /// Valida si un usuario tiene permisos para ver un proyecto según su vinculación y membresía.
         /// </summary>
         Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId);
+
+        /// <summary>
+        /// Devuelve la actividad reciente de un proyecto: sesiones CoWork, cambios de estado
+        /// de sección y transiciones de workflow. Para el panel de actividad del Workspace.
+        /// </summary>
+        Task<List<ProyectoActividadDto>> GetProjectActivityAsync(string projectUuid, int maxItems = 20);
     }
 
     public class TransferDirectorRequest

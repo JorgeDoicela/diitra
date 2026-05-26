@@ -73,13 +73,24 @@ namespace diitra_api.Controllers
 
                 var statuses = await _db.InvDocumentosSeccionesMetadata
                     .Where(s => s.DocumentoUuid == instanceUuid)
-                    .Select(s => new { s.SeccionNombre, s.Estado })
+                    .Select(s => new {
+                        s.SeccionNombre,
+                        s.Estado,
+                        s.UltimoNombreUsuario,
+                        s.UltimoUsuarioUuid,
+                        s.ActualizadoEn
+                    })
                     .ToListAsync();
 
                 // Evitar errores de claves duplicadas si por alguna razón la BD tiene inconsistencias
                 var statusesDict = statuses
                     .GroupBy(s => s.SeccionNombre)
-                    .ToDictionary(g => g.Key, g => g.First().Estado);
+                    .ToDictionary(g => g.Key, g => new {
+                        estado = g.First().Estado,
+                        ultimoNombreUsuario = g.First().UltimoNombreUsuario,
+                        ultimoUsuarioUuid = g.First().UltimoUsuarioUuid,
+                        actualizadoEn = g.First().ActualizadoEn
+                    });
 
                 return Ok(new { 
                     comments = comments, 
