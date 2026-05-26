@@ -208,10 +208,10 @@ export class SignalRTransport implements ICoWorkTransport {
         } catch (err) {}
     }
 
-    async updateSectionStatus(instanceUuid: string, sectionName: string, status: string, userUuid: string): Promise<void> {
+    async updateSectionStatus(instanceUuid: string, sectionName: string, status: string, userUuid: string, userName: string): Promise<void> {
         if (!this._isConnected) return;
         try {
-            await this.connection.invoke('UpdateSectionStatus', instanceUuid, sectionName, status, userUuid);
+            await this.connection.invoke('UpdateSectionStatus', instanceUuid, sectionName, status, userUuid, userName);
         } catch (err) {}
     }
 

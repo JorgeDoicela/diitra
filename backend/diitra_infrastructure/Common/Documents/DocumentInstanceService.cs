@@ -93,7 +93,27 @@ namespace Diitra.Infrastructure.Common.Documents
         public async Task<DocumentInstance> UpdateMetadataAsync(string uuid, string metadataJson, CancellationToken ct = default)
         {
             var instance = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
-            if (instance == null) throw new KeyNotFoundException($"La instancia '{uuid}' no existe.");
+            
+            if (instance == null)
+            {
+                // Fallback: Tal vez nos pasaron el UUID del proyecto (entityUuid) para el protocolo principal.
+                instance = await _context.DocumentInstances.FirstOrDefaultAsync(
+                    i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION", ct);
+            }
+
+            if (instance == null)
+            {
+                // Auto-creación resiliente: si el proyecto existe, creamos la instancia del protocolo principal
+                // en caliente para evitar fallos de inicialización o guardado.
+                var projectExists = await _context.InvProyectos.AnyAsync(p => p.Uuid == uuid, ct);
+                if (projectExists)
+                {
+                    instance = await CreateAsync("PROTOCOLO_INVESTIGACION", uuid, "sistema", "Protocolo Oficial", "Proyecto", ct);
+                }
+            }
+
+            if (instance == null) 
+                throw new KeyNotFoundException($"La instancia o proyecto '{uuid}' no existe.");
 
             instance.UpdateDataSnapshot(metadataJson);
             await _context.SaveChangesAsync(ct);

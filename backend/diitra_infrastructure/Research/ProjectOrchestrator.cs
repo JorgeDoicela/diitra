@@ -1407,41 +1407,37 @@ namespace diitra_infrastructure.Research
                 .Select(di => di.Uuid)
                 .ToListAsync();
 
+            // Garantizar que el propio UUID del proyecto esté en la lista, ya que para el
+            // documento principal (PROTOCOLO_INVESTIGACION) su instanceUuid es exactamente el projectUuid.
+            if (!instanceUuids.Contains(projectUuid))
+            {
+                instanceUuids.Add(projectUuid);
+            }
+
             var actividades = new List<ProyectoActividadDto>();
 
             if (instanceUuids.Count > 0)
             {
-                // Construir expresión dinámica para filtrar sesiones por prefijo o match exacto de instanceUuids,
-                // ya que EF Core no puede traducir .Any con StartsWith de una colección local.
-                var parameter = System.Linq.Expressions.Expression.Parameter(typeof(diitra_infrastructure.data.models.Cowork.InvCoworkSesion), "s");
-                System.Linq.Expressions.Expression? body = null;
-                var docUuidProp = System.Linq.Expressions.Expression.Property(parameter, nameof(diitra_infrastructure.data.models.Cowork.InvCoworkSesion.DocumentoUuid));
-                var startsWithMethod = typeof(string).GetMethod(nameof(string.StartsWith), new[] { typeof(string) })!;
-
+                // Obtener las sesiones de CoWork correspondientes a las instancias asociadas al proyecto.
+                // Se utiliza EF.Functions.Like con un bucle rápido para garantizar compatibilidad total
+                // y óptima indexación en Pomelo MySQL, evitando errores de traducción SQL.
+                var sesiones = new List<diitra_infrastructure.data.models.Cowork.InvCoworkSesion>();
                 foreach (var uuid in instanceUuids)
                 {
-                    var exactMatch = System.Linq.Expressions.Expression.Equal(docUuidProp, System.Linq.Expressions.Expression.Constant(uuid));
-                    var startsWithMatch = System.Linq.Expressions.Expression.Call(docUuidProp, startsWithMethod, System.Linq.Expressions.Expression.Constant(uuid + "_"));
-                    var combinedMatch = System.Linq.Expressions.Expression.OrElse(exactMatch, startsWithMatch);
-
-                    body = body == null ? combinedMatch : System.Linq.Expressions.Expression.OrElse(body, combinedMatch);
+                    var pattern = uuid + "%";
+                    var list = await _context.InvCoworkSesiones.AsNoTracking()
+                        .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern))
+                        .OrderByDescending(s => s.ConectadoEn)
+                        .Take(10)
+                        .ToListAsync();
+                    sesiones.AddRange(list);
                 }
 
-                var querySesiones = _context.InvCoworkSesiones.AsNoTracking();
-                if (body != null)
-                {
-                    var lambda = System.Linq.Expressions.Expression.Lambda<Func<diitra_infrastructure.data.models.Cowork.InvCoworkSesion, bool>>(body, parameter);
-                    querySesiones = querySesiones.Where(lambda);
-                }
-                else
-                {
-                    querySesiones = querySesiones.Where(s => false);
-                }
-
-                var sesiones = await querySesiones
+                // Mantener las 10 sesiones más recientes globalmente
+                sesiones = sesiones
                     .OrderByDescending(s => s.ConectadoEn)
                     .Take(10)
-                    .ToListAsync();
+                    .ToList();
 
                 foreach (var s in sesiones)
                 {
