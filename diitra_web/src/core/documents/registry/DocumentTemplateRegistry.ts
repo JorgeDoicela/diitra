@@ -230,5 +230,36 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
                 }
             }
         ]
+    },
+
+    ACTA_COMITE_ETICA: {
+        title: "Acta del Comité de Ética de Investigación",
+        subtitle: "Evaluación de Pertinencia Ética y Bioética - IST Traversari",
+        schema: {
+            JustificacionEtica: '',
+            RiesgosIdentificados: '',
+            MetodoConsentimiento: '',
+            DictamenComite: 'Aprobado sin observaciones', // 'Aprobado sin observaciones' | 'Aprobado con sugerencias' | 'Rechazado'
+            ObservacionesEspecificas: '',
+            MiembrosFirmantes: []
+        },
+        lists: ['MiembrosFirmantes'],
+        sections: [
+            {
+                id: 'evaluacion_comite',
+                label: 'Evaluación de Ética',
+                iconName: 'CheckSquare',
+                config: {
+                    referenceTemplateCode: 'PROTOCOLO_INVESTIGACION',
+                    fields: [
+                        { name: 'JustificacionEtica',       label: 'Justificación Ética de la Investigación',    type: 'rich-text', collaborative: true, placeholder: 'Describa el impacto ético sobre seres humanos, datos sensibles o animales...' },
+                        { name: 'RiesgosIdentificados',      label: 'Identificación y Mitigación de Riesgos',     type: 'rich-text', collaborative: true, placeholder: 'Especifique cualquier riesgo biológico, digital o social y cómo se resolverá...' },
+                        { name: 'MetodoConsentimiento',      label: 'Mecanismo de Consentimiento Informado',      type: 'rich-text', collaborative: true, placeholder: 'Detalle cómo se obtendrá el consentimiento firmado de los participantes...' },
+                        { name: 'DictamenComite',            label: 'Dictamen Final de Comisión de Ética',         type: 'select',   collaborative: false, options: ['Aprobado sin observaciones', 'Aprobado con sugerencias', 'Rechazado'] },
+                        { name: 'ObservacionesEspecificas',  label: 'Observaciones y Requerimientos de Enmienda',  type: 'textarea', collaborative: false, placeholder: 'Escriba cualquier directriz obligatoria que el equipo de investigadores deba aplicar...' }
+                    ]
+                }
+            }
+        ]
     }
 };
