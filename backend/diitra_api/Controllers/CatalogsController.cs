@@ -293,11 +293,9 @@ namespace diitra_api.Controllers
         }
 
         [HttpGet("search-users")]
-        public async Task<IActionResult> SearchUsers([FromQuery] string q)
+        public async Task<IActionResult> SearchUsers([FromQuery] string? q = null)
         {
-            if (string.IsNullOrWhiteSpace(q)) return Ok(new List<object>());
-
-            var query = q.Trim().ToLower();
+            var query = q?.Trim().ToLower();
 
             // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -324,14 +322,16 @@ namespace diitra_api.Controllers
                     pa.IdPeriodo == periodId));
             }
 
-            profesoresQuery = profesoresQuery.Where(p => p.IdProfesor.Contains(query) ||
-                            (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(query)) ||
-                            (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(query)) ||
-                            (p.Nombres != null && p.Nombres.ToLower().Contains(query)) ||
-                            (p.Apellidos != null && p.Apellidos.ToLower().Contains(query)));
+            if (!string.IsNullOrEmpty(query))
+            {
+                profesoresQuery = profesoresQuery.Where(p => p.IdProfesor.Contains(query) ||
+                                (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(query)) ||
+                                (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(query)) ||
+                                (p.Nombres != null && p.Nombres.ToLower().Contains(query)) ||
+                                (p.Apellidos != null && p.Apellidos.ToLower().Contains(query)));
+            }
 
             var profesoresSelect = profesoresQuery
-                .Take(10)
                 .Select(p => new
                 {
                     cedula = p.IdProfesor.Trim(),
@@ -343,41 +343,54 @@ namespace diitra_api.Controllers
                     tipo = "profesor"
                 });
 
-            // 2. Buscar en Alumnos
-            var alumnosQuery = _context.Alumnos.AsQueryable();
+            // 2. Buscar en Alumnos (solo si se proporciona un término de búsqueda para ahorrar rendimiento)
+            var alums = new List<object>();
 
-            // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
-            if (!string.IsNullOrEmpty(periodId))
+            if (!string.IsNullOrEmpty(query))
             {
-                alumnosQuery = alumnosQuery.Where(a => _context.Matriculas.Any(m =>
-                    m.IdAlumno == a.IdAlumno &&
-                    m.IdPeriodo == periodId &&
-                    (m.Retirado == null || m.Retirado == false) &&
-                    (m.Valida == 1)));
+                var alumnosQuery = _context.Alumnos.AsQueryable();
+
+                // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
+                if (!string.IsNullOrEmpty(periodId))
+                {
+                    alumnosQuery = alumnosQuery.Where(a => _context.Matriculas.Any(m =>
+                        m.IdAlumno == a.IdAlumno &&
+                        m.IdPeriodo == periodId &&
+                        (m.Retirado == null || m.Retirado == false) &&
+                        (m.Valida == 1)));
+                }
+
+                alumnosQuery = alumnosQuery.Where(a => a.IdAlumno.Contains(query) ||
+                                (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(query)) ||
+                                (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)));
+
+                var alumnosSelect = alumnosQuery
+                    .Take(15) // Permitimos hasta 15 estudiantes si están buscando
+                    .Select(a => new
+                    {
+                        cedula = a.IdAlumno.Trim(),
+                        nombre = ($"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}").Replace("  ", " ").Trim(),
+                        email = a.EmailInstitucional ?? a.Email ?? "",
+                        telefono = a.Celular ?? a.Telefono ?? "",
+                        nivelAcademico = "Pregrado",
+                        rol = "Co-Investigador (Estudiante)",
+                        tipo = "alumno"
+                    });
+
+                var alumsList = await alumnosSelect.ToListAsync();
+                alums = alumsList.Select(a => new {
+                    a.cedula,
+                    nombre = a.nombre.Replace("  ", " ").Trim(),
+                    a.email,
+                    a.telefono,
+                    a.nivelAcademico,
+                    a.rol,
+                    a.tipo
+                }).Cast<object>().ToList();
             }
 
-            alumnosQuery = alumnosQuery.Where(a => a.IdAlumno.Contains(query) ||
-                            (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(query)) ||
-                            (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)));
-
-            var alumnosSelect = alumnosQuery
-                .Take(10)
-                .Select(a => new
-                {
-                    cedula = a.IdAlumno.Trim(),
-                    nombre = ($"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}").Replace("  ", " ").Trim(),
-                    email = a.EmailInstitucional ?? a.Email ?? "",
-                    telefono = a.Celular ?? a.Telefono ?? "",
-                    nivelAcademico = "Pregrado",
-                    rol = "Co-Investigador (Estudiante)",
-                    tipo = "alumno"
-                });
-
-            var profs = await profesoresSelect.ToListAsync();
-            var alums = await alumnosSelect.ToListAsync();
-
-            // Combinar y limpiar dobles espacios que puedan quedar en el nombre
-            var results = profs.Select(p => new {
+            var profsList = await profesoresSelect.ToListAsync();
+            var profs = profsList.Select(p => new {
                 p.cedula,
                 nombre = p.nombre.Replace("  ", " ").Trim(),
                 p.email,
@@ -385,17 +398,17 @@ namespace diitra_api.Controllers
                 p.nivelAcademico,
                 p.rol,
                 p.tipo
-            }).Cast<object>().Concat(alums.Select(a => new {
-                a.cedula,
-                nombre = a.nombre.Replace("  ", " ").Trim(),
-                a.email,
-                a.telefono,
-                a.nivelAcademico,
-                a.rol,
-                a.tipo
-            }).Cast<object>()).Take(12).ToList();
+            }).Cast<object>().ToList();
 
-            return Ok(results);
+            // Combinar
+            var results = profs.Concat(alums);
+
+            if (!string.IsNullOrEmpty(query))
+            {
+                results = results.Take(25); // Límite de búsqueda general aumentado a 25 para dar más visibilidad
+            }
+
+            return Ok(results.ToList());
         }
     }
 }
