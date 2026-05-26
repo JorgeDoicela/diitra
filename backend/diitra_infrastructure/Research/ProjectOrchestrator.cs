@@ -431,6 +431,7 @@ namespace diitra_infrastructure.Research
                 TrlInicial = (int?)p.TrlInicial,
                 TrlActual = (int?)p.TrlActual,
                 TrlMeta = (int?)p.TrlMeta,
+                PuntajeEvaluacion = p.PuntajeEvaluacion,
                 LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
                 GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null,
                 CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad),
