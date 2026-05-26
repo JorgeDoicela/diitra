@@ -67,6 +67,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [isDraftMode, setIsDraftMode] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [signaturePassword, setSignaturePassword] = useState('');
+    const [signatureFile, setSignatureFile] = useState<File | null>(null);
     const [isSigning, setIsSigning] = useState(false);
     const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -158,14 +159,25 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica PAdES...');
         try {
+            const formDataObj = new FormData();
+            if (signatureFile) {
+                formDataObj.append('certificate', signatureFile);
+            }
+            formDataObj.append('password', signaturePassword);
+            formDataObj.append('projectUuid', formData.Uuid || '');
+
             const response = await api.post(
-                `/projects/sign?password=${signaturePassword}`,
-                {},
-                { responseType: 'blob' }
+                '/projects/sign',
+                formDataObj,
+                {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                    responseType: 'blob'
+                }
             );
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
             addAudit('Firma digital aplicada e integrada', 'success');
-        } catch {
+        } catch (err: any) {
+            console.error('[DIITRA] Error signing document:', err);
             addAudit('Error de firma: Clave o certificado inválido', 'error');
         } finally {
             setIsSigning(false);
@@ -423,13 +435,30 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Digital PAdES</h4>
                                             <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a Ley de Comercio Electrónico.</p>
                                             <div className="space-y-4">
-                                                <input
-                                                    type="password"
-                                                    placeholder="Contraseña Certificado (.p12)"
-                                                    value={signaturePassword}
-                                                    onChange={(e) => setSignaturePassword(e.target.value)}
-                                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"
-                                                />
+                                                <div>
+                                                    <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Archivo de Firma (.p12 / .pfx)</label>
+                                                    <input
+                                                        type="file"
+                                                        accept=".p12,.pfx"
+                                                        onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
+                                                        className="w-full text-xs text-text-dim file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded-xl p-3 bg-bg-deep/30"
+                                                    />
+                                                    {signatureFile && (
+                                                        <p className="text-[8px] text-green-500 font-bold uppercase tracking-widest mt-1.5">
+                                                            ✓ {signatureFile.name} ({(signatureFile.size / 1024).toFixed(1)} KB)
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Contraseña del Certificado</label>
+                                                    <input
+                                                        type="password"
+                                                        placeholder="Contraseña Certificado (.p12)"
+                                                        value={signaturePassword}
+                                                        onChange={(e) => setSignaturePassword(e.target.value)}
+                                                        className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"
+                                                    />
+                                                </div>
                                                 <button
                                                     onClick={handleSign}
                                                     disabled={!pdfBlob || isSigning}
