@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     Users, Plus, Search, Edit2,
     Trash2, CheckCircle, XCircle,
-    BookOpen, Shield, Award, Calendar, FileText, Eye,
+    BookOpen, Shield, Award, Calendar, FileText,
     UserMinus, GraduationCap, User, ChevronRight, Target, ChevronDown
 } from 'lucide-react';
 import api from '../../api/axios_config';
@@ -34,7 +34,7 @@ interface Group {
     fecha_creacion: string;
     tipo_grupo: string;
     id_dominio: number | null;
-    categoriaConsolidacion?: string;
+    categoria_consolidacion?: string;
     activo: boolean;
     estado?: string; // "Pendiente", "Aprobado", "Rechazado"
     lineas_ids: number[];
@@ -112,13 +112,14 @@ const GroupsPage = () => {
         vision: '',
         resolucion_aprobacion: '',
         fecha_creacion: '',
-        categoriaConsolidacion: 'En Formación',
+        categoria_consolidacion: 'En Formación',
         lineas_ids: [] as number[],
         carreras_ids: [] as number[]
     });
 
     // --- Coordinator Autocomplete States & Search ---
     const [coordSearchQuery, setCoordSearchQuery] = useState('');
+    const [selectedCoordName, setSelectedCoordName] = useState('');
     const [coordSearchResults, setCoordSearchResults] = useState<any[]>([]);
     const [isCoordSearching, setIsCoordSearching] = useState(false);
     const [showCoordResults, setShowCoordResults] = useState(false);
@@ -146,11 +147,16 @@ const GroupsPage = () => {
     }, [coordSearchQuery, showCoordResults, editingGroup]);
 
     const handleSelectCoordinator = (teacher: any) => {
+        if (groupMembers.some(m => m.cedula === teacher.cedula)) {
+            alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
+            return;
+        }
         setFormData(prev => ({
             ...prev,
             id_profesor_coordinador: teacher.cedula
         }));
-        setCoordSearchQuery(teacher.nombre);
+        setSelectedCoordName(teacher.nombre);
+        setCoordSearchQuery('');
         setShowCoordResults(false);
     };
 
@@ -206,6 +212,11 @@ const GroupsPage = () => {
 
     const handleAddTeacher = async () => {
         if (!selectedTeacher) return;
+
+        if (selectedTeacher.cedula === formData.id_profesor_coordinador) {
+            alert("No se puede agregar al Coordinador Responsable como integrante docente.");
+            return;
+        }
 
         const newMember = {
             id_grupo_miembro: Date.now(), // ID temporal para keys de React
@@ -415,11 +426,12 @@ const GroupsPage = () => {
                 vision: group.vision || '',
                 resolucion_aprobacion: group.resolucion_aprobacion || '',
                 fecha_creacion: group.fecha_creacion ? group.fecha_creacion.split('T')[0] : '',
-                categoriaConsolidacion: group.categoriaConsolidacion || 'En Formación',
+                categoria_consolidacion: group.categoria_consolidacion || 'En Formación',
                 lineas_ids: group.lineas_ids || [],
                 carreras_ids: group.carreras_ids || []
             });
-            setCoordSearchQuery(group.nombre_coordinador || '');
+            setSelectedCoordName(group.nombre_coordinador || '');
+            setCoordSearchQuery('');
 
             try {
                 const res = await api.get(`/Groups/${group.uuid}`);
@@ -436,11 +448,12 @@ const GroupsPage = () => {
                         vision: fullGroup.vision || '',
                         resolucion_aprobacion: fullGroup.resolucion_aprobacion || '',
                         fecha_creacion: fullGroup.fecha_creacion ? fullGroup.fecha_creacion.split('T')[0] : '',
-                        categoriaConsolidacion: fullGroup.categoriaConsolidacion || 'En Formación',
+                        categoria_consolidacion: fullGroup.categoria_consolidacion || 'En Formación',
                         lineas_ids: fullGroup.lineas_ids || [],
                         carreras_ids: fullGroup.carreras_ids || []
                     });
-                    setCoordSearchQuery(fullGroup.nombre_coordinador || '');
+                    setSelectedCoordName(fullGroup.nombre_coordinador || '');
+                    setCoordSearchQuery('');
 
                     if (fullGroup.miembros) {
                         const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
@@ -463,10 +476,11 @@ const GroupsPage = () => {
                 vision: '',
                 resolucion_aprobacion: '',
                 fecha_creacion: new Date().toISOString().split('T')[0],
-                categoriaConsolidacion: 'En Formación',
+                categoria_consolidacion: 'En Formación',
                 lineas_ids: [],
                 carreras_ids: []
             });
+            setSelectedCoordName('');
             setCoordSearchQuery('');
         }
         setIsModalOpen(true);
@@ -647,12 +661,12 @@ const GroupsPage = () => {
                                                         }`}>
                                                         {g.tipo_grupo?.toUpperCase() || 'INVESTIGACIÓN'}
                                                     </span>
-                                                    {g.categoriaConsolidacion && (
-                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${g.categoriaConsolidacion === 'Consolidado'
+                                                    {g.categoria_consolidacion && (
+                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${g.categoria_consolidacion === 'Consolidado'
                                                                 ? 'bg-purple-500/15 text-purple-400 border-purple-500/20'
                                                                 : 'bg-amber-500/15 text-amber-400 border-amber-500/20'
                                                             }`}>
-                                                            {g.categoriaConsolidacion.toUpperCase()}
+                                                            {g.categoria_consolidacion.toUpperCase()}
                                                         </span>
                                                     )}
                                                 </div>
@@ -763,15 +777,7 @@ const GroupsPage = () => {
                                                             </>
                                                         );
                                                     } else {
-                                                        return (
-                                                            <button
-                                                                onClick={() => handleOpenModal(g, true)}
-                                                                className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-surface border border-border-thin rounded-md text-[10px] font-bold uppercase tracking-wider text-text-dim hover:text-text-main transition-all"
-                                                                title="Ver Detalles (Solo Lectura)"
-                                                            >
-                                                                <Eye size={12} /> Ver
-                                                            </button>
-                                                        );
+                                                        return null;
                                                     }
                                                 })()
                                             )}
@@ -893,8 +899,8 @@ const GroupsPage = () => {
                                     <select
                                         required
                                         disabled={isReadOnly}
-                                        value={formData.categoriaConsolidacion}
-                                        onChange={(e) => setFormData({ ...formData, categoriaConsolidacion: e.target.value })}
+                                        value={formData.categoria_consolidacion}
+                                        onChange={(e) => setFormData({ ...formData, categoria_consolidacion: e.target.value })}
                                         className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed font-medium"
                                     >
                                         <option value="En Formación">En Formación (Grupo Inicial / Reciente)</option>
@@ -908,7 +914,7 @@ const GroupsPage = () => {
                                         <div className="w-full bg-bg-deep/50 border border-border-thin rounded-lg p-3 text-sm text-text-main font-medium flex items-center gap-3">
                                             <User size={16} className="text-text-dim" />
                                             <div>
-                                                <p className="font-bold text-text-main text-xs uppercase">{coordSearchQuery || 'Sin Coordinador'}</p>
+                                                <p className="font-bold text-text-main text-xs uppercase">{selectedCoordName || 'Sin Coordinador'}</p>
                                                 {formData.id_profesor_coordinador && (
                                                     <p className="text-[10px] text-text-dim font-mono">C.I. {formData.id_profesor_coordinador}</p>
                                                 )}
@@ -919,7 +925,12 @@ const GroupsPage = () => {
                                             {/* Custom Selector Trigger */}
                                             <button
                                                 type="button"
-                                                onClick={() => setShowCoordResults(!showCoordResults)}
+                                                onClick={() => {
+                                                    if (!showCoordResults) {
+                                                        setCoordSearchQuery('');
+                                                    }
+                                                    setShowCoordResults(!showCoordResults);
+                                                }}
                                                 className={`w-full bg-bg-deep border rounded-lg p-3 text-left transition-all flex items-center justify-between text-xs font-medium focus:outline-none focus:border-text-main ${showCoordResults ? 'border-text-main shadow-lg shadow-text-main/5' : 'border-border-thin hover:border-text-dim'
                                                     }`}
                                             >
@@ -928,7 +939,7 @@ const GroupsPage = () => {
                                                     <div className="truncate">
                                                         {formData.id_profesor_coordinador ? (
                                                             <>
-                                                                <p className="font-bold text-text-main text-xs uppercase truncate">{coordSearchQuery}</p>
+                                                                <p className="font-bold text-text-main text-xs uppercase truncate">{selectedCoordName}</p>
                                                                 <p className="text-[9px] text-emerald-400 font-mono">Verificado | C.I. {formData.id_profesor_coordinador}</p>
                                                             </>
                                                         ) : (
@@ -951,13 +962,12 @@ const GroupsPage = () => {
                                                             <input
                                                                 type="text"
                                                                 autoFocus
-                                                                value={formData.id_profesor_coordinador ? "" : coordSearchQuery}
+                                                                value={coordSearchQuery}
                                                                 onChange={(e) => {
+                                                                    setCoordSearchQuery(e.target.value);
                                                                     if (formData.id_profesor_coordinador) {
                                                                         setFormData(prev => ({ ...prev, id_profesor_coordinador: '' }));
-                                                                        setCoordSearchQuery(e.target.value);
-                                                                    } else {
-                                                                        setCoordSearchQuery(e.target.value);
+                                                                        setSelectedCoordName('');
                                                                     }
                                                                 }}
                                                                 placeholder="Filtrar docente por nombre o cédula..."
@@ -1008,138 +1018,6 @@ const GroupsPage = () => {
                                             )}
                                         </div>
                                     )}
-                                </div>
-                            </section>
-
-                            {/* Regulations / Normative */}
-                            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <FileText size={12} /> Resolución de Aprobación
-                                    </label>
-                                    <input
-                                        type="text"
-                                        disabled={isReadOnly || !isAdmin}
-                                        value={formData.resolucion_aprobacion}
-                                        onChange={(e) => setFormData({ ...formData, resolucion_aprobacion: e.target.value })}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed font-medium"
-                                        placeholder={!isAdmin ? "ASIGNADO TRAS APROBACIÓN" : "ACTA-DI-2026-001"}
-                                    />
-                                    {!isAdmin && (
-                                        <p className="text-[8px] text-text-dim/60 uppercase font-bold tracking-wider">
-                                            Solo el administrador puede definir este valor tras la aprobación de la propuesta.
-                                        </p>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar size={12} /> Fecha de Creación / Propuesta
-                                    </label>
-                                    <input
-                                        type="date"
-                                        disabled={isReadOnly}
-                                        value={formData.fecha_creacion}
-                                        onChange={(e) => setFormData({ ...formData, fecha_creacion: e.target.value })}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                            </section>
-
-                            {/* Identity Statements */}
-                            <section className="space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Objetivo General</label>
-                                    <textarea
-                                        rows={3}
-                                        disabled={isReadOnly}
-                                        value={formData.objetivo_general}
-                                        onChange={(e) => setFormData({ ...formData, objetivo_general: e.target.value })}
-                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
-                                        <textarea
-                                            rows={3}
-                                            disabled={isReadOnly}
-                                            value={formData.mision}
-                                            onChange={(e) => setFormData({ ...formData, mision: e.target.value })}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Visión</label>
-                                        <textarea
-                                            rows={3}
-                                            disabled={isReadOnly}
-                                            value={formData.vision}
-                                            onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
-                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
-                                        />
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Careers */}
-                            <section className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <Users size={12} /> Carreras / Programas Académicos
-                                    </label>
-                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                        {formData.carreras_ids.length} seleccionadas
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {carreras.map(career => (
-                                        <div
-                                            key={career.id_carrera}
-                                            onClick={() => !isReadOnly && toggleCarrera(career.id_carrera)}
-                                            className={`p-3 rounded-xl border transition-all flex items-center gap-2 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'
-                                                } ${formData.carreras_ids.includes(career.id_carrera)
-                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-500'
-                                                    : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
-                                                }`}
-                                        >
-                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center shrink-0 ${formData.carreras_ids.includes(career.id_carrera) ? 'border-blue-500 bg-blue-500' : 'border-border-thin'
-                                                }`}>
-                                                {formData.carreras_ids.includes(career.id_carrera) && <CheckCircle size={8} className="text-bg-deep" />}
-                                            </div>
-                                            <span className="text-[9px] font-bold uppercase truncate">{career.carrera1}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Research Lines */}
-                            <section className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <BookOpen size={12} /> Líneas de Investigación Institucionales
-                                    </label>
-                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                        {formData.lineas_ids.length} seleccionadas
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {lines.map(line => (
-                                        <div
-                                            key={line.id}
-                                            onClick={() => !isReadOnly && toggleLine(line.id)}
-                                            className={`p-3 rounded-xl border transition-all flex items-center gap-3 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'
-                                                } ${formData.lineas_ids.includes(line.id)
-                                                    ? 'bg-text-main/10 border-text-main text-text-main'
-                                                    : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
-                                                }`}
-                                        >
-                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${formData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
-                                                }`}>
-                                                {formData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
-                                            </div>
-                                            <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombre}</span>
-                                        </div>
-                                    ))}
                                 </div>
                             </section>
 
@@ -1496,6 +1374,138 @@ const GroupsPage = () => {
                                     </section>
                                 );
                             })() : null}
+
+                            {/* Identity Statements */}
+                            <section className="space-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Objetivo General</label>
+                                    <textarea
+                                        rows={3}
+                                        disabled={isReadOnly}
+                                        value={formData.objetivo_general}
+                                        onChange={(e) => setFormData({ ...formData, objetivo_general: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Misión</label>
+                                        <textarea
+                                            rows={3}
+                                            disabled={isReadOnly}
+                                            value={formData.mision}
+                                            onChange={(e) => setFormData({ ...formData, mision: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Visión</label>
+                                        <textarea
+                                            rows={3}
+                                            disabled={isReadOnly}
+                                            value={formData.vision}
+                                            onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Careers */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <Users size={12} /> Carreras / Programas Académicos
+                                    </label>
+                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                        {formData.carreras_ids.length} seleccionadas
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {carreras.map(career => (
+                                        <div
+                                            key={career.id_carrera}
+                                            onClick={() => !isReadOnly && toggleCarrera(career.id_carrera)}
+                                            className={`p-3 rounded-xl border transition-all flex items-center gap-2 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'
+                                                } ${formData.carreras_ids.includes(career.id_carrera)
+                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-500'
+                                                    : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
+                                                }`}
+                                        >
+                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center shrink-0 ${formData.carreras_ids.includes(career.id_carrera) ? 'border-blue-500 bg-blue-500' : 'border-border-thin'
+                                                }`}>
+                                                {formData.carreras_ids.includes(career.id_carrera) && <CheckCircle size={8} className="text-bg-deep" />}
+                                            </div>
+                                            <span className="text-[9px] font-bold uppercase truncate">{career.carrera1}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Research Lines */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <BookOpen size={12} /> Líneas de Investigación Institucionales
+                                    </label>
+                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                                        {formData.lineas_ids.length} seleccionadas
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {lines.map(line => (
+                                        <div
+                                            key={line.id}
+                                            onClick={() => !isReadOnly && toggleLine(line.id)}
+                                            className={`p-3 rounded-xl border transition-all flex items-center gap-3 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'
+                                                } ${formData.lineas_ids.includes(line.id)
+                                                    ? 'bg-text-main/10 border-text-main text-text-main'
+                                                    : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
+                                                }`}
+                                        >
+                                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${formData.lineas_ids.includes(line.id) ? 'border-text-main bg-text-main' : 'border-border-thin'
+                                                }`}>
+                                                {formData.lineas_ids.includes(line.id) && <CheckCircle size={10} className="text-bg-deep" />}
+                                            </div>
+                                            <span className="text-[11px] font-bold uppercase tracking-tight">{line.nombre}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Regulations / Normative */}
+                            <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <FileText size={12} /> Resolución de Aprobación
+                                    </label>
+                                    <input
+                                        type="text"
+                                        disabled={isReadOnly || !isAdmin}
+                                        value={formData.resolucion_aprobacion}
+                                        onChange={(e) => setFormData({ ...formData, resolucion_aprobacion: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed font-medium"
+                                        placeholder={!isAdmin ? "ASIGNADO TRAS APROBACIÓN" : "ACTA-DI-2026-001"}
+                                    />
+                                    {!isAdmin && (
+                                        <p className="text-[8px] text-text-dim/60 uppercase font-bold tracking-wider">
+                                            Solo el administrador puede definir este valor tras la aprobación de la propuesta.
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <Calendar size={12} /> Fecha de Creación / Propuesta
+                                    </label>
+                                    <input
+                                        type="date"
+                                        disabled={isReadOnly || !isAdmin}
+                                        value={formData.fecha_creacion}
+                                        onChange={(e) => setFormData({ ...formData, fecha_creacion: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                    />
+                                </div>
+                            </section>
                         </form>
 
                         <div className="modal-footer">
@@ -1582,11 +1592,11 @@ const GroupsPage = () => {
                                         <Target size={12} /> Consolidación
                                     </label>
                                     <span className={`badge-vercel border text-center ${
-                                        detailGroup.categoriaConsolidacion === 'Consolidado'
+                                        detailGroup.categoria_consolidacion === 'Consolidado'
                                             ? 'bg-purple-500/15 text-purple-400 border-purple-500/20'
                                             : 'bg-amber-500/15 text-amber-400 border-amber-500/20'
                                     }`}>
-                                        {detailGroup.categoriaConsolidacion || 'En Formación'}
+                                        {detailGroup.categoria_consolidacion || 'En Formación'}
                                     </span>
                                 </div>
                             </div>
@@ -1796,13 +1806,7 @@ const GroupsPage = () => {
 
                         <div className="modal-footer">
                             <button onClick={() => { setDetailGroup(null); setDetailMembers([]); }} className="btn-vercel-secondary">Cerrar</button>
-                            <button
-                                onClick={() => { handleOpenModal(detailGroup, !isAdmin); setDetailGroup(null); setDetailMembers([]); }}
-                                className="btn-vercel-primary flex items-center gap-2"
-                            >
-                                <Eye size={14} /> Ver Completo
-                            </button>
-                            {isAdmin && (
+                            {(isAdmin || detailGroup.id_profesor_coordinador === user?.id_referencia) && (
                                 <button
                                     onClick={() => { handleOpenModal(detailGroup, false); setDetailGroup(null); setDetailMembers([]); }}
                                     className="btn-vercel-brand flex items-center gap-2"
