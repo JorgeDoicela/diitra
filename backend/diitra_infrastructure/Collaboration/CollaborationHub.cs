@@ -239,19 +239,22 @@ namespace diitra_infrastructure.Collaboration
 
         /// <summary>
         /// Actualiza el estado de una sección y lo notifica en tiempo real.
+        /// Persiste tanto el UUID como el nombre del usuario para trazabilidad sin joins adicionales.
+        /// DocumentoUuid = instanceUuid (no incluye el nombre de sección) para que GetPulse
+        /// y GetProjectActivity lo encuentren correctamente con una sola clave.
         /// </summary>
-        public async Task UpdateSectionStatus(string instanceUuid, string sectionName, string status, string userUuid)
+        public async Task UpdateSectionStatus(string instanceUuid, string sectionName, string status, string userUuid, string userName = "")
         {
-            var documentUuid = $"{instanceUuid}_{sectionName}";
-
+            // CORRECCIÓN: Usar instanceUuid puro como DocumentoUuid.
+            // La unicidad del registro se garantiza por (DocumentoUuid, SeccionNombre).
             var meta = await _db.InvDocumentosSeccionesMetadata
-                .FirstOrDefaultAsync(m => m.DocumentoUuid == documentUuid && m.SeccionNombre == sectionName);
+                .FirstOrDefaultAsync(m => m.DocumentoUuid == instanceUuid && m.SeccionNombre == sectionName);
 
             if (meta == null)
             {
                 meta = new InvDocumentoSeccionMetadata
                 {
-                    DocumentoUuid = documentUuid,
+                    DocumentoUuid = instanceUuid,
                     SeccionNombre = sectionName
                 };
                 _db.InvDocumentosSeccionesMetadata.Add(meta);
@@ -259,16 +262,19 @@ namespace diitra_infrastructure.Collaboration
 
             meta.Estado = status;
             meta.UltimoUsuarioUuid = userUuid;
+            meta.UltimoNombreUsuario = string.IsNullOrEmpty(userName) ? null : userName;
             meta.ActualizadoEn = DateTime.UtcNow;
 
             await _db.SaveChangesAsync();
 
-            // Notificar a todo el equipo
+            // Notificar a todo el equipo incluyendo el nombre para evitar re-consultas en el cliente
             await Clients.Group(instanceUuid).SendAsync("SectionStatusUpdated", new {
                 instanceUuid,
                 sectionName,
                 status,
-                updatedBy = userUuid
+                updatedBy = userUuid,
+                updatedByName = userName,
+                updatedAt = meta.ActualizadoEn
             });
         }
 

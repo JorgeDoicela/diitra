@@ -36,6 +36,12 @@ namespace diitra_infrastructure.data.models.Cowork
         [JsonPropertyName("ultimoUsuarioUuid")]
         public string? UltimoUsuarioUuid { get; set; }
 
+        /// <summary>Nombre legible del último usuario que actualizó esta sección.</summary>
+        [Column("lastUserName")]
+        [MaxLength(255)]
+        [JsonPropertyName("ultimoNombreUsuario")]
+        public string? UltimoNombreUsuario { get; set; }
+
         [Column("actualizadoEn")]
         public DateTime ActualizadoEn { get; set; } = DateTime.UtcNow;
     }

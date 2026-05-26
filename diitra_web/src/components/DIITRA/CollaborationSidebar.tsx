@@ -43,7 +43,13 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             try {
                 const res = await api.get(`/collaboration/${instanceUuid}/pulse`);
                 if (res.data.comments) setComments(res.data.comments);
-                if (res.data.statuses) setSectionStatuses(res.data.statuses);
+                if (res.data.statuses) {
+                    const mappedStatuses: Record<string, string> = {};
+                    Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
+                        mappedStatuses[key] = typeof val === 'string' ? val : (val?.estado || 'Borrador');
+                    });
+                    setSectionStatuses(mappedStatuses);
+                }
             } catch (err) {
                 console.error("[Team Pulse] Error al cargar pulso inicial:", err);
             } finally {

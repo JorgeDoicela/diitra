@@ -25,6 +25,7 @@ import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignatur
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
+import WorkspaceActivityPanel from './WorkspaceActivityPanel';
 
 
 const WorkflowPhases = [
@@ -253,7 +254,8 @@ export const ProjectWorkspace: React.FC = () => {
                     status: res.data.estado || 'Borrador',
                     presupuesto: res.data.costo_total || 0,
                     linea: res.data.linea_investigacion || 'No definida',
-                    puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? true) &&
+                    // FIX: fallback seguro — sin datos explícitos, denegamos edición (mínimo privilegio)
+                    puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
                                  (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
                     puntajeEvaluacion: res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
                 });
@@ -1131,6 +1133,15 @@ export const ProjectWorkspace: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* ── Panel de Actividad Reciente (Desacoplado) ── */}
+                        {resolvedProjectUuid && (
+                            <div className="bento-card flex flex-col overflow-hidden">
+                                <WorkspaceActivityPanel
+                                    projectUuid={resolvedProjectUuid}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>

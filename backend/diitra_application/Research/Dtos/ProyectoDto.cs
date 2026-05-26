@@ -254,4 +254,30 @@ namespace Diitra.Application.Research.Dtos
 
         public List<bool>? Semanas { get; set; }
     }
+
+    /// <summary>
+    /// Representa un evento de actividad dentro de un proyecto para el panel lateral del Workspace.
+    /// Diseño desacoplado: el frontend elige cómo renderizar basándose en Tipo e Icono,
+    /// sin necesidad de cambios en el backend cuando se añadan nuevos tipos de evento.
+    /// </summary>
+    public class ProyectoActividadDto
+    {
+        /// <summary>Categoría del evento: 'acceso', 'seccion', 'workflow', 'comentario'</summary>
+        public string Tipo { get; set; } = string.Empty;
+
+        /// <summary>Nombre legible del usuario que generó el evento</summary>
+        public string NombreUsuario { get; set; } = string.Empty;
+
+        /// <summary>Rol institucional del usuario en el momento del evento</summary>
+        public string RolUsuario { get; set; } = string.Empty;
+
+        /// <summary>Descripción humana del evento</summary>
+        public string Descripcion { get; set; } = string.Empty;
+
+        /// <summary>Marca temporal del evento</summary>
+        public DateTime Fecha { get; set; }
+
+        /// <summary>Código de ícono sugerido: 'edit', 'check', 'eye', 'workflow', 'comment'</summary>
+        public string Icono { get; set; } = "edit";
+    }
 }

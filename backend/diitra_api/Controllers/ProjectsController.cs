@@ -529,6 +529,23 @@ namespace diitra_api.Controllers
             return Ok(new { success = true });
         }
 
+        /// <summary>
+        /// Feed de actividad reciente de un proyecto: sesiones CoWork, estados de sección
+        /// y transiciones de workflow. Diseñado para el panel lateral del Workspace.
+        /// Desacoplado: nuevos tipos de actividad se agregan en el backend sin cambios en el frontend.
+        /// </summary>
+        [HttpGet("{uuid}/activity")]
+        public async Task<IActionResult> GetActivity(string uuid, [FromQuery] int maxItems = 20)
+        {
+            if (!await CanCurrentUserViewProjectAsync(uuid))
+            {
+                return Forbid("No tienes permisos para visualizar la actividad de este proyecto.");
+            }
+
+            var actividad = await _projectOrchestrator.GetProjectActivityAsync(uuid, maxItems);
+            return Ok(actividad);
+        }
+
         private async Task<bool> CanCurrentUserModifyProjectAsync(string uuid)
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
