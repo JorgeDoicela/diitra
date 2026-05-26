@@ -50,6 +50,7 @@ public class GroupsService : IGroupsService
         var group = await _context.InvGruposInvestigacion
             .Include(g => g.IdCoordinadorNavigation)
             .Include(g => g.IdLineas)
+            .Include(g => g.IdCarreras)
             .Include(g => g.InvGruposMiembros)
                 .ThenInclude(m => m.IdUsuarioNavigation)
             .FirstOrDefaultAsync(g => g.Uuid == uuid);
@@ -58,6 +59,7 @@ public class GroupsService : IGroupsService
 
         var dto = MapToDto(group);
         dto.LineasIds = group.IdLineas.Select(l => l.IdLinea).ToList();
+        dto.CarrerasIds = group.IdCarreras.Select(c => c.IdCarrera).ToList();
         dto.Miembros = group.InvGruposMiembros.Select(m => new GroupMemberDto
         {
             IdGrupoMiembro = m.IdGrupoMiembro,
@@ -203,7 +205,10 @@ public class GroupsService : IGroupsService
             }
         }
 
-        return MapToDto(group);
+        var resultDto = MapToDto(group);
+        resultDto.LineasIds = group.IdLineas.Select(l => l.IdLinea).ToList();
+        resultDto.CarrerasIds = group.IdCarreras.Select(c => c.IdCarrera).ToList();
+        return resultDto;
     }
 
     public async Task<GroupDto> UpdateAsync(string uuid, CreateGroupDto dto)
@@ -340,7 +345,10 @@ public class GroupsService : IGroupsService
             }
         }
 
-        return MapToDto(group);
+        var resultDto = MapToDto(group);
+        resultDto.LineasIds = group.IdLineas.Select(l => l.IdLinea).ToList();
+        resultDto.CarrerasIds = currentGroupWithCarreras?.IdCarreras.Select(c => c.IdCarrera).ToList() ?? new List<int>();
+        return resultDto;
     }
 
     public async Task<bool> DeactivateAsync(string uuid)
