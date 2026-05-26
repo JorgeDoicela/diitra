@@ -13,6 +13,7 @@ public partial class InvGrupoMiembro
     public bool? Activo { get; set; }
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
+    public string? MotivoSalida { get; set; }
 
     public virtual InvGrupoInvestigacion IdGrupoNavigation { get; set; } = null!;
     public virtual User IdUsuarioNavigation { get; set; } = null!;

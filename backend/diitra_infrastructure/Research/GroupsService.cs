@@ -361,13 +361,14 @@ public class GroupsService : IGroupsService
         return true;
     }
 
-    public async Task<bool> RemoveMemberAsync(int memberId)
+    public async Task<bool> RemoveMemberAsync(int memberId, string? reason)
     {
         var member = await _context.InvGruposMiembros.FindAsync(memberId);
         if (member == null) return false;
 
         member.Activo = false;
         member.FechaFin = DateOnly.FromDateTime(DateTime.Now);
+        member.MotivoSalida = reason;
         await _context.SaveChangesAsync();
         return true;
     }

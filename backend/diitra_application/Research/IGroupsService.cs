@@ -10,6 +10,6 @@ public interface IGroupsService
     Task<GroupDto> UpdateAsync(string uuid, CreateGroupDto dto);
     Task<bool> DeactivateAsync(string uuid);
     Task<bool> AddMemberAsync(string groupUuid, GroupMemberDto memberDto);
-    Task<bool> RemoveMemberAsync(int memberId);
+    Task<bool> RemoveMemberAsync(int memberId, string? reason);
     Task<bool> ReviewGroupAsync(string uuid, bool aprobado, string? resolucion);
 }
