@@ -241,6 +241,7 @@ CREATE TABLE inv_grupos_miembros (
     activo         TINYINT(1)   DEFAULT 1,
     fechaInicio    DATE,
     fechaFin       DATE,
+    motivoSalida   VARCHAR(255) NULL,
     FOREIGN KEY (idGrupo)    REFERENCES inv_grupos_investigacion(idGrupo) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

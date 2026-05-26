@@ -805,6 +805,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(true);
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
+            entity.Property(e => e.MotivoSalida).HasColumnName("motivoSalida").HasMaxLength(255);
 
             entity.HasOne(d => d.IdGrupoNavigation).WithMany(p => p.InvGruposMiembros)
                 .HasForeignKey(d => d.IdGrupo).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_miembro_grupo");

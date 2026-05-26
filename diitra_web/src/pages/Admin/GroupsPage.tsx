@@ -212,10 +212,13 @@ const GroupsPage = () => {
 
     const handleRemoveMember = async (idGrupoMiembro: number) => {
         if (!editingGroup) return;
-        if (!window.confirm("¿Está seguro de retirar a este integrante del grupo?")) return;
+        
+        const reason = window.prompt("Ingrese el motivo por el cual el integrante se retira del grupo (opcional):");
+        if (reason === null) return; // Cancelado por el usuario
         
         try {
-            await api.delete(`/Groups/members/${idGrupoMiembro}`);
+            const encodedReason = encodeURIComponent(reason.trim());
+            await api.delete(`/Groups/members/${idGrupoMiembro}?reason=${encodedReason}`);
             
             const res = await api.get(`/Groups/${editingGroup.uuid}`);
             const fullGroup = res.data;

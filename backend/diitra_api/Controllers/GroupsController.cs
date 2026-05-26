@@ -101,9 +101,9 @@ public class GroupsController : ControllerBase
     }
 
     [HttpDelete("members/{memberId}")]
-    public async Task<IActionResult> RemoveMember(int memberId)
+    public async Task<IActionResult> RemoveMember(int memberId, [FromQuery] string? reason = null)
     {
-        var result = await _groupsService.RemoveMemberAsync(memberId);
+        var result = await _groupsService.RemoveMemberAsync(memberId, reason);
         if (!result) return NotFound();
         return NoContent();
     }
