@@ -96,9 +96,15 @@ const VerifyDocument = () => {
                             <ShieldCheck size={32} className="text-success shrink-0" />
                             <div>
                                 <h3 className="text-xl font-bold tracking-tighter text-text-main">Documento Auténtico</h3>
-                                <div className="badge-vercel badge-vercel-success mt-2">
-                                    <span className="dot dot-success" />
-                                    Integridad SHA-256 Verificada
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    <div className="badge-vercel badge-vercel-success">
+                                        <span className="dot dot-success" />
+                                        Integridad SHA-256 Verificada
+                                    </div>
+                                    <div className="badge-vercel badge-vercel-success bg-brand/10 border-brand/20 text-brand-light">
+                                        <span className="dot bg-brand animate-pulse" />
+                                        Firma Digital PAdES Activa
+                                    </div>
                                 </div>
                             </div>
                         </div>

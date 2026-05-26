@@ -104,86 +104,126 @@ namespace diitra_api.Controllers
         /// <summary>
         /// Simulación de firma electrónica PAdES usando el motor DIITRA.
         /// </summary>
+        /// <summary>
+        /// Simulación y aplicación de firma electrónica PAdES usando el motor DIITRA.
+        /// </summary>
         [HttpPost("sign")]
         public async Task<IActionResult> SignDocument(
-            [FromQuery] string password,
-            [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService)
+            [FromForm] Microsoft.AspNetCore.Http.IFormFile? certificate,
+            [FromForm] string password,
+            [FromForm] string projectUuid,
+            [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
+            [FromServices] Microsoft.Extensions.Logging.ILogger<ProjectsController> logger)
         {
-            // 1. Generar un PDF base para la prueba con datos reales
-            var request = new DocumentRequest {
-                TemplateCode = "PROTOCOLO_INVESTIGACION",
-                Data = new {
-                    Titulo = "Prueba de Firma Profesional Enterprise",
-                    nombre_investigador = "Jorge Doicela",
-                    nombre_director = "Dr. Marco Traversari",
-                    codigo_institucional = "IST-DIITRA-2026-001-P",
-                    linea_investigacion = "Inteligencia Artificial y Software",
-                    tipo_investigacion = "Investigación Aplicada",
-                    ods = "9. Industria, Innovación e Infraestructura",
-                    tiempo_ejecucion = "12 Meses",
-                    antecedentes = "La presente investigación aborda la automatización de procesos de auditoría académica mediante tecnología Blockchain y Hash-Linking...",
-                    descripcion_proyecto = "Desarrollo de un núcleo de software capaz de garantizar la inmutabilidad de los expedientes de investigación.",
-                    justificacion = "Cumplimiento de las normativas vigentes de CACES y SENESCYT para la acreditación institucional.",
-                    marco_teorico = "Basado en los estándares internacionales de firma digital PAdES y XAdES.",
-                    metodologia = "Desarrollo ágil con enfoque en seguridad por diseño (Security by Design).",
-                    recursos_necesarios = new[] {
-                        new { descripcion = "Servidor GPU Auditoría", id_partida = "53.01.05", costo_total = 3500, es_gasto_capital = true },
-                        new { descripcion = "Licencias Enterprise LTV", id_partida = "53.08.04", costo_total = 1200, es_gasto_capital = false }
-                    },
-                    cronograma = new[] {
-                        new { numero = 1, actividad = "Prueba E2E de Trazabilidad", ponderacion = 50, es_entregable_caces = true },
-                        new { numero = 2, actividad = "Validación de Integridad LTV", ponderacion = 50, es_entregable_caces = true }
-                    }
-                }
-            };
-            var genResult = await _documentEngine.GenerateAsync(request);
-
-            // Bypass de prueba para el USER (Modo Demo)
-            if (password == "diitra2026")
+            try 
             {
+                logger.LogInformation("[DIITRA CORE] Solicitud de firma avanzada PAdES para proyecto {Uuid}", projectUuid);
+
+                // 1. Obtener los datos reales del proyecto
+                var projectDto = await _projectOrchestrator.GetProjectDetailAsync(projectUuid);
+                if (projectDto == null)
+                {
+                    return NotFound(new { error = "El proyecto de investigación especificado no existe." });
+                }
+
+                // 2. Generar el PDF oficial del protocolo de investigación en modo NO Borrador
+                var request = new DocumentRequest
+                {
+                    TemplateCode = "PROTOCOLO_INVESTIGACION",
+                    Data = projectDto,
+                    IsDraftMode = false, // Emisión oficial inmutable
+                    IsBlindMode = false,
+                    RequestedBy = User.Identity?.Name ?? "Sistema DIITRA (Firma)",
+                    ProjectUuid = projectDto.Uuid,
+                    EntityUuid = projectDto.Uuid
+                };
+
+                var genResult = await _documentEngine.GenerateAsync(request);
+
+                // 3. Aplicar Firma Criptográfica Avanzada (.p12 / BouncyCastle)
+                byte[] signedPdfBytes;
+                if (certificate != null && certificate.Length > 0)
+                {
+                    byte[] certificateBytes;
+                    using (var ms = new System.IO.MemoryStream())
+                    {
+                        await certificate.CopyToAsync(ms);
+                        certificateBytes = ms.ToArray();
+                    }
+
+                    if (!firmaService.ValidateCertificate(certificateBytes, password))
+                    {
+                        return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
+                    }
+
+                    signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, password,
+                        reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
+                        location: "Quito, Ecuador");
+                }
+                else
+                {
+                    // Bypass de demostración (Demo Mode)
+                    if (password != "diitra2026")
+                    {
+                        return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o ingresar la contraseña de demostración." });
+                    }
+                    signedPdfBytes = genResult.PdfBytes;
+                }
+
+                // 4. Sello de Trazabilidad e Integridad (SHA-256)
+                string finalHash;
+                using (var sha256 = System.Security.Cryptography.SHA256.Create())
+                {
+                    byte[] hashBytes = sha256.ComputeHash(signedPdfBytes);
+                    finalHash = Convert.ToHexString(hashBytes).ToLower();
+                }
+
+                // 5. Transición de Estado de Workflow Core
+                var workflowService = HttpContext.RequestServices.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
+                bool success = await workflowService.TransicionarEstadoAsync(projectDto.Uuid, "Enviado", 1, $"Sello Digital e Inmutabilidad Forense - Hash: {finalHash}");
+
+                if (!success)
+                {
+                    logger.LogWarning("[DIITRA CORE] La transición de estado falló durante la firma del proyecto.");
+                }
+
+                // 6. Sellar y Registrar Instancia de Documento (Integración CoWork Read-Only)
                 try
                 {
                     var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
-                    var workflowService = HttpContext.RequestServices.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
+                    var instance = await context.DocumentInstances
+                        .FirstOrDefaultAsync(i => i.EntityUuid == projectDto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
 
-                    var project = await context.InvProyectos.OrderByDescending(p => p.IdProyecto).FirstOrDefaultAsync();
-
-                    if (project != null)
+                    if (instance == null)
                     {
-                        if (project.Estado != "Borrador") {
-                            project.Estado = "Borrador";
-                            await context.SaveChangesAsync();
-                        }
-
-                        // Intentamos la transición
-                        bool success = await workflowService.TransicionarEstadoAsync(project.Uuid, "Enviado", 1, "Sello Digital de Integridad - Firma Jorge Doicela");
-
-                        if (!success) {
-                             Console.WriteLine("DIITRA DEBUG: TransicionarEstadoAsync devolvió FALSE");
-                        }
+                        instance = await _documentInstanceService.CreateAsync(
+                            "PROTOCOLO_INVESTIGACION",
+                            projectDto.Uuid,
+                            User.Identity?.Name ?? "Sistema DIITRA",
+                            $"Protocolo Oficial: {projectDto.Titulo}",
+                            "Proyecto"
+                        );
                     }
-                    else {
-                        Console.WriteLine("DIITRA DEBUG: No se encontró ningún proyecto en inv_proyectos");
-                    }
+
+                    // Pasar a estado firmado e inmutable en CoWork
+                    await _documentInstanceService.FinalizeAsync(
+                        instance.Uuid,
+                        signedPdfBytes,
+                        genResult.FileName,
+                        finalHash,
+                        genResult.TraceabilityCode
+                    );
                 }
-                catch (Exception ex)
+                catch (System.Exception ex)
                 {
-                    Console.WriteLine($"DIITRA ERROR CRÍTICO: {ex.Message}");
-                    Console.WriteLine($"DIITRA ERROR DETALLE: {ex.InnerException?.Message}");
+                    logger.LogError(ex, "[DIITRA CORE] No se pudo finalizar la instancia documental.");
                 }
 
-                return File(genResult.PdfBytes, "application/pdf", "DIITRA_Enterprise_Signed.pdf");
-            }
-
-            // 2. Firmar usando el servicio profesional (Requiere certificado real)
-            byte[] dummyCert = new byte[10];
-            try
-            {
-                var signedPdf = firmaService.SignPdf(genResult.PdfBytes, dummyCert, password);
-                return File(signedPdf, "application/pdf", "DIITRA_Firmado.pdf");
+                return File(signedPdfBytes, "application/pdf", genResult.FileName);
             }
             catch (System.Exception ex)
             {
+                logger.LogError(ex, "[DIITRA CORE] Error crítico durante la firma del documento");
                 return BadRequest(new { error = "Firma fallida: " + ex.Message });
             }
         }
