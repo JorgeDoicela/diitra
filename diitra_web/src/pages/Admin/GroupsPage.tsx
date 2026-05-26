@@ -3,7 +3,7 @@ import {
     Users, Plus, Search, Edit2,
     Trash2, CheckCircle, XCircle,
     BookOpen, Shield, Award, Calendar, FileText, Eye,
-    UserPlus, UserMinus, GraduationCap, User, ChevronRight, Target, ChevronDown
+    UserMinus, GraduationCap, User, ChevronRight, Target, ChevronDown
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
@@ -34,6 +34,7 @@ interface Group {
     fecha_creacion: string;
     tipo_grupo: string;
     id_dominio: number | null;
+    categoriaConsolidacion?: string;
     activo: boolean;
     estado?: string; // "Pendiente", "Aprobado", "Rechazado"
     lineas_ids: number[];
@@ -83,13 +84,21 @@ const GroupsPage = () => {
     // Member states
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
 
-    // Member Autocomplete States & Search
-    const [memberSearchQuery, setMemberSearchQuery] = useState('');
-    const [memberSearchResults, setMemberSearchResults] = useState<any[]>([]);
-    const [isMemberSearching, setIsMemberSearching] = useState(false);
-    const [showMemberResults, setShowMemberResults] = useState(false);
-    const [selectedMember, setSelectedMember] = useState<any | null>(null);
-    const [memberRol, setMemberRol] = useState('Co-Investigador');
+    // Teacher Autocomplete States & Search
+    const [teacherSearchQuery, setTeacherSearchQuery] = useState('');
+    const [teacherSearchResults, setTeacherSearchResults] = useState<any[]>([]);
+    const [isTeacherSearching, setIsTeacherSearching] = useState(false);
+    const [showTeacherResults, setShowTeacherResults] = useState(false);
+    const [selectedTeacher, setSelectedTeacher] = useState<any | null>(null);
+    const [teacherRol, setTeacherRol] = useState('Co-Investigador');
+
+    // Student Autocomplete States & Search
+    const [studentSearchQuery, setStudentSearchQuery] = useState('');
+    const [studentSearchResults, setStudentSearchResults] = useState<any[]>([]);
+    const [isStudentSearching, setIsStudentSearching] = useState(false);
+    const [showStudentResults, setShowStudentResults] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
+    const [studentRol, setStudentRol] = useState('Semillerista');
 
     // Form states
     const [formData, setFormData] = useState({
@@ -103,6 +112,7 @@ const GroupsPage = () => {
         vision: '',
         resolucion_aprobacion: '',
         fecha_creacion: '',
+        categoriaConsolidacion: 'En Formación',
         lineas_ids: [] as number[],
         carreras_ids: [] as number[]
     });
@@ -123,9 +133,8 @@ const GroupsPage = () => {
                     ? ''
                     : coordSearchQuery;
 
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(queryParam)}`);
-                const teachersOnly = (res.data || []).filter((u: any) => u.tipo === 'profesor');
-                setCoordSearchResults(teachersOnly);
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(queryParam)}&tipo=profesor`);
+                setCoordSearchResults(res.data || []);
             } catch (err) {
                 console.error("Error al buscar docentes coordinadores:", err);
             } finally {
@@ -145,89 +154,174 @@ const GroupsPage = () => {
         setShowCoordResults(false);
     };
 
+    // Autocomplete for Teachers (tipo=profesor)
     useEffect(() => {
-        if (!memberSearchQuery.trim()) {
-            setMemberSearchResults([]);
-            return;
-        }
-
+        if (!showTeacherResults) return;
         const delayDebounceFn = setTimeout(async () => {
-            setIsMemberSearching(true);
+            setIsTeacherSearching(true);
             try {
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(memberSearchQuery)}`);
-                setMemberSearchResults(res.data || []);
-                setShowMemberResults(true);
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(teacherSearchQuery)}&tipo=profesor`);
+                setTeacherSearchResults(res.data || []);
             } catch (err) {
-                console.error("Error al buscar integrantes:", err);
+                console.error("Error al buscar docentes investigadores:", err);
             } finally {
-                setIsMemberSearching(false);
+                setIsTeacherSearching(false);
             }
-        }, 300);
+        }, teacherSearchQuery.trim() ? 300 : 0);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [memberSearchQuery]);
+    }, [teacherSearchQuery, showTeacherResults]);
 
-    const handleSelectMember = (member: any) => {
-        setSelectedMember(member);
-        setMemberSearchQuery(member.nombre);
-        setShowMemberResults(false);
+    // Autocomplete for Students (tipo=alumno)
+    useEffect(() => {
+        if (!showStudentResults) return;
+        const delayDebounceFn = setTimeout(async () => {
+            setIsStudentSearching(true);
+            try {
+                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(studentSearchQuery)}&tipo=alumno`);
+                setStudentSearchResults(res.data || []);
+            } catch (err) {
+                console.error("Error al buscar estudiantes:", err);
+            } finally {
+                setIsStudentSearching(false);
+            }
+        }, studentSearchQuery.trim() ? 300 : 0);
 
-        if (member.tipo === 'alumno') {
-            setMemberRol('Semillerista');
-        } else {
-            setMemberRol('Co-Investigador');
-        }
+        return () => clearTimeout(delayDebounceFn);
+    }, [studentSearchQuery, showStudentResults]);
+
+    const handleSelectTeacher = (teacher: any) => {
+        setSelectedTeacher(teacher);
+        setTeacherSearchQuery(teacher.nombre);
+        setShowTeacherResults(false);
+        setTeacherRol('Co-Investigador');
     };
 
-    const handleAddMember = async () => {
-        if (!editingGroup || !selectedMember) return;
+    const handleSelectStudent = (student: any) => {
+        setSelectedStudent(student);
+        setStudentSearchQuery(student.nombre);
+        setShowStudentResults(false);
+        setStudentRol('Semillerista');
+    };
 
-        try {
-            const memberDto = {
-                id_usuario: 0,
-                cedula: selectedMember.cedula,
-                nombre_completo: selectedMember.nombre,
-                rol: memberRol,
-                activo: true
-            };
+    const handleAddTeacher = async () => {
+        if (!selectedTeacher) return;
 
-            await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
+        const newMember = {
+            id_grupo_miembro: Date.now(), // ID temporal para keys de React
+            id_usuario: 0,
+            cedula: selectedTeacher.cedula,
+            nombre_completo: selectedTeacher.nombre,
+            rol: teacherRol,
+            activo: true
+        };
 
-            const res = await api.get(`/Groups/${editingGroup.uuid}`);
-            const fullGroup = res.data;
-            if (fullGroup && fullGroup.miembros) {
-                const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
-                setGroupMembers(activeMembers);
+        if (editingGroup) {
+            try {
+                const memberDto = {
+                    id_usuario: 0,
+                    cedula: selectedTeacher.cedula,
+                    nombre_completo: selectedTeacher.nombre,
+                    rol: teacherRol,
+                    activo: true
+                };
+
+                await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
+
+                const res = await api.get(`/Groups/${editingGroup.uuid}`);
+                const fullGroup = res.data;
+                if (fullGroup && fullGroup.miembros) {
+                    const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
+                    setGroupMembers(activeMembers);
+                }
+            } catch (error: any) {
+                console.error("Error al agregar integrante docente:", error);
+                alert("No se pudo agregar al docente: " + (error.response?.data?.message || error.message));
             }
-
-            setSelectedMember(null);
-            setMemberSearchQuery('');
-            setMemberRol('Co-Investigador');
-        } catch (error: any) {
-            console.error("Error al agregar integrante:", error);
-            alert("No se pudo agregar al integrante: " + (error.response?.data?.message || error.message));
+        } else {
+            // Manejo local para propuesta de grupo
+            if (groupMembers.some(m => m.cedula === selectedTeacher.cedula)) {
+                alert("Este docente ya ha sido agregado al grupo.");
+                return;
+            }
+            setGroupMembers(prev => [...prev, newMember as any]);
         }
+
+        setSelectedTeacher(null);
+        setTeacherSearchQuery('');
+        setTeacherRol('Co-Investigador');
+    };
+
+    const handleAddStudent = async () => {
+        if (!selectedStudent) return;
+
+        const newMember = {
+            id_grupo_miembro: Date.now(), // ID temporal para keys de React
+            id_usuario: 0,
+            cedula: selectedStudent.cedula,
+            nombre_completo: selectedStudent.nombre,
+            rol: studentRol,
+            activo: true
+        };
+
+        if (editingGroup) {
+            try {
+                const memberDto = {
+                    id_usuario: 0,
+                    cedula: selectedStudent.cedula,
+                    nombre_completo: selectedStudent.nombre,
+                    rol: studentRol,
+                    activo: true
+                };
+
+                await api.post(`/Groups/${editingGroup.uuid}/members`, memberDto);
+
+                const res = await api.get(`/Groups/${editingGroup.uuid}`);
+                const fullGroup = res.data;
+                if (fullGroup && fullGroup.miembros) {
+                    const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
+                    setGroupMembers(activeMembers);
+                }
+            } catch (error: any) {
+                console.error("Error al agregar integrante estudiante:", error);
+                alert("No se pudo agregar al estudiante: " + (error.response?.data?.message || error.message));
+            }
+        } else {
+            // Manejo local para propuesta de grupo
+            if (groupMembers.some(m => m.cedula === selectedStudent.cedula)) {
+                alert("Este estudiante ya ha sido agregado al grupo.");
+                return;
+            }
+            setGroupMembers(prev => [...prev, newMember as any]);
+        }
+
+        setSelectedStudent(null);
+        setStudentSearchQuery('');
+        setStudentRol('Semillerista');
     };
 
     const handleRemoveMember = async (idGrupoMiembro: number) => {
-        if (!editingGroup) return;
+        if (editingGroup) {
+            const reason = window.prompt("Ingrese el motivo por el cual el integrante se retira del grupo (opcional):");
+            if (reason === null) return; // Cancelado por el usuario
 
-        const reason = window.prompt("Ingrese el motivo por el cual el integrante se retira del grupo (opcional):");
-        if (reason === null) return; // Cancelado por el usuario
+            try {
+                const encodedReason = encodeURIComponent(reason.trim());
+                await api.delete(`/Groups/members/${idGrupoMiembro}?reason=${encodedReason}`);
 
-        try {
-            const encodedReason = encodeURIComponent(reason.trim());
-            await api.delete(`/Groups/members/${idGrupoMiembro}?reason=${encodedReason}`);
-
-            const res = await api.get(`/Groups/${editingGroup.uuid}`);
-            const fullGroup = res.data;
-            if (fullGroup && fullGroup.miembros) {
-                const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
-                setGroupMembers(activeMembers);
+                const res = await api.get(`/Groups/${editingGroup.uuid}`);
+                const fullGroup = res.data;
+                if (fullGroup && fullGroup.miembros) {
+                    const activeMembers = fullGroup.miembros.filter((m: any) => m.activo);
+                    setGroupMembers(activeMembers);
+                }
+            } catch (error: any) {
+                console.error("Error al retirar integrante:", error);
+                alert("No se pudo retirar al integrante: " + (error.response?.data?.message || error.message));
             }
-        } catch (error: any) {
-            console.error("Error al retirar integrante:", error);
-            alert("No se pudo retirar al integrante: " + (error.response?.data?.message || error.message));
+        } else {
+            // Manejo local para propuesta de grupo
+            setGroupMembers(prev => prev.filter(m => m.id_grupo_miembro !== idGrupoMiembro));
         }
     };
 
@@ -279,11 +373,14 @@ const GroupsPage = () => {
                                 setDetailMembers(detailRes.data.miembros.filter((m: any) => m.activo));
                             }
                         }
-                    } catch { }
+                    } catch (err) {
+                        console.error("Error loading group detail:", err);
+                        setDetailMembers([]);
+                    }
                 }
             }
-        } catch (error) {
-            console.error('Error fetching data:', error);
+        } catch (err) {
+            console.error("Error fetching data:", err);
         } finally {
             setLoading(false);
         }
@@ -291,15 +388,19 @@ const GroupsPage = () => {
 
     useEffect(() => {
         fetchData();
-    }, [search, user, isAdmin]);
+    }, [search]);
 
-    const handleOpenModal = async (group: Group | null = null, readOnly = false) => {
+    const handleOpenModal = async (group?: Group, readOnly = false) => {
         setIsReadOnly(readOnly);
-        setCoordSearchResults([]);
-        setShowCoordResults(false);
-        setGroupMembers([]);
-        setSelectedMember(null);
-        setMemberSearchQuery('');
+        setTeacherSearchQuery('');
+        setTeacherSearchResults([]);
+        setSelectedTeacher(null);
+        setTeacherRol('Co-Investigador');
+
+        setStudentSearchQuery('');
+        setStudentSearchResults([]);
+        setSelectedStudent(null);
+        setStudentRol('Semillerista');
 
         if (group) {
             setEditingGroup(group);
@@ -314,6 +415,7 @@ const GroupsPage = () => {
                 vision: group.vision || '',
                 resolucion_aprobacion: group.resolucion_aprobacion || '',
                 fecha_creacion: group.fecha_creacion ? group.fecha_creacion.split('T')[0] : '',
+                categoriaConsolidacion: group.categoriaConsolidacion || 'En Formación',
                 lineas_ids: group.lineas_ids || [],
                 carreras_ids: group.carreras_ids || []
             });
@@ -334,6 +436,7 @@ const GroupsPage = () => {
                         vision: fullGroup.vision || '',
                         resolucion_aprobacion: fullGroup.resolucion_aprobacion || '',
                         fecha_creacion: fullGroup.fecha_creacion ? fullGroup.fecha_creacion.split('T')[0] : '',
+                        categoriaConsolidacion: fullGroup.categoriaConsolidacion || 'En Formación',
                         lineas_ids: fullGroup.lineas_ids || [],
                         carreras_ids: fullGroup.carreras_ids || []
                     });
@@ -360,6 +463,7 @@ const GroupsPage = () => {
                 vision: '',
                 resolucion_aprobacion: '',
                 fecha_creacion: new Date().toISOString().split('T')[0],
+                categoriaConsolidacion: 'En Formación',
                 lineas_ids: [],
                 carreras_ids: []
             });
@@ -378,7 +482,14 @@ const GroupsPage = () => {
             const payload = {
                 ...formData,
                 id_profesor_coordinador: formData.id_profesor_coordinador || null,
-                id_dominio: formData.id_dominio ? parseInt(formData.id_dominio) : null
+                id_dominio: formData.id_dominio ? parseInt(formData.id_dominio) : null,
+                miembros: editingGroup ? [] : groupMembers.map(m => ({
+                    id_usuario: m.id_usuario || 0,
+                    cedula: m.cedula,
+                    nombre_completo: m.nombre_completo,
+                    rol: m.rol,
+                    activo: true
+                }))
             };
 
             if (editingGroup) {
@@ -536,6 +647,14 @@ const GroupsPage = () => {
                                                         }`}>
                                                         {g.tipo_grupo?.toUpperCase() || 'INVESTIGACIÓN'}
                                                     </span>
+                                                    {g.categoriaConsolidacion && (
+                                                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded-full border ${g.categoriaConsolidacion === 'Consolidado'
+                                                                ? 'bg-purple-500/15 text-purple-400 border-purple-500/20'
+                                                                : 'bg-amber-500/15 text-amber-400 border-amber-500/20'
+                                                            }`}>
+                                                            {g.categoriaConsolidacion.toUpperCase()}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <div className="flex gap-2 items-center mt-1">
                                                     <span className="text-[10px] text-text-dim font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">{g.siglas || 'SIN_SIGLAS'}</span>
@@ -767,6 +886,19 @@ const GroupsPage = () => {
                                         {dominios.map(d => (
                                             <option key={d.id_dominio} value={d.id_dominio}>{d.nombre}</option>
                                         ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Categoría de Consolidación</label>
+                                    <select
+                                        required
+                                        disabled={isReadOnly}
+                                        value={formData.categoriaConsolidacion}
+                                        onChange={(e) => setFormData({ ...formData, categoriaConsolidacion: e.target.value })}
+                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all appearance-none disabled:opacity-60 disabled:cursor-not-allowed font-medium"
+                                    >
+                                        <option value="En Formación">En Formación (Grupo Inicial / Reciente)</option>
+                                        <option value="Consolidado">Consolidado (Producción & Publicaciones Indexadas)</option>
                                     </select>
                                 </div>
                                 <div className="space-y-2 relative">
@@ -1012,203 +1144,358 @@ const GroupsPage = () => {
                             </section>
 
                             {/* Bento Section: Group Members */}
-                            {editingGroup ? (
-                                <section className="p-6 bg-surface rounded-2xl border border-border-thin space-y-6 animate-fade-up">
-                                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-border-thin">
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2 text-[10px] font-black text-text-main uppercase tracking-widest">
-                                                <Users size={12} />
-                                                <span>Integrantes del Grupo de Investigación</span>
-                                            </div>
-                                            <p className="text-[10px] text-text-dim uppercase font-bold">Docentes con horas vigentes y Estudiantes matriculados</p>
-                                        </div>
-                                        <span className="text-[9px] font-bold text-text-main bg-text-main/10 border border-text-main/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
-                                            {groupMembers.length} Miembros Activos
-                                        </span>
-                                    </div>
+                            {true ? (() => {
+                                const teachers = groupMembers.filter(member => {
+                                    const rolLower = (member.rol || '').toLowerCase();
+                                    return !rolLower.includes('semillerista') && !rolLower.includes('estudiante');
+                                });
 
-                                    {/* Members Grid (Bento Style) */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {groupMembers.map((member) => {
-                                            const isStudent = member.rol?.toLowerCase().includes("semillerista") || member.rol?.toLowerCase().includes("estudiante");
-                                            return (
-                                                <div
-                                                    key={member.id_grupo_miembro}
-                                                    className="p-4 bg-bg-deep/40 rounded-xl border border-border-thin hover:border-border-thin/80 hover:bg-bg-deep/60 transition-all flex justify-between items-center group/member"
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0">
-                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${isStudent
-                                                                ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
-                                                                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                                                            }`}>
-                                                            {isStudent ? <GraduationCap size={16} /> : <User size={16} />}
-                                                        </div>
-                                                        <div className="min-w-0 space-y-0.5">
-                                                            <p className="text-xs font-extrabold text-text-main uppercase truncate max-w-[200px]" title={member.nombre_completo}>
-                                                                {member.nombre_completo}
-                                                            </p>
-                                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                                <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
-                                                                    C.I. {member.cedula || 'S/D'}
-                                                                </span>
-                                                                <span className={`text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full ${isStudent
-                                                                        ? 'bg-blue-500/15 text-blue-400 border border-blue-500/20'
-                                                                        : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
-                                                                    }`}>
-                                                                    {member.rol}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                const students = groupMembers.filter(member => {
+                                    const rolLower = (member.rol || '').toLowerCase();
+                                    return rolLower.includes('semillerista') || rolLower.includes('estudiante');
+                                });
 
-                                                    {/* Delete action button */}
-                                                    {!isReadOnly && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleRemoveMember(member.id_grupo_miembro)}
-                                                            className="p-1.5 rounded-md hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-text-dim hover:text-red-500 opacity-0 group-hover/member:opacity-100 focus:opacity-100 transition-all shrink-0"
-                                                            title="Dar de baja miembro"
-                                                        >
-                                                            <UserMinus size={13} />
-                                                        </button>
-                                                    )}
+                                return (
+                                    <section className="p-6 bg-surface rounded-2xl border border-border-thin space-y-6 animate-fade-up">
+                                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-border-thin">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 text-[10px] font-black text-text-main uppercase tracking-widest">
+                                                    <Users size={12} />
+                                                    <span>Integrantes del Grupo de Investigación</span>
                                                 </div>
-                                            );
-                                        })}
-
-                                        {groupMembers.length === 0 && (
-                                            <div className="col-span-2 py-8 text-center bg-bg-deep/20 rounded-xl border border-dashed border-border-thin space-y-2">
-                                                <Users size={20} className="mx-auto text-text-dim/40" />
-                                                <p className="text-[10px] text-text-dim font-black uppercase tracking-widest">No hay integrantes registrados en este grupo</p>
+                                                <p className="text-[10px] text-text-dim uppercase font-bold">Docentes con horas vigentes y Estudiantes matriculados</p>
                                             </div>
-                                        )}
-                                    </div>
+                                            <span className="text-[9px] font-bold text-text-main bg-text-main/10 border border-text-main/20 px-2.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                                                {groupMembers.length} Miembros Activos
+                                            </span>
+                                        </div>
 
-                                    {/* Add Member form (Bento Card within) */}
-                                    {!isReadOnly && (
-                                        <div className="p-4 bg-bg-deep/30 rounded-xl border border-border-thin space-y-4">
-                                            <div className="flex items-center gap-1.5 text-[9px] font-black text-text-main uppercase tracking-wider">
-                                                <UserPlus size={12} className="text-text-main" />
-                                                <span>Vincular Nuevo Integrante (Docente o Estudiante)</span>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                                                {/* Autocomplete Input */}
-                                                <div className="md:col-span-6 space-y-1.5 relative">
-                                                    <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Buscador Académico</label>
-                                                    <div className="relative">
-                                                        <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                                                        <input
-                                                            type="text"
-                                                            value={memberSearchQuery}
-                                                            onChange={(e) => {
-                                                                setMemberSearchQuery(e.target.value);
-                                                                if (selectedMember) {
-                                                                    setSelectedMember(null);
-                                                                }
-                                                            }}
-                                                            onFocus={() => setShowMemberResults(true)}
-                                                            placeholder="Ingrese nombre o cédula..."
-                                                            className="w-full bg-bg-deep border border-border-thin focus:border-text-main rounded-lg p-2.5 pl-9 text-xs text-text-main focus:outline-none transition-all placeholder:text-text-dim/60 font-medium"
-                                                        />
-                                                        {isMemberSearching && (
-                                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                                <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-text-main rounded-full"></div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Selected Member Verification Badge */}
-                                                    {selectedMember && (
-                                                        <div className="mt-1 px-2.5 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[9px] flex justify-between items-center font-mono text-emerald-400">
-                                                            <span>Persona: {selectedMember.nombre}</span>
-                                                            <span className="text-[7px] bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20 uppercase font-bold tracking-widest">{selectedMember.tipo === 'alumno' ? 'Estudiante' : 'Docente'}</span>
+                                        {/* Grid separating Docentes and Estudiantes */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {/* Sector 1: Docentes Investigadores */}
+                                            <div className="space-y-4 p-5 rounded-2xl bg-bg-deep/20 border border-emerald-500/10 backdrop-blur-sm relative overflow-hidden transition-all hover:border-emerald-500/25">
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+                                                
+                                                <div className="flex justify-between items-center pb-2 border-b border-border-thin">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                                                            <User size={16} />
                                                         </div>
-                                                    )}
+                                                        <div>
+                                                            <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Docentes Investigadores</h4>
+                                                            <p className="text-[10px] text-text-dim/80 font-bold uppercase tracking-tight">Académicos con horas de investigación</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
+                                                        {teachers.length} Activos
+                                                    </span>
+                                                </div>
 
-                                                    {/* Autocomplete Suggestions Panel */}
-                                                    {showMemberResults && memberSearchQuery.trim() && (
-                                                        <>
-                                                            <div className="fixed inset-0 z-20" onClick={() => setShowMemberResults(false)}></div>
-                                                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
-                                                                {memberSearchResults.length === 0 ? (
-                                                                    <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                                        Sin coincidencias en el periodo activo.
+                                                {/* Form to add teacher */}
+                                                {!isReadOnly && (
+                                                    <div className="space-y-3 p-3.5 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            <div className="relative space-y-1">
+                                                                <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Buscador Docente</label>
+                                                                <div className="relative">
+                                                                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                                                    <input
+                                                                        type="text"
+                                                                        value={teacherSearchQuery}
+                                                                        onChange={(e) => {
+                                                                            setTeacherSearchQuery(e.target.value);
+                                                                            if (selectedTeacher) {
+                                                                                setSelectedTeacher(null);
+                                                                            }
+                                                                        }}
+                                                                        onFocus={() => setShowTeacherResults(true)}
+                                                                        placeholder="Buscar docente investigador por nombre o cédula..."
+                                                                        className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2.5 pl-9 text-xs text-text-main focus:outline-none transition-all placeholder:text-text-dim/50 font-medium"
+                                                                    />
+                                                                    {isTeacherSearching && (
+                                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-emerald-400 rounded-full"></div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {selectedTeacher && (
+                                                                    <div className="mt-1.5 px-2.5 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-lg text-[9px] flex justify-between items-center font-mono text-emerald-400">
+                                                                        <span>Docente: {selectedTeacher.nombre}</span>
+                                                                        <span className="text-[7px] bg-emerald-500/10 px-1 py-0.2 rounded border border-emerald-500/20 uppercase font-bold tracking-widest">Seleccionado</span>
                                                                     </div>
-                                                                ) : (
-                                                                    memberSearchResults.map((userResult: any) => (
-                                                                        <button
-                                                                            key={userResult.cedula}
-                                                                            type="button"
-                                                                            onClick={() => handleSelectMember(userResult)}
-                                                                            className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
-                                                                        >
-                                                                            <div className="space-y-0.5">
-                                                                                <p className="font-bold text-text-main text-xs uppercase">{userResult.nombre}</p>
-                                                                                <p className="text-text-dim font-mono text-[9px]">C.I. {userResult.cedula} | {userResult.email}</p>
-                                                                            </div>
-                                                                            <span className={`px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border ${userResult.tipo === 'alumno'
-                                                                                    ? 'bg-blue-500/15 border-blue-500/25 text-blue-400'
-                                                                                    : 'bg-emerald-500/15 border-emerald-500/25 text-emerald-400'
-                                                                                }`}>
-                                                                                {userResult.tipo === 'alumno' ? 'Estudiante' : 'Docente'}
-                                                                            </span>
-                                                                        </button>
-                                                                    ))
+                                                                )}
+
+                                                                {showTeacherResults && (
+                                                                    <>
+                                                                        <div className="fixed inset-0 z-20" onClick={() => setShowTeacherResults(false)}></div>
+                                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                                            {teacherSearchResults.length === 0 ? (
+                                                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                                    No se encontraron docentes con horas vigentes.
+                                                                                </div>
+                                                                            ) : (
+                                                                                teacherSearchResults.map((teacher: any) => (
+                                                                                    <button
+                                                                                        key={teacher.cedula}
+                                                                                        type="button"
+                                                                                        onClick={() => handleSelectTeacher(teacher)}
+                                                                                        className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                                                    >
+                                                                                        <div className="space-y-0.5">
+                                                                                            <p className="font-bold text-text-main text-xs uppercase">{teacher.nombre}</p>
+                                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {teacher.cedula} | {teacher.email || 'S/D'}</p>
+                                                                                        </div>
+                                                                                        <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-emerald-500/15 border-emerald-500/25 text-emerald-400">
+                                                                                            Docente
+                                                                                        </span>
+                                                                                    </button>
+                                                                                ))
+                                                                            )}
+                                                                        </div>
+                                                                    </>
                                                                 )}
                                                             </div>
-                                                        </>
+
+                                                            <div className="grid grid-cols-12 gap-3 items-end">
+                                                                <div className="col-span-8 space-y-1">
+                                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                                                    <select
+                                                                        value={teacherRol}
+                                                                        onChange={(e) => setTeacherRol(e.target.value)}
+                                                                        className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                                    >
+                                                                        <option value="Co-Investigador">Co-Investigador</option>
+                                                                        <option value="Investigador Principal">Investigador Principal</option>
+                                                                        <option value="Asesor Externo">Asesor Externo</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div className="col-span-4">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={handleAddTeacher}
+                                                                        disabled={!selectedTeacher}
+                                                                        className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-bg-deep font-bold px-3 py-2.5 rounded-lg text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1"
+                                                                    >
+                                                                        <Plus size={12} strokeWidth={3} />
+                                                                        Vincular
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Teacher List */}
+                                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                                    {teachers.map((member) => (
+                                                        <div
+                                                            key={member.id_grupo_miembro}
+                                                            className="p-3 bg-bg-deep/40 rounded-xl border border-border-thin hover:border-emerald-500/20 hover:bg-bg-deep/60 transition-all flex justify-between items-center group/member"
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                                                                    <User size={14} />
+                                                                </div>
+                                                                <div className="min-w-0 space-y-0.5">
+                                                                    <p className="text-xs font-extrabold text-text-main uppercase truncate max-w-[200px]" title={member.nombre_completo}>
+                                                                        {member.nombre_completo}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                                        <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                                            C.I. {member.cedula || 'S/D'}
+                                                                        </span>
+                                                                        <span className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                                                                            {member.rol}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {!isReadOnly && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
+                                                                    className="p-1.5 rounded-md hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-text-dim hover:text-red-500 opacity-0 group-hover/member:opacity-100 focus:opacity-100 transition-all shrink-0"
+                                                                    title="Desvincular docente"
+                                                                >
+                                                                    <UserMinus size={13} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                    {teachers.length === 0 && (
+                                                        <div className="py-6 text-center bg-bg-deep/20 rounded-xl border border-dashed border-border-thin/60 space-y-1.5">
+                                                            <Users size={16} className="mx-auto text-text-dim/30" />
+                                                            <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest">Sin docentes investigadores</p>
+                                                        </div>
                                                     )}
                                                 </div>
+                                            </div>
 
-                                                {/* Role Selector dropdown */}
-                                                <div className="md:col-span-4 space-y-1.5">
-                                                    <label className="text-[8px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
-                                                    <select
-                                                        value={memberRol}
-                                                        onChange={(e) => setMemberRol(e.target.value)}
-                                                        className="w-full bg-bg-deep border border-border-thin rounded-lg p-2.5 text-xs text-text-main focus:outline-none focus:border-text-main transition-all appearance-none font-medium"
-                                                    >
-                                                        {selectedMember?.tipo === 'alumno' ? (
-                                                            <>
-                                                                <option value="Semillerista">Semillerista de Apoyo</option>
-                                                                <option value="Co-Investigador (Estudiante)">Co-Investigador Estudiantil</option>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <option value="Co-Investigador">Co-Investigador</option>
-                                                                <option value="Investigador Principal">Investigador Principal</option>
-                                                                <option value="Asesor Externo">Asesor Científico Externo</option>
-                                                            </>
-                                                        )}
-                                                    </select>
+                                            {/* Sector 2: Estudiantes Semilleristas */}
+                                            <div className="space-y-4 p-5 rounded-2xl bg-bg-deep/20 border border-blue-500/10 backdrop-blur-sm relative overflow-hidden transition-all hover:border-blue-500/25">
+                                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+
+                                                <div className="flex justify-between items-center pb-2 border-b border-border-thin">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                                                            <GraduationCap size={16} />
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Estudiantes Semilleristas</h4>
+                                                            <p className="text-[10px] text-text-dim/80 font-bold uppercase tracking-tight">Alumnos matriculados en semillero</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[9px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-full font-mono">
+                                                        {students.length} Activos
+                                                    </span>
                                                 </div>
 
-                                                {/* Action Button */}
-                                                <div className="md:col-span-2">
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleAddMember}
-                                                        disabled={!selectedMember}
-                                                        className="w-full bg-text-main text-bg-deep disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 font-bold px-3 py-2.5 rounded-lg text-[9px] uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                                                    >
-                                                        <Plus size={12} strokeWidth={3} />
-                                                        Agregar
-                                                    </button>
+                                                {/* Form to add student */}
+                                                {!isReadOnly && (
+                                                    <div className="space-y-3 p-3.5 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                                        <div className="grid grid-cols-1 gap-3">
+                                                            <div className="relative space-y-1">
+                                                                <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Buscador Estudiante</label>
+                                                                <div className="relative">
+                                                                    <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                                                    <input
+                                                                        type="text"
+                                                                        value={studentSearchQuery}
+                                                                        onChange={(e) => {
+                                                                            setStudentSearchQuery(e.target.value);
+                                                                            if (selectedStudent) {
+                                                                                setSelectedStudent(null);
+                                                                            }
+                                                                        }}
+                                                                        onFocus={() => setShowStudentResults(true)}
+                                                                        placeholder="Buscar estudiante por nombre o cédula..."
+                                                                        className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2.5 pl-9 text-xs text-text-main focus:outline-none transition-all placeholder:text-text-dim/50 font-medium"
+                                                                    />
+                                                                    {isStudentSearching && (
+                                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-t-transparent border-blue-400 rounded-full"></div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {selectedStudent && (
+                                                                    <div className="mt-1.5 px-2.5 py-1 bg-blue-500/5 border border-blue-500/10 rounded-lg text-[9px] flex justify-between items-center font-mono text-blue-400">
+                                                                        <span>Estudiante: {selectedStudent.nombre}</span>
+                                                                        <span className="text-[7px] bg-blue-500/10 px-1 py-0.2 rounded border border-blue-500/20 uppercase font-bold tracking-widest">Seleccionado</span>
+                                                                    </div>
+                                                                )}
+
+                                                                {showStudentResults && (
+                                                                    <>
+                                                                        <div className="fixed inset-0 z-20" onClick={() => setShowStudentResults(false)}></div>
+                                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                                            {studentSearchResults.length === 0 ? (
+                                                                                <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                                    No se encontraron estudiantes matriculados.
+                                                                                </div>
+                                                                            ) : (
+                                                                                studentSearchResults.map((student: any) => (
+                                                                                    <button
+                                                                                        key={student.cedula}
+                                                                                        type="button"
+                                                                                        onClick={() => handleSelectStudent(student)}
+                                                                                        className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                                                    >
+                                                                                        <div className="space-y-0.5">
+                                                                                            <p className="font-bold text-text-main text-xs uppercase">{student.nombre}</p>
+                                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {student.cedula} | {student.email || 'S/D'}</p>
+                                                                                        </div>
+                                                                                        <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-blue-500/15 border-blue-500/25 text-blue-400">
+                                                                                            Estudiante
+                                                                                        </span>
+                                                                                    </button>
+                                                                                ))
+                                                                            )}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="grid grid-cols-12 gap-3 items-end">
+                                                                <div className="col-span-8 space-y-1">
+                                                                    <label className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Rol en el Grupo</label>
+                                                                    <select
+                                                                        value={studentRol}
+                                                                        onChange={(e) => setStudentRol(e.target.value)}
+                                                                        className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
+                                                                    >
+                                                                        <option value="Semillerista">Semillerista</option>
+                                                                        <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
+                                                                    </select>
+                                                                </div>
+                                                                <div className="col-span-4">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={handleAddStudent}
+                                                                        disabled={!selectedStudent}
+                                                                        className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-bg-deep font-bold px-3 py-2.5 rounded-lg text-[10px] uppercase tracking-wider transition-all flex items-center justify-center gap-1"
+                                                                    >
+                                                                        <Plus size={12} strokeWidth={3} />
+                                                                        Vincular
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Student List */}
+                                                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                                                    {students.map((member) => (
+                                                        <div
+                                                            key={member.id_grupo_miembro}
+                                                            className="p-3 bg-bg-deep/40 rounded-xl border border-border-thin hover:border-blue-500/20 hover:bg-bg-deep/60 transition-all flex justify-between items-center group/member"
+                                                        >
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                                                    <GraduationCap size={14} />
+                                                                </div>
+                                                                <div className="min-w-0 space-y-0.5">
+                                                                    <p className="text-xs font-extrabold text-text-main uppercase truncate max-w-[200px]" title={member.nombre_completo}>
+                                                                        {member.nombre_completo}
+                                                                    </p>
+                                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                                        <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                                            C.I. {member.cedula || 'S/D'}
+                                                                        </span>
+                                                                        <span className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
+                                                                            {member.rol}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            {!isReadOnly && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRemoveMember(member.id_grupo_miembro)}
+                                                                    className="p-1.5 rounded-md hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-text-dim hover:text-red-500 opacity-0 group-hover/member:opacity-100 focus:opacity-100 transition-all shrink-0"
+                                                                    title="Desvincular estudiante"
+                                                                >
+                                                                    <UserMinus size={13} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                    {students.length === 0 && (
+                                                        <div className="py-6 text-center bg-bg-deep/20 rounded-xl border border-dashed border-border-thin/60 space-y-1.5">
+                                                            <GraduationCap size={16} className="mx-auto text-text-dim/30" />
+                                                            <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest">Sin estudiantes vinculados</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
-                                </section>
-                            ) : (
-                                <section className="p-6 bg-surface rounded-2xl border border-dashed border-border-thin flex flex-col items-center justify-center text-center space-y-2 animate-fade-up">
-                                    <Users size={24} className="text-text-dim/40" />
-                                    <p className="text-[10px] text-text-dim font-black uppercase tracking-widest">Gestión de Miembros Integrantes</p>
-                                    <p className="text-[9px] text-text-dim/80 max-w-sm uppercase font-bold tracking-wider leading-relaxed">
-                                        Los integrantes (docentes investigadores y estudiantes semilleristas) podrán ser agregados y vinculados al grupo una vez guardada e instituida formalmente la propuesta.
-                                    </p>
-                                </section>
-                            )}
+                                    </section>
+                                );
+                            })() : null}
                         </form>
 
                         <div className="modal-footer">
@@ -1257,8 +1544,8 @@ const GroupsPage = () => {
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* Status & Type */}
-                            <div className="grid grid-cols-2 gap-4">
+                            {/* Status & Type & Consolidation */}
+                            <div className="grid grid-cols-3 gap-4">
                                 <div className="bento-card static p-4">
                                     <label className="section-label text-text-dim mb-2">
                                         <Shield size={12} /> Estado
@@ -1288,6 +1575,18 @@ const GroupsPage = () => {
                                     </label>
                                     <span className="badge-vercel badge-vercel-brand">
                                         {detailGroup.tipo_grupo || 'Investigación'}
+                                    </span>
+                                </div>
+                                <div className="bento-card static p-4">
+                                    <label className="section-label text-text-dim mb-2">
+                                        <Target size={12} /> Consolidación
+                                    </label>
+                                    <span className={`badge-vercel border text-center ${
+                                        detailGroup.categoriaConsolidacion === 'Consolidado'
+                                            ? 'bg-purple-500/15 text-purple-400 border-purple-500/20'
+                                            : 'bg-amber-500/15 text-amber-400 border-amber-500/20'
+                                    }`}>
+                                        {detailGroup.categoriaConsolidacion || 'En Formación'}
                                     </span>
                                 </div>
                             </div>
@@ -1400,41 +1699,93 @@ const GroupsPage = () => {
                             )}
 
                             {/* Members */}
-                            <div className="bento-card static p-4 space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <label className="section-label text-text-main">
-                                        <Users size={12} /> Integrantes
+                            <div className="bento-card static p-4 space-y-4">
+                                <div className="flex items-center justify-between pb-2 border-b border-border-thin">
+                                    <label className="section-label text-text-main flex items-center gap-1.5 font-black uppercase tracking-widest text-[10px]">
+                                        <Users size={12} /> Integrantes del Grupo
                                     </label>
                                     <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
                                         {detailMembers.length} activos
                                     </span>
                                 </div>
-                                <div className="divider-vercel !my-0" />
-                                {detailMembers.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {detailMembers.map(member => {
-                                            const isStudent = member.rol?.toLowerCase().includes('semillerista') || member.rol?.toLowerCase().includes('estudiante');
-                                            return (
-                                                <div key={member.id_grupo_miembro} className="flex items-center justify-between p-2.5 bg-bg-deep/40 rounded-lg border border-border-thin">
-                                                    <div className="flex items-center gap-2.5 min-w-0">
-                                                        <div className={`w-7 h-7 rounded flex items-center justify-center shrink-0 border ${isStudent ? 'bg-info-subtle border-info/20 text-info' : 'bg-success-subtle border-success/20 text-success'}`}>
-                                                            {isStudent ? <GraduationCap size={14} /> : <User size={14} />}
+
+                                {detailMembers.length > 0 ? (() => {
+                                    const teachers = detailMembers.filter(member => {
+                                        const rolLower = (member.rol || '').toLowerCase();
+                                        return !rolLower.includes('semillerista') && !rolLower.includes('estudiante');
+                                    });
+
+                                    const students = detailMembers.filter(member => {
+                                        const rolLower = (member.rol || '').toLowerCase();
+                                        return rolLower.includes('semillerista') || rolLower.includes('estudiante');
+                                    });
+
+                                    return (
+                                        <div className="space-y-4">
+                                            {/* Docentes */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-emerald-400">
+                                                    <User size={10} />
+                                                    <span>Docentes Investigadores ({teachers.length})</span>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    {teachers.map(member => (
+                                                        <div key={member.id_grupo_miembro} className="flex items-center justify-between p-2.5 bg-bg-deep/40 rounded-lg border border-emerald-500/10">
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <div className="w-7 h-7 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                                                                    <User size={14} />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-text-main uppercase truncate" title={member.nombre_completo}>{member.nombre_completo}</p>
+                                                                    <span className="text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                                                                        {member.rol}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {member.cedula && (
+                                                                <span className="text-[9px] font-mono text-text-dim">C.I. {member.cedula}</span>
+                                                            )}
                                                         </div>
-                                                        <div className="min-w-0">
-                                                            <p className="text-xs font-bold text-text-main uppercase truncate">{member.nombre_completo}</p>
-                                                            <span className={`text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-full ${isStudent ? 'bg-info-subtle text-info border border-info/20' : 'bg-success-subtle text-success border border-success/20'}`}>
-                                                                {member.rol}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    {member.cedula && (
-                                                        <span className="text-[9px] font-mono text-text-dim">{member.cedula}</span>
+                                                    ))}
+                                                    {teachers.length === 0 && (
+                                                        <p className="text-[9px] text-text-dim font-bold uppercase py-2 text-center bg-bg-deep/10 border border-dashed border-border-thin rounded-lg">Sin docentes investigadores</p>
                                                     )}
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                ) : (
+                                            </div>
+
+                                            {/* Estudiantes */}
+                                            <div className="space-y-2">
+                                                <div className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-blue-400">
+                                                    <GraduationCap size={10} />
+                                                    <span>Estudiantes Semilleristas ({students.length})</span>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    {students.map(member => (
+                                                        <div key={member.id_grupo_miembro} className="flex items-center justify-between p-2.5 bg-bg-deep/40 rounded-lg border border-blue-500/10">
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <div className="w-7 h-7 rounded bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                                                                    <GraduationCap size={14} />
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="text-xs font-bold text-text-main uppercase truncate" title={member.nombre_completo}>{member.nombre_completo}</p>
+                                                                    <span className="text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
+                                                                        {member.rol}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            {member.cedula && (
+                                                                <span className="text-[9px] font-mono text-text-dim">C.I. {member.cedula}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                    {students.length === 0 && (
+                                                        <p className="text-[9px] text-text-dim font-bold uppercase py-2 text-center bg-bg-deep/10 border border-dashed border-border-thin rounded-lg">Sin estudiantes semilleristas</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })() : (
                                     <div className="py-6 text-center">
                                         <Users size={20} className="mx-auto text-text-dim/30 mb-2" />
                                         <p className="text-[10px] text-text-dim font-medium uppercase tracking-widest">Sin integrantes registrados</p>

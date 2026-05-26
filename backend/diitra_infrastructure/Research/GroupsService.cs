@@ -97,6 +97,7 @@ public class GroupsService : IGroupsService
             Vision = dto.Vision,
             ResolucionAprobacion = dto.ResolucionAprobacion,
             FechaCreacion = dto.FechaCreacion,
+            CategoriaConsolidacion = dto.CategoriaConsolidacion ?? "En Formación",
             Activo = dto.Estado == "Pendiente" ? false : true,
             Estado = dto.Estado ?? "Aprobado"
         };
@@ -119,6 +120,33 @@ public class GroupsService : IGroupsService
 
         _context.InvGruposInvestigacion.Add(group);
         await _context.SaveChangesAsync();
+
+        if (dto.Miembros != null && dto.Miembros.Any())
+        {
+            foreach (var memberDto in dto.Miembros)
+            {
+                int userId = memberDto.IdUsuario;
+                if (!string.IsNullOrEmpty(memberDto.Cedula))
+                {
+                    var user = await _authService.GetOrProvisionUserByCedulaAsync(memberDto.Cedula);
+                    if (user != null) userId = user.IdUsuario;
+                }
+
+                if (userId != 0)
+                {
+                    var member = new InvGrupoMiembro
+                    {
+                        IdGrupo = group.IdGrupo,
+                        IdUsuario = userId,
+                        Rol = memberDto.Rol,
+                        Activo = true,
+                        FechaInicio = memberDto.FechaInicio ?? DateOnly.FromDateTime(DateTime.Now)
+                    };
+                    _context.InvGruposMiembros.Add(member);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
 
         var afterState = new
         {
@@ -198,6 +226,7 @@ public class GroupsService : IGroupsService
             Vision = group.Vision,
             ResolucionAprobacion = group.ResolucionAprobacion,
             FechaCreacion = group.FechaCreacion,
+            CategoriaConsolidacion = group.CategoriaConsolidacion,
             Activo = group.Activo,
             Estado = group.Estado
         };
@@ -219,6 +248,7 @@ public class GroupsService : IGroupsService
         group.Mision = dto.Mision;
         group.Vision = dto.Vision;
         group.FechaCreacion = dto.FechaCreacion;
+        group.CategoriaConsolidacion = dto.CategoriaConsolidacion ?? "En Formación";
 
         if (!string.IsNullOrEmpty(dto.Estado))
         {
@@ -468,6 +498,7 @@ public class GroupsService : IGroupsService
             Vision = g.Vision,
             ResolucionAprobacion = g.ResolucionAprobacion,
             FechaCreacion = g.FechaCreacion,
+            CategoriaConsolidacion = g.CategoriaConsolidacion,
             Activo = g.Activo ?? false,
             Estado = g.Estado
         };

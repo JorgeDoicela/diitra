@@ -460,8 +460,27 @@ body {
 }
 
 *:focus-visible {
-  outline: 2px solid var(--brand);
+  outline: 2px solid var(--fg);
   outline-offset: 2px;
+}
+
+/* Evitar outline de color y aplicar sombreado negro/blanco limpio (estilo Vercel) en campos de entrada y texto */
+input:focus,
+textarea:focus,
+select:focus,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+  border-color: var(--fg) !important;
+  box-shadow: 0 0 0 1px var(--fg) !important;
+}
+
+/* Evitar outline azul en el editor de texto colaborativo */
+.ProseMirror:focus,
+.ProseMirror:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /**

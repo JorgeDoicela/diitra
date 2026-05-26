@@ -293,9 +293,10 @@ namespace diitra_api.Controllers
         }
 
         [HttpGet("search-users")]
-        public async Task<IActionResult> SearchUsers([FromQuery] string? q = null)
+        public async Task<IActionResult> SearchUsers([FromQuery] string? q = null, [FromQuery] string? tipo = null)
         {
             var query = q?.Trim().ToLower();
+            var tipoFilter = tipo?.Trim().ToLower();
 
             // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
@@ -308,105 +309,117 @@ namespace diitra_api.Controllers
 
             var periodId = currentPeriod?.IdPeriodo;
 
-            // 1. Buscar en Profesores
-            var profesoresQuery = _context.Profesores.AsQueryable();
-
-            profesoresQuery = profesoresQuery.Where(p => p.Activo == 1);
-
-            // Solo docentes que tengan actividades de investigación (idSubcategoria = 7) en el periodo actual
-            if (!string.IsNullOrEmpty(periodId))
-            {
-                profesoresQuery = profesoresQuery.Where(p => _context.ProfesoresActividades.Any(pa =>
-                    pa.IdProfesor == p.IdProfesor &&
-                    pa.IdSubcategoria == 7 &&
-                    pa.IdPeriodo == periodId));
-            }
-
-            if (!string.IsNullOrEmpty(query))
-            {
-                profesoresQuery = profesoresQuery.Where(p => p.IdProfesor.Contains(query) ||
-                                (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(query)) ||
-                                (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(query)) ||
-                                (p.Nombres != null && p.Nombres.ToLower().Contains(query)) ||
-                                (p.Apellidos != null && p.Apellidos.ToLower().Contains(query)));
-            }
-
-            var profesoresSelect = profesoresQuery
-                .Select(p => new
-                {
-                    cedula = p.IdProfesor.Trim(),
-                    nombre = ($"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}").Replace("  ", " ").Trim(),
-                    email = p.EmailInstitucional ?? p.Email ?? "",
-                    telefono = p.Celular ?? p.Telefono ?? "",
-                    nivelAcademico = p.Titulo ?? "Tercer Nivel",
-                    rol = "Investigador (Docente)",
-                    tipo = "profesor"
-                });
-
-            // 2. Buscar en Alumnos (solo si se proporciona un término de búsqueda para ahorrar rendimiento)
+            var profs = new List<object>();
             var alums = new List<object>();
 
-            if (!string.IsNullOrEmpty(query))
+            // 1. Buscar en Profesores
+            if (string.IsNullOrEmpty(tipoFilter) || tipoFilter == "profesor")
             {
-                var alumnosQuery = _context.Alumnos.AsQueryable();
+                var profesoresQuery = _context.Profesores.AsQueryable();
+                profesoresQuery = profesoresQuery.Where(p => p.Activo == 1);
 
-                // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
+                // Filtrar estrictamente por docentes que tengan actividades de investigación (idSubcategoria = 7)
                 if (!string.IsNullOrEmpty(periodId))
                 {
-                    alumnosQuery = alumnosQuery.Where(a => _context.Matriculas.Any(m =>
-                        m.IdAlumno == a.IdAlumno &&
-                        m.IdPeriodo == periodId &&
-                        (m.Retirado == null || m.Retirado == false) &&
-                        (m.Valida == 1)));
+                    profesoresQuery = profesoresQuery.Where(p => _context.ProfesoresActividades.Any(pa =>
+                        pa.IdProfesor == p.IdProfesor &&
+                        pa.IdSubcategoria == 7 &&
+                        pa.IdPeriodo == periodId));
+                }
+                else
+                {
+                    // Resiliente: si no hay periodo activo configurado, filtramos por docentes que tengan horas de investigación asignadas
+                    profesoresQuery = profesoresQuery.Where(p => _context.ProfesoresActividades.Any(pa =>
+                        pa.IdProfesor == p.IdProfesor &&
+                        pa.IdSubcategoria == 7));
                 }
 
-                alumnosQuery = alumnosQuery.Where(a => a.IdAlumno.Contains(query) ||
-                                (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(query)) ||
-                                (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)));
+                if (!string.IsNullOrEmpty(query))
+                {
+                    profesoresQuery = profesoresQuery.Where(p => p.IdProfesor.Contains(query) ||
+                                    (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(query)) ||
+                                    (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(query)) ||
+                                    (p.Nombres != null && p.Nombres.ToLower().Contains(query)) ||
+                                    (p.Apellidos != null && p.Apellidos.ToLower().Contains(query)));
+                }
 
-                var alumnosSelect = alumnosQuery
-                    .Take(15) // Permitimos hasta 15 estudiantes si están buscando
-                    .Select(a => new
+                var profesoresSelect = profesoresQuery
+                    .Select(p => new
                     {
-                        cedula = a.IdAlumno.Trim(),
-                        nombre = ($"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}").Replace("  ", " ").Trim(),
-                        email = a.EmailInstitucional ?? a.Email ?? "",
-                        telefono = a.Celular ?? a.Telefono ?? "",
-                        nivelAcademico = "Pregrado",
-                        rol = "Co-Investigador (Estudiante)",
-                        tipo = "alumno"
+                        cedula = p.IdProfesor.Trim(),
+                        nombre = ($"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}").Replace("  ", " ").Trim(),
+                        email = p.EmailInstitucional ?? p.Email ?? "",
+                        telefono = p.Celular ?? p.Telefono ?? "",
+                        nivelAcademico = p.Titulo ?? "Tercer Nivel",
+                        rol = "Investigador (Docente)",
+                        tipo = "profesor"
                     });
 
-                var alumsList = await alumnosSelect.ToListAsync();
-                alums = alumsList.Select(a => new {
-                    a.cedula,
-                    nombre = a.nombre.Replace("  ", " ").Trim(),
-                    a.email,
-                    a.telefono,
-                    a.nivelAcademico,
-                    a.rol,
-                    a.tipo
+                var profsList = await profesoresSelect.ToListAsync();
+                profs = profsList.Select(p => new {
+                    p.cedula,
+                    nombre = p.nombre.Replace("  ", " ").Trim(),
+                    p.email,
+                    p.telefono,
+                    p.nivelAcademico,
+                    p.rol,
+                    p.tipo
                 }).Cast<object>().ToList();
             }
 
-            var profsList = await profesoresSelect.ToListAsync();
-            var profs = profsList.Select(p => new {
-                p.cedula,
-                nombre = p.nombre.Replace("  ", " ").Trim(),
-                p.email,
-                p.telefono,
-                p.nivelAcademico,
-                p.rol,
-                p.tipo
-            }).Cast<object>().ToList();
+            // 2. Buscar en Alumnos
+            if (string.IsNullOrEmpty(tipoFilter) || tipoFilter == "alumno")
+            {
+                // Para alumnos, permitimos búsqueda libre si es el sector de alumnos
+                if (!string.IsNullOrEmpty(query) || tipoFilter == "alumno")
+                {
+                    var alumnosQuery = _context.Alumnos.AsQueryable();
+
+                    // Solo alumnos con matrícula válida en el periodo actual que no se hayan retirado
+                    if (!string.IsNullOrEmpty(periodId))
+                    {
+                        alumnosQuery = alumnosQuery.Where(a => _context.Matriculas.Any(m =>
+                            m.IdAlumno == a.IdAlumno &&
+                            m.IdPeriodo == periodId &&
+                            (m.Retirado == null || m.Retirado == false) &&
+                            (m.Valida == 1)));
+                    }
+
+                    if (!string.IsNullOrEmpty(query))
+                    {
+                        alumnosQuery = alumnosQuery.Where(a => a.IdAlumno.Contains(query) ||
+                                        (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(query)) ||
+                                        (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)));
+                    }
+
+                    var alumnosSelect = alumnosQuery
+                        .Take(30) // Permitir hasta 30 estudiantes si están buscando
+                        .Select(a => new
+                        {
+                            cedula = a.IdAlumno.Trim(),
+                            nombre = ($"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}").Replace("  ", " ").Trim(),
+                            email = a.EmailInstitucional ?? a.Email ?? "",
+                            telefono = a.Celular ?? a.Telefono ?? "",
+                            nivelAcademico = "Pregrado",
+                            rol = "Co-Investigador (Estudiante)",
+                            tipo = "alumno"
+                        });
+
+                    var alumsList = await alumnosSelect.ToListAsync();
+                    alums = alumsList.Select(a => new {
+                        a.cedula,
+                        nombre = a.nombre.Replace("  ", " ").Trim(),
+                        a.email,
+                        a.telefono,
+                        a.nivelAcademico,
+                        a.rol,
+                        a.tipo
+                    }).Cast<object>().ToList();
+                }
+            }
 
             // Combinar
             var results = profs.Concat(alums);
-
-            if (!string.IsNullOrEmpty(query))
-            {
-                results = results.Take(25); // Límite de búsqueda general aumentado a 25 para dar más visibilidad
-            }
 
             return Ok(results.ToList());
         }
