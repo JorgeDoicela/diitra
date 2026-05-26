@@ -4,6 +4,7 @@ public class PeerReviewDto
 {
     public string Uuid { get; set; } = null!;
     public int IdProyecto { get; set; }
+    public string ProyectoUuid { get; set; } = null!;
     public string ProyectoTitulo { get; set; } = null!;
     public int IdRevisor { get; set; }
     public string RevisorNombre { get; set; } = null!;
