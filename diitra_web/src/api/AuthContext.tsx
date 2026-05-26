@@ -11,6 +11,7 @@ interface User {
     roles: string[];
     usuario?: string;
     id_usuario?: number;
+    role_codes?: string[];
 }
 
 interface AuthContextType {
@@ -59,9 +60,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (credentials: any) => {
         const response = await api.post('/auth/login', credentials);
-        setUser(response.data);
+        const data = response.data;
+        
+        // Normalizar los roles para usar los códigos de roles (role_codes) en lugar de los nombres descriptivos.
+        // Esto mantiene la coherencia entre el estado posterior al login y el obtenido al refrescar la página.
+        const normalizedUser: User = {
+            ...data,
+            roles: data.role_codes || data.roles || [],
+            role: data.role_codes?.[0] || data.role
+        };
+        
+        setUser(normalizedUser);
         localStorage.setItem('diitra_logged_in', 'true');
-        return response.data;
+        return normalizedUser;
     };
 
     const logout = async () => {
