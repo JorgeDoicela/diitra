@@ -180,7 +180,7 @@ namespace diitra_api.Controllers
 
                 // 5. Transición de Estado de Workflow Core
                 var workflowService = HttpContext.RequestServices.GetRequiredService<Diitra.Application.Research.IWorkflowEngineService>();
-                bool success = await workflowService.TransicionarEstadoAsync(projectDto.Uuid, "Enviado", 1, $"Sello Digital e Inmutabilidad Forense - Hash: {finalHash}");
+                bool success = await workflowService.TransicionarEstadoAsync(projectDto.Uuid!, "Enviado", 1, $"Sello Digital e Inmutabilidad Forense - Hash: {finalHash}");
 
                 if (!success)
                 {
@@ -198,7 +198,7 @@ namespace diitra_api.Controllers
                     {
                         instance = await _documentInstanceService.CreateAsync(
                             "PROTOCOLO_INVESTIGACION",
-                            projectDto.Uuid,
+                            projectDto.Uuid!,
                             User.Identity?.Name ?? "Sistema DIITRA",
                             $"Protocolo Oficial: {projectDto.Titulo}",
                             "Proyecto"
