@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Plus, Search, Edit2,
-    Trash2, CheckCircle, XCircle,
+    Trash2, CheckCircle, XCircle, AlertTriangle,
     BookOpen, Shield, Award, Calendar, FileText,
     UserMinus, GraduationCap, User, ChevronRight, Target, ChevronDown
 } from 'lucide-react';
@@ -80,6 +80,21 @@ const GroupsPage = () => {
     const [reviewingGroup, setReviewingGroup] = useState<Group | null>(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [reviewResolution, setReviewResolution] = useState('');
+
+    // Custom Confirmation Dialog State
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void | Promise<void>;
+        type: 'danger' | 'warning' | 'info' | 'success';
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+        type: 'warning'
+    });
 
     // Member states
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
@@ -538,20 +553,27 @@ const GroupsPage = () => {
         }));
     };
 
-    const handleDelete = async (uuid: string, name: string) => {
+    const handleDelete = (uuid: string, name: string) => {
+        const title = isAdmin ? 'Desactivar Grupo' : 'Eliminar Propuesta';
         const confirmMsg = isAdmin
             ? `¿Está seguro de desactivar el grupo "${name}"?`
             : `¿Está seguro de eliminar su propuesta de grupo "${name}"?`;
 
-        if (!window.confirm(confirmMsg)) return;
-
-        try {
-            await api.delete(`/Groups/${uuid}`);
-            fetchData();
-        } catch (error: any) {
-            console.error('Error deactivating/deleting group:', error);
-            alert('No se pudo procesar la acción: ' + error.message);
-        }
+        setConfirmDialog({
+            isOpen: true,
+            title,
+            message: confirmMsg,
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.delete(`/Groups/${uuid}`);
+                    fetchData();
+                } catch (error: any) {
+                    console.error('Error deactivating/deleting group:', error);
+                    alert('No se pudo procesar la acción: ' + error.message);
+                }
+            }
+        });
     };
 
     // Review Handlers (Admin)
@@ -581,17 +603,24 @@ const GroupsPage = () => {
         }
     };
 
-    const handleReject = async (group: Group) => {
-        if (!window.confirm(`¿Está seguro de rechazar la propuesta del grupo "${group.nombre}"?`)) return;
-        try {
-            await api.patch(`/Groups/${group.uuid}/review`, {
-                aprobado: false
-            });
-            fetchData();
-        } catch (error: any) {
-            console.error('Error rejecting group:', error);
-            alert('Error al rechazar el grupo: ' + (error.response?.data?.message || error.message));
-        }
+    const handleReject = (group: Group) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Rechazar Propuesta',
+            message: `¿Está seguro de rechazar la propuesta del grupo "${group.nombre}"?`,
+            type: 'danger',
+            onConfirm: async () => {
+                try {
+                    await api.patch(`/Groups/${group.uuid}/review`, {
+                        aprobado: false
+                    });
+                    fetchData();
+                } catch (error: any) {
+                    console.error('Error rejecting group:', error);
+                    alert('Error al rechazar el grupo: ' + (error.response?.data?.message || error.message));
+                }
+            }
+        });
     };
 
     return (
@@ -1882,6 +1911,58 @@ const GroupsPage = () => {
                                 className="btn-vercel-primary flex items-center gap-2"
                             >
                                 <CheckCircle size={14} /> Confirmar y Aprobar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Custom Confirmation Modal */}
+            {confirmDialog.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-card animate-scale-up max-w-md">
+                        <div className="modal-header !py-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`icon-circle ${
+                                    confirmDialog.type === 'danger' ? 'icon-circle-error' :
+                                    confirmDialog.type === 'warning' ? 'icon-circle-warning' :
+                                    confirmDialog.type === 'success' ? 'icon-circle-success' :
+                                    'icon-circle-info'
+                                }`}>
+                                    {confirmDialog.type === 'danger' && <XCircle size={18} />}
+                                    {confirmDialog.type === 'warning' && <AlertTriangle size={18} />}
+                                    {confirmDialog.type === 'success' && <CheckCircle size={18} />}
+                                    {confirmDialog.type === 'info' && <Shield size={18} />}
+                                </div>
+                                <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                                    {confirmDialog.title}
+                                </h3>
+                            </div>
+                        </div>
+                        <div className="modal-body py-6">
+                            <p className="text-xs text-text-dim leading-relaxed font-medium uppercase">
+                                {confirmDialog.message}
+                            </p>
+                        </div>
+                        <div className="modal-footer bg-surface/50 !py-3">
+                            <button
+                                onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                                className="btn-vercel-secondary !py-2"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                    await confirmDialog.onConfirm();
+                                }}
+                                className={`!py-2 ${
+                                    confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                    confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                    'btn-vercel-primary'
+                                }`}
+                            >
+                                Confirmar
                             </button>
                         </div>
                     </div>
