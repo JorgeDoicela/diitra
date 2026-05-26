@@ -18,6 +18,7 @@ public partial class InvGrupoInvestigacion
     public string? Vision { get; set; }
     public string? ResolucionAprobacion { get; set; }
     public DateOnly? FechaCreacion { get; set; }
+    public string? CategoriaConsolidacion { get; set; } = "En Formación";
     public bool? Activo { get; set; }
     public string? Estado { get; set; } = "Aprobado";
     public DateTime? FechaRegistro { get; set; }

@@ -19,6 +19,7 @@ public class GroupDto
     public string? Vision { get; set; }
     public string? ResolucionAprobacion { get; set; }
     public DateOnly? FechaCreacion { get; set; }
+    public string? CategoriaConsolidacion { get; set; }
     public bool Activo { get; set; }
     public string? Estado { get; set; }
 
@@ -53,6 +54,8 @@ public class CreateGroupDto
     public string? ResolucionAprobacion { get; set; }
     public string? Estado { get; set; }
     public DateOnly? FechaCreacion { get; set; }
+    public string? CategoriaConsolidacion { get; set; }
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
+    public List<GroupMemberDto> Miembros { get; set; } = new();
 }

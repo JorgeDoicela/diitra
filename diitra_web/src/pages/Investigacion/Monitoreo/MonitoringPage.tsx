@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-    ArrowLeft, Activity, DollarSign, Calendar, AlertCircle, 
-    FileText, CheckCircle2, Circle, TrendingUp, Wallet, 
-    Plus, Search, Trash2, ArrowUpRight, BarChart3, HelpCircle, X 
+    ArrowLeft, Activity, DollarSign, Calendar, 
+    CheckCircle2, TrendingUp, Wallet, 
+    Plus, Trash2, ArrowUpRight, BarChart3, X 
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 
@@ -12,23 +12,6 @@ import api from '../../../api/axios_config';
  * DIITRA ARCHITECTURE: MONITOREO & EJECUCIÓN (FASE C) - MÓDULO SATÉLITE
  * ══════════════════════════════════════════════════════════════════════════════
  */
-
-interface Actividad {
-    numero: number;
-    actividad: string;
-    ponderacion: number;
-    esEntregableCaces: boolean;
-    semanas: boolean[];
-}
-
-interface Recurso {
-    descripcion: string;
-    cantidad: number | string;
-    costoUnitario: number;
-    costoTotal: number;
-    idPartida?: string;
-    esGastoCapital?: boolean;
-}
 
 interface GastoRegistrado {
     id: string;

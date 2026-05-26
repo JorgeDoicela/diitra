@@ -195,6 +195,7 @@ CREATE TABLE inv_grupos_investigacion (
     vision               TEXT,
     resolucionAprobacion VARCHAR(100),
     fechaCreacion        DATE,
+    categoriaConsolidacion VARCHAR(50) DEFAULT 'En Formación' COMMENT 'En Formación, Consolidado',
     estado               VARCHAR(20)  DEFAULT 'Aprobado',
     activo               TINYINT(1)   DEFAULT 1,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,

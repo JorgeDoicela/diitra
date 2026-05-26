@@ -27,7 +27,7 @@ interface WorkspaceActivityPanelProps {
 
 const POLL_INTERVAL_MS = 30_000;
 
-function getIconComponent(icono: string, tipo: string) {
+function getIconComponent(icono: string) {
     if (icono === 'check') return <CheckCircle size={13} className="text-emerald-400 shrink-0" />;
     if (icono === 'eye')   return <Eye size={13} className="text-sky-400 shrink-0" />;
     if (icono === 'workflow') return <GitBranch size={13} className="text-violet-400 shrink-0" />;
@@ -161,7 +161,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                             >
                                 {/* Ícono */}
                                 <div className="mt-0.5 flex-shrink-0">
-                                    {getIconComponent(item.icono, item.tipo)}
+                                    {getIconComponent(item.icono)}
                                 </div>
 
                                 {/* Content */}
