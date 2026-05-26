@@ -1,9 +1,31 @@
+// ══════════════════════════════════════════════════════════════════════════════
+// DIITRA ARCHITECTURE NOTE: DIRECTRIZ DE EXTENSIBILIDAD DE TRABAJO (DECISIÓN DE DISEÑO)
+// ══════════════════════════════════════════════════════════════════════════════
+//
+// 1. ESTABILIDAD DEL WORKSPACE CORE:
+//    - Este componente (ProjectWorkspace) es estable y resuelve las transiciones y carga de equipo.
+//    - DECISIÓN: NO realizar refactorizaciones masivas ni fragmentaciones forzadas aquí.
+//
+// 2. ESTRATEGIA DE EXTENSIÓN POR MÓDULOS SATÉLITE (DESACOPLADO):
+//    - Todo nuevo módulo del CACES/SENESCYT (ej: Rúbricas detalladas, Actas de Ética, Monitoreo Financiero)
+//      debe crearse como una vista o página AUTOCONTENIDA en rutas independientes de navegación.
+//    - El Workspace Core se comunicará con ellos únicamente mediante vínculos de navegación simples
+//      o consumiendo resultados consolidados en la base de datos (ej: puntajes finales, estados).
+//
+// 3. PERSISTENCIA FLEXIBLE ORIENTADA A METADATOS (METADATA-DRIVEN):
+//    - Si el CACES añade o cambia un campo en el formulario de un documento, NO crees columnas SQL.
+//    - El sistema está diseñado para que estos campos vivan dinámicamente en el JSON de metadatos 
+//      (MetadataCacesJson y ydoc reactivos) y se rendericen automáticamente vía plantillas.
+//
+// ══════════════════════════════════════════════════════════════════════════════
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import DocumentEditor from '../Wizard/DocumentEditor';
+
 
 const WorkflowPhases = [
     { id: 'Borrador', label: 'Formulación', icon: FileText },

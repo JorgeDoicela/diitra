@@ -43,6 +43,18 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
 //   useDIITRADocument → estado local + sincronización Yjs
 //   useCoWork → canal de colaboración en tiempo real
 //   DIITRABuilderShell → marco visual (auto-save, PDF, firma)
+//
+// GUÍA DE ESCALABILIDAD PARA NUEVOS DOCUMENTOS (CACES/SENESCYT):
+//   Para crear cualquier nuevo documento oficial (ej. Acta de Ética, Informe de Progreso):
+//   1. CERO CÓDIGO OPERATIVO: No crees nuevas vistas o formularios complejos.
+//   2. REGISTRO JSON: Añade una nueva entrada JSON en `DocumentTemplateRegistry` definiendo
+//      sus campos, secciones, campos de texto enriquecido (rich-text) y listas de datos.
+//   3. RENDERIZADO AUTOMÁTICO: Este editor resolverá y cargará la interfaz colaborativa
+//      de forma dinámica basándose enteramente en la configuración JSON del templateCode.
+//   4. PLANTILLA PDF: Registra el formato HTML/CSS en `inv_document_templates` en el backend
+//      para que el DocumentEngine pueda emitir y firmar digitalmente el PDF definitivo.
+//   5. PERSISTENCIA: El documento se guardará automáticamente como snapshot JSON sin requerir
+//      crear tablas relacionales a menos que sea un dato crítico a consultar por SQL.
 
 interface DocumentEditorProps {
     templateCode: string;
