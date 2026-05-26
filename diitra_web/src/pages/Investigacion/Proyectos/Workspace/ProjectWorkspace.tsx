@@ -254,7 +254,8 @@ export const ProjectWorkspace: React.FC = () => {
                     presupuesto: res.data.costo_total || 0,
                     linea: res.data.linea_investigacion || 'No definida',
                     puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? true) &&
-                                 (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección')
+                                 (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
+                    puntajeEvaluacion: res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
@@ -656,7 +657,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                 )}
                                                 
                                                 {phase.id === 'En Revisión' && (isCurrent || isPast) && (
-                                                    <div className="mt-4 animate-fade-in">
+                                                    <div className="mt-4 animate-fade-in flex flex-wrap items-center gap-3">
                                                         <button 
                                                             onClick={() => resolveDocumentInstance('RUBRICA_EVALUACION')}
                                                             disabled={resolvingDocument === 'RUBRICA_EVALUACION'}
@@ -668,11 +669,19 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <><CheckSquare size={14} /><span>{isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica'}</span></>
                                                             )}
                                                         </button>
+
+                                                        {currentProject.puntajeEvaluacion !== null && (
+                                                            <div className="badge-vercel badge-vercel-success !text-[11px] !py-2 flex items-center gap-1.5 font-bold animate-fade-in">
+                                                                <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
+                                                                <span className="text-text-dim">|</span>
+                                                                <span className="text-[10px] uppercase font-mono">{currentProject.puntajeEvaluacion >= 70 ? 'Aprobado' : 'Rechazado'}</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 )}
                                                 
-                                                {phase.id === 'En Ejecución' && isCurrent && (
-                                                    <div className="mt-4 animate-fade-in">
+                                                {phase.id === 'En Ejecución' && (isCurrent || isPast) && (
+                                                    <div className="mt-4 animate-fade-in flex flex-wrap gap-3">
                                                         <button 
                                                             onClick={() => resolveDocumentInstance('INFORME_AVANCE')}
                                                             disabled={resolvingDocument === 'INFORME_AVANCE'}
@@ -680,6 +689,13 @@ export const ProjectWorkspace: React.FC = () => {
                                                         >
                                                             <BarChart size={14} />
                                                             <span>Generar Informe</span>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => navigate(`/investigacion/monitoreo/${currentProject.uuid}`)}
+                                                            className="btn-vercel-secondary !py-2"
+                                                        >
+                                                            <Activity size={14} className="text-brand animate-pulse" />
+                                                            <span>Ver Monitoreo Financiero</span>
                                                         </button>
                                                     </div>
                                                 )}

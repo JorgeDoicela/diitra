@@ -12,6 +12,7 @@ import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjec
 import MyProjectsPage from './pages/Investigacion/Proyectos/MyProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
 import { ProjectWorkspace } from './pages/Investigacion/Proyectos/Workspace/ProjectWorkspace';
+import MonitoringPage from './pages/Investigacion/Monitoreo/MonitoringPage';
 import GroupsPage from './pages/Admin/GroupsPage';
 import AuditPage from './pages/Admin/AuditPage';
 import ConfiguracionPage from './pages/Admin/ConfiguracionPage';
@@ -108,6 +109,7 @@ function App() {
                             <Route path="/admin/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
                             <Route path="/investigacion" element={<ResearchProjectsPage />} />
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
+                            <Route path="/investigacion/monitoreo/:projectUuid" element={<MonitoringPage />} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
                             <Route path="/verify" element={<VerifyDocument />} />

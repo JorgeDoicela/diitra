@@ -172,6 +172,7 @@ namespace Diitra.Application.Research.Dtos
         public string? IdDspaceHandle { get; set; }
         public string? MetadataCacesJson { get; set; }
         public bool PuedeEditar { get; set; } = true;
+        public decimal? PuntajeEvaluacion { get; set; }
 
         // --- Compliance Enterprise ---
         public List<MmlRowDto>? MatrizMarcoLogico { get; set; }
