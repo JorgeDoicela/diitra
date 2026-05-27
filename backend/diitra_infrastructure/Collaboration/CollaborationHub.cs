@@ -42,6 +42,82 @@ namespace diitra_infrastructure.Collaboration
             // 1. Extraer UUID de la instancia (formato: {instanceUuid}_{section})
             var instanceUuid = documentId.Split('_')[0];
 
+            // 1.1 SEGURIDAD PLATINUM: Control de Acceso por Defensa en Profundidad
+            var isHubAdmin = Context.User?.FindFirst("es_admin")?.Value == "true" ||
+                             Context.User?.IsInRole("DIITRA_ADMIN") == true ||
+                             Context.User?.IsInRole("ADMIN_SISTEMA") == true ||
+                             Context.User?.IsInRole("DIRECTOR_INV") == true;
+
+            if (!isHubAdmin)
+            {
+                var username = Context.User?.Identity?.Name ?? Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(username))
+                {
+                    username = userUuid; // Fallback para entornos de desarrollo locales
+                }
+
+                if (string.IsNullOrEmpty(username))
+                {
+                    throw new HubException("No autenticado o credenciales inválidas.");
+                }
+
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi == username);
+                if (user == null)
+                {
+                    throw new HubException("Usuario no registrado en el sistema.");
+                }
+
+                string projectUuid = null;
+                var instanceToCheck = await _db.DocumentInstances
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
+
+                if (instanceToCheck != null)
+                {
+                    projectUuid = instanceToCheck.EntityUuid;
+                }
+                else
+                {
+                    var projectExists = await _db.InvProyectos.AnyAsync(p => p.Uuid == instanceUuid);
+                    if (projectExists)
+                    {
+                        projectUuid = instanceUuid;
+                    }
+                }
+
+                if (projectUuid != null)
+                {
+                    var project = await _db.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+                    if (project != null)
+                    {
+                        var isTeamMember = await _db.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
+                                           await _db.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+
+                        bool hasAccess = isTeamMember;
+
+                        if (!hasAccess && project.TieneGrupo == true && project.IdGrupo.HasValue)
+                        {
+                            var isGroupMember = await _db.InvGruposMiembros
+                                .AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                            if (isGroupMember) hasAccess = true;
+                        }
+
+                        if (!hasAccess)
+                        {
+                            var isPeerReviewer = await _db.InvRevisionesPares
+                                .AnyAsync(r => r.IdProyecto == project.IdProyecto && r.IdRevisor == user.IdUsuario);
+                            if (isPeerReviewer) hasAccess = true;
+                        }
+
+                        if (!hasAccess)
+                        {
+                            _logger.LogWarning("[HUB] Access Denied: User {User} has no permissions for project {ProjectUuid}", username, projectUuid);
+                            throw new HubException("No tienes permisos para unirte a esta sesión colaborativa.");
+                        }
+                    }
+                }
+            }
+
             // 2. Seguridad Enterprise: Verificar si el documento ya está finalizado/firmado o es Doble Ciego
             var instance = await _db.DocumentInstances
                 .AsNoTracking()
