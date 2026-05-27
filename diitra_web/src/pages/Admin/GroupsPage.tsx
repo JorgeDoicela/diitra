@@ -2002,19 +2002,24 @@ const GroupsPage = () => {
                                             {comments.map((c, i) => {
                                                 const parsed = parseCommentContent(c.contenido);
                                                 const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
+                                                const isMe = c.usuarioUuid === user?.id_referencia;
                                                 
                                                 return (
                                                     <div
                                                         key={c.idComentario || i}
                                                         className={`flex flex-col max-w-[90%] ${
-                                                            isMsgFromAdmin ? 'mr-auto items-start' : 'ml-auto items-end'
+                                                            isMe ? 'ml-auto items-end' : 'mr-auto items-start'
                                                         } animate-fade-up`}
                                                     >
-                                                        <div className="flex items-center gap-1.5 mb-0.5 px-1">
+                                                        <div className={`flex items-center gap-1.5 mb-0.5 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                                             <span className={`text-[8px] font-black uppercase tracking-wider ${
-                                                                isMsgFromAdmin ? 'text-amber-400' : 'text-emerald-400'
+                                                                isMe
+                                                                    ? 'text-emerald-400'
+                                                                    : isMsgFromAdmin
+                                                                        ? 'text-amber-400'
+                                                                        : 'text-brand'
                                                             }`}>
-                                                                {c.nombreUsuario}
+                                                                {isMe ? 'Tú' : c.nombreUsuario}
                                                             </span>
                                                             <span className="text-[7px] text-text-dim font-mono">
                                                                 {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
@@ -2022,9 +2027,11 @@ const GroupsPage = () => {
                                                         </div>
 
                                                         <div className={`rounded-xl p-3 border shadow-sm select-text ${
-                                                            isMsgFromAdmin
-                                                                ? 'bg-surface border-amber-500/10 text-text-main rounded-tl-none'
-                                                                : 'bg-text-main text-bg-deep border-transparent rounded-tr-none font-semibold'
+                                                            isMe
+                                                                ? 'bg-text-main text-bg-deep border-transparent rounded-tr-none font-semibold'
+                                                                : isMsgFromAdmin
+                                                                    ? 'bg-surface border-amber-500/10 text-text-main rounded-tl-none'
+                                                                    : 'bg-surface border-border-thin text-text-main rounded-tl-none'
                                                         }`}>
                                                             {parsed?.audioUrl && (
                                                                 <div className="mb-2">
@@ -2544,20 +2551,25 @@ const GroupsPage = () => {
                                                 } catch (e) {}
 
                                                 const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
+                                                const isMe = c.usuarioUuid === user?.id_referencia;
 
                                                 if (isFieldFeedback && fieldFeedbackData) {
                                                     return (
                                                         <div 
                                                             key={c.idComentario || i} 
                                                             className={`flex flex-col w-full max-w-[90%] ${
-                                                                isMsgFromAdmin ? 'mr-auto items-start' : 'ml-auto items-end'
+                                                                isMe ? 'ml-auto items-end' : 'mr-auto items-start'
                                                             } animate-fade-up`}
                                                         >
-                                                            <div className="flex items-center gap-2 mb-1 px-1">
+                                                            <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                                                 <span className={`text-[9px] font-black uppercase tracking-wider ${
-                                                                    isMsgFromAdmin ? 'text-amber-400' : 'text-emerald-400'
+                                                                    isMe
+                                                                        ? 'text-emerald-400'
+                                                                        : isMsgFromAdmin
+                                                                            ? 'text-amber-400'
+                                                                            : 'text-brand'
                                                                 }`}>
-                                                                    {c.nombreUsuario} (Retroalimentación de Campo)
+                                                                    {isMe ? 'Tú' : c.nombreUsuario} (Retroalimentación de Campo)
                                                                 </span>
                                                                 <span className="text-[8px] text-text-dim font-mono">
                                                                     {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
@@ -2565,15 +2577,17 @@ const GroupsPage = () => {
                                                             </div>
 
                                                             <div className={`rounded-2xl p-4 border shadow-sm w-full select-text transition-all duration-300 ${
-                                                                isMsgFromAdmin
-                                                                    ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
-                                                                    : 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
+                                                                isMe
+                                                                    ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
+                                                                    : isMsgFromAdmin
+                                                                        ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
+                                                                        : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
                                                             }`}>
                                                                 <div className="flex items-center justify-between border-b border-border-thin/20 pb-2 mb-3">
                                                                     <div className="flex items-center gap-2">
-                                                                        <AlertTriangle size={12} className={isMsgFromAdmin ? 'text-amber-400' : 'text-emerald-400'} />
+                                                                        <AlertTriangle size={12} className={isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'} />
                                                                         <span className={`text-[10px] font-black uppercase tracking-widest ${
-                                                                            isMsgFromAdmin ? 'text-amber-400' : 'text-emerald-400'
+                                                                            isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
                                                                         }`}>
                                                                             Observación: {fieldFeedbackData.fieldName || fieldFeedbackData.field}
                                                                         </span>
@@ -2593,9 +2607,11 @@ const GroupsPage = () => {
                                                                             }, 3500);
                                                                         }}
                                                                         className={`flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border transition-all active:scale-95 ${
-                                                                            isMsgFromAdmin 
-                                                                                ? 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20' 
-                                                                                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+                                                                            isMe
+                                                                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20'
+                                                                                : isMsgFromAdmin 
+                                                                                    ? 'bg-amber-500/10 border-amber-500/20 text-amber-400 hover:bg-amber-500/20' 
+                                                                                    : 'bg-brand/10 border-brand/20 text-brand hover:bg-brand/20'
                                                                         }`}
                                                                     >
                                                                         <span>Ver Sección</span>
@@ -2624,14 +2640,18 @@ const GroupsPage = () => {
                                                     <div 
                                                         key={c.idComentario || i} 
                                                         className={`flex flex-col max-w-[85%] ${
-                                                            isMsgFromAdmin ? 'mr-auto items-start' : 'ml-auto items-end'
+                                                            isMe ? 'ml-auto items-end' : 'mr-auto items-start'
                                                         } animate-fade-up`}
                                                     >
-                                                        <div className="flex items-center gap-2 mb-1 px-1">
+                                                        <div className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                                                             <span className={`text-[9px] font-black uppercase tracking-wider ${
-                                                                isMsgFromAdmin ? 'text-amber-400' : 'text-emerald-400'
+                                                                isMe
+                                                                    ? 'text-emerald-400'
+                                                                    : isMsgFromAdmin
+                                                                        ? 'text-amber-400'
+                                                                        : 'text-brand'
                                                             }`}>
-                                                                {c.nombreUsuario}
+                                                                {isMe ? 'Tú' : c.nombreUsuario}
                                                             </span>
                                                             <span className="text-[8px] text-text-dim font-mono">
                                                                 {new Date(c.creadoEn).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' })}
@@ -2639,9 +2659,11 @@ const GroupsPage = () => {
                                                         </div>
                                                         
                                                         <div className={`rounded-2xl p-4 border shadow-sm select-text ${
-                                                            isMsgFromAdmin
-                                                                ? 'bg-surface border-amber-500/10 text-text-main rounded-tl-none'
-                                                                : 'bg-text-main text-bg-deep border-transparent rounded-tr-none font-semibold'
+                                                            isMe
+                                                                ? 'bg-text-main text-bg-deep border-transparent rounded-tr-none font-semibold'
+                                                                : isMsgFromAdmin
+                                                                    ? 'bg-surface border-amber-500/10 text-text-main rounded-tl-none'
+                                                                    : 'bg-surface border-border-thin text-text-main rounded-tl-none'
                                                         }`}>
                                                             {isAudio && audioData ? (
                                                                 <div className="space-y-2">
