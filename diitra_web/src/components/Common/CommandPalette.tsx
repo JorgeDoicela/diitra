@@ -10,17 +10,25 @@ import {
     Settings,
     LogOut,
     ClipboardList,
-    Activity
+    Activity,
+    BarChart3,
+    Award,
+    ShieldCheck,
+    ListChecks,
+    FileDown,
+    PenTool,
+    Cpu
 } from 'lucide-react';
 
 interface SearchItem {
     id: string;
     label: string;
-    category: 'Navegación' | 'Acciones' | 'Reciente';
+    category: 'Navegación' | 'Acciones' | 'Módulos';
     icon: any;
     path?: string;
     action?: () => void;
     shortcut?: string;
+    roles?: string[];
 }
 
 export const CommandPalette = () => {
@@ -31,13 +39,20 @@ export const CommandPalette = () => {
     const inputRef = useRef<HTMLInputElement>(null);
 
     const items: SearchItem[] = [
-        { id: 'dashboard', label: 'Dashboard Principal', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D' },
-        { id: 'convocatorias', label: 'Convocatorias Activas', category: 'Navegación', icon: ClipboardList, path: '/convocatorias', shortcut: 'G' },
-        { id: 'proyectos', label: 'Proyectos de Investigación', category: 'Navegación', icon: FileText, path: '/investigacion', shortcut: 'P' },
-        { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: Activity, path: '/revisiones', shortcut: 'R' },
-        { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/usuarios', shortcut: 'U' },
-        { id: 'new-project', label: 'Nuevo Borrador de Investigación', category: 'Acciones', icon: PlusCircle, action: () => console.log('Nuevo Proyecto'), shortcut: 'N' },
-        { id: 'settings', label: 'Configuración del Perfil', category: 'Acciones', icon: Settings, path: '/perfil' },
+        { id: 'dashboard', label: 'Tablero Principal', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D' },
+        { id: 'investigacion', label: 'Investigación (Proyectos I+D+i)', category: 'Navegación', icon: ClipboardList, path: '/investigacion', shortcut: 'P' },
+        { id: 'mis-proyectos', label: 'Mis Proyectos', category: 'Navegación', icon: ListChecks, path: '/investigacion/mis-proyectos' },
+        { id: 'convocatorias', label: 'Convocatorias Activas', category: 'Navegación', icon: PenTool, path: '/convocatorias', shortcut: 'G' },
+        { id: 'analiticas', label: 'Analíticas de Investigación', category: 'Navegación', icon: BarChart3, path: '/analiticas', shortcut: 'A' },
+        { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R' },
+        { id: 'grupos', label: 'Grupos de Investigación', category: 'Navegación', icon: Award, path: '/grupos' },
+        { id: 'verificar', label: 'Verificar Documento (Trazabilidad)', category: 'Navegación', icon: ShieldCheck, path: '/verify' },
+        { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/usuarios', shortcut: 'U', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+        { id: 'auditoria', label: 'Auditoría del Sistema', category: 'Navegación', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+        { id: 'configuracion', label: 'Configuración Institucional', category: 'Navegación', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+        { id: 'new-project', label: 'Nueva Postulación de Investigación', category: 'Acciones', icon: PlusCircle, shortcut: 'N', action: () => navigate('/investigacion') },
+        { id: 'export-analiticas', label: 'Exportar Reporte PDF de Analíticas', category: 'Acciones', icon: FileDown, shortcut: 'E', action: () => navigate('/analiticas') },
+        { id: 'builder', label: 'DIITRA Builder (Motor de Documentos)', category: 'Módulos', icon: Cpu, path: '/investigacion' },
         { id: 'logout', label: 'Cerrar Sesión', category: 'Acciones', icon: LogOut, action: () => navigate('/login') },
     ];
 
@@ -112,7 +127,7 @@ export const CommandPalette = () => {
                             setQuery(e.target.value);
                             setSelectedIndex(0);
                         }}
-                        placeholder="Buscar archivos o comandos..."
+                        placeholder="Buscar módulos, páginas o comandos..."
                         className="flex-1 bg-transparent border-none outline-none text-text-main text-sm placeholder:text-text-dim font-sans"
                     />
                     <kbd className="text-[10px] bg-surface px-2 py-1 rounded border border-border-thin text-text-dim font-mono">ESC</kbd>
@@ -154,7 +169,7 @@ export const CommandPalette = () => {
                 </div>
 
                 <div className="bg-surface/30 px-4 py-3 border-t border-border-thin flex items-center justify-between">
-                    <span className="text-[10px] text-text-dim font-mono tracking-tighter uppercase">DIITRA_ISTPET_BUILD_v1.0.0</span>
+                    <span className="text-[10px] text-text-dim font-mono tracking-tighter uppercase">DIITRA_ISTPET_v4.0</span>
                     <div className="flex items-center gap-1.5 text-[10px] bg-text-main text-bg-deep px-2 py-0.5 rounded-sm font-bold">
                         <Command size={10} />
                         <span>COMANDOS</span>
