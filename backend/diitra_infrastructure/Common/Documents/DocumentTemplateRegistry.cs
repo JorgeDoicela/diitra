@@ -94,6 +94,18 @@ namespace Diitra.Infrastructure.Common.Documents
                 collaborativeFields: "[\"HitosCompletados\", \"Evidencias\", \"PresupuestoEjecutado\", \"ConclusionesParciales\"]",
                 version: 1);
 
+            yield return DocumentTemplate.Create(
+                code: ReporteAnaliticasTemplate.CODE,
+                name: "Reporte de Analíticas de Investigación e Innovación",
+                description: "Reporte directivo con indicadores KPI, cumplimiento CACES y portafolio de proyectos para acreditación institucional.",
+                category: DocumentCategory.ReporteAnaliticas,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/ReporteAnaliticas.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: false,
+                version: 1);
+
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
             //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()

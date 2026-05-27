@@ -330,6 +330,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 DocumentCategory.ConvenioMarco => "CONV",
                 DocumentCategory.CertificadoParticipacion => "CERT",
                 DocumentCategory.ReporteDistributivoCruce => "DISTR",
+                DocumentCategory.ReporteAnaliticas => "ANLT",
                 _ => "DOC"
             };
 
