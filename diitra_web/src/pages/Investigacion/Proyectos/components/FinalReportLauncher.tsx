@@ -97,7 +97,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
     return (
         <div className="modal-overlay !items-end sm:!items-center !p-0 sm:!p-4">
             <div className="modal-card !max-w-2xl !rounded-t-2xl sm:!rounded-2xl animate-fade-up h-[90vh] sm:h-auto max-h-[90vh] sm:max-h-[80vh] flex flex-col">
-                <div className="modal-header bg-glow">
+                <div className="modal-header">
                     <div className="space-y-1">
                         <div className="section-label text-brand">
                             <Activity size={12} className="animate-pulse" />
