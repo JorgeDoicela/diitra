@@ -53,7 +53,7 @@ const ResearchProjectsPage = () => {
                     </div>
                     <div 
                         onClick={() => setShowReportLauncher(true)}
-                        className="bento-card p-6 cursor-pointer group bg-glow"
+                        className="bento-card p-6 cursor-pointer group"
                     >
                         <FileCheck className="text-brand mb-4 group-hover:scale-110 transition-transform" size={24} />
                         <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Informe Final</h4>

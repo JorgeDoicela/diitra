@@ -517,7 +517,7 @@ const AnalyticsPage = () => {
 
     if (loading) {
         return (
-            <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto relative overflow-hidden space-y-6 pb-12 select-none vercel-grid-fade bg-glow">
+<main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto relative overflow-hidden space-y-6 pb-12 select-none">
                 <SkeletonDashboard />
             </main>
         );
@@ -535,7 +535,7 @@ const AnalyticsPage = () => {
     } = processed;
 
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto relative overflow-hidden space-y-6 pb-12 select-none vercel-grid-fade bg-glow">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto relative overflow-hidden space-y-6 pb-12 select-none">
             {/* Cabecera Principal */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-thin pb-5">
                 <div className="space-y-1.5">
