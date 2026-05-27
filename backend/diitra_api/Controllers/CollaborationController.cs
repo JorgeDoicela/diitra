@@ -104,5 +104,48 @@ namespace diitra_api.Controllers
                 return StatusCode(500, new { message = "Error interno al cargar el pulso de colaboración", detail = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Publica un comentario en el hilo de colaboración / retroalimentación de un documento o grupo.
+        /// </summary>
+        [HttpPost("comments")]
+        public async Task<IActionResult> PostComment([FromBody] CreateCommentRequest request)
+        {
+            if (string.IsNullOrEmpty(request.DocumentoUuid) || string.IsNullOrEmpty(request.Contenido))
+                return BadRequest(new { message = "Faltan campos obligatorios." });
+
+            try
+            {
+                var userUuid = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+                var userName = User.FindFirst("nombre")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Usuario";
+
+                var comment = new InvCollaborationComment
+                {
+                    DocumentoUuid = request.DocumentoUuid,
+                    UsuarioUuid = userUuid,
+                    NombreUsuario = userName,
+                    Contenido = request.Contenido,
+                    IdPadre = request.IdPadre,
+                    CreadoEn = System.DateTime.UtcNow
+                };
+
+                _db.InvCollaborationComments.Add(comment);
+                await _db.SaveChangesAsync();
+
+                return Ok(comment);
+            }
+            catch (System.Exception ex)
+            {
+                System.Console.WriteLine($"[DIITRA ERROR] Fallo al publicar comentario: {ex.Message}");
+                return StatusCode(500, new { message = "Error interno al publicar comentario", detail = ex.Message });
+            }
+        }
+    }
+
+    public class CreateCommentRequest
+    {
+        public string DocumentoUuid { get; set; } = null!;
+        public string Contenido { get; set; } = null!;
+        public int? IdPadre { get; set; }
     }
 }

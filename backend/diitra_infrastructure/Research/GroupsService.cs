@@ -479,7 +479,9 @@ public class GroupsService : IGroupsService
 
     public async Task<bool> ReviewGroupAsync(string uuid, bool aprobado, string? resolucion)
     {
-        var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
+        var group = await _context.InvGruposInvestigacion
+            .Include(g => g.InvGruposMiembros)
+            .FirstOrDefaultAsync(g => g.Uuid == uuid);
         if (group == null) return false;
 
         var beforeState = new
@@ -551,6 +553,57 @@ public class GroupsService : IGroupsService
         }
 
         await _context.SaveChangesAsync();
+
+        // Enviar notificaciones profesionales a las personas del grupo
+        try
+        {
+            var title = aprobado ? "Propuesta de Grupo Aprobada" : "Propuesta de Grupo Rechazada";
+            var body = aprobado 
+                ? $"La propuesta del grupo \"{group.Nombre}\" ({group.Siglas}) ha sido APROBADA formalmente bajo la resolución {resolucion}."
+                : $"La propuesta del grupo \"{group.Nombre}\" ({group.Siglas}) ha sido RECHAZADA. Revise el Buzón de Retroalimentación para ver los motivos y audios explicativos.";
+
+            var membersToNotify = new List<int>();
+            if (group.IdCoordinador.HasValue)
+            {
+                membersToNotify.Add(group.IdCoordinador.Value);
+            }
+
+            foreach (var member in group.InvGruposMiembros.Where(m => m.Activo == true))
+            {
+                if (!membersToNotify.Contains(member.IdUsuario))
+                {
+                    membersToNotify.Add(member.IdUsuario);
+                }
+            }
+
+            foreach (var userId in membersToNotify)
+            {
+                try
+                {
+                    await _notificationService.NotifyUserAsync(
+                        userId, 
+                        title, 
+                        body, 
+                        "INVESTIGACION", 
+                        "/grupos", 
+                        new Dictionary<string, string>
+                        {
+                            { "GrupoUuid", group.Uuid },
+                            { "Nombre del Grupo", group.Nombre },
+                            { "Estado", group.Estado }
+                        });
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al notificar al integrante {UserId} del grupo {GroupUuid}", userId, group.Uuid);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error general al disparar notificaciones de revisión para grupo {GroupUuid}", group.Uuid);
+        }
+
         return true;
     }
 
