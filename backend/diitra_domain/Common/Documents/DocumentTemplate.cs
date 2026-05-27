@@ -159,6 +159,7 @@ namespace Diitra.Domain.Common.Documents
         MatrizIndicadoresCaces = 60,
         ReporteAnualSenescyt = 61,
         ReporteDistributivoCruce = 62,
+        ReporteAnaliticas = 63,
 
         // Comité Editorial
         ActaRevisionEditorial = 70,

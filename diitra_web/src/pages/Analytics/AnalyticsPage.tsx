@@ -3,9 +3,10 @@ import {
     BarChart3, PieChart, TrendingUp, Award, DollarSign, Users,
     CheckCircle2, Clock, ArrowUpRight, BookOpen, Cpu, FileText,
     Filter, Globe, Building2, Download, RefreshCw, AlertCircle,
-    ChevronRight, Zap, FolderOpen
+    ChevronRight, Zap, FolderOpen, Loader2
 } from 'lucide-react';
 import api from '../../api/axios_config';
+import { reportService } from '../../api/reportService';
 
 // ============================================================================
 // 1. DATA TYPES & INTERFACES (CONTRACTS)
@@ -496,6 +497,8 @@ const AnalyticsPage = () => {
     const [carrera, setCarrera] = useState('TODAS');
     const [activeTab, setActiveTab] = useState<'general' | 'caces' | 'productos'>('general');
     const [selectedChartSegment, setSelectedChartSegment] = useState<string | null>(null);
+    const [exporting, setExporting] = useState(false);
+    const [exportError, setExportError] = useState<string | null>(null);
 
     const { loading, refreshing, projects, stats, groups, allCareers, processed, reload } = useAnalyticsData(period, carrera);
 
@@ -513,7 +516,11 @@ const AnalyticsPage = () => {
     };
 
     if (loading) {
-        return <SkeletonDashboard />;
+        return (
+            <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto relative overflow-hidden space-y-6 pb-12 select-none vercel-grid-fade bg-glow">
+                <SkeletonDashboard />
+            </main>
+        );
     }
 
     const {
@@ -528,7 +535,7 @@ const AnalyticsPage = () => {
     } = processed;
 
     return (
-        <div className="relative overflow-hidden space-y-6 pb-12 select-none vercel-grid-fade bg-glow">
+        <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto relative overflow-hidden space-y-6 pb-12 select-none vercel-grid-fade bg-glow">
             {/* Cabecera Principal */}
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-thin pb-5">
                 <div className="space-y-1.5">
@@ -558,13 +565,33 @@ const AnalyticsPage = () => {
                         <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} />
                     </button>
                     <button
-                        onClick={() => alert("Consolidando metadatos de proyectos y producción del sistema...")}
-                        className="btn-vercel-primary flex items-center gap-2 h-10"
+                        onClick={async () => {
+                            setExporting(true);
+                            setExportError(null);
+                            try {
+                                await reportService.downloadAnalyticsReport(period, carrera);
+                            } catch (err: any) {
+                                console.error('[Analytics] Error exporting PDF:', err);
+                                setExportError(err?.response?.data?.error || err?.message || 'Error al generar el reporte');
+                                setTimeout(() => setExportError(null), 5000);
+                            } finally {
+                                setExporting(false);
+                            }
+                        }}
+                        disabled={exporting}
+                        className="btn-vercel-primary flex items-center gap-2 h-10 disabled:opacity-50 disabled:cursor-not-allowed"
                         id="export-pdf-report-btn"
                     >
-                        <Download size={13} />
-                        <span>Exportar PDF</span>
+                        {exporting ? (
+                            <Loader2 size={13} className="animate-spin" />
+                        ) : (
+                            <Download size={13} />
+                        )}
+                        <span>{exporting ? 'Generando...' : 'Exportar PDF'}</span>
                     </button>
+                    {exportError && (
+                        <p className="text-[10px] text-red-400 font-medium mt-1">{exportError}</p>
+                    )}
                 </div>
             </header>
 
@@ -1095,7 +1122,7 @@ const AnalyticsPage = () => {
                     )}
                 </>
             )}
-        </div>
+        </main>
     );
 };
 
