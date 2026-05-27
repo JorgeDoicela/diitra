@@ -429,6 +429,13 @@ public class AdminService : IAdminService
             await _context.SaveChangesAsync();
         }
 
+        var rolesBefore = await _context.UserRoles
+            .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
+            .Include(ur => ur.Role)
+            .Select(ur => ur.Role.CodigoRol)
+            .ToListAsync();
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(new { RolesActivos = rolesBefore });
+
         var existing = await _context.UserRoles.FirstOrDefaultAsync(ur => ur.IdUsuario == user.IdUsuario && ur.IdRol == role.IdRol);
         if (existing != null) {
             existing.EsActivo = true;
@@ -438,7 +445,15 @@ public class AdminService : IAdminService
         }
 
         await _context.SaveChangesAsync();
-        await _auditService.LogActionAsync(user.IdUsuario, "ASIGNAR_ROL", $"Asignación del rol {role.Nombre}", "SEGURIDAD");
+
+        var rolesAfter = await _context.UserRoles
+            .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
+            .Include(ur => ur.Role)
+            .Select(ur => ur.Role.CodigoRol)
+            .ToListAsync();
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(new { RolesActivos = rolesAfter, RolAsignado = role.CodigoRol });
+
+        await _auditService.LogActionAsync(user.IdUsuario, "ASIGNAR_ROL", $"Asignación del rol {role.Nombre}", "SEGURIDAD", beforeJson, afterJson);
 
         return true;
     }
@@ -454,10 +469,25 @@ public class AdminService : IAdminService
 
         if (existing != null)
         {
+            var rolesBefore = await _context.UserRoles
+                .Where(ur => ur.IdUsuario == existing.IdUsuario && (ur.EsActivo ?? true))
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role.CodigoRol)
+                .ToListAsync();
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(new { RolesActivos = rolesBefore });
+
             existing.EsActivo = false;
             existing.FechaModificacion = DateOnly.FromDateTime(DateTime.UtcNow);
             await _context.SaveChangesAsync();
-            await _auditService.LogActionAsync(existing.IdUsuario, "REVOCAR_ROL", $"Revocación del rol {role.Nombre}", "SEGURIDAD");
+
+            var rolesAfter = await _context.UserRoles
+                .Where(ur => ur.IdUsuario == existing.IdUsuario && (ur.EsActivo ?? true))
+                .Include(ur => ur.Role)
+                .Select(ur => ur.Role.CodigoRol)
+                .ToListAsync();
+            string afterJson = System.Text.Json.JsonSerializer.Serialize(new { RolesActivos = rolesAfter, RolRevocado = role.CodigoRol });
+
+            await _auditService.LogActionAsync(existing.IdUsuario, "REVOCAR_ROL", $"Revocación del rol {role.Nombre}", "SEGURIDAD", beforeJson, afterJson);
         }
 
         return true;
@@ -471,7 +501,7 @@ public class AdminService : IAdminService
         var user = new User {
             IdSigafi = dto.Cedula,
             Nombre = dto.FullName,
-            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11), // Temporal
+            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11),
             Activo = true,
             TablaSigafi = "otros"
         };
@@ -479,21 +509,15 @@ public class AdminService : IAdminService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // Registrar Metadata Profesional Académica
         _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata { 
             IdUsuario = user.IdUsuario, 
             Uuid = Guid.NewGuid(), 
             Version = 1,
             Especialidad = dto.Especialidad,
             GradoAcademicoMaximo = dto.GradoAcademico
-            // Nota: Podríamos añadir Institución a la base de datos si fuera necesario, 
-            // por ahora usamos los campos existentes.
         });
         await _context.SaveChangesAsync();
 
-        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {dto.FullName} ({dto.Institucion ?? "S/I"})", "USUARIOS");
-
-        // Asignar rol por defecto
         var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == dto.DefaultRole);
         if (role == null)
         {
@@ -505,7 +529,18 @@ public class AdminService : IAdminService
         _context.UserRoles.Add(new UserRole { IdUsuario = user.IdUsuario, IdRol = role.IdRol, EsActivo = true, FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow) });
         await _context.SaveChangesAsync();
 
-        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro manual de evaluador externo.", "USUARIOS");
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            Cedula = dto.Cedula,
+            Nombre = dto.FullName,
+            Institucion = dto.Institucion ?? "No especificada",
+            GradoAcademico = dto.GradoAcademico ?? "No especificado",
+            Especialidad = dto.Especialidad ?? "No especificada",
+            RolAsignado = role.CodigoRol
+        });
+
+        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {dto.FullName} ({dto.Institucion ?? "S/I"})", "USUARIOS", null, afterJson);
+
         return true;
     }
 

@@ -3,16 +3,19 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.data.models;
 using Diitra.Application.Research;
+using diitra_application.Security;
 
 namespace Diitra.Infrastructure.Research
 {
     public class WorkflowEngineService : IWorkflowEngineService
     {
         private readonly DiitraContext _context;
+        private readonly IAuditService _auditService;
 
-        public WorkflowEngineService(DiitraContext context)
+        public WorkflowEngineService(DiitraContext context, IAuditService auditService)
         {
             _context = context;
+            _auditService = auditService;
         }
 
         public async Task<bool> TransicionarEstadoAsync(string proyectoUuid, string nuevoEstado, int idUsuario, string observacion)
@@ -21,6 +24,15 @@ namespace Diitra.Infrastructure.Research
             if (proyecto == null) return false;
 
             string estadoAnterior = proyecto.Estado;
+
+            var beforeState = new
+            {
+                Titulo = proyecto.Titulo,
+                CodigoInstitucional = proyecto.CodigoInstitucional,
+                Estado = proyecto.Estado,
+                FechaModificacion = proyecto.FechaModificacion
+            };
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
             // 1. Validación Dinámica vía Base de Datos (Configurable)
             var esValida = await _context.InvConfigWorkflows
@@ -106,6 +118,17 @@ namespace Diitra.Infrastructure.Research
 
             _context.InvTrazabilidadProyectos.Add(trazabilidad);
             await _context.SaveChangesAsync();
+
+            var afterState = new
+            {
+                Titulo = proyecto.Titulo,
+                CodigoInstitucional = proyecto.CodigoInstitucional,
+                Estado = proyecto.Estado,
+                FechaModificacion = proyecto.FechaModificacion
+            };
+            string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+            await _auditService.LogActionAsync(idUsuario, "TRANSICIONAR_PROYECTO", $"Proyecto \"{proyecto.Titulo}\" transicionó de {estadoAnterior} a {nuevoEstado}", "PROYECTOS", beforeJson, afterJson);
 
             return true;
         }

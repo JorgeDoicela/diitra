@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using diitra_application.Security;
 using diitra_infrastructure.data.models;
 
@@ -10,29 +11,27 @@ namespace diitra_infrastructure.Security
     {
         private readonly DiitraContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<AuditService> _logger;
 
-        public AuditService(DiitraContext context, IHttpContextAccessor httpContextAccessor)
+        public AuditService(DiitraContext context, IHttpContextAccessor httpContextAccessor, ILogger<AuditService> logger)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
         public async Task LogActionAsync(int? affectedUserId, string action, string details, string? modulo = null, string? before = null, string? after = null)
         {
             try
             {
-                var context = _httpContextAccessor.HttpContext;
-                if (context == null) return;
+                var httpContext = _httpContextAccessor.HttpContext;
+                if (httpContext == null) return;
 
-                // 1. Obtener la identidad del usuario actual (el que realiza la acción)
-                // Usamos NameIdentifier que es donde AuthService.GenerateToken guarda el IdSigafi
-                var adminIdentifier = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                
+                var adminIdentifier = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
                 int adminId;
                 if (string.IsNullOrEmpty(adminIdentifier))
                 {
-                    // Si la acción es LOGIN o similar y no hay sesión autenticada en HttpContext,
-                    // usamos affectedUserId como el realizador de la acción si está disponible.
                     if (affectedUserId.HasValue)
                     {
                         adminId = affectedUserId.Value;
@@ -49,15 +48,13 @@ namespace diitra_infrastructure.Security
                     adminId = admin.IdUsuario;
                 }
 
-                // 2. Obtener Metadata de Red
-                var ip = context.Connection?.RemoteIpAddress?.ToString();
-                var ua = context.Request?.Headers["User-Agent"].ToString();
+                var ip = httpContext.Connection?.RemoteIpAddress?.ToString();
+                var ua = httpContext.Request?.Headers["User-Agent"].ToString();
 
-                // 3. Crear Registro
                 var audit = new InvAuditAdmin
                 {
                     IdUsuarioAdmin = adminId,
-                    IdUsuarioAfectado = affectedUserId ?? adminId, // Si no hay afectado, el mismo usuario
+                    IdUsuarioAfectado = affectedUserId ?? adminId,
                     Accion = action,
                     Modulo = modulo ?? "SISTEMA",
                     Detalle = details,
@@ -73,9 +70,7 @@ namespace diitra_infrastructure.Security
             }
             catch (Exception ex)
             {
-                // La auditoría no debe romper el flujo principal de la aplicación
-                // En producción, aquí se loguearía a un archivo o Serilog
-                System.Diagnostics.Debug.WriteLine($"Error en Auditoría: {ex.Message}");
+                _logger.LogError(ex, "Error registrando auditoría: Acción={Action}, Módulo={Modulo}, UsuarioAfectado={AffectedUserId}", action, modulo, affectedUserId);
             }
         }
     }

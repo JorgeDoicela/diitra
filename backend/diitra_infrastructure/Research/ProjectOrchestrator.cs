@@ -1031,10 +1031,19 @@ namespace diitra_infrastructure.Research
                 return new SyncResult { Success = false, Message = "Solo se pueden eliminar borradores de proyectos académicos." };
             }
 
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                Titulo = project.Titulo,
+                CodigoInstitucional = project.CodigoInstitucional,
+                Estado = project.Estado,
+                DescripcionProyecto = project.DescripcionProyecto,
+                Activo = project.Activo,
+                FechaRegistro = project.FechaRegistro
+            });
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Eliminar relaciones hijas
                 _context.InvProyectosCarreras.RemoveRange(project.InvProyectosCarreras);
                 _context.InvProyectosProfesores.RemoveRange(project.InvProyectosProfesores);
                 _context.InvProyectosAlumnos.RemoveRange(project.InvProyectosAlumnos);
@@ -1052,14 +1061,12 @@ namespace diitra_infrastructure.Research
                 _context.InvProyectosMml.RemoveRange(project.MatrizMarcoLogico);
                 _context.InvRecursosDisponibles.RemoveRange(project.InvRecursosDisponibles);
 
-                // Eliminar la instancia de Yjs / Metadata
                 var docInstance = await _context.DocumentInstances.FirstOrDefaultAsync(di => di.EntityUuid == uuid);
                 if (docInstance != null)
                 {
                     _context.DocumentInstances.Remove(docInstance);
                 }
 
-                // Eliminar proyecto principal
                 _context.InvProyectos.Remove(project);
 
                 await _context.SaveChangesAsync();
@@ -1067,7 +1074,7 @@ namespace diitra_infrastructure.Research
 
                 var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userIdRef);
                 int? internalUserId = internalUser?.IdUsuario;
-                await _auditService.LogActionAsync(internalUserId, "ELIMINAR_PROYECTO", $"Eliminación física del borrador del proyecto: {project.Titulo}", "PROYECTOS");
+                await _auditService.LogActionAsync(internalUserId, "ELIMINAR_PROYECTO", $"Eliminación física del borrador del proyecto: {project.Titulo}", "PROYECTOS", beforeJson, null);
 
                 return new SyncResult { Success = true };
             }
@@ -1086,6 +1093,8 @@ namespace diitra_infrastructure.Research
             {
                 return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
             }
+
+            string beforeJson = project.MetadataCacesJson ?? "{}";
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -1127,6 +1136,17 @@ namespace diitra_infrastructure.Research
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
+                string afterJson = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    Titulo = project.Titulo,
+                    CodigoInstitucional = project.CodigoInstitucional,
+                    TieneGrupo = project.TieneGrupo,
+                    TotalInvestigadores = investigadores.Count,
+                    FechaModificacion = project.FechaModificacion
+                });
+
+                await _auditService.LogActionAsync(null, "ACTUALIZAR_EQUIPO_PROYECTO", $"Equipo actualizado del proyecto \"{project.Titulo}\"", "PROYECTOS", beforeJson, afterJson);
+
                 return new SyncResult { Success = true, Uuid = uuid };
             }
             catch (Exception ex)
@@ -1147,6 +1167,18 @@ namespace diitra_infrastructure.Research
             {
                 return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
             }
+
+            var currentDirectorForAudit = project.InvProyectosProfesores
+                .FirstOrDefault(pp => pp.EsDirector == true && pp.Activo != false);
+
+            var beforeState = new
+            {
+                Titulo = project.Titulo,
+                CodigoInstitucional = project.CodigoInstitucional,
+                DirectorActual = currentDirectorForAudit?.IdUsuarioNavigation?.Nombre ?? "Sin director",
+                Estado = project.Estado
+            };
+            string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -1323,6 +1355,18 @@ namespace diitra_infrastructure.Research
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
+
+                var afterState = new
+                {
+                    Titulo = project.Titulo,
+                    CodigoInstitucional = project.CodigoInstitucional,
+                    NuevoDirector = request.NuevoDirectorCedula,
+                    Motivo = request.Motivo,
+                    Estado = project.Estado
+                };
+                string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+                await _auditService.LogActionAsync(nuevoDirectorUser.IdUsuario, "TRANSFERIR_DIRECCION", $"Transferencia de dirección del proyecto \"{project.Titulo}\"", "PROYECTOS", beforeJson, afterJson);
 
                 return new SyncResult { Success = true, Uuid = uuid };
             }

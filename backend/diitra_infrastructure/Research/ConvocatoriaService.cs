@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
+using diitra_application.Security;
+using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
 
 namespace diitra_infrastructure.Research;
@@ -9,16 +11,19 @@ namespace diitra_infrastructure.Research;
 public class ConvocatoriaService : IConvocatoriaService
 {
     private readonly DiitraContext _context;
-    private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
+    private readonly INotificationService _notificationService;
+    private readonly IAuditService _auditService;
     private readonly ILogger<ConvocatoriaService> _logger;
 
     public ConvocatoriaService(
         DiitraContext context,
-        diitra_application.Common.Notifications.INotificationService notificationService,
+        INotificationService notificationService,
+        IAuditService auditService,
         ILogger<ConvocatoriaService> logger)
     {
         _context = context;
         _notificationService = notificationService;
+        _auditService = auditService;
         _logger = logger;
     }
 
@@ -194,6 +199,23 @@ public class ConvocatoriaService : IConvocatoriaService
 
         _context.InvConvocatorias.Add(convocatoria);
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            convocatoria.Uuid,
+            convocatoria.CodigoConvocatoria,
+            convocatoria.Titulo,
+            convocatoria.Anio,
+            convocatoria.PresupuestoTotal,
+            convocatoria.MontoMaximoProyecto,
+            convocatoria.FechaApertura,
+            convocatoria.FechaCierre,
+            convocatoria.Estado
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(null, "CREAR_CONVOCATORIA", $"Creación de convocatoria {convocatoria.Titulo}", "CONVOCATORIAS", null, afterJson);
+
         return convocatoria.Uuid;
     }
 
@@ -205,6 +227,28 @@ public class ConvocatoriaService : IConvocatoriaService
             .Include(c => c.DocumentosReq)
             .FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
+
+        var beforeState = new
+        {
+            conv.CodigoConvocatoria,
+            conv.Titulo,
+            conv.Anio,
+            conv.Descripcion,
+            conv.PresupuestoTotal,
+            conv.MontoMaximoProyecto,
+            conv.UrlBases,
+            conv.RequisitosMinimos,
+            conv.IdTipoConvocatoria,
+            conv.IdAgendaZonal,
+            conv.IdRubrica,
+            conv.PuntajeMinimoAprobacion,
+            conv.FinanciamientoExt,
+            conv.MetaProduccion,
+            conv.FechaApertura,
+            conv.FechaCierre,
+            conv.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
         conv.CodigoConvocatoria = dto.CodigoConvocatoria;
         conv.Titulo = dto.Titulo;
@@ -269,6 +313,31 @@ public class ConvocatoriaService : IConvocatoriaService
         }
 
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            conv.CodigoConvocatoria,
+            conv.Titulo,
+            conv.Anio,
+            conv.Descripcion,
+            conv.PresupuestoTotal,
+            conv.MontoMaximoProyecto,
+            conv.UrlBases,
+            conv.RequisitosMinimos,
+            conv.IdTipoConvocatoria,
+            conv.IdAgendaZonal,
+            conv.IdRubrica,
+            conv.PuntajeMinimoAprobacion,
+            conv.FinanciamientoExt,
+            conv.MetaProduccion,
+            conv.FechaApertura,
+            conv.FechaCierre,
+            conv.Estado
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(null, "EDITAR_CONVOCATORIA", $"Edición de convocatoria {conv.Titulo}", "CONVOCATORIAS", beforeJson, afterJson);
+
         return true;
     }
 
@@ -277,9 +346,27 @@ public class ConvocatoriaService : IConvocatoriaService
         var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
+        var beforeState = new
+        {
+            conv.Titulo,
+            conv.CodigoConvocatoria,
+            EstadoAnterior = conv.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
         var oldState = conv.Estado;
         conv.Estado = newState;
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            conv.Titulo,
+            conv.CodigoConvocatoria,
+            EstadoNuevo = conv.Estado
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(null, "CAMBIAR_ESTADO_CONVOCATORIA", $"Convocatoria \"{conv.Titulo}\" cambió de {oldState} a {newState}", "CONVOCATORIAS", beforeJson, afterJson);
 
         if (newState == "Abierta" && oldState != "Abierta")
         {
@@ -312,8 +399,21 @@ public class ConvocatoriaService : IConvocatoriaService
         var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
+        var beforeState = new
+        {
+            conv.Uuid,
+            conv.CodigoConvocatoria,
+            conv.Titulo,
+            conv.Anio,
+            conv.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
         _context.InvConvocatorias.Remove(conv);
         await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(null, "ELIMINAR_CONVOCATORIA", $"Eliminación de convocatoria {conv.Titulo}", "CONVOCATORIAS", beforeJson, null);
+
         return true;
     }
 

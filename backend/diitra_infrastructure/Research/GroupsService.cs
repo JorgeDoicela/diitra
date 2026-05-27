@@ -75,7 +75,7 @@ public class GroupsService : IGroupsService
         return dto;
     }
 
-    public async Task<GroupDto> CreateAsync(CreateGroupDto dto)
+    public async Task<GroupDto> CreateAsync(CreateGroupDto dto, string? solicitanteNombre = null)
     {
         int? coordinatorId = dto.IdCoordinador;
         
@@ -180,9 +180,10 @@ public class GroupsService : IGroupsService
                     coordinadorNombre = coordinador?.Nombre;
                 }
 
+                var remitente = solicitanteNombre ?? coordinadorNombre ?? "No identificado";
                 await _notificationService.NotifyByRoleCodesAsync(
                     "Nueva Propuesta de Grupo de Investigación",
-                    $"Se ha recibido una nueva propuesta de grupo: {group.Nombre}. El coordinador {coordinadorNombre ?? "No asignado"} ha enviado la solicitud para su revisión.",
+                    $"{remitente} ha enviado la solicitud de creación del grupo \"{group.Nombre}\" para su revisión.",
                     new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
                     "/admin/groups",
                     new Dictionary<string, string>
@@ -190,7 +191,8 @@ public class GroupsService : IGroupsService
                         { "Nombre del Grupo", group.Nombre },
                         { "Siglas", group.Siglas ?? "N/A" },
                         { "Tipo", group.TipoGrupo },
-                        { "Coordinador", coordinadorNombre ?? "No asignado" },
+                        { "Coordinador Propuesto", coordinadorNombre ?? "No asignado" },
+                        { "Solicitante", remitente },
                         { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
                         { "Misión", group.Mision ?? "No especificada" },
                         { "Visión", group.Vision ?? "No especificada" },
@@ -211,7 +213,7 @@ public class GroupsService : IGroupsService
         return resultDto;
     }
 
-    public async Task<GroupDto> UpdateAsync(string uuid, CreateGroupDto dto)
+    public async Task<GroupDto> UpdateAsync(string uuid, CreateGroupDto dto, string? solicitanteNombre = null)
     {
         var group = await _context.InvGruposInvestigacion
             .Include(g => g.IdLineas)
@@ -323,9 +325,10 @@ public class GroupsService : IGroupsService
                     coordinadorNombre = coordinador?.Nombre;
                 }
 
+                var remitente = solicitanteNombre ?? coordinadorNombre ?? "No identificado";
                 await _notificationService.NotifyByRoleCodesAsync(
                     "Propuesta de Grupo Actualizada",
-                    $"El grupo \"{group.Nombre}\" ha sido modificado y requiere revisión nuevamente.",
+                    $"{remitente} ha modificado el grupo \"{group.Nombre}\" y requiere revisión nuevamente.",
                     new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
                     "/admin/groups",
                     new Dictionary<string, string>
@@ -333,7 +336,8 @@ public class GroupsService : IGroupsService
                         { "Nombre del Grupo", group.Nombre },
                         { "Siglas", group.Siglas ?? "N/A" },
                         { "Tipo", group.TipoGrupo },
-                        { "Coordinador", coordinadorNombre ?? "No asignado" },
+                        { "Coordinador Propuesto", coordinadorNombre ?? "No asignado" },
+                        { "Solicitante", remitente },
                         { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
                         { "Estado", group.Estado ?? "Pendiente" }
                     }
@@ -356,8 +360,31 @@ public class GroupsService : IGroupsService
         var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == uuid);
         if (group == null) return false;
 
+        var beforeState = new
+        {
+            Nombre = group.Nombre,
+            Siglas = group.Siglas,
+            TipoGrupo = group.TipoGrupo,
+            Activo = group.Activo,
+            Estado = group.Estado
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
+
         group.Activo = false;
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            Nombre = group.Nombre,
+            Siglas = group.Siglas,
+            TipoGrupo = group.TipoGrupo,
+            Activo = group.Activo,
+            Estado = group.Estado
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(null, "DESACTIVAR_GRUPO", $"Desactivación del grupo {group.Nombre}", "INVESTIGACION", beforeJson, afterJson);
+
         return true;
     }
 
@@ -376,7 +403,6 @@ public class GroupsService : IGroupsService
 
         if (userId == 0) return false;
 
-        // Evitar duplicados activos
         var existingMember = await _context.InvGruposMiembros
             .FirstOrDefaultAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == userId && m.Activo == true);
 
@@ -396,18 +422,58 @@ public class GroupsService : IGroupsService
 
         _context.InvGruposMiembros.Add(member);
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            Grupo = group.Nombre,
+            IdUsuario = userId,
+            Rol = memberDto.Rol,
+            FechaInicio = memberDto.FechaInicio?.ToString() ?? DateOnly.FromDateTime(DateTime.Now).ToString(),
+            Activo = true
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(userId, "AGREGAR_MIEMBRO_GRUPO", $"Miembro agregado al grupo {group.Nombre}", "INVESTIGACION", null, afterJson);
+
         return true;
     }
 
     public async Task<bool> RemoveMemberAsync(int memberId, string? reason)
     {
-        var member = await _context.InvGruposMiembros.FindAsync(memberId);
+        var member = await _context.InvGruposMiembros
+            .Include(m => m.IdGrupoNavigation)
+            .FirstOrDefaultAsync(m => m.IdGrupoMiembro == memberId);
         if (member == null) return false;
+
+        var beforeState = new
+        {
+            Grupo = member.IdGrupoNavigation?.Nombre ?? "Desconocido",
+            IdUsuario = member.IdUsuario,
+            Rol = member.Rol,
+            Activo = member.Activo,
+            FechaInicio = member.FechaInicio?.ToString(),
+            FechaFin = member.FechaFin?.ToString()
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
         member.Activo = false;
         member.FechaFin = DateOnly.FromDateTime(DateTime.Now);
         member.MotivoSalida = reason;
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            Grupo = member.IdGrupoNavigation?.Nombre ?? "Desconocido",
+            IdUsuario = member.IdUsuario,
+            Rol = member.Rol,
+            Activo = member.Activo,
+            FechaFin = member.FechaFin?.ToString(),
+            MotivoSalida = reason
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(member.IdUsuario, "REMOVER_MIEMBRO_GRUPO", $"Miembro removido del grupo {member.IdGrupoNavigation?.Nombre ?? "Desconocido"}", "INVESTIGACION", beforeJson, afterJson);
+
         return true;
     }
 

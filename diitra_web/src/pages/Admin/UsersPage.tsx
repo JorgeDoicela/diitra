@@ -3,7 +3,7 @@ import {
     Search, Shield, User as UserIcon, X, RefreshCw,
     Settings2, GraduationCap, UserPlus, History, Globe,
     Activity, ChevronRight, Mail, Hash,
-    Fingerprint
+    Fingerprint, XCircle, AlertTriangle, CheckCircle
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import UserProfileModal from './components/UserProfileModal';
@@ -57,6 +57,20 @@ const UsersPage = () => {
     const [detailUser, setDetailUser] = useState<ManagedUser | null>(null);
     const [showExternalForm, setShowExternalForm] = useState(false);
     const [showAudit, setShowAudit] = useState(false);
+
+    const [confirmDialog, setConfirmDialog] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        onConfirm: () => void | Promise<void>;
+        type: 'danger' | 'warning' | 'info' | 'success';
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+        type: 'warning'
+    });
 
     const [externalForm, setExternalForm] = useState({
         cedula: '',
@@ -114,6 +128,20 @@ const UsersPage = () => {
         }, 300);
         return () => clearTimeout(timer);
     }, [search, userType, page]);
+
+    const handleRoleToggle = (userId: string, userName: string, roleCode: string, roleName: string, hasRole: boolean) => {
+        setConfirmDialog({
+            isOpen: true,
+            title: hasRole ? 'Revocar Rol' : 'Asignar Rol',
+            message: hasRole
+                ? `¿Está seguro de revocar el rol "${roleName}" al usuario "${userName}"?`
+                : `¿Está seguro de asignar el rol "${roleName}" al usuario "${userName}"?`,
+            type: hasRole ? 'danger' : 'success',
+            onConfirm: async () => {
+                await toggleRole(userId, roleCode, hasRole);
+            }
+        });
+    };
 
     const toggleRole = async (userId: string, roleCode: string, hasRole: boolean) => {
         setUpdating(`${userId}-${roleCode}`);
@@ -301,7 +329,7 @@ const UsersPage = () => {
                                                 return (
                                                     <button
                                                         key={r.id_rol}
-                                                        onClick={() => toggleRole(u.id_profesor, r.codigo_rol, isActive)}
+                                                        onClick={(e) => { e.stopPropagation(); handleRoleToggle(u.id_profesor, u.nombre_completo, r.codigo_rol, r.nombre, isActive); }}
                                                         className={`${isActive ? 'btn-vercel-primary' : 'btn-vercel-secondary'} !py-1 !px-2 !text-[8px] !tracking-tighter flex items-center gap-1.5 ${isUpdating ? 'opacity-50 cursor-wait' : ''}`}
                                                     >
                                                         {r.nombre}
@@ -633,6 +661,57 @@ const UsersPage = () => {
                                 className="btn-vercel-primary flex items-center gap-2"
                             >
                                 <Settings2 size={14} /> Editar Perfil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {confirmDialog.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-card animate-scale-up max-w-md">
+                        <div className="modal-header !py-4">
+                            <div className="flex items-center gap-3">
+                                <div className={`icon-circle ${
+                                    confirmDialog.type === 'danger' ? 'icon-circle-error' :
+                                    confirmDialog.type === 'warning' ? 'icon-circle-warning' :
+                                    confirmDialog.type === 'success' ? 'icon-circle-success' :
+                                    'icon-circle-info'
+                                }`}>
+                                    {confirmDialog.type === 'danger' && <XCircle size={18} />}
+                                    {confirmDialog.type === 'warning' && <AlertTriangle size={18} />}
+                                    {confirmDialog.type === 'success' && <CheckCircle size={18} />}
+                                    {confirmDialog.type === 'info' && <Shield size={18} />}
+                                </div>
+                                <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                                    {confirmDialog.title}
+                                </h3>
+                            </div>
+                        </div>
+                        <div className="modal-body py-6">
+                            <p className="text-xs text-text-dim leading-relaxed font-medium uppercase">
+                                {confirmDialog.message}
+                            </p>
+                        </div>
+                        <div className="modal-footer bg-surface/50 !py-3">
+                            <button
+                                onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                                className="btn-vercel-secondary !py-2"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={async () => {
+                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                    await confirmDialog.onConfirm();
+                                }}
+                                className={`!py-2 ${
+                                    confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                    confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                    'btn-vercel-primary'
+                                }`}
+                            >
+                                Confirmar
                             </button>
                         </div>
                     </div>
