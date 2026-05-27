@@ -242,7 +242,6 @@ namespace diitra_infrastructure.Common.Notifications
             return await _context.InvNotificaciones
                 .Where(n => n.Destinatario == userId)
                 .OrderByDescending(n => n.FechaEnvio)
-                .Take(20)
                 .Select(n => new
                 {
                     uuid = n.Uuid,
@@ -267,6 +266,21 @@ namespace diitra_infrastructure.Common.Notifications
             notif.FechaLectura = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task MarkAllAsReadAsync(int userId)
+        {
+            var unread = await _context.InvNotificaciones
+                .Where(n => n.Destinatario == userId && !n.Leido)
+                .ToListAsync();
+
+            foreach (var notif in unread)
+            {
+                notif.Leido = true;
+                notif.FechaLectura = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
         }
     }
 }

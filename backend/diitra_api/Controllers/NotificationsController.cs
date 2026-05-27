@@ -18,9 +18,8 @@ namespace diitra_api.Controllers
         }
 
         [HttpGet("my")]
-        public async Task<IActionResult> GetMyNotifications()
+        public async Task<IActionResult> GetMyNotifications([FromQuery] int limit = 20)
         {
-            // Usar el claim id_usuario que contiene la PK numérica
             var userIdStr = User.FindFirst("id_usuario")?.Value;
             if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
             {
@@ -28,7 +27,14 @@ namespace diitra_api.Controllers
             }
 
             var notifications = await _notificationService.GetMyNotificationsAsync(userId);
-            return Ok(notifications);
+            var list = notifications.ToList();
+
+            if (limit > 0 && limit < list.Count)
+            {
+                list = list.Take(limit).ToList();
+            }
+
+            return Ok(list);
         }
 
         [HttpPatch("{uuid}/read")]
@@ -37,6 +43,19 @@ namespace diitra_api.Controllers
             var result = await _notificationService.MarkAsReadAsync(uuid);
             if (result) return Ok();
             return NotFound();
+        }
+
+        [HttpPost("mark-all-read")]
+        public async Task<IActionResult> MarkAllAsRead()
+        {
+            var userIdStr = User.FindFirst("id_usuario")?.Value;
+            if (string.IsNullOrEmpty(userIdStr) || !int.TryParse(userIdStr, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            await _notificationService.MarkAllAsReadAsync(userId);
+            return Ok();
         }
     }
 }

@@ -96,7 +96,10 @@ const NotificationBell = () => {
                         </div>
 
                         <footer className="p-3 border-t border-border-thin bg-surface/30 text-center">
-                            <button className="text-[9px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors">
+                            <button 
+                                onClick={() => { setIsOpen(false); navigate('/notificaciones'); }}
+                                className="text-[9px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors"
+                            >
                                 Ver todo el historial
                             </button>
                         </footer>
