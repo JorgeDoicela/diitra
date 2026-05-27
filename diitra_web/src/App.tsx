@@ -19,6 +19,7 @@ import ConfiguracionPage from './pages/Admin/ConfiguracionPage';
 import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
 import VerifyDocument from './pages/Public/VerifyDocument';
 import UnderDevelopment from './components/Common/UnderDevelopment';
+import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -144,7 +145,7 @@ function App() {
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/settings" element={<UnderDevelopment title="Módulo en Desarrollo" description="La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización." />} />
-                            <Route path="/analiticas" element={<UnderDevelopment title="Módulo en Desarrollo" description="El panel de analíticas y métricas institucionales estará disponible en la próxima actualización." />} />
+                            <Route path="/analiticas" element={<AnalyticsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><GroupsPage /></RoleRoute>} />
