@@ -72,6 +72,10 @@ public class GroupsController : ControllerBase
             var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
             if (!isAdmin)
             {
+                if (existingGroup.Estado == "Pendiente")
+                {
+                    return BadRequest(new { message = "No se puede editar un grupo de investigación mientras se encuentra en estado PENDIENTE de revisión." });
+                }
                 dto.Estado = "Pendiente";
                 if (string.IsNullOrEmpty(dto.IdProfesorCoordinador))
                 {
