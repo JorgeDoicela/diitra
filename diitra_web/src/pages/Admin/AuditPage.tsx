@@ -20,7 +20,8 @@ import {
     Check
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale/es';
+import { es } from 'date-fns/locale';
+import * as XLSX from 'xlsx';
 
 interface AuditLog {
     id_audit: number;
@@ -204,33 +205,53 @@ const AuditPage: React.FC = () => {
     }, [selectedLog]);
 
     const handleExport = () => {
-        if (logs.length === 0) return;
-        
-        const headers = ["Fecha", "Administrador", "Accion", "Modulo", "Afectado", "Detalles", "IP", "User Agent"];
-        const rows = logs.map(log => [
-            formatDateSafe(log.date, "yyyy-MM-dd HH:mm:ss"),
-            log.admin_name || '',
-            log.action || '',
-            log.modulo || '',
-            log.target_name || '',
-            (log.details || '').replace(/"/g, '""'),
-            log.ip_address || '',
-            (log.user_agent || '').replace(/"/g, '""')
-        ]);
-        
-        const csvContent = [
-            headers.join(","),
-            ...rows.map(e => e.map(val => `"${val}"`).join(","))
-        ].join("\n");
-        
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `auditoria_forense_${format(new Date(), "yyyyMMdd_HHmmss")}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        try {
+            if (logs.length === 0) return;
+            
+            // 1. Mapear los datos para la hoja de Excel
+            const excelData = logs.map(log => ({
+                "Fecha y Hora": formatDateSafe(log.date, "yyyy-MM-dd HH:mm:ss"),
+                "Administrador": log.admin_name || '—',
+                "Acción": log.action || '—',
+                "Módulo": log.modulo || 'SISTEMA',
+                "Afectado": log.target_name || 'Global',
+                "Detalles": log.details || '—',
+                "IP de Red": log.ip_address || '—',
+                "User Agent": log.user_agent || '—'
+            }));
+
+            // 2. Crear una hoja de cálculo a partir de los datos JSON
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+            // 3. Auto-ajustar el ancho de las columnas de manera elegante
+            worksheet['!cols'] = [
+                { wch: 20 }, // Fecha y Hora
+                { wch: 22 }, // Administrador
+                { wch: 25 }, // Acción
+                { wch: 15 }, // Módulo
+                { wch: 25 }, // Afectado
+                { wch: 50 }, // Detalles
+                { wch: 15 }, // IP de Red
+                { wch: 50 }  // User Agent
+            ];
+
+            // 4. Crear el libro de trabajo (workbook)
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoría Forense");
+
+            // 5. Generar y descargar el archivo binario nativo .xlsx
+            let dateStr = 'export';
+            try {
+                dateStr = format(new Date(), "yyyyMMdd_HHmmss");
+            } catch {
+                const now = new Date();
+                dateStr = now.toISOString().replace(/[:.]/g, '-');
+            }
+
+            XLSX.writeFile(workbook, `auditoria_forense_${dateStr}.xlsx`);
+        } catch (error) {
+            console.error('Error al exportar reporte de auditoria a Excel XLSX:', error);
+        }
     };
 
     const fetchLogs = async () => {
