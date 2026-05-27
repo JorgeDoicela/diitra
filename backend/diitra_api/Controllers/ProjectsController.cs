@@ -286,7 +286,8 @@ namespace diitra_api.Controllers
                 return Forbid("No tienes permisos para modificar este proyecto de investigación.");
             }
 
-            var result = await _projectOrchestrator.SyncProjectWizardDataAsync(dto);
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _projectOrchestrator.SyncProjectWizardDataAsync(dto, userIdRef);
 
             if (!result.Success)
             {

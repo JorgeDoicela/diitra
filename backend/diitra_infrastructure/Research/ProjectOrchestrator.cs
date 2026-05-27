@@ -1451,17 +1451,25 @@ namespace diitra_infrastructure.Research
             var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
             if (project == null) return true;
 
-            if (project.Estado != "Borrador") return true;
+            // 1. Verificar si es integrante directo del equipo del proyecto (Profesores o Alumnos)
+            var isTeamMember = await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false) ||
+                               await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+            if (isTeamMember) return true;
 
+            // 2. Verificar si es miembro del grupo de investigación asociado al proyecto
             if (project.TieneGrupo == true && project.IdGrupo.HasValue)
             {
                 var isGroupMember = await _context.InvGruposMiembros
                     .AnyAsync(m => m.IdGrupo == project.IdGrupo.Value && m.IdUsuario == user.IdUsuario && m.Activo != false);
                 if (isGroupMember) return true;
-                // Fallback: verificar membresía directa en el proyecto
             }
-            return await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario) ||
-                   await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario);
+
+            // 3. Verificar si es un Revisor por Pares asignado a este proyecto
+            var isPeerReviewer = await _context.InvRevisionesPares
+                .AnyAsync(r => r.IdProyecto == project.IdProyecto && r.IdRevisor == user.IdUsuario);
+            if (isPeerReviewer) return true;
+
+            return false;
         }
 
         /// <summary>

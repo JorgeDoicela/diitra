@@ -101,6 +101,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
+    const [isUnauthorized, setIsUnauthorized] = useState(false);
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -230,20 +231,36 @@ export const ProjectWorkspace: React.FC = () => {
             let retries = 3;
             let success = false;
             let res: any = null;
+            let forbidden = false;
+            let isNotFound = false;
+
             while (retries > 0 && !success) {
                 try {
                     res = await api.get(`/projects/${resolvedProjectUuid}/detail`);
                     success = true;
                 } catch (e: any) {
                     retries--;
-                    if (e?.response?.status === 404 && retries > 0) {
-                        console.warn(`[DIITRA] Detalle de proyecto no encontrado (404), reintentando en 1s... (${retries} intentos restantes)`);
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    if (e?.response?.status === 403 || e?.response?.status === 401) {
+                        retries = 0;
+                        forbidden = true;
+                    } else if (e?.response?.status === 404) {
+                        if (retries > 0) {
+                            console.warn(`[DIITRA] Detalle de proyecto no encontrado (404), reintentando en 1s... (${retries} intentos restantes)`);
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        } else {
+                            isNotFound = true;
+                        }
                     } else {
                         retries = 0;
                         console.error("[DIITRA] Error al cargar la instancia del proyecto", e);
                     }
                 }
+            }
+
+            if (forbidden) {
+                setIsUnauthorized(true);
+                setIsLoading(false);
+                return;
             }
 
             if (success && res) {
@@ -261,7 +278,8 @@ export const ProjectWorkspace: React.FC = () => {
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
-            } else {
+            } else if (isNotFound) {
+                // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
                 setCurrentProject({
                     id: resolvedProjectUuid?.substring(0,8).toUpperCase() || 'NEW',
                     uuid: resolvedProjectUuid || '',
@@ -273,6 +291,9 @@ export const ProjectWorkspace: React.FC = () => {
                 });
                 setInvestigadores([]);
                 setTieneGrupo(false);
+            } else {
+                // Ante cualquier otro error (500, Red, etc.), bloqueamos por Fail-Closed
+                setIsUnauthorized(true);
             }
             setIsLoading(false);
         };
@@ -371,6 +392,23 @@ export const ProjectWorkspace: React.FC = () => {
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
                     <p className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">Cargando Workspace...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (isUnauthorized) {
+        return (
+            <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh] p-6 text-center">
+                <div className="bento-card static p-8 max-w-md w-full flex flex-col items-center gap-4">
+                    <Shield size={48} className="text-error" />
+                    <h3 className="text-sm font-bold text-text-main uppercase tracking-widest">Acceso Restringido</h3>
+                    <p className="text-xs text-text-dim leading-relaxed">
+                        No tienes permisos para visualizar ni participar en este proyecto de investigación colaborativo.
+                    </p>
+                    <button onClick={() => navigate('/investigacion')} className="btn-vercel-primary text-xs w-full justify-center">
+                        Volver a Proyectos
+                    </button>
                 </div>
             </div>
         );
