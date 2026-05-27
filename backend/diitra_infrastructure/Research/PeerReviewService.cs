@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
+using diitra_application.Security;
 using diitra_infrastructure.data.models;
 
 namespace diitra_infrastructure.Research;
@@ -8,10 +9,12 @@ namespace diitra_infrastructure.Research;
 public class PeerReviewService : IPeerReviewService
 {
     private readonly DiitraContext _context;
+    private readonly IAuditService _auditService;
 
-    public PeerReviewService(DiitraContext context)
+    public PeerReviewService(DiitraContext context, IAuditService auditService)
     {
         _context = context;
+        _auditService = auditService;
     }
 
     public async Task<IEnumerable<PeerReviewDto>> GetPendingReviewsAsync(int revisorId)
@@ -36,6 +39,9 @@ public class PeerReviewService : IPeerReviewService
 
     public async Task<string> AssignReviewerAsync(CreatePeerReviewDto dto)
     {
+        var project = await _context.InvProyectos.FindAsync(dto.IdProyecto);
+        string estadoAnterior = project?.Estado ?? "Desconocido";
+
         var revision = new InvRevisionesPares
         {
             Uuid = Guid.NewGuid().ToString(),
@@ -48,14 +54,26 @@ public class PeerReviewService : IPeerReviewService
 
         _context.Set<InvRevisionesPares>().Add(revision);
         
-        // Update project status to 'En Revisión'
-        var project = await _context.InvProyectos.FindAsync(dto.IdProyecto);
         if (project != null && project.Estado == "Enviado")
         {
             project.Estado = "En Revisión";
         }
 
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            Proyecto = project?.Titulo ?? "N/A",
+            IdRevisor = dto.IdRevisor,
+            EsExterno = dto.EsExterno,
+            FechaLimite = dto.FechaLimite.ToString("dd/MM/yyyy"),
+            EstadoRevision = "Pendiente",
+            EstadoProyecto = project?.Estado ?? "N/A"
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(dto.IdRevisor, "ASIGNAR_REVISOR", $"Revisor asignado al proyecto \"{project?.Titulo ?? "N/A"}\"", "PROYECTOS", null, afterJson);
+
         return revision.Uuid;
     }
 
@@ -66,6 +84,17 @@ public class PeerReviewService : IPeerReviewService
             .FirstOrDefaultAsync(r => r.Uuid == dto.RevisionUuid);
 
         if (revision == null) return false;
+
+        var project = await _context.InvProyectos.FindAsync(revision.IdProyecto);
+        string estadoAnteriorProyecto = project?.Estado ?? "Desconocido";
+
+        var beforeState = new
+        {
+            EstadoRevision = revision.Estado,
+            EstadoProyecto = estadoAnteriorProyecto,
+            PuntajeEvaluacion = project?.PuntajeEvaluacion
+        };
+        string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
         revision.Estado = "Completada";
         revision.ObservacionesGral = dto.ObservacionesGral;
@@ -80,15 +109,12 @@ public class PeerReviewService : IPeerReviewService
             });
         }
 
-        // Calculate total score if all reviewers finished (Business Logic)
-        // For now, just update the project score based on this review
         var totalScore = dto.Detalles.Sum(d => d.Puntaje);
-        var project = await _context.InvProyectos.FindAsync(revision.IdProyecto);
+
         if (project != null)
         {
-            project.PuntajeEvaluacion = totalScore; // Simplified logic: one review sets the score
+            project.PuntajeEvaluacion = totalScore;
             
-            // Auto-approval logic
             var convocatoria = await _context.InvConvocatorias.FindAsync(project.IdConvocatoria);
             if (convocatoria != null && totalScore >= convocatoria.PuntajeMinimoAprobacion)
             {
@@ -98,10 +124,23 @@ public class PeerReviewService : IPeerReviewService
             else
             {
                 project.Estado = "Rechazado";
+                project.FechaModificacion = DateTime.Now;
             }
         }
 
         await _context.SaveChangesAsync();
+
+        var afterState = new
+        {
+            EstadoRevision = "Completada",
+            EstadoProyecto = project?.Estado ?? "N/A",
+            PuntajeEvaluacion = project?.PuntajeEvaluacion,
+            PuntajeTotal = totalScore
+        };
+        string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
+
+        await _auditService.LogActionAsync(revision.IdRevisor, "EVALUAR_PROYECTO", $"Evaluación completada del proyecto \"{project?.Titulo ?? "N/A"}\" con puntaje {totalScore}", "PROYECTOS", beforeJson, afterJson);
+
         return true;
     }
 

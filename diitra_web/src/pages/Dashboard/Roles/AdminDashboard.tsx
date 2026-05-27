@@ -134,7 +134,7 @@ export const AdminDashboard: React.FC = () => {
                 actions={
                     <>
                         <button
-                            onClick={() => navigate('/admin')}
+                            onClick={() => navigate('/usuarios')}
                             className="btn-vercel-secondary flex-1 md:flex-none"
                         >
                             <Users size={14} />

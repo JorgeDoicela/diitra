@@ -35,7 +35,7 @@ export const CommandPalette = () => {
         { id: 'convocatorias', label: 'Convocatorias Activas', category: 'Navegación', icon: ClipboardList, path: '/convocatorias', shortcut: 'G' },
         { id: 'proyectos', label: 'Proyectos de Investigación', category: 'Navegación', icon: FileText, path: '/investigacion', shortcut: 'P' },
         { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: Activity, path: '/revisiones', shortcut: 'R' },
-        { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/admin', shortcut: 'U' },
+        { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/usuarios', shortcut: 'U' },
         { id: 'new-project', label: 'Nuevo Borrador de Investigación', category: 'Acciones', icon: PlusCircle, action: () => console.log('Nuevo Proyecto'), shortcut: 'N' },
         { id: 'settings', label: 'Configuración del Perfil', category: 'Acciones', icon: Settings, path: '/perfil' },
         { id: 'logout', label: 'Cerrar Sesión', category: 'Acciones', icon: LogOut, action: () => navigate('/login') },

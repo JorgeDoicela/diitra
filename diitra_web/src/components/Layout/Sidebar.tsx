@@ -22,10 +22,10 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     { name: 'Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
     { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'] },
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
-    { name: 'Usuarios', icon: Users, path: '/admin', permission: 'USUARIOS:VER' },
-    { name: 'Auditoría', icon: Activity, path: '/admin/audit', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
-    { name: 'Grupos', icon: Award, path: '/admin/groups', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
-    { name: 'Configuración', icon: Settings, path: '/admin/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+    { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER' },
+    { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+    { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
+    { name: 'Configuración', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
   ];
 
   const menuItems = allMenuItems.filter(item => {

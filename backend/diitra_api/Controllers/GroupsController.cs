@@ -38,6 +38,8 @@ public class GroupsController : ControllerBase
     {
         try 
         {
+            var solicitanteNombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
+
             var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
             if (!isAdmin)
             {
@@ -48,7 +50,7 @@ public class GroupsController : ControllerBase
                 }
             }
             
-            var group = await _groupsService.CreateAsync(dto);
+            var group = await _groupsService.CreateAsync(dto, solicitanteNombre);
             return CreatedAtAction(nameof(GetByUuid), new { uuid = group.Uuid }, group);
         }
         catch (Exception ex)
@@ -65,6 +67,8 @@ public class GroupsController : ControllerBase
             var existingGroup = await _groupsService.GetByUuidAsync(uuid);
             if (existingGroup == null) return NotFound();
 
+            var solicitanteNombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
+
             var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
             if (!isAdmin)
             {
@@ -75,7 +79,7 @@ public class GroupsController : ControllerBase
                 }
             }
 
-            var group = await _groupsService.UpdateAsync(uuid, dto);
+            var group = await _groupsService.UpdateAsync(uuid, dto, solicitanteNombre);
             return Ok(group);
         }
         catch (Exception ex)

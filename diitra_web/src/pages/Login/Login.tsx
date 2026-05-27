@@ -43,7 +43,7 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                 const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN') || roles.includes('ADMIN_SISTEMA');
                 const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
 
-                if (isAdmin) target = '/admin';
+                if (isAdmin) target = '/usuarios';
                 else if (isDocente) target = '/investigacion';
             }
 
