@@ -34,6 +34,11 @@ namespace Diitra.Application.Research.Dtos
         // TRL para innovación
         public int? TrlActual { get; set; }
         public int? TrlMeta { get; set; }
+        // Soporte CACES
+        public int TotalEstudiantes { get; set; }
+        public string? EntidadAliada { get; set; }
+        public string? ObjetivoPnd { get; set; }
+        public string? ConvocatoriaCodigo { get; set; }
     }
 
     /// <summary>

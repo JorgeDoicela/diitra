@@ -295,10 +295,13 @@ namespace diitra_infrastructure.Research
             return await _context.InvProyectos
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.IdObjetivoPndNavigation)
+                .Include(p => p.IdEntidadAliadaNavigation)
                 .Include(p => p.InvProyectosProfesores)
                 .Include(p => p.InvProyectosAlumnos)
                 .Include(p => p.InvProductos)
                 .Include(p => p.InvInformesAvance)
+                .Include(p => p.InvProyectosCarreras).ThenInclude(pc => pc.IdCarreraNavigation)
                 .OrderByDescending(p => p.FechaRegistro)
                 .Select(p => new ProyectoResumenDto
                 {
@@ -308,6 +311,7 @@ namespace diitra_infrastructure.Research
                     Titulo = p.Titulo,
                     Estado = p.Estado,
                     LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
+                    Carrera = p.InvProyectosCarreras.Select(pc => pc.IdCarreraNavigation.Carrera1).FirstOrDefault(),
                     PresupuestoTotal = p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad),
                     PresupuestoEjecutado = p.ValorEjecucion,
                     PuntajeEvaluacion = p.PuntajeEvaluacion,
@@ -322,7 +326,11 @@ namespace diitra_infrastructure.Research
                     TotalInformes = p.InvInformesAvance.Count,
                     InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
                     TrlActual = (int?)p.TrlActual,
-                    TrlMeta = (int?)p.TrlMeta
+                    TrlMeta = (int?)p.TrlMeta,
+                    TotalEstudiantes = p.InvProyectosAlumnos.Count(pa => pa.Activo != false),
+                    EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
+                    ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
+                    ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null
                 })
                 .ToListAsync();
         }
@@ -354,10 +362,13 @@ namespace diitra_infrastructure.Research
                 .Where(p => misProyectosIds.Contains(p.IdProyecto))
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.IdObjetivoPndNavigation)
+                .Include(p => p.IdEntidadAliadaNavigation)
                 .Include(p => p.InvProyectosProfesores)
                 .Include(p => p.InvProyectosAlumnos)
                 .Include(p => p.InvProductos)
                 .Include(p => p.InvInformesAvance)
+                .Include(p => p.InvProyectosCarreras).ThenInclude(pc => pc.IdCarreraNavigation)
                 .OrderByDescending(p => p.FechaModificacion ?? p.FechaRegistro)
                 .Select(p => new ProyectoResumenDto
                 {
@@ -367,6 +378,7 @@ namespace diitra_infrastructure.Research
                     Titulo = p.Titulo,
                     Estado = p.Estado,
                     LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
+                    Carrera = p.InvProyectosCarreras.Select(pc => pc.IdCarreraNavigation.Carrera1).FirstOrDefault(),
                     PresupuestoTotal = p.InvPresupuestoItems.Sum(i => (decimal?)i.ValorUnitario * (decimal?)i.Cantidad),
                     PresupuestoEjecutado = p.ValorEjecucion,
                     PuntajeEvaluacion = p.PuntajeEvaluacion,
@@ -389,7 +401,11 @@ namespace diitra_infrastructure.Research
                     TotalInformes = p.InvInformesAvance.Count,
                     InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
                     TrlActual = (int?)p.TrlActual,
-                    TrlMeta = (int?)p.TrlMeta
+                    TrlMeta = (int?)p.TrlMeta,
+                    TotalEstudiantes = p.InvProyectosAlumnos.Count(pa => pa.Activo != false),
+                    EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
+                    ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
+                    ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null
                 })
                 .ToListAsync();
         }
@@ -523,6 +539,20 @@ namespace diitra_infrastructure.Research
             stats.PresupuestoTotalEjecutado = await _context.InvProyectos
                 .SumAsync(p => p.ValorEjecucion ?? 0);
 
+            // Contar investigadores activos únicos (docentes y alumnos en proyectos que no estén borrador/rechazado/anulado)
+            var profesoresActivosQuery = _context.InvProyectosProfesores
+                .Where(pp => pp.Activo != false && pp.IdProyectoNavigation.Estado != "Borrador" && pp.IdProyectoNavigation.Estado != "Rechazado" && pp.IdProyectoNavigation.Estado != "Anulado")
+                .Select(pp => pp.IdUsuario);
+
+            var alumnosActivosQuery = _context.InvProyectosAlumnos
+                .Where(pa => pa.Activo != false && pa.IdProyectoNavigation.Estado != "Borrador" && pa.IdProyectoNavigation.Estado != "Rechazado" && pa.IdProyectoNavigation.Estado != "Anulado")
+                .Select(pa => pa.IdUsuario);
+
+            stats.TotalInvestigadoresActivos = await profesoresActivosQuery
+                .Union(alumnosActivosQuery)
+                .Distinct()
+                .CountAsync();
+
             // Distribución por estado para el gráfico
             var colorMap = new Dictionary<string, string>
             {
@@ -573,6 +603,10 @@ namespace diitra_infrastructure.Research
                 stats.MisInformesPendientes = await _context.InvInformesAvance
                     .Where(i => misIds.Contains(i.IdProyecto) && i.Estado == "Pendiente")
                     .CountAsync();
+
+                stats.MisHorasInvestigacion = await _context.InvProyectosProfesores
+                    .Where(pp => pp.IdUsuario == userId.Value && pp.Activo != false && (pp.IdProyectoNavigation.Estado == "En Ejecución" || pp.IdProyectoNavigation.Estado == "Aprobado"))
+                    .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
             }
 
             // ── Actividad Reciente (últimos 10 eventos) ──
