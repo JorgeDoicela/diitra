@@ -17,6 +17,7 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IAuditService _auditService;
     private const string MASTER_ADMIN_ID = "0302144159";
+    private static bool _rbacSeeded = false;
 
     public AuthService(DiitraContext context, IConfiguration configuration, IAuditService auditService)
     {
@@ -351,6 +352,8 @@ public class AuthService : IAuthService
 
     private async Task SeedRbacStructureAsync()
     {
+        if (_rbacSeeded) return;
+
         // 1. Asegurar Sistema
         var system = await _context.Systems.FirstOrDefaultAsync(s => s.Codigo == "DIITRA");
         if (system == null)
@@ -373,29 +376,57 @@ public class AuthService : IAuthService
             .Distinct()
             .ToList();
 
+        if (!permissions.Any())
+        {
+            _rbacSeeded = true;
+            return;
+        }
+
+        // 3. Traer todos los módulos, operaciones y relaciones de DIITRA a memoria en una sola tanda
+        var existingModules = await _context.Modules
+            .Where(m => m.IdSistema == system.IdSistema)
+            .ToDictionaryAsync(m => m.Nombre, m => m);
+
+        var existingOperations = await _context.Operations
+            .ToDictionaryAsync(o => o.NombreOperacion, o => o);
+
+        var existingRelations = await _context.ModuleOperations
+            .Where(mo => mo.Module.IdSistema == system.IdSistema)
+            .Select(mo => new { mo.IdModulos, mo.IdOperaciones })
+            .ToListAsync();
+
+        var relationSet = new HashSet<(int, int)>(
+            existingRelations.Select(r => (r.IdModulos, r.IdOperaciones))
+        );
+
+        bool changesMade = false;
+
         foreach (var p in permissions)
         {
-            // Asegurar Módulo
-            var module = await _context.Modules.FirstOrDefaultAsync(m => m.Nombre == p.Modulo && m.IdSistema == system.IdSistema);
-            if (module == null)
+            // Asegurar Módulo en memoria / DB
+            if (!existingModules.TryGetValue(p.Modulo, out var module))
             {
                 module = new IdentityModule { Nombre = p.Modulo, IdSistema = system.IdSistema, EsActivo = true };
                 _context.Modules.Add(module);
+                changesMade = true;
+                // Guardamos cambios temporalmente para obtener el ID generado por la base de datos
                 await _context.SaveChangesAsync();
+                existingModules[p.Modulo] = module;
             }
 
-            // Asegurar Operación
-            var operation = await _context.Operations.FirstOrDefaultAsync(o => o.NombreOperacion == p.Operacion);
-            if (operation == null)
+            // Asegurar Operación en memoria / DB
+            if (!existingOperations.TryGetValue(p.Operacion, out var operation))
             {
                 operation = new IdentityOperation { NombreOperacion = p.Operacion };
                 _context.Operations.Add(operation);
+                changesMade = true;
                 await _context.SaveChangesAsync();
+                existingOperations[p.Operacion] = operation;
             }
 
             // Asegurar Relación Módulo-Operación
-            var exists = await _context.ModuleOperations.AnyAsync(mo => mo.IdModulos == module.IdModulos && mo.IdOperaciones == operation.IdOperaciones);
-            if (!exists)
+            var relKey = (module.IdModulos, operation.IdOperaciones);
+            if (!relationSet.Contains(relKey))
             {
                 _context.ModuleOperations.Add(new ModuleOperation 
                 { 
@@ -404,9 +435,17 @@ public class AuthService : IAuthService
                     EsActivo = true,
                     FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow)
                 });
-                await _context.SaveChangesAsync();
+                changesMade = true;
+                relationSet.Add(relKey);
             }
         }
+
+        if (changesMade)
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        _rbacSeeded = true;
     }
 
     private async Task AssignDefaultPermissionsToRoleAsync(Role role)

@@ -26,8 +26,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[#000000]">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#0070f3]"></div>
+            <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
             </div>
         );
     }
@@ -65,7 +65,12 @@ const ConvocatoriaRoute = () => {
 function App() {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         const savedTheme = localStorage.getItem('theme');
-        return (savedTheme as 'dark' | 'light') || 'dark';
+        if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme;
+        
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        return 'dark';
     });
 
     useEffect(() => {
