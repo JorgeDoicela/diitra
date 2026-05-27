@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet, useParams } from 'react-router-dom';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import UsersPage from './pages/Admin/UsersPage';
 import Dashboard from './pages/Dashboard/Dashboard';
@@ -20,6 +20,7 @@ import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicC
 import VerifyDocument from './pages/Public/VerifyDocument';
 import UnderDevelopment from './components/Common/UnderDevelopment';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
+import NotificationsPage from './pages/Notificaciones/NotificationsPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -100,6 +101,11 @@ const ConvocatoriaRoute = () => {
     return isAdmin ? <ConvocatoriasPage /> : <PublicConvocatoriasPage />;
 };
 
+const NavigateToProjectDetail = () => {
+    const { projectUuid } = useParams();
+    return <Navigate to={`/investigacion/monitoreo/${projectUuid}`} replace />;
+};
+
 function App() {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -146,13 +152,16 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/settings" element={<UnderDevelopment title="Módulo en Desarrollo" description="La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización." />} />
                             <Route path="/analiticas" element={<AnalyticsPage />} />
+                            <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><GroupsPage /></RoleRoute>} />
                             <Route path="/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
                             <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
+                            <Route path="/admin/groups" element={<Navigate to="/grupos" replace />} />
                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
                             <Route path="/admin/configuracion" element={<Navigate to="/configuracion" replace />} />
+                            <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
                             <Route path="/investigacion" element={<ResearchProjectsPage />} />
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<MonitoringPage />} />

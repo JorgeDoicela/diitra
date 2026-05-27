@@ -18,7 +18,9 @@ interface NotificationsContextType {
     unreadCount: number;
     fetchNotifications: () => Promise<void>;
     markAsRead: (uuid: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
     isLoading: boolean;
+    isConnected: boolean;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
 
     const fetchNotifications = useCallback(async () => {
         if (!isAuthenticated) return;
@@ -51,6 +54,15 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     };
 
+    const markAllAsRead = async () => {
+        try {
+            await api.post('/Admin/notifications/mark-all-read');
+            setNotifications(prev => prev.map(n => ({ ...n, leido: true })));
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
     // Manejo de la conexión SignalR (Singleton)
     useEffect(() => {
         if (!isAuthenticated) {
@@ -59,6 +71,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 setConnection(null);
             }
             setNotifications([]);
+            setIsConnected(false);
             return;
         }
 
@@ -80,21 +93,36 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                     return;
                 }
                 console.log('Global Notification Connection established');
+                setIsConnected(true);
                 newConnection.on('ReceiveNotification', () => {
                     fetchNotifications();
                 });
             })
             .catch(err => {
+                setIsConnected(false);
                 if (isSubscribed) {
                     console.error('SignalR Connection Error: ', err);
                 }
             });
+
+        newConnection.onclose(() => {
+            setIsConnected(false);
+        });
+
+        newConnection.onreconnecting(() => {
+            setIsConnected(false);
+        });
+
+        newConnection.onreconnected(() => {
+            setIsConnected(true);
+        });
 
         setConnection(newConnection);
 
         return () => {
             isSubscribed = false;
             newConnection.stop();
+            setIsConnected(false);
         };
     }, [isAuthenticated]);
 
@@ -106,7 +134,9 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             unreadCount, 
             fetchNotifications, 
             markAsRead,
-            isLoading 
+            markAllAsRead,
+            isLoading,
+            isConnected
         }}>
             {children}
         </NotificationsContext.Provider>

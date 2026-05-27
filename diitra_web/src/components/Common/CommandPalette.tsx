@@ -14,10 +14,11 @@ import {
     BarChart3,
     Award,
     ShieldCheck,
-    ListChecks,
     FileDown,
     PenTool,
-    Cpu
+    Cpu,
+    Bell,
+    ListChecks
 } from 'lucide-react';
 
 interface SearchItem {
@@ -47,6 +48,7 @@ export const CommandPalette = () => {
         { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R' },
         { id: 'grupos', label: 'Grupos de Investigación', category: 'Navegación', icon: Award, path: '/grupos' },
         { id: 'verificar', label: 'Verificar Documento (Trazabilidad)', category: 'Navegación', icon: ShieldCheck, path: '/verify' },
+        { id: 'notificaciones', label: 'Centro de Notificaciones', category: 'Navegación', icon: Bell, path: '/notificaciones' },
         { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/usuarios', shortcut: 'U', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
         { id: 'auditoria', label: 'Auditoría del Sistema', category: 'Navegación', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
         { id: 'configuracion', label: 'Configuración Institucional', category: 'Navegación', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },

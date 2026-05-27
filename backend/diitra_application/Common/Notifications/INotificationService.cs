@@ -9,5 +9,6 @@ namespace diitra_application.Common.Notifications
         Task NotifyByRoleCodesAsync(string title, string body, IEnumerable<string> roleCodes, string? url = null, Dictionary<string, string>? extraData = null);
         Task<IEnumerable<object>> GetMyNotificationsAsync(int userId);
         Task<bool> MarkAsReadAsync(string uuid);
+        Task MarkAllAsReadAsync(int userId);
     }
 }
