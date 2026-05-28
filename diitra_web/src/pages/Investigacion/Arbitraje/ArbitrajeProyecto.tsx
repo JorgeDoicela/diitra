@@ -248,7 +248,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                 <p className="text-xs text-text-dim italic">Ningún árbitro externo asignado</p>
                                 {arbitraje.total_arbitros > 0 && (
                                     <p className="text-[10px] text-error font-semibold flex items-center justify-center gap-1">
-                                        ⚠️ CACES exige al menos 1 árbitro externo
+                                        CACES exige al menos 1 árbitro externo
                                     </p>
                                 )}
                                 <button

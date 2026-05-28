@@ -167,7 +167,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                     </div>
                                                     <div className="truncate">
                                                         <p className="text-xs font-semibold leading-tight text-text-main">{formatNombre(rev.nombre_completo)}</p>
-                                                        <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">{rev.email}</p>
+                                                        <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">{rev.es_externo && rev.institucion ? `${formatNombre(rev.institucion)} — ` : ''}{rev.email}</p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0 flex items-center gap-1.5">
@@ -215,6 +215,12 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                             <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">Correo Electrónico</p>
                                             <p className="font-semibold text-text-dim truncate mt-0.5">{revisorSeleccionado.email}</p>
                                         </div>
+                                        {revisorSeleccionado.es_externo && revisorSeleccionado.institucion && (
+                                            <div>
+                                                <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">Institución de Origen</p>
+                                                <p className="font-semibold text-text-main mt-0.5">{formatNombre(revisorSeleccionado.institucion)}</p>
+                                            </div>
+                                        )}
                                         {revisorSeleccionado.orcid_id && (
                                             <div>
                                                 <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">ORCID iD</p>

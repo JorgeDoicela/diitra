@@ -121,6 +121,7 @@ public class RevisorDisponibleDto
     public string? Especialidad { get; set; }
     public string? GradoAcademicoMaximo { get; set; }
     public string? OrcidId { get; set; }
+    public string? Institucion { get; set; }
     public bool EsExterno { get; set; }
     public int RevisionesActivas { get; set; } // Carga de trabajo actual
 }
