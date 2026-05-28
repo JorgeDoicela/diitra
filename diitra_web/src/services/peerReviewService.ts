@@ -80,6 +80,7 @@ export interface RevisorDisponibleDto {
     especialidad?: string;
     grado_academico_maximo?: string;
     orcid_id?: string;
+    institucion?: string;
     es_externo: boolean;
     revisiones_activas: number;
 }

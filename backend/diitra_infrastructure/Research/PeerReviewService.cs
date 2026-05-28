@@ -392,6 +392,20 @@ public class PeerReviewService : IPeerReviewService
                 var revisionesActivas = await _context.Set<InvRevisionesPares>()
                     .CountAsync(r => r.IdRevisor == user.IdUsuario && r.Estado == "Pendiente");
 
+                string? institucion = null;
+                if (!string.IsNullOrEmpty(meta?.Configuracion))
+                {
+                    try
+                    {
+                        using var doc = System.Text.Json.JsonDocument.Parse(meta.Configuracion);
+                        if (doc.RootElement.TryGetProperty("institucion", out var prop))
+                        {
+                            institucion = prop.GetString();
+                        }
+                    }
+                    catch {}
+                }
+
                 result.Add(new RevisorDisponibleDto
                 {
                     IdUsuario = user.IdUsuario,
@@ -400,6 +414,7 @@ public class PeerReviewService : IPeerReviewService
                     Especialidad = meta?.Especialidad,
                     GradoAcademicoMaximo = meta?.GradoAcademicoMaximo,
                     OrcidId = meta?.OrcidId,
+                    Institucion = institucion,
                     EsExterno = true,
                     RevisionesActivas = revisionesActivas
                 });
@@ -821,6 +836,7 @@ public class PeerReviewService : IPeerReviewService
         await _context.SaveChangesAsync();
 
         // 3. Crear Metadata
+        var configDict = new Dictionary<string, string> { { "institucion", dto.Institucion } };
         var metadata = new InvUsuarioMetadata
         {
             IdUsuario = user.IdUsuario,
@@ -828,7 +844,8 @@ public class PeerReviewService : IPeerReviewService
             Version = 1,
             OrcidId = dto.OrcidId,
             Especialidad = dto.Especialidad,
-            GradoAcademicoMaximo = dto.GradoAcademico
+            GradoAcademicoMaximo = dto.GradoAcademico,
+            Configuracion = System.Text.Json.JsonSerializer.Serialize(configDict)
         };
         _context.Set<InvUsuarioMetadata>().Add(metadata);
         await _context.SaveChangesAsync();
@@ -874,6 +891,20 @@ public class PeerReviewService : IPeerReviewService
             var revisionesActivas = await _context.Set<InvRevisionesPares>()
                 .CountAsync(r => r.IdRevisor == user.IdUsuario && r.Estado == "Pendiente");
 
+            string? institucion = null;
+            if (!string.IsNullOrEmpty(meta?.Configuracion))
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(meta.Configuracion);
+                    if (doc.RootElement.TryGetProperty("institucion", out var prop))
+                    {
+                        institucion = prop.GetString();
+                    }
+                }
+                catch {}
+            }
+
             result.Add(new RevisorDisponibleDto
             {
                 IdUsuario = user.IdUsuario,
@@ -882,6 +913,7 @@ public class PeerReviewService : IPeerReviewService
                 Especialidad = meta?.Especialidad,
                 GradoAcademicoMaximo = meta?.GradoAcademicoMaximo,
                 OrcidId = meta?.OrcidId,
+                Institucion = institucion,
                 EsExterno = true,
                 RevisionesActivas = revisionesActivas
             });

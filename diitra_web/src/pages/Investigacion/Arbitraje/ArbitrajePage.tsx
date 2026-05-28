@@ -345,10 +345,10 @@ const ArbitrajePage: React.FC = () => {
                         <div
                             key={a.id}
                             className={`flex items-start gap-3 p-3 rounded-lg border text-xs transition-all ${a.tipo === 'critico'
-                                    ? 'bg-error/8 border-error/30 text-error'
-                                    : a.tipo === 'advertencia'
-                                        ? 'bg-warning/8 border-warning/30 text-warning'
-                                        : 'bg-info/8 border-info/30 text-info'
+                                ? 'bg-error/8 border-error/30 text-error'
+                                : a.tipo === 'advertencia'
+                                    ? 'bg-warning/8 border-warning/30 text-warning'
+                                    : 'bg-info/8 border-info/30 text-info'
                                 }`}
                             style={{ '--color-warning': '#f0a500', '--color-info': '#3b82f6' } as React.CSSProperties}
                         >
@@ -687,7 +687,7 @@ const ArbitrajePage: React.FC = () => {
                                                                             <p className="text-[10px] text-text-dim italic">Ninguno asignado</p>
                                                                             {p.total_arbitros > 0 && (
                                                                                 <p className="text-[9px] text-error font-semibold flex items-center justify-center gap-1">
-                                                                                    ⚠️ CACES exige al menos 1 árbitro externo
+                                                                                    CACES exige al menos 1 árbitro externo
                                                                                 </p>
                                                                             )}
                                                                         </div>

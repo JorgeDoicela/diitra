@@ -50,7 +50,7 @@ const estadoConfig = (estado: string) =>
 
 export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
-    const { user } = useAuth();
+    const { user, isAdmin, roles } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -102,6 +102,8 @@ export const ProjectWorkspace: React.FC = () => {
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
     const [isUnauthorized, setIsUnauthorized] = useState(false);
+    const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
+    const [isCheckingRevision, setIsCheckingRevision] = useState(false);
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -174,6 +176,32 @@ export const ProjectWorkspace: React.FC = () => {
             fetchProductTypes();
         }
     }, [resolvedProjectUuid]);
+
+    useEffect(() => {
+        const checkPeerReviews = async () => {
+            if (!resolvedProjectUuid || !user) return;
+            setIsCheckingRevision(true);
+            try {
+                const res = await api.get(`/PeerReviews/project/${resolvedProjectUuid}`);
+                const data = res.data; // ArbitrajeProyectoDto
+                
+                // Buscar si el usuario actual es un revisor asignado
+                const userRevision = data.revisiones?.find((r: any) => 
+                    r.idRevisor === user.id_usuario
+                );
+                
+                if (userRevision) {
+                    setAssignedRevisionUuid(userRevision.uuid);
+                }
+            } catch (err) {
+                console.warn("[DIITRA] No se pudieron cargar evaluaciones del proyecto o sin privilegios de visualización.", err);
+            } finally {
+                setIsCheckingRevision(false);
+            }
+        };
+
+        checkPeerReviews();
+    }, [resolvedProjectUuid, user]);
 
     const handleCreateProduct = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -713,26 +741,44 @@ export const ProjectWorkspace: React.FC = () => {
                                                 )}
                                                 
                                                 {phase.id === 'En Revisión' && (isCurrent || isPast) && (
-                                                    <div className="mt-4 animate-fade-in flex flex-wrap items-center gap-3">
-                                                        <button 
-                                                            onClick={() => resolveDocumentInstance('RUBRICA_EVALUACION')}
-                                                            disabled={resolvingDocument === 'RUBRICA_EVALUACION'}
-                                                            className="btn-vercel-primary !py-2"
-                                                        >
-                                                            {resolvingDocument === 'RUBRICA_EVALUACION' ? (
-                                                                <><div className="animate-spin h-3 w-3 border-t-2 border-bg-deep rounded-full" /> Cargando...</>
+                                                    <div className="mt-4 animate-fade-in flex flex-col gap-3 w-full">
+                                                        <div className="flex flex-wrap items-center gap-3">
+                                                            {assignedRevisionUuid ? (
+                                                                <button 
+                                                                    onClick={() => navigate(`/revisiones/${assignedRevisionUuid}`)}
+                                                                    className="btn-vercel-primary !py-2"
+                                                                >
+                                                                    <CheckSquare size={14} />
+                                                                    <span>{isPast ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
+                                                                </button>
+                                                            ) : (isAdmin || roles?.includes('DIRECTOR_INV')) ? (
+                                                                <button 
+                                                                    onClick={() => navigate(`/arbitraje/proyecto/${resolvedProjectUuid}`)}
+                                                                    className="btn-vercel-primary !py-2"
+                                                                >
+                                                                    <Settings size={14} />
+                                                                    <span>Gestionar Arbitraje Científico</span>
+                                                                </button>
                                                             ) : (
-                                                                <><CheckSquare size={14} /><span>{isPast ? 'Ver Rúbrica' : 'Llenar Rúbrica'}</span></>
+                                                                <div className="flex items-start gap-2 bg-surface border border-border-thin rounded-lg p-3 max-w-xl text-text-dim text-xs leading-relaxed">
+                                                                    <AlertCircle size={14} className="text-brand shrink-0 mt-0.5" />
+                                                                    <span>
+                                                                        El proyecto se encuentra en la etapa formal de **Evaluación por Pares Doble Ciego**. 
+                                                                        Por motivos de blindaje académico y confidencialidad CACES, los evaluadores asignados 
+                                                                        y el desarrollo de sus rúbricas permanecen anónimos. Una vez concluido el arbitraje y 
+                                                                        emitido el dictamen final, el puntaje obtenido y la resolución legal se publicarán aquí.
+                                                                    </span>
+                                                                 </div>
                                                             )}
-                                                        </button>
 
-                                                        {currentProject.puntajeEvaluacion !== null && (
-                                                            <div className="badge-vercel badge-vercel-success !text-[11px] !py-2 flex items-center gap-1.5 font-bold animate-fade-in">
-                                                                <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
-                                                                <span className="text-text-dim">|</span>
-                                                                <span className="text-[10px] uppercase font-mono">{currentProject.puntajeEvaluacion >= 70 ? 'Aprobado' : 'Rechazado'}</span>
-                                                            </div>
-                                                        )}
+                                                            {currentProject.puntajeEvaluacion !== null && (
+                                                                <div className="badge-vercel badge-vercel-success !text-[11px] !py-2 flex items-center gap-1.5 font-bold animate-fade-in">
+                                                                    <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
+                                                                    <span className="text-text-dim">|</span>
+                                                                    <span className="text-[10px] uppercase font-mono">{currentProject.puntajeEvaluacion >= 70 ? 'Aprobado' : 'Rechazado'}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 )}
                                                 
