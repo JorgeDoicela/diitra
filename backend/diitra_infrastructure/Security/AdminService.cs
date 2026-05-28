@@ -511,12 +511,11 @@ public class AdminService : IAdminService
             {
                 throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un estudiante matriculado.");
             }
-            
-            var hasMeta = await _context.InvUsuariosMetadata.AnyAsync(m => m.IdUsuario == existingUser.IdUsuario);
-            if (hasMeta)
+            if (existingUser.TablaSigafi == "otros")
             {
-                throw new InvalidOperationException("Este evaluador externo ya se encuentra registrado en el sistema.");
+                throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un evaluador externo registrado en el sistema.");
             }
+            throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un usuario registrado en el sistema.");
         }
 
         // 2. Validar contra tablas base de profesores (por si no tienen usuario aún)
