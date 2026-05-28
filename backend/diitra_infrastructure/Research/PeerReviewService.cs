@@ -725,9 +725,6 @@ public class PeerReviewService : IPeerReviewService
     // ══════════════════════════════════════════════════════════════════
     //  REVISORES EXTERNOS (sin cuenta institucional)
     // ══════════════════════════════════════════════════════════════════
-
-
-
     public async Task<string> RegisterRevisorExternoAsync(RegistrarRevisorExternoDto dto, int directorId)
     {
         string identifier = !string.IsNullOrEmpty(dto.Cedula) ? dto.Cedula : dto.Email;
@@ -741,7 +738,21 @@ public class PeerReviewService : IPeerReviewService
         if (existing != null)
         {
             var metaExisting = await _context.Set<InvUsuarioMetadata>().FirstOrDefaultAsync(m => m.IdUsuario == existing.IdUsuario);
-            return metaExisting?.Uuid.ToString() ?? Guid.NewGuid().ToString();
+            if (metaExisting == null)
+            {
+                metaExisting = new InvUsuarioMetadata
+                {
+                    IdUsuario = existing.IdUsuario,
+                    Uuid = Guid.NewGuid(),
+                    Version = 1,
+                    OrcidId = dto.OrcidId,
+                    Especialidad = dto.Especialidad,
+                    GradoAcademicoMaximo = dto.GradoAcademico
+                };
+                _context.Set<InvUsuarioMetadata>().Add(metaExisting);
+                await _context.SaveChangesAsync();
+            }
+            return metaExisting.Uuid.ToString();
         }
 
         // 2. Crear User en la tabla central
