@@ -81,6 +81,11 @@ public class RubricaDinamicaDto
     public bool EsDobleCiego { get; set; }
     public decimal PuntajeMinimoAprobacion { get; set; }
     public List<CriterioRubricaDto> Criterios { get; set; } = new();
+    
+    // Propiedades adicionales para revisiones ya completadas
+    public string? ObservacionesGral { get; set; }
+    public string? EstadoRevision { get; set; }
+    public decimal? PuntajeTotal { get; set; }
 }
 
 public class CriterioRubricaDto
@@ -94,6 +99,10 @@ public class CriterioRubricaDto
     /// Puntaje máximo derivado del peso. Ej: Peso=30% → PuntajeMaximo=30.
     /// </summary>
     public decimal PuntajeMaximo => PesoPorcentaje;
+
+    // Propiedades adicionales para revisiones ya completadas
+    public decimal? PuntajeObtenido { get; set; }
+    public string? ObservacionesCriterio { get; set; }
 }
 
 // ─────────────────────────────────────────────────────────────

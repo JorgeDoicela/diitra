@@ -172,7 +172,12 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
             {
                 id: 'ejecucion',
                 label: 'Avance de Ejecución',
-                iconName: 'BarChart'
+                iconName: 'BarChart',
+                config: {
+                    fields: [
+                        { name: 'ConclusionesParciales', label: 'Conclusiones Parciales', type: 'rich-text', collaborative: true }
+                    ]
+                }
             }
         ]
     },

@@ -55,13 +55,11 @@ public class PeerReviewService : IPeerReviewService
         return result;
     }
 
-    /// <summary>
-    /// Carga la rúbrica dinámica de la convocatoria del proyecto asignado.
-    /// Si la convocatoria no tiene rúbrica, devuelve criterios genéricos CACES.
     /// </summary>
     public async Task<RubricaDinamicaDto?> GetRubricaForRevisionAsync(string revisionUuid)
     {
         var revision = await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Detalles)
             .Include(r => r.Proyecto)
                 .ThenInclude(p => p.IdConvocatoriaNavigation)
                     .ThenInclude(c => c!.IdRubricaNavigation)
@@ -118,6 +116,21 @@ public class PeerReviewService : IPeerReviewService
             ? $"Propuesta #{proyecto.IdProyecto:D4}" // Título anonimizado
             : proyecto.Titulo;
 
+        var revisionCompletada = revision.Estado == "Completada";
+        if (revisionCompletada && revision.Detalles != null)
+        {
+            foreach (var crit in criterios)
+            {
+                var det = revision.Detalles.FirstOrDefault(d => 
+                    d.Criterio.Equals(crit.Nombre, StringComparison.OrdinalIgnoreCase));
+                if (det != null)
+                {
+                    crit.PuntajeObtenido = det.Puntaje;
+                    crit.ObservacionesCriterio = det.Observaciones;
+                }
+            }
+        }
+
         return new RubricaDinamicaDto
         {
             IdRubrica = idRubrica,
@@ -129,7 +142,12 @@ public class PeerReviewService : IPeerReviewService
             ProyectoUuid = proyecto.Uuid,
             EsDobleCiego = revision.EsDobleCiego,
             PuntajeMinimoAprobacion = puntajeMinimo,
-            Criterios = criterios
+            Criterios = criterios,
+            
+            // Campos de la revisión completada
+            EstadoRevision = revision.Estado,
+            ObservacionesGral = revision.ObservacionesGral,
+            PuntajeTotal = revision.PuntajeTotal
         };
     }
 
@@ -172,6 +190,69 @@ public class PeerReviewService : IPeerReviewService
         revision.DictamenRevisor = totalScore >= 70m ? "Aprueba" : "Rechaza";
 
         await _context.SaveChangesAsync();
+
+        // ── SINCRONIZACIÓN AUTOMÁTICA CON EL SISTEMA DE DOCUMENTOS ──
+        // Criterio de usabilidad: Cuando un par evalúa, se llena y firma automáticamente 
+        // el documento "RUBRICA_EVALUACION" de la instancia correspondiente para que
+        // figure de forma automática y completada en el Workspace del proyecto.
+        if (project != null && !string.IsNullOrEmpty(project.Uuid))
+        {
+            try
+            {
+                var existingDoc = await _context.DocumentInstances
+                    .FirstOrDefaultAsync(d => d.EntityUuid == project.Uuid && d.TemplateCode == "RUBRICA_EVALUACION");
+
+                if (existingDoc == null)
+                {
+                    var template = await _context.DocumentTemplates
+                        .FirstOrDefaultAsync(t => t.Code == "RUBRICA_EVALUACION" && t.IsActive);
+                    if (template != null)
+                    {
+                        existingDoc = Diitra.Domain.Common.Documents.DocumentInstance.Create(
+                            "RUBRICA_EVALUACION", 
+                            template.Version, 
+                            project.Uuid, 
+                            "sistema", 
+                            $"Rúbrica de Evaluación — {project.CodigoInstitucional ?? project.Titulo}", 
+                            "Proyecto"
+                        );
+                        _context.DocumentInstances.Add(existingDoc);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+
+                if (existingDoc != null && existingDoc.State != Diitra.Domain.Common.Documents.DocumentState.Signed)
+                {
+                    decimal pertinencia = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Pertinencia"))?.Puntaje ?? 0;
+                    decimal metodologia = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Metodología") || d.Criterio.Contains("Metodologia"))?.Puntaje ?? 0;
+                    decimal viabilidad = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Viabilidad") || d.Criterio.Contains("Presupuesto"))?.Puntaje ?? 0;
+                    decimal impacto = dto.Detalles.FirstOrDefault(d => d.Criterio.Contains("Impacto"))?.Puntaje ?? 0;
+
+                    var dataSnapshot = new
+                    {
+                        Pertinencia = pertinencia,
+                        Metodologia = metodologia,
+                        Viabilidad = viabilidad,
+                        Impacto = impacto,
+                        ComentariosGenerales = dto.ObservacionesGral ?? "",
+                        RecomendacionFinal = totalScore >= 70m ? "Aprobado sin modificaciones" : "Rechazado"
+                    };
+
+                    string json = System.Text.Json.JsonSerializer.Serialize(dataSnapshot);
+                    existingDoc.UpdateDataSnapshot(json);
+                    
+                    // Transicionamos a Firmado para que sea de solo lectura y refleje la nota del par
+                    existingDoc.TransitionTo(Diitra.Domain.Common.Documents.DocumentState.Signed);
+                    
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Registramos pero no bloqueamos el flujo principal en caso de fallos de sincronización documental
+                Console.WriteLine($"[DIITRA] Error al sincronizar rúbrica documental: {ex.Message}");
+            }
+        }
 
         var afterState = System.Text.Json.JsonSerializer.Serialize(new
         {

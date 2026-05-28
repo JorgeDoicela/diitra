@@ -58,6 +58,12 @@ export interface CriterioRubricaDto {
     peso_porcentaje: number;
     orden: number;
     puntaje_maximo: number;
+    
+    // Propiedades adicionales para revisiones completadas
+    puntajeObtenido?: number;
+    puntaje_obtenido?: number;
+    observacionesCriterio?: string;
+    observaciones_criterio?: string;
 }
 
 export interface RubricaDinamicaDto {
@@ -71,6 +77,14 @@ export interface RubricaDinamicaDto {
     es_doble_ciego: boolean;
     puntaje_minimo_aprobacion: number;
     criterios: CriterioRubricaDto[];
+    
+    // Propiedades adicionales para revisiones completadas
+    observacionesGral?: string;
+    observaciones_gral?: string;
+    estadoRevision?: string;
+    estado_revision?: string;
+    puntajeTotal?: number;
+    puntaje_total?: number;
 }
 
 export interface RevisorDisponibleDto {

@@ -239,6 +239,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 'Metodologia', 'Evaluacion', 'Bibliografia'
             ];
         }
+        if (templateCode === 'INFORME_AVANCE') {
+            return ['ConclusionesParciales'];
+        }
         if (templateConfig?.sections) {
             templateConfig.sections.forEach((sec: any) => {
                 const fields = sec.config?.fields || sec.fields;
