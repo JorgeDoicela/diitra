@@ -543,7 +543,7 @@ public class AdminService : IAdminService
         {
             IdSigafi = dto.Cedula,
             Nombre = nombreCompleto,
-            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11),
+            Contrasenia = BCrypt.Net.BCrypt.HashPassword("Diitra2026*", 11),
             Activo = true,
             TablaSigafi = "otros",
             EmailInstitucional = dto.Email
