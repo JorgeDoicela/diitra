@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
+import { DocumentDataContext } from '../../documents/context/DocumentDataContext';
 
 interface CoWorkFieldProps {
     name: string;
@@ -30,7 +31,15 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     children,
     readOnly
 }) => {
-    const [localValue, setLocalValue] = useState<any>(type === 'checkbox' ? false : '');
+    const parentFormData = useContext(DocumentDataContext);
+    const value = parentFormData ? parentFormData[name] : undefined;
+
+    const [localValue, setLocalValue] = useState<any>(() => {
+        if (value !== undefined && value !== null && value !== '') {
+            return type === 'checkbox' ? value === 'true' || value === true : value;
+        }
+        return type === 'checkbox' ? false : '';
+    });
     const { ydoc } = cowork;
     const isRemoteChange = useRef(false);
 
@@ -39,6 +48,28 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     useEffect(() => {
         onValueChangeRef.current = onValueChange;
     }, [onValueChange]);
+
+    // Sincronizar el valor local cuando el valor del padre cambie (ej: carga asíncrona de base de datos)
+    useEffect(() => {
+        if (value !== undefined && value !== null && value !== '' && value !== localValue) {
+            const isReadOnlyMode = readOnly || cowork.session.readOnly;
+            if (isReadOnlyMode) {
+                setLocalValue(type === 'checkbox' ? value === 'true' || value === true : value);
+            } else {
+                // Si estamos en modo de escritura y Yjs está vacío, podemos poblar Yjs
+                const ytext = ydoc?.getText(name);
+                const currentYVal = ytext?.toString();
+                if (!currentYVal || currentYVal === 'undefined') {
+                    const parsed = type === 'checkbox' ? value === 'true' || value === true : value;
+                    setLocalValue(parsed);
+                    ydoc?.transact(() => {
+                        ytext?.delete(0, ytext.length);
+                        ytext?.insert(0, String(value));
+                    }, 'local-initializer-effect');
+                }
+            }
+        }
+    }, [value, ydoc, name, cowork.session.readOnly, readOnly, localValue, type]);
 
     useEffect(() => {
         if (!ydoc) return;
@@ -51,12 +82,27 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             const parsed = type === 'checkbox' ? initialVal === 'true' : initialVal;
             // Solo sincronizamos si el valor local inicial (vacío) es diferente al del ydoc
             if (localValue !== parsed) {
-                console.log(`[CoWorkField:${name}] Sincronización inicial detectada.`);
+                console.log(`[CoWorkField:${name}] Sincronización inicial detectada desde Yjs:`, parsed);
                 setLocalValue(parsed);
                 const callback = onValueChangeRef.current;
                 if (callback) {
                     setTimeout(() => callback(parsed), 0);
                 }
+            }
+        } else if (value !== undefined && value !== null && value !== '') {
+            // Yjs está vacío, pero el padre tiene un valor de base de datos.
+            const isReadOnlyMode = readOnly || cowork.session.readOnly;
+            if (!isReadOnlyMode) {
+                console.log(`[CoWorkField:${name}] Yjs vacío. Poblando Yjs con el valor de la BD del padre:`, value);
+                const stringVal = String(value);
+                ydoc.transact(() => {
+                    ytext.delete(0, ytext.length);
+                    ytext.insert(0, stringVal);
+                }, 'local-initializer');
+            } else {
+                console.log(`[CoWorkField:${name}] Yjs vacío (modo sólo lectura). Usando valor de la BD:`, value);
+                const parsed = type === 'checkbox' ? value === 'true' || value === true : value;
+                setLocalValue(parsed);
             }
         }
 
@@ -84,7 +130,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         return () => {
             ytext.unobserve(observer);
         };
-    }, [ydoc, name, type]); // <-- onValueChange removido de deps
+    }, [ydoc, name, type, value, readOnly, cowork.session.readOnly]); // <-- onValueChange removido de deps, value y readOnly añadidos
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;

@@ -69,13 +69,16 @@ interface DocumentEditorProps {
 const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false, readOnlyReason, projectStatus }) => {
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
+    const [docInstanceData, setDocInstanceData] = useState<any>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const [resolvedUuid, setResolvedUuid] = useState<string | null>(null);
 
     // Catálogos institucionales (agnóstico por plantilla)
     const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [tiposProducto, setTiposProducto] = useState<any[]>([]);
 
-    // 1. Resolución de configuración de la plantilla
+    // 1. Resolución de configuración de la plantilla y carga de datos de la instancia
     useEffect(() => {
         const fetchConfig = async () => {
             // PRIORIDAD 1: Registry local (esquema puro, sin componentes React)
@@ -100,6 +103,46 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         fetchConfig();
     }, [templateCode]);
 
+    useEffect(() => {
+        const fetchDocData = async () => {
+            if (!initialData?.Uuid || initialData.Uuid.startsWith('temp_')) {
+                setDocInstanceData({});
+                setIsLoadingData(false);
+                return;
+            }
+            try {
+                const response = await api.get(`/documents/instances/${initialData.Uuid}`);
+                if (response.data) {
+                    const realUuid = response.data.uuid || response.data.Uuid;
+                    if (realUuid) {
+                        console.log(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
+                        setResolvedUuid(realUuid);
+                    }
+                    const snapshotStr = response.data.dataSnapshotJson || response.data.DataSnapshotJson;
+                    if (snapshotStr) {
+                        try {
+                            const parsed = JSON.parse(snapshotStr);
+                            setDocInstanceData(parsed);
+                        } catch (e) {
+                            console.error('[DIITRA] Error parsing dataSnapshotJson:', e);
+                            setDocInstanceData({});
+                        }
+                    } else {
+                        setDocInstanceData({});
+                    }
+                } else {
+                    setDocInstanceData({});
+                }
+            } catch (err) {
+                console.error('[DIITRA] Error loading document instance data:', err);
+                setDocInstanceData({});
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+        fetchDocData();
+    }, [initialData?.Uuid]);
+
     // 2. Carga de catálogos institucionales
     useEffect(() => {
         const loadMetadata = async () => {
@@ -120,7 +163,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         loadMetadata();
     }, []);
 
-    if (isLoadingTemplate) {
+    if (isLoadingTemplate || isLoadingData) {
         return (
             <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
                 <Loader size={48} className="animate-spin text-primary" />
@@ -151,7 +194,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         <DocumentEditorCore
             templateCode={templateCode}
             templateConfig={templateConfig}
-            initialData={initialData}
+            initialData={{ ...docInstanceData, ...initialData, Uuid: resolvedUuid || initialData?.Uuid }}
             entityUuid={entityUuid}
             carreras={carreras}
             convocatorias={convocatorias}
@@ -349,6 +392,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             readOnly={readOnly}
             readOnlyReason={readOnlyReason}
             projectStatus={projectStatus}
+            entityUuid={entityUuid}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);

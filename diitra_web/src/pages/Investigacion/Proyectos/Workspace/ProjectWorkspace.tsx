@@ -110,21 +110,19 @@ export const ProjectWorkspace: React.FC = () => {
         const resolveUuid = async () => {
             if (!documentUuid) return;
             
-            if (templateCode && templateCode !== 'PROTOCOLO_INVESTIGACION') {
-                try {
-                    const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
-                    const entityUuid = instanceRes.data?.entity_uuid || instanceRes.data?.entityUuid;
-                    if (entityUuid) {
-                        setResolvedProjectUuid(entityUuid);
-                    } else {
-                        console.error("[DIITRA] EntityUuid no encontrado en la instancia del documento", instanceRes.data);
-                        setResolvedProjectUuid(documentUuid);
-                    }
-                } catch (err) {
-                    console.error("[DIITRA] Error al resolver el UUID del proyecto", err);
+            // Siempre intentamos resolver el EntityUuid real desde la instancia del documento,
+            // ya que documentUuid en la URL suele ser el UUID de la instancia y no el del proyecto.
+            try {
+                const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
+                const entityUuid = instanceRes.data?.entity_uuid || instanceRes.data?.entityUuid || instanceRes.data?.EntityUuid;
+                if (entityUuid) {
+                    setResolvedProjectUuid(entityUuid);
+                } else {
+                    console.warn("[DIITRA] EntityUuid no encontrado en la instancia, usando fallback");
                     setResolvedProjectUuid(documentUuid);
                 }
-            } else {
+            } catch (err) {
+                console.warn("[DIITRA] Fallback: No se pudo cargar la instancia, asumiendo documentUuid como proyecto", err);
                 setResolvedProjectUuid(documentUuid);
             }
         };
@@ -176,7 +174,7 @@ export const ProjectWorkspace: React.FC = () => {
             fetchProducts(resolvedProjectUuid);
             fetchProductTypes();
         }
-    }, [resolvedProjectUuid]);
+    }, [resolvedProjectUuid, activeDocument]);
 
     useEffect(() => {
         const checkPeerReviews = async () => {
@@ -203,7 +201,7 @@ export const ProjectWorkspace: React.FC = () => {
         };
 
         checkPeerReviews();
-    }, [resolvedProjectUuid, user]);
+    }, [resolvedProjectUuid, user, activeDocument]);
 
     const handleCreateProduct = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -329,7 +327,7 @@ export const ProjectWorkspace: React.FC = () => {
         };
         
         fetchProject();
-    }, [resolvedProjectUuid]);
+    }, [resolvedProjectUuid, activeDocument]);
 
     useEffect(() => {
         if (!searchQuery.trim()) {

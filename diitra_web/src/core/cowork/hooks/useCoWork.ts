@@ -33,6 +33,8 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
     const activeTransportRef = useRef<ICoWorkTransport | null>(null);
     const submitTimerRef = useRef<any>(null);
+    const lastContentRef = useRef<{ html: string; json: string } | null>(null);
+    const hasUnsavedContentRef = useRef<boolean>(false);
 
     // Getters seguros para el handle
     const getTransport = () => {
@@ -51,6 +53,9 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     }, [config.documentId]);
 
     const submitFinalContent = useCallback((html: string, json: string) => {
+        lastContentRef.current = { html, json };
+        hasUnsavedContentRef.current = true;
+
         if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
 
         submitTimerRef.current = setTimeout(async () => {
@@ -59,6 +64,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 setSession(s => ({ ...s, isSyncing: true }));
                 await getTransport().submitFinalContent(config.documentId, html, json);
                 console.info(`[useCoWork] Snapshot guardado exitosamente.`);
+                hasUnsavedContentRef.current = false;
                 setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
             } catch (err) {
                 console.error("[useCoWork] Error al guardar:", err);
@@ -295,8 +301,22 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 setAwareness(null);
             }
 
-            transport.disconnect();
-            if (activeTransportRef.current === transport) activeTransportRef.current = null;
+            // Guardar cambios pendientes de CoWork antes de cerrar físicamente la conexión
+            (async () => {
+                if (hasUnsavedContentRef.current && lastContentRef.current) {
+                    const { html, json } = lastContentRef.current;
+                    console.log(`[useCoWork] Desmontando: Forzando guardado de snapshot antes de desconectar para: ${config.documentId}...`);
+                    try {
+                        await transport.submitFinalContent(config.documentId, html, json);
+                        console.log(`[useCoWork] Desmontado: Snapshot guardado forzadamente.`);
+                    } catch (err) {
+                        console.error("[useCoWork] Error al forzar guardado de snapshot:", err);
+                    }
+                }
+                console.log(`[useCoWork] Desconectando transporte para sala: ${config.documentId}`);
+                await transport.disconnect();
+                if (activeTransportRef.current === transport) activeTransportRef.current = null;
+            })();
         };
     }, [config.documentId, config.enabled]);
 

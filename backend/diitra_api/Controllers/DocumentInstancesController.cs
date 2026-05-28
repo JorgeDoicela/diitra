@@ -7,6 +7,7 @@ using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
 using System;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Controllers
 {
@@ -295,16 +296,38 @@ namespace diitra_api.Controllers
                         {
                             PropertyNameCaseInsensitive = true
                         };
-                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(metadataJson, options);
+                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(instance.DataSnapshotJson ?? metadataJson, options);
                         if (dto != null)
                         {
-                            dto.Uuid = uuid;
+                            // Si el EntityUuid es "GLOBAL", significa que es una nueva postulación y no un proyecto existente.
+                            // Generamos un nuevo UUID único para el proyecto y actualizamos la vinculación de la instancia.
+                            bool isNewProject = string.IsNullOrEmpty(instance.EntityUuid) || instance.EntityUuid == "GLOBAL";
+                            if (isNewProject)
+                            {
+                                dto.Uuid = Guid.NewGuid().ToString();
+                            }
+                            else
+                            {
+                                dto.Uuid = instance.EntityUuid;
+                            }
+
                             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
                             var result = await projectOrchestrator.SyncProjectWizardDataAsync(dto, userIdRef);
                             
                             if (!result.Success)
                             {
                                 return BadRequest(new { success = false, message = $"Error de sincronización relacional: {result.Message}" });
+                            }
+
+                            if (isNewProject)
+                            {
+                                var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
+                                var dbInstance = await context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == instance.Uuid, ct);
+                                if (dbInstance != null)
+                                {
+                                    dbInstance.SetEntityUuid(dto.Uuid);
+                                    await context.SaveChangesAsync(ct);
+                                }
                             }
                         }
                         else
