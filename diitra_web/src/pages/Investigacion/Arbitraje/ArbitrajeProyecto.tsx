@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Gavel, UserCheck, UserX, AlertTriangle,
     CheckCircle2, Clock, PlusCircle, Trash2, Award,
-    Scale, Loader2
+    Scale, Loader2, Users, Building
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion,
@@ -12,6 +12,7 @@ import {
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
 import DictamenModal from './DictamenModal';
+import { formatNombre, getAvatarStyle } from './ArbitrajePage';
 
 const ArbitrajeProyecto: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
@@ -22,6 +23,9 @@ const ArbitrajeProyecto: React.FC = () => {
     const [cerrando, setCerrando] = useState(false);
     const [showAsignar, setShowAsignar] = useState(false);
     const [dictamen, setDictamen] = useState<DictamenDto | null>(null);
+
+    const internos = arbitraje ? arbitraje.revisiones.filter(r => !r.es_externo) : [];
+    const externos = arbitraje ? arbitraje.revisiones.filter(r => r.es_externo) : [];
 
     const loadData = useCallback(async () => {
         if (!projectUuid) return;
@@ -187,48 +191,98 @@ const ArbitrajeProyecto: React.FC = () => {
             </div>
 
             {/* Lista de Árbitros */}
-            <div className="animate-fade-up [animation-delay:100ms]">
-                <div className="section-label mb-4">
+            <div className="animate-fade-up [animation-delay:100ms] space-y-4">
+                <div className="section-label mb-2">
                     <UserCheck size={12} />
                     <span>Árbitros Asignados</span>
                 </div>
 
-                {arbitraje.revisiones.length === 0 ? (
-                    <div className="bento-card p-10 text-center">
-                        <div className="icon-circle icon-circle-neutral !p-4 mx-auto mb-4">
-                            <UserX size={28} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Columna 1: Árbitros Internos */}
+                    <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
+                            <span className="text-xs font-bold text-text-main flex items-center gap-2">
+                                <Users size={14} className="text-text-dim" /> Árbitros Internos
+                            </span>
+                            <span className="text-[10px] font-mono bg-bg-deep px-2 py-0.5 rounded-md border border-border-thin text-text-dim">
+                                {internos.length}
+                            </span>
                         </div>
-                        <p className="text-text-dim font-bold text-sm uppercase tracking-widest mb-2">Sin árbitros asignados</p>
-                        <p className="text-xs text-text-dim mb-4">
-                            Este proyecto necesita al menos 2 árbitros para cumplir con la normativa CACES.
-                        </p>
-                        <button
-                            onClick={() => setShowAsignar(true)}
-                            className="btn-vercel-primary inline-flex items-center gap-2"
-                        >
-                            <PlusCircle size={14} /> Asignar Primer Árbitro
-                        </button>
-                    </div>
-                ) : (
-                    <div className="space-y-3">
-                        {arbitraje.revisiones.map((rev) => (
-                            <ArbitroCard
-                                key={rev.uuid}
-                                review={rev}
-                                onRevocar={() => handleRevocar(rev)}
-                            />
-                        ))}
-                    </div>
-                )}
 
-                {/* Aviso de mínimo 2 árbitros CACES */}
-                {arbitraje.revisiones.length === 1 && (
-                    <div className="mt-4 p-4 rounded-lg border border-warning/30 bg-warning/5 flex items-center gap-3">
-                        <AlertTriangle size={16} className="text-warning shrink-0" />
-                        <p className="text-xs text-text-dim">
-                            <span className="font-bold text-text-main">Normativa CACES:</span> Se recomienda un mínimo
-                            de 2 árbitros por propuesta. Asigne al menos un árbitro adicional.
-                        </p>
+                        {internos.length === 0 ? (
+                            <div className="text-center py-10 border border-dashed border-border-thin rounded-xl bg-surface/20">
+                                <p className="text-xs text-text-dim italic">Ningún árbitro interno asignado</p>
+                                <button
+                                    onClick={() => setShowAsignar(true)}
+                                    className="mt-3 btn-vercel-secondary !py-1.5 !px-3 !text-xs inline-flex items-center gap-1.5 font-medium transition-all"
+                                >
+                                    <PlusCircle size={13} /> Asignar Interno
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {internos.map((rev) => (
+                                    <ArbitroCard
+                                        key={rev.uuid}
+                                        review={rev}
+                                        onRevocar={() => handleRevocar(rev)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Columna 2: Árbitros Externos */}
+                    <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
+                            <span className="text-xs font-bold text-text-main flex items-center gap-2">
+                                <Building size={14} className="text-text-dim" /> Árbitros Externos (CACES)
+                            </span>
+                            <span className="text-[10px] font-mono bg-bg-deep px-2 py-0.5 rounded-md border border-border-thin text-text-dim">
+                                {externos.length}
+                            </span>
+                        </div>
+
+                        {externos.length === 0 ? (
+                            <div className="text-center py-10 border border-dashed border-border-thin rounded-xl bg-surface/20 space-y-2">
+                                <p className="text-xs text-text-dim italic">Ningún árbitro externo asignado</p>
+                                {arbitraje.total_arbitros > 0 && (
+                                    <p className="text-[10px] text-error font-semibold flex items-center justify-center gap-1">
+                                        ⚠️ CACES exige al menos 1 árbitro externo
+                                    </p>
+                                )}
+                                <button
+                                    onClick={() => setShowAsignar(true)}
+                                    className="mt-2 btn-vercel-secondary !py-1.5 !px-3 !text-xs inline-flex items-center gap-1.5 font-medium transition-all"
+                                >
+                                    <PlusCircle size={13} /> Asignar Externo
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {externos.map((rev) => (
+                                    <ArbitroCard
+                                        key={rev.uuid}
+                                        review={rev}
+                                        onRevocar={() => handleRevocar(rev)}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Avisos de Cumplimiento CACES */}
+                {(arbitraje.total_arbitros < 2 || externos.length === 0) && (
+                    <div className="p-4 rounded-xl border border-warning/30 bg-warning/5 flex items-start gap-3 animate-fade-in">
+                        <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                            <p className="text-xs font-bold text-text-main">Cumplimiento Normativo CACES (Indicador I5)</p>
+                            <p className="text-[11px] text-text-dim">
+                                {arbitraje.total_arbitros < 2 && "• Se recomienda un mínimo de 2 árbitros evaluadores por propuesta académica para un panel completo. "}
+                                {externos.length === 0 && "• Es obligatorio contar con al menos 1 árbitro externo a la institución para la evaluación de proyectos."}
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
@@ -259,16 +313,17 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = 
     const diasRestantes = Math.ceil(
         (new Date(review.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
     );
+    const avStyle = getAvatarStyle(review.revisor_nombre);
 
     return (
-        <div className="bento-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="bento-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-text-dim/30 hover:bg-surface/50 hover:-translate-y-0.5 transition-all duration-200">
             <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className={`icon-circle shrink-0 ${review.estado === 'Completada' ? 'icon-circle-brand' : 'icon-circle-neutral'}`}>
-                    {review.estado === 'Completada' ? <CheckCircle2 size={18} /> : <Clock size={18} />}
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avStyle.bg} border text-xs font-bold flex items-center justify-center shrink-0`}>
+                    {review.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-bold text-sm text-text-main">{review.revisor_nombre}</span>
+                        <span className="font-bold text-sm text-text-main">{formatNombre(review.revisor_nombre)}</span>
                         {review.es_externo && (
                             <span className="badge-vercel badge-vercel-info text-[9px]">PAR EXTERNO</span>
                         )}

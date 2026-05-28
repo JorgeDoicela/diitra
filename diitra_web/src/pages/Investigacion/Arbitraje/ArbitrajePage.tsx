@@ -199,6 +199,40 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
 };
 
 // ─────────────────────────────────────────────────────────────
+//  Helpers de formato visual y usabilidad
+// ─────────────────────────────────────────────────────────────
+export const formatNombre = (name: string) => {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .split(' ')
+        .filter(Boolean)
+        .map(word => {
+            const preps = ['de', 'la', 'del', 'los', 'las', 'y'];
+            if (preps.includes(word)) return word;
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(' ')
+        .replace(/^\w/, c => c.toUpperCase());
+};
+
+export const getAvatarStyle = (name: string) => {
+    const colors = [
+        { bg: 'from-blue-500/10 to-indigo-500/10 text-blue-400 border-blue-500/20' },
+        { bg: 'from-emerald-500/10 to-teal-500/10 text-emerald-400 border-emerald-500/20' },
+        { bg: 'from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20' },
+        { bg: 'from-rose-500/10 to-pink-500/10 text-rose-400 border-rose-500/20' },
+        { bg: 'from-violet-500/10 to-fuchsia-500/10 text-violet-400 border-violet-500/20' }
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+};
+
+// ─────────────────────────────────────────────────────────────
 //  Componente principal: ArbitrajePage
 // ─────────────────────────────────────────────────────────────
 const ArbitrajePage: React.FC = () => {
@@ -546,160 +580,161 @@ const ArbitrajePage: React.FC = () => {
                                                                 e.stopPropagation();
                                                                 setProyectoParaAsignar(p);
                                                             }}
-                                                            className="btn-vercel-secondary !py-1 !px-2.5 !text-[10px] flex items-center gap-1"
-                                                            title="Asignar árbitro"
+                                                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs flex items-center gap-1.5 font-medium transition-all"
                                                         >
-                                                            <PlusCircle size={11} />
-                                                            Árbitro
+                                                            <PlusCircle size={13} />
+                                                            <span>Árbitro</span>
                                                         </button>
-                                                        <ChevronRight
-                                                            size={14}
-                                                            className={`text-text-dim transition-transform duration-200 ${isExpandido ? 'rotate-90' : ''}`}
-                                                        />
+                                                        <div className={`p-1 rounded-md text-text-dim group-hover:text-text-main transition-colors ${isExpandido ? 'rotate-90' : ''}`}>
+                                                            <ChevronRight size={14} />
+                                                        </div>
                                                     </div>
                                                 </td>
                                             </tr>
 
-                                            {/* ── Fila expandida con Tabs Internos/Externos ── */}
+                                            {/* ── Fila expandida con Panel Dividido ("2 Cuadros") ── */}
                                             {isExpandido && (
                                                 <tr className="border-b border-border-thin/50">
                                                     <td colSpan={6} className="px-5 pb-4 pt-0">
-                                                        <div className="bg-surface/40 rounded-xl p-4 border border-border-thin/50">
-                                                            {/* Tabs */}
-                                                            <div className="flex items-center gap-1 mb-4">
-                                                                <button
-                                                                    id={`tab-internos-${p.proyecto_uuid}`}
-                                                                    onClick={() => setTabRevisores(t => ({ ...t, [p.proyecto_uuid]: 'internos' }))}
-                                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${tabActual === 'internos'
-                                                                            ? 'bg-surface text-text-main border border-border-thin'
-                                                                            : 'text-text-dim hover:text-text-main'
-                                                                        }`}
-                                                                >
-                                                                    <Users size={12} />
-                                                                    Árbitros Internos
-                                                                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-surface text-[9px]">
-                                                                        {internos.length}
-                                                                    </span>
-                                                                </button>
-                                                                <button
-                                                                    id={`tab-externos-${p.proyecto_uuid}`}
-                                                                    onClick={() => setTabRevisores(t => ({ ...t, [p.proyecto_uuid]: 'externos' }))}
-                                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold transition-all ${tabActual === 'externos'
-                                                                            ? 'bg-surface text-text-main border border-border-thin'
-                                                                            : 'text-text-dim hover:text-text-main'
-                                                                        }`}
-                                                                >
-                                                                    <ExternalLink size={12} />
-                                                                    Árbitros Externos
-                                                                    {!tieneExterno && (
-                                                                        <span className="ml-1 px-1.5 py-0.5 rounded-full bg-error/20 text-error text-[9px]">
-                                                                            CACES
-                                                                        </span>
-                                                                    )}
-                                                                    <span className="ml-1 px-1.5 py-0.5 rounded-full bg-surface text-[9px]">
-                                                                        {externos.length}
-                                                                    </span>
-                                                                </button>
-
-                                                                {/* Botón ver detalle completo */}
+                                                        <div className="bg-surface/40 rounded-xl p-4 border border-border-thin/50 space-y-4 animate-fade-in">
+                                                            {/* Cabecera de Fila Expandida */}
+                                                            <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
+                                                                <span className="text-[11px] font-bold text-text-main tracking-wide">
+                                                                    Resumen de evaluadores asignados
+                                                                </span>
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         navigate(`/arbitraje/proyecto/${p.proyecto_uuid}`);
                                                                     }}
-                                                                    className="ml-auto btn-vercel-secondary !py-1 !px-2.5 !text-[10px] flex items-center gap-1"
+                                                                    className="ml-auto btn-vercel-secondary !py-1.5 !px-3.5 !text-xs flex items-center gap-1.5 font-medium transition-all"
                                                                 >
-                                                                    <FileSearch size={10} />
+                                                                    <FileSearch size={13} />
                                                                     Ver detalle completo
                                                                 </button>
                                                             </div>
 
-                                                            {/* Contenido de la tab activa */}
-                                                            {(() => {
-                                                                const revisoresTab = tabActual === 'internos' ? internos : externos;
+                                                            {/* Panel Dividido de 2 Columnas */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {/* Columna 1: Árbitros Internos */}
+                                                                <div className="p-3 bg-surface/50 rounded-lg border border-border-thin space-y-3">
+                                                                    <div className="flex items-center justify-between pb-1.5 border-b border-border-thin/50">
+                                                                        <span className="text-xs font-bold text-text-main flex items-center gap-1.5">
+                                                                            <Users size={12} className="text-text-dim" /> Árbitros Internos
+                                                                        </span>
+                                                                        <span className="text-[9px] font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim">
+                                                                            {internos.length}
+                                                                        </span>
+                                                                    </div>
+                                                                    {internos.length === 0 ? (
+                                                                        <p className="text-[10px] text-text-dim py-5 text-center italic">Ninguno asignado</p>
+                                                                    ) : (
+                                                                        <div className="space-y-2">
+                                                                            {internos.map(r => {
+                                                                                const dictCfg = DICTAMEN_REVISOR_CONFIG[r.dictamen_revisor || 'Pendiente'];
+                                                                                const estadoCfgR = r.estado === 'Completada'
+                                                                                    ? { badge: 'badge-vercel-success', dot: 'dot-success' }
+                                                                                    : { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' };
+                                                                                const avStyle = getAvatarStyle(r.revisor_nombre);
+                                                                                return (
+                                                                                    <div
+                                                                                        key={r.uuid}
+                                                                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between hover:border-text-dim/30 hover:bg-surface/50 hover:-translate-y-0.5 transition-all duration-200"
+                                                                                    >
+                                                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                                                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
+                                                                                                {r.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                                                            </div>
+                                                                                            <div className="truncate">
+                                                                                                <p className="text-xs font-semibold text-text-main truncate leading-tight">
+                                                                                                    {formatNombre(r.revisor_nombre)}
+                                                                                                </p>
+                                                                                                <p className="text-[9px] text-text-dim truncate mt-0.5 font-medium">
+                                                                                                    {r.revisor_grado || 'S/G'} {r.revisor_especialidad ? `· ${r.revisor_especialidad}` : ''}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2 shrink-0">
+                                                                                            {r.puntaje_total != null && (
+                                                                                                <span className={`text-[11px] font-bold font-mono ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                                                                                                    {r.puntaje_total.toFixed(1)}/100
+                                                                                                </span>
+                                                                                            )}
+                                                                                            <div className={`badge-vercel ${estadoCfgR.badge} text-[9px] py-0.5 px-1.5`}>
+                                                                                                <span className={`dot ${estadoCfgR.dot}`} />
+                                                                                                {r.estado}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
 
-                                                                if (revisoresTab.length === 0) {
-                                                                    return (
-                                                                        <div className="text-center py-6 text-text-dim">
-                                                                            <div className="mb-2">
-                                                                                {tabActual === 'externos'
-                                                                                    ? <ExternalLink size={28} className="mx-auto opacity-30" />
-                                                                                    : <Users size={28} className="mx-auto opacity-30" />
-                                                                                }
-                                                                            </div>
-                                                                            <p className="text-[11px] font-bold uppercase tracking-widest">
-                                                                                {tabActual === 'externos'
-                                                                                    ? 'No hay árbitros externos asignados'
-                                                                                    : 'No hay árbitros internos asignados'
-                                                                                }
-                                                                            </p>
-                                                                            {tabActual === 'externos' && (
-                                                                                <p className="text-[10px] mt-1 text-error">
-                                                                                    ⚠ CACES requiere al menos 1 árbitro externo
+                                                                {/* Columna 2: Árbitros Externos */}
+                                                                <div className="p-3 bg-surface/50 rounded-lg border border-border-thin space-y-3">
+                                                                    <div className="flex items-center justify-between pb-1.5 border-b border-border-thin/50">
+                                                                        <span className="text-xs font-bold text-text-main flex items-center gap-1.5">
+                                                                            <Building size={12} className="text-text-dim" /> Árbitros Externos
+                                                                        </span>
+                                                                        <span className="text-[9px] font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim">
+                                                                            {externos.length}
+                                                                        </span>
+                                                                    </div>
+                                                                    {externos.length === 0 ? (
+                                                                        <div className="text-center py-4 space-y-1 bg-surface/20 border border-dashed border-border-thin rounded-lg">
+                                                                            <p className="text-[10px] text-text-dim italic">Ninguno asignado</p>
+                                                                            {p.total_arbitros > 0 && (
+                                                                                <p className="text-[9px] text-error font-semibold flex items-center justify-center gap-1">
+                                                                                    ⚠️ CACES exige al menos 1 árbitro externo
                                                                                 </p>
                                                                             )}
                                                                         </div>
-                                                                    );
-                                                                }
-
-                                                                return (
-                                                                    <div className="space-y-2">
-                                                                        {revisoresTab.map(r => {
-                                                                            const dictCfg = DICTAMEN_REVISOR_CONFIG[r.dictamen_revisor || 'Pendiente'];
-                                                                            const estadoCfgR = r.estado === 'Completada'
-                                                                                ? { badge: 'badge-vercel-success', dot: 'dot-success' }
-                                                                                : { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' };
-                                                                            return (
-                                                                                <div
-                                                                                    key={r.uuid}
-                                                                                    className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin/40"
-                                                                                >
-                                                                                    <div className="icon-circle-brand !p-1.5 shrink-0">
-                                                                                        {r.es_externo
-                                                                                            ? <Building size={12} strokeWidth={1.5} />
-                                                                                            : <Users size={12} strokeWidth={1.5} />
-                                                                                        }
-                                                                                    </div>
-                                                                                    <div className="flex-1 min-w-0">
-                                                                                        <p className="text-xs font-semibold text-text-main truncate">
-                                                                                            {r.revisor_nombre}
-                                                                                        </p>
-                                                                                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                                                                            {r.revisor_grado && (
-                                                                                                <span className="text-[10px] text-text-dim">{r.revisor_grado}</span>
-                                                                                            )}
-                                                                                            {r.revisor_especialidad && (
-                                                                                                <span className="text-[10px] text-text-dim truncate max-w-[200px]">· {r.revisor_especialidad}</span>
-                                                                                            )}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-2 shrink-0">
-                                                                                        {r.puntaje_total != null && (
-                                                                                            <span className={`text-xs font-bold ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
-                                                                                                {r.puntaje_total.toFixed(1)}/100
-                                                                                            </span>
-                                                                                        )}
-                                                                                        <div className={`badge-vercel ${estadoCfgR.badge} text-[10px]`}>
-                                                                                            <span className={`dot ${estadoCfgR.dot}`} />
-                                                                                            {r.estado}
-                                                                                        </div>
-                                                                                        {r.estado === 'Completada' && (
-                                                                                            <div className={`badge-vercel ${dictCfg.badge} text-[10px]`}>
-                                                                                                {dictCfg.label}
+                                                                    ) : (
+                                                                        <div className="space-y-2">
+                                                                            {externos.map(r => {
+                                                                                const dictCfg = DICTAMEN_REVISOR_CONFIG[r.dictamen_revisor || 'Pendiente'];
+                                                                                const estadoCfgR = r.estado === 'Completada'
+                                                                                    ? { badge: 'badge-vercel-success', dot: 'dot-success' }
+                                                                                    : { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' };
+                                                                                const avStyle = getAvatarStyle(r.revisor_nombre);
+                                                                                return (
+                                                                                    <div
+                                                                                        key={r.uuid}
+                                                                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between hover:border-text-dim/30 hover:bg-surface/50 hover:-translate-y-0.5 transition-all duration-200"
+                                                                                    >
+                                                                                        <div className="flex items-center gap-2.5 min-w-0">
+                                                                                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
+                                                                                                {r.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                                                             </div>
-                                                                                        )}
-                                                                                        {r.es_externo && (
-                                                                                            <span className="status-tag text-[10px] border-blue-500/30 text-blue-400">
-                                                                                                Externo
-                                                                                            </span>
-                                                                                        )}
+                                                                                            <div className="truncate">
+                                                                                                <p className="text-xs font-semibold text-text-main truncate leading-tight">
+                                                                                                    {formatNombre(r.revisor_nombre)}
+                                                                                                </p>
+                                                                                                <p className="text-[9px] text-text-dim truncate mt-0.5 font-medium">
+                                                                                                    {r.revisor_grado || 'S/G'} {r.revisor_especialidad ? `· ${r.revisor_especialidad}` : ''}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2 shrink-0">
+                                                                                            {r.puntaje_total != null && (
+                                                                                                <span className={`text-[11px] font-bold font-mono ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                                                                                                    {r.puntaje_total.toFixed(1)}/100
+                                                                                                </span>
+                                                                                            )}
+                                                                                            <div className={`badge-vercel ${estadoCfgR.badge} text-[9px] py-0.5 px-1.5`}>
+                                                                                                <span className={`dot ${estadoCfgR.dot}`} />
+                                                                                                {r.estado}
+                                                                                            </div>
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                            );
-                                                                        })}
-                                                                    </div>
-                                                                );
-                                                            })()}
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                 </tr>
