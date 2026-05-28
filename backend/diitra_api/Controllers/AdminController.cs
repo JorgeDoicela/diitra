@@ -87,9 +87,16 @@ public class AdminController : ControllerBase
     [HttpPost("external")]
     public async Task<IActionResult> RegisterExternal([FromBody] ExternalUserDto dto)
     {
-        var result = await _adminService.RegisterExternalUserAsync(dto);
-        if (result) return Ok(new { message = "Evaluador externo registrado" });
-        return BadRequest(new { message = "El usuario ya existe o hubo un error" });
+        try
+        {
+            var result = await _adminService.RegisterExternalUserAsync(dto);
+            if (result) return Ok(new { message = "Evaluador externo registrado" });
+            return BadRequest(new { message = "No se pudo registrar el evaluador." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet("audit")]

@@ -19,11 +19,15 @@ public interface IPeerReviewService
     Task<string> AsignarArbitroAsync(AsignarArbitroDto dto, int directorId);
     Task<bool> RevocarAsignacionAsync(string revisionUuid, int directorId);
 
+    // ── Revisores Externos (sin cuenta institucional) ──────────
+    Task<string> RegisterRevisorExternoAsync(RegistrarRevisorExternoDto dto, int directorId);
+    Task<IEnumerable<RevisorDisponibleDto>> GetRevisoresExternosAsync();
+
     // ── Cierre y Resolución ────────────────────────────────────
     Task<DictamenDto> CerrarArbitrajeAsync(string projectUuid, int directorId);
+    Task<byte[]> GenerateDictamenPdfAsync(string projectUuid, int directorId);
 
     // ── Compatibilidad legado ──────────────────────────────────
     Task<string> AssignReviewerAsync(CreatePeerReviewDto dto);
     Task<IEnumerable<PeerReviewDto>> GetProjectReviewsAsync(int projectId);
 }
-

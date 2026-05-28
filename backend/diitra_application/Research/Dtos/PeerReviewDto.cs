@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace diitra_application.Research.Dtos;
 
 // ─────────────────────────────────────────────────────────────
@@ -41,7 +44,7 @@ public class ArbitrajeProyectoDto
     public int TotalArbitros { get; set; }
     public int ArbitrosCompletados { get; set; }
     public decimal? PuntajePromedio { get; set; }
-    public string EstadoArbitraje { get; set; } = "Pendiente"; // Pendiente, EnProceso, Completado, Desempate
+    public string EstadoArbitraje { get; set; } = "Pendiente"; // Subestados: Pendiente, EnProceso, Completado, Desempate
     public List<PeerReviewDto> Revisiones { get; set; } = new();
 }
 
@@ -162,3 +165,18 @@ public class DictamenDto
 // Mantenemos compatibilidad con el código legado
 public class CreatePeerReviewDto : AsignarArbitroDto { }
 
+/// <summary>
+/// DTO para registrar un árbitro externo (sin cuenta institucional).
+/// Normativa CACES: los proyectos deben ser evaluados por al menos un revisor externo a la institución.
+/// </summary>
+public class RegistrarRevisorExternoDto
+{
+    public string? Cedula { get; set; }
+    public string Nombres { get; set; } = null!;
+    public string Apellidos { get; set; } = null!;
+    public string Email { get; set; } = null!;
+    public string Institucion { get; set; } = null!;
+    public string? GradoAcademico { get; set; }
+    public string? OrcidId { get; set; }
+    public string? Especialidad { get; set; }
+}

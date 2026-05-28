@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace diitra_application.Security.DTOs;
 
@@ -77,10 +78,22 @@ public class AuditLogDto
 public class ExternalUserDto
 {
     public string Cedula { get; set; } = string.Empty;
-    public string FullName { get; set; } = string.Empty;
+    public string? FullName { get; set; } = string.Empty;
+    public string Nombres { get; set; } = string.Empty;
+    public string Apellidos { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+
+    [JsonPropertyName("especialidad")]
     public string? Especialidad { get; set; }
+
+    [JsonPropertyName("grado_academico")]
     public string? GradoAcademico { get; set; }
+
+    [JsonPropertyName("institucion")]
     public string? Institucion { get; set; }
+
+    [JsonPropertyName("orcid_id")]
+    public string? OrcidId { get; set; }
+
     public string DefaultRole { get; set; } = "DIITRA_REVISOR_EXTERNO";
 }

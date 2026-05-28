@@ -127,6 +127,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             DocumentCategory.InformeAvance => "Informe de Avance",
             DocumentCategory.InformeFinal => "Informe Final",
             DocumentCategory.ActaLiquidacion => "Acta de Liquidación",
+            DocumentCategory.DictamenArbitraje => "Acta de Dictamen de Arbitraje (CACES)",
             DocumentCategory.TerminosDeReferencia => "Términos de Referencia (SERCOP)",
             DocumentCategory.EspecificacionTecnica => "Especificación Técnica (SERCOP)",
             DocumentCategory.CertificacionPresupuestaria => "Certificación Presupuestaria",

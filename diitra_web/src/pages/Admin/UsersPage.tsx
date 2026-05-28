@@ -57,6 +57,7 @@ const UsersPage = () => {
     const [detailUser, setDetailUser] = useState<ManagedUser | null>(null);
     const [showExternalForm, setShowExternalForm] = useState(false);
     const [showAudit, setShowAudit] = useState(false);
+    const [error, setError] = useState('');
 
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
@@ -74,11 +75,13 @@ const UsersPage = () => {
 
     const [externalForm, setExternalForm] = useState({
         cedula: '',
-        full_name: '',
+        nombres: '',
+        apellidos: '',
         email: '',
         especialidad: '',
         grado_academico: '',
-        institucion: ''
+        institucion: '',
+        orcid_id: ''
     });
 
     const fetchUsers = async () => {
@@ -162,14 +165,17 @@ const UsersPage = () => {
 
     const handleRegisterExternal = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         try {
             await api.post('/Admin/external', externalForm);
             setShowExternalForm(false);
-            setExternalForm({ cedula: '', full_name: '', email: '', especialidad: '', grado_academico: '', institucion: '' });
+            setExternalForm({ cedula: '', nombres: '', apellidos: '', email: '', especialidad: '', grado_academico: '', institucion: '', orcid_id: '' });
             fetchUsers();
             fetchAuditLogs();
-        } catch (error) {
-            console.error('Error registering external:', error);
+        } catch (err: any) {
+            console.error('Error registering external:', err);
+            const serverMsg = err?.response?.data?.message || err?.response?.data?.title || 'Error al registrar el evaluador.';
+            setError(serverMsg);
         }
     };
 
@@ -198,7 +204,7 @@ const UsersPage = () => {
 
                         {userType === 'EXTERNO' && (
                             <button
-                                onClick={() => setShowExternalForm(true)}
+                                onClick={() => { setError(''); setShowExternalForm(true); }}
                                 className="btn-brand flex-1 md:flex-none flex items-center justify-center gap-2"
                             >
                                 <UserPlus size={14} /> Nuevo Externo
@@ -444,10 +450,17 @@ const UsersPage = () => {
                                     <p className="section-label text-text-dim">Personal Externo DIITRA - IST Quito</p>
                                 </div>
                             </div>
-                            <button type="button" onClick={() => setShowExternalForm(false)} className="text-text-dim hover:text-text-main transition-colors"><X size={20} /></button>
+                            <button type="button" onClick={() => { setError(''); setShowExternalForm(false); }} className="text-text-dim hover:text-text-main transition-colors"><X size={20} /></button>
                         </div>
                         
-                        <form onSubmit={handleRegisterExternal} className="modal-body">
+                        {error && (
+                            <div className="flex items-center gap-2.5 p-3.5 mx-6 mt-4 rounded-lg bg-error/15 border border-error/30 text-error text-xs font-semibold animate-fade-up">
+                                <AlertTriangle size={14} className="shrink-0" />
+                                {error}
+                            </div>
+                        )}
+                        
+                        <form id="external-register-form" onSubmit={handleRegisterExternal} className="modal-body">
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="col-span-2 space-y-4">
                                     <label className="section-label text-text-main">Identificación y Contacto</label>
@@ -461,9 +474,13 @@ const UsersPage = () => {
                                             <label className="section-label text-text-dim">Correo Electrónico</label>
                                             <input required type="email" value={externalForm.email} onChange={e => setExternalForm({ ...externalForm, email: e.target.value })} className="input-vercel" placeholder="dr.perez@universidad.edu.ec" />
                                         </div>
-                                        <div className="col-span-2 space-y-2">
-                                            <label className="section-label text-text-dim">Nombres Completos (Grado Académico + Nombres)</label>
-                                            <input required type="text" value={externalForm.full_name} onChange={e => setExternalForm({ ...externalForm, full_name: e.target.value })} className="input-vercel !uppercase" placeholder="Ej: PhD. Juan Pérez Arrieta" />
+                                        <div className="space-y-2">
+                                            <label className="section-label text-text-dim">Nombres</label>
+                                            <input required type="text" value={externalForm.nombres} onChange={e => setExternalForm({ ...externalForm, nombres: e.target.value })} className="input-vercel !uppercase" placeholder="Ej: JUAN CARLOS" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="section-label text-text-dim">Apellidos</label>
+                                            <input required type="text" value={externalForm.apellidos} onChange={e => setExternalForm({ ...externalForm, apellidos: e.target.value })} className="input-vercel !uppercase" placeholder="Ej: PÉREZ MORA" />
                                         </div>
                                     </div>
                                 </div>
@@ -490,9 +507,13 @@ const UsersPage = () => {
                                             <label className="section-label text-text-dim">Especialidad (Línea de Inv.)</label>
                                             <input type="text" value={externalForm.especialidad} onChange={e => setExternalForm({ ...externalForm, especialidad: e.target.value })} className="input-vercel" placeholder="Ej: Inteligencia Artificial" />
                                         </div>
-                                        <div className="col-span-2 space-y-2">
+                                        <div className="space-y-2">
                                             <label className="section-label text-text-dim">Institución de Origen</label>
                                             <input type="text" value={externalForm.institucion} onChange={e => setExternalForm({ ...externalForm, institucion: e.target.value })} className="input-vercel" placeholder="Ej: Escuela Politécnica Nacional" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="section-label text-text-dim">ORCID iD</label>
+                                            <input type="text" value={externalForm.orcid_id} onChange={e => setExternalForm({ ...externalForm, orcid_id: e.target.value })} className="input-vercel" placeholder="0000-0000-0000-0000" />
                                         </div>
                                     </div>
                                 </div>
@@ -505,8 +526,8 @@ const UsersPage = () => {
                                 <span>Se asignará automáticamente el rol de Revisor Externo DIITRA</span>
                             </div>
                             <div className="flex gap-3">
-                                <button type="button" onClick={() => setShowExternalForm(false)} className="btn-vercel-secondary">Cancelar</button>
-                                <button type="submit" className="btn-vercel-primary">Registrar Evaluador</button>
+                                <button type="button" onClick={() => { setError(''); setShowExternalForm(false); }} className="btn-vercel-secondary">Cancelar</button>
+                                <button type="submit" form="external-register-form" className="btn-vercel-primary">Registrar Evaluador</button>
                             </div>
                         </div>
                     </div>

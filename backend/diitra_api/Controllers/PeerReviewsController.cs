@@ -20,7 +20,7 @@ public class PeerReviewsController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdStr = User.FindFirst("id_usuario")?.Value;
         if (!int.TryParse(userIdStr, out var userId))
             throw new UnauthorizedAccessException("No se pudo identificar al usuario.");
         return userId;
@@ -172,5 +172,55 @@ public class PeerReviewsController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Descargar el Acta de Dictamen de Arbitraje en PDF (CACES).
+    /// Genera un PDF con doble ciego, código de trazabilidad y soporte de firma digital.
+    /// </summary>
+    [HttpGet("project/{projectUuid}/dictamen-pdf")]
+    public async Task<IActionResult> DescargarDictamenPdf(string projectUuid)
+    {
+        var directorId = GetCurrentUserId();
+        try
+        {
+            var pdfBytes = await _peerReviewService.GenerateDictamenPdfAsync(projectUuid, directorId);
+            var fileName = $"DIITRA_DICTAMEN_ARBITRAJE_{projectUuid[..8].ToUpper()}_{DateTime.Now:yyyyMMdd}.pdf";
+            return File(pdfBytes, "application/pdf", fileName);
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error al generar el PDF: {ex.Message}" });
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  GESTIÓN DE REVISORES EXTERNOS
+    // ════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Registrar un nuevo árbitro externo (sin cuenta institucional).
+    /// Cumple criterio CACES: participación de evaluadores externos a la institución.
+    /// </summary>
+    [HttpPost("revisores/externos")]
+    public async Task<IActionResult> RegisterRevisorExterno([FromBody] RegistrarRevisorExternoDto dto)
+    {
+        var directorId = GetCurrentUserId();
+        var uuid = await _peerReviewService.RegisterRevisorExternoAsync(dto, directorId);
+        return Ok(new { uuid, message = "Revisor externo registrado correctamente." });
+    }
+
+    /// <summary>
+    /// Listar todos los árbitros externos registrados en el sistema.
+    /// </summary>
+    [HttpGet("revisores/externos")]
+    public async Task<IActionResult> GetRevisoresExternos()
+    {
+        var result = await _peerReviewService.GetRevisoresExternosAsync();
+        return Ok(result);
     }
 }

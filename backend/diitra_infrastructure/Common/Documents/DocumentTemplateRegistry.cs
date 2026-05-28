@@ -106,6 +106,18 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresSignature: false,
                 version: 1);
 
+            yield return DocumentTemplate.Create(
+                code: "DICTAMEN_ARBITRAJE",
+                name: "Acta de Dictamen de Arbitraje",
+                description: "Documento oficial CACES del resultado de la evaluación por pares doble ciego. Firmable digitalmente por el Director de Investigación.",
+                category: DocumentCategory.DictamenArbitraje,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/DictamenArbitraje.html -->",
+                requiresLopdp: false,
+                supportsBlind: true,
+                requiresTraceability: true,
+                requiresSignature: true,
+                version: 1);
+
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
             //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()

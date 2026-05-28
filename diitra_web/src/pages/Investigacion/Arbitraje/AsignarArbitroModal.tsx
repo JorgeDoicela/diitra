@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { X, Search, UserCheck, Award, AlertCircle, Loader2, CalendarDays } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { X, Search, UserCheck, Award, AlertCircle, Loader2, CalendarDays, ChevronDown } from 'lucide-react';
 import {
     searchRevisores, asignarArbitro
 } from '../../../services/peerReviewService';
@@ -17,6 +17,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
     const [revisores, setRevisores] = useState<RevisorDisponibleDto[]>([]);
     const [buscando, setBuscando] = useState(false);
     const [revisorSeleccionado, setRevisorSeleccionado] = useState<RevisorDisponibleDto | null>(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [fechaLimite, setFechaLimite] = useState(() => {
         const d = new Date();
         d.setDate(d.getDate() + 21);
@@ -26,8 +27,9 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
     const [enviando, setEnviando] = useState(false);
     const [error, setError] = useState('');
 
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const buscar = useCallback(async () => {
-        if (query.length < 2) { setRevisores([]); return; }
         setBuscando(true);
         try {
             const result = await searchRevisores(query, soloExternos, proyecto.proyecto_uuid);
@@ -40,9 +42,23 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
     }, [query, soloExternos, proyecto.proyecto_uuid]);
 
     useEffect(() => {
-        const timer = setTimeout(buscar, 400);
-        return () => clearTimeout(timer);
-    }, [buscar]);
+        if (query === '') {
+            buscar();
+        } else {
+            const timer = setTimeout(buscar, 400);
+            return () => clearTimeout(timer);
+        }
+    }, [query, buscar]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const handleAsignar = async () => {
         if (!revisorSeleccionado) return;
@@ -83,91 +99,119 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                 </div>
 
                 <div className="modal-body space-y-6">
-                    {/* Buscador */}
+                    {/* Buscador / Selector */}
                     <div>
                         <label className="section-label mb-2 block">
-                            <Search size={10} /> Buscar Árbitro
+                            <Search size={10} /> Seleccionar Árbitro
                         </label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                                <input
-                                    type="text"
-                                    className="input-vercel !pl-9"
-                                    placeholder="Nombre o cédula del árbitro..."
-                                    value={query}
-                                    onChange={(e) => setQuery(e.target.value)}
-                                    autoFocus
-                                />
-                            </div>
-                            <label className="flex items-center gap-2 px-3 py-2 bg-surface rounded-md border border-border-thin cursor-pointer hover:bg-surface-hover transition-colors text-xs text-text-dim whitespace-nowrap">
-                                <input
-                                    type="checkbox"
-                                    className="accent-text-main"
-                                    checked={soloExternos}
-                                    onChange={(e) => setSoloExternos(e.target.checked)}
-                                />
-                                Solo Externos
-                            </label>
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                type="button"
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="w-full flex items-center justify-between px-3 py-2 bg-surface hover:bg-surface-hover border border-border-thin hover:border-border-hover rounded-lg text-sm text-left transition-all duration-200"
+                            >
+                                {revisorSeleccionado ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-5 h-5 rounded-full bg-text-main text-bg-deep text-[8px] font-bold flex items-center justify-center">
+                                            {revisorSeleccionado.nombre_completo.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                        </div>
+                                        <span className="font-semibold text-text-main">
+                                            {revisorSeleccionado.nombre_completo}
+                                        </span>
+                                        {revisorSeleccionado.es_externo && (
+                                            <span className="text-[8px] uppercase tracking-widest text-warning font-bold px-1.5 py-0.5 rounded bg-warning-subtle border border-warning/20">
+                                                Externo
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <span className="text-text-dim">Buscar y seleccionar un árbitro...</span>
+                                )}
+                                <ChevronDown size={16} className={`text-text-dim transition-transform duration-200 ${isDropdownOpen ? 'rotate-180 text-text-main' : ''}`} />
+                            </button>
+
+                            {isDropdownOpen && (
+                                <div className="relative mt-2 p-2.5 bg-bg-deep/40 border border-border-thin rounded-lg shadow-inner animate-scale-up">
+                                    {/* Input de búsqueda interno */}
+                                    <div className="flex gap-2 mb-2">
+                                        <div className="relative flex-1">
+                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                            <input
+                                                type="text"
+                                                className="input-vercel !pl-9"
+                                                placeholder="Escribe el nombre o cédula para filtrar..."
+                                                value={query}
+                                                onChange={(e) => setQuery(e.target.value)}
+                                                autoFocus
+                                            />
+                                        </div>
+                                        <label className="flex items-center gap-2 px-3 py-2 bg-bg-deep rounded-md border border-border-thin cursor-pointer hover:bg-surface-hover transition-colors text-xs text-text-dim whitespace-nowrap">
+                                            <input
+                                                type="checkbox"
+                                                className="accent-text-main"
+                                                checked={soloExternos}
+                                                onChange={(e) => setSoloExternos(e.target.checked)}
+                                            />
+                                            Solo Externos
+                                        </label>
+                                    </div>
+
+                                    {/* Listado filtrado */}
+                                    <div className="max-h-52 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                                        {buscando ? (
+                                            <div className="flex items-center gap-2 text-text-dim text-xs py-6 justify-center">
+                                                <Loader2 size={14} className="animate-spin text-text-main" /> Buscando...
+                                            </div>
+                                        ) : revisores.length === 0 ? (
+                                            <div className="text-center py-8 text-text-dim text-xs font-bold uppercase tracking-widest">
+                                                Sin resultados
+                                            </div>
+                                        ) : (
+                                            revisores.map((rev) => (
+                                                <button
+                                                    key={rev.id_usuario}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setRevisorSeleccionado(rev);
+                                                        setIsDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full text-left p-2.5 rounded-md transition-all flex items-center justify-between ${
+                                                        revisorSeleccionado?.id_usuario === rev.id_usuario
+                                                            ? 'bg-surface-hover border border-text-main/20 text-text-main font-semibold'
+                                                            : 'hover:bg-surface-hover text-text-dim hover:text-text-main'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2.5 min-w-0">
+                                                        <div className={`w-6 h-6 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0
+                                                            ${revisorSeleccionado?.id_usuario === rev.id_usuario ? 'bg-text-main text-bg-deep' : 'bg-bg-deep text-text-main'}`}
+                                                        >
+                                                            {rev.nombre_completo.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                                                        </div>
+                                                        <div className="truncate">
+                                                            <p className="text-xs font-semibold leading-tight text-text-main">{rev.nombre_completo}</p>
+                                                            <p className="text-[10px] text-text-dim truncate mt-0.5">{rev.email}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right shrink-0 flex items-center gap-2">
+                                                        {rev.especialidad && (
+                                                            <span className="text-[9px] bg-bg-deep text-text-dim px-1.5 py-0.5 rounded border border-border-thin truncate max-w-[100px]">
+                                                                {rev.especialidad}
+                                                            </span>
+                                                        )}
+                                                        {rev.revisiones_activas > 0 && (
+                                                            <span className="text-[9px] text-warning font-bold bg-warning-subtle border border-warning/20 px-1 py-0.5 rounded">
+                                                                {rev.revisiones_activas} act.
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-
-                    {/* Resultados */}
-                    {query.length >= 2 && (
-                        <div className="max-h-52 overflow-y-auto space-y-2 pr-1">
-                            {buscando ? (
-                                <div className="flex items-center gap-2 text-text-dim text-xs py-4 justify-center">
-                                    <Loader2 size={14} className="animate-spin" /> Buscando...
-                                </div>
-                            ) : revisores.length === 0 ? (
-                                <div className="text-center py-6 text-text-dim text-xs font-bold uppercase tracking-widest">
-                                    Sin resultados
-                                </div>
-                            ) : revisores.map((rev) => (
-                                <button
-                                    key={rev.id_usuario}
-                                    onClick={() => setRevisorSeleccionado(rev)}
-                                    className={`w-full text-left p-3 rounded-lg border transition-all ${revisorSeleccionado?.id_usuario === rev.id_usuario
-                                        ? 'border-text-main bg-surface text-text-main'
-                                        : 'border-border-thin hover:border-border-thin/60 hover:bg-surface/50 text-text-dim'
-                                    }`}
-                                >
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold uppercase
-                                                ${revisorSeleccionado?.id_usuario === rev.id_usuario ? 'bg-text-main text-bg-deep' : 'bg-surface-hover text-text-main'}`}
-                                            >
-                                                {rev.nombre_completo.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-semibold text-text-main leading-tight">{rev.nombre_completo}</p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    {rev.especialidad && (
-                                                        <span className="text-[10px] text-text-dim flex items-center gap-1">
-                                                            <Award size={9} /> {rev.especialidad}
-                                                        </span>
-                                                    )}
-                                                    {rev.grado_academico_maximo && (
-                                                        <span className="status-tag text-text-dim">{rev.grado_academico_maximo}</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right shrink-0">
-                                            {rev.orcid_id && (
-                                                <span className="status-tag text-text-dim">ORCID</span>
-                                            )}
-                                            {rev.revisiones_activas > 0 && (
-                                                <p className="text-[10px] text-warning font-bold mt-1">
-                                                    {rev.revisiones_activas} activas
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
 
                     {/* Árbitro seleccionado — detalles */}
                     {revisorSeleccionado && (
@@ -274,3 +318,5 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
 };
 
 export default AsignarArbitroModal;
+// Trigger refresh of TS server diagnostics
+

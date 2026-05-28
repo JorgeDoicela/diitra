@@ -746,9 +746,11 @@ CREATE TABLE inv_revisiones_pares (
     idRevision        INT           AUTO_INCREMENT PRIMARY KEY,
     uuid              VARCHAR(36)      NOT NULL UNIQUE,
     idProyecto        INT           NOT NULL,
-    idRevisor         INT(11)       NOT NULL, -- ID del Usuario/Profesor
+    idRevisor         INT(11)       NULL COMMENT 'Referencia al evaluador (interno o externo) en la tabla usuarios',
     fechaAsignacion   TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
     fechaLimite       DATE          NOT NULL,
+    fechaCompletado   TIMESTAMP     NULL COMMENT 'Fecha en que el árbitro completó su evaluación. Usado para el KPI de tiempo promedio.',
+    dictamenRevisor   ENUM('Pendiente', 'Aprueba', 'Rechaza') DEFAULT 'Pendiente' COMMENT 'Dictamen individual del árbitro, calculado al completar evaluación (>=70=Aprueba).',
     estado            ENUM('Pendiente', 'Completada', 'Rechazada', 'Expirada') DEFAULT 'Pendiente',
     esExterno         TINYINT(1)    DEFAULT 0,
     esDobleCiego      TINYINT(1)    DEFAULT 1 COMMENT 'Si es 1, el núcleo oculta identidades',
@@ -835,6 +837,8 @@ CREATE INDEX idx_objetivos_proyecto         ON inv_objetivos_proyecto(idProyecto
 CREATE INDEX idx_cronograma_proyecto        ON inv_cronograma(idProyecto);
 CREATE INDEX idx_gastos_proyecto            ON inv_gastos(idProyecto);
 CREATE INDEX idx_informesav_proyecto        ON inv_informes_avance(idProyecto);
+CREATE INDEX idx_rev_pares_revisor          ON inv_revisiones_pares(idRevisor);
+CREATE INDEX idx_rev_pares_completado       ON inv_revisiones_pares(fechaCompletado);
 
 -- =============================================================================
 -- GRUPO K: NOTIFICACIONES, SEGURIDAD Y METADATA
@@ -1241,6 +1245,69 @@ CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
 -- SEMILLAS: Documentos Base DIITRA Builder
 -- =============================================================================
 
-INSERT INTO inv_document_templates (code, name, description, html_content, category, collaborative_fields_json) VALUES 
+INSERT INTO inv_document_templates (code, name, description, html_content, category, collaborative_fields_json) VALUES
 ('PROTOCOLO_INVESTIGACION', 'Protocolo de Investigación', 'Template oficial para la presentación de proyectos SENESCYT/CACES.', '<h1>Protocolo</h1>', 1, '["antecedentes", "justificacion", "marcoTeorico", "metodologia", "evaluacion"]'),
 ('INFORME_FINAL_INVESTIGACION', 'Informe Final de Investigación', 'Template consolidado para el cierre de proyectos CACES 2026.', '<h1>Informe Final</h1>', 1, '["resumen_ejecutivo", "introduccion", "desarrollo_tecnico", "analisis_resultados", "conclusiones_recomendaciones"]');
+
+INSERT IGNORE INTO inv_document_templates
+    (code, name, description, html_content, category, requires_signature, supports_blind_mode, requires_traceability, requires_lopdp)
+VALUES
+    (
+        'DICTAMEN_ARBITRAJE',
+        'Acta de Dictamen de Arbitraje',
+        'Documento oficial CACES del resultado de la evaluación por pares doble ciego. Requiere firma digital del Director de Investigación.',
+        '<div class="dictamen-header">
+            <div class="logo-area">[[institucion_nombre]]</div>
+            <h1>ACTA DE DICTAMEN DE ARBITRAJE</h1>
+            <p class="subtitulo">Departamento de Investigación e Innovación Traversari — DIITRA</p>
+            <p class="codigo-trazabilidad">Código: [[traceability_code]]</p>
+        </div>
+        <section class="datos-proyecto">
+            <h2>1. Datos del Proyecto</h2>
+            <table>
+                <tr><td><strong>Código Institucional:</strong></td><td>[[codigo_institucional]]</td></tr>
+                <tr><td><strong>Título:</strong></td><td>[[proyecto_titulo]]</td></tr>
+                <tr><td><strong>Convocatoria:</strong></td><td>[[convocatoria_titulo]]</td></tr>
+                <tr><td><strong>Línea de Investigación:</strong></td><td>[[linea_investigacion]]</td></tr>
+                <tr><td><strong>Fecha de Postulación:</strong></td><td>[[fecha_postulacion]]</td></tr>
+                <tr><td><strong>Fecha de Cierre del Arbitraje:</strong></td><td>[[fecha_cierre]]</td></tr>
+            </table>
+        </section>
+        <section class="panel-arbitros">
+            <h2>2. Panel de Árbitros Evaluadores</h2>
+            <p><em>La identidad de los árbitros se mantiene bajo reserva de conformidad con el proceso de doble ciego (Reglamento de Régimen Académico, Art. 75).</em></p>
+            [[tabla_arbitros]]
+        </section>
+        <section class="resolucion">
+            <h2>3. Resolución Final</h2>
+            <table>
+                <tr><td><strong>Puntaje Promedio Ponderado:</strong></td><td>[[puntaje_promedio]]/100</td></tr>
+                <tr><td><strong>Puntaje Mínimo de Aprobación:</strong></td><td>[[puntaje_minimo]]/100</td></tr>
+                <tr><td><strong>Dictamen:</strong></td><td class="dictamen-[[dictamen_clase]]"><strong>[[dictamen_resultado]]</strong></td></tr>
+            </table>
+            <div class="observaciones">
+                <h3>Observaciones Generales del Panel:</h3>
+                <p>[[observaciones_generales]]</p>
+            </div>
+        </section>
+        <section class="firma-digital">
+            <h2>4. Firma y Certificación</h2>
+            <div class="firma-container">
+                <div class="firma-imagen">[[firma_imagen]]</div>
+                <p><strong>Director/a de Investigación e Innovación</strong></p>
+                <p>[[director_nombre]]</p>
+                <p>DIITRA — [[institucion_nombre]]</p>
+                <p>Fecha de Firma: [[fecha_firma]]</p>
+            </div>
+            <div class="qr-container">
+                <p><strong>Verificación de Integridad:</strong></p>
+                [[qr_code]]
+                <p class="qr-url">[[verification_url]]</p>
+            </div>
+        </section>',
+        2,   -- category: 2 = Arbitraje
+        1,   -- requires_signature = TRUE
+        1,   -- supports_blind_mode = TRUE
+        1,   -- requires_traceability = TRUE
+        0    -- requires_lopdp = FALSE (no datos personales sensibles en el acta)
+    );
