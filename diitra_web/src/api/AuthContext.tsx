@@ -19,6 +19,8 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (credentials: any) => Promise<User>;
+    magicLogin: (token: string) => Promise<{ user: User; pin: string | null }>;
+    handoffLogin: (pin: string) => Promise<User>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
     hasPermission: (module: string, operation: string) => boolean;
@@ -64,6 +66,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Normalizar los roles para usar los códigos de roles (role_codes) en lugar de los nombres descriptivos.
         // Esto mantiene la coherencia entre el estado posterior al login y el obtenido al refrescar la página.
+        const normalizedUser: User = {
+            ...data,
+            roles: data.role_codes || data.roles || [],
+            role: data.role_codes?.[0] || data.role
+        };
+        
+        setUser(normalizedUser);
+        localStorage.setItem('diitra_logged_in', 'true');
+        return normalizedUser;
+    };
+
+    const magicLogin = async (token: string) => {
+        const response = await api.post('/auth/magic-login', { token });
+        const { auth, pin } = response.data;
+        
+        const normalizedUser: User = {
+            ...auth,
+            roles: auth.role_codes || auth.roles || [],
+            role: auth.role_codes?.[0] || auth.role
+        };
+        
+        setUser(normalizedUser);
+        localStorage.setItem('diitra_logged_in', 'true');
+        return { user: normalizedUser, pin: pin || null };
+    };
+
+    const handoffLogin = async (pin: string) => {
+        const response = await api.post('/auth/magic-handoff', { pin });
+        const data = response.data;
+        
         const normalizedUser: User = {
             ...data,
             roles: data.role_codes || data.roles || [],
@@ -125,6 +157,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAuthenticated: !!user, 
             isLoading, 
             login, 
+            magicLogin,
+            handoffLogin,
             logout, 
             refreshUser,
             hasPermission,

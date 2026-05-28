@@ -26,43 +26,87 @@ public class AuthService : IAuthService
         _auditService = auditService;
     }
 
-    public async Task<AuthResponse?> LoginAsync(LoginRequest request)
+    public async Task<(AuthResponse? Auth, LoginBlockedResponse? Blocked)> LoginAsync(LoginRequest request)
     {
         var username = request.Username.Trim();
         var password = request.Password.Trim();
 
-        // 1. Buscar usuario en DIITRA
+        // ── 1. Buscar usuario en DIITRA ──────────────────────────────────────────
         var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == username && u.Activo);
 
         if (user != null)
         {
+            // ── Verificar bloqueo activo ─────────────────────────────────────────
+            if (user.BloqueadoHasta.HasValue && user.BloqueadoHasta.Value > DateTime.UtcNow)
+            {
+                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.UtcNow).TotalSeconds;
+                return (null, new LoginBlockedResponse
+                {
+                    Message = $"Cuenta bloqueada temporalmente por exceso de intentos fallidos. Intenta de nuevo en {remaining} segundos.",
+                    BloqueadoHasta = user.BloqueadoHasta.Value,
+                    SegundosRestantes = remaining
+                });
+            }
+
             if (VerifyPassword(user, password))
             {
+                // ── Éxito: resetear contadores ───────────────────────────────────
+                user.IntentosFallidos = 0;
+                user.BloqueadoHasta = null;
+                await _context.SaveChangesAsync();
+
                 var response = await GetAuthResponseAsync(user);
                 await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (Usuario DIITRA)", "SEGURIDAD");
-                return response;
+                return (response, null);
             }
-            return null;
+
+            // ── Fallo: incrementar intentos y calcular bloqueo progresivo ────────
+            user.IntentosFallidos++;
+            user.BloqueadoHasta = user.IntentosFallidos switch
+            {
+                >= 12 => DateTime.UtcNow.AddMinutes(60),
+                >= 9  => DateTime.UtcNow.AddMinutes(30),
+                >= 6  => DateTime.UtcNow.AddMinutes(15),
+                >= 3  => DateTime.UtcNow.AddMinutes(5),
+                _     => null  // < 3 intentos: aún no se bloquea
+            };
+            await _context.SaveChangesAsync();
+            await _auditService.LogActionAsync(user.IdUsuario, "LOGIN_FAILED",
+                $"Intento fallido #{user.IntentosFallidos}{(user.BloqueadoHasta.HasValue ? $" — cuenta bloqueada hasta {user.BloqueadoHasta:u}" : "")}", "SEGURIDAD");
+
+            // Si acaba de superar un umbral, devolver bloqueo
+            if (user.BloqueadoHasta.HasValue)
+            {
+                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.UtcNow).TotalSeconds;
+                return (null, new LoginBlockedResponse
+                {
+                    Message = $"Demasiados intentos fallidos. Cuenta bloqueada por {GetLockoutMinutes(user.IntentosFallidos)} minutos.",
+                    BloqueadoHasta = user.BloqueadoHasta.Value,
+                    SegundosRestantes = remaining
+                });
+            }
+
+            // Intentos 1 y 2: credenciales incorrectas sin bloqueo
+            return (null, null);
         }
 
-        // 2. JIT Provisioning: Intentar buscar en SIGAFI (Docentes)
+        // ── 2. JIT Provisioning: Docentes ────────────────────────────────────────
         var profesor = await _context.Profesores
             .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && (p.Activo == 1 || p.Activo == null));
 
         if (profesor != null)
         {
-            // Validar clave legada de SIGAFI (Asumimos texto plano o BCrypt si ya fue migrada)
             if (profesor.Clave == password || (profesor.Clave != null && BCrypt.Net.BCrypt.Verify(password, profesor.Clave)))
             {
                 string fullNombre = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
                 user = await ProvisionUserAsync(username, fullNombre, password, "profesor", username);
                 var response = await GetAuthResponseAsync(user);
                 await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Profesor)", "SEGURIDAD");
-                return response;
+                return (response, null);
             }
         }
 
-        // 3. JIT Provisioning: Intentar buscar en SIGAFI (Alumnos)
+        // ── 3. JIT Provisioning: Alumnos ─────────────────────────────────────────
         var alumno = await _context.Alumnos
             .FirstOrDefaultAsync(a => a.UserAlumno == username && a.Password == password);
 
@@ -72,11 +116,19 @@ public class AuthService : IAuthService
             user = await ProvisionUserAsync(username, fullNombre, password, "alumno", alumno.IdAlumno);
             var response = await GetAuthResponseAsync(user);
             await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Alumno)", "SEGURIDAD");
-            return response;
+            return (response, null);
         }
 
-        return null;
+        return (null, null);
     }
+
+    private static int GetLockoutMinutes(int intentos) => intentos switch
+    {
+        >= 12 => 60,
+        >= 9  => 30,
+        >= 6  => 15,
+        _     => 5
+    };
 
     public async Task<User?> GetOrProvisionUserByCedulaAsync(string cedula)
     {
@@ -134,6 +186,18 @@ public class AuthService : IAuthService
     public async Task<User> ProvisionUserAsync(string username, string name, string password, string table, string sigafiId)
     {
         string contraseniaHash = IsBCryptHash(password) ? password : BCrypt.Net.BCrypt.HashPassword(password, 11);
+        string? email = null;
+        if (table == "profesor")
+        {
+            var p = await _context.Profesores.FirstOrDefaultAsync(prof => prof.IdProfesor == sigafiId);
+            if (p != null) email = p.EmailInstitucional ?? p.Email;
+        }
+        else if (table == "alumno")
+        {
+            var a = await _context.Alumnos.FirstOrDefaultAsync(al => al.IdAlumno == sigafiId);
+            if (a != null) email = a.EmailInstitucional ?? a.Email;
+        }
+
         var user = new User
         {
             IdSigafi = sigafiId,
@@ -141,7 +205,8 @@ public class AuthService : IAuthService
             Contrasenia = contraseniaHash,
             Activo = true,
             Administrador = (username == MASTER_ADMIN_ID),
-            TablaSigafi = table
+            TablaSigafi = table,
+            EmailInstitucional = email
         };
 
         _context.Users.Add(user);
@@ -506,5 +571,67 @@ public class AuthService : IAuthService
         var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == username && u.Activo);
         if (user == null) return null;
         return await GetAuthResponseAsync(user);
+    }
+
+    public async Task<AuthResponse?> GetAuthResponseForUserByIdAsync(int idUsuario)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == idUsuario && u.Activo);
+        if (user == null) return null;
+        return await GetAuthResponseAsync(user);
+    }
+
+    public async Task<MagicLoginResponseDto?> ValidateAndConsumeMagicLinkAsync(string tokenHash, string? ipAddress, string? userAgent)
+    {
+        var magicLink = await _context.Set<InvMagicLink>()
+            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash && !l.Utilizado && l.FechaExpiracion > DateTime.UtcNow);
+
+        if (magicLink == null) return null;
+
+        // Mark as used
+        magicLink.Utilizado = true;
+        magicLink.FechaUtilizado = DateTime.UtcNow;
+        magicLink.IpUtilizacion = ipAddress;
+        magicLink.UserAgent = userAgent;
+
+        // Generar PIN alfanumérico de 8 caracteres (fácil de copiar, difícil de adivinar)
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusiones
+        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        var bytes = new byte[8];
+        rng.GetBytes(bytes);
+        var rawPin = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
+        // Formato legible: XXXX-XXXX
+        var pin = $"{rawPin[..4]}-{rawPin[4..]}";
+        magicLink.CodigoPinHandoff = pin;
+        magicLink.FechaExpiracionPin = DateTime.UtcNow.AddMinutes(30);
+
+        await _context.SaveChangesAsync();
+
+        var authResponse = await GetAuthResponseForUserByIdAsync(magicLink.IdUsuario);
+        if (authResponse == null) return null;
+
+        return new MagicLoginResponseDto
+        {
+            Auth = authResponse,
+            Pin = pin
+        };
+    }
+
+    public async Task<AuthResponse?> ValidateAndConsumeHandoffPinAsync(string pin, string? ipAddress)
+    {
+        var magicLink = await _context.Set<InvMagicLink>()
+            .FirstOrDefaultAsync(l => l.CodigoPinHandoff == pin && l.FechaExpiracionPin > DateTime.UtcNow);
+
+        if (magicLink == null) return null;
+
+        // Clear pin to make it one-time use
+        magicLink.CodigoPinHandoff = null;
+        magicLink.FechaExpiracionPin = null;
+        
+        // Audit/log IP
+        magicLink.IpUtilizacion = ipAddress;
+
+        await _context.SaveChangesAsync();
+
+        return await GetAuthResponseForUserByIdAsync(magicLink.IdUsuario);
     }
 }

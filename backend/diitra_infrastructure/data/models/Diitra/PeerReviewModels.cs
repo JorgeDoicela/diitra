@@ -53,3 +53,53 @@ public class InvEvaluacionesDetalle
     [ForeignKey("IdRevision")]
     public virtual InvRevisionesPares Revision { get; set; } = null!;
 }
+
+[Table("inv_magic_links")]
+public class InvMagicLink
+{
+    [Key]
+    [Column("id_magic_link")]
+    public int IdMagicLink { get; set; }
+
+    [Column("id_usuario")]
+    public int IdUsuario { get; set; }
+
+    [Column("token_hash")]
+    [Required]
+    [MaxLength(64)]
+    public string TokenHash { get; set; } = null!;
+
+    [Column("fecha_creacion")]
+    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+    [Column("fecha_expiracion")]
+    public DateTime FechaExpiracion { get; set; }
+
+    [Column("utilizado")]
+    public bool Utilizado { get; set; } = false;
+
+    [Column("fecha_utilizado")]
+    public DateTime? FechaUtilizado { get; set; }
+
+    [Column("ip_creacion")]
+    [MaxLength(45)]
+    public string? IpCreacion { get; set; }
+
+    [Column("ip_utilizacion")]
+    [MaxLength(45)]
+    public string? IpUtilizacion { get; set; }
+
+    [Column("user_agent")]
+    [MaxLength(255)]
+    public string? UserAgent { get; set; }
+
+    [Column("codigo_pin_handoff")]
+    [MaxLength(6)]
+    public string? CodigoPinHandoff { get; set; }
+
+    [Column("fecha_expiracion_pin")]
+    public DateTime? FechaExpiracionPin { get; set; }
+
+    [ForeignKey("IdUsuario")]
+    public virtual User Usuario { get; set; } = null!;
+}

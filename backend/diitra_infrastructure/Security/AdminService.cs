@@ -408,7 +408,8 @@ public class AdminService : IAdminService
                     Nombre = fullNombre,
                     Contrasenia = BCrypt.Net.BCrypt.HashPassword(s.Password ?? "cambiame", 11),
                     Activo = true,
-                    TablaSigafi = "alumno"
+                    TablaSigafi = "alumno",
+                    EmailInstitucional = s.EmailInstitucional ?? s.Email
                 };
             }
             else
@@ -421,7 +422,8 @@ public class AdminService : IAdminService
                     Nombre = fullNombre,
                     Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame", 11),
                     Activo = true,
-                    TablaSigafi = "profesor"
+                    TablaSigafi = "profesor",
+                    EmailInstitucional = p.EmailInstitucional ?? p.Email
                 };
             }
 
@@ -543,7 +545,8 @@ public class AdminService : IAdminService
             Nombre = nombreCompleto,
             Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11),
             Activo = true,
-            TablaSigafi = "otros"
+            TablaSigafi = "otros",
+            EmailInstitucional = dto.Email
         };
 
         _context.Users.Add(user);
