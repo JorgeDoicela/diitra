@@ -11,6 +11,9 @@ import ConvocatoriasPage from './pages/Investigacion/Convocatorias/Convocatorias
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import MyProjectsPage from './pages/Investigacion/Proyectos/MyProjectsPage';
 import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
+import EvaluacionPage from './pages/Investigacion/PeerReview/EvaluacionPage';
+import ArbitrajePage from './pages/Investigacion/Arbitraje/ArbitrajePage';
+import ArbitrajeProyecto from './pages/Investigacion/Arbitraje/ArbitrajeProyecto';
 import { ProjectWorkspace } from './pages/Investigacion/Proyectos/Workspace/ProjectWorkspace';
 import MonitoringPage from './pages/Investigacion/Monitoreo/MonitoringPage';
 import GroupsPage from './pages/Admin/GroupsPage';
@@ -167,6 +170,9 @@ function App() {
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<MonitoringPage />} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
+                            <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
+                            <Route path="/arbitraje" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'ADMIN_SISTEMA', 'DIRECTOR_INV', 'DOCENTE_INV']}><ArbitrajePage /></RoleRoute>} />
+                            <Route path="/arbitraje/proyecto/:projectUuid" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'ADMIN_SISTEMA', 'DIRECTOR_INV', 'DOCENTE_INV']}><ArbitrajeProyecto /></RoleRoute>} />
                             <Route path="/verify" element={<VerifyDocument />} />
                         </Route>
 

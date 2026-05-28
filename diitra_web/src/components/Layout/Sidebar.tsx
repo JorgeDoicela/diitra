@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -19,7 +19,8 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
     { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true },
     { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE', 'DOCENTE_INV'] },
-    { name: 'Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
+    { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
+    { name: 'Arbitraje', icon: Gavel, path: '/arbitraje', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA', 'DIRECTOR_INV', 'DOCENTE_INV'] },
     { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'] },
     { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'] },
     { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'] },
