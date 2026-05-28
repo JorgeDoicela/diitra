@@ -8,6 +8,7 @@ using Diitra.Application.Common.Documents;
 using Diitra.Application.Common;
 using diitra_application.Common.Notifications;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace diitra_infrastructure.Research;
 
@@ -19,8 +20,9 @@ public class PeerReviewService : IPeerReviewService
     private readonly INotificationService _notificationService;
     private readonly IConfiguration _configuration;
     private readonly IAuthService _authService;
+    private readonly ILogger<PeerReviewService> _logger;
 
-    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration, IAuthService authService)
+    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration, IAuthService authService, ILogger<PeerReviewService> logger)
     {
         _context = context;
         _auditService = auditService;
@@ -28,6 +30,7 @@ public class PeerReviewService : IPeerReviewService
         _notificationService = notificationService;
         _configuration = configuration;
         _authService = authService;
+        _logger = logger;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -126,8 +129,20 @@ public class PeerReviewService : IPeerReviewService
         {
             try
             {
+                _logger.LogInformation(
+                    "[PeerReview] DIAGNÓSTICO: proyecto.Uuid={ProyectoUuid}, proyecto.Justificacion nulo/vacío={JustVacia}, proyecto.Metodologia nulo/vacío={MetVacia}",
+                    proyecto.Uuid,
+                    string.IsNullOrWhiteSpace(justificacionFinal),
+                    string.IsNullOrWhiteSpace(metodologiaFinal));
+
                 var docInstance = await _context.DocumentInstances
                     .FirstOrDefaultAsync(i => i.EntityUuid == proyecto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
+
+                _logger.LogInformation(
+                    "[PeerReview] DIAGNÓSTICO: docInstance encontrada={Encontrada}, docInstance.Uuid={InstUuid}, docInstance.EntityUuid={EntUuid}",
+                    docInstance != null,
+                    docInstance?.Uuid ?? "NULL",
+                    docInstance?.EntityUuid ?? "NULL");
 
                 if (docInstance != null)
                 {
@@ -142,6 +157,7 @@ public class PeerReviewService : IPeerReviewService
                             justEl.ValueKind == System.Text.Json.JsonValueKind.String)
                         {
                             justificacionFinal = justEl.GetString();
+                            _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Justificacion recuperada del DataSnapshotJson ({Chars} chars)", justificacionFinal?.Length ?? 0);
                         }
 
                         if (string.IsNullOrWhiteSpace(metodologiaFinal) &&
@@ -149,14 +165,20 @@ public class PeerReviewService : IPeerReviewService
                             metEl.ValueKind == System.Text.Json.JsonValueKind.String)
                         {
                             metodologiaFinal = metEl.GetString();
+                            _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Metodologia recuperada del DataSnapshotJson ({Chars} chars)", metodologiaFinal?.Length ?? 0);
                         }
                     }
 
                     // Fallback directo a inv_cowork_documentos para recuperar el contenido colaborativo en vivo
                     if (string.IsNullOrWhiteSpace(justificacionFinal))
                     {
+                        var coworkKey = $"{docInstance.Uuid}_Justificacion";
+                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Buscando CoWork Justificacion con Uuid={Key}", coworkKey);
                         var coworkJust = await _context.InvCoworkDocumentos
-                            .FirstOrDefaultAsync(d => d.Uuid == $"{docInstance.Uuid}_Justificacion");
+                            .FirstOrDefaultAsync(d => d.Uuid == coworkKey);
+                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: CoWork Justificacion encontrado={Encontrado}, ContentHtml vacío={HtmlVacio}",
+                            coworkJust != null,
+                            string.IsNullOrWhiteSpace(coworkJust?.ContentHtml));
                         if (coworkJust != null && !string.IsNullOrWhiteSpace(coworkJust.ContentHtml))
                         {
                             justificacionFinal = coworkJust.ContentHtml;
@@ -165,8 +187,13 @@ public class PeerReviewService : IPeerReviewService
 
                     if (string.IsNullOrWhiteSpace(metodologiaFinal))
                     {
+                        var coworkKey = $"{docInstance.Uuid}_Metodologia";
+                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Buscando CoWork Metodologia con Uuid={Key}", coworkKey);
                         var coworkMet = await _context.InvCoworkDocumentos
-                            .FirstOrDefaultAsync(d => d.Uuid == $"{docInstance.Uuid}_Metodologia");
+                            .FirstOrDefaultAsync(d => d.Uuid == coworkKey);
+                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: CoWork Metodologia encontrado={Encontrado}, ContentHtml vacío={HtmlVacio}",
+                            coworkMet != null,
+                            string.IsNullOrWhiteSpace(coworkMet?.ContentHtml));
                         if (coworkMet != null && !string.IsNullOrWhiteSpace(coworkMet.ContentHtml))
                         {
                             metodologiaFinal = coworkMet.ContentHtml;
@@ -174,8 +201,9 @@ public class PeerReviewService : IPeerReviewService
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "[PeerReview] DIAGNÓSTICO: Error en el fallback de contenido para proyecto {Uuid}", proyecto.Uuid);
                 // Fallback silencioso: si el snapshot o el cowork falla, continuar normalmente sin datos de contenido.
             }
         }
