@@ -18,14 +18,16 @@ public class PeerReviewService : IPeerReviewService
     private readonly IDocumentEngine _documentEngine;
     private readonly INotificationService _notificationService;
     private readonly IConfiguration _configuration;
+    private readonly IAuthService _authService;
 
-    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration)
+    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration, IAuthService authService)
     {
         _context = context;
         _auditService = auditService;
         _documentEngine = documentEngine;
         _notificationService = notificationService;
         _configuration = configuration;
+        _authService = authService;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -523,29 +525,8 @@ public class PeerReviewService : IPeerReviewService
             var revisorUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == dto.IdRevisor);
             if (revisorUser != null && !string.IsNullOrEmpty(revisorUser.EmailInstitucional))
             {
-                // Generar token aleatorio criptográficamente seguro
-                var tokenBytes = new byte[32];
-                using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
-                {
-                    rng.GetBytes(tokenBytes);
-                }
-                var plainToken = Convert.ToHexString(tokenBytes);
-
-                // Calcular Hash SHA-256
-                var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
-                var tokenHash = Convert.ToHexString(tokenHashBytes);
-
-                // Guardar en inv_magic_links (expiración extendida dinámicamente hasta la fecha límite del arbitraje)
-                var magicLink = new InvMagicLink
-                {
-                    IdUsuario = revisorUser.IdUsuario,
-                    TokenHash = tokenHash,
-                    FechaCreacion = DateTime.UtcNow,
-                    FechaExpiracion = dto.FechaLimite,
-                    Utilizado = false
-                };
-                _context.Set<InvMagicLink>().Add(magicLink);
-                await _context.SaveChangesAsync();
+                // Crear el enlace mágico centralizadamente a través del servicio de autenticación
+                var plainToken = await _authService.CreateMagicLinkAsync(revisorUser.IdUsuario, dto.FechaLimite);
 
                 // Obtener URL base de la configuración
                 var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";

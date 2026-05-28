@@ -200,13 +200,24 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                             ¿No tienes acceso? Contacta a la Dirección de Investigación.
                         </p>
 
-                        {/* Acceso por PIN para revisores externos */}
-                        <button
-                            onClick={() => navigate('/auth/pin')}
-                            className="w-full border border-border-thin rounded-lg px-4 py-2.5 text-[10px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-2"
-                        >
-                            <span className="uppercase tracking-widest">Tengo un código PIN de acceso</span>
-                        </button>
+                        {/* Acceso para revisores externos */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => navigate('/auth/pin')}
+                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5"
+                                title="Ingresar con código PIN de handoff"
+                            >
+                                <span className="uppercase tracking-widest">Tengo un PIN</span>
+                            </button>
+
+                            <button
+                                onClick={() => navigate('/auth/magic-resend')}
+                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5"
+                                title="Solicitar reenvío de enlace de acceso"
+                            >
+                                <span className="uppercase tracking-widest">Perdí mi Enlace</span>
+                            </button>
+                        </div>
 
                         <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
                             <button onClick={() => navigate('/')} className="hover:text-text-main transition-colors">Inicio</button>

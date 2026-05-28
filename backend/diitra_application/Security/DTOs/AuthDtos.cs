@@ -50,3 +50,8 @@ public class MagicLoginResponseDto
     public AuthResponse Auth { get; set; } = null!;
     public string? Pin { get; set; }
 }
+
+public class MagicResendRequest
+{
+    public string Email { get; set; } = null!;
+}

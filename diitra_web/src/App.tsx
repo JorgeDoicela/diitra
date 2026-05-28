@@ -7,6 +7,7 @@ import Landing from './pages/Landing/Landing';
 import Login from './pages/Login/Login';
 import MagicLogin from './pages/Login/MagicLogin';
 import PinHandoff from './pages/Login/PinHandoff';
+import MagicResend from './pages/Login/MagicResend';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
@@ -150,6 +151,9 @@ function App() {
                         } />
                         <Route path="/auth/pin" element={
                             <PinHandoff currentTheme={theme} />
+                        } />
+                        <Route path="/auth/magic-resend" element={
+                            <MagicResend currentTheme={theme} />
                         } />
 
                         {/* Internal Pages with Layout (Stable) */}
