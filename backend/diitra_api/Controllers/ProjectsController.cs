@@ -40,9 +40,19 @@ namespace diitra_api.Controllers
             [FromQuery] bool isDraft = true,
             [FromQuery] bool isBlind = false)
         {
+            // Robustez: Si el DTO está incompleto (ej: Titulo nulo) y tenemos el UUID, resolvemos los datos reales desde BD.
+            if (string.IsNullOrEmpty(dto.Titulo) && !string.IsNullOrEmpty(dto.Uuid))
+            {
+                var resolvedDto = await _projectOrchestrator.GetProjectDetailAsync(dto.Uuid);
+                if (resolvedDto != null)
+                {
+                    dto = resolvedDto;
+                }
+            }
+
             var request = new DocumentRequest
             {
-                TemplateCode = isBlind ? "PROTOCOLO_PEER_REVIEW" : "PROTOCOLO_INVESTIGACION",
+                TemplateCode = "PROTOCOLO_INVESTIGACION",
                 Data = dto,
                 IsDraftMode = isDraft,
                 IsBlindMode = isBlind,
@@ -81,7 +91,7 @@ namespace diitra_api.Controllers
         {
             var request = new DocumentRequest
             {
-                TemplateCode = "PROTOCOLO_PEER_REVIEW",
+                TemplateCode = "PROTOCOLO_INVESTIGACION",
                 Data = dto,
                 IsBlindMode = true,
                 RequestedBy = User.Identity?.Name ?? "sistema"
