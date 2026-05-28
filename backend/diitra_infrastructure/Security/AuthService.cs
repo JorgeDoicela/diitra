@@ -16,14 +16,17 @@ public class AuthService : IAuthService
     private readonly DiitraContext _context;
     private readonly IConfiguration _configuration;
     private readonly IAuditService _auditService;
+    private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
     private const string MASTER_ADMIN_ID = "0302144159";
     private static bool _rbacSeeded = false;
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime LockedUntil)> _ipLockouts = new();
 
-    public AuthService(DiitraContext context, IConfiguration configuration, IAuditService auditService)
+    public AuthService(DiitraContext context, IConfiguration configuration, IAuditService auditService, diitra_application.Common.Notifications.INotificationService notificationService)
     {
         _context = context;
         _configuration = configuration;
         _auditService = auditService;
+        _notificationService = notificationService;
     }
 
     public async Task<(AuthResponse? Auth, LoginBlockedResponse? Blocked)> LoginAsync(LoginRequest request)
@@ -622,10 +625,49 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse?> ValidateAndConsumeHandoffPinAsync(string pin, string? ipAddress)
     {
+        // ── 1. Verificar bloqueo por IP ──────────────────────────────────────────
+        if (!string.IsNullOrEmpty(ipAddress))
+        {
+            if (_ipLockouts.TryGetValue(ipAddress, out var lockout))
+            {
+                if (lockout.LockedUntil > DateTime.UtcNow)
+                {
+                    var secondsLeft = (int)(lockout.LockedUntil - DateTime.UtcNow).TotalSeconds;
+                    throw new InvalidOperationException($"Demasiados intentos fallidos. Esta dirección IP está bloqueada por {secondsLeft} segundos.");
+                }
+            }
+        }
+
         var magicLink = await _context.Set<InvMagicLink>()
             .FirstOrDefaultAsync(l => l.CodigoPinHandoff == pin && l.FechaExpiracionPin > DateTime.UtcNow);
 
-        if (magicLink == null) return null;
+        if (magicLink == null)
+        {
+            // Incrementar contador de fallos por IP
+            if (!string.IsNullOrEmpty(ipAddress))
+            {
+                _ipLockouts.AddOrUpdate(ipAddress,
+                    (Attempts: 1, LockedUntil: DateTime.MinValue),
+                    (key, old) =>
+                    {
+                        var newAttempts = old.Attempts + 1;
+                        var lockedUntil = newAttempts >= 5 ? DateTime.UtcNow.AddMinutes(5) : DateTime.MinValue;
+                        return (newAttempts, lockedUntil);
+                    });
+
+                if (_ipLockouts.TryGetValue(ipAddress, out var updatedLockout) && updatedLockout.LockedUntil > DateTime.UtcNow)
+                {
+                    throw new InvalidOperationException("Demasiados intentos fallidos de PIN. Esta dirección IP ha sido bloqueada por 5 minutos.");
+                }
+            }
+            return null;
+        }
+
+        // ── 2. Limpiar bloqueo e intentos en caso de éxito ─────────────────────────
+        if (!string.IsNullOrEmpty(ipAddress))
+        {
+            _ipLockouts.TryRemove(ipAddress, out _);
+        }
 
         // Clear pin to make it one-time use
         magicLink.CodigoPinHandoff = null;
@@ -637,5 +679,82 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         return await GetAuthResponseForUserByIdAsync(magicLink.IdUsuario);
+    }
+
+    public async Task<string> CreateMagicLinkAsync(int idUsuario, DateTime expirationDate)
+    {
+        // Generar token aleatorio criptográficamente seguro
+        var tokenBytes = new byte[32];
+        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(tokenBytes);
+        }
+        var plainToken = Convert.ToHexString(tokenBytes);
+
+        // Calcular Hash SHA-256
+        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+        var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+        // Guardar en inv_magic_links
+        var magicLink = new InvMagicLink
+        {
+            IdUsuario = idUsuario,
+            TokenHash = tokenHash,
+            FechaCreacion = DateTime.UtcNow,
+            FechaExpiracion = expirationDate,
+            Utilizado = false
+        };
+        
+        _context.Set<InvMagicLink>().Add(magicLink);
+        await _context.SaveChangesAsync();
+
+        return plainToken;
+    }
+
+    public async Task<bool> ResendMagicLinkAsync(string email)
+    {
+        email = email.Trim().ToLower();
+
+        // 1. Buscar usuario activo que tenga el email
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.EmailInstitucional == email && u.Activo);
+        if (user == null) return false;
+
+        // 2. Buscar si tiene un enlace mágico activo
+        var activeLink = await _context.Set<InvMagicLink>()
+            .Where(l => l.IdUsuario == user.IdUsuario && !l.Utilizado && l.FechaExpiracion > DateTime.UtcNow)
+            .OrderByDescending(l => l.FechaExpiracion)
+            .FirstOrDefaultAsync();
+
+        if (activeLink == null) return false;
+
+        // 3. Invalidar el enlace anterior
+        activeLink.Utilizado = true;
+
+        // 4. Crear un enlace nuevo con la misma fecha de expiración
+        var plainToken = await CreateMagicLinkAsync(user.IdUsuario, activeLink.FechaExpiracion);
+
+        // 5. Enviar por correo
+        var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
+
+        var emailTitle = "Acceso de Arbitraje Científico - DIITRA (Reenvío)";
+        var emailBody = $"Estimado/a {user.Nombre},\n\n" +
+                        $"Usted ha solicitado el reenvío de su enlace de acceso para el módulo de arbitraje científico.\n\n" +
+                        $"Para ingresar a la plataforma y continuar con sus revisiones pendientes, utilice el siguiente enlace único de acceso (vigente hasta la fecha límite {activeLink.FechaExpiracion:dd/MM/yyyy}):\n\n" +
+                        $"{magicLinkUrl}\n\n" +
+                        $"Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:\n" +
+                        $"• Usuario: {user.IdSigafi}\n" +
+                        $"• Contraseña por defecto: Diitra2026*\n\n" +
+                        $"Recuerde que por seguridad es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.";
+
+        await _notificationService.NotifyUserAsync(
+            user.IdUsuario,
+            emailTitle,
+            emailBody,
+            "PEER_REVIEW",
+            magicLinkUrl
+        );
+
+        return true;
     }
 }

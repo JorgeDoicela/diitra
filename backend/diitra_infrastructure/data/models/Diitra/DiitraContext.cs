@@ -1578,8 +1578,11 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IpCreacion).HasColumnName("ip_creacion").HasMaxLength(45);
             entity.Property(e => e.IpUtilizacion).HasColumnName("ip_utilizacion").HasMaxLength(45);
             entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(255);
-            entity.Property(e => e.CodigoPinHandoff).HasColumnName("codigo_pin_handoff").HasMaxLength(6);
+            entity.Property(e => e.CodigoPinHandoff).HasColumnName("codigo_pin_handoff").HasMaxLength(12);
             entity.Property(e => e.FechaExpiracionPin).HasColumnName("fecha_expiracion_pin");
+
+            entity.HasIndex(e => e.TokenHash).IsUnique();
+            entity.HasIndex(e => e.CodigoPinHandoff);
 
             entity.HasOne(d => d.Usuario).WithMany()
                 .HasForeignKey(d => d.IdUsuario)

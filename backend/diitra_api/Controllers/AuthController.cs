@@ -106,6 +106,22 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Reenvía un enlace mágico activo al correo especificado, si existe un arbitraje pendiente para este.
+    /// </summary>
+    [HttpPost("magic-resend")]
+    [AllowAnonymous]
+    public async Task<IActionResult> MagicResend([FromBody] MagicResendRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Email))
+            return BadRequest(new { message = "El correo electrónico es obligatorio." });
+
+        // Por seguridad frente a enumeración de usuarios, siempre retornamos Ok (200)
+        await _authService.ResendMagicLinkAsync(request.Email);
+
+        return Ok(new { message = "Si existe un arbitraje activo asignado a este correo, se le enviará un nuevo enlace de acceso." });
+    }
+
+    /// <summary>
     /// Inicia sesión en un dispositivo secundario utilizando el PIN de handoff generado al consumir un enlace mágico.
     /// </summary>
     [HttpPost("magic-handoff")]
@@ -115,22 +131,29 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(request.Pin))
             return BadRequest(new { message = "El código PIN es obligatorio." });
 
-        var response = await _authService.ValidateAndConsumeHandoffPinAsync(request.Pin, HttpContext.Connection.RemoteIpAddress?.ToString());
-
-        if (response == null)
-            return Unauthorized(new { message = "El código PIN es inválido o ha expirado." });
-
-        // Guardar el JWT en una cookie HttpOnly para compatibilidad local
-        var cookieOptions = new CookieOptions
+        try
         {
-            HttpOnly = true,
-            Secure = false,
-            SameSite = SameSiteMode.Strict,
-            Expires = DateTime.UtcNow.AddHours(8)
-        };
-        Response.Cookies.Append("diitra_auth", response.Token, cookieOptions);
+            var response = await _authService.ValidateAndConsumeHandoffPinAsync(request.Pin, HttpContext.Connection.RemoteIpAddress?.ToString());
 
-        return Ok(response);
+            if (response == null)
+                return Unauthorized(new { message = "El código PIN es inválido o ha expirado." });
+
+            // Guardar el JWT en una cookie HttpOnly para compatibilidad local
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = false,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddHours(8)
+            };
+            Response.Cookies.Append("diitra_auth", response.Token, cookieOptions);
+
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(429, new { message = ex.Message });
+        }
     }
 
     /// <summary>

@@ -13,4 +13,6 @@ public interface IAuthService
     Task<AuthResponse?> GetAuthResponseForUserByIdAsync(int idUsuario);
     Task<MagicLoginResponseDto?> ValidateAndConsumeMagicLinkAsync(string tokenHash, string? ipAddress, string? userAgent);
     Task<AuthResponse?> ValidateAndConsumeHandoffPinAsync(string pin, string? ipAddress);
+    Task<string> CreateMagicLinkAsync(int idUsuario, DateTime expirationDate);
+    Task<bool> ResendMagicLinkAsync(string email);
 }
