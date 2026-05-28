@@ -67,7 +67,7 @@ namespace diitra_infrastructure.Collaboration
                     throw new HubException("Usuario no registrado en el sistema.");
                 }
 
-                string projectUuid = null;
+                string? projectUuid = null;
                 var instanceToCheck = await _db.DocumentInstances
                     .AsNoTracking()
                     .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
