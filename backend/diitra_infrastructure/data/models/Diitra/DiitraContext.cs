@@ -74,6 +74,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
     public virtual DbSet<InvDispositivoToken> InvDispositivosTokens   { get; set; }
+    public virtual DbSet<InvMagicLink>        InvMagicLinks          { get; set; }
 
     // --- Catálogos Nucleares y Configuración ---
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
@@ -1345,6 +1346,10 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.EmailValidado).HasColumnType("tinyint(4)").HasColumnName("emailValidado").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.HashEmailToken).HasMaxLength(255).HasColumnName("hashEmailToken");
             entity.Property(e => e.FechaEmailValidacion).HasColumnName("fechaEmailValidacion");
+
+            // Seguridad: bloqueo progresivo
+            entity.Property(e => e.IntentosFallidos).HasColumnName("intentosFallidos").HasDefaultValueSql("'0'");
+            entity.Property(e => e.BloqueadoHasta).HasColumnName("bloqueadoHasta");
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -1557,6 +1562,29 @@ public partial class DiitraContext : DbContext
 
             entity.HasOne(d => d.IdUsuarioNavigation).WithMany()
                 .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_token_usuario");
+        });
+
+        modelBuilder.Entity<InvMagicLink>(entity =>
+        {
+            entity.HasKey(e => e.IdMagicLink).HasName("PRIMARY");
+            entity.ToTable("inv_magic_links");
+            entity.Property(e => e.IdMagicLink).HasColumnName("id_magic_link");
+            entity.Property(e => e.IdUsuario).HasColumnName("id_usuario");
+            entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
+            entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaExpiracion).HasColumnName("fecha_expiracion");
+            entity.Property(e => e.Utilizado).HasColumnName("utilizado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.FechaUtilizado).HasColumnName("fecha_utilizado");
+            entity.Property(e => e.IpCreacion).HasColumnName("ip_creacion").HasMaxLength(45);
+            entity.Property(e => e.IpUtilizacion).HasColumnName("ip_utilizacion").HasMaxLength(45);
+            entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(255);
+            entity.Property(e => e.CodigoPinHandoff).HasColumnName("codigo_pin_handoff").HasMaxLength(6);
+            entity.Property(e => e.FechaExpiracionPin).HasColumnName("fecha_expiracion_pin");
+
+            entity.HasOne(d => d.Usuario).WithMany()
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_magic_link_usuario");
         });
 
         // ============================================================

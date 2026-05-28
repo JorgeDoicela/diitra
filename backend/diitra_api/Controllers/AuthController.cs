@@ -35,9 +35,17 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponse), 200)]
     [ProducesResponseType(401)]
+    [ProducesResponseType(429)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var response = await _authService.LoginAsync(request);
+        var (response, blocked) = await _authService.LoginAsync(request);
+
+        // Cuenta bloqueada por exceso de intentos → 429 Too Many Requests
+        if (blocked != null)
+        {
+            Response.Headers.Append("Retry-After", blocked.SegundosRestantes.ToString());
+            return StatusCode(429, blocked);
+        }
 
         if (response == null)
         {
@@ -53,6 +61,73 @@ public class AuthController : ControllerBase
             Expires = DateTime.UtcNow.AddHours(8) // Vigencia sincronizada con el access token (8 horas)
         };
 
+        Response.Cookies.Append("diitra_auth", response.Token, cookieOptions);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Inicia sesión utilizando un token de enlace mágico (Magic Link) de un solo uso.
+    /// </summary>
+    [HttpPost("magic-login")]
+    [AllowAnonymous]
+    public async Task<IActionResult> MagicLogin([FromBody] MagicLoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Token))
+            return BadRequest(new { message = "El token es obligatorio." });
+
+        byte[] tokenHashBytes;
+        try
+        {
+            tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(request.Token));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { message = "Formato de token inválido.", detail = ex.Message });
+        }
+        var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+        var result = await _authService.ValidateAndConsumeMagicLinkAsync(tokenHash, HttpContext.Connection.RemoteIpAddress?.ToString(), Request.Headers["User-Agent"].ToString());
+
+        if (result == null)
+            return Unauthorized(new { message = "El enlace mágico es inválido, ya fue utilizado o ha expirado." });
+
+        // Guardar el JWT en una cookie HttpOnly para compatibilidad local
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(8)
+        };
+        Response.Cookies.Append("diitra_auth", result.Auth.Token, cookieOptions);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Inicia sesión en un dispositivo secundario utilizando el PIN de handoff generado al consumir un enlace mágico.
+    /// </summary>
+    [HttpPost("magic-handoff")]
+    [AllowAnonymous]
+    public async Task<IActionResult> MagicHandoff([FromBody] HandoffLoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Pin))
+            return BadRequest(new { message = "El código PIN es obligatorio." });
+
+        var response = await _authService.ValidateAndConsumeHandoffPinAsync(request.Pin, HttpContext.Connection.RemoteIpAddress?.ToString());
+
+        if (response == null)
+            return Unauthorized(new { message = "El código PIN es inválido o ha expirado." });
+
+        // Guardar el JWT en una cookie HttpOnly para compatibilidad local
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(8)
+        };
         Response.Cookies.Append("diitra_auth", response.Token, cookieOptions);
 
         return Ok(response);

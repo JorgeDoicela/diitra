@@ -6,6 +6,8 @@ using diitra_domain.Identity.Entities;
 using diitra_infrastructure.data.models;
 using Diitra.Application.Common.Documents;
 using Diitra.Application.Common;
+using diitra_application.Common.Notifications;
+using Microsoft.Extensions.Configuration;
 
 namespace diitra_infrastructure.Research;
 
@@ -14,12 +16,16 @@ public class PeerReviewService : IPeerReviewService
     private readonly DiitraContext _context;
     private readonly IAuditService _auditService;
     private readonly IDocumentEngine _documentEngine;
+    private readonly INotificationService _notificationService;
+    private readonly IConfiguration _configuration;
 
-    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine)
+    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration)
     {
         _context = context;
         _auditService = auditService;
         _documentEngine = documentEngine;
+        _notificationService = notificationService;
+        _configuration = configuration;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -452,7 +458,8 @@ public class PeerReviewService : IPeerReviewService
                         Nombre = fullNombre,
                         Contrasenia = BCrypt.Net.BCrypt.HashPassword(p.Clave ?? "cambiame", 11),
                         Activo = true,
-                        TablaSigafi = "profesor"
+                        TablaSigafi = "profesor",
+                        EmailInstitucional = p.EmailInstitucional ?? p.Email
                     };
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
@@ -509,6 +516,58 @@ public class PeerReviewService : IPeerReviewService
             project.Estado = "En Revisión";
 
         await _context.SaveChangesAsync();
+
+        // 🔗 ENLACES MÁGICOS: Generación automática si es evaluador externo
+        if (dto.EsExterno)
+        {
+            var revisorUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == dto.IdRevisor);
+            if (revisorUser != null && !string.IsNullOrEmpty(revisorUser.EmailInstitucional))
+            {
+                // Generar token aleatorio criptográficamente seguro
+                var tokenBytes = new byte[32];
+                using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+                {
+                    rng.GetBytes(tokenBytes);
+                }
+                var plainToken = Convert.ToHexString(tokenBytes);
+
+                // Calcular Hash SHA-256
+                var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+                var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+                // Guardar en inv_magic_links (expiración extendida dinámicamente hasta la fecha límite del arbitraje)
+                var magicLink = new InvMagicLink
+                {
+                    IdUsuario = revisorUser.IdUsuario,
+                    TokenHash = tokenHash,
+                    FechaCreacion = DateTime.UtcNow,
+                    FechaExpiracion = dto.FechaLimite,
+                    Utilizado = false
+                };
+                _context.Set<InvMagicLink>().Add(magicLink);
+                await _context.SaveChangesAsync();
+
+                // Obtener URL base de la configuración
+                var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+                var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
+
+                // Notificar vía correo electrónico (con plantilla corporativa)
+                var emailTitle = $"Acceso de Arbitraje Científico - DIITRA";
+                var emailBody = $"Estimado/a {revisorUser.Nombre},\n\n" +
+                                $"Ha sido asignado/a para realizar el arbitraje del proyecto de investigación titulado:\n" +
+                                $"\"{project.Titulo}\"\n\n" +
+                                $"Para ingresar a la plataforma y emitir su dictamen de forma segura sin requerir contraseña, " +
+                                $"utilice el siguiente enlace único de acceso. Este enlace estará vigente hasta la fecha límite de entrega ({dto.FechaLimite:dd/MM/yyyy}):";
+
+                await _notificationService.NotifyUserAsync(
+                    revisorUser.IdUsuario,
+                    emailTitle,
+                    emailBody,
+                    "PEER_REVIEW",
+                    magicLinkUrl
+                );
+            }
+        }
 
         var afterState = System.Text.Json.JsonSerializer.Serialize(new
         {
@@ -737,6 +796,12 @@ public class PeerReviewService : IPeerReviewService
 
         if (existing != null)
         {
+            if (string.IsNullOrEmpty(existing.EmailInstitucional))
+            {
+                existing.EmailInstitucional = dto.Email;
+                await _context.SaveChangesAsync();
+            }
+
             var metaExisting = await _context.Set<InvUsuarioMetadata>().FirstOrDefaultAsync(m => m.IdUsuario == existing.IdUsuario);
             if (metaExisting == null)
             {
@@ -762,7 +827,8 @@ public class PeerReviewService : IPeerReviewService
             Nombre = $"{dto.Nombres} {dto.Apellidos}",
             Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11),
             Activo = true,
-            TablaSigafi = "otros"
+            TablaSigafi = "otros",
+            EmailInstitucional = dto.Email
         };
 
         _context.Users.Add(user);

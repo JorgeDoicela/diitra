@@ -24,3 +24,29 @@ public class AuthResponse
     public string UserUuid { get; set; } = null!;
     public string Usuario { get; set; } = null!;
 }
+
+/// <summary>Respuesta cuando el usuario está bloqueado por exceso de intentos fallidos.</summary>
+public class LoginBlockedResponse
+{
+    public string Message { get; set; } = null!;
+    /// <summary>UTC moment when the lockout expires (ISO 8601).</summary>
+    public DateTime BloqueadoHasta { get; set; }
+    /// <summary>Seconds remaining until the account unlocks.</summary>
+    public int SegundosRestantes { get; set; }
+}
+
+public class MagicLoginRequest
+{
+    public string Token { get; set; } = null!;
+}
+
+public class HandoffLoginRequest
+{
+    public string Pin { get; set; } = null!;
+}
+
+public class MagicLoginResponseDto
+{
+    public AuthResponse Auth { get; set; } = null!;
+    public string? Pin { get; set; }
+}

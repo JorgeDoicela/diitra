@@ -19,6 +19,10 @@ public class User
     public string? HashEmailToken { get; set; }
     public DateTime? FechaEmailValidacion { get; set; }
 
+    // Seguridad: bloqueo progresivo por intentos fallidos
+    public int IntentosFallidos { get; set; } = 0;
+    public DateTime? BloqueadoHasta { get; set; }
+
     // Relaciones
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

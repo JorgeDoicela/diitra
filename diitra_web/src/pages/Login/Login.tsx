@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -25,17 +25,46 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Lockout state
+    const [lockoutSeconds, setLockoutSeconds] = useState(0);
+    const lockoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startLockoutCountdown = (seconds: number) => {
+        setLockoutSeconds(seconds);
+        if (lockoutRef.current) clearInterval(lockoutRef.current);
+        lockoutRef.current = setInterval(() => {
+            setLockoutSeconds(prev => {
+                if (prev <= 1) {
+                    clearInterval(lockoutRef.current!);
+                    setError(null);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // Cleanup on unmount
+    useEffect(() => () => { if (lockoutRef.current) clearInterval(lockoutRef.current); }, []);
+
+    const formatLockoutTime = (secs: number) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return m > 0 ? `${m}m ${s.toString().padStart(2, '0')}s` : `${s}s`;
+    };
+
     const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema)
     });
     const from = (location.state as any)?.from?.pathname || '/dashboard';
 
     const onSubmit = async (data: LoginFormValues) => {
+        if (lockoutSeconds > 0) return; // Bloquear envío mientras hay lockout
         setIsSubmitting(true);
         setError(null);
         try {
             const user = await login(data);
-            
+
             // Determinar página de destino si no viene de una ruta específica
             let target = from;
             if (target === '/dashboard') {
@@ -49,7 +78,16 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
 
             navigate(target, { replace: true });
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Error al iniciar sesión. Verifique sus credenciales.');
+            const status = err.response?.status;
+            if (status === 429) {
+                // Cuenta bloqueada — mostrar countdown
+                const secs: number = err.response?.data?.segundosRestantes ?? 300;
+                const msg: string = err.response?.data?.message ?? 'Cuenta bloqueada temporalmente.';
+                setError(msg);
+                startLockoutCountdown(secs);
+            } else {
+                setError(err.response?.data?.message || 'Credenciales incorrectas. Verifique su usuario y contraseña.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -59,13 +97,13 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
         <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
             {/* Background Grid - Very subtle */}
 
-            
+
             <div className="w-full max-w-[350px] space-y-10 relative z-20 animate-fade-up">
                 {/* Brand Logo & Header */}
                 <div className="flex flex-col items-center space-y-6">
-                    <img 
-                        src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
-                        alt="DIITRA Logo" 
+                    <img
+                        src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                        alt="DIITRA Logo"
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
@@ -95,7 +133,7 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                                 <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim" htmlFor="password">
                                     Contraseña
                                 </label>
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
                                     className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium"
@@ -113,20 +151,43 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                             {errors.password && <p className="text-[10px] text-error font-mono mt-1 ml-1">{(errors.password as any).message}</p>}
                         </div>
 
-                        {error && (
+                        {/* Error / Lockout display */}
+                        {lockoutSeconds > 0 ? (
+                            <div className="p-4 rounded-lg bg-error/5 border border-error/30 space-y-2 animate-in fade-in">
+                                <div className="flex items-center gap-2 text-error">
+                                    <Lock size={14} className="shrink-0" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">Cuenta bloqueada temporalmente</span>
+                                </div>
+                                <p className="text-[9px] text-text-dim leading-relaxed">{error}</p>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] text-text-dim uppercase tracking-widest">Tiempo restante:</span>
+                                    <span className="font-mono text-sm font-black text-error tabular-nums">
+                                        {formatLockoutTime(lockoutSeconds)}
+                                    </span>
+                                </div>
+                                <div className="w-full bg-border-thin rounded-full h-1 overflow-hidden">
+                                    <div
+                                        className="h-full bg-error transition-all duration-1000"
+                                        style={{ width: `${Math.min(100, (lockoutSeconds / 300) * 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+                        ) : error ? (
                             <div className="p-3 rounded-md bg-error/5 border border-error/20 text-error text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
                                 {error}
                             </div>
-                        )}
+                        ) : null}
 
                         <div className="pt-2">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
-                                className="btn-vercel-primary w-full h-11"
+                                disabled={isSubmitting || lockoutSeconds > 0}
+                                className="btn-vercel-primary w-full h-11 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : lockoutSeconds > 0 ? (
+                                    <span className="font-mono">{formatLockoutTime(lockoutSeconds)}</span>
                                 ) : (
                                     'Continuar'
                                 )}
@@ -134,11 +195,19 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
                         </div>
                     </form>
 
-                    <div className="text-center pt-4">
-                        <p className="text-[10px] text-text-dim font-medium tracking-tight mb-8">
+                    <div className="text-center pt-4 space-y-4">
+                        <p className="text-[10px] text-text-dim font-medium tracking-tight">
                             ¿No tienes acceso? Contacta a la Dirección de Investigación.
                         </p>
-                        
+
+                        {/* Acceso por PIN para revisores externos */}
+                        <button
+                            onClick={() => navigate('/auth/pin')}
+                            className="w-full border border-border-thin rounded-lg px-4 py-2.5 text-[10px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-2"
+                        >
+                            <span className="uppercase tracking-widest">Tengo un código PIN de acceso</span>
+                        </button>
+
                         <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
                             <button onClick={() => navigate('/')} className="hover:text-text-main transition-colors">Inicio</button>
                             <span>/</span>
