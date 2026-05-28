@@ -166,12 +166,26 @@ const UsersPage = () => {
     const handleRegisterExternal = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        const registeredCedula = externalForm.cedula;
+        const registeredNombre = `${externalForm.nombres} ${externalForm.apellidos}`.toUpperCase().trim();
         try {
             await api.post('/Admin/external', externalForm);
             setShowExternalForm(false);
             setExternalForm({ cedula: '', nombres: '', apellidos: '', email: '', especialidad: '', grado_academico: '', institucion: '', orcid_id: '' });
             fetchUsers();
             fetchAuditLogs();
+
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Evaluador Registrado con Éxito',
+                message: `El evaluador externo "${registeredNombre}" ha sido registrado en el sistema.\n\n` +
+                         `Credenciales de acceso convencional por defecto:\n` +
+                         `• Usuario: ${registeredCedula}\n` +
+                         `• Contraseña temporal: Diitra2026*\n\n` +
+                         `Nota: Por favor comparta estas credenciales con el evaluador por si prefiere acceder utilizando el inicio de sesión convencional con contraseña.`,
+                type: 'success',
+                onConfirm: () => {}
+            });
         } catch (err: any) {
             console.error('Error registering external:', err);
             const serverMsg = err?.response?.data?.message || err?.response?.data?.title || 'Error al registrar el evaluador.';
@@ -710,30 +724,41 @@ const UsersPage = () => {
                             </div>
                         </div>
                         <div className="modal-body py-6">
-                            <p className="text-xs text-text-dim leading-relaxed font-medium uppercase">
+                            <div className="text-xs text-text-dim leading-relaxed font-medium whitespace-pre-wrap">
                                 {confirmDialog.message}
-                            </p>
+                            </div>
                         </div>
                         <div className="modal-footer bg-surface/50 !py-3">
-                            <button
-                                onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-                                className="btn-vercel-secondary !py-2"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-                                    await confirmDialog.onConfirm();
-                                }}
-                                className={`!py-2 ${
-                                    confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                    confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                    'btn-vercel-primary'
-                                }`}
-                            >
-                                Confirmar
-                            </button>
+                            {confirmDialog.type === 'success' ? (
+                                <button
+                                    onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                                    className="btn-vercel-primary !py-2 px-6"
+                                >
+                                    Entendido
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                                        className="btn-vercel-secondary !py-2"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                            await confirmDialog.onConfirm();
+                                        }}
+                                        className={`!py-2 ${
+                                            confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                            confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                            'btn-vercel-primary'
+                                        }`}
+                                    >
+                                        Confirmar
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

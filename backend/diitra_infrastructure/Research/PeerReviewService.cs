@@ -557,7 +557,12 @@ public class PeerReviewService : IPeerReviewService
                                 $"Ha sido asignado/a para realizar el arbitraje del proyecto de investigación titulado:\n" +
                                 $"\"{project.Titulo}\"\n\n" +
                                 $"Para ingresar a la plataforma y emitir su dictamen de forma segura sin requerir contraseña, " +
-                                $"utilice el siguiente enlace único de acceso. Este enlace estará vigente hasta la fecha límite de entrega ({dto.FechaLimite:dd/MM/yyyy}):";
+                                $"utilice el siguiente enlace único de acceso (vigente hasta la fecha límite {dto.FechaLimite:dd/MM/yyyy}):\n\n" +
+                                $"{magicLinkUrl}\n\n" +
+                                $"Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:\n" +
+                                $"• Usuario: {revisorUser.IdSigafi}\n" +
+                                $"• Contraseña por defecto: Diitra2026*\n\n" +
+                                $"Recuerde que por seguridad es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.";
 
                 await _notificationService.NotifyUserAsync(
                     revisorUser.IdUsuario,
@@ -825,7 +830,7 @@ public class PeerReviewService : IPeerReviewService
         {
             IdSigafi = identifier,
             Nombre = $"{dto.Nombres} {dto.Apellidos}",
-            Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11),
+            Contrasenia = BCrypt.Net.BCrypt.HashPassword("Diitra2026*", 11),
             Activo = true,
             TablaSigafi = "otros",
             EmailInstitucional = dto.Email
