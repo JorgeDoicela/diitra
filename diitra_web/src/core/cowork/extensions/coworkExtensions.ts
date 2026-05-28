@@ -20,8 +20,8 @@ import * as Y from 'yjs';
 import * as awarenessProtocol from 'y-protocols/awareness';
 
 export interface CoWorkExtensionsConfig {
-    ydoc: Y.Doc;
-    awareness: awarenessProtocol.Awareness;
+    ydoc: Y.Doc | null;
+    awareness: awarenessProtocol.Awareness | null;
     placeholder?: string;
     field?: string;
 }

@@ -116,7 +116,73 @@ public class PeerReviewService : IPeerReviewService
             ? $"Propuesta #{proyecto.IdProyecto:D4}" // Título anonimizado
             : proyecto.Titulo;
 
+        // ── FALLBACK DE CONTENIDO ──────────────────────────────────────────────
+        // Si los campos relacionales están vacíos (pueden haberse guardado antes del fix de UUID),
+        // intentar leerlos desde el DataSnapshotJson de la instancia del documento.
+        string? justificacionFinal = proyecto.Justificacion;
+        string? metodologiaFinal = proyecto.Metodologia;
+
+        if (string.IsNullOrWhiteSpace(justificacionFinal) || string.IsNullOrWhiteSpace(metodologiaFinal))
+        {
+            try
+            {
+                var docInstance = await _context.DocumentInstances
+                    .FirstOrDefaultAsync(i => i.EntityUuid == proyecto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
+
+                if (docInstance != null)
+                {
+                    if (docInstance.DataSnapshotJson != null)
+                    {
+                        var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var snapshot = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(
+                            docInstance.DataSnapshotJson, opts);
+
+                        if (string.IsNullOrWhiteSpace(justificacionFinal) &&
+                            snapshot.TryGetProperty("Justificacion", out var justEl) &&
+                            justEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            justificacionFinal = justEl.GetString();
+                        }
+
+                        if (string.IsNullOrWhiteSpace(metodologiaFinal) &&
+                            snapshot.TryGetProperty("Metodologia", out var metEl) &&
+                            metEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                        {
+                            metodologiaFinal = metEl.GetString();
+                        }
+                    }
+
+                    // Fallback directo a inv_cowork_documentos para recuperar el contenido colaborativo en vivo
+                    if (string.IsNullOrWhiteSpace(justificacionFinal))
+                    {
+                        var coworkJust = await _context.InvCoworkDocumentos
+                            .FirstOrDefaultAsync(d => d.Uuid == $"{docInstance.Uuid}_Justificacion");
+                        if (coworkJust != null && !string.IsNullOrWhiteSpace(coworkJust.ContentHtml))
+                        {
+                            justificacionFinal = coworkJust.ContentHtml;
+                        }
+                    }
+
+                    if (string.IsNullOrWhiteSpace(metodologiaFinal))
+                    {
+                        var coworkMet = await _context.InvCoworkDocumentos
+                            .FirstOrDefaultAsync(d => d.Uuid == $"{docInstance.Uuid}_Metodologia");
+                        if (coworkMet != null && !string.IsNullOrWhiteSpace(coworkMet.ContentHtml))
+                        {
+                            metodologiaFinal = coworkMet.ContentHtml;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fallback silencioso: si el snapshot o el cowork falla, continuar normalmente sin datos de contenido.
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────────
+
         var revisionCompletada = revision.Estado == "Completada";
+
         if (revisionCompletada && revision.Detalles != null)
         {
             foreach (var crit in criterios)
@@ -137,8 +203,8 @@ public class PeerReviewService : IPeerReviewService
             NombreRubrica = nombreRubrica,
             ProyectoTitulo = tituloParaRevisor,
             LineaInvestigacion = revision.EsDobleCiego ? null : proyecto.IdSublineaNavigation?.Nombre,
-            Justificacion = proyecto.Justificacion,
-            Metodologia = proyecto.Metodologia,
+            Justificacion = justificacionFinal,
+            Metodologia = metodologiaFinal,
             ProyectoUuid = proyecto.Uuid,
             EsDobleCiego = revision.EsDobleCiego,
             PuntajeMinimoAprobacion = puntajeMinimo,

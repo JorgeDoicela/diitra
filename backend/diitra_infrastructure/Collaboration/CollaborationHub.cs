@@ -272,17 +272,28 @@ namespace diitra_infrastructure.Collaboration
             var doc = await _db.InvCoworkDocumentos
                 .FirstOrDefaultAsync(d => d.Uuid == documentId);
 
-            if (doc != null)
+            if (doc == null)
             {
-                doc.ContentHtml = html;
-                doc.ContentJson = json;
-                doc.ActualizadoEn = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation(
-                    "[DIITRA CoWork] Snapshot de contenido guardado para {DocumentId} ({Bytes} chars)",
-                    documentId, html.Length);
+                doc = new InvCoworkDocumento
+                {
+                    Uuid = documentId,
+                    EntidadUuid = documentId.Split('_')[0],
+                    CampoNombre = documentId.Contains('_') ? documentId.Split('_')[1] : "contenido",
+                    EntidadTipo = "PROYECTO",
+                    Version = 1,
+                    CreadoEn = DateTime.UtcNow
+                };
+                _db.InvCoworkDocumentos.Add(doc);
             }
+
+            doc.ContentHtml = html;
+            doc.ContentJson = json;
+            doc.ActualizadoEn = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "[DIITRA CoWork] Snapshot de contenido guardado para {DocumentId} ({Bytes} chars)",
+                documentId, html?.Length ?? 0);
         }
 
         /// <summary>

@@ -11,13 +11,14 @@
 // <CoWorkEditor cowork={cowork} placeholder="Escribe tu metodología..." />
 // ═══════════════════════════════════════════════════════════════════
 
-import React from 'react';
+import React, { useContext } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import api from '../../../api/axios_config';
 import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
 import type { CoWorkHandle, CoWorkUser } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
+import { DocumentDataContext } from '../../documents/context/DocumentDataContext';
 import { 
     CheckCircle2, 
     Loader2, 
@@ -43,8 +44,18 @@ interface CoWorkEditorProps {
     className?: string;
 }
 
+interface InnerCoWorkEditorProps extends CoWorkEditorProps {
+    useCollaboration: boolean;
+    dbValue: string | undefined;
+}
+
 export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
-    if (!props.cowork.ydoc || !props.cowork.awareness) {
+    const parentFormData = useContext(DocumentDataContext);
+    const field = props.field || 'default';
+    const dbValue = parentFormData ? parentFormData[field] : undefined;
+
+    const isLoaded = props.cowork.session.lastSyncedAt !== null || props.cowork.session.error !== null;
+    if (!props.cowork.ydoc || !props.cowork.awareness || !isLoaded) {
         return (
             <div className="flex flex-col items-center justify-center p-20 bg-bg-deep rounded-lg border border-border-thin">
                 <Loader2 className="animate-spin text-text-main mb-4" size={24} />
@@ -52,17 +63,33 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
             </div>
         );
     }
+
+    const isReadOnlyMode = props.readonly || props.cowork.session.readOnly;
+    const xmlFragment = props.cowork.ydoc.getXmlFragment(field);
+    const hasYjsContent = xmlFragment.length > 0;
+    const useCollaboration = !isReadOnlyMode || hasYjsContent;
+
+    const editorKey = `${field}_collab_${useCollaboration}`;
     
-    return <InnerCoWorkEditor {...props} />;
+    return (
+        <InnerCoWorkEditor 
+            key={editorKey} 
+            useCollaboration={useCollaboration} 
+            dbValue={dbValue} 
+            {...props} 
+        />
+    );
 };
 
-const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
+const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     cowork,
     field = 'default',
     onChange,
     placeholder,
     readonly = false,
     className = '',
+    useCollaboration,
+    dbValue,
 }) => {
     const ydoc = cowork.ydoc!;
     const awareness = cowork.awareness!;
@@ -81,15 +108,16 @@ const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
     // Memorizar las extensiones para evitar re-creaciones del editor innecesarias
     const extensions = React.useMemo(() => {
         return buildCoWorkExtensions({
-            ydoc,
-            awareness,
+            ydoc: useCollaboration ? ydoc : null,
+            awareness: useCollaboration ? awareness : null,
             placeholder,
             field
         });
-    }, [ydoc, awareness, placeholder, field]);
+    }, [useCollaboration, ydoc, awareness, placeholder, field]);
 
     const editor = useEditor({
         extensions,
+        content: useCollaboration ? undefined : dbValue,
         editorProps: {
             attributes: {
                 class: 'focus:outline-none',
@@ -193,17 +221,34 @@ const InnerCoWorkEditor: React.FC<CoWorkEditorProps> = ({
         // Notificar cambios al formulario contenedor o usar fallback de SignalR (retrocompatibilidad)
         onUpdate: ({ editor }) => {
             const html = editor.getHTML();
+            console.log(`[DIITRA] CoWorkEditor: onUpdate en campo '${fieldRef.current}'. Longitud HTML: ${html.length}`);
             const currentOnChange = onChangeRef.current;
             if (currentOnChange) {
                 // Modo Moderno: Delegar al formulario centralizador de React
                 setTimeout(() => currentOnChange(html), 0);
-            } else {
-                // Modo Legado: Guardar de manera autónoma vía SignalR para pantallas anteriores
-                const json = JSON.stringify(editor.getJSON());
-                coworkRef.current.submitFinalContent(html, json);
             }
+            
+            // SIEMPRE registrar en el snapshot de SignalR (retrocompatibilidad y soporte PDF/Rubrica)
+            const json = JSON.stringify(editor.getJSON());
+            coworkRef.current.submitFinalContent(html, json);
         }
     }, [extensions]); // El editor se instancia UNA SOLA VEZ y permanece estable en memoria
+
+    // Auto-poblar Yjs con el contenido de la base de datos si Yjs está vacío
+    React.useEffect(() => {
+        if (!editor || !useCollaboration) return;
+
+        const xmlFragment = ydoc.getXmlFragment(field);
+        const isYjsEmpty = xmlFragment.length === 0;
+
+        if (isYjsEmpty && dbValue && dbValue.trim() !== '') {
+            const isReadOnlyMode = readonly || cowork.session.readOnly;
+            if (!isReadOnlyMode) {
+                console.log(`[DIITRA] CoWorkEditor: Yjs para '${field}' está vacío. Inicializando Yjs con valor de BD:`, dbValue.substring(0, 100));
+                editor.commands.setContent(dbValue, false);
+            }
+        }
+    }, [editor, useCollaboration, ydoc, field, dbValue, readonly, cowork.session.readOnly]);
 
     // Sincronizar estado de Edición/Solo Lectura de forma dinámica sin destruir el editor
     const isEditable = !readonly && !cowork.session.readOnly;

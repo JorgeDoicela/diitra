@@ -53,6 +53,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
     // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
     const updateField = useCallback((name: string, value: any) => {
+        console.log(`[DIITRA] useDIITRADocument: updateField llamado para '${name}' con valor:`, value);
         // Sincronizar en Yjs si existe ydoc y no es una lista trackeada ni un rich-text
         // Excluimos 'Uuid'/'uuid' y 'EntityUuid'/'entityuuid' de Yjs para proteger los identificadores estáticos de persistencia relacional
         if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && name.toLowerCase() !== 'uuid' && name.toLowerCase() !== 'entityuuid') {
