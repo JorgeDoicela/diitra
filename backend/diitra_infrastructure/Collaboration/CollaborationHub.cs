@@ -244,10 +244,15 @@ namespace diitra_infrastructure.Collaboration
             var doc = await _db.InvCoworkDocumentos.FirstOrDefaultAsync(d => d.Uuid == documentId);
             if (doc == null)
             {
+                // documentId can be plain UUID (main doc) or UUID_FieldName (per-field rich-text)
+                var separatorIdx = documentId.LastIndexOf('_');
+                var entityUuid = separatorIdx > 36 ? documentId.Substring(0, separatorIdx) : documentId;
+                var campoNombre = separatorIdx > 36 ? documentId.Substring(separatorIdx + 1) : "contenido";
+
                 doc = new InvCoworkDocumento {
                     Uuid = documentId,
-                    EntidadUuid = documentId.Split('_')[0],
-                    CampoNombre = documentId.Contains('_') ? documentId.Split('_')[1] : "contenido"
+                    EntidadUuid = entityUuid,
+                    CampoNombre = campoNombre
                 };
                 _db.InvCoworkDocumentos.Add(doc);
             }
@@ -274,11 +279,16 @@ namespace diitra_infrastructure.Collaboration
 
             if (doc == null)
             {
+                // documentId can be plain UUID (main doc) or UUID_FieldName (per-field rich-text)
+                var separatorIdx = documentId.LastIndexOf('_');
+                var entityUuid = separatorIdx > 36 ? documentId.Substring(0, separatorIdx) : documentId;
+                var campoNombre = separatorIdx > 36 ? documentId.Substring(separatorIdx + 1) : "contenido";
+
                 doc = new InvCoworkDocumento
                 {
                     Uuid = documentId,
-                    EntidadUuid = documentId.Split('_')[0],
-                    CampoNombre = documentId.Contains('_') ? documentId.Split('_')[1] : "contenido",
+                    EntidadUuid = entityUuid,
+                    CampoNombre = campoNombre,
                     EntidadTipo = "PROYECTO",
                     Version = 1,
                     CreadoEn = DateTime.UtcNow
