@@ -189,6 +189,11 @@ const MagicLogin = ({ currentTheme = 'dark' }: { currentTheme?: 'dark' | 'light'
                                         <p className="text-[9px] text-text-dim font-medium text-center">
                                             Válido durante 30 minutos. Úsalo una sola vez.
                                         </p>
+                                        <div className="mt-2 p-2 bg-brand/5 border border-brand/20 rounded-md">
+                                            <p className="text-[9px] text-brand text-center leading-relaxed">
+                                                <strong>Aviso de seguridad:</strong> Cada vez que abres este enlace desde tu correo, se genera un nuevo PIN y el anterior se invalida automáticamente.
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             )}

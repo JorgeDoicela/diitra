@@ -582,20 +582,24 @@ public class AuthService : IAuthService
 
     public async Task<MagicLoginResponseDto?> ValidateAndConsumeMagicLinkAsync(string tokenHash, string? ipAddress, string? userAgent)
     {
+        // El magic link es MULTI-USO hasta FechaExpiracion (fecha límite del arbitraje).
+        // No se marca como "utilizado" en cada acceso — solo puede ser invalidado
+        // administrativamente (Utilizado = true) o cuando vence la fecha del arbitraje.
+        // Esto permite al revisor volver al enlace del correo en cualquier momento durante el período.
         var magicLink = await _context.Set<InvMagicLink>()
             .FirstOrDefaultAsync(l => l.TokenHash == tokenHash && !l.Utilizado && l.FechaExpiracion > DateTime.UtcNow);
 
         if (magicLink == null) return null;
 
-        // Mark as used
-        magicLink.Utilizado = true;
+        // Auditoría del último acceso (sin marcar como utilizado definitivamente)
         magicLink.FechaUtilizado = DateTime.UtcNow;
         magicLink.IpUtilizacion = ipAddress;
         magicLink.UserAgent = userAgent;
 
-        // Generar PIN alfanumérico de 8 caracteres (fácil de copiar, difícil de adivinar)
+        // Generar un PIN nuevo en cada uso — invalida automáticamente cualquier PIN anterior
+        // que el revisor pudiera haber anotado, ya que el PIN anterior queda sobrescrito.
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusiones
-        var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+        using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
         var bytes = new byte[8];
         rng.GetBytes(bytes);
         var rawPin = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
