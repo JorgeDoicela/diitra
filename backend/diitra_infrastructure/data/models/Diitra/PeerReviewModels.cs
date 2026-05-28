@@ -94,7 +94,7 @@ public class InvMagicLink
     public string? UserAgent { get; set; }
 
     [Column("codigo_pin_handoff")]
-    [MaxLength(6)]
+    [MaxLength(12)]
     public string? CodigoPinHandoff { get; set; }
 
     [Column("fecha_expiracion_pin")]
