@@ -42,11 +42,17 @@ const EvaluacionPage: React.FC = () => {
         getRubricaForRevision(revisionUuid)
             .then((data) => {
                 setRubrica(data);
+                
+                const isCompletada = data.estadoRevision === 'Completada' || data.estado_revision === 'Completada';
+                if (isCompletada) {
+                    setObservacionesGral(data.observacionesGral || data.observaciones_gral || '');
+                }
+
                 setDetalles(data.criterios.map(c => ({
                     idCriterio: c.id_criterio,
                     criterio: c.nombre,
-                    puntaje: 0,
-                    observaciones: '',
+                    puntaje: isCompletada ? (c.puntajeObtenido ?? c.puntaje_obtenido ?? 0) : 0,
+                    observaciones: isCompletada ? (c.observacionesCriterio ?? c.observaciones_criterio ?? '') : '',
                     max: c.puntaje_maximo
                 })));
             })
@@ -58,6 +64,7 @@ const EvaluacionPage: React.FC = () => {
     const minimo = rubrica?.puntaje_minimo_aprobacion ?? 70;
     const dictamenPreview = getDictamenPreview(puntajeTotal, minimo);
     const dictamenCfg = DICTAMEN_CONFIG[dictamenPreview];
+    const isReadOnly = rubrica?.estadoRevision === 'Completada' || rubrica?.estado_revision === 'Completada';
 
     const handlePuntajeChange = (idx: number, val: number) => {
         setDetalles(prev => {
@@ -120,6 +127,44 @@ const EvaluacionPage: React.FC = () => {
             a.remove();
         } catch {
             alert('No se pudo descargar el protocolo.');
+        }
+    };
+
+    const handleDescargarRubrica = async () => {
+        if (!rubrica) return;
+        try {
+            const pertinencia = detalles.find(d => d.criterio.includes('Pertinencia'))?.puntaje ?? 0;
+            const metodologia = detalles.find(d => d.criterio.includes('Metodología') || d.criterio.includes('Metodologia'))?.puntaje ?? 0;
+            const viabilidad = detalles.find(d => d.criterio.includes('Viabilidad') || d.criterio.includes('Presupuesto') || d.criterio.includes('Viabilidad y Presupuesto'))?.puntaje ?? 0;
+            const impacto = detalles.find(d => d.criterio.includes('Impacto'))?.puntaje ?? 0;
+
+            const payload = {
+                titulo: rubrica.proyecto_titulo,
+                entity_uuid: rubrica.proyecto_uuid,
+                fecha_evaluacion: new Date().toLocaleDateString('es-EC'),
+                Pertinencia: pertinencia,
+                Metodologia: metodologia,
+                Viabilidad: viabilidad,
+                Impacto: impacto,
+                ComentariosGenerales: observacionesGral,
+                RecomendacionFinal: puntajeTotal >= (rubrica.puntaje_minimo_aprobacion ?? 70) ? "Aprobado sin modificaciones" : "Rechazado"
+            };
+
+            const response = await api.post(
+                `/documents/render?templateCode=RUBRICA_EVALUACION&isDraft=false&isBlind=true`,
+                payload,
+                { responseType: 'blob' }
+            );
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const a = document.createElement('a');
+            a.href = url;
+            a.setAttribute('download', `RUBRICA_CALIFICADA_${rubrica.proyecto_uuid.split('-')[0].toUpperCase()}.pdf`);
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        } catch (err) {
+            console.error('[DIITRA] Error al descargar la rúbrica calificada:', err);
+            alert('No se pudo generar ni descargar la rúbrica de evaluación.');
         }
     };
 
@@ -268,7 +313,16 @@ const EvaluacionPage: React.FC = () => {
                     </div>
 
                     {/* Descarga PDF */}
-                    <div className="p-5 border-t border-border-thin">
+                    <div className="p-5 border-t border-border-thin flex flex-col gap-2">
+                        {isReadOnly && (
+                            <button
+                                onClick={handleDescargarRubrica}
+                                className="btn-vercel-primary w-full flex items-center justify-center gap-2 text-xs"
+                            >
+                                <FileText size={12} />
+                                Descargar Rúbrica Calificada
+                            </button>
+                        )}
                         <button
                             onClick={handleDescargarCiego}
                             className="btn-vercel-secondary w-full flex items-center justify-center gap-2 text-xs"
@@ -276,7 +330,7 @@ const EvaluacionPage: React.FC = () => {
                             <ExternalLink size={12} />
                             Descargar PDF Ciego
                         </button>
-                        <p className="text-[9px] text-text-dim text-center mt-2">
+                        <p className="text-[9px] text-text-dim text-center mt-1">
                             Protocolo completo sin datos identificadores
                         </p>
                     </div>
@@ -344,6 +398,7 @@ const EvaluacionPage: React.FC = () => {
                                         porcentaje={porcentajeCriterio}
                                         onPuntajeChange={(v) => handlePuntajeChange(idx, v)}
                                         onObsChange={(v) => handleObsChange(idx, v)}
+                                        disabled={isReadOnly}
                                     />
                                 );
                             })}
@@ -361,6 +416,7 @@ const EvaluacionPage: React.FC = () => {
                                     value={observacionesGral}
                                     onChange={(e) => setObservacionesGral(e.target.value)}
                                     required
+                                    disabled={isReadOnly}
                                 />
                                 <p className="text-[10px] text-text-dim">
                                     Este campo es obligatorio y formará parte del acta de evaluación oficial del DIITRA.
@@ -394,17 +450,25 @@ const EvaluacionPage: React.FC = () => {
                                     </span>
                                 </div>
                             </div>
-                            <button
-                                type="submit"
-                                disabled={enviando}
-                                className="btn-vercel-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {enviando
-                                    ? <Loader2 size={14} className="animate-spin" />
-                                    : <Send size={14} />
-                                }
-                                Enviar Evaluación
-                            </button>
+                            
+                            {isReadOnly ? (
+                                <div className="badge-vercel badge-vercel-success !text-xs !py-2.5 flex items-center gap-1.5 font-bold animate-fade-in">
+                                    <ShieldCheck size={14} className="text-success" />
+                                    <span>Evaluación Registrada e Inmutable</span>
+                                </div>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    disabled={enviando}
+                                    className="btn-vercel-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {enviando
+                                        ? <Loader2 size={14} className="animate-spin" />
+                                        : <Send size={14} />
+                                    }
+                                    Enviar Evaluación
+                                </button>
+                            )}
                         </div>
                     </form>
                 </div>
@@ -423,12 +487,37 @@ interface CriterioCardProps {
     porcentaje: number;
     onPuntajeChange: (v: number) => void;
     onObsChange: (v: string) => void;
+    disabled?: boolean;
 }
 
 const CriterioCard: React.FC<CriterioCardProps> = ({
-    numero, detalle, criterioInfo, porcentaje, onPuntajeChange, onObsChange
+    numero, detalle, criterioInfo, porcentaje, onPuntajeChange, onObsChange, disabled
 }) => {
-    const color = porcentaje >= 70 ? '#22c55e' : porcentaje >= 40 ? '#f0a500' : '#6b7280';
+    // Definición de colores según el estándar CACES (Geist preset)
+    const color = porcentaje >= 90 
+        ? 'var(--color-success)' 
+        : porcentaje >= 70 
+            ? 'var(--color-info)' 
+            : porcentaje >= 50 
+                ? 'var(--color-warning)' 
+                : 'var(--color-error)';
+
+    // Determinar niveles CACES para el IST de Quito (Ecuador)
+    const getCacesRango = (pct: number) => {
+        if (pct < 50) return { label: 'Insatisfactorio', badgeClass: 'text-error bg-error/10 border-error/20' };
+        if (pct < 70) return { label: 'Poco Satisfactorio', badgeClass: 'text-warning bg-warning/10 border-warning/20' };
+        if (pct < 90) return { label: 'Satisfactorio', badgeClass: 'text-info bg-info/10 border-info/20' };
+        return { label: 'Excelente', badgeClass: 'text-success bg-success/10 border-success/20' };
+    };
+
+    const cacesInfo = getCacesRango(porcentaje);
+
+    const presets = [
+        { label: 'Deficiente (25%)', pct: 0.25, colorClass: 'hover:text-error hover:bg-error/10 hover:border-error/30' },
+        { label: 'Regular (50%)', pct: 0.50, colorClass: 'hover:text-warning hover:bg-warning/10 hover:border-warning/30' },
+        { label: 'Bueno (75%)', pct: 0.75, colorClass: 'hover:text-info hover:bg-info/10 hover:border-info/30' },
+        { label: 'Excelente (100%)', pct: 1.00, colorClass: 'hover:text-success hover:bg-success/10 hover:border-success/30' },
+    ];
 
     return (
         <div className="bento-card p-5 space-y-4">
@@ -445,42 +534,102 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                         )}
                     </div>
                 </div>
-                <div className="text-right shrink-0">
-                    <span className="text-xl font-black leading-none" style={{ color }}>
-                        {detalle.puntaje.toFixed(1)}
-                    </span>
-                    <span className="text-text-dim text-xs">/{detalle.max}</span>
+                
+                {/* Score interactivo con input numérico de alta precisión */}
+                <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-1">
+                        <input
+                            type="number"
+                            min={0}
+                            max={detalle.max}
+                            step={0.5}
+                            value={detalle.puntaje}
+                            disabled={disabled}
+                            onChange={(e) => {
+                                let val = parseFloat(e.target.value);
+                                if (isNaN(val)) val = 0;
+                                if (val < 0) val = 0;
+                                if (val > detalle.max) val = detalle.max;
+                                onPuntajeChange(val);
+                            }}
+                            className="w-14 h-7 text-center font-bold bg-surface hover:bg-surface-hover focus:bg-bg-deep border border-border-thin rounded text-sm text-text-main font-mono py-0 px-1 focus:border-text-main transition-colors select-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            style={{ color }}
+                        />
+                        <span className="text-text-dim text-xs font-semibold">/{detalle.max}</span>
+                    </div>
                     {criterioInfo && (
-                        <p className="text-[9px] text-text-dim mt-1">Peso: {criterioInfo.peso_porcentaje}%</p>
+                        <p className="text-[9px] font-mono text-text-dim uppercase tracking-wider">
+                            Peso: {criterioInfo.peso_porcentaje}%
+                        </p>
                     )}
                 </div>
             </div>
 
             {/* Barra de progreso visual */}
-            <div className="w-full bg-surface rounded-full h-1.5">
+            <div className="w-full bg-surface rounded-full h-1">
                 <div
-                    className="h-1.5 rounded-full transition-all duration-200"
+                    className="h-1 rounded-full transition-all duration-200"
                     style={{ width: `${porcentaje}%`, background: color }}
                 />
             </div>
 
-            {/* Slider */}
-            <input
-                type="range"
-                min={0}
-                max={detalle.max}
-                step={0.5}
-                value={detalle.puntaje}
-                onChange={(e) => onPuntajeChange(parseFloat(e.target.value))}
-                className="w-full h-1.5 bg-surface rounded-lg appearance-none cursor-pointer"
-                style={{ accentColor: color }}
-            />
+            {/* Slider con track visible y custom colors */}
+            <div className="py-1">
+                <input
+                    type="range"
+                    min={0}
+                    max={detalle.max}
+                    step={0.5}
+                    value={detalle.puntaje}
+                    disabled={disabled}
+                    onChange={(e) => onPuntajeChange(parseFloat(e.target.value))}
+                    className="w-full h-1 bg-neutral-200 dark:bg-neutral-800/80 rounded-lg cursor-pointer focus:outline-none transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ accentColor: color }}
+                />
+            </div>
+
+            {/* Fila inferior: Estado CACES + Botones Preset */}
+            <div className="flex flex-wrap gap-2 items-center justify-between mt-1">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] text-text-dim font-bold uppercase tracking-wider">Nivel CACES:</span>
+                    <span className={`badge-vercel text-[9px] font-bold px-1.5 py-0.5 rounded ${cacesInfo.badgeClass}`}>
+                        {cacesInfo.label}
+                    </span>
+                </div>
+                
+                <div className="flex items-center gap-1">
+                    {presets.map(p => {
+                        const targetScore = detalle.max * p.pct;
+                        const isSelected = Math.abs(detalle.puntaje - targetScore) < 0.01;
+                        return (
+                            <button
+                                key={p.label}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => onPuntajeChange(targetScore)}
+                                className={`px-2 py-0.5 text-[9px] font-semibold border rounded transition-all duration-150 ${
+                                    disabled
+                                        ? isSelected
+                                            ? 'bg-text-main/20 border-text-main/20 text-text-main/70 cursor-not-allowed'
+                                            : 'bg-surface/10 border-border-thin/30 text-text-dim/40 cursor-not-allowed'
+                                        : isSelected 
+                                            ? 'bg-text-main border-text-main text-bg-deep cursor-pointer' 
+                                            : `bg-surface/30 border-border-thin text-text-dim cursor-pointer ${p.colorClass}`
+                                }`}
+                            >
+                                {p.label.split(' ')[0]}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
             {/* Observaciones del criterio */}
             <textarea
-                className="input-vercel !text-xs h-16 resize-none"
-                placeholder={`Observaciones sobre ${detalle.criterio.toLowerCase()}...`}
+                className="input-vercel !text-xs h-16 resize-none mt-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                placeholder={`Justificación y observaciones específicas sobre ${detalle.criterio.toLowerCase()}...`}
                 value={detalle.observaciones}
+                disabled={disabled}
                 onChange={(e) => onObsChange(e.target.value)}
             />
         </div>

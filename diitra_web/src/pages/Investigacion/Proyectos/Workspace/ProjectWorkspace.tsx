@@ -103,6 +103,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
     const [isUnauthorized, setIsUnauthorized] = useState(false);
     const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
+    const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
     const [isCheckingRevision, setIsCheckingRevision] = useState(false);
 
     useEffect(() => {
@@ -187,11 +188,12 @@ export const ProjectWorkspace: React.FC = () => {
                 
                 // Buscar si el usuario actual es un revisor asignado
                 const userRevision = data.revisiones?.find((r: any) => 
-                    r.idRevisor === user.id_usuario
+                    (r.idRevisor ?? r.IdRevisor) === user.id_usuario
                 );
                 
                 if (userRevision) {
-                    setAssignedRevisionUuid(userRevision.uuid);
+                    setAssignedRevisionUuid(userRevision.uuid ?? userRevision.Uuid);
+                    setAssignedRevisionStatus(userRevision.estado ?? userRevision.Estado ?? null);
                 }
             } catch (err) {
                 console.warn("[DIITRA] No se pudieron cargar evaluaciones del proyecto o sin privilegios de visualización.", err);
@@ -547,11 +549,16 @@ export const ProjectWorkspace: React.FC = () => {
     };
 
     if (activeDocument) {
-        const editorUuid = activeDocument === templateCode
+        const isMainProtocol = 
+            activeDocument === 'PROTOCOLO_INVESTIGACION' || 
+            activeDocument === 'PROTOCOLO_PEER_REVIEW' || 
+            activeDocument?.toUpperCase() === templateCode?.toUpperCase();
+
+        const editorUuid = isMainProtocol
             ? documentUuid
             : subDocumentUuids[activeDocument];
 
-        if (activeDocument !== templateCode && !editorUuid) {
+        if (!isMainProtocol && !editorUuid) {
             return (
                 <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                     <div className="flex flex-col items-center gap-4">
@@ -562,7 +569,6 @@ export const ProjectWorkspace: React.FC = () => {
             );
         }
 
-        const isMainProtocol = activeDocument === templateCode;
         const isNotEditableState = currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección';
         
         // El protocolo principal se rige por puedeEditar.
@@ -580,7 +586,7 @@ export const ProjectWorkspace: React.FC = () => {
             <DocumentEditor 
                 templateCode={activeDocument} 
                 initialData={{ Uuid: editorUuid }}
-                entityUuid={activeDocument === templateCode ? resolvedProjectUuid || undefined : resolvedProjectUuid || undefined}
+                entityUuid={resolvedProjectUuid || undefined}
                 onClose={handleCloseEditor} 
                 readOnly={isReadOnly}
                 readOnlyReason={readOnlyReason}
@@ -716,8 +722,8 @@ export const ProjectWorkspace: React.FC = () => {
                                     
                                     return (
                                         <div key={phase.id} className={`p-4 border-b border-border-thin last:border-b-0 flex items-start gap-3 transition-all duration-300 ${isCurrent ? 'bg-surface-hover border-l-2 border-l-brand' : ''}`}>
-                                            <div className={`mt-0.5 transition-colors duration-300 ${isCurrent ? 'text-brand' : isPast ? 'text-success' : 'text-text-dim'}`}>
-                                                {isPast ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                                            <div className={`mt-0.5 transition-colors duration-300 ${(isCurrent && !(phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? 'text-brand' : (isPast || (phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? 'text-success' : 'text-text-dim'}`}>
+                                                {(isPast || (phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h3 className={`text-xs font-bold tracking-wider uppercase ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
@@ -749,7 +755,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     className="btn-vercel-primary !py-2"
                                                                 >
                                                                     <CheckSquare size={14} />
-                                                                    <span>{isPast ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
+                                                                    <span>{(isPast || assignedRevisionStatus === 'Completada') ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
                                                                 </button>
                                                             ) : (isAdmin || roles?.includes('DIRECTOR_INV')) ? (
                                                                 <button 

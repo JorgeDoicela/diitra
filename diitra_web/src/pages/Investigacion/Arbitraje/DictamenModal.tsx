@@ -1,8 +1,7 @@
 import React from 'react';
 import { X, Scale, CheckCircle2, XCircle, AlertTriangle, Award, Download, FileText } from 'lucide-react';
-import { DICTAMEN_CONFIG } from '../../../services/peerReviewService';
+import { DICTAMEN_CONFIG, downloadDictamenPdf } from '../../../services/peerReviewService';
 import type { DictamenDto } from '../../../services/peerReviewService';
-import api from '../../../api/axios_config';
 
 interface Props {
     dictamen: DictamenDto;
@@ -20,20 +19,17 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
 
     const handleDescargarPdf = async () => {
         try {
-            // En el futuro este endpoint generará el Acta de Dictamen en PDF con QuestPDF
-            const response = await api.post(
-                `/projects/generate-pdf?isDraft=false&isBlind=false`,
-                { uuid: dictamen.proyecto_uuid },
-                { responseType: 'blob' }
-            );
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const blob = await downloadDictamenPdf(dictamen.proyecto_uuid);
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `DICTAMEN_${dictamen.codigo_institucional ?? dictamen.proyecto_uuid.split('-')[0].toUpperCase()}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();
-        } catch {
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('[DIITRA] Error al descargar acta:', err);
             alert('No se pudo descargar el dictamen en PDF.');
         }
     };
