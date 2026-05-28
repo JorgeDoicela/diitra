@@ -48,7 +48,7 @@ export function createNoOpCoWork(documentId = 'noop'): CoWorkHandle {
         // Operaciones de ciclo de vida — no-ops seguros
         disconnect: () => { /* no-op */ },
         compact: () => Promise.resolve(),
-        submitFinalContent: (_html: string, _json: string) => { /* no-op */ },
+        submitFinalContent: (_html: string, _json: string, _fieldName?: string) => { /* no-op */ },
 
         // Coordinación Team Pulse — retornan promesas resueltas
         notifySectionActivity: (_uuid, _section, _action) => Promise.resolve(),

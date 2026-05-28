@@ -229,8 +229,11 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             }
             
             // SIEMPRE registrar en el snapshot de SignalR (retrocompatibilidad y soporte PDF/Rubrica)
+            // Pasamos el nombre del campo para que se almacene bajo {docId}_{fieldName}
+            // en inv_cowork_documentos, permitiendo que PeerReviewService recupere
+            // justificacion y metodologia de forma independiente.
             const json = JSON.stringify(editor.getJSON());
-            coworkRef.current.submitFinalContent(html, json);
+            coworkRef.current.submitFinalContent(html, json, fieldRef.current);
         }
     }, [extensions]); // El editor se instancia UNA SOLA VEZ y permanece estable en memoria
 

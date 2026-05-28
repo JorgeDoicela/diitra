@@ -66,7 +66,7 @@ export interface CoWorkHandle {
     awareness: import('y-protocols/awareness').Awareness | null;
     disconnect: () => void;
     compact: () => Promise<void>;
-    submitFinalContent: (html: string, json: string) => void;
+    submitFinalContent: (html: string, json: string, fieldName?: string) => void;
 
     // Coordination (Team Pulse)
     notifySectionActivity: (instanceUuid: string, sectionName: string, action: string) => Promise<void>;
