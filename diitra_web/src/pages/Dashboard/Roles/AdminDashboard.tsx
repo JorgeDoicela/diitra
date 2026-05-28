@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Activity, BarChart3,
-    ClipboardList, Loader2, Megaphone, TrendingUp,
-    UserPlus, Eye, Award, X
+    ClipboardList, Loader2, Megaphone, TrendingUp
 } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
@@ -42,34 +41,11 @@ export const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<GlobalStats | null>(null);
     const [loading, setLoading] = useState(true);
 
-    // Peer Review States
-    const [projects, setProjects] = useState<any[]>([]);
-    const [reviewers, setReviewers] = useState<any[]>([]);
-    const [selectedProject, setSelectedProject] = useState<any | null>(null);
-    const [showAssignModal, setShowAssignModal] = useState(false);
-    const [assignForm, setAssignForm] = useState({
-        idRevisor: 0,
-        fechaLimite: '',
-        esExterno: false
-    });
-    const [selectedProjectReviews, setSelectedProjectReviews] = useState<any[]>([]);
-    const [showReviewsModal, setShowReviewsModal] = useState(false);
-
     const fetchData = async () => {
         setLoading(true);
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
-
-            const projRes = await api.get('/projects');
-            setProjects(projRes.data || []);
-
-            const revRes = await api.get('/Admin/users?type=DOCENTE&pageSize=100');
-            if (revRes.data?.items) {
-                setReviewers(revRes.data.items);
-            } else {
-                setReviewers(revRes.data || []);
-            }
         } catch (e) {
             console.error('[DIITRA] Error al cargar datos:', e);
         } finally {
@@ -80,46 +56,6 @@ export const AdminDashboard: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, []);
-
-    const handleOpenAssignModal = (proj: any) => {
-        setSelectedProject(proj);
-        const firstValidReviewer = reviewers.find(r => r.id_usuario !== null && r.id_usuario !== undefined);
-        setAssignForm({
-            idRevisor: firstValidReviewer?.id_usuario || 0,
-            fechaLimite: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 15 días por defecto
-            esExterno: false
-        });
-        setShowAssignModal(true);
-    };
-
-    const handleAssignReviewer = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedProject) return;
-
-        try {
-            await api.post('/PeerReviews/assign', {
-                idProyecto: selectedProject.id_proyecto,
-                idRevisor: Number(assignForm.idRevisor),
-                fechaLimite: new Date(assignForm.fechaLimite).toISOString(),
-                esExterno: assignForm.esExterno
-            });
-            setShowAssignModal(false);
-            fetchData();
-        } catch (error) {
-            console.error('[DIITRA] Error al asignar revisor:', error);
-        }
-    };
-
-    const handleViewReviews = async (proj: any) => {
-        setSelectedProject(proj);
-        try {
-            const response = await api.get(`/PeerReviews/project/${proj.id_proyecto}`);
-            setSelectedProjectReviews(response.data || []);
-            setShowReviewsModal(true);
-        } catch (error) {
-            console.error('[DIITRA] Error al cargar rúbricas:', error);
-        }
-    };
 
     const ejecucionPorc = stats?.presupuesto_total_asignado
         ? Math.min(100, ((stats.presupuesto_total_ejecutado ?? 0) / stats.presupuesto_total_asignado) * 100)
@@ -308,244 +244,6 @@ export const AdminDashboard: React.FC = () => {
                     </BentoCard>
 
                 </BentoGrid>
-
-                {/* Consola de Arbitraje Científico (Peer Review) */}
-                <section className="mt-8 px-2 animate-fade-up [animation-delay:300ms]">
-                    <div className="section-label mb-2">
-                        <Award size={12} className="text-text-main" />
-                        <span>Comité Institucional de Selección</span>
-                    </div>
-                    <h3 className="text-3xl font-bold text-text-main tracking-tighter uppercase mb-6">Arbitraje y Evaluación por Pares</h3>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        {/* 1. Proyectos Pendientes de Arbitraje */}
-                        <div className="bento-card p-6 flex flex-col h-[500px]">
-                            <header className="mb-4">
-                                <h4 className="text-lg font-bold text-text-main uppercase tracking-tight">Proyectos Postulados</h4>
-                                <p className="text-xs text-text-dim">Proyectos en estado 'Enviado' o 'En Revisión' listos para asignar evaluador.</p>
-                            </header>
-
-                            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                                {projects.filter(p => p.estado === 'Enviado' || p.estado === 'En Revisión').length === 0 ? (
-                                    <div className="empty-state h-full">
-                                        <p className="text-xs text-text-dim font-bold uppercase tracking-wider">No hay proyectos postulados pendientes</p>
-                                    </div>
-                                ) : (
-                                    projects.filter(p => p.estado === 'Enviado' || p.estado === 'En Revisión').map((proj) => (
-                                        <div key={proj.uuid} className="p-4 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`status-tag ${
-                                                        proj.estado === 'Enviado' ? 'badge-vercel-warning' : 'badge-vercel-info'
-                                                    }`}>
-                                                        {proj.estado}
-                                                    </span>
-                                                    {proj.codigo_institucional && (
-                                                        <span className="text-[9px] text-text-dim font-mono">{proj.codigo_institucional}</span>
-                                                    )}
-                                                </div>
-                                                <h5 className="text-sm font-bold text-text-main truncate">{proj.titulo}</h5>
-                                                <p className="text-[10px] text-text-dim truncate">Línea: {proj.linea_investigacion || 'General'} · TRL Meta: {proj.trl_meta || 1}</p>
-                                            </div>
-                                            <button 
-                                                onClick={() => handleOpenAssignModal(proj)}
-                                                className="btn-vercel-secondary shrink-0"
-                                            >
-                                                <UserPlus size={12} />
-                                                <span>Asignar Par</span>
-                                            </button>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 2. Historial de Evaluación y Calificación */}
-                        <div className="bento-card p-6 flex flex-col h-[500px]">
-                            <header className="mb-4">
-                                <h4 className="text-lg font-bold text-text-main uppercase tracking-tight">Dictámenes y Calificaciones</h4>
-                                <p className="text-xs text-text-dim">Puntajes finales otorgados y rúbricas auditables (CACES Compliance).</p>
-                            </header>
-
-                            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                                {projects.filter(p => ['En Revisión', 'Aprobado', 'Rechazado'].includes(p.estado)).length === 0 ? (
-                                    <div className="empty-state h-full">
-                                        <p className="text-xs text-text-dim font-bold uppercase tracking-wider">No hay evaluaciones registradas</p>
-                                    </div>
-                                ) : (
-                                    projects.filter(p => ['En Revisión', 'Aprobado', 'Rechazado'].includes(p.estado)).map((proj) => (
-                                        <div key={proj.uuid} className="p-4 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-all flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className={`status-tag ${
-                                                        proj.estado === 'Aprobado' ? 'badge-vercel-success' : 
-                                                        proj.estado === 'Rechazado' ? 'badge-vercel-error' :
-                                                        'badge-vercel-info'
-                                                    }`}>
-                                                        {proj.estado}
-                                                    </span>
-                                                    <span className="text-[9px] text-text-dim font-mono">Calificación: {proj.puntaje_evaluacion !== null && proj.puntaje_evaluacion !== undefined ? `${proj.puntaje_evaluacion}/100` : 'Pendiente'}</span>
-                                                </div>
-                                                <h5 className="text-sm font-bold text-text-main truncate">{proj.titulo}</h5>
-                                                <p className="text-[10px] text-text-dim truncate">Presupuesto: ${proj.presupuesto_total?.toLocaleString() ?? 0} · TRL Actual: {proj.trl_actual || 1}</p>
-                                            </div>
-                                            <button 
-                                                onClick={() => handleViewReviews(proj)}
-                                                className="btn-vercel-secondary shrink-0"
-                                            >
-                                                <Eye size={12} />
-                                                <span>Ver Detalle</span>
-                                            </button>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* MODAL: ASIGNAR REVISOR */}
-                {showAssignModal && selectedProject && (
-                    <div className="modal-overlay">
-                        <div className="modal-card">
-                            <header className="modal-header">
-                                <div>
-                                    <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
-                                        Asignación de Par Evaluador
-                                    </h3>
-                                    <p className="text-[9px] text-text-dim font-mono uppercase tracking-widest">Proyecto: {selectedProject.titulo}</p>
-                                </div>
-                                <button onClick={() => setShowAssignModal(false)} className="p-2 text-text-dim hover:text-text-main transition-colors">
-                                    <X size={20} />
-                                </button>
-                            </header>
-
-                            <form onSubmit={handleAssignReviewer} className="modal-body space-y-6">
-                                <div className="space-y-2">
-                                    <label className="section-label text-text-dim">Seleccionar Revisor (Docente)</label>
-                                    <select 
-                                        className="input-vercel"
-                                        value={assignForm.idRevisor}
-                                        onChange={(e) => setAssignForm({ ...assignForm, idRevisor: Number(e.target.value) })}
-                                    >
-                                        {reviewers
-                                            .filter((rev) => rev.id_usuario !== null && rev.id_usuario !== undefined)
-                                            .map((rev) => (
-                                                <option key={rev.id_usuario} value={rev.id_usuario}>
-                                                    {rev.nombre_completo} ({rev.email})
-                                                </option>
-                                            ))}
-                                        {reviewers.filter((rev) => rev.id_usuario !== null && rev.id_usuario !== undefined).length === 0 && (
-                                            <option value={0}>No hay revisores disponibles</option>
-                                        )}
-                                    </select>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="section-label text-text-dim">Fecha Límite</label>
-                                        <input 
-                                            type="date"
-                                            className="input-vercel"
-                                            value={assignForm.fechaLimite}
-                                            onChange={(e) => setAssignForm({ ...assignForm, fechaLimite: e.target.value })}
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="section-label text-text-dim">Tipo de Arbitraje</label>
-                                        <div className="flex items-center h-11">
-                                            <label className="flex items-center gap-2 cursor-pointer">
-                                                <input 
-                                                    type="checkbox"
-                                                    className="w-4 h-4 rounded border-border-thin bg-surface text-text-main accent-text-main"
-                                                    checked={assignForm.esExterno}
-                                                    onChange={(e) => setAssignForm({ ...assignForm, esExterno: e.target.checked })}
-                                                />
-                                                <span className="text-xs text-text-main font-bold uppercase tracking-wider">Evaluador Externo</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="modal-footer" style={{ margin: '0 -1.5rem' }}>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setShowAssignModal(false)}
-                                        className="btn-vercel-secondary"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button 
-                                        type="submit"
-                                        className="btn-vercel-primary"
-                                    >
-                                        Confirmar Asignación
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
-
-                {/* MODAL: VER EVALUACIONES */}
-                {showReviewsModal && selectedProject && (
-                    <div className="modal-overlay">
-                        <div className="modal-card modal-card--lg" style={{ maxHeight: '85vh' }}>
-                            <header className="modal-header">
-                                <div>
-                                    <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
-                                        Dictámenes de Evaluación por Pares
-                                    </h3>
-                                    <p className="text-[9px] text-text-dim font-mono uppercase tracking-widest">Proyecto: {selectedProject.titulo}</p>
-                                </div>
-                                <button onClick={() => setShowReviewsModal(false)} className="p-2 text-text-dim hover:text-text-main transition-colors">
-                                    <X size={20} />
-                                </button>
-                            </header>
-
-                            <div className="modal-body space-y-6">
-                                {selectedProjectReviews.length === 0 ? (
-                                    <p className="text-xs text-text-dim py-8 text-center uppercase font-bold tracking-wider">No se han registrado evaluaciones para este proyecto.</p>
-                                ) : (
-                                    selectedProjectReviews.map((rev, i) => (
-                                        <div key={i} className="p-4 rounded bg-surface/10 border border-border-thin space-y-4">
-                                            <div className="flex justify-between items-center border-b border-border-thin pb-2">
-                                                <div>
-                                                    <p className="text-xs text-text-main font-bold uppercase">Revisor ID: {rev.id_revisor} {rev.es_externo && <span className="text-info font-bold ml-2">[EXTERNO]</span>}</p>
-                                                    <p className="text-[9px] text-text-dim uppercase tracking-wider">Límite: {new Date(rev.fecha_limite).toLocaleDateString()}</p>
-                                                </div>
-                                                <span className={`status-tag ${
-                                                    rev.estado === 'Completada' ? 'badge-vercel-success' : 'badge-vercel-warning'
-                                                }`}>
-                                                    {rev.estado}
-                                                </span>
-                                            </div>
-
-                                            {rev.estado === 'Completada' && (
-                                                <div className="space-y-4">
-                                                    <div className="rounded bg-surface/20 p-3">
-                                                        <p className="text-[10px] section-label text-text-dim" style={{ marginBottom: '0.25rem' }}>Dictamen General:</p>
-                                                        <p className="text-xs text-text-main italic font-medium leading-relaxed">"{rev.observaciones_gral || 'Sin observaciones'}"</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <footer className="modal-footer">
-                                <button 
-                                    onClick={() => setShowReviewsModal(false)}
-                                    className="btn-vercel-secondary"
-                                >
-                                    Cerrar Ventana
-                                </button>
-                            </footer>
-                        </div>
-                    </div>
-                )}
                 </>
             )}
         </>
