@@ -26,6 +26,4 @@ public class InvestigationInstitute
     public int Version { get; set; } = 1;
     public bool Activo { get; set; } = true;
 
-    // Relaciones
-    public virtual ICollection<ExternalReviewer> ExternalReviewers { get; set; } = new List<ExternalReviewer>();
 }

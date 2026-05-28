@@ -25,6 +25,7 @@ export interface PeerReviewDto {
     es_doble_ciego: boolean;
     puntaje_total?: number;
     observaciones_gral?: string;
+    dictamen_revisor?: 'Pendiente' | 'Aprueba' | 'Rechaza';
 }
 
 export interface ArbitrajeProyectoDto {
@@ -171,6 +172,37 @@ export const revocarAsignacion = (revisionUuid: string): Promise<{ message: stri
 export const cerrarArbitraje = (projectUuid: string): Promise<DictamenDto> =>
     api.post(`/PeerReviews/project/${projectUuid}/cerrar`).then(r => r.data);
 
+/** Descarga el Acta de Dictamen de Arbitraje como blob PDF. */
+export const downloadDictamenPdf = async (projectUuid: string): Promise<Blob> => {
+    const response = await api.get(`/PeerReviews/project/${projectUuid}/dictamen-pdf`, {
+        responseType: 'blob',
+    });
+    return response.data as Blob;
+};
+
+// ─────────────────────────────────────────────────────────────
+//  API Calls — Revisores Externos
+// ─────────────────────────────────────────────────────────────
+
+export interface RegistrarRevisorExternoPayload {
+    cedula?: string;
+    nombres: string;
+    apellidos: string;
+    email: string;
+    institucion: string;
+    grado_academico?: string;
+    orcid_id?: string;
+    especialidad?: string;
+}
+
+export const registerRevisorExterno = (
+    payload: RegistrarRevisorExternoPayload
+): Promise<{ uuid: string; message: string }> =>
+    api.post('/PeerReviews/revisores/externos', payload).then(r => r.data);
+
+export const getRevisoresExternos = (): Promise<RevisorDisponibleDto[]> =>
+    api.get('/PeerReviews/revisores/externos').then(r => r.data);
+
 // ─────────────────────────────────────────────────────────────
 //  Helpers de UI
 // ─────────────────────────────────────────────────────────────
@@ -194,6 +226,13 @@ export const DICTAMEN_CONFIG: Record<string, { label: string; color: string; bg:
     'Aprobado':  { label: '✓ APROBADO',  color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
     'Rechazado': { label: '✗ RECHAZADO', color: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
     'Desempate': { label: '⚖ DESEMPATE', color: '#f0a500', bg: 'rgba(240,165,0,0.1)' },
+};
+
+/** Config de dictamen individual del árbitro */
+export const DICTAMEN_REVISOR_CONFIG: Record<string, { label: string; badge: string }> = {
+    'Aprueba':   { label: '✓ Aprueba',   badge: 'badge-vercel-success' },
+    'Rechaza':   { label: '✗ Rechaza',   badge: 'badge-vercel-error' },
+    'Pendiente': { label: '– Pendiente', badge: 'badge-vercel-warning' },
 };
 
 export const getDictamenPreview = (puntaje: number, minimo: number): 'Aprobado' | 'Rechazado' =>

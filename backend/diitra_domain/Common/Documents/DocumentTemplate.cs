@@ -130,6 +130,8 @@ namespace Diitra.Domain.Common.Documents
         InformeAvance = 3,
         InformeFinal = 4,
         ActaLiquidacion = 5,
+        /// <summary>Acta de dictamen de la evaluación por pares (doble ciego). Normativa CACES.</summary>
+        DictamenArbitraje = 6,
 
         // Gestión de presupuesto público (SERCOP)
         TerminosDeReferencia = 10,

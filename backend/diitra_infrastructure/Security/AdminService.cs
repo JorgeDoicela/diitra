@@ -136,8 +136,7 @@ public class AdminService : IAdminService
         else if (type == "EXTERNO")
         {
             var query = _context.Users
-                .Where(u => u.TablaSigafi == "otros" || u.TablaSigafi == null)
-                .Where(u => _context.InvUsuariosMetadata.Any(m => m.IdUsuario == u.IdUsuario));
+                .Where(u => u.TablaSigafi == "otros" && _context.UserRoles.Any(ur => ur.IdUsuario == u.IdUsuario && ur.Role.CodigoRol == "DIITRA_REVISOR_EXTERNO"));
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
@@ -181,6 +180,10 @@ public class AdminService : IAdminService
                     nombreCompleto = $"{prof.PrimerNombre} {prof.SegundoNombre} {prof.PrimerApellido} {prof.SegundoApellido}".Replace("  ", " ").Trim();
                 } else if (student != null) {
                     nombreCompleto = $"{student.PrimerNombre} {student.SegundoNombre} {student.ApellidoPaterno} {student.ApellidoMaterno}".Replace("  ", " ").Trim();
+                }
+
+                if (string.IsNullOrWhiteSpace(nombreCompleto)) {
+                    nombreCompleto = u.IdSigafi;
                 }
 
                 return new UserManagementDto
@@ -495,12 +498,50 @@ public class AdminService : IAdminService
 
     public async Task<bool> RegisterExternalUserAsync(ExternalUserDto dto)
     {
-        var existing = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == dto.Cedula || u.IdSigafi == dto.Email);
-        if (existing != null) return false;
+        // 1. Validar contra usuarios existentes
+        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == dto.Cedula || u.IdSigafi == dto.Email);
+        
+        if (existingUser != null)
+        {
+            if (existingUser.TablaSigafi == "profesor")
+            {
+                throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un docente interno de la institución.");
+            }
+            if (existingUser.TablaSigafi == "alumno")
+            {
+                throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un estudiante matriculado.");
+            }
+            
+            var hasMeta = await _context.InvUsuariosMetadata.AnyAsync(m => m.IdUsuario == existingUser.IdUsuario);
+            if (hasMeta)
+            {
+                throw new InvalidOperationException("Este evaluador externo ya se encuentra registrado en el sistema.");
+            }
+        }
 
-        var user = new User {
+        // 2. Validar contra tablas base de profesores (por si no tienen usuario aún)
+        var existingProf = await _context.Profesores.AnyAsync(p => p.IdProfesor == dto.Cedula || p.EmailInstitucional == dto.Email || p.Email == dto.Email);
+        if (existingProf)
+        {
+            throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un docente registrado en la institución.");
+        }
+
+        // 3. Validar contra tablas base de alumnos (por si no tienen usuario aún)
+        var existingAlum = await _context.Alumnos.AnyAsync(a => a.IdAlumno == dto.Cedula || a.EmailInstitucional == dto.Email || a.Email == dto.Email);
+        if (existingAlum)
+        {
+            throw new InvalidOperationException("La cédula o correo ingresado ya corresponde a un estudiante en el registro institucional.");
+        }
+
+        // Si pasa las validaciones, creamos el usuario externo
+        string nombreCompleto = !string.IsNullOrEmpty(dto.FullName) 
+            ? dto.FullName 
+            : $"{dto.Nombres} {dto.Apellidos}".Trim();
+
+        var user = new User
+        {
             IdSigafi = dto.Cedula,
-            Nombre = dto.FullName,
+            Nombre = nombreCompleto,
             Contrasenia = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString().Substring(0, 8), 11),
             Activo = true,
             TablaSigafi = "otros"
@@ -509,12 +550,14 @@ public class AdminService : IAdminService
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata { 
-            IdUsuario = user.IdUsuario, 
-            Uuid = Guid.NewGuid(), 
+        _context.InvUsuariosMetadata.Add(new InvUsuarioMetadata
+        {
+            IdUsuario = user.IdUsuario,
+            Uuid = Guid.NewGuid(),
             Version = 1,
             Especialidad = dto.Especialidad,
-            GradoAcademicoMaximo = dto.GradoAcademico
+            GradoAcademicoMaximo = dto.GradoAcademico,
+            OrcidId = dto.OrcidId
         });
         await _context.SaveChangesAsync();
 
@@ -532,14 +575,14 @@ public class AdminService : IAdminService
         string afterJson = System.Text.Json.JsonSerializer.Serialize(new
         {
             Cedula = dto.Cedula,
-            Nombre = dto.FullName,
+            Nombre = user.Nombre,
             Institucion = dto.Institucion ?? "No especificada",
             GradoAcademico = dto.GradoAcademico ?? "No especificado",
             Especialidad = dto.Especialidad ?? "No especificada",
             RolAsignado = role.CodigoRol
         });
 
-        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {dto.FullName} ({dto.Institucion ?? "S/I"})", "USUARIOS", null, afterJson);
+        await _auditService.LogActionAsync(user.IdUsuario, "REGISTRO_EXTERNO", $"Registro de evaluador externo: {user.Nombre} ({dto.Institucion ?? "S/I"})", "USUARIOS", null, afterJson);
 
         return true;
     }

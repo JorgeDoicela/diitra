@@ -1,8 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_infrastructure.data.models;
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  REVISIONES DE PARES
+//  Tabla: inv_revisiones_pares
+// ─────────────────────────────────────────────────────────────────────────────
 [Table("inv_revisiones_pares")]
 public class InvRevisionesPares
 {
@@ -10,10 +15,17 @@ public class InvRevisionesPares
     public int IdRevision { get; set; }
     public string Uuid { get; set; } = Guid.NewGuid().ToString();
     public int IdProyecto { get; set; }
-    public int IdRevisor { get; set; }
+    /// <summary>
+    /// Referencia al evaluador (interno o externo) en la tabla usuarios.
+    /// </summary>
+    public int? IdRevisor { get; set; }
     public DateTime FechaAsignacion { get; set; } = DateTime.Now;
     public DateTime FechaLimite { get; set; }
+    /// <summary>Fecha en que el árbitro completó su evaluación (para KPI de tiempo promedio).</summary>
+    public DateTime? FechaCompletado { get; set; }
     public string Estado { get; set; } = "Pendiente";
+    /// <summary>Dictamen individual: Pendiente | Aprueba | Rechaza (calculado al completar evaluación).</summary>
+    public string DictamenRevisor { get; set; } = "Pendiente";
     public bool EsExterno { get; set; }
     public bool EsDobleCiego { get; set; } = true;
     public decimal? PuntajeTotal { get; set; }
@@ -21,10 +33,9 @@ public class InvRevisionesPares
 
     [ForeignKey("IdProyecto")]
     public virtual InvProyecto Proyecto { get; set; } = null!;
-    
-    // Suponiendo que existe un modelo Usuario o similar
-    // [ForeignKey("IdRevisor")]
-    // public virtual Usuario Revisor { get; set; } = null!;
+
+    [ForeignKey("IdRevisor")]
+    public virtual User? Revisor { get; set; }
 
     public virtual ICollection<InvEvaluacionesDetalle> Detalles { get; set; } = new List<InvEvaluacionesDetalle>();
 }
