@@ -87,53 +87,11 @@ const PeerReviewPage: React.FC = () => {
                 </div>
             </header>
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 animate-fade-up [animation-delay:50ms] relative z-10">
-                {/* Pendientes */}
-                <div className="bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1">Pendientes</span>
-                        <span className="stat-number text-warning">{pendientesCount}</span>
-                        <span className="text-[10px] text-text-dim mt-2 font-medium">
-                            {vencidasCount > 0 ? `⚠ ${vencidasCount} requieren atención urgente` : 'Al día con tus revisiones'}
-                        </span>
-                    </div>
-                    <div className="icon-circle icon-circle-warning !p-4">
-                        <Clock size={28} strokeWidth={1.5} />
-                    </div>
-                </div>
-
-                {/* Completadas */}
-                <div className="bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow">
-                    <div className="flex flex-col flex-1 mr-4">
-                        <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1">Completadas</span>
-                        <span className="stat-number text-success">{completadasCount}</span>
-                        <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden mt-3 max-w-[150px]">
-                            <div className="progress-fill progress-fill--success" style={{ width: `${completionRate}%` }} />
-                        </div>
-                    </div>
-                    <div className="icon-circle icon-circle-success !p-4">
-                        <CheckCircle size={28} strokeWidth={1.5} />
-                    </div>
-                </div>
-
-                {/* Vencidas */}
-                <div className="bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow">
-                    <div className="flex flex-col">
-                        <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1">Vencidas</span>
-                        <span className="stat-number text-error">{vencidasCount}</span>
-                        <span className="text-[10px] text-text-dim mt-2 font-medium">
-                            {vencidasCount > 0 ? 'Plazo de entrega superado' : 'Sin retrasos de entrega'}
-                        </span>
-                    </div>
-                    <div className="icon-circle icon-circle-error !p-4">
-                        <AlertTriangle size={28} strokeWidth={1.5} />
-                    </div>
-                </div>
-            </div>
-
-            {/* List Section */}
-            <div className="space-y-6 animate-fade-up [animation-delay:100ms] relative z-10">
+            {/* Two-column Vercel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:100ms] relative z-10">
+                
+                {/* Main Content: Left Column */}
+                <div className="lg:col-span-3 space-y-6">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-24 gap-3 text-text-dim bento-card static">
                         <Loader2 size={24} className="animate-spin text-brand" />
@@ -321,8 +279,139 @@ const PeerReviewPage: React.FC = () => {
                     </>
                 )}
             </div>
+
+            {/* Sidebar: Right Column */}
+            <div className="space-y-6">
+                <VercelUsageCard 
+                    title="Resumen de Evaluaciones"
+                    buttonLabel="Actualizar"
+                    onButtonClick={fetchReviews}
+                    items={[
+                        {
+                            label: 'Pendientes',
+                            value: pendientesCount,
+                            displayValue: `${pendientesCount} activas`,
+                            max: totalCount || 1,
+                            color: 'var(--warning)'
+                        },
+                        {
+                            label: 'Completadas',
+                            value: completadasCount,
+                            displayValue: `${completadasCount} enviadas`,
+                            max: totalCount || 1,
+                            color: 'var(--success)'
+                        },
+                        {
+                            label: 'Vencidas',
+                            value: vencidasCount,
+                            displayValue: `${vencidasCount} urgente`,
+                            max: totalCount || 1,
+                            color: 'var(--error)'
+                        }
+                    ]}
+                />
+
+                {/* Completion rate card (Visual progress) */}
+                {totalCount > 0 && (
+                    <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="section-label">
+                                <ShieldCheck size={12} className="text-success" />
+                                <span className="text-[13px] font-semibold text-text-main">Avance Global</span>
+                            </div>
+                            <span className="font-mono text-[13px] font-bold text-success">
+                                {completionRate}%
+                            </span>
+                        </div>
+                        <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-success transition-all duration-700"
+                                style={{ width: `${completionRate}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
         </main>
     );
 };
+
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-5">
+            <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
+            {buttonLabel && (
+                <button 
+                    onClick={onButtonClick} 
+                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                    {buttonLabel}
+                </button>
+            )}
+        </div>
+        <div className="space-y-1">
+            {items.map((item: any, idx: number) => {
+                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
+                const radius = 6.5;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                
+                return (
+                    <div 
+                        key={idx} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none"
+                                        strokeWidth="1.8"
+                                        style={{ stroke: 'var(--accents-2)' }}
+                                    />
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none transition-all duration-500"
+                                        stroke={item.color || 'var(--brand)'}
+                                        strokeWidth="1.8"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[13px] font-medium text-text-main truncate">
+                                    {item.label}
+                                </span>
+                                <svg 
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                            {item.displayValue || item.value}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+);
 
 export default PeerReviewPage;

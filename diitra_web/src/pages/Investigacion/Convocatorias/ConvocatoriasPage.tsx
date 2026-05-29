@@ -275,100 +275,135 @@ const ConvocatoriasPage = () => {
                 </div>
             </header>
 
-            {/* Grid of Stats (Quick View) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-up" style={{ animationDelay: '100ms' }}>
-                <StatCard label="Total Anual" value={convocatorias.length} icon={CalendarDays} />
-                <StatCard label="Abiertas" value={convocatorias.filter(c => c.estado === 'Abierta').length} icon={CheckCircle} color="text-success" />
-                <StatCard label="Presupuesto Total" value={`$${convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0).toLocaleString()}`} icon={DollarSign} />
-                <StatCard label="Próximas a Cerrar" value={convocatorias.filter(c => c.estado === 'Abierta').length} icon={Clock} />
-            </div>
-
-            {/* List View */}
-            <div className="space-y-4 animate-fade-up" style={{ animationDelay: '200ms' }}>
-                {convocatorias.map((conv) => (
-                    <div 
-                        key={conv.uuid} 
-                        onClick={() => setSelectedConvocatoria(conv)}
-                        className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group cursor-pointer"
-                    >
-                        <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
-                            <div className="icon-circle-brand shrink-0">
-                                <FileText size={20} strokeWidth={1.5} />
-                            </div>
-                            <div className="space-y-1 min-w-0 flex-1">
-                                <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                                    <span className={getStatusBadgeClass(conv.estado)}>
-                                        {conv.estado}
-                                    </span>
-                                    <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{conv.codigo_convocatoria}</span>
+            {/* Two-column Vercel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up" style={{ animationDelay: '100ms' }}>
+                
+                {/* Main Content: List View (Left Column) */}
+                <div className="lg:col-span-3 space-y-4">
+                    {convocatorias.map((conv) => (
+                        <div 
+                            key={conv.uuid} 
+                            onClick={() => setSelectedConvocatoria(conv)}
+                            className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group cursor-pointer"
+                        >
+                            <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
+                                <div className="icon-circle-brand shrink-0">
+                                    <FileText size={20} strokeWidth={1.5} />
                                 </div>
-                                <h4 className="text-base md:text-lg font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform truncate">{conv.titulo}</h4>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-text-dim font-medium uppercase tracking-tight">
-                                    <span className="flex items-center gap-1"><Calendar size={12} /> {conv.anio}</span>
-                                    <span className="flex items-center gap-1"><ShieldCheck size={12} /> {conv.periodo_nombre || conv.id_periodo}</span>
-                                    <span className="flex items-center gap-1 text-text-main whitespace-nowrap"><DollarSign size={12} /> Max: ${conv.monto_maximo_proyecto?.toLocaleString()}</span>
-                                    {conv.rubrica_nombre && <span className="flex items-center gap-1"><Layers size={12} /> {conv.rubrica_nombre}</span>}
+                                <div className="space-y-1 min-w-0 flex-1">
+                                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                                        <span className={getStatusBadgeClass(conv.estado)}>
+                                            {conv.estado}
+                                        </span>
+                                        <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{conv.codigo_convocatoria}</span>
+                                    </div>
+                                    <h4 className="text-base md:text-lg font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform truncate">{conv.titulo}</h4>
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-text-dim font-medium uppercase tracking-tight">
+                                        <span className="flex items-center gap-1"><Calendar size={12} /> {conv.anio}</span>
+                                        <span className="flex items-center gap-1"><ShieldCheck size={12} /> {conv.periodo_nombre || conv.id_periodo}</span>
+                                        <span className="flex items-center gap-1 text-text-main whitespace-nowrap"><DollarSign size={12} /> Max: ${conv.monto_maximo_proyecto?.toLocaleString()}</span>
+                                        {conv.rubrica_nombre && <span className="flex items-center gap-1"><Layers size={12} /> {conv.rubrica_nombre}</span>}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-border-thin pt-4 md:pt-0">
-                            <div className="text-left md:text-right md:mr-4">
-                                <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Cierre</p>
-                                <p className="text-xs font-mono text-text-main">{conv.fecha_cierre}</p>
-                            </div>
-                            
-                            <div className="flex items-center gap-1">
-                                {conv.estado === 'Borrador' && (
+                            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-border-thin pt-4 md:pt-0">
+                                <div className="text-left md:text-right md:mr-4">
+                                    <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Cierre</p>
+                                    <p className="text-xs font-mono text-text-main">{conv.fecha_cierre}</p>
+                                </div>
+                                
+                                <div className="flex items-center gap-1">
+                                    {conv.estado === 'Borrador' && (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusChange(conv.uuid, 'Abierta');
+                                            }}
+                                            className="p-2 text-text-dim hover:text-success hover:bg-surface-hover rounded transition-colors"
+                                            title="Publicar Convocatoria"
+                                        >
+                                            <CheckCircle size={18} />
+                                        </button>
+                                    )}
+                                    
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleStatusChange(conv.uuid, 'Abierta');
+                                            handleEdit(conv);
                                         }}
-                                        className="p-2 text-text-dim hover:text-success hover:bg-surface-hover rounded transition-colors"
-                                        title="Publicar Convocatoria"
+                                        className="p-2 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors"
+                                        title="Editar"
                                     >
-                                        <CheckCircle size={18} />
+                                        <Edit2 size={18} />
                                     </button>
-                                )}
-                                
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEdit(conv);
-                                    }}
-                                    className="p-2 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors"
-                                    title="Editar"
-                                >
-                                    <Edit2 size={18} />
-                                </button>
-                                
-                                <button 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(conv.uuid);
-                                    }}
-                                    className="p-2 text-text-dim hover:text-error hover:bg-surface-hover rounded transition-colors"
-                                    title="Eliminar"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                    
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(conv.uuid);
+                                        }}
+                                        className="p-2 text-text-dim hover:text-error hover:bg-surface-hover rounded transition-colors"
+                                        title="Eliminar"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
 
-                {convocatorias.length === 0 && !loading && (
-                    <div className="empty-state py-20">
-                        <div className="icon-circle-neutral mb-4">
-                            <AlertCircle size={24} />
+                    {convocatorias.length === 0 && !loading && (
+                        <div className="empty-state py-20">
+                            <div className="icon-circle-neutral mb-4">
+                                <AlertCircle size={24} />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-sm text-text-main font-bold uppercase tracking-widest">No hay convocatorias activas</p>
+                                <p className="text-xs text-text-dim">Empieza creando una nueva convocatoria para este periodo.</p>
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-sm text-text-main font-bold uppercase tracking-widest">No hay convocatorias activas</p>
-                            <p className="text-xs text-text-dim">Empieza creando una nueva convocatoria para este periodo.</p>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
+
+                {/* Sidebar Metrics (Right Column) */}
+                <div className="space-y-6">
+                    <VercelUsageCard 
+                        title="Resumen del Periodo"
+                        buttonLabel="Actualizar"
+                        onButtonClick={fetchConvocatorias}
+                        items={[
+                            {
+                                label: 'Total Anual',
+                                value: convocatorias.length,
+                                displayValue: `${convocatorias.length} ciclos`,
+                                max: 10,
+                                color: 'var(--brand)'
+                            },
+                            {
+                                label: 'Abiertas',
+                                value: convocatorias.filter(c => c.estado === 'Abierta').length,
+                                displayValue: `${convocatorias.filter(c => c.estado === 'Abierta').length} vigentes`,
+                                max: convocatorias.length || 1,
+                                color: 'var(--success)'
+                            },
+                            {
+                                label: 'Presupuesto Total',
+                                value: convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0),
+                                displayValue: `$${(convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0) / 1000).toFixed(0)}K`,
+                                max: 150000,
+                                color: 'var(--info)'
+                            },
+                            {
+                                label: 'Próximas a Cerrar',
+                                value: convocatorias.filter(c => c.estado === 'Abierta').length,
+                                displayValue: `${convocatorias.filter(c => c.estado === 'Abierta').length} activas`,
+                                max: convocatorias.length || 1,
+                                color: 'var(--warning)'
+                            }
+                        ]}
+                    />
+                </div>
             </div>
 
             {/* Modal - Create/Edit */}
@@ -859,16 +894,105 @@ const ConvocatoriasPage = () => {
     );
 };
 
-const StatCard = ({ label, value, icon: Icon, color = 'text-text-main' }: any) => (
-    <div className="bento-card p-5 flex items-center gap-4">
-        <div className="icon-circle-brand">
-            <Icon size={16} />
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-5">
+            <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
+            {buttonLabel && (
+                <button 
+                    onClick={onButtonClick} 
+                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                    {buttonLabel}
+                </button>
+            )}
         </div>
-        <div>
-            <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">{label}</p>
-            <p className={`text-xl font-bold tracking-tighter ${color}`}>{value}</p>
+        <div className="space-y-1">
+            {items.map((item: any, idx: number) => {
+                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
+                const radius = 6.5;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                
+                return (
+                    <div 
+                        key={idx} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none"
+                                        strokeWidth="1.8"
+                                        style={{ stroke: 'var(--accents-2)' }}
+                                    />
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none transition-all duration-500"
+                                        stroke={item.color || 'var(--brand)'}
+                                        strokeWidth="1.8"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[13px] font-medium text-text-main truncate">
+                                    {item.label}
+                                </span>
+                                <svg 
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                            {item.displayValue || item.value}
+                        </span>
+                    </div>
+                );
+            })}
         </div>
     </div>
 );
+
+const StatCard = ({ label, value, icon: Icon, type = 'brand', desc }: any) => {
+    let circleClass = 'icon-circle-brand';
+    if (type === 'success') circleClass = 'icon-circle-success bg-success-subtle text-success border-success/10';
+    if (type === 'warning') circleClass = 'icon-circle-warning bg-warning-subtle text-warning border-warning/10';
+    if (type === 'error') circleClass = 'icon-circle-error bg-error-subtle text-error border-error/10';
+    if (type === 'info') circleClass = 'icon-circle-info bg-info-subtle text-info border-info/10';
+    if (type === 'brand') circleClass = 'icon-circle bg-brand-subtle text-brand border-brand/10';
+
+    return (
+        <div className="bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow">
+            <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1 truncate">{label}</span>
+                <span className="stat-number text-text-main truncate">{value}</span>
+                {desc && (
+                    <span className="text-[10px] text-text-dim mt-2 font-medium truncate">{desc}</span>
+                )}
+            </div>
+            <div className={`icon-circle ${circleClass} !p-4 shrink-0`}>
+                <Icon size={28} strokeWidth={1.5} />
+            </div>
+        </div>
+    );
+};
 
 export default ConvocatoriasPage;
