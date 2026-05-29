@@ -38,7 +38,7 @@ const useAnimatedScore = (targetValue: number, duration: number = 500): number =
 
     useEffect(() => {
         if (targetValue === targetRef.current) return;
-        
+
         targetRef.current = targetValue;
         startValueRef.current = displayValue;
         startTimeRef.current = null;
@@ -85,6 +85,7 @@ const EvaluacionPage: React.FC = () => {
     const [observacionesGral, setObservacionesGral] = useState('');
 
     const [detalles, setDetalles] = useState<EvaluacionDetalle[]>([]);
+    const [activeTab, setActiveTab] = useState<'document' | 'rubric'>('document');
 
     useEffect(() => {
         if (!revisionUuid) return;
@@ -92,7 +93,7 @@ const EvaluacionPage: React.FC = () => {
         getRubricaForRevision(revisionUuid)
             .then((data) => {
                 setRubrica(data);
-                
+
                 const isCompletada = data.estado_revision === 'Completada';
                 let initialObservaciones = data.observaciones_gral || '';
                 let initialDetalles = data.criterios.map(c => ({
@@ -199,7 +200,7 @@ const EvaluacionPage: React.FC = () => {
                 })),
                 observaciones_gral: observacionesGral,
             });
-            
+
             // Limpiar borrador al enviar con éxito
             localStorage.removeItem(`diitra_peer_review_draft_${revisionUuid}`);
             setEnviado(true);
@@ -272,16 +273,16 @@ const EvaluacionPage: React.FC = () => {
     if (enviado) {
         const cfg = DICTAMEN_CONFIG[dictamenPreview];
         return (
-            <main className="flex-1 bg-bg-deep flex items-center justify-center p-8 lg:p-10 vercel-grid-fade">
+            <main className="flex-1 bg-bg-deep flex items-center justify-center p-8 lg:p-10">
                 <div className="bento-card static p-8 text-center max-w-lg w-full shadow-2xl relative z-10 border-border-hover bg-surface animate-scale-up">
-                    <div className="p-6 rounded-full mx-auto mb-6 w-20 h-20 flex items-center justify-center animate-bounce"
+                    <div className="p-6 rounded-full mx-auto mb-6 w-20 h-20 flex items-center justify-center"
                         style={{ background: cfg.bg }}>
                         {dictamenPreview === 'Aprobado'
                             ? <CheckCircle2 size={36} style={{ color: cfg.color }} />
                             : <XCircle size={36} style={{ color: cfg.color }} />
                         }
                     </div>
-                    
+
                     <h2 className="text-3xl font-black tracking-tighter text-text-main uppercase mb-2">
                         Evaluación Registrada
                     </h2>
@@ -365,11 +366,35 @@ const EvaluacionPage: React.FC = () => {
     const criteriosEvaluadosCount = detalles.filter(d => d.puntaje > 0 || d.observaciones.trim() !== '').length;
 
     return (
-        <main className="flex-1 bg-bg-deep overflow-hidden">
-            <div className="flex h-full flex-col lg:flex-row animate-fade-in">
+        <main className="flex-1 bg-bg-deep overflow-hidden flex flex-col">
+            {/* Mobile Tab Switcher */}
+            <div className="flex shrink-0 border-b border-border-thin bg-surface/30 backdrop-blur-md lg:hidden">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('document')}
+                    className={`flex-1 py-3.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 transition-all ${activeTab === 'document'
+                        ? 'border-brand text-brand bg-brand/5'
+                        : 'border-transparent text-text-dim'
+                        }`}
+                >
+                    1. Protocolo
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setActiveTab('rubric')}
+                    className={`flex-1 py-3.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 transition-all ${activeTab === 'rubric'
+                        ? 'border-brand text-brand bg-brand/5'
+                        : 'border-transparent text-text-dim'
+                        }`}
+                >
+                    2. Rúbrica ({criteriosEvaluadosCount}/{detalles.length})
+                </button>
+            </div>
+
+            <div className="flex h-full flex-1 flex-col lg:flex-row overflow-hidden animate-fade-in relative">
 
                 {/* Contenido Central: Documento */}
-                <section className="flex-1 border-r border-border-thin flex flex-col bg-bg-deep overflow-hidden">
+                <section className={`flex-1 border-r border-border-thin flex flex-col bg-bg-deep overflow-hidden ${activeTab === 'document' ? 'flex' : 'hidden lg:flex'}`}>
                     <div className="px-6 py-5 border-b border-border-thin bg-surface/5 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
                             <button
@@ -386,7 +411,7 @@ const EvaluacionPage: React.FC = () => {
                                 <span className="text-sm font-black text-text-main uppercase tracking-tighter">Protocolo de Investigación Original</span>
                             </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={handleDescargarCiego}
@@ -445,7 +470,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         1. Resumen / Descripción General
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.descripcion_proyecto }}
                                     />
@@ -457,7 +482,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         2. Antecedentes
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.antecedentes }}
                                     />
@@ -472,7 +497,7 @@ const EvaluacionPage: React.FC = () => {
                                     {rubrica.objetivo_general && (
                                         <div className="space-y-1 bg-bg-deep p-4 rounded-xl border border-border-thin">
                                             <p className="text-[9px] font-extrabold text-text-dim uppercase tracking-widest">Objetivo General</p>
-                                            <div 
+                                            <div
                                                 className="text-sm text-text-dim leading-relaxed font-normal"
                                                 dangerouslySetInnerHTML={{ __html: rubrica.objetivo_general }}
                                             />
@@ -481,7 +506,7 @@ const EvaluacionPage: React.FC = () => {
                                     {rubrica.objetivos_especificos && (
                                         <div className="space-y-1 bg-bg-deep p-4 rounded-xl border border-border-thin">
                                             <p className="text-[9px] font-extrabold text-text-dim uppercase tracking-widest">Objetivos Específicos</p>
-                                            <div 
+                                            <div
                                                 className="text-sm text-text-dim leading-relaxed font-normal"
                                                 dangerouslySetInnerHTML={{ __html: rubrica.objetivos_especificos }}
                                             />
@@ -495,7 +520,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         4. Justificación
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.justificacion }}
                                     />
@@ -507,7 +532,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         5. Marco Teórico
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.marco_teorico }}
                                     />
@@ -519,7 +544,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         6. Metodología de la Investigación
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.metodologia }}
                                     />
@@ -531,7 +556,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         7. Método de Evaluación y Validación
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.evaluacion }}
                                     />
@@ -543,7 +568,7 @@ const EvaluacionPage: React.FC = () => {
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         8. Bibliografía y Referencias Fuentes
                                     </h3>
-                                    <div 
+                                    <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.bibliografia }}
                                     />
@@ -554,7 +579,7 @@ const EvaluacionPage: React.FC = () => {
                 </section>
 
                 {/* Columna Derecha: Rúbrica */}
-                <div className="w-full lg:w-[460px] shrink-0 flex flex-col bg-surface/5 overflow-hidden">
+                <div className={`w-full lg:w-[460px] shrink-0 flex flex-col bg-surface/5 overflow-hidden ${activeTab === 'rubric' ? 'flex' : 'hidden lg:flex'}`}>
                     <div className="px-6 py-5 border-b border-border-thin bg-bg-deep sticky top-0 z-10">
                         <div className="flex items-center justify-between">
                             <div>
@@ -605,7 +630,7 @@ const EvaluacionPage: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
                         <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
-                            
+
                             {/* Banner de Modo Lectura */}
                             {isReadOnly && (
                                 <div className="read-only-banner">
@@ -677,7 +702,7 @@ const EvaluacionPage: React.FC = () => {
                                     </span>
                                 </div>
                             </div>
-                            
+
                             {isReadOnly ? (
                                 <div className="badge-vercel badge-vercel-success !text-[10px] !py-2 flex items-center gap-1 animate-fade-in font-bold">
                                     <ShieldCheck size={12} className="text-success" />
@@ -706,6 +731,27 @@ const EvaluacionPage: React.FC = () => {
                     </form>
                 </div>
             </div>
+
+            {/* Floating Action Button for responsive view switching */}
+            <div className="fixed bottom-[80px] right-6 z-50 lg:hidden animate-scale-up">
+                <button
+                    type="button"
+                    onClick={() => setActiveTab(activeTab === 'document' ? 'rubric' : 'document')}
+                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-brand text-white shadow-2xl hover:scale-105 active:scale-95 transition-all font-bold uppercase tracking-wider text-xs border border-white/10"
+                >
+                    {activeTab === 'document' ? (
+                        <>
+                            <ShieldCheck size={16} />
+                            Calificar ({criteriosEvaluadosCount}/{detalles.length})
+                        </>
+                    ) : (
+                        <>
+                            <BookOpen size={16} />
+                            Ver Documento
+                        </>
+                    )}
+                </button>
+            </div>
         </main>
     );
 };
@@ -726,12 +772,12 @@ interface CriterioCardProps {
 const CriterioCard: React.FC<CriterioCardProps> = ({
     numero, detalle, criterioInfo, porcentaje, onPuntajeChange, onObsChange, disabled
 }) => {
-    const color = porcentaje >= 90 
-        ? 'var(--color-success)' 
-        : porcentaje >= 70 
-            ? 'var(--color-info)' 
-            : porcentaje >= 50 
-                ? 'var(--color-warning)' 
+    const color = porcentaje >= 90
+        ? 'var(--color-success)'
+        : porcentaje >= 70
+            ? 'var(--color-info)'
+            : porcentaje >= 50
+                ? 'var(--color-warning)'
                 : 'var(--color-error)';
 
     const getCacesRango = (pct: number) => {
@@ -764,7 +810,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                         )}
                     </div>
                 </div>
-                
+
                 <div className="text-right shrink-0 flex flex-col items-end gap-1">
                     <div className="flex items-center gap-1">
                         <input
@@ -822,7 +868,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                         {cacesInfo.label}
                     </span>
                 </div>
-                
+
                 <div className="flex items-center gap-1">
                     {presets.map(p => {
                         const targetScore = detalle.max * p.pct;
