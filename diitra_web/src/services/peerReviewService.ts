@@ -58,11 +58,9 @@ export interface CriterioRubricaDto {
     peso_porcentaje: number;
     orden: number;
     puntaje_maximo: number;
-    
-    // Propiedades adicionales para revisiones completadas
-    puntajeObtenido?: number;
+
+    // Propiedades presentes cuando la revisión ya fue completada
     puntaje_obtenido?: number;
-    observacionesCriterio?: string;
     observaciones_criterio?: string;
 }
 
@@ -71,30 +69,26 @@ export interface RubricaDinamicaDto {
     nombre_rubrica: string;
     proyecto_titulo: string;
     linea_investigacion?: string;
+
+    // Secciones del dossier técnico (resueltas por PeerReviewService.ResolveFieldAsync)
     justificacion?: string;
     metodologia?: string;
     antecedentes?: string;
-    descripcionProyecto?: string;
     descripcion_proyecto?: string;
-    objetivoGeneral?: string;
     objetivo_general?: string;
-    objetivosEspecificos?: string;
     objetivos_especificos?: string;
-    marcoTeorico?: string;
     marco_teorico?: string;
     evaluacion?: string;
     bibliografia?: string;
+
     proyecto_uuid: string;
     es_doble_ciego: boolean;
     puntaje_minimo_aprobacion: number;
     criterios: CriterioRubricaDto[];
-    
-    // Propiedades adicionales para revisiones completadas
-    observacionesGral?: string;
+
+    // Presentes cuando la revisión ya fue completada
     observaciones_gral?: string;
-    estadoRevision?: string;
     estado_revision?: string;
-    puntajeTotal?: number;
     puntaje_total?: number;
 }
 

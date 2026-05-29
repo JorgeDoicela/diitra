@@ -44,16 +44,16 @@ const EvaluacionPage: React.FC = () => {
             .then((data) => {
                 setRubrica(data);
                 
-                const isCompletada = data.estadoRevision === 'Completada' || data.estado_revision === 'Completada';
+                const isCompletada = data.estado_revision === 'Completada';
                 if (isCompletada) {
-                    setObservacionesGral(data.observacionesGral || data.observaciones_gral || '');
+                    setObservacionesGral(data.observaciones_gral || '');
                 }
 
                 setDetalles(data.criterios.map(c => ({
                     idCriterio: c.id_criterio,
                     criterio: c.nombre,
-                    puntaje: isCompletada ? (c.puntajeObtenido ?? c.puntaje_obtenido ?? 0) : 0,
-                    observaciones: isCompletada ? (c.observacionesCriterio ?? c.observaciones_criterio ?? '') : '',
+                    puntaje: isCompletada ? (c.puntaje_obtenido ?? 0) : 0,
+                    observaciones: isCompletada ? (c.observaciones_criterio ?? '') : '',
                     max: c.puntaje_maximo
                 })));
             })
@@ -65,7 +65,7 @@ const EvaluacionPage: React.FC = () => {
     const minimo = rubrica?.puntaje_minimo_aprobacion ?? 70;
     const dictamenPreview = getDictamenPreview(puntajeTotal, minimo);
     const dictamenCfg = DICTAMEN_CONFIG[dictamenPreview];
-    const isReadOnly = rubrica?.estadoRevision === 'Completada' || rubrica?.estado_revision === 'Completada';
+    const isReadOnly = rubrica?.estado_revision === 'Completada';
 
     const handlePuntajeChange = (idx: number, val: number) => {
         setDetalles(prev => {
@@ -356,14 +356,14 @@ const EvaluacionPage: React.FC = () => {
                                 )}
                             </div>
 
-                            {(rubrica.descripcionProyecto || rubrica.descripcion_proyecto) && (
+                            {rubrica.descripcion_proyecto && (
                                 <div className="space-y-2 pt-2">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
                                         1. Resumen / Descripción General
                                     </h3>
                                     <div 
                                         className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.descripcionProyecto || rubrica.descripcion_proyecto || '' }}
+                                        dangerouslySetInnerHTML={{ __html: rubrica.descripcion_proyecto }}
                                     />
                                 </div>
                             )}
@@ -380,26 +380,26 @@ const EvaluacionPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {(rubrica.objetivoGeneral || rubrica.objetivo_general || rubrica.objetivosEspecificos || rubrica.objetivos_especificos) && (
+                            {(rubrica.objetivo_general || rubrica.objetivos_especificos) && (
                                 <div className="space-y-4">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
                                         3. Objetivos
                                     </h3>
-                                    {(rubrica.objetivoGeneral || rubrica.objetivo_general) && (
+                                    {rubrica.objetivo_general && (
                                         <div className="space-y-1 bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-border-thin/20">
                                             <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest">Objetivo General</p>
                                             <div 
                                                 className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal"
-                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivoGeneral || rubrica.objetivo_general || '' }}
+                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivo_general }}
                                             />
                                         </div>
                                     )}
-                                    {(rubrica.objetivosEspecificos || rubrica.objetivos_especificos) && (
+                                    {rubrica.objetivos_especificos && (
                                         <div className="space-y-1 bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-border-thin/20">
                                             <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest">Objetivos Específicos</p>
                                             <div 
                                                 className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal"
-                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivosEspecificos || rubrica.objetivos_especificos || '' }}
+                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivos_especificos }}
                                             />
                                         </div>
                                     )}
@@ -418,14 +418,14 @@ const EvaluacionPage: React.FC = () => {
                                 </div>
                             )}
 
-                            {(rubrica.marcoTeorico || rubrica.marco_teorico) && (
+                            {rubrica.marco_teorico && (
                                 <div className="space-y-2">
                                     <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
                                         5. Marco Teórico
                                     </h3>
                                     <div 
                                         className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.marcoTeorico || rubrica.marco_teorico || '' }}
+                                        dangerouslySetInnerHTML={{ __html: rubrica.marco_teorico }}
                                     />
                                 </div>
                             )}
