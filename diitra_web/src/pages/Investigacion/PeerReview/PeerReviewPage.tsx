@@ -59,7 +59,7 @@ const PeerReviewPage: React.FC = () => {
     const completionRate = totalCount > 0 ? Math.round((completadasCount / totalCount) * 100) : 0;
 
     return (
-        <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto vercel-grid-fade">
+        <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* Header */}
             <header className="mb-10 animate-fade-up relative z-10">
                 <div className="section-label mb-2">
@@ -99,7 +99,7 @@ const PeerReviewPage: React.FC = () => {
                         </span>
                     </div>
                     <div className="icon-circle icon-circle-warning !p-4">
-                        <Clock size={28} strokeWidth={1.5} className="animate-pulse" />
+                        <Clock size={28} strokeWidth={1.5} />
                     </div>
                 </div>
 
@@ -242,7 +242,7 @@ const PeerReviewPage: React.FC = () => {
                         ) : (
                             // Celebration State when no pending
                             <div className="bento-card static p-8 text-center flex flex-col items-center justify-center border-success/20 bg-success-subtle/10 animate-scale-up py-12">
-                                <CheckCircle size={44} className="text-success mb-3 animate-bounce" />
+                                <CheckCircle size={44} className="text-success mb-3" />
                                 <h4 className="text-lg font-bold text-text-main uppercase tracking-wider">¡Todo al día!</h4>
                                 <p className="text-sm text-text-dim mt-1 max-w-md">
                                     Has completado todas tus evaluaciones asignadas. Tu rigor y rapidez académica apoyan al desarrollo del instituto.
