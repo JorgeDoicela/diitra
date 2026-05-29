@@ -88,121 +88,240 @@ export const DocenteDashboard: React.FC = () => {
                     <Loader2 className="animate-spin text-text-dim" size={24} />
                 </div>
             ) : (
-                <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms] pb-10">
-
-                    {/* Mis proyectos activos */}
-                    <BentoCard
-                        title="Proyectos Activos"
-                        description="Investigaciones en ejecución o aprobadas"
-                        icon={<Briefcase size={14} />}
-                        className="md:col-span-2"
-                    >
-                        <div className="mt-6 flex items-end gap-6">
+                /* Two-column Vercel Layout */
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:200ms] pb-10">
+                    
+                    {/* Main Content: Left Column */}
+                    <div className="lg:col-span-3 space-y-6">
+                        
+                        {/* Gestión de Proyectos */}
+                        <div className="bento-card p-6 flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl">
                             <div>
-                                <p className="stat-number stat-number--lg text-text-main">
-                                    {stats?.mis_proyectos_activos ?? 0}
-                                </p>
-                                <p className="text-[10px] text-text-dim uppercase tracking-widest mt-1">
-                                    proyectos activos
-                                </p>
-                            </div>
-                            {stats?.mis_proyectos_borrador != null && stats.mis_proyectos_borrador > 0 && (
-                                <div className="pb-1">
-                                    <p className="stat-number stat-number--sm text-text-dim">
-                                        +{stats.mis_proyectos_borrador}
-                                    </p>
-                                    <p className="text-[10px] text-text-dim uppercase tracking-widest">
-                                        en borrador
-                                    </p>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Briefcase size={14} className="text-text-dim" />
+                                    <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Mis Proyectos de Investigación</span>
                                 </div>
-                            )}
-                        </div>
-                        <button
-                            onClick={() => navigate('/investigacion/mis-proyectos')}
-                            className="mt-6 btn-vercel-secondary"
-                        >
-                            Ver todos mis proyectos
-                            <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-                        </button>
-                    </BentoCard>
-
-                    {/* Informes pendientes */}
-                    <BentoCard
-                        title="Informes Pendientes"
-                        description="Reportes de avance por entregar"
-                        icon={<Clock size={14} />}
-                    >
-                        <div className="mt-4">
-                            <p className={`stat-number ${(stats?.mis_informes_pendientes ?? 0) > 0 ? 'text-warning' : 'text-text-main'}`}>
-                                {stats?.mis_informes_pendientes ?? 0}
-                            </p>
-                            {(stats?.mis_informes_pendientes ?? 0) > 0 && (
-                                <div className="flex items-center gap-1.5 mt-3 text-[10px] text-warning font-bold uppercase">
-                                    <AlertCircle size={10} />
-                                    Acción requerida
-                                </div>
-                            )}
-                            {(stats?.mis_informes_pendientes ?? 0) === 0 && (
-                                <p className="text-[10px] text-text-dim mt-3 uppercase tracking-wide">
-                                    Al día ✓
+                                <h3 className="text-xl font-bold tracking-tight text-text-main mb-2">
+                                    Resumen de Propuestas Académicas
+                                </h3>
+                                <p className="text-xs text-text-dim max-w-xl font-medium leading-relaxed mb-6">
+                                    Administra tus propuestas, realiza el seguimiento del ciclo de vida (Borrador, En Revisión, En Ejecución, Finalizado) y justifica egresos financieros bajo normativas vigentes.
                                 </p>
-                            )}
-                        </div>
-                    </BentoCard>
 
-                    {/* Productos registrados */}
-                    <BentoCard
-                        title="Mis Productos"
-                        description="Artículos, prototipos y ponencias"
-                        icon={<BarChart3 size={14} />}
-                    >
-                        <div className="mt-2 flex items-center justify-between">
-                            <p className="stat-number stat-number--sm">
-                                {String(stats?.mis_productos_registrados ?? 0).padStart(2, '0')}
-                            </p>
-                        </div>
-                        <p className="text-[10px] text-text-dim mt-4 uppercase font-bold tracking-tighter">
-                            productos validados
-                        </p>
-                    </BentoCard>
-
-                    {/* Actividad reciente */}
-                    <BentoCard
-                        title="Actividad Reciente"
-                        description="Últimos movimientos en el sistema"
-                        icon={<TrendingUp size={14} />}
-                        className="md:col-span-4"
-                    >
-                        <div className="mt-4 space-y-2">
-                            {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
-                                <div className="empty-state py-4">
-                                    <p className="text-[11px] text-text-dim">
-                                        Aún no hay actividad registrada.
-                                    </p>
-                                </div>
-                            ) : (
-                                stats.actividad_reciente.slice(0, 5).map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin hover:border-border-hover transition-colors cursor-pointer group">
-                                        <div className={`dot ${ESTADO_DOT[item.estado ?? ''] ?? 'dot-neutral'}`} />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[11px] font-bold text-text-main truncate">{item.descripcion}</p>
-                                            <p className="text-[9px] text-text-dim uppercase tracking-wide">
-                                                {item.tipo} · {new Date(item.fecha).toLocaleDateString('es-EC')}
-                                            </p>
-                                        </div>
-                                        {item.estado && (
-                                            <span className="status-tag text-text-dim border-border-thin">
-                                                {item.estado}
-                                            </span>
-                                        )}
+                                <div className="grid grid-cols-3 gap-4 mb-6">
+                                    <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
+                                        <p className="text-2xl font-black text-text-main font-mono">{stats?.mis_proyectos_activos ?? 0}</p>
+                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-wider mt-1">Activos</p>
                                     </div>
-                                ))
-                            )}
-                        </div>
-                    </BentoCard>
+                                    <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
+                                        <p className="text-2xl font-black text-text-dim font-mono">{stats?.mis_proyectos_borrador ?? 0}</p>
+                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-wider mt-1">Borradores</p>
+                                    </div>
+                                    <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
+                                        <p className="text-2xl font-black text-text-main font-mono">
+                                            {(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0)}
+                                        </p>
+                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-wider mt-1">Total</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                </BentoGrid>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => navigate('/investigacion/mis-proyectos')}
+                                    className="btn-vercel-secondary text-xs px-4 py-2"
+                                >
+                                    Ver mis proyectos
+                                </button>
+                                <button
+                                    onClick={() => navigate('/investigacion')}
+                                    className="btn-vercel-primary text-xs px-4 py-2"
+                                >
+                                    Iniciar Nuevo Proyecto
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Actividad reciente */}
+                        <div className="bento-card p-6 bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
+                            <div className="flex items-center gap-2">
+                                <TrendingUp size={14} className="text-text-dim" />
+                                <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Actividad Reciente</span>
+                            </div>
+                            
+                            <div className="space-y-2.5">
+                                {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
+                                    <div className="empty-state py-8">
+                                        <p className="text-xs text-text-dim italic">
+                                            Aún no hay actividad registrada en este periodo.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    stats.actividad_reciente.slice(0, 5).map((item, i) => (
+                                        <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin/40 hover:border-border-hover/60 transition-colors cursor-pointer group" onClick={() => navigate('/investigacion/mis-proyectos')}>
+                                            <div className={`dot ${ESTADO_DOT[item.estado ?? ''] ?? 'dot-neutral'} w-2 h-2 shrink-0`} />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-[11px] font-bold text-text-main truncate group-hover:text-brand transition-colors">{item.descripcion}</p>
+                                                <p className="text-[9px] text-text-dim uppercase tracking-wide mt-0.5">
+                                                    {item.tipo} · {new Date(item.fecha).toLocaleDateString('es-EC')}
+                                                </p>
+                                            </div>
+                                            {item.estado && (
+                                                <span className="status-tag text-[9px] text-text-dim border-border-thin bg-surface">
+                                                    {item.estado}
+                                                </span>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    {/* Sidebar: Right Column */}
+                    <div className="space-y-6">
+                        <VercelUsageCard 
+                            title="Resumen Académico"
+                            buttonLabel="Actualizar"
+                            onButtonClick={fetch}
+                            items={[
+                                {
+                                    label: 'Proyectos Activos',
+                                    value: stats?.mis_proyectos_activos ?? 0,
+                                    displayValue: `${stats?.mis_proyectos_activos ?? 0} vigentes`,
+                                    max: 10,
+                                    color: 'var(--brand)'
+                                },
+                                {
+                                    label: 'En Borrador',
+                                    value: stats?.mis_proyectos_borrador ?? 0,
+                                    displayValue: `${stats?.mis_proyectos_borrador ?? 0} borrador`,
+                                    max: 5,
+                                    color: 'var(--text-dim)'
+                                },
+                                {
+                                    label: 'Mis Productos',
+                                    value: stats?.mis_productos_registrados ?? 0,
+                                    displayValue: `${stats?.mis_productos_registrados ?? 0} validados`,
+                                    max: 15,
+                                    color: 'var(--success)'
+                                },
+                                {
+                                    label: 'Informes Pendientes',
+                                    value: stats?.mis_informes_pendientes ?? 0,
+                                    displayValue: `${stats?.mis_informes_pendientes ?? 0} por entregar`,
+                                    max: 5,
+                                    color: (stats?.mis_informes_pendientes ?? 0) > 0 ? 'var(--warning)' : 'var(--success)'
+                                }
+                            ]}
+                        />
+
+                        {/* Carga Horaria progress card */}
+                        {stats?.mis_horas_investigacion !== undefined && (
+                            <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="section-label">
+                                        <ClipboardList size={12} className="text-info" />
+                                        <span className="text-[13px] font-semibold text-text-main">Carga Horaria Semanal</span>
+                                    </div>
+                                    <span className="font-mono text-[13px] font-bold text-info">
+                                        {stats.mis_horas_investigacion} hrs
+                                    </span>
+                                </div>
+                                <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full rounded-full bg-info transition-all duration-700"
+                                        style={{ width: `${Math.min(100, (stats.mis_horas_investigacion / 40) * 100)}%` }}
+                                    />
+                                </div>
+                                <span className="text-[10px] text-text-dim mt-2 block font-medium">
+                                    Dedicación asignada de un máximo de 40 hrs semanales.
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             )}
         </>
     );
 };
+
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-5">
+            <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
+            {buttonLabel && (
+                <button 
+                    onClick={onButtonClick} 
+                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                    {buttonLabel}
+                </button>
+            )}
+        </div>
+        <div className="space-y-1">
+            {items.map((item: any, idx: number) => {
+                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
+                const radius = 6.5;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                
+                return (
+                    <div 
+                        key={idx} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none"
+                                        strokeWidth="1.8"
+                                        style={{ stroke: 'var(--accents-2)' }}
+                                    />
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none transition-all duration-500"
+                                        stroke={item.color || 'var(--brand)'}
+                                        strokeWidth="1.8"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[13px] font-medium text-text-main truncate">
+                                    {item.label}
+                                </span>
+                                <svg 
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                            {item.displayValue || item.value}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+);
+
+export default DocenteDashboard;
