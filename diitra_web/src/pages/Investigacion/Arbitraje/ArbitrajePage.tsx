@@ -345,11 +345,13 @@ const ArbitrajePage: React.FC = () => {
                 ].map(f => (
                     <button
                         key={f.key}
+                        type="button"
                         onClick={() => setFiltroEstado(f.key)}
-                        className={`status-tag transition-all ${filtroEstado === f.key
-                            ? 'bg-surface text-text-main border-border-thin'
-                            : 'text-text-dim border-transparent hover:border-border-thin hover:text-text-main'
-                            }`}
+                        className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all duration-150 cursor-pointer ${
+                            filtroEstado === f.key
+                                ? 'bg-text-main text-bg-deep border-text-main font-extrabold shadow-sm'
+                                : 'bg-transparent text-text-dim border-border-thin hover:text-text-main hover:border-text-dim/50'
+                        }`}
                     >
                         {f.key === 'Desempate' && stats && stats.casos_desempate > 0 && (
                             <span className="w-1.5 h-1.5 rounded-full bg-error inline-block mr-1.5" />
@@ -365,7 +367,7 @@ const ArbitrajePage: React.FC = () => {
                 {/* Main Content: Left Column */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* ── Tabla de Proyectos + Tabs Internos/Externos ── */}
-                    <div className="bento-card-static overflow-hidden animate-fade-up [animation-delay:200ms]">
+                    <div className="bento-card static overflow-hidden animate-fade-up [animation-delay:200ms]">
                 {loading ? (
                     <div className="flex items-center justify-center py-20 gap-3 text-text-dim">
                         <Loader2 size={20} className="animate-spin" />
@@ -715,7 +717,7 @@ const ArbitrajePage: React.FC = () => {
 
                 {/* ── Avance Global del Arbitraje ──────────────── */}
                 {stats && stats.total_arbitros_asignados > 0 && (
-                    <div className="bento-card-static p-5 relative overflow-hidden vercel-card-glow bg-surface w-full">
+                    <div className="bento-card static p-5 relative overflow-hidden vercel-card-glow bg-surface w-full">
                         <div className="flex items-center justify-between mb-3">
                             <div className="section-label">
                                 <TrendingUp size={12} />
@@ -742,7 +744,7 @@ const ArbitrajePage: React.FC = () => {
 
                 {/* ── Alertas CACES Checklist Card (Sidebar) ─────── */}
                 {alertas.length > 0 && (
-                    <div className="bento-card-static p-5 relative overflow-hidden bg-surface animate-fade-up w-full">
+                    <div className="bento-card static p-5 relative overflow-hidden bg-surface animate-fade-up w-full">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
@@ -905,7 +907,7 @@ interface KpiCardProps {
 }
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card-static p-5 flex flex-col relative overflow-hidden bg-surface w-full">
+    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface w-full">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
