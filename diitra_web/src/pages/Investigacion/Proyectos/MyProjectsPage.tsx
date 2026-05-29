@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
+import { useAuth } from '../../../api/AuthContext';
 
 interface ProyectoResumen {
     uuid: string;
@@ -47,6 +48,7 @@ const estadoConfig = (estado: string) =>
 
 const MyProjectsPage: React.FC = () => {
     const navigate = useNavigate();
+    const { isDocente } = useAuth();
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -128,13 +130,15 @@ const MyProjectsPage: React.FC = () => {
                         {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
                     </p>
                 </div>
-                <button
-                    onClick={() => setShowNewProject(true)}
-                    className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
-                >
-                    <Plus size={14} strokeWidth={3} />
-                    Nueva Postulación
-                </button>
+                {!isDocente && (
+                    <button
+                        onClick={() => setShowNewProject(true)}
+                        className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
+                    >
+                        <Plus size={14} strokeWidth={3} />
+                        Nueva Postulación
+                    </button>
+                )}
             </header>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-8 animate-fade-up [animation-delay:100ms]">
@@ -182,7 +186,7 @@ const MyProjectsPage: React.FC = () => {
                             ? 'Prueba con otros filtros de búsqueda.'
                             : 'Crea tu primera propuesta de investigación para comenzar.'}
                     </p>
-                    {filterEstado === 'todos' && !search && (
+                    {filterEstado === 'todos' && !search && !isDocente && (
                         <button
                             onClick={() => setShowNewProject(true)}
                             className="btn-vercel-primary px-6 py-2.5"
