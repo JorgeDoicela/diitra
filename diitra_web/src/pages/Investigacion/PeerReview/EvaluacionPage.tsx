@@ -368,83 +368,17 @@ const EvaluacionPage: React.FC = () => {
         <main className="flex-1 bg-bg-deep overflow-hidden">
             <div className="flex h-full flex-col lg:flex-row animate-fade-in">
 
-                {/* Sidebar izquierdo refactorizado */}
-                <aside className="w-full lg:w-[260px] shrink-0 border-b lg:border-b-0 lg:border-r border-border-thin flex flex-col bg-surface/5 justify-between">
-                    <div className="flex flex-col">
-                        <div className="p-5 border-b border-border-thin">
-                            <button
-                                onClick={() => navigate('/revisiones')}
-                                className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest transition-colors"
-                            >
-                                <ArrowLeft size={12} /> Mis Revisiones
-                            </button>
-                        </div>
-
-                        <div className="p-5 space-y-6">
-                            <div className="space-y-3">
-                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Proyecto Asignado</span>
-                                <div className="p-3.5 bg-surface/30 border border-border-thin rounded-xl">
-                                    <p className="text-xs font-bold text-text-main line-clamp-3 leading-snug uppercase">
-                                        {rubrica.proyecto_titulo}
-                                    </p>
-                                    <p className="text-[9px] text-text-dim mt-2 font-mono">
-                                        REF: #{rubrica.id_rubrica}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Progreso de Rúbrica</span>
-                                <div className="p-3.5 rounded-xl bg-surface/20 border border-border-thin space-y-2">
-                                    <div className="flex justify-between items-center text-xs">
-                                        <span className="text-text-dim font-medium">Evaluados:</span>
-                                        <span className="font-bold text-text-main font-mono">
-                                            {criteriosEvaluadosCount} / {detalles.length}
-                                        </span>
-                                    </div>
-                                    <div className="progress-track-thick mt-1">
-                                        <div 
-                                            className="progress-fill progress-fill--brand transition-all duration-300"
-                                            style={{ width: `${(criteriosEvaluadosCount / detalles.length) * 100}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Información de Arbitraje</span>
-                                <div className="p-3.5 rounded-xl bg-surface/20 border border-border-thin/45 space-y-2">
-                                    {rubrica.es_doble_ciego && (
-                                        <span className="badge-vercel badge-vercel-info text-[9px] w-fit block font-extrabold">DOBLE CIEGO</span>
-                                    )}
-                                    <p className="text-[11px] font-medium text-text-dim leading-relaxed">
-                                        Identidad del autor protegida. Evalúe de forma anónima y objetiva conforme a la normativa.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="p-5">
-                        <div className="p-4 rounded-xl bg-surface/15 border border-border-thin/40 flex flex-col gap-1.5">
-                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
-                                <Lock size={9} /> Auto-guardado
-                            </span>
-                            <div className="flex items-center gap-1.5 text-success font-black text-[10px] uppercase tracking-wide">
-                                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                                Borrador Activo Local
-                            </div>
-                        </div>
-                    </div>
-                </aside>
-
                 {/* Contenido Central: Documento */}
                 <section className="flex-1 border-r border-border-thin flex flex-col bg-bg-deep overflow-hidden">
                     <div className="px-6 py-5 border-b border-border-thin bg-surface/5 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-xl bg-text-main/5 border border-text-main/10 text-text-main">
-                                <BookOpen size={18} />
-                            </div>
+                            <button
+                                onClick={() => navigate('/revisiones')}
+                                className="p-2 rounded-xl bg-text-main/5 border border-text-main/10 text-text-dim hover:text-text-main hover:bg-text-main/10 transition-all mr-1"
+                                title="Volver a Mis Revisiones"
+                            >
+                                <ArrowLeft size={16} />
+                            </button>
                             <div>
                                 <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest block">
                                     Mis Revisiones / #{rubrica.id_rubrica}
@@ -482,8 +416,15 @@ const EvaluacionPage: React.FC = () => {
                                 <p className="text-[11px] font-semibold text-text-dim">
                                     Dirección de Investigación y Desarrollo Tecnológico (DIITRA)
                                 </p>
-                                <div className="mt-3 badge-vercel badge-vercel-neutral text-[10px] font-bold uppercase tracking-wider">
-                                    {rubrica.es_doble_ciego ? 'Modo Arbitraje Académico (Doble Ciego)' : 'Arbitraje Estándar'}
+                                <div className="mt-2 flex flex-col items-center justify-center gap-1.5">
+                                    <div className="badge-vercel badge-vercel-info text-[10px] font-extrabold uppercase tracking-wider">
+                                        {rubrica.es_doble_ciego ? 'Arbitraje Doble Ciego' : 'Arbitraje Estándar'}
+                                    </div>
+                                    {rubrica.es_doble_ciego && (
+                                        <p className="text-[10px] text-text-dim max-w-md leading-relaxed font-medium">
+                                            Identidad del autor protegida. Evalúe de forma anónima y objetiva conforme a la normativa.
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -651,6 +592,15 @@ const EvaluacionPage: React.FC = () => {
                                 }}
                             />
                         </div>
+                        <div className="mt-2.5 flex items-center justify-between text-[10px] text-text-dim font-bold uppercase tracking-wider">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-brand" />
+                                Criterios Evaluados: {criteriosEvaluadosCount} / {detalles.length}
+                            </span>
+                            <span>
+                                {Math.round((criteriosEvaluadosCount / detalles.length) * 100)}% Completado
+                            </span>
+                        </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
@@ -734,17 +684,23 @@ const EvaluacionPage: React.FC = () => {
                                     <span>Registrada</span>
                                 </div>
                             ) : (
-                                <button
-                                    type="submit"
-                                    disabled={enviando}
-                                    className="btn-brand flex items-center gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 hover:shadow-lg transition-all"
-                                >
-                                    {enviando
-                                        ? <Loader2 size={12} className="animate-spin" />
-                                        : <Send size={12} />
-                                    }
-                                    Enviar Evaluación
-                                </button>
+                                <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1.5 text-success font-black text-[10px] uppercase tracking-wide bg-success/5 border border-success/15 px-2.5 py-1.5 rounded-lg select-none">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                        Borrador Guardado
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={enviando}
+                                        className="btn-brand flex items-center gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 hover:shadow-lg transition-all"
+                                    >
+                                        {enviando
+                                            ? <Loader2 size={12} className="animate-spin" />
+                                            : <Send size={12} />
+                                        }
+                                        Enviar Evaluación
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </form>
