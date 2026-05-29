@@ -4,7 +4,7 @@ import {
     Gavel, Users, CheckCircle2, Scale, ChevronRight, RefreshCw,
     PlusCircle, Clock, TrendingUp, FileSearch, Loader2,
     AlertTriangle, UserPlus, Building, ExternalLink,
-    ShieldCheck, X, FileDown
+    ShieldCheck, X, FileDown, Check, Maximize2
 } from 'lucide-react';
 import {
     getArbitrajesActivos, getArbitrajeStats,
@@ -333,57 +333,8 @@ const ArbitrajePage: React.FC = () => {
                     </div>
                 </div>
             </header>
-
-            {/* Two-column Vercel Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up" style={{ animationDelay: '100ms' }}>
-                
-                {/* Main Content: Left Column */}
-                <div className="lg:col-span-3 space-y-6">
-                    {/* ── Alertas CACES (Adición 2) ──────────────── */}
-                    {alertasVisibles.length > 0 && (
-                        <div className="space-y-2 animate-fade-up [animation-delay:30ms]">
-                            <div className="section-label mb-2">
-                                <ShieldCheck size={11} />
-                                <span>Alertas de Cumplimiento CACES</span>
-                            </div>
-                            {alertasVisibles.map(a => (
-                                <div
-                                    key={a.id}
-                                    className={`flex items-start gap-3 p-3 rounded-lg border text-xs transition-all ${a.tipo === 'critico'
-                                        ? 'bg-error/8 border-error/30 text-error'
-                                        : a.tipo === 'advertencia'
-                                            ? 'bg-warning/8 border-warning/30 text-warning'
-                                            : 'bg-info/8 border-info/30 text-info'
-                                        }`}
-                                    style={{ '--color-warning': '#f0a500', '--color-info': '#3b82f6' } as React.CSSProperties}
-                                >
-                                    <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                                    <div className="flex-1 min-w-0">
-                                        <span className="font-bold mr-1">{a.titulo}:</span>
-                                        {a.descripcion}
-                                        {a.proyectoUuid && (
-                                            <button
-                                                className="ml-2 underline opacity-70 hover:opacity-100"
-                                                onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
-                                            >
-                                                Ver proyecto →
-                                            </button>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => setAlertasDismissed(s => new Set([...s, a.id]))}
-                                        className="shrink-0 opacity-50 hover:opacity-100 transition-opacity"
-                                        title="Descartar alerta"
-                                    >
-                                        <X size={12} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* ── Filtros ───────────────────────────────── */}
-                    <div className="flex flex-wrap gap-2 animate-fade-up [animation-delay:150ms]">
+            {/* ── Filtros ───────────────────────────────── */}
+            <div className="flex flex-wrap gap-2 mb-6 animate-fade-up [animation-delay:150ms]">
                 {[
                     { key: 'todos', label: 'Todos' },
                     { key: 'SinArbitros', label: 'Sin Árbitros' },
@@ -408,8 +359,13 @@ const ArbitrajePage: React.FC = () => {
                 ))}
             </div>
 
-            {/* ── Tabla de Proyectos + Tabs Internos/Externos ── */}
-            <div className="bento-card overflow-hidden animate-fade-up [animation-delay:200ms]">
+            {/* Two-column Vercel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up" style={{ animationDelay: '100ms' }}>
+                
+                {/* Main Content: Left Column */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* ── Tabla de Proyectos + Tabs Internos/Externos ── */}
+                    <div className="bento-card overflow-hidden animate-fade-up [animation-delay:200ms]">
                 {loading ? (
                     <div className="flex items-center justify-center py-20 gap-3 text-text-dim">
                         <Loader2 size={20} className="animate-spin" />
@@ -711,7 +667,7 @@ const ArbitrajePage: React.FC = () => {
         </div>
             
             {/* Sidebar: Right Column */}
-            <div className="space-y-6">
+            <div className="lg:col-span-1 space-y-6 w-full flex flex-col">
                 {stats && (
                     <VercelUsageCard 
                         title="Métricas de Arbitraje"
@@ -759,7 +715,7 @@ const ArbitrajePage: React.FC = () => {
 
                 {/* ── Avance Global del Arbitraje ──────────────── */}
                 {stats && stats.total_arbitros_asignados > 0 && (
-                    <div className="bento-card p-5 relative overflow-hidden vercel-card-glow bg-surface">
+                    <div className="bento-card p-5 relative overflow-hidden vercel-card-glow bg-surface w-full">
                         <div className="flex items-center justify-between mb-3">
                             <div className="section-label">
                                 <TrendingUp size={12} />
@@ -781,6 +737,131 @@ const ArbitrajePage: React.FC = () => {
                                 {alertasVisibles.length} alerta(s) de cumplimiento CACES
                             </p>
                         )}
+                    </div>
+                )}
+
+                {/* ── Alertas CACES Checklist Card (Sidebar) ─────── */}
+                {alertas.length > 0 && (
+                    <div className="bento-card p-5 relative overflow-hidden bg-surface animate-fade-up w-full">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <ShieldCheck className="text-brand w-4 h-4" />
+                                <span className="text-[13px] font-bold text-text-main tracking-tight uppercase">
+                                    Cumplimiento CACES
+                                </span>
+                                <span 
+                                    className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold text-brand"
+                                    style={{ backgroundColor: 'var(--brand-subtle)', border: '1px solid rgba(0, 112, 243, 0.2)' }}
+                                >
+                                    {alertas.length - alertasVisibles.length}/{alertas.length}
+                                </span>
+                            </div>
+                            <div className="text-text-dim/40 hover:text-text-main transition-colors cursor-help" title="Indicadores de acreditación CACES (I5)">
+                                <Maximize2 size={13} />
+                            </div>
+                        </div>
+
+                        {/* Checklist Items */}
+                        <div className="space-y-2">
+                            {alertas.map(a => {
+                                const isDismissed = alertasDismissed.has(a.id);
+                                return (
+                                    <div
+                                        key={a.id}
+                                        className="flex items-center justify-between p-3 rounded-lg border transition-all duration-200"
+                                        style={
+                                            isDismissed
+                                                ? {
+                                                    backgroundColor: 'var(--brand-subtle)',
+                                                    borderColor: 'rgba(0, 112, 243, 0.2)',
+                                                    opacity: 0.85
+                                                  }
+                                                : a.tipo === 'critico'
+                                                    ? {
+                                                        backgroundColor: 'var(--error-subtle)',
+                                                        borderColor: 'rgba(255, 51, 51, 0.2)'
+                                                      }
+                                                    : {
+                                                        backgroundColor: 'var(--warning-subtle)',
+                                                        borderColor: 'rgba(245, 166, 35, 0.2)'
+                                                      }
+                                        }
+                                    >
+                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                            {/* Left Icon */}
+                                            <div 
+                                                className="shrink-0 p-1 rounded-md"
+                                                style={
+                                                    isDismissed
+                                                        ? { color: 'var(--brand)' }
+                                                        : a.tipo === 'critico'
+                                                            ? { color: 'var(--error)' }
+                                                            : { color: 'var(--warning)' }
+                                                }
+                                            >
+                                                <AlertTriangle size={13} />
+                                            </div>
+                                            
+                                            {/* Text Content */}
+                                            <div className="min-w-0 flex-1 text-[11px] leading-tight">
+                                                <p className={`font-medium ${
+                                                    isDismissed 
+                                                        ? 'line-through text-brand opacity-80 font-semibold' 
+                                                        : 'text-text-main'
+                                                }`}>
+                                                    <span className="font-bold mr-1">{a.titulo}:</span>
+                                                    {a.descripcion}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Actions & Checkmark */}
+                                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                                            {/* Link to project */}
+                                            {a.proyectoUuid && !isDismissed && (
+                                                <button
+                                                    className="text-[10px] font-bold text-brand hover:text-brand-light hover:underline flex items-center gap-0.5 transition-colors cursor-pointer"
+                                                    onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
+                                                >
+                                                    Ver →
+                                                </button>
+                                            )}
+
+                                            {/* Checkmark indicator */}
+                                            {isDismissed && (
+                                                <span className="text-brand shrink-0 flex items-center justify-center font-bold">
+                                                    <Check size={12} strokeWidth={3} />
+                                                </span>
+                                            )}
+                                            
+                                            {/* Toggle status button */}
+                                            <button
+                                                onClick={() => {
+                                                    if (isDismissed) {
+                                                        setAlertasDismissed(s => {
+                                                            const n = new Set(s);
+                                                            n.delete(a.id);
+                                                            return n;
+                                                        });
+                                                    } else {
+                                                        setAlertasDismissed(s => new Set([...s, a.id]));
+                                                    }
+                                                }}
+                                                className="text-text-dim hover:text-text-main p-0.5 rounded hover:bg-surface-hover transition-colors cursor-pointer"
+                                                title={isDismissed ? "Marcar como pendiente" : "Marcar como completado"}
+                                            >
+                                                {isDismissed ? (
+                                                    <RefreshCw size={11} className="opacity-70 hover:opacity-100" />
+                                                ) : (
+                                                    <X size={11} />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
             </div>
@@ -824,7 +905,7 @@ interface KpiCardProps {
 }
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface w-full">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
