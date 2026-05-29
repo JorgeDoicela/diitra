@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import * as signalR from '@microsoft/signalr';
 import {
     Users, Plus, Search, Edit2,
     Trash2, CheckCircle, XCircle, AlertTriangle,
@@ -493,6 +494,86 @@ const GroupsPage = () => {
             setLoadingFeedback(false);
         }
     };
+
+    // Conexión a SignalR en tiempo real para el buzón de observaciones/comentarios
+    const [collabConnection, setCollabConnection] = useState<signalR.HubConnection | null>(null);
+
+    useEffect(() => {
+        if (!detailGroup || !detailGroup.uuid) {
+            if (collabConnection) {
+                collabConnection.stop();
+                setCollabConnection(null);
+            }
+            return;
+        }
+
+        const hubUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5175'}/hubs/collaboration`;
+        const newConnection = new signalR.HubConnectionBuilder()
+            .withUrl(hubUrl, {
+                skipNegotiation: true,
+                transport: signalR.HttpTransportType.WebSockets,
+                withCredentials: true,
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        let isSubscribed = true;
+
+        newConnection.start()
+            .then(async () => {
+                if (!isSubscribed) {
+                    newConnection.stop();
+                    return;
+                }
+                console.log('[GroupsPage] Conexión de colaboración en tiempo real establecida');
+
+                const userUuid = user?.id_referencia || '0';
+                const userName = user?.nombre_completo || 'Usuario';
+                const userRole = isAdmin ? 'Admin' : 'Docente';
+
+                try {
+                    await newConnection.invoke(
+                        'JoinDocument',
+                        detailGroup.uuid.toLowerCase().trim(),
+                        userName,
+                        userUuid,
+                        userRole
+                    );
+                    console.log('[GroupsPage] Unido a la sala de colaboración:', detailGroup.uuid);
+                } catch (err) {
+                    console.error('[GroupsPage] Error al unirse a la sala:', err);
+                }
+
+                newConnection.on('NewCommentReceived', (data: any) => {
+                    setFeedbackComments(prev => {
+                        const commentId = data.idComentario || data.id_comentario || data.idComentario;
+                        if (prev.some(c => (c.idComentario || c.id_comentario) === commentId)) {
+                            return prev;
+                        }
+                        
+                        const normalizedComment = {
+                            idComentario: commentId,
+                            usuarioUuid: data.usuarioUuid || data.usuario_uuid,
+                            nombreUsuario: data.nombreUsuario || data.nombre_usuario,
+                            contenido: data.contenido,
+                            idPadre: data.idPadre || data.id_padre,
+                            creadoEn: data.creadoEn || data.creado_en || new Date().toISOString()
+                        };
+                        return [...prev, normalizedComment];
+                    });
+                });
+            })
+            .catch(err => {
+                console.error('[GroupsPage] Error de conexión de SignalR:', err);
+            });
+
+        setCollabConnection(newConnection);
+
+        return () => {
+            isSubscribed = false;
+            newConnection.stop();
+        };
+    }, [detailGroup?.uuid]);
 
     // Voice recording helpers for professional feedback
     const startRecording = async () => {

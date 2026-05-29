@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using diitra_infrastructure.data.models;
 using diitra_infrastructure.data.models.Cowork;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.SignalR;
+using diitra_infrastructure.Collaboration;
 
 namespace diitra_api.Controllers
 {
@@ -18,11 +20,16 @@ namespace diitra_api.Controllers
     {
         private readonly DiitraContext _db;
         private readonly Diitra.Infrastructure.Common.Storage.IFileStorageService _storageService;
+        private readonly IHubContext<CollaborationHub> _hubContext;
 
-        public CollaborationController(DiitraContext db, Diitra.Infrastructure.Common.Storage.IFileStorageService storageService)
+        public CollaborationController(
+            DiitraContext db, 
+            Diitra.Infrastructure.Common.Storage.IFileStorageService storageService,
+            IHubContext<CollaborationHub> hubContext)
         {
             _db = db;
             _storageService = storageService;
+            _hubContext = hubContext;
         }
 
         /// <summary>
@@ -131,6 +138,17 @@ namespace diitra_api.Controllers
 
                 _db.InvCollaborationComments.Add(comment);
                 await _db.SaveChangesAsync();
+
+                // Retransmitir en tiempo real a todos los clientes del Hub de colaboración en el grupo correspondiente (normalizando el UUID a minúsculas)
+                await _hubContext.Clients.Group(request.DocumentoUuid.ToLower().Trim()).SendAsync("NewCommentReceived", new
+                {
+                    idComentario = comment.IdComentario,
+                    usuarioUuid = comment.UsuarioUuid,
+                    nombreUsuario = comment.NombreUsuario,
+                    contenido = comment.Contenido,
+                    idPadre = comment.IdPadre,
+                    creadoEn = comment.CreadoEn
+                });
 
                 return Ok(comment);
             }
