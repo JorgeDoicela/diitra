@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, ShieldCheck, FileText, Send,
     MessageSquare, AlertCircle, CheckCircle2, XCircle,
-    Loader2, BookOpen, Microscope, Target, ExternalLink
+    Loader2, BookOpen, Microscope, Target, ExternalLink,
+    Lock
 } from 'lucide-react';
 import {
     getRubricaForRevision, submitEvaluation,
@@ -208,7 +209,6 @@ const EvaluacionPage: React.FC = () => {
         );
     }
 
-    // ─── Loading / Error ───────────────────────────────────────
     if (loading) {
         return (
             <main className="flex-1 bg-bg-deep flex items-center justify-center">
@@ -240,140 +240,270 @@ const EvaluacionPage: React.FC = () => {
 
     return (
         <main className="flex-1 bg-bg-deep overflow-hidden">
-            <div className="flex h-full flex-col lg:flex-row">
+            <div className="flex h-full flex-col lg:flex-row animate-fade-in">
 
-                {/* ─── Panel Izquierdo: Protocolo Anonimizado ─── */}
-                <aside className="w-full lg:w-[340px] shrink-0 border-b lg:border-b-0 lg:border-r border-border-thin flex flex-col bg-surface/5 overflow-y-auto">
-                    {/* Back button */}
-                    <div className="p-5 border-b border-border-thin">
-                        <button
-                            onClick={() => navigate('/revisiones')}
-                            className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest transition-colors"
-                        >
-                            <ArrowLeft size={12} /> Mis Revisiones
-                        </button>
-                    </div>
-
-                    <div className="p-6 flex-1 space-y-6 overflow-y-auto">
-                        {/* Rúbrica info */}
-                        <div>
-                            <div className="section-label mb-2">
-                                <ShieldCheck size={10} />
-                                <span>Protocolo a Evaluar</span>
-                            </div>
-                            {rubrica.es_doble_ciego && (
-                                <div className="flex items-center gap-1.5 mb-3">
-                                    <span className="badge-vercel badge-vercel-info text-[9px]">DOBLE CIEGO</span>
-                                    <span className="text-[10px] text-text-dim">Identidad del autor oculta</span>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Título */}
-                        <div className="space-y-1">
-                            <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Referencia</p>
-                            <p className="text-base font-bold text-text-main leading-tight">{rubrica.proyecto_titulo}</p>
-                        </div>
-
-                        {/* Línea de investigación */}
-                        {rubrica.linea_investigacion && (
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1">
-                                    <Target size={9} /> Línea de Investigación
-                                </p>
-                                <p className="text-xs text-text-main font-medium">{rubrica.linea_investigacion}</p>
-                            </div>
-                        )}
-
-                        {/* Justificación */}
-                        {rubrica.justificacion && (
-                            <div className="space-y-2">
-                                <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1">
-                                    <BookOpen size={9} /> Justificación
-                                </p>
-                                <div
-                                    className="text-xs text-text-dim leading-relaxed max-h-36 overflow-y-auto p-3 rounded-lg bg-surface/30 border border-border-thin/40"
-                                    dangerouslySetInnerHTML={{ __html: rubrica.justificacion }}
-                                />
-                            </div>
-                        )}
-
-                        {/* Metodología */}
-                        {rubrica.metodologia && (
-                            <div className="space-y-2">
-                                <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1">
-                                    <Microscope size={9} /> Metodología
-                                </p>
-                                <div
-                                    className="text-xs text-text-dim leading-relaxed max-h-36 overflow-y-auto p-3 rounded-lg bg-surface/30 border border-border-thin/40"
-                                    dangerouslySetInnerHTML={{ __html: rubrica.metodologia }}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Descarga PDF */}
-                    <div className="p-5 border-t border-border-thin flex flex-col gap-2">
-                        {isReadOnly && (
+                <aside className="w-full lg:w-[260px] shrink-0 border-b lg:border-b-0 lg:border-r border-border-thin flex flex-col bg-surface/5 justify-between">
+                    <div className="flex flex-col">
+                        <div className="p-5 border-b border-border-thin">
                             <button
-                                onClick={handleDescargarRubrica}
-                                className="btn-vercel-primary w-full flex items-center justify-center gap-2 text-xs"
+                                onClick={() => navigate('/revisiones')}
+                                className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest transition-colors"
                             >
-                                <FileText size={12} />
-                                Descargar Rúbrica Calificada
+                                <ArrowLeft size={12} /> Mis Revisiones
                             </button>
-                        )}
-                        <button
-                            onClick={handleDescargarCiego}
-                            className="btn-vercel-secondary w-full flex items-center justify-center gap-2 text-xs"
-                        >
-                            <ExternalLink size={12} />
-                            Descargar PDF Ciego
-                        </button>
-                        <p className="text-[9px] text-text-dim text-center mt-1">
-                            Protocolo completo sin datos identificadores
-                        </p>
+                        </div>
+
+                        <div className="p-5 space-y-6">
+                            <div className="space-y-3">
+                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Navegación del Documento</span>
+                                <button className="w-full text-left px-4 py-3 rounded-xl bg-text-main text-bg-deep font-bold text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-md">
+                                    <ShieldCheck size={16} />
+                                    Evaluación Técnica
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={handleSubmit}
+                                    disabled={isReadOnly || enviando}
+                                    className="w-full text-left px-4 py-3 rounded-xl border border-primary/30 text-primary hover:bg-primary/5 font-bold text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all disabled:opacity-50"
+                                >
+                                    <Send size={14} />
+                                    Finalizar y Firmar
+                                </button>
+                            </div>
+
+                            <div className="space-y-2 pt-2">
+                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Información de Arbitraje</span>
+                                <div className="p-3.5 rounded-xl bg-surface/20 border border-border-thin/40 space-y-2">
+                                    {rubrica.es_doble_ciego && (
+                                        <span className="badge-vercel badge-vercel-info text-[9px] w-fit block font-extrabold">DOBLE CIEGO</span>
+                                    )}
+                                    <p className="text-[11px] font-medium text-text-dim leading-relaxed">
+                                        Identidad del autor protegida. Evalúe de forma anónima y objetiva conforme a la normativa.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="p-5">
+                        <div className="p-4 rounded-xl bg-surface/15 border border-border-thin/40 flex flex-col gap-1.5">
+                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
+                                <Lock size={9} /> Auditoría de Sesión
+                            </span>
+                            <div className="flex items-center gap-1.5 text-success font-black text-[10px] uppercase tracking-wide">
+                                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                Sincronización Exitosa
+                            </div>
+                        </div>
                     </div>
                 </aside>
 
-                {/* ─── Panel Derecho: Rúbrica Dinámica ─── */}
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    {/* Sticky header de la rúbrica */}
-                    <div className="px-8 py-5 border-b border-border-thin bg-bg-deep sticky top-0 z-10">
+                <section className="flex-1 border-r border-border-thin flex flex-col bg-bg-deep overflow-hidden">
+                    <div className="px-6 py-5 border-b border-border-thin bg-surface/5 flex items-center justify-between shrink-0">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-text-main/5 border border-text-main/10 text-text-main">
+                                <BookOpen size={18} />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest block">Dossier Técnico de Propuesta</span>
+                                <span className="text-sm font-black text-text-main uppercase tracking-tighter">Protocolo de Investigación Original</span>
+                            </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleDescargarCiego}
+                                className="btn-vercel-secondary text-xs flex items-center gap-1.5 !px-3 !py-1.5"
+                            >
+                                <ExternalLink size={12} />
+                                PDF Ciego
+                            </button>
+                            {isReadOnly && (
+                                <button
+                                    onClick={handleDescargarRubrica}
+                                    className="btn-vercel-primary text-xs flex items-center gap-1.5 !px-3 !py-1.5"
+                                >
+                                    <FileText size={12} />
+                                    Descargar Rúbrica
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex-1 p-6 bg-bg-deep overflow-y-auto flex justify-center">
+                        <article className="w-full bg-white dark:bg-neutral-900 border border-border-thin/80 rounded-2xl shadow-xl p-8 md:p-10 space-y-8 min-h-[90vh] text-neutral-800 dark:text-neutral-200 overflow-y-auto">
+                            <div className="border-b-2 border-neutral-200 dark:border-neutral-800 pb-5 text-center space-y-1">
+                                <p className="text-[10px] font-extrabold uppercase tracking-widest text-text-dim">
+                                    Instituto Superior Tecnológico Traversari
+                                </p>
+                                <p className="text-[11px] font-semibold text-text-dim">
+                                    Dirección de Investigación y Desarrollo Tecnológico (DIITRA)
+                                </p>
+                                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[10px] font-bold text-text-dim uppercase tracking-wider">
+                                    {rubrica.es_doble_ciego ? 'Modo Arbitraje Académico (Doble Ciego)' : 'Arbitraje Estándar'}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-text-dim">Referencia del Proyecto</span>
+                                <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-white leading-tight">
+                                    {rubrica.proyecto_titulo}
+                                </h1>
+                                {rubrica.linea_investigacion && (
+                                    <p className="text-xs font-semibold text-neutral-500 flex items-center gap-1">
+                                        <Target size={11} className="text-primary" /> {rubrica.linea_investigacion}
+                                    </p>
+                                )}
+                            </div>
+
+                            {(rubrica.descripcionProyecto || rubrica.descripcion_proyecto) && (
+                                <div className="space-y-2 pt-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        1. Resumen / Descripción General
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.descripcionProyecto || rubrica.descripcion_proyecto || '' }}
+                                    />
+                                </div>
+                            )}
+
+                            {rubrica.antecedentes && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        2. Antecedentes
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.antecedentes }}
+                                    />
+                                </div>
+                            )}
+
+                            {(rubrica.objetivoGeneral || rubrica.objetivo_general || rubrica.objetivosEspecificos || rubrica.objetivos_especificos) && (
+                                <div className="space-y-4">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        3. Objetivos
+                                    </h3>
+                                    {(rubrica.objetivoGeneral || rubrica.objetivo_general) && (
+                                        <div className="space-y-1 bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-border-thin/20">
+                                            <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest">Objetivo General</p>
+                                            <div 
+                                                className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal"
+                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivoGeneral || rubrica.objetivo_general || '' }}
+                                            />
+                                        </div>
+                                    )}
+                                    {(rubrica.objetivosEspecificos || rubrica.objetivos_especificos) && (
+                                        <div className="space-y-1 bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-border-thin/20">
+                                            <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest">Objetivos Específicos</p>
+                                            <div 
+                                                className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal"
+                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivosEspecificos || rubrica.objetivos_especificos || '' }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {rubrica.justificacion && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        4. Justificación
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.justificacion }}
+                                    />
+                                </div>
+                            )}
+
+                            {(rubrica.marcoTeorico || rubrica.marco_teorico) && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        5. Marco Teórico
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.marcoTeorico || rubrica.marco_teorico || '' }}
+                                    />
+                                </div>
+                            )}
+
+                            {rubrica.metodologia && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        6. Metodología de la Investigación
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.metodologia }}
+                                    />
+                                </div>
+                            )}
+
+                            {rubrica.evaluacion && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        7. Método de Evaluación y Validación
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.evaluacion }}
+                                    />
+                                </div>
+                            )}
+
+                            {rubrica.bibliografia && (
+                                <div className="space-y-2">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                        8. Bibliografía y Referencias Fuentes
+                                    </h3>
+                                    <div 
+                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        dangerouslySetInnerHTML={{ __html: rubrica.bibliografia }}
+                                    />
+                                </div>
+                            )}
+                        </article>
+                    </div>
+                </section>
+
+                <div className="w-full lg:w-[460px] shrink-0 flex flex-col bg-surface/5 overflow-hidden">
+                    <div className="px-6 py-5 border-b border-border-thin bg-bg-deep sticky top-0 z-10">
                         <div className="flex items-center justify-between">
                             <div>
-                                <div className="section-label mb-1">
-                                    <FileText size={10} />
-                                    <span>{rubrica.nombre_rubrica}</span>
-                                </div>
-                                <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
-                                    Rúbrica de Evaluación
+                                <span className="text-[9px] font-mono text-text-dim uppercase tracking-wider block">
+                                    {rubrica.nombre_rubrica}
+                                </span>
+                                <h3 className="text-base font-extrabold tracking-tight text-text-main uppercase">
+                                    Evaluación Técnica
                                 </h3>
                             </div>
 
-                            {/* Dictamen en tiempo real */}
-                            <div className="text-right">
+                            <div className="text-right flex items-center gap-3">
                                 <div
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-black text-sm tracking-tighter transition-all duration-300"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-xs tracking-tighter transition-all duration-300"
                                     style={{ background: dictamenCfg.bg, color: dictamenCfg.color }}
                                 >
                                     {dictamenPreview === 'Aprobado'
-                                        ? <CheckCircle2 size={16} />
-                                        : <XCircle size={16} />
+                                        ? <CheckCircle2 size={13} />
+                                        : <XCircle size={13} />
                                     }
                                     {dictamenCfg.label}
                                 </div>
-                                <p className="text-[10px] text-text-dim mt-1 font-bold">
-                                    <span className="text-text-main text-lg font-black">{puntajeTotal.toFixed(1)}</span>/100
-                                    {' '}· Mín: {minimo}
-                                </p>
+                                <div className="text-right">
+                                    <p className="text-[9px] text-text-dim font-bold">
+                                        <span className="text-text-main text-base font-black">{puntajeTotal.toFixed(1)}</span>/100
+                                    </p>
+                                    <p className="text-[8px] text-text-dim">Mín: {minimo}</p>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Barra de progreso */}
-                        <div className="mt-4 w-full bg-surface rounded-full h-1.5">
+                        <div className="mt-3.5 w-full bg-surface rounded-full h-1">
                             <div
-                                className="h-1.5 rounded-full transition-all duration-300"
+                                className="h-1 rounded-full transition-all duration-300"
                                 style={{
                                     width: `${Math.min(porcentajeCompletado, 100)}%`,
                                     background: dictamenCfg.color
@@ -382,9 +512,8 @@ const EvaluacionPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Formulario */}
-                    <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
-                        <div className="p-8 space-y-5">
+                    <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-5">
                             {detalles.map((det, idx) => {
                                 const criterioInfo = rubrica.criterios.find(c => c.id_criterio === det.idCriterio);
                                 const porcentajeCriterio = det.max > 0 ? (det.puntaje / det.max) * 100 : 0;
@@ -405,68 +534,66 @@ const EvaluacionPage: React.FC = () => {
 
                             <div className="divider-vercel" />
 
-                            {/* Conclusión General */}
-                            <div className="space-y-3">
-                                <label className="section-label text-text-dim">
-                                    <MessageSquare size={12} /> Conclusión General del Árbitro *
+                            <div className="space-y-2.5">
+                                <label className="section-label text-text-dim text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                                    <MessageSquare size={11} /> Conclusión General del Árbitro *
                                 </label>
                                 <textarea
-                                    className="input-vercel h-36 resize-none"
+                                    className="input-vercel h-28 resize-none text-xs"
                                     placeholder="Escriba su dictamen final como árbitro. Incluya fortalezas, debilidades y recomendaciones específicas al equipo investigador..."
                                     value={observacionesGral}
                                     onChange={(e) => setObservacionesGral(e.target.value)}
                                     required
                                     disabled={isReadOnly}
                                 />
-                                <p className="text-[10px] text-text-dim">
+                                <p className="text-[9px] text-text-dim leading-relaxed">
                                     Este campo es obligatorio y formará parte del acta de evaluación oficial del DIITRA.
                                 </p>
                             </div>
 
                             {error && (
-                                <div className="flex items-center gap-2 p-4 rounded-lg bg-error/10 border border-error/30 text-error text-sm">
-                                    <AlertCircle size={16} className="shrink-0" />
+                                <div className="flex items-center gap-2 p-4 rounded-lg bg-error/10 border border-error/30 text-error text-xs">
+                                    <AlertCircle size={14} className="shrink-0" />
                                     {error}
                                 </div>
                             )}
                         </div>
 
-                        {/* Footer sticky */}
-                        <div className="sticky bottom-0 bg-bg-deep border-t border-border-thin px-8 py-4 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="sticky bottom-0 bg-bg-deep border-t border-border-thin px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
                                 <div>
-                                    <span className="text-[10px] text-text-dim uppercase tracking-widest font-bold block">Puntaje Total</span>
-                                    <span className="text-2xl font-black text-text-main">{puntajeTotal.toFixed(1)}</span>
-                                    <span className="text-text-dim text-sm">/100</span>
+                                    <span className="text-[8px] text-text-dim uppercase tracking-widest font-bold block">Puntaje Total</span>
+                                    <span className="text-xl font-black text-text-main">{puntajeTotal.toFixed(1)}</span>
+                                    <span className="text-text-dim text-xs">/100</span>
                                 </div>
                                 <div
-                                    className="h-8 w-[1px]"
+                                    className="h-6 w-[1px]"
                                     style={{ background: 'var(--color-border-thin)' }}
                                 />
                                 <div>
-                                    <span className="text-[10px] text-text-dim uppercase tracking-widest font-bold block">Dictamen</span>
-                                    <span className="text-sm font-black" style={{ color: dictamenCfg.color }}>
+                                    <span className="text-[8px] text-text-dim uppercase tracking-widest font-bold block">Dictamen</span>
+                                    <span className="text-xs font-black" style={{ color: dictamenCfg.color }}>
                                         {dictamenCfg.label}
                                     </span>
                                 </div>
                             </div>
                             
                             {isReadOnly ? (
-                                <div className="badge-vercel badge-vercel-success !text-xs !py-2.5 flex items-center gap-1.5 font-bold animate-fade-in">
-                                    <ShieldCheck size={14} className="text-success" />
-                                    <span>Evaluación Registrada e Inmutable</span>
+                                <div className="badge-vercel badge-vercel-success !text-[10px] !py-2 flex items-center gap-1 animate-fade-in font-bold">
+                                    <ShieldCheck size={12} className="text-success" />
+                                    <span>Registrada</span>
                                 </div>
                             ) : (
                                 <button
                                     type="submit"
                                     disabled={enviando}
-                                    className="btn-vercel-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-vercel-primary flex items-center gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {enviando
-                                        ? <Loader2 size={14} className="animate-spin" />
-                                        : <Send size={14} />
+                                        ? <Loader2 size={12} className="animate-spin" />
+                                        : <Send size={12} />
                                     }
-                                    Enviar Evaluación
+                                    Enviar
                                 </button>
                             )}
                         </div>
@@ -477,9 +604,6 @@ const EvaluacionPage: React.FC = () => {
     );
 };
 
-// ─────────────────────────────────────────────────────────────
-//  Sub-componente: Criterio con slider y barra de progreso
-// ─────────────────────────────────────────────────────────────
 interface CriterioCardProps {
     numero: number;
     detalle: EvaluacionDetalle;
@@ -493,7 +617,6 @@ interface CriterioCardProps {
 const CriterioCard: React.FC<CriterioCardProps> = ({
     numero, detalle, criterioInfo, porcentaje, onPuntajeChange, onObsChange, disabled
 }) => {
-    // Definición de colores según el estándar CACES (Geist preset)
     const color = porcentaje >= 90 
         ? 'var(--color-success)' 
         : porcentaje >= 70 
@@ -502,7 +625,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                 ? 'var(--color-warning)' 
                 : 'var(--color-error)';
 
-    // Determinar niveles CACES para el IST de Quito (Ecuador)
     const getCacesRango = (pct: number) => {
         if (pct < 50) return { label: 'Insatisfactorio', badgeClass: 'text-error bg-error/10 border-error/20' };
         if (pct < 70) return { label: 'Poco Satisfactorio', badgeClass: 'text-warning bg-warning/10 border-warning/20' };
@@ -521,7 +643,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
 
     return (
         <div className="bento-card p-5 space-y-4">
-            {/* Header del criterio */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                     <span className="w-7 h-7 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-black text-text-dim shrink-0">
@@ -535,7 +656,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                     </div>
                 </div>
                 
-                {/* Score interactivo con input numérico de alta precisión */}
                 <div className="text-right shrink-0 flex flex-col items-end gap-1">
                     <div className="flex items-center gap-1">
                         <input
@@ -565,7 +685,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                 </div>
             </div>
 
-            {/* Barra de progreso visual */}
             <div className="w-full bg-surface rounded-full h-1">
                 <div
                     className="h-1 rounded-full transition-all duration-200"
@@ -573,7 +692,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                 />
             </div>
 
-            {/* Slider con track visible y custom colors */}
             <div className="py-1">
                 <input
                     type="range"
@@ -588,7 +706,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                 />
             </div>
 
-            {/* Fila inferior: Estado CACES + Botones Preset */}
             <div className="flex flex-wrap gap-2 items-center justify-between mt-1">
                 <div className="flex items-center gap-1.5">
                     <span className="text-[9px] text-text-dim font-bold uppercase tracking-wider">Nivel CACES:</span>
@@ -624,7 +741,6 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                 </div>
             </div>
 
-            {/* Observaciones del criterio */}
             <textarea
                 className="input-vercel !text-xs h-16 resize-none mt-2 disabled:opacity-75 disabled:cursor-not-allowed"
                 placeholder={`Justificación y observaciones específicas sobre ${detalle.criterio.toLowerCase()}...`}

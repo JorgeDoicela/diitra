@@ -77,6 +77,13 @@ public class RubricaDinamicaDto
     public string? LineaInvestigacion { get; set; }
     public string? Justificacion { get; set; }       // Anonimizado
     public string? Metodologia { get; set; }         // Anonimizado
+    public string? Antecedentes { get; set; }
+    public string? DescripcionProyecto { get; set; }
+    public string? ObjetivoGeneral { get; set; }
+    public string? ObjetivosEspecificos { get; set; }
+    public string? MarcoTeorico { get; set; }
+    public string? Evaluacion { get; set; }
+    public string? Bibliografia { get; set; }
     public string ProyectoUuid { get; set; } = null!;
     public bool EsDobleCiego { get; set; }
     public decimal PuntajeMinimoAprobacion { get; set; }

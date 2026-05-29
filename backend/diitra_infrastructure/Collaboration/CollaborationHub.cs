@@ -246,8 +246,8 @@ namespace diitra_infrastructure.Collaboration
             {
                 // documentId can be plain UUID (main doc) or UUID_FieldName (per-field rich-text)
                 var separatorIdx = documentId.LastIndexOf('_');
-                var entityUuid = separatorIdx > 36 ? documentId.Substring(0, separatorIdx) : documentId;
-                var campoNombre = separatorIdx > 36 ? documentId.Substring(separatorIdx + 1) : "contenido";
+                var entityUuid = separatorIdx >= 36 ? documentId.Substring(0, separatorIdx) : documentId;
+                var campoNombre = separatorIdx >= 36 ? documentId.Substring(separatorIdx + 1) : "contenido";
 
                 doc = new InvCoworkDocumento {
                     Uuid = documentId,
@@ -281,8 +281,8 @@ namespace diitra_infrastructure.Collaboration
             {
                 // documentId can be plain UUID (main doc) or UUID_FieldName (per-field rich-text)
                 var separatorIdx = documentId.LastIndexOf('_');
-                var entityUuid = separatorIdx > 36 ? documentId.Substring(0, separatorIdx) : documentId;
-                var campoNombre = separatorIdx > 36 ? documentId.Substring(separatorIdx + 1) : "contenido";
+                var entityUuid = separatorIdx >= 36 ? documentId.Substring(0, separatorIdx) : documentId;
+                var campoNombre = separatorIdx >= 36 ? documentId.Substring(separatorIdx + 1) : "contenido";
 
                 doc = new InvCoworkDocumento
                 {

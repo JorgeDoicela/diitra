@@ -119,94 +119,53 @@ public class PeerReviewService : IPeerReviewService
             ? $"Propuesta #{proyecto.IdProyecto:D4}" // Título anonimizado
             : proyecto.Titulo;
 
-        // ── FALLBACK DE CONTENIDO ──────────────────────────────────────────────
-        // Si los campos relacionales están vacíos (pueden haberse guardado antes del fix de UUID),
-        // intentar leerlos desde el DataSnapshotJson de la instancia del documento.
-        string? justificacionFinal = proyecto.Justificacion;
-        string? metodologiaFinal = proyecto.Metodologia;
+        // ── FALLBACK DE CONTENIDO COMPLETO (DOSSIER TÉCNICO) ────────────────────────
+        var docInstance = await _context.DocumentInstances
+            .FirstOrDefaultAsync(i => i.EntityUuid == proyecto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
 
-        if (string.IsNullOrWhiteSpace(justificacionFinal) || string.IsNullOrWhiteSpace(metodologiaFinal))
+        async Task<string?> ResolveFieldAsync(string fieldName, string? baseValue)
         {
-            try
+            if (!string.IsNullOrWhiteSpace(baseValue)) return baseValue;
+
+            if (docInstance != null)
             {
-                _logger.LogInformation(
-                    "[PeerReview] DIAGNÓSTICO: proyecto.Uuid={ProyectoUuid}, proyecto.Justificacion nulo/vacío={JustVacia}, proyecto.Metodologia nulo/vacío={MetVacia}",
-                    proyecto.Uuid,
-                    string.IsNullOrWhiteSpace(justificacionFinal),
-                    string.IsNullOrWhiteSpace(metodologiaFinal));
-
-                var docInstance = await _context.DocumentInstances
-                    .FirstOrDefaultAsync(i => i.EntityUuid == proyecto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
-
-                _logger.LogInformation(
-                    "[PeerReview] DIAGNÓSTICO: docInstance encontrada={Encontrada}, docInstance.Uuid={InstUuid}, docInstance.EntityUuid={EntUuid}",
-                    docInstance != null,
-                    docInstance?.Uuid ?? "NULL",
-                    docInstance?.EntityUuid ?? "NULL");
-
-                if (docInstance != null)
+                // 1. Intentar recuperar desde DataSnapshotJson de la instancia
+                if (docInstance.DataSnapshotJson != null)
                 {
-                    if (docInstance.DataSnapshotJson != null)
+                    try
                     {
                         var opts = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                        var snapshot = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(
-                            docInstance.DataSnapshotJson, opts);
-
-                        if (string.IsNullOrWhiteSpace(justificacionFinal) &&
-                            snapshot.TryGetProperty("Justificacion", out var justEl) &&
-                            justEl.ValueKind == System.Text.Json.JsonValueKind.String)
+                        var snapshot = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(docInstance.DataSnapshotJson, opts);
+                        if (snapshot.TryGetProperty(fieldName, out var el) && el.ValueKind == System.Text.Json.JsonValueKind.String)
                         {
-                            justificacionFinal = justEl.GetString();
-                            _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Justificacion recuperada del DataSnapshotJson ({Chars} chars)", justificacionFinal?.Length ?? 0);
-                        }
-
-                        if (string.IsNullOrWhiteSpace(metodologiaFinal) &&
-                            snapshot.TryGetProperty("Metodologia", out var metEl) &&
-                            metEl.ValueKind == System.Text.Json.JsonValueKind.String)
-                        {
-                            metodologiaFinal = metEl.GetString();
-                            _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Metodologia recuperada del DataSnapshotJson ({Chars} chars)", metodologiaFinal?.Length ?? 0);
+                            var val = el.GetString();
+                            if (!string.IsNullOrWhiteSpace(val)) return val;
                         }
                     }
+                    catch { }
+                }
 
-                    // Fallback directo a inv_cowork_documentos para recuperar el contenido colaborativo en vivo
-                    if (string.IsNullOrWhiteSpace(justificacionFinal))
-                    {
-                        var coworkKey = $"{docInstance.Uuid}_Justificacion";
-                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Buscando CoWork Justificacion con Uuid={Key}", coworkKey);
-                        var coworkJust = await _context.InvCoworkDocumentos
-                            .FirstOrDefaultAsync(d => d.Uuid == coworkKey);
-                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: CoWork Justificacion encontrado={Encontrado}, ContentHtml vacío={HtmlVacio}",
-                            coworkJust != null,
-                            string.IsNullOrWhiteSpace(coworkJust?.ContentHtml));
-                        if (coworkJust != null && !string.IsNullOrWhiteSpace(coworkJust.ContentHtml))
-                        {
-                            justificacionFinal = coworkJust.ContentHtml;
-                        }
-                    }
-
-                    if (string.IsNullOrWhiteSpace(metodologiaFinal))
-                    {
-                        var coworkKey = $"{docInstance.Uuid}_Metodologia";
-                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: Buscando CoWork Metodologia con Uuid={Key}", coworkKey);
-                        var coworkMet = await _context.InvCoworkDocumentos
-                            .FirstOrDefaultAsync(d => d.Uuid == coworkKey);
-                        _logger.LogInformation("[PeerReview] DIAGNÓSTICO: CoWork Metodologia encontrado={Encontrado}, ContentHtml vacío={HtmlVacio}",
-                            coworkMet != null,
-                            string.IsNullOrWhiteSpace(coworkMet?.ContentHtml));
-                        if (coworkMet != null && !string.IsNullOrWhiteSpace(coworkMet.ContentHtml))
-                        {
-                            metodologiaFinal = coworkMet.ContentHtml;
-                        }
-                    }
+                // 2. Intentar recuperar desde inv_cowork_documentos (contenido colaborativo)
+                var coworkKey = $"{docInstance.Uuid}_{fieldName}";
+                var coworkDoc = await _context.InvCoworkDocumentos.FirstOrDefaultAsync(d => d.Uuid == coworkKey);
+                if (coworkDoc != null && !string.IsNullOrWhiteSpace(coworkDoc.ContentHtml))
+                {
+                    return coworkDoc.ContentHtml;
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[PeerReview] DIAGNÓSTICO: Error en el fallback de contenido para proyecto {Uuid}", proyecto.Uuid);
-                // Fallback silencioso: si el snapshot o el cowork falla, continuar normalmente sin datos de contenido.
-            }
+
+            return null;
         }
+
+        string? justificacionFinal = await ResolveFieldAsync("Justificacion", proyecto.Justificacion);
+        string? metodologiaFinal = await ResolveFieldAsync("Metodologia", proyecto.Metodologia);
+        string? antecedentesFinal = await ResolveFieldAsync("Antecedentes", proyecto.Antecedentes);
+        string? descripcionFinal = await ResolveFieldAsync("DescripcionProyecto", proyecto.DescripcionProyecto);
+        string? marcoTeoricoFinal = await ResolveFieldAsync("MarcoTeorico", proyecto.MarcoTeorico);
+        string? evaluacionFinal = await ResolveFieldAsync("Evaluacion", proyecto.MetodoEvaluacion);
+        string? objetivoGeneralFinal = await ResolveFieldAsync("ObjetivoGeneral", null);
+        string? objetivosEspecificosFinal = await ResolveFieldAsync("ObjetivosEspecificos", null);
+        string? bibliografiaFinal = await ResolveFieldAsync("Bibliografia", null);
         // ──────────────────────────────────────────────────────────────────────
 
         var revisionCompletada = revision.Estado == "Completada";
@@ -233,6 +192,13 @@ public class PeerReviewService : IPeerReviewService
             LineaInvestigacion = revision.EsDobleCiego ? null : proyecto.IdSublineaNavigation?.Nombre,
             Justificacion = justificacionFinal,
             Metodologia = metodologiaFinal,
+            Antecedentes = antecedentesFinal,
+            DescripcionProyecto = descripcionFinal,
+            ObjetivoGeneral = objetivoGeneralFinal,
+            ObjetivosEspecificos = objetivosEspecificosFinal,
+            MarcoTeorico = marcoTeoricoFinal,
+            Evaluacion = evaluacionFinal,
+            Bibliografia = bibliografiaFinal,
             ProyectoUuid = proyecto.Uuid,
             EsDobleCiego = revision.EsDobleCiego,
             PuntajeMinimoAprobacion = puntajeMinimo,
