@@ -365,7 +365,7 @@ const ArbitrajePage: React.FC = () => {
                 {/* Main Content: Left Column */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* ── Tabla de Proyectos + Tabs Internos/Externos ── */}
-                    <div className="bento-card overflow-hidden animate-fade-up [animation-delay:200ms]">
+                    <div className="bento-card-static overflow-hidden animate-fade-up [animation-delay:200ms]">
                 {loading ? (
                     <div className="flex items-center justify-center py-20 gap-3 text-text-dim">
                         <Loader2 size={20} className="animate-spin" />
@@ -715,7 +715,7 @@ const ArbitrajePage: React.FC = () => {
 
                 {/* ── Avance Global del Arbitraje ──────────────── */}
                 {stats && stats.total_arbitros_asignados > 0 && (
-                    <div className="bento-card p-5 relative overflow-hidden vercel-card-glow bg-surface w-full">
+                    <div className="bento-card-static p-5 relative overflow-hidden vercel-card-glow bg-surface w-full">
                         <div className="flex items-center justify-between mb-3">
                             <div className="section-label">
                                 <TrendingUp size={12} />
@@ -742,7 +742,7 @@ const ArbitrajePage: React.FC = () => {
 
                 {/* ── Alertas CACES Checklist Card (Sidebar) ─────── */}
                 {alertas.length > 0 && (
-                    <div className="bento-card p-5 relative overflow-hidden bg-surface animate-fade-up w-full">
+                    <div className="bento-card-static p-5 relative overflow-hidden bg-surface animate-fade-up w-full">
                         {/* Header */}
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
@@ -905,7 +905,7 @@ interface KpiCardProps {
 }
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface w-full">
+    <div className="bento-card-static p-5 flex flex-col relative overflow-hidden bg-surface w-full">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
