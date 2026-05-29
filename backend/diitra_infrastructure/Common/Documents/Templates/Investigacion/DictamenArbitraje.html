@@ -213,17 +213,17 @@
      ENCABEZADO INSTITUCIONAL
 ══════════════════════════════════════════════════════ -->
 <div class="dictamen-header">
-  <div class="logo-area">{{ institucion_nombre | default: "Instituto Superior Tecnológico" }}</div>
+  <div class="logo-area">{{default institucion_nombre "Instituto Superior Tecnológico"}}</div>
   <h1>Acta de Dictamen de Arbitraje</h1>
   <p class="subtitulo">Departamento de Investigación e Innovación Traversari — DIITRA</p>
   <p class="subtitulo">Proceso de Evaluación por Pares Doble Ciego | Normativa CACES-IST 2024-2025</p>
-  <p class="codigo-trazabilidad">Código de Trazabilidad: {{ traceability_code | default: "N/A" }}</p>
+  <p class="codigo-trazabilidad">Código de Trazabilidad: {{default traceability_code "N/A"}}</p>
 </div>
 
 <!-- ══════════════════════════════════════════════════════
      AVISO DOBLE CIEGO (solo si aplica)
 ══════════════════════════════════════════════════════ -->
-{% if es_doble_ciego %}
+{{#if es_doble_ciego}}
 <section>
   <div class="aviso-ciego">
     ⚠️ <strong>PROCESO DE DOBLE CIEGO:</strong> La identidad de los árbitros evaluadores se mantiene bajo 
@@ -231,7 +231,7 @@
     identidad de los autores y viceversa durante el proceso de revisión.
   </div>
 </section>
-{% end %}
+{{/if}}
 
 <!-- ══════════════════════════════════════════════════════
      SECCIÓN 1: DATOS DEL PROYECTO
@@ -241,27 +241,27 @@
   <table class="datos">
     <tr>
       <td>Código Institucional:</td>
-      <td><strong>{{ codigo_institucional | default: "Sin código asignado" }}</strong></td>
+      <td><strong>{{default codigo_institucional "Sin código asignado"}}</strong></td>
     </tr>
     <tr>
       <td>Título del Proyecto:</td>
-      <td>{{ proyecto_titulo | default: "[Anonimizado — Doble Ciego]" }}</td>
+      <td>{{default proyecto_titulo "[Anonimizado — Doble Ciego]"}}</td>
     </tr>
     <tr>
       <td>Convocatoria:</td>
-      <td>{{ convocatoria_titulo | default: "N/A" }}</td>
+      <td>{{default convocatoria_titulo "N/A"}}</td>
     </tr>
     <tr>
       <td>Línea de Investigación:</td>
-      <td>{{ linea_investigacion | default: "N/A" }}</td>
+      <td>{{default linea_investigacion "N/A"}}</td>
     </tr>
     <tr>
       <td>Fecha de Postulación:</td>
-      <td>{{ fecha_postulacion | default: "N/A" }}</td>
+      <td>{{default fecha_postulacion "N/A"}}</td>
     </tr>
     <tr>
       <td>Fecha de Cierre del Arbitraje:</td>
-      <td>{{ fecha_cierre | date: "dd 'de' MMMM 'de' yyyy" | default: "N/A" }}</td>
+      <td>{{fecha_larga fecha_cierre}}</td>
     </tr>
   </table>
 </section>
@@ -290,24 +290,30 @@
       </tr>
     </thead>
     <tbody>
-      {% for r in revisiones %}
+      {{#each revisiones}}
       <tr>
-        <td>{{ for.index | plus: 1 }}</td>
+        <td>{{sum @index 1}}</td>
         <td>
-          {% if es_doble_ciego %}
-            Árbitro #{{ for.index | plus: 1 }}
-          {% else %}
-            {{ r.revisor_nombre }}
-          {% end %}
+          {{#if ../es_doble_ciego}}
+            Árbitro #{{sum @index 1}}
+          {{else}}
+            {{revisor_nombre}}
+          {{/if}}
         </td>
-        <td>{{ r.es_externo ? "Externo" : "Interno" }}</td>
-        <td>{{ r.revisor_grado | default: "N/I" }}</td>
-        <td><strong>{{ r.puntaje_total | default: "—" }}/100</strong></td>
-        <td>{{ r.dictamen_revisor | default: "Pendiente" }}</td>
-        <td>{{ r.estado }}</td>
-        <td>{{ r.fecha_completado | date: "dd/MM/yyyy" | default: "—" }}</td>
+        <td>
+          {{#if es_externo}}
+            Externo
+          {{else}}
+            Interno
+          {{/if}}
+        </td>
+        <td>{{default revisor_grado "N/I"}}</td>
+        <td><strong>{{default puntaje_total "—"}}/100</strong></td>
+        <td>{{default dictamen_revisor "Pendiente"}}</td>
+        <td>{{estado}}</td>
+        <td>{{default fecha_completado "—"}}</td>
       </tr>
-      {% end %}
+      {{/each}}
     </tbody>
   </table>
 </section>
@@ -320,42 +326,42 @@
 
   <div style="text-align:center; margin: 14px 0;">
     <div class="puntaje-box">
-      <span class="valor">{{ puntaje_promedio }}/100</span>
+      <span class="valor">{{default puntaje_promedio "0"}}/100</span>
       <span class="etiqueta">Puntaje Promedio Ponderado</span>
     </div>
     &nbsp;&nbsp;&nbsp;
     <div class="puntaje-box">
-      <span class="valor">{{ puntaje_minimo }}/100</span>
+      <span class="valor">{{default puntaje_minimo "70"}}/100</span>
       <span class="etiqueta">Puntaje Mínimo de Aprobación</span>
     </div>
   </div>
 
   <div style="text-align:center; margin: 12px 0;">
-    {% if dictamen_resultado == "Aprobado" %}
-      <div class="resultado-badge resultado-aprobado">✓ {{ dictamen_resultado }}</div>
-    {% elsif dictamen_resultado == "Rechazado" %}
-      <div class="resultado-badge resultado-rechazado">✗ {{ dictamen_resultado }}</div>
-    {% elsif dictamen_resultado == "Desempate" %}
+    {{#if (eq dictamen_resultado "Aprobado")}}
+      <div class="resultado-badge resultado-aprobado">✓ {{dictamen_resultado}}</div>
+    {{else}}{{#if (eq dictamen_resultado "Rechazado")}}
+      <div class="resultado-badge resultado-rechazado">✗ {{dictamen_resultado}}</div>
+    {{else}}{{#if (eq dictamen_resultado "Desempate")}}
       <div class="resultado-badge resultado-desempate">⚖ Desempate Requerido</div>
-    {% else %}
-      <div class="resultado-badge resultado-revision">↺ {{ dictamen_resultado }}</div>
-    {% end %}
+    {{else}}
+      <div class="resultado-badge resultado-revision">↺ {{dictamen_resultado}}</div>
+    {{/if}}{{/if}}{{/if}}
   </div>
 
-  {% if mensaje_desempate %}
+  {{#if mensaje_desempate}}
   <p style="text-align:center; font-size:9pt; color:#856404; font-style:italic; margin-top:6px;">
-    {{ mensaje_desempate }}
+    {{mensaje_desempate}}
   </p>
-  {% end %}
+  {{/if}}
 
   <table class="datos" style="margin-top:14px;">
     <tr>
       <td>Estado Anterior del Proyecto:</td>
-      <td>{{ estado_anterior }}</td>
+      <td>{{estado_anterior}}</td>
     </tr>
     <tr>
       <td>Estado Nuevo del Proyecto:</td>
-      <td><strong>{{ estado_nuevo }}</strong></td>
+      <td><strong>{{estado_nuevo}}</strong></td>
     </tr>
     <tr>
       <td>Fundamento Normativo:</td>
@@ -369,17 +375,14 @@
 ══════════════════════════════════════════════════════ -->
 <section>
   <h2>4. Observaciones Consolidadas del Panel</h2>
-  {% for r in revisiones %}
-  {% if r.observaciones_gral %}
-  <div>
-    <h3>Árbitro #{{ for.index | plus: 1 }}:</h3>
-    <div class="obs-box">{{ r.observaciones_gral }}</div>
-  </div>
-  {% end %}
-  {% end %}
-  {% if revisiones | array.size == 0 or (revisiones | array.map: "observaciones_gral" | array.compact | array.size) == 0 %}
-  <div class="obs-box">Sin observaciones adicionales registradas por el panel.</div>
-  {% end %}
+  {{#each revisiones}}
+    {{#if observaciones_gral}}
+      <div>
+        <h3>Árbitro #{{sum @index 1}}:</h3>
+        <div class="obs-box">{{observaciones_gral}}</div>
+      </div>
+    {{/if}}
+  {{/each}}
 </section>
 
 <!-- ══════════════════════════════════════════════════════
@@ -397,16 +400,16 @@
 
   <div class="firma-section" style="padding: 0; margin-top: 28px;">
     <div class="firma-box">
-      {% if firma_imagen %}
-      <img src="{{ firma_imagen }}" style="max-height:60px; margin-bottom:4px;" alt="Firma digital" />
-      {% else %}
-      <div style="height:60px; border-bottom: 1px dashed #aaa; margin-bottom:4px;"></div>
-      {% end %}
+      {{#if firma_imagen}}
+        <img src="{{firma_imagen}}" style="max-height:60px; margin-bottom:4px;" alt="Firma digital" />
+      {{else}}
+        <div style="height:60px; border-bottom: 1px dashed #aaa; margin-bottom:4px;"></div>
+      {{/if}}
       <div class="firma-linea"></div>
-      <div class="firma-nombre">{{ director_nombre | default: "Director/a de Investigación" }}</div>
+      <div class="firma-nombre">{{default director_nombre "Director/a de Investigación"}}</div>
       <div class="firma-cargo">Director/a de Investigación e Innovación</div>
-      <div class="firma-cargo">DIITRA — {{ institucion_nombre | default: "IST" }}</div>
-      <div class="firma-cargo">Fecha: {{ fecha_cierre | date: "dd/MM/yyyy" | default: "N/A" }}</div>
+      <div class="firma-cargo">DIITRA — {{default institucion_nombre "IST"}}</div>
+      <div class="firma-cargo">Fecha: {{default fecha_cierre "N/A"}}</div>
     </div>
     <div class="firma-box">
       <div style="height:60px; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:8pt;">
@@ -415,7 +418,7 @@
       <div class="firma-linea"></div>
       <div class="firma-nombre">Sello DIITRA</div>
       <div class="firma-cargo">Departamento de Investigación e Innovación Traversari</div>
-      <div class="firma-cargo">{{ institucion_nombre | default: "Instituto Superior Tecnológico" }}</div>
+      <div class="firma-cargo">{{default institucion_nombre "Instituto Superior Tecnológico"}}</div>
       <div class="firma-cargo">Quito, Ecuador</div>
     </div>
   </div>
@@ -426,9 +429,9 @@
 ══════════════════════════════════════════════════════ -->
 <div class="legitimidad">
   Este documento ha sido generado automáticamente por el Sistema DIITRA v2.0. 
-  Su autenticidad puede verificarse en: <strong>{{ verification_url | default: "https://diitra.ist.edu.ec/verificar" }}</strong><br/>
-  Código de Trazabilidad: {{ traceability_code | default: "N/A" }} | 
-  Generado el {{ fecha_generacion | date: "dd/MM/yyyy HH:mm" | default: "" }} (UTC-5)
+  Su autenticidad puede verificarse en: <strong>{{default verification_url "https://diitra.ist.edu.ec/verificar"}}</strong><br/>
+  Código de Trazabilidad: {{default traceability_code "N/A"}} | 
+  Generado el {{default fecha_generacion ""}} (UTC-5)
 </div>
 
 </body>

@@ -336,7 +336,9 @@ public class PeerReviewService : IPeerReviewService
     {
         var proyectosEnRevision = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
-            .Where(p => p.Estado == "En Revisión" || p.Estado == "Enviado")
+            .Where(p => p.Estado == "En Revisión" || p.Estado == "Enviado" || 
+                       ((p.Estado == "Aprobado" || p.Estado == "Rechazado") && 
+                        _context.Set<InvRevisionesPares>().Any(r => r.IdProyecto == p.IdProyecto)))
             .ToListAsync();
 
         var result = new List<ArbitrajeProyectoDto>();
@@ -390,7 +392,8 @@ public class PeerReviewService : IPeerReviewService
     {
         var todasRevisiones = await _context.Set<InvRevisionesPares>()
             .Include(r => r.Proyecto)
-            .Where(r => r.Proyecto.Estado == "En Revisión" || r.Proyecto.Estado == "Enviado")
+            .Where(r => r.Proyecto.Estado == "En Revisión" || r.Proyecto.Estado == "Enviado" || 
+                       r.Proyecto.Estado == "Aprobado" || r.Proyecto.Estado == "Rechazado")
             .ToListAsync();
 
         int proyectos = todasRevisiones.Select(r => r.IdProyecto).Distinct().Count();
@@ -783,17 +786,17 @@ public class PeerReviewService : IPeerReviewService
         string? mensajeDesempate = null;
 
         // Lógica normativa CACES: verificar si hay desempate
-        bool hayAprobados = revisiones.Any(r => (r.PuntajeTotal ?? 0) >= puntajeMinimo);
-        bool hayRechazados = revisiones.Any(r => (r.PuntajeTotal ?? 0) < puntajeMinimo);
+        int aprobadosCount = revisiones.Count(r => (r.PuntajeTotal ?? 0) >= puntajeMinimo);
+        int rechazadosCount = revisiones.Count(r => (r.PuntajeTotal ?? 0) < puntajeMinimo);
 
-        if (hayAprobados && hayRechazados)
+        if (aprobadosCount == rechazadosCount && revisiones.Count > 0)
         {
             resultado = "Desempate";
             project.Estado = "En Revisión"; // Se mantiene en revisión hasta resolución
-            mensajeDesempate = $"Los {revisiones.Count} árbitros presentan dictámenes contradictorios. " +
+            mensajeDesempate = $"Los {revisiones.Count} árbitros presentan dictámenes contradictorios (empate {aprobadosCount} vs {rechazadosCount}). " +
                                $"Se requiere la designación de un árbitro dirimente o decisión fundada del Director de Investigación.";
         }
-        else if (promedio >= puntajeMinimo)
+        else if (aprobadosCount > rechazadosCount)
         {
             resultado = "Aprobado";
             project.Estado = "Aprobado";
@@ -916,7 +919,9 @@ public class PeerReviewService : IPeerReviewService
         if (revisiones.All(r => r.Estado == "Completada"))
         {
             var scores = revisiones.Where(r => r.PuntajeTotal.HasValue).Select(r => r.PuntajeTotal!.Value).ToList();
-            if (scores.Any(s => s >= 70) && scores.Any(s => s < 70)) return "Desempate";
+            var aprobadosCount = scores.Count(s => s >= 70);
+            var rechazadosCount = scores.Count(s => s < 70);
+            if (aprobadosCount == rechazadosCount && scores.Count > 0) return "Desempate";
             return "Completado";
         }
         if (revisiones.Any(r => r.Estado == "Completada")) return "EnProceso";
