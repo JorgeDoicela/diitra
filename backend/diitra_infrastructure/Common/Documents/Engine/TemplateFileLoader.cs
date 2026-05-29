@@ -76,6 +76,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 ["RUBRICA_EVALUACION"]            = "Investigacion/RubricaEvaluacion.html",
                 ["INFORME_AVANCE"]                = "Investigacion/InformeAvance.html",
                 ["REPORTE_ANALITICAS"]            = "Investigacion/ReporteAnaliticas.html",
+                ["DICTAMEN_ARBITRAJE"]            = "Investigacion/DictamenArbitraje.html",
             };
 
             if (map.TryGetValue(templateCode, out var relativePath))
