@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, ShieldCheck, FileText, Send,
@@ -24,6 +24,55 @@ interface EvaluacionDetalle {
     max: number;
 }
 
+// ─────────────────────────────────────────────────────────────
+//  Hooks auxiliares de UX
+// ─────────────────────────────────────────────────────────────
+
+/** Hook de animación de conteo numérico con easing cuadrático */
+const useAnimatedScore = (targetValue: number, duration: number = 500): number => {
+    const [displayValue, setDisplayValue] = useState(targetValue);
+    const targetRef = useRef(targetValue);
+    const animRef = useRef<number | null>(null);
+    const startValueRef = useRef(targetValue);
+    const startTimeRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        if (targetValue === targetRef.current) return;
+        
+        targetRef.current = targetValue;
+        startValueRef.current = displayValue;
+        startTimeRef.current = null;
+
+        const animate = (timestamp: number) => {
+            if (!startTimeRef.current) startTimeRef.current = timestamp;
+            const progress = (timestamp - startTimeRef.current) / duration;
+
+            if (progress >= 1) {
+                setDisplayValue(targetValue);
+                animRef.current = null;
+            } else {
+                // Easing cuadrático de salida (easeOutQuad)
+                const ease = progress * (2 - progress);
+                const current = startValueRef.current + (targetValue - startValueRef.current) * ease;
+                setDisplayValue(current);
+                animRef.current = requestAnimationFrame(animate);
+            }
+        };
+
+        if (animRef.current) cancelAnimationFrame(animRef.current);
+        animRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (animRef.current) cancelAnimationFrame(animRef.current);
+        };
+    }, [targetValue, duration, displayValue]);
+
+    return displayValue;
+};
+
+// ─────────────────────────────────────────────────────────────
+//  Componente Principal
+// ─────────────────────────────────────────────────────────────
 const EvaluacionPage: React.FC = () => {
     const { revisionUuid } = useParams<{ revisionUuid: string }>();
     const navigate = useNavigate();
@@ -45,17 +94,45 @@ const EvaluacionPage: React.FC = () => {
                 setRubrica(data);
                 
                 const isCompletada = data.estado_revision === 'Completada';
-                if (isCompletada) {
-                    setObservacionesGral(data.observaciones_gral || '');
-                }
-
-                setDetalles(data.criterios.map(c => ({
+                let initialObservaciones = data.observaciones_gral || '';
+                let initialDetalles = data.criterios.map(c => ({
                     idCriterio: c.id_criterio,
                     criterio: c.nombre,
                     puntaje: isCompletada ? (c.puntaje_obtenido ?? 0) : 0,
                     observaciones: isCompletada ? (c.observaciones_criterio ?? '') : '',
                     max: c.puntaje_maximo
-                })));
+                }));
+
+                // Cargar borrador local si la revisión no está completada
+                if (!isCompletada) {
+                    const draftStr = localStorage.getItem(`diitra_peer_review_draft_${revisionUuid}`);
+                    if (draftStr) {
+                        try {
+                            const draft = JSON.parse(draftStr);
+                            if (draft && draft.detalles) {
+                                initialDetalles = initialDetalles.map(fetched => {
+                                    const draftDet = draft.detalles.find((d: any) => d.idCriterio === fetched.idCriterio);
+                                    if (draftDet) {
+                                        return {
+                                            ...fetched,
+                                            puntaje: draftDet.puntaje,
+                                            observaciones: draftDet.observaciones || ''
+                                        };
+                                    }
+                                    return fetched;
+                                });
+                            }
+                            if (draft && typeof draft.observacionesGral === 'string') {
+                                initialObservaciones = draft.observacionesGral;
+                            }
+                        } catch (e) {
+                            console.error('[DIITRA] Error al parsear borrador local:', e);
+                        }
+                    }
+                }
+
+                setObservacionesGral(initialObservaciones);
+                setDetalles(initialDetalles);
             })
             .catch(() => setError('No se pudo cargar la rúbrica de evaluación.'))
             .finally(() => setLoading(false));
@@ -66,6 +143,25 @@ const EvaluacionPage: React.FC = () => {
     const dictamenPreview = getDictamenPreview(puntajeTotal, minimo);
     const dictamenCfg = DICTAMEN_CONFIG[dictamenPreview];
     const isReadOnly = rubrica?.estado_revision === 'Completada';
+
+    // Auto-save: guardar cambios localmente con un pequeño de-bounce
+    useEffect(() => {
+        if (isReadOnly || loading || !revisionUuid || detalles.length === 0) return;
+
+        const timer = setTimeout(() => {
+            const draftData = {
+                detalles,
+                observacionesGral,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(`diitra_peer_review_draft_${revisionUuid}`, JSON.stringify(draftData));
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [detalles, observacionesGral, isReadOnly, loading, revisionUuid]);
+
+    // Puntaje animado
+    const animatedTotalScore = useAnimatedScore(puntajeTotal);
 
     const handlePuntajeChange = (idx: number, val: number) => {
         setDetalles(prev => {
@@ -103,6 +199,9 @@ const EvaluacionPage: React.FC = () => {
                 })),
                 observaciones_gral: observacionesGral,
             });
+            
+            // Limpiar borrador al enviar con éxito
+            localStorage.removeItem(`diitra_peer_review_draft_${revisionUuid}`);
             setEnviado(true);
         } catch (err: any) {
             setError(err?.response?.data?.message ?? 'Error al enviar la evaluación. Intente de nuevo.');
@@ -173,36 +272,62 @@ const EvaluacionPage: React.FC = () => {
     if (enviado) {
         const cfg = DICTAMEN_CONFIG[dictamenPreview];
         return (
-            <main className="flex-1 bg-bg-deep flex items-center justify-center p-10">
-                <div className="text-center max-w-md">
-                    <div className="p-6 rounded-full mx-auto mb-6 w-24 h-24 flex items-center justify-center"
+            <main className="flex-1 bg-bg-deep flex items-center justify-center p-8 lg:p-10 vercel-grid-fade">
+                <div className="bento-card static p-8 text-center max-w-lg w-full shadow-2xl relative z-10 border-border-hover bg-surface animate-scale-up">
+                    <div className="p-6 rounded-full mx-auto mb-6 w-20 h-20 flex items-center justify-center animate-bounce"
                         style={{ background: cfg.bg }}>
                         {dictamenPreview === 'Aprobado'
-                            ? <CheckCircle2 size={40} style={{ color: cfg.color }} />
-                            : <XCircle size={40} style={{ color: cfg.color }} />
+                            ? <CheckCircle2 size={36} style={{ color: cfg.color }} />
+                            : <XCircle size={36} style={{ color: cfg.color }} />
                         }
                     </div>
+                    
                     <h2 className="text-3xl font-black tracking-tighter text-text-main uppercase mb-2">
-                        Evaluación Enviada
+                        Evaluación Registrada
                     </h2>
-                    <p className="text-text-dim text-sm mb-2">
-                        Su dictamen preliminar es:
+                    <p className="text-text-dim text-sm mb-4">
+                        Su dictamen ha sido recibido exitosamente por el comité académico.
                     </p>
-                    <p className="text-2xl font-black mb-1" style={{ color: cfg.color }}>
-                        {cfg.label}
-                    </p>
-                    <p className="text-text-dim text-xs mb-8">
-                        Puntaje total: <span className="font-bold text-text-main">{puntajeTotal.toFixed(1)}/100</span>
-                    </p>
-                    <p className="text-xs text-text-dim mb-8 leading-relaxed">
-                        Gracias por su contribución al proceso de evaluación por pares de DIITRA —
-                        Instituto Tecnológico Traversari. Su evaluación ha sido registrada correctamente.
-                    </p>
+
+                    <div className="my-6 p-4 bg-bg-deep rounded-xl border border-border-thin space-y-3">
+                        <div className="flex justify-between items-center border-b border-border-thin pb-2">
+                            <span className="text-xs text-text-dim">Dictamen Emitido:</span>
+                            <span className="text-sm font-bold uppercase tracking-wider font-mono" style={{ color: cfg.color }}>
+                                {cfg.label}
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center border-b border-border-thin pb-2">
+                            <span className="text-xs text-text-dim">Puntaje Final:</span>
+                            <span className="text-sm font-bold text-text-main font-mono">
+                                {puntajeTotal.toFixed(1)} / 100
+                            </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs text-text-dim">Fecha de Registro:</span>
+                            <span className="text-xs text-text-main font-semibold">
+                                {new Date().toLocaleString('es-EC')}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2.5 mb-8">
+                        <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider text-left">Resumen de Calificaciones</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-40 overflow-y-auto custom-scrollbar p-1">
+                            {detalles.map(d => (
+                                <div key={d.idCriterio} className="flex justify-between items-center p-2.5 bg-surface-hover/30 border border-border-thin rounded-lg text-left">
+                                    <span className="text-[11px] text-text-dim truncate pr-2 max-w-[125px]">{d.criterio}</span>
+                                    <span className="text-[11px] font-bold text-text-main font-mono">{d.puntaje} pts</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <button
                         onClick={() => navigate('/revisiones')}
-                        className="btn-vercel-primary"
+                        className="btn-brand w-full py-3 text-xs flex items-center justify-center gap-2 hover:shadow-lg transition-all"
                     >
                         Volver a Mis Revisiones
+                        <ArrowLeft size={12} className="rotate-180" />
                     </button>
                 </div>
             </main>
@@ -213,7 +338,7 @@ const EvaluacionPage: React.FC = () => {
         return (
             <main className="flex-1 bg-bg-deep flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-text-dim">
-                    <Loader2 size={24} className="animate-spin" />
+                    <Loader2 size={24} className="animate-spin text-brand" />
                     <span className="text-xs font-bold uppercase tracking-widest">Cargando rúbrica...</span>
                 </div>
             </main>
@@ -237,11 +362,13 @@ const EvaluacionPage: React.FC = () => {
     }
 
     const porcentajeCompletado = (puntajeTotal / 100) * 100;
+    const criteriosEvaluadosCount = detalles.filter(d => d.puntaje > 0 || d.observaciones.trim() !== '').length;
 
     return (
         <main className="flex-1 bg-bg-deep overflow-hidden">
             <div className="flex h-full flex-col lg:flex-row animate-fade-in">
 
+                {/* Sidebar izquierdo refactorizado */}
                 <aside className="w-full lg:w-[260px] shrink-0 border-b lg:border-b-0 lg:border-r border-border-thin flex flex-col bg-surface/5 justify-between">
                     <div className="flex flex-col">
                         <div className="p-5 border-b border-border-thin">
@@ -255,25 +382,38 @@ const EvaluacionPage: React.FC = () => {
 
                         <div className="p-5 space-y-6">
                             <div className="space-y-3">
-                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Navegación del Documento</span>
-                                <button className="w-full text-left px-4 py-3 rounded-xl bg-text-main text-bg-deep font-bold text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all shadow-md">
-                                    <ShieldCheck size={16} />
-                                    Evaluación Técnica
-                                </button>
-                                <button 
-                                    type="button"
-                                    onClick={handleSubmit}
-                                    disabled={isReadOnly || enviando}
-                                    className="w-full text-left px-4 py-3 rounded-xl border border-primary/30 text-primary hover:bg-primary/5 font-bold text-xs uppercase tracking-wider flex items-center gap-2.5 transition-all disabled:opacity-50"
-                                >
-                                    <Send size={14} />
-                                    Finalizar y Firmar
-                                </button>
+                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Proyecto Asignado</span>
+                                <div className="p-3.5 bg-surface/30 border border-border-thin rounded-xl">
+                                    <p className="text-xs font-bold text-text-main line-clamp-3 leading-snug uppercase">
+                                        {rubrica.proyecto_titulo}
+                                    </p>
+                                    <p className="text-[9px] text-text-dim mt-2 font-mono">
+                                        REF: #{rubrica.id_rubrica}
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="space-y-2 pt-2">
+                            <div className="space-y-3">
+                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Progreso de Rúbrica</span>
+                                <div className="p-3.5 rounded-xl bg-surface/20 border border-border-thin space-y-2">
+                                    <div className="flex justify-between items-center text-xs">
+                                        <span className="text-text-dim font-medium">Evaluados:</span>
+                                        <span className="font-bold text-text-main font-mono">
+                                            {criteriosEvaluadosCount} / {detalles.length}
+                                        </span>
+                                    </div>
+                                    <div className="progress-track-thick mt-1">
+                                        <div 
+                                            className="progress-fill progress-fill--brand transition-all duration-300"
+                                            style={{ width: `${(criteriosEvaluadosCount / detalles.length) * 100}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
                                 <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block">Información de Arbitraje</span>
-                                <div className="p-3.5 rounded-xl bg-surface/20 border border-border-thin/40 space-y-2">
+                                <div className="p-3.5 rounded-xl bg-surface/20 border border-border-thin/45 space-y-2">
                                     {rubrica.es_doble_ciego && (
                                         <span className="badge-vercel badge-vercel-info text-[9px] w-fit block font-extrabold">DOBLE CIEGO</span>
                                     )}
@@ -288,16 +428,17 @@ const EvaluacionPage: React.FC = () => {
                     <div className="p-5">
                         <div className="p-4 rounded-xl bg-surface/15 border border-border-thin/40 flex flex-col gap-1.5">
                             <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-1.5">
-                                <Lock size={9} /> Auditoría de Sesión
+                                <Lock size={9} /> Auto-guardado
                             </span>
                             <div className="flex items-center gap-1.5 text-success font-black text-[10px] uppercase tracking-wide">
                                 <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-                                Sincronización Exitosa
+                                Borrador Activo Local
                             </div>
                         </div>
                     </div>
                 </aside>
 
+                {/* Contenido Central: Documento */}
                 <section className="flex-1 border-r border-border-thin flex flex-col bg-bg-deep overflow-hidden">
                     <div className="px-6 py-5 border-b border-border-thin bg-surface/5 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
@@ -305,7 +446,9 @@ const EvaluacionPage: React.FC = () => {
                                 <BookOpen size={18} />
                             </div>
                             <div>
-                                <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest block">Dossier Técnico de Propuesta</span>
+                                <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest block">
+                                    Mis Revisiones / #{rubrica.id_rubrica}
+                                </span>
                                 <span className="text-sm font-black text-text-main uppercase tracking-tighter">Protocolo de Investigación Original</span>
                             </div>
                         </div>
@@ -331,22 +474,22 @@ const EvaluacionPage: React.FC = () => {
                     </div>
 
                     <div className="flex-1 p-6 bg-bg-deep overflow-y-auto flex justify-center">
-                        <article className="w-full bg-white dark:bg-neutral-900 border border-border-thin/80 rounded-2xl shadow-xl p-8 md:p-10 space-y-8 min-h-[90vh] text-neutral-800 dark:text-neutral-200 overflow-y-auto">
-                            <div className="border-b-2 border-neutral-200 dark:border-neutral-800 pb-5 text-center space-y-1">
+                        <article className="w-full bg-surface border border-border-thin rounded-2xl shadow-sm p-8 md:p-10 space-y-8 min-h-[90vh] text-text-main overflow-y-auto">
+                            <div className="border-b border-border-thin pb-5 text-center space-y-1">
                                 <p className="text-[10px] font-extrabold uppercase tracking-widest text-text-dim">
                                     Instituto Superior Tecnológico Traversari
                                 </p>
                                 <p className="text-[11px] font-semibold text-text-dim">
                                     Dirección de Investigación y Desarrollo Tecnológico (DIITRA)
                                 </p>
-                                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 dark:bg-neutral-800 text-[10px] font-bold text-text-dim uppercase tracking-wider">
+                                <div className="mt-3 badge-vercel badge-vercel-neutral text-[10px] font-bold uppercase tracking-wider">
                                     {rubrica.es_doble_ciego ? 'Modo Arbitraje Académico (Doble Ciego)' : 'Arbitraje Estándar'}
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <span className="text-[9px] font-extrabold uppercase tracking-widest text-text-dim">Referencia del Proyecto</span>
-                                <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 dark:text-white leading-tight">
+                                <h1 className="text-2xl font-extrabold tracking-tight text-text-main leading-tight">
                                     {rubrica.proyecto_titulo}
                                 </h1>
                                 {rubrica.linea_investigacion && (
@@ -358,11 +501,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.descripcion_proyecto && (
                                 <div className="space-y-2 pt-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         1. Resumen / Descripción General
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.descripcion_proyecto }}
                                     />
                                 </div>
@@ -370,11 +513,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.antecedentes && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         2. Antecedentes
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.antecedentes }}
                                     />
                                 </div>
@@ -382,23 +525,23 @@ const EvaluacionPage: React.FC = () => {
 
                             {(rubrica.objetivo_general || rubrica.objetivos_especificos) && (
                                 <div className="space-y-4">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         3. Objetivos
                                     </h3>
                                     {rubrica.objetivo_general && (
-                                        <div className="space-y-1 bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-border-thin/20">
-                                            <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest">Objetivo General</p>
+                                        <div className="space-y-1 bg-bg-deep p-4 rounded-xl border border-border-thin">
+                                            <p className="text-[9px] font-extrabold text-text-dim uppercase tracking-widest">Objetivo General</p>
                                             <div 
-                                                className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal"
+                                                className="text-sm text-text-dim leading-relaxed font-normal"
                                                 dangerouslySetInnerHTML={{ __html: rubrica.objetivo_general }}
                                             />
                                         </div>
                                     )}
                                     {rubrica.objetivos_especificos && (
-                                        <div className="space-y-1 bg-neutral-50 dark:bg-neutral-850 p-4 rounded-xl border border-border-thin/20">
-                                            <p className="text-[9px] font-extrabold text-neutral-400 uppercase tracking-widest">Objetivos Específicos</p>
+                                        <div className="space-y-1 bg-bg-deep p-4 rounded-xl border border-border-thin">
+                                            <p className="text-[9px] font-extrabold text-text-dim uppercase tracking-widest">Objetivos Específicos</p>
                                             <div 
-                                                className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal"
+                                                className="text-sm text-text-dim leading-relaxed font-normal"
                                                 dangerouslySetInnerHTML={{ __html: rubrica.objetivos_especificos }}
                                             />
                                         </div>
@@ -408,11 +551,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.justificacion && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         4. Justificación
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.justificacion }}
                                     />
                                 </div>
@@ -420,11 +563,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.marco_teorico && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         5. Marco Teórico
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.marco_teorico }}
                                     />
                                 </div>
@@ -432,11 +575,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.metodologia && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         6. Metodología de la Investigación
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.metodologia }}
                                     />
                                 </div>
@@ -444,11 +587,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.evaluacion && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         7. Método de Evaluación y Validación
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.evaluacion }}
                                     />
                                 </div>
@@ -456,11 +599,11 @@ const EvaluacionPage: React.FC = () => {
 
                             {rubrica.bibliografia && (
                                 <div className="space-y-2">
-                                    <h3 className="text-xs font-bold uppercase tracking-widest text-neutral-400 border-b border-neutral-100 dark:border-neutral-800 pb-1">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                         8. Bibliografía y Referencias Fuentes
                                     </h3>
                                     <div 
-                                        className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed font-normal ProseMirror-rendered"
+                                        className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
                                         dangerouslySetInnerHTML={{ __html: rubrica.bibliografia }}
                                     />
                                 </div>
@@ -469,6 +612,7 @@ const EvaluacionPage: React.FC = () => {
                     </div>
                 </section>
 
+                {/* Columna Derecha: Rúbrica */}
                 <div className="w-full lg:w-[460px] shrink-0 flex flex-col bg-surface/5 overflow-hidden">
                     <div className="px-6 py-5 border-b border-border-thin bg-bg-deep sticky top-0 z-10">
                         <div className="flex items-center justify-between">
@@ -482,10 +626,7 @@ const EvaluacionPage: React.FC = () => {
                             </div>
 
                             <div className="text-right flex items-center gap-3">
-                                <div
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-xs tracking-tighter transition-all duration-300"
-                                    style={{ background: dictamenCfg.bg, color: dictamenCfg.color }}
-                                >
+                                <div className={`dictamen-pill-large ${dictamenPreview.toLowerCase()}`}>
                                     {dictamenPreview === 'Aprobado'
                                         ? <CheckCircle2 size={13} />
                                         : <XCircle size={13} />
@@ -494,16 +635,16 @@ const EvaluacionPage: React.FC = () => {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[9px] text-text-dim font-bold">
-                                        <span className="text-text-main text-base font-black">{puntajeTotal.toFixed(1)}</span>/100
+                                        <span className="text-text-main text-2xl font-mono font-black">{animatedTotalScore.toFixed(1)}</span>/100
                                     </p>
                                     <p className="text-[8px] text-text-dim">Mín: {minimo}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="mt-3.5 w-full bg-surface rounded-full h-1">
+                        <div className="mt-4 progress-track-thick">
                             <div
-                                className="h-1 rounded-full transition-all duration-300"
+                                className="h-full rounded-full transition-all duration-300"
                                 style={{
                                     width: `${Math.min(porcentajeCompletado, 100)}%`,
                                     background: dictamenCfg.color
@@ -513,7 +654,16 @@ const EvaluacionPage: React.FC = () => {
                     </div>
 
                     <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-                        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
+                            
+                            {/* Banner de Modo Lectura */}
+                            {isReadOnly && (
+                                <div className="read-only-banner">
+                                    <Lock size={14} className="shrink-0" />
+                                    <span>EVALUACIÓN REGISTRADA — MODO SÓLO LECTURA</span>
+                                </div>
+                            )}
+
                             {detalles.map((det, idx) => {
                                 const criterioInfo = rubrica.criterios.find(c => c.id_criterio === det.idCriterio);
                                 const porcentajeCriterio = det.max > 0 ? (det.puntaje / det.max) * 100 : 0;
@@ -539,7 +689,7 @@ const EvaluacionPage: React.FC = () => {
                                     <MessageSquare size={11} /> Conclusión General del Árbitro *
                                 </label>
                                 <textarea
-                                    className="input-vercel h-28 resize-none text-xs"
+                                    className={`input-vercel h-28 resize-none text-xs ${isReadOnly ? 'read-only-field' : ''}`}
                                     placeholder="Escriba su dictamen final como árbitro. Incluya fortalezas, debilidades y recomendaciones específicas al equipo investigador..."
                                     value={observacionesGral}
                                     onChange={(e) => setObservacionesGral(e.target.value)}
@@ -559,11 +709,11 @@ const EvaluacionPage: React.FC = () => {
                             )}
                         </div>
 
-                        <div className="sticky bottom-0 bg-bg-deep border-t border-border-thin px-6 py-4 flex items-center justify-between">
+                        <div className="sticky bottom-0 bg-bg-deep border-t border-border-thin px-6 py-4 flex items-center justify-between z-20">
                             <div className="flex items-center gap-3">
                                 <div>
                                     <span className="text-[8px] text-text-dim uppercase tracking-widest font-bold block">Puntaje Total</span>
-                                    <span className="text-xl font-black text-text-main">{puntajeTotal.toFixed(1)}</span>
+                                    <span className="text-xl font-mono font-black text-text-main">{animatedTotalScore.toFixed(1)}</span>
                                     <span className="text-text-dim text-xs">/100</span>
                                 </div>
                                 <div
@@ -587,13 +737,13 @@ const EvaluacionPage: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={enviando}
-                                    className="btn-vercel-primary flex items-center gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-brand flex items-center gap-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 hover:shadow-lg transition-all"
                                 >
                                     {enviando
                                         ? <Loader2 size={12} className="animate-spin" />
                                         : <Send size={12} />
                                     }
-                                    Enviar
+                                    Enviar Evaluación
                                 </button>
                             )}
                         </div>
@@ -604,6 +754,9 @@ const EvaluacionPage: React.FC = () => {
     );
 };
 
+// ─────────────────────────────────────────────────────────────
+//  Componente Tarjeta de Criterio
+// ─────────────────────────────────────────────────────────────
 interface CriterioCardProps {
     numero: number;
     detalle: EvaluacionDetalle;
@@ -635,14 +788,14 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
     const cacesInfo = getCacesRango(porcentaje);
 
     const presets = [
-        { label: 'Deficiente (25%)', pct: 0.25, colorClass: 'hover:text-error hover:bg-error/10 hover:border-error/30' },
-        { label: 'Regular (50%)', pct: 0.50, colorClass: 'hover:text-warning hover:bg-warning/10 hover:border-warning/30' },
-        { label: 'Bueno (75%)', pct: 0.75, colorClass: 'hover:text-info hover:bg-info/10 hover:border-info/30' },
-        { label: 'Excelente (100%)', pct: 1.00, colorClass: 'hover:text-success hover:bg-success/10 hover:border-success/30' },
+        { label: 'Deficiente (25%)', pct: 0.25 },
+        { label: 'Regular (50%)', pct: 0.50 },
+        { label: 'Bueno (75%)', pct: 0.75 },
+        { label: 'Excelente (100%)', pct: 1.00 },
     ];
 
     return (
-        <div className="bento-card p-5 space-y-4">
+        <div className="bento-card static p-5 space-y-4 hover:border-border-hover transition-colors">
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                     <span className="w-7 h-7 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-black text-text-dim shrink-0">
@@ -672,7 +825,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                                 if (val > detalle.max) val = detalle.max;
                                 onPuntajeChange(val);
                             }}
-                            className="w-14 h-7 text-center font-bold bg-surface hover:bg-surface-hover focus:bg-bg-deep border border-border-thin rounded text-sm text-text-main font-mono py-0 px-1 focus:border-text-main transition-colors select-all disabled:opacity-70 disabled:cursor-not-allowed"
+                            className={`w-14 h-7 text-center font-bold bg-surface focus:bg-bg-deep border border-border-thin rounded text-sm text-text-main font-mono py-0 px-1 focus:border-text-main transition-colors select-all disabled:cursor-not-allowed ${disabled ? 'read-only-field' : 'hover:bg-surface-hover'}`}
                             style={{ color }}
                         />
                         <span className="text-text-dim text-xs font-semibold">/{detalle.max}</span>
@@ -687,7 +840,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
 
             <div className="w-full bg-surface rounded-full h-1">
                 <div
-                    className="h-1 rounded-full transition-all duration-200"
+                    className="h-1 rounded-full transition-all duration-300"
                     style={{ width: `${porcentaje}%`, background: color }}
                 />
             </div>
@@ -701,7 +854,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                     value={detalle.puntaje}
                     disabled={disabled}
                     onChange={(e) => onPuntajeChange(parseFloat(e.target.value))}
-                    className="w-full h-1 bg-neutral-200 dark:bg-neutral-800/80 rounded-lg cursor-pointer focus:outline-none transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-1 bg-surface-hover rounded-lg cursor-pointer focus:outline-none transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ accentColor: color }}
                 />
             </div>
@@ -709,7 +862,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
             <div className="flex flex-wrap gap-2 items-center justify-between mt-1">
                 <div className="flex items-center gap-1.5">
                     <span className="text-[9px] text-text-dim font-bold uppercase tracking-wider">Nivel CACES:</span>
-                    <span className={`badge-vercel text-[9px] font-bold px-1.5 py-0.5 rounded ${cacesInfo.badgeClass}`}>
+                    <span className={`badge-vercel text-[9px] font-bold px-1.5 py-0.5 rounded transition-all duration-300 ${cacesInfo.badgeClass}`}>
                         {cacesInfo.label}
                     </span>
                 </div>
@@ -724,16 +877,9 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => onPuntajeChange(targetScore)}
-                                className={`px-2 py-0.5 text-[9px] font-semibold border rounded transition-all duration-150 ${
-                                    disabled
-                                        ? isSelected
-                                            ? 'bg-text-main/20 border-text-main/20 text-text-main/70 cursor-not-allowed'
-                                            : 'bg-surface/10 border-border-thin/30 text-text-dim/40 cursor-not-allowed'
-                                        : isSelected 
-                                            ? 'bg-text-main border-text-main text-bg-deep cursor-pointer' 
-                                            : `bg-surface/30 border-border-thin text-text-dim cursor-pointer ${p.colorClass}`
-                                }`}
+                                className={`criterio-preset-btn ${isSelected ? 'active' : ''}`}
                             >
+                                {isSelected && <span className="mr-0.5 font-bold">✓</span>}
                                 {p.label.split(' ')[0]}
                             </button>
                         );
@@ -742,7 +888,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
             </div>
 
             <textarea
-                className="input-vercel !text-xs h-16 resize-none mt-2 disabled:opacity-75 disabled:cursor-not-allowed"
+                className={`input-vercel !text-xs h-16 resize-none mt-2 ${disabled ? 'read-only-field' : ''}`}
                 placeholder={`Justificación y observaciones específicas sobre ${detalle.criterio.toLowerCase()}...`}
                 value={detalle.observaciones}
                 disabled={disabled}
