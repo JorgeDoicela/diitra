@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Gavel, Users, CheckCircle2, Scale, ChevronRight, RefreshCw,
-    PlusCircle, Clock, TrendingUp, FileSearch, Loader2,
-    AlertTriangle, UserPlus, Building, ExternalLink,
+    Gavel, Users, ChevronRight, RefreshCw,
+    PlusCircle, TrendingUp, FileSearch, Loader2,
+    AlertTriangle, UserPlus, Building,
     ShieldCheck, X, FileDown, Check, Maximize2
 } from 'lucide-react';
 import {
     getArbitrajesActivos, getArbitrajeStats,
-    ESTADO_ARBITRAJE_CONFIG, DICTAMEN_REVISOR_CONFIG,
+    ESTADO_ARBITRAJE_CONFIG,
     downloadDictamenPdf, registerRevisorExterno,
     type RegistrarRevisorExternoPayload
 } from '../../../services/peerReviewService';
@@ -198,39 +198,7 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
     );
 };
 
-// ─────────────────────────────────────────────────────────────
-//  Helpers de formato visual y usabilidad
-// ─────────────────────────────────────────────────────────────
-export const formatNombre = (name: string) => {
-    if (!name) return '';
-    return name
-        .toLowerCase()
-        .split(' ')
-        .filter(Boolean)
-        .map(word => {
-            const preps = ['de', 'la', 'del', 'los', 'las', 'y'];
-            if (preps.includes(word)) return word;
-            return word.charAt(0).toUpperCase() + word.slice(1);
-        })
-        .join(' ')
-        .replace(/^\w/, c => c.toUpperCase());
-};
-
-export const getAvatarStyle = (name: string) => {
-    const colors = [
-        { bg: 'from-blue-500/10 to-indigo-500/10 text-blue-400 border-blue-500/20' },
-        { bg: 'from-emerald-500/10 to-teal-500/10 text-emerald-400 border-emerald-500/20' },
-        { bg: 'from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20' },
-        { bg: 'from-rose-500/10 to-pink-500/10 text-rose-400 border-rose-500/20' },
-        { bg: 'from-violet-500/10 to-fuchsia-500/10 text-violet-400 border-violet-500/20' }
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
-};
+import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
 
 // ─────────────────────────────────────────────────────────────
 //  Componente principal: ArbitrajePage
@@ -246,9 +214,7 @@ const ArbitrajePage: React.FC = () => {
     const [descargandoPdf, setDescargandoPdf] = useState<string | null>(null);
     const [alertas, setAlertas] = useState<CacesAlert[]>([]);
     const [alertasDismissed, setAlertasDismissed] = useState<Set<string>>(new Set());
-    // Tab Internos/Externos para una fila expandida
     const [proyectoExpandido, setProyectoExpandido] = useState<string | null>(null);
-    const [tabRevisores, setTabRevisores] = useState<Record<string, 'internos' | 'externos'>>({});
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -292,7 +258,6 @@ const ArbitrajePage: React.FC = () => {
 
     const toggleExpandir = (uuid: string) => {
         setProyectoExpandido(prev => prev === uuid ? null : uuid);
-        setTabRevisores(prev => ({ ...prev, [uuid]: prev[uuid] ?? 'internos' }));
     };
 
     return (
@@ -402,7 +367,6 @@ const ArbitrajePage: React.FC = () => {
                                         ? Math.round(p.arbitros_completados / p.total_arbitros * 100)
                                         : 0;
                                     const isExpandido = proyectoExpandido === p.proyecto_uuid;
-                                    const tabActual = tabRevisores[p.proyecto_uuid] ?? 'internos';
                                     const internos = p.revisiones.filter(r => !r.es_externo);
                                     const externos = p.revisiones.filter(r => r.es_externo);
                                     const tieneExterno = externos.length > 0;
@@ -550,7 +514,6 @@ const ArbitrajePage: React.FC = () => {
                                                                     ) : (
                                                                         <div className="space-y-2">
                                                                             {internos.map(r => {
-                                                                                const dictCfg = DICTAMEN_REVISOR_CONFIG[r.dictamen_revisor || 'Pendiente'];
                                                                                 const estadoCfgR = r.estado === 'Completada'
                                                                                     ? { badge: 'badge-vercel-success', dot: 'dot-success' }
                                                                                     : { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' };
@@ -613,7 +576,6 @@ const ArbitrajePage: React.FC = () => {
                                                                     ) : (
                                                                         <div className="space-y-2">
                                                                             {externos.map(r => {
-                                                                                const dictCfg = DICTAMEN_REVISOR_CONFIG[r.dictamen_revisor || 'Pendiente'];
                                                                                 const estadoCfgR = r.estado === 'Completada'
                                                                                     ? { badge: 'badge-vercel-success', dot: 'dot-success' }
                                                                                     : { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' };
@@ -895,16 +857,7 @@ const ArbitrajePage: React.FC = () => {
     );
 };
 
-// ─────────────────────────────────────────────────────────────
-//  Sub-componente: KPI Card
-// ─────────────────────────────────────────────────────────────
-interface KpiCardProps {
-    icon: React.ReactNode;
-    label: string;
-    value: number;
-    color: string;
-    alert?: boolean;
-}
+
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
     <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface w-full">
@@ -983,32 +936,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
     </div>
 );
 
-const KpiCard: React.FC<KpiCardProps & { type?: 'brand' | 'success' | 'warning' | 'error' | 'info'; desc?: string }> = ({ 
-    icon, label, value, color, alert, type = 'brand', desc 
-}) => {
-    let circleClass = 'icon-circle-brand';
-    if (type === 'success') circleClass = 'icon-circle-success bg-success-subtle text-success border-success/10';
-    if (type === 'warning') circleClass = 'icon-circle-warning bg-warning-subtle text-warning border-warning/10';
-    if (type === 'error') circleClass = 'icon-circle-error bg-error-subtle text-error border-error/10';
-    if (type === 'info') circleClass = 'icon-circle-info bg-info-subtle text-info border-info/10';
-    if (type === 'brand') circleClass = 'icon-circle bg-brand-subtle text-brand border-brand/10';
 
-    return (
-        <div className={`bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow ${alert ? 'border-error/40' : ''}`}>
-            <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1 truncate">{label}</span>
-                <span className="stat-number text-text-main truncate" style={{ color }}>{value}</span>
-                {desc && (
-                    <span className="text-[10px] text-text-dim mt-2 font-medium truncate">{desc}</span>
-                )}
-            </div>
-            <div className={`icon-circle ${circleClass} !p-4 shrink-0 relative`}>
-                {icon}
-                {alert && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-error" />}
-            </div>
-        </div>
-    );
-};
 
 export default ArbitrajePage;
 // Trigger refresh of TS server diagnostics

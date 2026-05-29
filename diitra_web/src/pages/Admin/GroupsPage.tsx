@@ -5,7 +5,7 @@ import {
     Trash2, CheckCircle, XCircle, AlertTriangle,
     BookOpen, Shield, Award, Calendar, FileText,
     UserMinus, GraduationCap, User, ChevronRight, Target, ChevronDown,
-    MessageSquare, Send, Mic, Play, Pause, Loader2, Volume2, RefreshCw
+    MessageSquare, Send, Mic, Play, Pause, Loader2
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';

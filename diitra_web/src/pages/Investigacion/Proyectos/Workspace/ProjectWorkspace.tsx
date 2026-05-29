@@ -104,7 +104,6 @@ export const ProjectWorkspace: React.FC = () => {
     const [isUnauthorized, setIsUnauthorized] = useState(false);
     const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
-    const [isCheckingRevision, setIsCheckingRevision] = useState(false);
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -179,7 +178,6 @@ export const ProjectWorkspace: React.FC = () => {
     useEffect(() => {
         const checkPeerReviews = async () => {
             if (!resolvedProjectUuid || !user) return;
-            setIsCheckingRevision(true);
             try {
                 const res = await api.get(`/PeerReviews/project/${resolvedProjectUuid}`);
                 const data = res.data; // ArbitrajeProyectoDto
@@ -195,8 +193,6 @@ export const ProjectWorkspace: React.FC = () => {
                 }
             } catch (err) {
                 console.warn("[DIITRA] No se pudieron cargar evaluaciones del proyecto o sin privilegios de visualización.", err);
-            } finally {
-                setIsCheckingRevision(false);
             }
         };
 

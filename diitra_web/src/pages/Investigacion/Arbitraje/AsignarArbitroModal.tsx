@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { X, Search, UserCheck, Award, AlertCircle, Loader2, CalendarDays, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, Search, UserCheck, AlertCircle, Loader2, CalendarDays } from 'lucide-react';
 import { searchRevisores, asignarArbitro } from '../../../services/peerReviewService';
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
-import { formatNombre, getAvatarStyle } from './ArbitrajePage';
+import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
 
 interface Props {
     proyecto: ArbitrajeProyectoDto;
@@ -89,6 +89,12 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                         <X size={20} />
                     </button>
                 </div>
+
+                {error && (
+                    <div className="mx-6 mt-4 p-3 rounded-md bg-error/10 border border-error/30 text-error text-xs flex items-center gap-2">
+                        <AlertCircle size={13} /> {error}
+                    </div>
+                )}
 
                 {/* Modal Body with 2 Columns Split Layout */}
                 <div className="modal-body grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 min-h-[380px]">

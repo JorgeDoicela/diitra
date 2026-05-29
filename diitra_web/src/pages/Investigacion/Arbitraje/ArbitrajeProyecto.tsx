@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Gavel, UserCheck, UserX, AlertTriangle,
+    ArrowLeft, Gavel, UserCheck, AlertTriangle,
     CheckCircle2, Clock, PlusCircle, Trash2, Award,
     Scale, Loader2, Users, Building
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import {
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
 import DictamenModal from './DictamenModal';
-import { formatNombre, getAvatarStyle } from './ArbitrajePage';
+import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
 
 const ArbitrajeProyecto: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();

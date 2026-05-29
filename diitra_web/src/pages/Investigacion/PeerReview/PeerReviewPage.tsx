@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ShieldCheck, Clock, CheckCircle, FileText,
-    ChevronRight, RefreshCw, Loader2, Award, AlertTriangle
+    ChevronRight, RefreshCw, Loader2, Award
 } from 'lucide-react';
 import {
     getPendingReviews,

@@ -117,6 +117,144 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
                 return false;
             });
+
+            // Helper: generar columnas de ancho col para el cronograma (48 semanas)
+            _handlebars.RegisterHelper("generar_columnas_col", (output, context, arguments) =>
+            {
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < 48; i++)
+                {
+                    sb.Append("<col style=\"width: 1.33%;\" />");
+                }
+                output.WriteSafeString(sb.ToString());
+            });
+
+            // Helper: agrupar objetivos dinámicamente y sólo mostrar el objetivo si cambió
+            _handlebars.RegisterHelper("mostrar_objetivo", (output, context, arguments) =>
+            {
+                var indexObj = arguments.ElementAtOrDefault(0);
+                var listObj = arguments.ElementAtOrDefault(1);
+
+                if (indexObj == null || listObj == null) return;
+
+                int index = 0;
+                if (indexObj is int idx) index = idx;
+                else if (!int.TryParse(indexObj.ToString(), out index)) return;
+
+                if (listObj is System.Collections.IEnumerable enumerable)
+                {
+                    var list = new System.Collections.ArrayList();
+                    foreach (var item in enumerable) list.Add(item);
+
+                    if (index < 0 || index >= list.Count) return;
+
+                    var currentItem = list[index];
+                    var currentObj = GetProperty(currentItem, "objetivo");
+
+                    if (index == 0)
+                    {
+                        output.WriteSafeString(currentObj);
+                        return;
+                    }
+
+                    var prevItem = list[index - 1];
+                    var prevObj = GetProperty(prevItem, "objetivo");
+
+                    if (currentObj != prevObj)
+                    {
+                        output.WriteSafeString(currentObj);
+                    }
+                }
+            });
+
+            // Helper: generar las 48 columnas de la tabla de cronograma basadas en la lista de semanas activa
+            _handlebars.RegisterHelper("columnas_gantt", (output, context, arguments) =>
+            {
+                var semanasObj = arguments.ElementAtOrDefault(0);
+                var rowIndexObj = arguments.ElementAtOrDefault(1);
+
+                int rowIndex = 0;
+                if (rowIndexObj is int r) rowIndex = r;
+                else if (rowIndexObj != null) int.TryParse(rowIndexObj.ToString(), out rowIndex);
+
+                var semanas = new List<bool>();
+                if (semanasObj is System.Collections.IEnumerable enumerable)
+                {
+                    foreach (var item in enumerable)
+                    {
+                        if (item is bool b) semanas.Add(b);
+                        else if (item != null && bool.TryParse(item.ToString(), out var bParsed)) semanas.Add(bParsed);
+                        else semanas.Add(false);
+                    }
+                }
+
+                var sb = new System.Text.StringBuilder();
+                for (int w = 0; w < 48; w++)
+                {
+                    bool active = w < semanas.Count && semanas[w];
+                    if (active)
+                    {
+                        sb.Append("<td class=\"bg-gantt-").Append(rowIndex % 8).Append("\" style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                    }
+                    else
+                    {
+                        sb.Append("<td style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                    }
+                }
+                output.WriteSafeString(sb.ToString());
+            });
+
+            // Helper: generar las 8 filas de ejemplo para la tabla de cronograma como fallback
+            _handlebars.RegisterHelper("render_fallback_cronograma", (output, context, arguments) =>
+            {
+                var sb = new System.Text.StringBuilder();
+                for (int r = 0; r < 8; r++)
+                {
+                    sb.Append("<tr>");
+                    if (r == 0)
+                    {
+                        sb.Append("<td rowspan=\"4\" style=\"border: 1px solid #000000; text-align: center; vertical-align: middle; font-weight: bold; font-size: 8pt; color: #000000;\">OBJETIVO<br/>N° 1</td>");
+                    }
+                    else if (r > 3)
+                    {
+                        sb.Append("<td style=\"border: 1px solid #000000;\">&nbsp;</td>");
+                    }
+
+                    sb.Append("<td style=\"border: 1px solid #000000; padding: 4px; text-align: center; vertical-align: middle; color: #000000;\">");
+                    sb.Append(r < 4 ? (r + 1).ToString() : "&nbsp;");
+                    sb.Append("</td>");
+
+                    sb.Append("<td style=\"border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;\">");
+                    sb.Append(r < 2 ? "Especificar la actividad" : "&nbsp;");
+                    sb.Append("</td>");
+
+                    sb.Append("<td style=\"border: 1px solid #000000; padding: 4px;\">&nbsp;</td>");
+
+                    for (int w = 0; w < 48; w++)
+                    {
+                        bool active = false;
+                        if (r == 0 && (w >= 1 && w <= 3)) active = true;
+                        else if (r == 1 && (w >= 4 && w <= 7)) active = true;
+                        else if (r == 2 && (w >= 8 && w <= 10)) active = true;
+                        else if (r == 3 && (w >= 11 && w <= 15)) active = true;
+                        else if (r == 4 && (w >= 16 && w <= 17)) active = true;
+                        else if (r == 5 && (w >= 18 && w <= 23)) active = true;
+                        else if (r == 6 && (w >= 24 && w <= 26)) active = true;
+                        else if (r == 7 && (w >= 27 && w <= 31)) active = true;
+
+                        if (active)
+                        {
+                            sb.Append("<td class=\"bg-gantt-").Append(r).Append("\" style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                        }
+                        else
+                        {
+                            sb.Append("<td style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                        }
+                    }
+                    sb.Append("</tr>");
+                }
+                output.WriteSafeString(sb.ToString());
+            });
         }
 
         /// <summary>
@@ -246,6 +384,18 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             foreach (var field in fieldsToMask)
                 if (data.ContainsKey(field))
                     data[field] = "[ RESERVADO — PROCESO DOBLE CIEGO ]";
+        }
+
+        private static string GetProperty(object? item, string key)
+        {
+            if (item is Dictionary<string, object?> dict)
+            {
+                if (dict.TryGetValue(key, out var val))
+                    return val?.ToString() ?? string.Empty;
+                if (dict.TryGetValue(key.ToLower(), out var valLower))
+                    return valLower?.ToString() ?? string.Empty;
+            }
+            return string.Empty;
         }
     }
 }

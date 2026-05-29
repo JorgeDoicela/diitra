@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
     Bell, ExternalLink, Mail, Info, AlertTriangle,
-    CheckCheck, Filter, Search, ChevronDown, Inbox,
-    RefreshCw, Wifi, WifiOff
+    CheckCheck, Filter, Search, Inbox,
+    RefreshCw
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
