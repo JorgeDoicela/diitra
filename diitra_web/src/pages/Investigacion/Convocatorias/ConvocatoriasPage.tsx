@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { 
     Plus, Calendar, DollarSign, FileText, CheckCircle, 
-    Clock, Trash2, Edit2, Activity, 
+    Trash2, Edit2, Activity, 
     AlertCircle, RefreshCw,
     ChevronRight, CalendarDays, X, Save, ShieldCheck,
     BookOpen, Layers
@@ -970,29 +970,5 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
         </div>
     </div>
 );
-
-const StatCard = ({ label, value, icon: Icon, type = 'brand', desc }: any) => {
-    let circleClass = 'icon-circle-brand';
-    if (type === 'success') circleClass = 'icon-circle-success bg-success-subtle text-success border-success/10';
-    if (type === 'warning') circleClass = 'icon-circle-warning bg-warning-subtle text-warning border-warning/10';
-    if (type === 'error') circleClass = 'icon-circle-error bg-error-subtle text-error border-error/10';
-    if (type === 'info') circleClass = 'icon-circle-info bg-info-subtle text-info border-info/10';
-    if (type === 'brand') circleClass = 'icon-circle bg-brand-subtle text-brand border-brand/10';
-
-    return (
-        <div className="bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow">
-            <div className="flex flex-col min-w-0">
-                <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1 truncate">{label}</span>
-                <span className="stat-number text-text-main truncate">{value}</span>
-                {desc && (
-                    <span className="text-[10px] text-text-dim mt-2 font-medium truncate">{desc}</span>
-                )}
-            </div>
-            <div className={`icon-circle ${circleClass} !p-4 shrink-0`}>
-                <Icon size={28} strokeWidth={1.5} />
-            </div>
-        </div>
-    );
-};
 
 export default ConvocatoriasPage;

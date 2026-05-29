@@ -248,7 +248,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             const isReadOnlyMode = readonly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
                 console.log(`[DIITRA] CoWorkEditor: Yjs para '${field}' está vacío. Inicializando Yjs con valor de BD:`, dbValue.substring(0, 100));
-                editor.commands.setContent(dbValue, false);
+                editor.commands.setContent(dbValue, { emitUpdate: false });
             }
         }
     }, [editor, useCollaboration, ydoc, field, dbValue, readonly, cowork.session.readOnly]);

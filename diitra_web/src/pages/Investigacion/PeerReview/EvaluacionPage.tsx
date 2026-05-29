@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, ShieldCheck, FileText, Send,
     MessageSquare, AlertCircle, CheckCircle2, XCircle,
-    Loader2, BookOpen, Microscope, Target, ExternalLink,
+    Loader2, BookOpen, Target, ExternalLink,
     Lock
 } from 'lucide-react';
 import {

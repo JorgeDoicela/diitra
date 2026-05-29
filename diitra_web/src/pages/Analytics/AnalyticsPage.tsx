@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-    BarChart3, PieChart, TrendingUp, Award, DollarSign, Users,
-    CheckCircle2, Clock, ArrowUpRight, BookOpen, Cpu, FileText,
+    BarChart3, PieChart, TrendingUp, DollarSign, Users,
+    Clock, ArrowUpRight, BookOpen, Cpu, FileText,
     Filter, Globe, Building2, Download, RefreshCw, AlertCircle,
-    ChevronRight, Zap, FolderOpen, Loader2
+    FolderOpen, Loader2
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { reportService } from '../../api/reportService';
@@ -91,8 +91,7 @@ export interface GrupoInvestigacion {
 
 const calculateCacesIndicators = (
     projects: ProyectoResumen[],
-    stats: DashboardStats | null,
-    groupsCount: number
+    stats: DashboardStats | null
 ) => {
     const totalProyectos = projects.length;
     const totalProductos = stats?.totalProductosPeriodo || projects.reduce((sum, p) => sum + (p.totalProductos || 0), 0);
@@ -268,7 +267,7 @@ const useAnalyticsData = (period: string, carrera: string) => {
         const budgetExecuted = filteredProjects.reduce((sum, p) => sum + (p.presupuestoEjecutado || 0), 0);
 
         // 5. CACES compliance indicators
-        const cacesIndicators = calculateCacesIndicators(filteredProjects, stats, groups.length);
+        const cacesIndicators = calculateCacesIndicators(filteredProjects, stats);
 
         // 6. Lista dinámica de periodos disponibles en la BD
         const dbPeriods = Array.from(new Set(
@@ -500,7 +499,7 @@ const AnalyticsPage = () => {
     const [exporting, setExporting] = useState(false);
     const [exportError, setExportError] = useState<string | null>(null);
 
-    const { loading, refreshing, projects, stats, groups, allCareers, processed, reload } = useAnalyticsData(period, carrera);
+    const { loading, refreshing, projects, stats, groups, processed, reload } = useAnalyticsData(period, carrera);
 
     const formatCurrency = (val: number) => {
         return new Intl.NumberFormat('es-EC', { style: 'currency', currency: 'USD' }).format(val);

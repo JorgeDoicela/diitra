@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Plus, TrendingUp, Clock, BarChart3, Briefcase,
-    Loader2, AlertCircle, ClipboardList, ArrowRight
+    TrendingUp, Briefcase, Loader2, ClipboardList
 } from 'lucide-react';
-import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';

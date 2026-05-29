@@ -16,6 +16,7 @@ using Diitra.Infrastructure.Common.Documents.Engine;
 using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using iText.IO.Image;
 using Microsoft.Extensions.Configuration;
+using Diitra.Application.Research.Dtos;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -152,6 +153,54 @@ namespace Diitra.Infrastructure.Common.Documents
                     {
                         extraImageVars["portada_base64"] = coverBase64;
                         break;
+                    }
+                }
+
+                if (template.Code == ProyectoInvestigacionTemplate.CODE)
+                {
+                    var logoBase64 = await _imageLoader.LoadAsBase64Async("logo_istpet_negro.png");
+                    if (logoBase64 != null)
+                    {
+                        extraImageVars["logo_base64"] = logoBase64;
+                    }
+
+                    ProyectoDto? projectDto = request.Data as ProyectoDto;
+                    if (projectDto == null && request.Data != null)
+                    {
+                        try
+                        {
+                            var rawText = request.Data is System.Text.Json.JsonElement je 
+                                ? je.GetRawText() 
+                                : System.Text.Json.JsonSerializer.Serialize(request.Data);
+                            projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(rawText, new System.Text.Json.JsonSerializerOptions 
+                            { 
+                                PropertyNameCaseInsensitive = true 
+                            });
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "DIITRA DocumentEngine: No se pudo deserializar request.Data a ProyectoDto para {Code}", template.Code);
+                        }
+                    }
+
+                    if (projectDto != null)
+                    {
+                        var director = projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
+                        
+                        var docentes = projectDto.Investigadores?.Where(i => i != director && 
+                            (i.Rol?.Contains("Docente", StringComparison.OrdinalIgnoreCase) == true || 
+                             i.Rol?.Contains("Co-Investigador", StringComparison.OrdinalIgnoreCase) == true || 
+                             (i.NivelAcademico != "Pregrado" && i.NivelAcademico != "Estudiante"))).ToList();
+                        
+                        var estudiantes = projectDto.Investigadores?.Where(i => i != director && 
+                            (i.Rol?.Contains("Estudiante", StringComparison.OrdinalIgnoreCase) == true || 
+                             i.Rol?.Contains("Alumno", StringComparison.OrdinalIgnoreCase) == true || 
+                             i.NivelAcademico == "Pregrado" || 
+                             (docentes != null && !docentes.Contains(i)))).ToList();
+
+                        extraImageVars["investigador_director"] = director;
+                        extraImageVars["investigadores_docentes"] = docentes;
+                        extraImageVars["investigadores_estudiantes"] = estudiantes;
                     }
                 }
 
