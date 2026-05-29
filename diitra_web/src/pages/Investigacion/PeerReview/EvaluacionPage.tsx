@@ -592,7 +592,7 @@ const EvaluacionPage: React.FC = () => {
                             </div>
 
                             <div className="text-right flex items-center gap-3">
-                                <div className={`dictamen-pill-large ${dictamenPreview.toLowerCase()}`}>
+                                <div className={`badge-vercel ${dictamenPreview === 'Aprobado' ? 'badge-vercel-success' : 'badge-vercel-error'} !px-3 !py-1.5 text-[10px] font-bold uppercase tracking-wider`}>
                                     {dictamenPreview === 'Aprobado'
                                         ? <CheckCircle2 size={13} />
                                         : <XCircle size={13} />
@@ -608,7 +608,7 @@ const EvaluacionPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="mt-4 progress-track-thick">
+                        <div className="mt-4 w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
                             <div
                                 className="h-full rounded-full transition-all duration-300"
                                 style={{
@@ -633,7 +633,7 @@ const EvaluacionPage: React.FC = () => {
 
                             {/* Banner de Modo Lectura */}
                             {isReadOnly && (
-                                <div className="read-only-banner">
+                                <div className="bg-info/5 border border-info/20 text-info rounded-lg p-3 text-[10px] font-bold tracking-wider uppercase flex items-center gap-2 mb-6 animate-fade-in">
                                     <Lock size={14} className="shrink-0" />
                                     <span>EVALUACIÓN REGISTRADA — MODO SÓLO LECTURA</span>
                                 </div>
@@ -664,7 +664,7 @@ const EvaluacionPage: React.FC = () => {
                                     <MessageSquare size={11} /> Conclusión General del Árbitro *
                                 </label>
                                 <textarea
-                                    className={`input-vercel h-28 resize-none text-xs ${isReadOnly ? 'read-only-field' : ''}`}
+                                    className={`input-vercel h-28 resize-none text-xs ${isReadOnly ? 'bg-surface border-dashed border-border-thin text-text-dim opacity-70 cursor-not-allowed' : ''}`}
                                     placeholder="Escriba su dictamen final como árbitro. Incluya fortalezas, debilidades y recomendaciones específicas al equipo investigador..."
                                     value={observacionesGral}
                                     onChange={(e) => setObservacionesGral(e.target.value)}
@@ -827,7 +827,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                                 if (val > detalle.max) val = detalle.max;
                                 onPuntajeChange(val);
                             }}
-                            className={`w-14 h-7 text-center font-bold bg-surface focus:bg-bg-deep border border-border-thin rounded text-sm text-text-main font-mono py-0 px-1 focus:border-text-main transition-colors select-all disabled:cursor-not-allowed ${disabled ? 'read-only-field' : 'hover:bg-surface-hover'}`}
+                            className={`w-14 h-7 text-center font-bold bg-surface focus:bg-bg-deep border border-border-thin rounded text-sm text-text-main font-mono py-0 px-1 focus:border-text-main transition-colors select-all disabled:cursor-not-allowed ${disabled ? 'bg-surface border-dashed border-border-thin text-text-dim opacity-70' : 'hover:bg-surface-hover'}`}
                             style={{ color }}
                         />
                         <span className="text-text-dim text-xs font-semibold">/{detalle.max}</span>
@@ -879,7 +879,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => onPuntajeChange(targetScore)}
-                                className={`criterio-preset-btn ${isSelected ? 'active' : ''}`}
+                                className={`bg-surface border border-border-thin text-text-dim font-sans text-[10px] font-bold uppercase tracking-wider py-1 px-2.5 rounded transition-all cursor-pointer inline-flex items-center gap-1 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-text-main hover:enabled:bg-surface-hover hover:enabled:text-text-main ${isSelected ? 'bg-text-main text-bg-deep border-text-main' : ''}`}
                             >
                                 {isSelected && <span className="mr-0.5 font-bold">✓</span>}
                                 {p.label.split(' ')[0]}
@@ -890,7 +890,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
             </div>
 
             <textarea
-                className={`input-vercel !text-xs h-16 resize-none mt-2 ${disabled ? 'read-only-field' : ''}`}
+                className={`input-vercel !text-xs h-16 resize-none mt-2 ${disabled ? 'bg-surface border-dashed border-border-thin text-text-dim opacity-70 cursor-not-allowed' : ''}`}
                 placeholder={`Justificación y observaciones específicas sobre ${detalle.criterio.toLowerCase()}...`}
                 value={detalle.observaciones}
                 disabled={disabled}
