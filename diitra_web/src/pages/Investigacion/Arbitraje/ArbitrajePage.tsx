@@ -334,95 +334,56 @@ const ArbitrajePage: React.FC = () => {
                 </div>
             </header>
 
-            {/* ── Alertas CACES (Adición 2) ──────────────── */}
-            {alertasVisibles.length > 0 && (
-                <div className="space-y-2 mb-8 animate-fade-up [animation-delay:30ms]">
-                    <div className="section-label mb-2">
-                        <ShieldCheck size={11} />
-                        <span>Alertas de Cumplimiento CACES</span>
-                    </div>
-                    {alertasVisibles.map(a => (
-                        <div
-                            key={a.id}
-                            className={`flex items-start gap-3 p-3 rounded-lg border text-xs transition-all ${a.tipo === 'critico'
-                                ? 'bg-error/8 border-error/30 text-error'
-                                : a.tipo === 'advertencia'
-                                    ? 'bg-warning/8 border-warning/30 text-warning'
-                                    : 'bg-info/8 border-info/30 text-info'
-                                }`}
-                            style={{ '--color-warning': '#f0a500', '--color-info': '#3b82f6' } as React.CSSProperties}
-                        >
-                            <AlertTriangle size={14} className="shrink-0 mt-0.5" />
-                            <div className="flex-1 min-w-0">
-                                <span className="font-bold mr-1">{a.titulo}:</span>
-                                {a.descripcion}
-                                {a.proyectoUuid && (
-                                    <button
-                                        className="ml-2 underline opacity-70 hover:opacity-100"
-                                        onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
-                                    >
-                                        Ver proyecto →
-                                    </button>
-                                )}
-                            </div>
-                            <button
-                                onClick={() => setAlertasDismissed(s => new Set([...s, a.id]))}
-                                className="shrink-0 opacity-50 hover:opacity-100 transition-opacity"
-                                title="Descartar alerta"
-                            >
-                                <X size={12} />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* ── KPI Cards (Adición 4 — KPIs mejorados) ── */}
-            {stats && (
-                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 animate-fade-up [animation-delay:50ms]">
-                    <KpiCard icon={<FileSearch size={18} />} label="En Revisión"
-                        value={stats.proyectos_en_revision} color="var(--color-text-main)" />
-                    <KpiCard icon={<Users size={18} />} label="Árbitros Asignados"
-                        value={stats.total_arbitros_asignados} color="#3b82f6" />
-                    <KpiCard icon={<CheckCircle2 size={18} />} label="Completadas"
-                        value={stats.evaluaciones_completadas} color="#22c55e" />
-                    <KpiCard icon={<Clock size={18} />} label="Pendientes"
-                        value={stats.evaluaciones_pendientes} color="#f0a500" />
-                    <KpiCard icon={<Scale size={18} />} label="Desempates"
-                        value={stats.casos_desempate} color="#ef4444"
-                        alert={stats.casos_desempate > 0} />
-                </div>
-            )}
-
-            {/* ── Barra de progreso global ──────────────── */}
-            {stats && stats.total_arbitros_asignados > 0 && (
-                <div className="bento-card p-5 mb-8 animate-fade-up [animation-delay:100ms]">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="section-label">
-                            <TrendingUp size={12} />
-                            <span>Avance Global del Arbitraje</span>
-                        </div>
-                        <span className="stat-number stat-number--sm text-text-main">
-                            {stats.porcentaje_avance}%
-                        </span>
-                    </div>
-                    <div className="w-full bg-surface rounded-full h-1.5">
-                        <div
-                            className="h-1.5 rounded-full bg-text-main transition-all duration-700"
-                            style={{ width: `${stats.porcentaje_avance}%` }}
-                        />
-                    </div>
+            {/* Two-column Vercel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up" style={{ animationDelay: '100ms' }}>
+                
+                {/* Main Content: Left Column */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* ── Alertas CACES (Adición 2) ──────────────── */}
                     {alertasVisibles.length > 0 && (
-                        <p className="text-[10px] text-error mt-2 font-bold flex items-center gap-1">
-                            <AlertTriangle size={10} />
-                            {alertasVisibles.length} alerta(s) de cumplimiento CACES activa(s)
-                        </p>
+                        <div className="space-y-2 animate-fade-up [animation-delay:30ms]">
+                            <div className="section-label mb-2">
+                                <ShieldCheck size={11} />
+                                <span>Alertas de Cumplimiento CACES</span>
+                            </div>
+                            {alertasVisibles.map(a => (
+                                <div
+                                    key={a.id}
+                                    className={`flex items-start gap-3 p-3 rounded-lg border text-xs transition-all ${a.tipo === 'critico'
+                                        ? 'bg-error/8 border-error/30 text-error'
+                                        : a.tipo === 'advertencia'
+                                            ? 'bg-warning/8 border-warning/30 text-warning'
+                                            : 'bg-info/8 border-info/30 text-info'
+                                        }`}
+                                    style={{ '--color-warning': '#f0a500', '--color-info': '#3b82f6' } as React.CSSProperties}
+                                >
+                                    <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                        <span className="font-bold mr-1">{a.titulo}:</span>
+                                        {a.descripcion}
+                                        {a.proyectoUuid && (
+                                            <button
+                                                className="ml-2 underline opacity-70 hover:opacity-100"
+                                                onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
+                                            >
+                                                Ver proyecto →
+                                            </button>
+                                        )}
+                                    </div>
+                                    <button
+                                        onClick={() => setAlertasDismissed(s => new Set([...s, a.id]))}
+                                        className="shrink-0 opacity-50 hover:opacity-100 transition-opacity"
+                                        title="Descartar alerta"
+                                    >
+                                        <X size={12} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
                     )}
-                </div>
-            )}
 
-            {/* ── Filtros ───────────────────────────────── */}
-            <div className="flex flex-wrap gap-2 mb-6 animate-fade-up [animation-delay:150ms]">
+                    {/* ── Filtros ───────────────────────────────── */}
+                    <div className="flex flex-wrap gap-2 animate-fade-up [animation-delay:150ms]">
                 {[
                     { key: 'todos', label: 'Todos' },
                     { key: 'SinArbitros', label: 'Sin Árbitros' },
@@ -747,6 +708,83 @@ const ArbitrajePage: React.FC = () => {
                     </div>
                 )}
             </div>
+        </div>
+            
+            {/* Sidebar: Right Column */}
+            <div className="space-y-6">
+                {stats && (
+                    <VercelUsageCard 
+                        title="Métricas de Arbitraje"
+                        buttonLabel="Actualizar"
+                        onButtonClick={loadData}
+                        items={[
+                            {
+                                label: 'En Revisión',
+                                value: stats.proyectos_en_revision,
+                                displayValue: `${stats.proyectos_en_revision} proy.`,
+                                max: 10,
+                                color: 'var(--color-text-main)'
+                            },
+                            {
+                                label: 'Árbitros Asignados',
+                                value: stats.total_arbitros_asignados,
+                                displayValue: `${stats.total_arbitros_asignados} asignados`,
+                                max: 15,
+                                color: '#3b82f6'
+                            },
+                            {
+                                label: 'Completadas',
+                                value: stats.evaluaciones_completadas,
+                                displayValue: `${stats.evaluaciones_completadas} listos`,
+                                max: stats.total_arbitros_asignados || 1,
+                                color: '#22c55e'
+                            },
+                            {
+                                label: 'Pendientes',
+                                value: stats.evaluaciones_pendientes,
+                                displayValue: `${stats.evaluaciones_pendientes} en curso`,
+                                max: stats.total_arbitros_asignados || 1,
+                                color: '#f0a500'
+                            },
+                            {
+                                label: 'Desempates',
+                                value: stats.casos_desempate,
+                                displayValue: `${stats.casos_desempate} casos`,
+                                max: stats.proyectos_en_revision || 1,
+                                color: '#ef4444'
+                            }
+                        ]}
+                    />
+                )}
+
+                {/* ── Avance Global del Arbitraje ──────────────── */}
+                {stats && stats.total_arbitros_asignados > 0 && (
+                    <div className="bento-card p-5 relative overflow-hidden vercel-card-glow bg-surface">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="section-label">
+                                <TrendingUp size={12} />
+                                <span>Avance Global</span>
+                            </div>
+                            <span className="stat-number stat-number--sm text-text-main">
+                                {stats.porcentaje_avance}%
+                            </span>
+                        </div>
+                        <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-text-main transition-all duration-700"
+                                style={{ width: `${stats.porcentaje_avance}%` }}
+                            />
+                        </div>
+                        {alertasVisibles.length > 0 && (
+                            <p className="text-[10px] text-error mt-2 font-bold flex items-center gap-1">
+                                <AlertTriangle size={10} />
+                                {alertasVisibles.length} alerta(s) de cumplimiento CACES
+                            </p>
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
 
             {/* ── Modal Asignar Árbitro ─────────────────── */}
             {proyectoParaAsignar && (
@@ -785,18 +823,109 @@ interface KpiCardProps {
     alert?: boolean;
 }
 
-const KpiCard: React.FC<KpiCardProps> = ({ icon, label, value, color, alert }) => (
-    <div className={`bento-card p-5 relative overflow-hidden ${alert ? 'border-error/40' : ''}`}>
-        <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-md bg-surface" style={{ color }}>
-                {icon}
-            </div>
-            {alert && <span className="w-2 h-2 rounded-full bg-error animate-pulse" />}
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-5">
+            <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
+            {buttonLabel && (
+                <button 
+                    onClick={onButtonClick} 
+                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                    {buttonLabel}
+                </button>
+            )}
         </div>
-        <p className="stat-number stat-number--sm text-text-main" style={{ color }}>{value}</p>
-        <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mt-1 leading-tight">{label}</p>
+        <div className="space-y-1">
+            {items.map((item: any, idx: number) => {
+                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
+                const radius = 6.5;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                
+                return (
+                    <div 
+                        key={idx} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none"
+                                        strokeWidth="1.8"
+                                        style={{ stroke: 'var(--accents-2)' }}
+                                    />
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none transition-all duration-500"
+                                        stroke={item.color || 'var(--brand)'}
+                                        strokeWidth="1.8"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[13px] font-medium text-text-main truncate">
+                                    {item.label}
+                                </span>
+                                <svg 
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                            {item.displayValue || item.value}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
     </div>
 );
+
+const KpiCard: React.FC<KpiCardProps & { type?: 'brand' | 'success' | 'warning' | 'error' | 'info'; desc?: string }> = ({ 
+    icon, label, value, color, alert, type = 'brand', desc 
+}) => {
+    let circleClass = 'icon-circle-brand';
+    if (type === 'success') circleClass = 'icon-circle-success bg-success-subtle text-success border-success/10';
+    if (type === 'warning') circleClass = 'icon-circle-warning bg-warning-subtle text-warning border-warning/10';
+    if (type === 'error') circleClass = 'icon-circle-error bg-error-subtle text-error border-error/10';
+    if (type === 'info') circleClass = 'icon-circle-info bg-info-subtle text-info border-info/10';
+    if (type === 'brand') circleClass = 'icon-circle bg-brand-subtle text-brand border-brand/10';
+
+    return (
+        <div className={`bento-card p-6 flex items-center justify-between relative overflow-hidden vercel-card-glow ${alert ? 'border-error/40' : ''}`}>
+            <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-text-dim uppercase tracking-wider mb-1 truncate">{label}</span>
+                <span className="stat-number text-text-main truncate" style={{ color }}>{value}</span>
+                {desc && (
+                    <span className="text-[10px] text-text-dim mt-2 font-medium truncate">{desc}</span>
+                )}
+            </div>
+            <div className={`icon-circle ${circleClass} !p-4 shrink-0 relative`}>
+                {icon}
+                {alert && <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-error" />}
+            </div>
+        </div>
+    );
+};
 
 export default ArbitrajePage;
 // Trigger refresh of TS server diagnostics

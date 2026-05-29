@@ -186,58 +186,12 @@ const NotificationsPage = () => {
                 </div>
             </header>
 
-            {/* Bento Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 animate-fade-up [animation-delay:50ms]">
-                <div className="bento-card vercel-card-glow p-5 flex flex-col gap-2 relative overflow-hidden">
-                    <span className="section-label text-text-dim">Notificaciones Totales</span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                        <span className="stat-number stat-number--sm font-mono">{allNotifications.length}</span>
-                        <span className="text-[10px] text-text-dim font-medium uppercase">Registros</span>
-                    </div>
-                    <div className="absolute right-4 bottom-4 text-text-dim opacity-10 pointer-events-none">
-                        <Inbox size={48} strokeWidth={1} />
-                    </div>
-                </div>
-
-                <div className="bento-card vercel-card-glow p-5 flex flex-col gap-2 relative overflow-hidden">
-                    <span className="section-label text-text-dim">Por Leer</span>
-                    <div className="flex items-baseline gap-2 mt-1">
-                        <span className={`stat-number stat-number--sm font-mono ${unreadCount > 0 ? 'text-brand' : 'text-text-main'}`}>
-                            {unreadCount}
-                        </span>
-                        <span className="text-[10px] text-text-dim font-medium uppercase">Pendientes</span>
-                    </div>
-                    {unreadCount > 0 && (
-                        <div className="absolute right-4 top-4 flex items-center gap-1.5 bg-surface border border-brand/20 px-2 py-0.5 rounded-sm">
-                            <span className="dot dot-brand dot-pulse w-1.5 h-1.5" />
-                            <span className="text-[8px] font-black text-brand uppercase tracking-widest">Nuevas</span>
-                        </div>
-                    )}
-                    <div className="absolute right-4 bottom-4 text-text-dim opacity-10 pointer-events-none">
-                        <Bell size={48} strokeWidth={1} />
-                    </div>
-                </div>
-
-                <div className="bento-card vercel-card-glow p-5 flex flex-col gap-2 relative overflow-hidden">
-                    <span className="section-label text-text-dim">Canal en Tiempo Real</span>
-                    <div className="flex items-center gap-2 mt-3">
-                        <span className={`dot ${isConnected ? 'dot-success dot-pulse' : 'dot-neutral'} w-2.5 h-2.5`} />
-                        <span className="text-xs font-bold text-text-main uppercase tracking-tight">
-                            {isConnected ? 'Activo (WebSocket)' : 'Sincronizado'}
-                        </span>
-                    </div>
-                    <p className="text-[10px] text-text-dim mt-1">
-                        {isConnected 
-                            ? 'Conexión activa con el servidor. Recibiendo alertas instantáneas.' 
-                            : 'Actualizado mediante protocolo HTTPS convencional.'}
-                    </p>
-                    <div className="absolute right-4 bottom-4 text-text-dim opacity-10 pointer-events-none">
-                        {isConnected ? <Wifi size={48} strokeWidth={1} /> : <WifiOff size={48} strokeWidth={1} />}
-                    </div>
-                </div>
-            </div>
-
-            {/* Filtros y Búsqueda */}
+            {/* Two-column Vercel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:50ms]">
+                
+                {/* Main Content: Left Column */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* Filtros y Búsqueda */}
             <div className="bento-card static p-4 mb-6 flex flex-col md:flex-row items-start md:items-center gap-4 animate-fade-up [animation-delay:100ms]">
                 <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
                     <Filter size={13} className="text-text-dim shrink-0" />
@@ -357,6 +311,58 @@ const NotificationsPage = () => {
                     ))
                 )}
             </div>
+        </div>
+
+            {/* Sidebar: Right Column */}
+            <div className="space-y-6">
+                <VercelUsageCard 
+                    title="Centro de Alertas"
+                    buttonLabel="Actualizar"
+                    onButtonClick={handleRefresh}
+                    items={[
+                        {
+                            label: 'Notificaciones',
+                            value: allNotifications.length,
+                            displayValue: `${allNotifications.length} registradas`,
+                            max: 100,
+                            color: 'var(--brand)'
+                        },
+                        {
+                            label: 'Por Leer',
+                            value: unreadCount,
+                            displayValue: `${unreadCount} pendientes`,
+                            max: allNotifications.length || 1,
+                            color: unreadCount > 0 ? 'var(--brand)' : 'var(--text-dim)'
+                        },
+                        {
+                            label: 'WebSocket Activo',
+                            value: isConnected ? 1 : 0,
+                            displayValue: isConnected ? 'En vivo' : 'Https',
+                            max: 1,
+                            color: isConnected ? 'var(--success)' : 'var(--warning)'
+                        }
+                    ]}
+                />
+
+                {/* WebSocket Details Bento Card */}
+                <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="section-label">
+                            <span className={`dot ${isConnected ? 'dot-success dot-pulse' : 'dot-neutral'} w-2 h-2`} />
+                            <span className="text-[13px] font-semibold text-text-main">Canal en Tiempo Real</span>
+                        </div>
+                        <span className="font-mono text-[9px] bg-bg-deep px-2 py-0.5 rounded border border-border-thin text-text-dim">
+                            {isConnected ? 'LIVE' : 'HTTPS'}
+                        </span>
+                    </div>
+                    <p className="text-[11px] text-text-dim leading-relaxed">
+                        {isConnected 
+                            ? 'Suscripción bidireccional activa. Recibiendo notificaciones instantáneas sin necesidad de recargar la página.' 
+                            : 'El canal WebSocket está inactivo. Las alertas se actualizarán de forma convencional mediante solicitudes HTTPS.'}
+                    </p>
+                </div>
+            </div>
+        </div>
 
             {/* Footer Stats */}
             {allNotifications.length > 0 && (
@@ -369,5 +375,82 @@ const NotificationsPage = () => {
         </main>
     );
 };
+
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-5">
+            <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
+            {buttonLabel && (
+                <button 
+                    onClick={onButtonClick} 
+                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                    {buttonLabel}
+                </button>
+            )}
+        </div>
+        <div className="space-y-1">
+            {items.map((item: any, idx: number) => {
+                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
+                const radius = 6.5;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                
+                return (
+                    <div 
+                        key={idx} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none"
+                                        strokeWidth="1.8"
+                                        style={{ stroke: 'var(--accents-2)' }}
+                                    />
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none transition-all duration-500"
+                                        stroke={item.color || 'var(--brand)'}
+                                        strokeWidth="1.8"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[13px] font-medium text-text-main truncate">
+                                    {item.label}
+                                </span>
+                                <svg 
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                            {item.displayValue || item.value}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+);
 
 export default NotificationsPage;

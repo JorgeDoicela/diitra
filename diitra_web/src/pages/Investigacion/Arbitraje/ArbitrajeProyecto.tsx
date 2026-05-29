@@ -149,46 +149,24 @@ const ArbitrajeProyecto: React.FC = () => {
                 </div>
             </div>
 
-            {/* Aviso si hay desempate */}
-            {arbitraje.estado_arbitraje === 'Desempate' && (
-                <div className="bento-card p-4 mb-6 border-error/40 flex items-start gap-4 animate-fade-up">
-                    <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-sm font-bold text-text-main">Caso de Desempate Detectado</p>
-                        <p className="text-xs text-text-dim mt-1">
-                            Los árbitros presentan dictámenes contradictorios. Puede asignar un árbitro dirimente adicional
-                            o emitir una resolución fundada del Director de Investigación.
-                        </p>
-                    </div>
-                </div>
-            )}
-
-            {/* Resumen KPIs */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-up [animation-delay:50ms]">
-                <div className="bento-card p-5 text-center">
-                    <p className="stat-number stat-number--sm text-text-main">{arbitraje.total_arbitros}</p>
-                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mt-1">Total Árbitros</p>
-                </div>
-                <div className="bento-card p-5 text-center">
-                    <p className="stat-number stat-number--sm" style={{ color: '#22c55e' }}>{arbitraje.arbitros_completados}</p>
-                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mt-1">Completados</p>
-                </div>
-                <div className="bento-card p-5 text-center">
-                    <p className="stat-number stat-number--sm" style={{ color: '#f0a500' }}>
-                        {arbitraje.total_arbitros - arbitraje.arbitros_completados}
-                    </p>
-                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mt-1">Pendientes</p>
-                </div>
-                <div className="bento-card p-5 text-center">
-                    <p className={`stat-number stat-number--sm ${arbitraje.puntaje_promedio != null
-                        ? arbitraje.puntaje_promedio >= 70 ? 'text-success' : 'text-error'
-                        : 'text-text-dim'}`}
-                    >
-                        {arbitraje.puntaje_promedio != null ? arbitraje.puntaje_promedio.toFixed(1) : '—'}
-                    </p>
-                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mt-1">Promedio /100</p>
-                </div>
-            </div>
+            {/* Two-column Vercel Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:50ms]">
+                
+                {/* Main Content: Left Column */}
+                <div className="lg:col-span-3 space-y-6">
+                    {/* Aviso si hay desempate */}
+                    {arbitraje.estado_arbitraje === 'Desempate' && (
+                        <div className="bento-card p-4 border-error/40 flex items-start gap-4 animate-fade-up">
+                            <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
+                            <div>
+                                <p className="text-sm font-bold text-text-main">Caso de Desempate Detectado</p>
+                                <p className="text-xs text-text-dim mt-1">
+                                    Los árbitros presentan dictámenes contradictorios. Puede asignar un árbitro dirimente adicional
+                                    o emitir una resolución fundada del Director de Investigación.
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
             {/* Lista de Árbitros */}
             <div className="animate-fade-up [animation-delay:100ms] space-y-4">
@@ -286,6 +264,68 @@ const ArbitrajeProyecto: React.FC = () => {
                     </div>
                 )}
             </div>
+        </div>
+
+            {/* Sidebar: Right Column */}
+            <div className="space-y-6">
+                <VercelUsageCard 
+                    title="Resumen del Tribunal"
+                    buttonLabel="Actualizar"
+                    onButtonClick={loadData}
+                    items={[
+                        {
+                            label: 'Total Árbitros',
+                            value: arbitraje.total_arbitros,
+                            displayValue: `${arbitraje.total_arbitros} asignados`,
+                            max: 5,
+                            color: 'var(--brand)'
+                        },
+                        {
+                            label: 'Completados',
+                            value: arbitraje.arbitros_completados,
+                            displayValue: `${arbitraje.arbitros_completados} dictámenes`,
+                            max: arbitraje.total_arbitros || 1,
+                            color: '#22c55e'
+                        },
+                        {
+                            label: 'Pendientes',
+                            value: arbitraje.total_arbitros - arbitraje.arbitros_completados,
+                            displayValue: `${arbitraje.total_arbitros - arbitraje.arbitros_completados} en espera`,
+                            max: arbitraje.total_arbitros || 1,
+                            color: '#f0a500'
+                        },
+                        {
+                            label: 'Promedio /100',
+                            value: arbitraje.puntaje_promedio || 0,
+                            displayValue: arbitraje.puntaje_promedio != null ? `${arbitraje.puntaje_promedio.toFixed(1)}/100` : '—',
+                            max: 100,
+                            color: arbitraje.puntaje_promedio && arbitraje.puntaje_promedio >= 70 ? '#22c55e' : '#ef4444'
+                        }
+                    ]}
+                />
+
+                {/* Progress bar */}
+                {arbitraje.total_arbitros > 0 && (
+                    <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                        <div className="flex items-center justify-between mb-3">
+                            <div className="section-label">
+                                <CheckCircle2 size={12} className="text-brand" />
+                                <span className="text-[13px] font-semibold text-text-main">Progreso Evaluaciones</span>
+                            </div>
+                            <span className="font-mono text-[13px] font-bold text-brand">
+                                {Math.round((arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100)}%
+                            </span>
+                        </div>
+                        <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                            <div
+                                className="h-full rounded-full bg-brand transition-all duration-700"
+                                style={{ width: `${(arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
 
             {/* Modals */}
             {showAsignar && (
@@ -371,5 +411,82 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = 
         </div>
     );
 };
+
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
+    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+        <div className="flex items-center justify-between mb-5">
+            <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
+            {buttonLabel && (
+                <button 
+                    onClick={onButtonClick} 
+                    className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
+                >
+                    {buttonLabel}
+                </button>
+            )}
+        </div>
+        <div className="space-y-1">
+            {items.map((item: any, idx: number) => {
+                const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
+                const radius = 6.5;
+                const circumference = 2 * Math.PI * radius;
+                const strokeDashoffset = circumference - (percentage / 100) * circumference;
+                
+                return (
+                    <div 
+                        key={idx} 
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="relative w-[18px] h-[18px] flex items-center justify-center shrink-0">
+                                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 18 18">
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none"
+                                        strokeWidth="1.8"
+                                        style={{ stroke: 'var(--accents-2)' }}
+                                    />
+                                    <circle
+                                        cx="9"
+                                        cy="9"
+                                        r={radius}
+                                        className="fill-none transition-all duration-500"
+                                        stroke={item.color || 'var(--brand)'}
+                                        strokeWidth="1.8"
+                                        strokeDasharray={circumference}
+                                        strokeDashoffset={item.max ? strokeDashoffset : 0}
+                                        strokeLinecap="round"
+                                    />
+                                </svg>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[13px] font-medium text-text-main truncate">
+                                    {item.label}
+                                </span>
+                                <svg 
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2.5"
+                                >
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" y1="16" x2="12" y2="12" />
+                                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                                </svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                            {item.displayValue || item.value}
+                        </span>
+                    </div>
+                );
+            })}
+        </div>
+    </div>
+);
 
 export default ArbitrajeProyecto;
