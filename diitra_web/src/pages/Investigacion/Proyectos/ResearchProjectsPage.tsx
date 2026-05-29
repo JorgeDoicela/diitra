@@ -7,9 +7,11 @@ import {
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import DocumentTray from '../../../components/DIITRA/DocumentTray';
 import FinalReportLauncher from './components/FinalReportLauncher';
+import { useAuth } from '../../../api/AuthContext';
 
 const ResearchProjectsPage = () => {
     const navigate = useNavigate();
+    const { isDocente } = useAuth();
     const [showWizard, setShowWizard] = useState(false);
     const [showReportLauncher, setShowReportLauncher] = useState(false);
 
@@ -28,13 +30,15 @@ const ResearchProjectsPage = () => {
                     </p>
                 </div>
 
-                <button 
-                    onClick={() => setShowWizard(true)}
-                    className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
-                >
-                    <Plus size={14} strokeWidth={3} />
-                    Nueva Postulación
-                </button>
+                {!isDocente && (
+                    <button 
+                        onClick={() => setShowWizard(true)}
+                        className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
+                    >
+                        <Plus size={14} strokeWidth={3} />
+                        Nueva Postulación
+                    </button>
+                )}
             </header>
 
             {/* ── ACCIONES RÁPIDAS ── */}
