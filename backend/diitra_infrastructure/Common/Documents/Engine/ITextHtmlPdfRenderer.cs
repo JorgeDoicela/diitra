@@ -3,6 +3,7 @@ using iText.Html2pdf.Resolver.Font;
 using iText.IO.Font;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Event;
+using iText.Kernel.Geom;
 using iText.Layout.Font;
 using System.Text;
 
@@ -24,7 +25,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _fontProvider.AddStandardPdfFonts();
 
             // 1. Cargar fuentes locales del proyecto (Portabilidad total para Producción)
-            string localFontsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Fonts");
+            string localFontsPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "Fonts");
             if (Directory.Exists(localFontsPath))
             {
                 _fontProvider.AddDirectory(localFontsPath);
@@ -40,7 +41,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             foreach (var fontFile in requestedFonts)
             {
-                var fullPath = Path.Combine(fontsPath, fontFile);
+                var fullPath = System.IO.Path.Combine(fontsPath, fontFile);
                 if (File.Exists(fullPath))
                 {
                     _fontProvider.AddFont(fullPath);
@@ -160,7 +161,6 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             
             /* ── Configuración de Página ── */
             @page {
-                size: A4;
                 margin: 1cm 1.5cm 1.5cm 1.5cm;
                 @bottom-right {
                     content: counter(page);
@@ -187,6 +187,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             using var outputStream = new MemoryStream();
             using var pdfWriter = new PdfWriter(outputStream);
             using var pdfDocument = new PdfDocument(pdfWriter);
+            pdfDocument.SetDefaultPageSize(PageSize.A4);
 
             // ── NUEVO: Registro de Eventos Globales (Encabezados/Pies/Marcas de Agua) ──
             var handler = new DocumentEventHandler(
@@ -199,6 +200,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
             try 
             {
+                pdfDocument.AddEventHandler(PdfDocumentEvent.START_PAGE, handler);
                 pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
 
                 HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, _converterProperties);
@@ -216,19 +218,32 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
         private static string WrapInFullHtmlDocument(string bodyContent, string? customCss)
         {
+            var stylesBuilder = new StringBuilder();
+            stylesBuilder.AppendLine(InstitutionalBaseCss);
+            if (!string.IsNullOrEmpty(customCss))
+            {
+                stylesBuilder.AppendLine(customCss);
+            }
+
+            // Extraer bloques <style>...</style> del bodyContent para colocarlos en el <head>
+            // de modo que pdfHTML los procese con prioridad global (especialmente reglas @page)
+            string cleanBody = System.Text.RegularExpressions.Regex.Replace(bodyContent, @"<style[^>]*>(.*?)</style>", m => {
+                stylesBuilder.AppendLine(m.Groups[1].Value);
+                return string.Empty;
+            }, System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
             return $@"<!DOCTYPE html>
 <html lang=""es"">
 <head>
     <meta charset=""UTF-8"" />
     <meta name=""viewport"" content=""width=device-width, initial-scale=1.0"" />
     <style>
-        {InstitutionalBaseCss}
-        {(customCss ?? string.Empty)}
+        {stylesBuilder}
     </style>
 </head>
 <body>
     <div class=""document-body"">
-        {bodyContent}
+        {cleanBody}
     </div>
 </body>
 </html>";

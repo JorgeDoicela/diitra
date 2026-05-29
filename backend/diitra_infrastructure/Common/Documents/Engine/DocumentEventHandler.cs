@@ -91,73 +91,93 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             PdfDocumentEvent docEvent = (PdfDocumentEvent)@event;
             PdfDocument pdfDoc = docEvent.GetDocument();
             PdfPage page = docEvent.GetPage();
-            Rectangle pageSize = page.GetPageSize();
-            
-            // 0.1 Fondo Institucional (Papel Membretado)
-            if (pdfDoc.GetPageNumber(page) > 1 && _stationaryImage != null)
+            int pageNumber = pdfDoc.GetPageNumber(page);
+
+            // En iText 9 .NET, GetType() está sobreescrito para devolver el string del tipo de evento directamente
+            string eventType = @event.GetType();
+
+            Console.WriteLine($"[DIITRA EVENT] Page: {pageNumber}, EventType: '{eventType}', MediaBox: {page.GetMediaBox()}");
+
+            if (eventType == "StartPdfPage")
             {
-                try
+                if (pageNumber == 5)
                 {
-                    PdfCanvas pc = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
-                    Canvas underCanvas = new Canvas(pc, pageSize);
-                    
-                    _stationaryImage.SetWidth(pageSize.GetWidth())
-                                    .SetHeight(pageSize.GetHeight()); 
-                    
-                    underCanvas.Add(_stationaryImage);
-                    underCanvas.Close();
+                    page.SetMediaBox(PageSize.A4.Rotate());
                 }
-                catch { }
-            }
-
-            PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
-            Canvas canvas = new Canvas(pdfCanvas, pageSize);
-
-            // 0. Omitir en la primera página (Portada)
-            if (pdfDoc.GetPageNumber(page) == 1)
-            {
-                canvas.Close();
                 return;
             }
 
-            // 1. Marca de agua (Watermark) si es borrador
-            if (_isDraft && _watermarkFont != null)
+            if (eventType == "EndPdfPage")
             {
-                Paragraph p = new Paragraph("BORRADOR / DRAFT")
-                    .SetFont(_watermarkFont)
-                    .SetFontSize(60)
-                    .SetFontColor(iText.Kernel.Colors.ColorConstants.LIGHT_GRAY)
-                    .SetOpacity(0.3f);
+                // Lógica para el evento END_PAGE
+                Rectangle pageSize = page.GetPageSize();
                 
-                canvas.ShowTextAligned(p, pageSize.GetWidth() / 2, pageSize.GetHeight() / 2, 
-                    pdfDoc.GetPageNumber(page), TextAlignment.CENTER, VerticalAlignment.MIDDLE, 45);
+                // 0.1 Fondo Institucional (Papel Membretado)
+                if (pageNumber > 1 && _stationaryImage != null)
+                {
+                    try
+                    {
+                        PdfCanvas pc = new PdfCanvas(page.NewContentStreamBefore(), page.GetResources(), pdfDoc);
+                        Canvas underCanvas = new Canvas(pc, pageSize);
+                        
+                        _stationaryImage.SetWidth(pageSize.GetWidth())
+                                        .SetHeight(pageSize.GetHeight()); 
+                        
+                        underCanvas.Add(_stationaryImage);
+                        underCanvas.Close();
+                    }
+                    catch { }
+                }
+
+                PdfCanvas pdfCanvas = new PdfCanvas(page.NewContentStreamAfter(), page.GetResources(), pdfDoc);
+                Canvas canvas = new Canvas(pdfCanvas, pageSize);
+
+                // 0. Omitir en la primera página (Portada)
+                if (pageNumber == 1)
+                {
+                    canvas.Close();
+                    return;
+                }
+
+                // 1. Marca de agua (Watermark) si es borrador
+                if (_isDraft && _watermarkFont != null)
+                {
+                    Paragraph p = new Paragraph("BORRADOR / DRAFT")
+                        .SetFont(_watermarkFont)
+                        .SetFontSize(60)
+                        .SetFontColor(iText.Kernel.Colors.ColorConstants.LIGHT_GRAY)
+                        .SetOpacity(0.3f);
+                    
+                    canvas.ShowTextAligned(p, pageSize.GetWidth() / 2, pageSize.GetHeight() / 2, 
+                        pageNumber, TextAlignment.CENTER, VerticalAlignment.MIDDLE, 45);
+                }
+
+                // 2. Encabezado Global - Desactivado (Se maneja por plantilla)
+                // canvas.SetFontSize(7);
+                // ...
+
+                // 3. Pie de Página Global + QR de Verificación
+                canvas.ShowTextAligned(new Paragraph(_lopdpClause), 
+                    36, 25, TextAlignment.LEFT);
+                
+                canvas.ShowTextAligned(new Paragraph($"Página {pageNumber}"), 
+                    pageSize.GetRight() - 36, 25, TextAlignment.RIGHT);
+
+                // 4. QR de Verificación Nativo (Esquina inferior derecha)
+                // Usamos el estándar iText 9 Professional para asegurar visibilidad en todos los visores
+                BarcodeQRCode qrCode = new BarcodeQRCode($"{_verificationBaseUrl}/verify/{_traceabilityCode}");
+                PdfFormXObject qrObject = qrCode.CreateFormXObject(iText.Kernel.Colors.ColorConstants.BLACK, pdfDoc);
+                
+                // Creamos un objeto Image para posicionamiento preciso y escalado automático
+                Image qrImage = new Image(qrObject)
+                    .SetWidth(45)
+                    .SetHeight(45)
+                    .SetFixedPosition(pageSize.GetRight() - 85, 45);
+                
+                canvas.Add(qrImage);
+
+                canvas.Close();
             }
-
-            // 2. Encabezado Global - Desactivado (Se maneja por plantilla)
-            // canvas.SetFontSize(7);
-            // ...
-
-            // 3. Pie de Página Global + QR de Verificación
-            canvas.ShowTextAligned(new Paragraph(_lopdpClause), 
-                36, 25, TextAlignment.LEFT);
-            
-            canvas.ShowTextAligned(new Paragraph($"Página {pdfDoc.GetPageNumber(page)}"), 
-                pageSize.GetRight() - 36, 25, TextAlignment.RIGHT);
-
-            // 4. QR de Verificación Nativo (Esquina inferior derecha)
-            // Usamos el estándar iText 9 Professional para asegurar visibilidad en todos los visores
-            BarcodeQRCode qrCode = new BarcodeQRCode($"{_verificationBaseUrl}/verify/{_traceabilityCode}");
-            PdfFormXObject qrObject = qrCode.CreateFormXObject(iText.Kernel.Colors.ColorConstants.BLACK, pdfDoc);
-            
-            // Creamos un objeto Image para posicionamiento preciso y escalado automático
-            Image qrImage = new Image(qrObject)
-                .SetWidth(45)
-                .SetHeight(45)
-                .SetFixedPosition(pageSize.GetRight() - 85, 45);
-            
-            canvas.Add(qrImage);
-
-            canvas.Close();
         }
     }
 }
