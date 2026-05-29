@@ -20,8 +20,8 @@ namespace diitra_infrastructure.data.models.Cowork
         public int IdDocumento { get; set; }
 
         /// <summary>UUID público del documento (generalmente = UUID del proyecto).</summary>
-        [Column("uuid", TypeName = "varchar(36)")]
-        [Required, MaxLength(36)]
+        [Column("uuid", TypeName = "varchar(100)")]
+        [Required, MaxLength(100)]
         public string Uuid { get; set; } = string.Empty;
 
         /// <summary>Tipo de entidad que contiene este documento (PROYECTO, INFORME_AVANCE, etc.).</summary>

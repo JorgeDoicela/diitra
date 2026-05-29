@@ -73,6 +73,17 @@ export interface RubricaDinamicaDto {
     linea_investigacion?: string;
     justificacion?: string;
     metodologia?: string;
+    antecedentes?: string;
+    descripcionProyecto?: string;
+    descripcion_proyecto?: string;
+    objetivoGeneral?: string;
+    objetivo_general?: string;
+    objetivosEspecificos?: string;
+    objetivos_especificos?: string;
+    marcoTeorico?: string;
+    marco_teorico?: string;
+    evaluacion?: string;
+    bibliografia?: string;
     proyecto_uuid: string;
     es_doble_ciego: boolean;
     puntaje_minimo_aprobacion: number;
