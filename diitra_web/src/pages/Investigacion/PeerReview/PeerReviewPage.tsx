@@ -154,10 +154,11 @@ const PeerReviewPage: React.FC = () => {
                         {/* PENDIENTES */}
                         {reviewsPendientes.length > 0 ? (
                             <div className="space-y-4">
-                                <div className="peer-review-section-divider">
-                                    <span className="section-label text-warning font-bold">
+                                <div className="flex items-center gap-4 my-6">
+                                    <span className="section-label text-warning font-bold shrink-0">
                                         ⚠ Pendientes de Evaluación ({reviewsPendientes.length})
                                     </span>
+                                    <div className="flex-1 h-[1px] bg-border-thin" />
                                 </div>
                                 <div className="grid gap-4">
                                     {reviewsPendientes.map((review) => {
@@ -253,10 +254,11 @@ const PeerReviewPage: React.FC = () => {
                         {/* COMPLETADAS */}
                         {reviewsCompletadas.length > 0 && (
                             <div className="space-y-4">
-                                <div className="peer-review-section-divider">
-                                    <span className="section-label text-success font-bold">
+                                <div className="flex items-center gap-4 my-6">
+                                    <span className="section-label text-success font-bold shrink-0">
                                         ✓ Evaluaciones Completadas ({reviewsCompletadas.length})
                                     </span>
+                                    <div className="flex-1 h-[1px] bg-border-thin" />
                                 </div>
                                 <div className="grid gap-4">
                                     {reviewsCompletadas.map((review) => {
