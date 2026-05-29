@@ -64,22 +64,13 @@ export const DocenteDashboard: React.FC = () => {
                 subtitle="Gestiona tus proyectos, carga horaria y productos científicos en un solo lugar."
                 roleName="Docente Investigador"
                 actions={
-                    <>
-                        <button
-                            onClick={() => navigate('/investigacion/mis-proyectos')}
-                            className="btn-vercel-secondary flex-1 md:flex-none"
-                        >
-                            <ClipboardList size={14} />
-                            <span>Mis Proyectos</span>
-                        </button>
-                        <button
-                            onClick={() => navigate('/investigacion')}
-                            className="btn-vercel-primary flex-1 md:flex-none"
-                        >
-                            <Plus size={16} />
-                            <span>Nuevo Proyecto</span>
-                        </button>
-                    </>
+                    <button
+                        onClick={() => navigate('/investigacion/mis-proyectos')}
+                        className="btn-vercel-secondary flex-1 md:flex-none"
+                    >
+                        <ClipboardList size={14} />
+                        <span>Mis Proyectos</span>
+                    </button>
                 }
             />
 
@@ -132,12 +123,6 @@ export const DocenteDashboard: React.FC = () => {
                                     className="btn-vercel-secondary text-xs px-4 py-2"
                                 >
                                     Ver mis proyectos
-                                </button>
-                                <button
-                                    onClick={() => navigate('/investigacion')}
-                                    className="btn-vercel-primary text-xs px-4 py-2"
-                                >
-                                    Iniciar Nuevo Proyecto
                                 </button>
                             </div>
                         </div>

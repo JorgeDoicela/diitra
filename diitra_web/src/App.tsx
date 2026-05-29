@@ -166,7 +166,7 @@ function App() {
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/settings" element={<UnderDevelopment title="Módulo en Desarrollo" description="La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización." />} />
-                            <Route path="/analiticas" element={<AnalyticsPage />} />
+                            <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
@@ -183,8 +183,8 @@ function App() {
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
-                            <Route path="/arbitraje" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'ADMIN_SISTEMA', 'DIRECTOR_INV', 'DOCENTE_INV']}><ArbitrajePage /></RoleRoute>} />
-                            <Route path="/arbitraje/proyecto/:projectUuid" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'ADMIN_SISTEMA', 'DIRECTOR_INV', 'DOCENTE_INV']}><ArbitrajeProyecto /></RoleRoute>} />
+                            <Route path="/arbitraje" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
+                            <Route path="/arbitraje/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
                             <Route path="/verify" element={<VerifyDocument />} />
                         </Route>
 
