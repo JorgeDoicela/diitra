@@ -50,7 +50,7 @@ namespace diitra_infrastructure.Collaboration
 
             if (!isHubAdmin)
             {
-                var username = Context.User?.Identity?.Name ?? Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var username = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? Context.User?.Identity?.Name;
                 if (string.IsNullOrEmpty(username))
                 {
                     username = userUuid; // Fallback para entornos de desarrollo locales
