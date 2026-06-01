@@ -68,7 +68,7 @@ const Sidebar = ({
   const location = useLocation();
 
   const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-  const searchShortcut = isMac ? '⌘K' : 'Ctrl+K';
+  const searchShortcut = isMac ? '⌥K' : 'Alt+K';
 
   const [isResizing, setIsResizing] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -197,8 +197,7 @@ const Sidebar = ({
   const triggerCommandPalette = () => {
     const event = new KeyboardEvent('keydown', {
       key: 'k',
-      ctrlKey: true,
-      metaKey: true,
+      altKey: true,
       bubbles: true
     });
     window.dispatchEvent(event);
