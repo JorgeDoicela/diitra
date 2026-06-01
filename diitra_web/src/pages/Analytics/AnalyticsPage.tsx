@@ -346,10 +346,10 @@ const KPICard: React.FC<KPICardProps> = ({
     }[accentColor] || 'bg-surface-hover text-text-dim';
 
     return (
-        <div className="bento-card p-5 space-y-4 hover:border-border-hover relative overflow-hidden group select-none">
+        <div className="bento-card static p-5 space-y-4 relative overflow-hidden group select-none">
             <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black uppercase tracking-widest text-text-dim font-mono">{title}</span>
-                <span className={`p-2 rounded-lg transition-transform duration-300 group-hover:scale-105 ${iconBgClass}`}>
+                <span className={`p-2 rounded-lg transition-transform duration-300 ${iconBgClass}`}>
                     {icon}
                 </span>
             </div>
@@ -791,7 +791,7 @@ const AnalyticsPage = () => {
                                             </span>
                                         ) : (
                                             linesData.map((line, idx) => (
-                                                <div key={idx} className="space-y-1 p-2.5 bg-bg-deep/30 border border-border-thin rounded-xl hover:border-border-hover transition-all">
+                                                <div key={idx} className="space-y-1 p-2.5 bg-bg-deep/30 border border-border-thin rounded-xl transition-all">
                                                     <div className="flex justify-between items-start text-[9.5px] font-bold">
                                                         <span className="text-text-main max-w-[80%] truncate leading-normal" title={line.nombre}>
                                                             {line.nombre}
@@ -826,7 +826,7 @@ const AnalyticsPage = () => {
                                     <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                                         {stats?.actividadReciente && stats.actividadReciente.length > 0 ? (
                                             stats.actividadReciente.map((act, i) => (
-                                                <div key={act.uuid || i} className="flex items-center gap-3 p-2.5 bg-surface/50 border border-border-thin rounded-xl hover:border-border-hover transition-all">
+                                                <div key={act.uuid || i} className="flex items-center gap-3 p-2.5 bg-surface/50 border border-border-thin rounded-xl transition-all">
                                                     <span className={`p-2 rounded-lg shrink-0 ${
                                                         act.tipo === 'proyecto'
                                                             ? 'bg-brand-subtle text-brand'
@@ -940,11 +940,11 @@ const AnalyticsPage = () => {
                                         ALERTA: 'badge-vercel-error'
                                     }[ind.status] || 'badge-vercel-neutral';
 
-                                    const borderHover = {
-                                        CUMPLIDO: 'hover:border-success/30',
-                                        'EN PROCESO': 'hover:border-warning/30',
-                                        ALERTA: 'hover:border-error/30'
-                                    }[ind.status] || 'hover:border-border-hover';
+                                    const borderClass = {
+                                        CUMPLIDO: 'border-success/20',
+                                        'EN PROCESO': 'border-warning/20',
+                                        ALERTA: 'border-error/20'
+                                    }[ind.status] || 'border-border-thin';
 
                                     const barColor = {
                                         CUMPLIDO: 'bg-success',
@@ -953,7 +953,7 @@ const AnalyticsPage = () => {
                                     }[ind.status] || 'bg-text-dim';
 
                                     return (
-                                        <div key={i} className={`bento-card static p-5 space-y-4 hover:bg-surface-hover/20 transition-all ${borderHover}`}>
+                                        <div key={i} className={`bento-card static p-5 space-y-4 transition-all ${borderClass}`}>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[9px] font-black uppercase tracking-wider text-text-dim font-mono">
                                                     Estándar: {ind.code}
@@ -1009,7 +1009,7 @@ const AnalyticsPage = () => {
                                             </thead>
                                             <tbody className="divide-y divide-border-thin/30 font-medium">
                                                 {filteredProjects.map((proj, idx) => (
-                                                    <tr key={proj.uuid || idx} className="hover:bg-surface-hover/20 transition-colors">
+                                                    <tr key={proj.uuid || idx} className="transition-colors">
                                                         <td className="py-3 pr-3">
                                                             <div className="flex items-center gap-1.5 mb-0.5">
                                                                 <span className="text-[9.5px] font-black text-brand uppercase tracking-wider font-mono">

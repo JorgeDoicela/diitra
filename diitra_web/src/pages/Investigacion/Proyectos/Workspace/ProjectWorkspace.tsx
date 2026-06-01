@@ -735,7 +735,7 @@ export const ProjectWorkspace: React.FC = () => {
                 <div className="px-2 grid grid-cols-1 lg:grid-cols-3 gap-3">
                     <div className="lg:col-span-2 flex flex-col gap-3">
                         {/* ── Flujo Institucional CACES ── */}
-                        <div className="bento-card p-6 flex flex-col justify-between group">
+                        <div className="bento-card static p-6 flex flex-col justify-between group">
                             <div className="flex items-center gap-2.5 mb-1.5">
                                 <Settings size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
                                 <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Flujo Institucional CACES</h3>
@@ -861,7 +861,7 @@ export const ProjectWorkspace: React.FC = () => {
                         </div>
 
                         {/* ── Equipo de Trabajo ── */}
-                        <div className="bento-card p-6 flex flex-col justify-between group">
+                        <div className="bento-card static p-6 flex flex-col justify-between group">
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <Users size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
@@ -1163,7 +1163,7 @@ export const ProjectWorkspace: React.FC = () => {
                         </div>
 
                         {/* ── Productos de Investigación ── */}
-                        <div className="bento-card p-6 flex flex-col justify-between group">
+                        <div className="bento-card static p-6 flex flex-col justify-between group">
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <BookOpen size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
@@ -1226,7 +1226,7 @@ export const ProjectWorkspace: React.FC = () => {
                     {/* ── Sidebar (1 col) ── */}
                     <div className="flex flex-col gap-3">
                         {/* Firmas */}
-                        <div className="bento-card p-6 flex flex-col justify-between group relative overflow-hidden">
+                        <div className="bento-card static p-6 flex flex-col justify-between group relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-24 h-24 bg-brand/10 rounded-full blur-3xl -mr-8 -mt-8 pointer-events-none"></div>
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
@@ -1251,7 +1251,7 @@ export const ProjectWorkspace: React.FC = () => {
                         </div>
 
                         {/* Metadata */}
-                        <div className="bento-card p-6 flex flex-col justify-between group">
+                        <div className="bento-card static p-6 flex flex-col justify-between group">
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
@@ -1272,7 +1272,7 @@ export const ProjectWorkspace: React.FC = () => {
 
                         {/* ── Panel de Actividad Reciente (Desacoplado) ── */}
                         {resolvedProjectUuid && (
-                            <div className="bento-card flex flex-col overflow-hidden">
+                            <div className="bento-card static flex flex-col overflow-hidden">
                                 <WorkspaceActivityPanel
                                     projectUuid={resolvedProjectUuid}
                                 />

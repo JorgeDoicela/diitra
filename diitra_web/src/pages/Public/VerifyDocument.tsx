@@ -46,7 +46,7 @@ const VerifyDocument = () => {
 
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-up [animation-delay:100ms] px-2">
                 {!result && !loading && (
-                    <div className="lg:col-span-5 bento-card p-8 md:p-10 text-center">
+                    <div className="lg:col-span-5 bento-card static p-8 md:p-10 text-center">
                         <div className="flex justify-center mb-6 text-brand">
                             <ShieldCheck size={32} strokeWidth={1.5} />
                         </div>
@@ -77,7 +77,7 @@ const VerifyDocument = () => {
                 )}
 
                 {error && (
-                    <div className="lg:col-span-5 bento-card !bg-error-subtle !border-error/30 p-8 md:p-10 text-center animate-fade-in">
+                    <div className="lg:col-span-5 bento-card static !bg-error-subtle !border-error/30 p-8 md:p-10 text-center animate-fade-in">
                         <ShieldAlert size={32} className="text-error mx-auto mb-6" />
                         <h3 className="text-xl font-bold text-text-main mb-2">Validación Fallida</h3>
                         <p className="text-sm text-text-dim mb-8">{error}</p>
@@ -91,7 +91,7 @@ const VerifyDocument = () => {
                 )}
 
                 {result && (
-<div className="lg:col-span-5 bento-card p-8 md:p-10 overflow-hidden animate-fade-in">
+<div className="lg:col-span-5 bento-card static p-8 md:p-10 overflow-hidden animate-fade-in">
                         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-thin">
                             <ShieldCheck size={32} className="text-success shrink-0" />
                             <div>

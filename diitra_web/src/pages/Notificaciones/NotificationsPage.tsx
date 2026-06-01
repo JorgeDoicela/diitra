@@ -345,7 +345,7 @@ const NotificationsPage = () => {
                 />
 
                 {/* WebSocket Details Bento Card */}
-                <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
                     <div className="flex items-center justify-between mb-3">
                         <div className="section-label">
                             <span className={`dot ${isConnected ? 'dot-success dot-pulse' : 'dot-neutral'} w-2 h-2`} />
@@ -377,7 +377,7 @@ const NotificationsPage = () => {
 };
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (

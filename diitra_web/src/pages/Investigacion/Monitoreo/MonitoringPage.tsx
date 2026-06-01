@@ -173,22 +173,22 @@ export const MonitoringPage: React.FC = () => {
 
             {/* Ficha Rápida del Proyecto en Bento */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6 animate-fade-up">
-                <div className="bento-card p-5 space-y-1">
+                <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Director de Proyecto</span>
                     <p className="text-sm font-semibold text-text-main truncate">{projectDetail.directorProyecto || 'Jorge Doicela'}</p>
                 </div>
-                <div className="bento-card p-5 space-y-1">
+                <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Línea de Investigación</span>
                     <p className="text-sm font-semibold text-text-main truncate">{projectDetail.lineaInvestigacion || 'No especificada'}</p>
                 </div>
-                <div className="bento-card p-5 space-y-1">
+                <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Estado de Ciclo de Vida</span>
                     <span className="badge-vercel badge-vercel-violet text-[9px] font-bold w-fit mt-1">
                         <span className="dot dot-brand dot-pulse" />
                         En Ejecución (Fase C)
                     </span>
                 </div>
-                <div className="bento-card p-5 space-y-1">
+                <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Acreditación CACES</span>
                     <p className="text-xs font-semibold text-text-main flex items-center gap-1.5">
                         <CheckCircle2 size={12} className="text-success" />
@@ -201,7 +201,7 @@ export const MonitoringPage: React.FC = () => {
             <main className="animate-fade-up [animation-delay:100ms]">
                 {activeTab === 'cronograma' ? (
                     /* ── VISTA DEL CRONOGRAMA (DIAGRAMA DE GANTT INTERACTIVO) ── */
-                    <div className="bento-card p-6 md:p-8 space-y-6">
+                    <div className="bento-card static p-6 md:p-8 space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-border-thin pb-4 gap-3 sm:gap-0">
                             <div>
                                 <h3 className="text-lg font-bold text-text-main">Diagrama de Gantt Académico</h3>
@@ -280,14 +280,14 @@ export const MonitoringPage: React.FC = () => {
                     <div className="space-y-6">
                         {/* Tarjetas Bento de Métricas Financieras */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div className="bento-card p-6 flex items-center justify-between group">
+                            <div className="bento-card static p-6 flex items-center justify-between group">
                                 <div className="space-y-1">
                                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Presupuesto Asignado</span>
                                     <p className="text-2xl font-black text-text-main tracking-tight">${presupuestoPlanificado.toFixed(2)}</p>
                                 </div>
                                 <div className="icon-circle icon-circle-neutral"><Wallet size={20} /></div>
                             </div>
-                            <div className="bento-card p-6 flex items-center justify-between group">
+                            <div className="bento-card static p-6 flex items-center justify-between group">
                                 <div className="space-y-1">
                                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Ejecución Real (Gastado)</span>
                                     <p className="text-2xl font-black text-brand tracking-tight">${totalGastado.toFixed(2)}</p>
@@ -295,7 +295,7 @@ export const MonitoringPage: React.FC = () => {
                                 </div>
                                 <div className="icon-circle icon-circle-brand"><TrendingUp size={20} /></div>
                             </div>
-                            <div className="bento-card p-6 flex items-center justify-between group">
+                            <div className="bento-card static p-6 flex items-center justify-between group">
                                 <div className="space-y-1">
                                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Saldo Restante</span>
                                     <p className="text-2xl font-black text-text-main tracking-tight">${saldoRestante.toFixed(2)}</p>
@@ -305,7 +305,7 @@ export const MonitoringPage: React.FC = () => {
                         </div>
 
                         {/* Bento Card del Libro Diario */}
-                        <div className="bento-card p-6 md:p-8 space-y-6">
+                        <div className="bento-card static p-6 md:p-8 space-y-6">
                             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-border-thin pb-4 gap-3 sm:gap-0">
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main">Libro Diario de Gastos</h3>
