@@ -55,3 +55,8 @@ public class MagicResendRequest
 {
     public string Email { get; set; } = null!;
 }
+
+public class MagicConfirmRequest
+{
+    public string Token { get; set; } = null!;
+}

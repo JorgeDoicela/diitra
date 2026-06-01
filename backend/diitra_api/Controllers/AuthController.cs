@@ -92,7 +92,23 @@ public class AuthController : ControllerBase
         if (result == null)
             return Unauthorized(new { message = "El enlace mágico es inválido, ya fue utilizado o ha expirado." });
 
-        // Guardar el JWT en una cookie HttpOnly para compatibilidad local
+        // NOTA DE ALTA SEGURIDAD: Ya no escribimos la cookie de sesión automáticamente aquí
+        // para evitar iniciar sesión en navegadores/dispositivos usados únicamente como puente (ej. smartphones).
+        // La sesión se establecerá explícitamente en el navegador que elija "Ir a mis Revisiones".
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Confirma la sesión del magic link en el dispositivo actual estableciendo la cookie HttpOnly.
+    /// </summary>
+    [HttpPost("magic-confirm")]
+    [AllowAnonymous]
+    public IActionResult MagicConfirm([FromBody] MagicConfirmRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Token))
+            return BadRequest(new { message = "El token es obligatorio." });
+
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
@@ -100,9 +116,9 @@ public class AuthController : ControllerBase
             SameSite = SameSiteMode.Strict,
             Expires = DateTime.UtcNow.AddHours(8)
         };
-        Response.Cookies.Append("diitra_auth", result.Auth.Token, cookieOptions);
+        Response.Cookies.Append("diitra_auth", request.Token, cookieOptions);
 
-        return Ok(result);
+        return Ok(new { success = true });
     }
 
     /// <summary>

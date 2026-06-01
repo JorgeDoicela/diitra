@@ -19,7 +19,8 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (credentials: any) => Promise<User>;
-    magicLogin: (token: string) => Promise<{ user: User; pin: string | null }>;
+    magicLogin: (token: string) => Promise<{ user: User; pin: string | null; token: string }>;
+    confirmMagicLogin: (user: User, token: string) => Promise<void>;
     handoffLogin: (pin: string) => Promise<User>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
@@ -87,9 +88,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: auth.role_codes?.[0] || auth.role
         };
         
-        setUser(normalizedUser);
+        // Retornamos sin iniciar la sesión en este dispositivo de forma automática.
+        // La sesión se establecerá explícitamente cuando el usuario confirme el acceso.
+        return { user: normalizedUser, pin: pin || null, token: auth.token };
+    };
+
+    const confirmMagicLogin = async (user: User, token: string) => {
+        await api.post('/auth/magic-confirm', { token });
+        setUser(user);
         localStorage.setItem('diitra_logged_in', 'true');
-        return { user: normalizedUser, pin: pin || null };
     };
 
     const handoffLogin = async (pin: string) => {
@@ -158,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isLoading, 
             login, 
             magicLogin,
+            confirmMagicLogin,
             handoffLogin,
             logout, 
             refreshUser,

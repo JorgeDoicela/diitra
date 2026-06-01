@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'dark' | 'light'; toggleTheme?: () => void }) => {
-    const { magicLogin } = useAuth();
+    const { magicLogin, confirmMagicLogin } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
@@ -17,6 +17,11 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     const [error, setError] = useState<string | null>(null);
     const [pin, setPin] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    
+    // Estados temporales para Alta Seguridad (sesión no iniciada aún)
+    const [userData, setUserData] = useState<any>(null);
+    const [authToken, setAuthToken] = useState<string | null>(null);
+    const [confirming, setConfirming] = useState(false);
 
     const pinPageUrl = `${window.location.origin}/auth/pin`;
 
@@ -27,10 +32,27 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
         try {
             const result = await magicLogin(token);
             setPin(result.pin);
+            setUserData(result.user);
+            setAuthToken(result.token);
             setStatus('success');
         } catch (err: any) {
             setStatus('error');
             setError(err.response?.data?.message || 'El enlace mágico es inválido, ha caducado o ya fue utilizado.');
+        }
+    };
+
+    const handleConfirmDevice = async () => {
+        if (!userData || !authToken) return;
+        setConfirming(true);
+        try {
+            await confirmMagicLogin(userData, authToken);
+            navigate('/revisiones');
+        } catch (err: any) {
+            console.error('Error al confirmar la sesión en este dispositivo', err);
+            setError('No se pudo establecer la sesión segura en este dispositivo.');
+            setStatus('error');
+        } finally {
+            setConfirming(false);
         }
     };
 
@@ -148,13 +170,20 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 <p className="text-[10px] text-text-dim leading-relaxed">
                                     Haz clic para ingresar directamente al portal de revisiones en este navegador.
                                 </p>
-                                <Link
-                                    to="/revisiones"
-                                    className="btn-vercel-primary w-full h-10 flex items-center justify-center gap-2 group no-underline"
+                                <button
+                                    onClick={handleConfirmDevice}
+                                    disabled={confirming}
+                                    className="btn-vercel-primary w-full h-10 flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-50"
                                 >
-                                    <span>Ir a mis Revisiones</span>
-                                    <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-                                </Link>
+                                    {confirming ? (
+                                        <Loader2 size={14} className="animate-spin" />
+                                    ) : (
+                                        <>
+                                            <span>Ir a mis Revisiones</span>
+                                            <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+                                        </>
+                                    )}
+                                </button>
                             </div>
 
                             {/* Opción B: Transferir sesión a PC */}
