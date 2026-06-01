@@ -285,7 +285,20 @@ namespace diitra_infrastructure.Common.Notifications
         
         public async Task SubscribeUserAsync(int userId, string deviceToken, string plataforma)
         {
-            // Buscar si el token del navegador ya está registrado por CUALQUIER usuario en la base de datos
+            // 1. Limpieza de tokens obsoletos (dispositivos inactivos por más de 30 días)
+            // Esto asegura que la base de datos se mantenga limpia de forma autogestionada
+            var limiteInactividad = DateTime.UtcNow.AddDays(-30);
+            var tokensObsoletos = await _context.InvDispositivosTokens
+                .Where(t => t.UltimaSincronizacion < limiteInactividad)
+                .ToListAsync();
+
+            if (tokensObsoletos.Any())
+            {
+                _logger.LogInformation("Limpiando {Count} tokens de push obsoletos sin sincronización por más de 30 días", tokensObsoletos.Count);
+                _context.InvDispositivosTokens.RemoveRange(tokensObsoletos);
+            }
+
+            // 2. Registrar o reasignar el token del dispositivo activo
             var existing = await _context.InvDispositivosTokens
                 .FirstOrDefaultAsync(t => t.DeviceToken == deviceToken);
 
