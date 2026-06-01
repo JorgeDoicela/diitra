@@ -3,10 +3,11 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import {
     Loader2, ShieldCheck, Key, AlertTriangle,
-    ArrowRight, Laptop, Smartphone, Copy, Check
+    ArrowRight, Laptop, Smartphone, Copy, Check,
+    Sun, Moon
 } from 'lucide-react';
 
-const MagicLogin = ({ currentTheme = 'dark' }: { currentTheme?: 'dark' | 'light' }) => {
+const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'dark' | 'light'; toggleTheme?: () => void }) => {
     const { magicLogin } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -42,6 +43,16 @@ const MagicLogin = ({ currentTheme = 'dark' }: { currentTheme?: 'dark' | 'light'
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+            {/* Theme Toggle Button */}
+            {toggleTheme && (
+                <button
+                    onClick={toggleTheme}
+                    className="absolute top-6 right-6 p-2 rounded-lg border border-border-thin bg-surface/50 text-text-dim hover:text-text-main hover:border-border-hover transition-all duration-300 z-30 cursor-pointer"
+                    title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                >
+                    {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                </button>
+            )}
             <div className="w-full max-w-[460px] space-y-8 relative z-20 animate-fade-up">
                 {/* Logo & Header */}
                 <div className="flex flex-col items-center space-y-6">

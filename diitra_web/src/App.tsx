@@ -146,17 +146,17 @@ function App() {
                         } />
                         <Route path="/login" element={
                             <AuthenticatedRedirect>
-                                <Login currentTheme={theme} />
+                                <Login currentTheme={theme} toggleTheme={toggleTheme} />
                             </AuthenticatedRedirect>
                         } />
                         <Route path="/auth/magic-login" element={
-                            <MagicLogin currentTheme={theme} />
+                            <MagicLogin currentTheme={theme} toggleTheme={toggleTheme} />
                         } />
                         <Route path="/auth/pin" element={
-                            <PinHandoff currentTheme={theme} />
+                            <PinHandoff currentTheme={theme} toggleTheme={toggleTheme} />
                         } />
                         <Route path="/auth/magic-resend" element={
-                            <MagicResend currentTheme={theme} />
+                            <MagicResend currentTheme={theme} toggleTheme={toggleTheme} />
                         } />
 
                         {/* Internal Pages with Layout (Stable) */}
