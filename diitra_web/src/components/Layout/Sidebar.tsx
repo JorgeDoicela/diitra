@@ -114,6 +114,7 @@ const Sidebar = ({
     { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
     { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
     { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true, group: 1 },
+    { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], indent: true, group: 1 },
     
     // Grupo 2: Procesos y Analíticas
     { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 2 },
@@ -127,6 +128,7 @@ const Sidebar = ({
     { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
     { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
     { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 3 },
+    { name: 'Motor de Correos', icon: Mail, path: '/admin/emails', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
     { name: 'Configuración', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },
   ];
 

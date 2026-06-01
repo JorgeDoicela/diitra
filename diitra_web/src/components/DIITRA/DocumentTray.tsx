@@ -4,8 +4,6 @@ import {
     Plus, 
     ExternalLink, 
     Download, 
-    Clock, 
-    MoreVertical,
     Shield,
     AlertCircle,
     Fingerprint,
@@ -36,33 +34,6 @@ interface DocumentTrayProps {
     entityUuid: string;
     title?: string;
 }
-
-const getStatusBadge = (state: number) => {
-    switch (state) {
-        case 3: return "badge-vercel-success";
-        case 1: return "badge-vercel-info";
-        default: return "badge-vercel-neutral";
-    }
-};
-
-const getStatusDot = (state: number) => {
-    switch (state) {
-        case 3: return "dot-success";
-        case 1: return "dot-info";
-        default: return "dot-neutral";
-    }
-};
-
-const getStatusLabel = (state: number) => {
-    switch (state) {
-        case 1: return "Borrador";
-        case 2: return "En Revisión";
-        case 3: return "Firmado";
-        case 4: return "Archivado";
-        case 5: return "Anulado";
-        default: return "Desconocido";
-    }
-};
 
 const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expediente Documental" }) => {
     const [documents, setDocuments] = useState<DocumentInstance[]>([]);

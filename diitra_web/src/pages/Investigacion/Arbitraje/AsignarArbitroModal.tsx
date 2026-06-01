@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { X, Search, UserCheck, AlertCircle, Loader2, CalendarDays } from 'lucide-react';
+import { X, UserCheck, AlertCircle, Loader2, CalendarDays } from 'lucide-react';
 import { searchRevisores, asignarArbitro } from '../../../services/peerReviewService';
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
 import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
