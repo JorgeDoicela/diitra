@@ -196,7 +196,10 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                     </div>
                                                     <div className="truncate">
                                                         <p className="text-xs font-semibold leading-tight text-text-main">{formatNombre(rev.nombre_completo)}</p>
-                                                        <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">{rev.es_externo && rev.institucion ? `${formatNombre(rev.institucion)} — ` : ''}{rev.email}</p>
+                                                        <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">
+                                                            {rev.es_externo && rev.institucion ? `${formatNombre(rev.institucion)} — ` : rev.carrera ? `${rev.carrera} — ` : ''}
+                                                            {rev.email}
+                                                        </p>
                                                     </div>
                                                 </div>
                                                 <div className="text-right shrink-0 flex items-center gap-1.5">
@@ -251,7 +254,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                         </span>
                                                     </div>
                                                     <span className="text-[10px] text-text-dim block truncate">
-                                                        {rev.es_externo ? `Externo CACES · ${rev.email}` : `Par Interno · ${rev.email}`}
+                                                        {rev.es_externo ? `Externo CACES · ${rev.email}` : `${rev.carrera || 'Par Interno'} · ${rev.email}`}
                                                     </span>
                                                 </div>
                                                 <button

@@ -356,14 +356,29 @@ namespace diitra_api.Controllers
                     });
 
                 var profsList = await profesoresSelect.ToListAsync();
-                profs = profsList.Select(p => new {
-                    p.cedula,
-                    nombre = p.nombre.Replace("  ", " ").Trim(),
-                    p.email,
-                    p.telefono,
-                    p.nivelAcademico,
-                    p.rol,
-                    p.tipo
+                var ids = profsList.Select(p => p.cedula).ToList();
+                var profCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Include(pc => pc.IdCarreraNavigation)
+                    .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
+                    .ToListAsync();
+
+                profs = profsList.Select(p => {
+                    var linkedCareers = profCareers
+                        .Where(pc => pc.IdProfesor.Trim() == p.cedula && pc.IdCarreraNavigation != null)
+                        .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                        .ToList();
+                    var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+
+                    return new {
+                        p.cedula,
+                        nombre = p.nombre.Replace("  ", " ").Trim(),
+                        p.email,
+                        p.telefono,
+                        p.nivelAcademico,
+                        p.rol,
+                        p.tipo,
+                        carrera = carreraNom
+                    };
                 }).Cast<object>().ToList();
             }
 
@@ -413,7 +428,8 @@ namespace diitra_api.Controllers
                         a.telefono,
                         a.nivelAcademico,
                         a.rol,
-                        a.tipo
+                        a.tipo,
+                        carrera = "Estudiante"
                     }).Cast<object>().ToList();
                 }
             }

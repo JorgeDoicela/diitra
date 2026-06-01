@@ -102,6 +102,7 @@ export interface RevisorDisponibleDto {
     institucion?: string;
     es_externo: boolean;
     revisiones_activas: number;
+    carrera?: string;
 }
 
 export interface AsignarArbitroPayload {

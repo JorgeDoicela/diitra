@@ -940,7 +940,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             >
                                                                 <div>
                                                                     <p className="font-bold text-text-main text-xs">{su.nombre}</p>
-                                                                    <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
+                                                                    <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula} {su.carrera && `| ${su.carrera}`}</p>
                                                                 </div>
                                                                 <span className={`badge-vercel text-[8px] font-bold ${
                                                                     su.tipo === 'profesor' ? 'badge-vercel-info' : 'badge-vercel-success'

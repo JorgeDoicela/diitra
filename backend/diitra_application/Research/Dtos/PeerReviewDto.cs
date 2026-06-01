@@ -140,6 +140,7 @@ public class RevisorDisponibleDto
     public string? Institucion { get; set; }
     public bool EsExterno { get; set; }
     public int RevisionesActivas { get; set; } // Carga de trabajo actual
+    public string? Carrera { get; set; }
 }
 
 // ─────────────────────────────────────────────────────────────

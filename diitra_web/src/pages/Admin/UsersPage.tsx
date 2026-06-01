@@ -314,6 +314,12 @@ const UsersPage = () => {
                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
                                                     {u.tipo_dedicacion || 'Sin contrato activo'}
                                                 </p>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="badge-vercel badge-vercel-neutral">
+                                                        <GraduationCap size={10} />
+                                                        {u.carrera || 'Sin Carrera'}
+                                                    </span>
+                                                </div>
                                             </div>
                                         ) : u.type === 'ESTUDIANTE' ? (
                                             <div className="space-y-1.5">
@@ -612,6 +618,13 @@ const UsersPage = () => {
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Dedicación</p>
                                             <p className="text-sm font-bold text-text-main">{detailUser.tipo_dedicacion || 'Sin contrato'}</p>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="section-label text-text-dim mb-1">Carrera / Tecnología</p>
+                                            <p className="text-sm font-bold text-text-main flex items-center gap-1.5">
+                                                <GraduationCap size={14} className="text-text-dim" />
+                                                {detailUser.carrera || 'Sin carrera asignada'}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

@@ -218,7 +218,6 @@ public partial class DiitraContext : DbContext
             // Ignorar los que definitivamente no usaremos o sospechosos de relaciones rotas
             entity.Ignore(e => e.IdDiscapacidadNavigation);
             entity.Ignore(e => e.IdEtniaNavigation);
-            entity.Ignore(e => e.ProfesoresCarrerasPeriodos);
             entity.Ignore(e => e.ProfesoresDedicacions);
             entity.Ignore(e => e.TitulosProfesores);
         });
@@ -301,7 +300,6 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.PeriodoPlanificacion).HasColumnType("tinyint(4)").HasColumnName("periodoPlanificacion");
 
             entity.Ignore(e => e.Matriculas);
-            entity.Ignore(e => e.ProfesoresCarrerasPeriodos);
             entity.Ignore(e => e.ProfesoresDedicacions);
         });
 
@@ -325,7 +323,6 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.EsInstituto).HasColumnName("esInstituto");
 
             entity.Ignore(e => e.Espacios);
-            entity.Ignore(e => e.ProfesoresCarrerasPeriodos);
         });
 
         modelBuilder.Entity<Departamento>(entity =>
@@ -621,9 +618,24 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.IdPeriodo).HasMaxLength(7).HasColumnName("idPeriodo");
             entity.Property(e => e.IdProfesor).HasMaxLength(14).HasColumnName("idProfesor");
             entity.Property(e => e.IdCarrera).HasColumnType("int(11)").HasColumnName("idCarrera");
-            entity.Ignore(e => e.IdCarreraNavigation);
-            entity.Ignore(e => e.IdPeriodoNavigation);
-            entity.Ignore(e => e.IdProfesorNavigation);
+
+            entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
+            entity.Property(e => e.SonTodas).HasColumnType("tinyint(4)").HasColumnName("sonTodas").HasDefaultValueSql("'0'");
+
+            entity.HasOne(d => d.IdCarreraNavigation).WithMany(p => p.ProfesoresCarrerasPeriodos)
+                .HasForeignKey(d => d.IdCarrera)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_pcp_carreras");
+
+            entity.HasOne(d => d.IdPeriodoNavigation).WithMany(p => p.ProfesoresCarrerasPeriodos)
+                .HasForeignKey(d => d.IdPeriodo)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_pcp_periodos");
+
+            entity.HasOne(d => d.IdProfesorNavigation).WithMany(p => p.ProfesoresCarrerasPeriodos)
+                .HasForeignKey(d => d.IdProfesor)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("fk_pcp_profesores");
         });
 
         modelBuilder.Entity<AlumnosCarrera>(entity =>

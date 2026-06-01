@@ -244,10 +244,9 @@ public class AdminService : IAdminService
                 .Where(c => ids.Contains(c.IdProfesor) && c.EsActivo == 1)
                 .ToListAsync();
 
-            var careers = await _context.Carreras.ToListAsync();
-
-            // Obtener carreras vinculadas a los docentes en este periodo
+            // Obtener carreras vinculadas a los docentes en este periodo cargando su navegación
             var profCareers = await _context.ProfesoresCarrerasPeriodos
+                .Include(pc => pc.IdCarreraNavigation)
                 .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
                 .ToListAsync();
 
@@ -269,9 +268,11 @@ public class AdminService : IAdminService
                 var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
-                // Buscar carrera vinculada al docente en este periodo
-                var profCareerIds = profCareers.Where(pc => pc.IdProfesor.Trim() == pId).Select(pc => pc.IdCarrera).ToList();
-                var linkedCareers = careers.Where(c => profCareerIds.Contains(c.IdCarrera)).Select(c => c.Carrera1).ToList();
+                // Buscar carrera vinculada al docente en este periodo usando la navegación precargada
+                var linkedCareers = profCareers
+                    .Where(pc => pc.IdProfesor.Trim() == pId && pc.IdCarreraNavigation != null)
+                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .ToList();
                 var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
 
                 return new UserManagementDto

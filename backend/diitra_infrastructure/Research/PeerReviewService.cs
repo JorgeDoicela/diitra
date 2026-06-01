@@ -605,6 +605,12 @@ public class PeerReviewService : IPeerReviewService
             // Filtrar autores del proyecto
             profesores = profesores.Where(p => !autoresSigafi.Contains(p.IdProfesor.Trim().ToLower())).ToList();
 
+            var docIds = profesores.Select(p => p.IdProfesor.Trim()).ToList();
+            var profCareers = await _context.ProfesoresCarrerasPeriodos
+                .Include(pc => pc.IdCarreraNavigation)
+                .Where(pc => docIds.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
+                .ToListAsync();
+
             foreach (var p in profesores)
             {
                 var pId = p.IdProfesor.Trim();
@@ -634,6 +640,12 @@ public class PeerReviewService : IPeerReviewService
                 var revisionesActivas = await _context.Set<InvRevisionesPares>()
                     .CountAsync(r => r.IdRevisor == user.IdUsuario && r.Estado == "Pendiente");
 
+                var linkedCareers = profCareers
+                    .Where(pc => pc.IdProfesor.Trim() == pId && pc.IdCarreraNavigation != null)
+                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .ToList();
+                var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+
                 result.Add(new RevisorDisponibleDto
                 {
                     IdUsuario = user.IdUsuario,
@@ -643,7 +655,8 @@ public class PeerReviewService : IPeerReviewService
                     GradoAcademicoMaximo = meta?.GradoAcademicoMaximo,
                     OrcidId = meta?.OrcidId,
                     EsExterno = false,
-                    RevisionesActivas = revisionesActivas
+                    RevisionesActivas = revisionesActivas,
+                    Carrera = carreraNom
                 });
             }
         }
