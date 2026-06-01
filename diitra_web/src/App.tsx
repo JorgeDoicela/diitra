@@ -132,8 +132,8 @@ function App() {
 
     return (
         <AuthProvider>
-            <NotificationsProvider>
-                <BrowserRouter>
+            <BrowserRouter>
+                <NotificationsProvider>
                     <Routes>
                         {/* Public Landing Page */}
                         <Route path="/" element={
@@ -200,8 +200,8 @@ function App() {
                         {/* Fallback */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
-                </BrowserRouter>
-            </NotificationsProvider>
+                </NotificationsProvider>
+            </BrowserRouter>
         </AuthProvider>
     );
 }
