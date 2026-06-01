@@ -339,17 +339,17 @@ const KPICard: React.FC<KPICardProps> = ({
     }[accentColor] || 'badge-vercel-neutral';
 
     const iconBgClass = {
-        brand: 'bg-brand-subtle text-brand',
-        success: 'bg-success-subtle text-success',
-        warning: 'bg-warning-subtle text-warning',
-        violet: 'bg-purple-500/10 text-purple-500'
-    }[accentColor] || 'bg-surface-hover text-text-dim';
+        brand: 'bg-brand-subtle text-brand border border-brand/10',
+        success: 'bg-success-subtle text-success border border-success/10',
+        warning: 'bg-warning-subtle text-warning border border-warning/10',
+        violet: 'bg-purple-500/10 text-purple-500 border border-purple-500/15'
+    }[accentColor] || 'bg-surface-hover text-text-dim border border-border-thin';
 
     return (
-        <div className="bento-card static p-5 space-y-4 relative overflow-hidden group select-none">
+        <div className="bento-card static p-5 space-y-4 relative overflow-hidden group select-none hover:-translate-y-1 hover:shadow-md hover:shadow-brand/5 hover:border-brand/35 transition-all duration-300">
             <div className="flex items-center justify-between">
                 <span className="text-[9px] font-black uppercase tracking-widest text-text-dim font-mono">{title}</span>
-                <span className={`p-2 rounded-lg transition-transform duration-300 ${iconBgClass}`}>
+                <span className={`p-2 rounded-lg transition-all duration-300 group-hover:scale-105 ${iconBgClass}`}>
                     {icon}
                 </span>
             </div>
@@ -369,10 +369,10 @@ const KPICard: React.FC<KPICardProps> = ({
             </div>
 
             {footerItems && footerItems.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 border-t border-border-thin pt-3 mt-2 text-[10px] font-bold">
+                <div className="grid grid-cols-2 gap-2 border-t border-border-thin/60 pt-3.5 mt-2 text-[10px] font-bold">
                     {footerItems.map((item, idx) => (
                         <div key={idx}>
-                            <span className="text-text-dim block text-[8px] uppercase tracking-wide">{item.label}</span>
+                            <span className="text-text-dim block text-[8px] uppercase tracking-wider font-mono">{item.label}</span>
                             <span className={`font-mono ${item.valueColorClass || 'text-text-main'}`}>{item.value}</span>
                         </div>
                     ))}
@@ -406,7 +406,8 @@ const DonutChart: React.FC<DonutChartProps> = ({
                     r="38"
                     fill="transparent"
                     stroke="var(--border)"
-                    strokeWidth="8"
+                    strokeWidth="5"
+                    className="opacity-45"
                 />
                 {elements.map((item, idx) => {
                     const pct = (item.cantidad / (total || 1)) * 100;
@@ -424,9 +425,10 @@ const DonutChart: React.FC<DonutChartProps> = ({
                             r="38"
                             fill="transparent"
                             stroke={item.color}
-                            strokeWidth={isSelected ? "11" : "8"}
+                            strokeWidth={isSelected ? "8" : "5"}
                             strokeDasharray={strokeDash}
                             strokeDashoffset={100 - currentOffset}
+                            strokeLinecap="round"
                             className="transition-all duration-300 cursor-pointer"
                             onMouseEnter={() => setSelectedSegment(item.estado)}
                             onMouseLeave={() => setSelectedSegment(null)}
@@ -439,19 +441,19 @@ const DonutChart: React.FC<DonutChartProps> = ({
             <div className="absolute flex flex-col items-center justify-center text-center">
                 {selectedSegment ? (
                     <>
-                        <span className="text-[8px] font-black text-text-dim uppercase tracking-wider">
+                        <span className="text-[8px] font-black text-text-dim uppercase tracking-wider font-mono">
                             {selectedSegment}
                         </span>
-                        <span className="text-xl font-black text-text-main font-mono">
+                        <span className="text-2xl font-black text-text-main font-mono">
                             {elements.find(i => i.estado === selectedSegment)?.cantidad}
                         </span>
                     </>
                 ) : (
                     <>
-                        <span className="text-[8px] font-black text-text-dim uppercase tracking-widest">
+                        <span className="text-[8px] font-black text-text-dim uppercase tracking-widest font-mono">
                             TOTAL
                         </span>
-                        <span className="text-2xl font-black text-text-main font-mono">
+                        <span className="text-3xl font-black text-text-main font-mono leading-none">
                             {total}
                         </span>
                     </>
@@ -751,7 +753,7 @@ const AnalyticsPage = () => {
                     {activeTab === 'general' && (
                         <>
                             {/* Bento Grid: KPIs Principales */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-up">
                                 <KPICard
                                     title="Proyectos de Investigación"
                                     value={filteredProjects.length}
@@ -772,7 +774,7 @@ const AnalyticsPage = () => {
                                     subText="Entregables vinculados"
                                     badgeText={`Total Periodo: ${stats?.totalProductosPeriodo || 0}`}
                                     footerItems={[
-                                        { label: 'Artículos Indexados', value: stats?.articulosIndexados || 0, valueColorClass: 'text-success' },
+                                        { label: 'Artículos Indexados', value: stats?.articulosIndexados || 0, valueColorClass: 'text-success font-semibold' },
                                         { label: 'Prototipos', value: stats?.prototipos || 0 }
                                     ]}
                                 />
@@ -783,7 +785,7 @@ const AnalyticsPage = () => {
                                     accentColor="warning"
                                     subText={`${budgetTotal > 0 ? Math.round((budgetExecuted / budgetTotal) * 100) : 0}% de ejecución`}
                                     footerItems={[
-                                        { label: 'Ejecutado', value: formatCurrency(budgetExecuted), valueColorClass: 'text-warning' },
+                                        { label: 'Ejecutado', value: formatCurrency(budgetExecuted), valueColorClass: 'text-warning font-semibold' },
                                         { label: 'Restante', value: formatCurrency(budgetTotal - budgetExecuted) }
                                     ]}
                                 />
@@ -801,15 +803,15 @@ const AnalyticsPage = () => {
                             </div>
 
                             {/* Gráficos Consolidados */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up [animation-delay:100ms]">
                                 {/* Estado Donut Chart */}
-                                <div className="bento-card static p-5 flex flex-col justify-between h-[360px]">
+                                <div className="bento-card static p-5 flex flex-col justify-between h-[360px] border border-border-thin hover:border-brand/20 transition-all duration-300">
                                     <div>
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-[9px] font-black uppercase tracking-widest text-text-dim">Estado de Proyectos</h4>
+                                            <h4 className="text-[9px] font-black uppercase tracking-widest text-text-dim font-mono">Estado de Proyectos</h4>
                                             <PieChart size={13} className="text-brand" />
                                         </div>
-                                        <p className="text-xs text-text-dim mt-1 font-medium">Estado del portafolio actual</p>
+                                        <p className="text-xs text-text-dim mt-1 font-medium font-sans">Estado del portafolio actual</p>
                                     </div>
 
                                     <DonutChart
@@ -820,7 +822,7 @@ const AnalyticsPage = () => {
                                     />
 
                                     {/* Leyenda */}
-                                    <div className="grid grid-cols-2 gap-1 text-[9px] font-bold border-t border-border-thin pt-3.5">
+                                    <div className="grid grid-cols-2 gap-1 text-[9px] font-bold border-t border-border-thin/60 pt-3.5">
                                         {proyectosPorEstado.map((item, idx) => (
                                             <div
                                                 key={idx}
@@ -830,7 +832,7 @@ const AnalyticsPage = () => {
                                                 onMouseEnter={() => setSelectedChartSegment(item.estado)}
                                                 onMouseLeave={() => setSelectedChartSegment(null)}
                                             >
-                                                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
                                                 <span className="text-text-dim truncate">{item.estado}</span>
                                                 <span className="ml-auto text-text-main font-mono">{item.cantidad}</span>
                                             </div>
@@ -839,81 +841,96 @@ const AnalyticsPage = () => {
                                 </div>
 
                                 {/* Líneas de Investigación */}
-                                <div className="bento-card static p-5 lg:col-span-2 flex flex-col justify-between h-[360px]">
+                                <div className="bento-card static p-5 lg:col-span-2 flex flex-col justify-between h-[360px] border border-border-thin hover:border-brand/20 transition-all duration-300">
                                     <div>
                                         <div className="flex items-center justify-between">
-                                            <h4 className="text-[9px] font-black uppercase tracking-widest text-text-dim">
+                                            <h4 className="text-[9px] font-black uppercase tracking-widest text-text-dim font-mono">
                                                 Distribución por Línea de Investigación
                                             </h4>
                                             <TrendingUp size={13} className="text-emerald-500" />
                                         </div>
-                                        <p className="text-xs text-text-dim mt-1 font-medium">Proyectos asociados a líneas oficiales del instituto</p>
+                                        <p className="text-xs text-text-dim mt-1 font-medium font-sans">Proyectos asociados a líneas oficiales del instituto</p>
                                     </div>
 
-                                    <div className="space-y-2.5 flex-1 justify-center flex flex-col overflow-y-auto custom-scrollbar pr-1">
+                                    <div className="space-y-2.5 flex-1 justify-center flex flex-col overflow-y-auto custom-scrollbar pr-1 mt-4">
                                         {linesData.length === 0 ? (
-                                            <span className="text-text-dim text-[10px] text-center font-bold block py-10 uppercase">
+                                            <span className="text-text-dim text-[10px] text-center font-bold block py-10 uppercase font-mono">
                                                 Sin líneas vinculadas
                                             </span>
                                         ) : (
-                                            linesData.map((line, idx) => (
-                                                <div key={idx} className="space-y-1 p-2.5 bg-bg-deep/30 border border-border-thin rounded-xl transition-all">
-                                                    <div className="flex justify-between items-start text-[9.5px] font-bold">
-                                                        <span className="text-text-main max-w-[80%] truncate leading-normal" title={line.nombre}>
-                                                            {line.nombre}
-                                                        </span>
-                                                        <div className="text-right shrink-0">
-                                                            <span className="text-text-main font-mono block">{line.proyectos} Proyectos</span>
-                                                            <span className="text-text-dim font-mono text-[8px] block">{formatCurrency(line.pres)}</span>
+                                            linesData.map((line, idx) => {
+                                                const lineIcons = [
+                                                    <BookOpen size={11} />,
+                                                    <Cpu size={11} />,
+                                                    <TrendingUp size={11} />,
+                                                    <Users size={11} />,
+                                                    <DollarSign size={11} />,
+                                                    <Globe size={11} />
+                                                ];
+                                                return (
+                                                    <div key={idx} className="space-y-2 p-3 bg-surface/30 hover:bg-surface/50 border border-border-thin/60 hover:border-border-thin rounded-xl transition-all duration-300 group">
+                                                        <div className="flex justify-between items-start gap-3 text-[10px] font-bold">
+                                                            <div className="flex items-center gap-2 min-w-0">
+                                                                <span className="p-1.5 rounded-md bg-bg-deep border border-border-thin text-text-dim group-hover:text-brand group-hover:border-brand/30 transition-all duration-300 shrink-0">
+                                                                    {lineIcons[idx % lineIcons.length]}
+                                                                </span>
+                                                                <span className="text-text-main truncate leading-normal" title={line.nombre}>
+                                                                    {line.nombre}
+                                                                </span>
+                                                            </div>
+                                                            <div className="text-right shrink-0">
+                                                                <span className="text-text-main font-mono block">{line.proyectos} {line.proyectos === 1 ? 'Proyecto' : 'Proyectos'}</span>
+                                                                <span className="text-text-dim font-mono text-[8px] block">{formatCurrency(line.pres)}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="w-full bg-border-thin/35 h-1 rounded-full overflow-hidden">
+                                                            <div
+                                                                className={`h-full transition-all duration-1000 rounded-full ${line.colorClass}`}
+                                                                style={{ width: `${line.pct}%` }}
+                                                            />
                                                         </div>
                                                     </div>
-                                                    <div className="w-full bg-border-thin/35 h-1.5 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full transition-all duration-700 rounded-full ${line.colorClass}`}
-                                                            style={{ width: `${line.pct}%` }}
-                                                        ></div>
-                                                    </div>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         )}
                                     </div>
                                 </div>
                             </div>
 
                             {/* Bitácora y Estado del Repositorio */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-up [animation-delay:200ms]">
                                 {/* Actividad */}
-                                <div className="bento-card static p-5 lg:col-span-2 space-y-4">
+                                <div className="bento-card static p-5 lg:col-span-2 space-y-4 border border-border-thin hover:border-brand/20 transition-all duration-300">
                                     <div>
-                                        <h4 className="text-[9px] font-black uppercase tracking-widest text-text-dim">Bitácora Técnica de Investigación</h4>
-                                        <p className="text-xs text-text-dim mt-1 font-medium">Historial reciente de auditoría de proyectos y entregables</p>
+                                        <h4 className="text-[9px] font-black uppercase tracking-widest text-text-dim font-mono">Bitácora Técnica de Investigación</h4>
+                                        <p className="text-xs text-text-dim mt-1 font-medium font-sans">Historial reciente de auditoría de proyectos y entregables</p>
                                     </div>
 
                                     <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                                         {stats?.actividadReciente && stats.actividadReciente.length > 0 ? (
                                             stats.actividadReciente.map((act, i) => (
-                                                <div key={act.uuid || i} className="flex items-center gap-3 p-2.5 bg-surface/50 border border-border-thin rounded-xl transition-all">
-                                                    <span className={`p-2 rounded-lg shrink-0 ${
+                                                <div key={act.uuid || i} className="flex items-center gap-3.5 p-3 bg-surface/30 hover:bg-surface/60 border border-border-thin/50 hover:border-border-thin rounded-xl transition-all duration-300 select-none group">
+                                                    <span className={`p-2 rounded-lg shrink-0 border transition-all duration-300 ${
                                                         act.tipo === 'proyecto'
-                                                            ? 'bg-brand-subtle text-brand'
+                                                            ? 'bg-brand-subtle text-brand border-brand/10 group-hover:border-brand/35'
                                                             : act.tipo === 'producto'
-                                                                ? 'bg-success-subtle text-success'
-                                                                : 'bg-warning-subtle text-warning'
+                                                                ? 'bg-success-subtle text-success border-success/10 group-hover:border-success/35'
+                                                                : 'bg-warning-subtle text-warning border-warning/10 group-hover:border-warning/35'
                                                     }`}>
                                                         {act.tipo === 'proyecto' ? <Cpu size={13} /> : act.tipo === 'producto' ? <BookOpen size={13} /> : <FileText size={13} />}
                                                     </span>
-                                                    <div className="min-w-0 flex-1">
-                                                        <p className="text-xs font-semibold text-text-main truncate leading-relaxed">
+                                                    <div className="min-w-0 flex-1 space-y-1">
+                                                        <p className="text-[11.5px] font-semibold text-text-main group-hover:text-brand transition-colors truncate leading-relaxed">
                                                             {act.descripcion}
                                                         </p>
-                                                        <div className="flex items-center gap-2 mt-0.5 text-[8.5px] text-text-dim font-bold font-mono">
-                                                            <span className="uppercase">{act.tipo}</span>
+                                                        <div className="flex items-center gap-2 text-[8.5px] text-text-dim font-bold font-mono">
+                                                            <span className="uppercase tracking-wider">{act.tipo}</span>
                                                             <span>•</span>
                                                             <span>{formatDate(act.fecha)}</span>
                                                             {act.estado && (
                                                                 <>
                                                                     <span>•</span>
-                                                                    <span className={`px-1.5 py-0.5 rounded-full text-[7.5px] ${
+                                                                    <span className={`px-2 py-0.5 rounded-full text-[7.5px] font-extrabold ${
                                                                         act.estado === 'Aprobado' || act.estado === 'En Ejecución'
                                                                             ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                                                             : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
@@ -927,53 +944,62 @@ const AnalyticsPage = () => {
                                                 </div>
                                             ))
                                         ) : (
-                                            <span className="text-[10px] text-text-dim uppercase font-bold block text-center py-10">
-                                                Sin actividad registrada
-                                            </span>
+                                            <div className="flex flex-col items-center justify-center py-14 px-6 border border-dashed border-border-thin/70 rounded-2xl bg-bg-deep/10 text-center select-none space-y-3.5 animate-fade-up">
+                                                <div className="relative flex items-center justify-center w-11 h-11 rounded-full bg-surface border border-border-thin text-text-dim/60 shadow-sm">
+                                                    <Clock size={16} className="text-brand/80" />
+                                                    <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-brand animate-pulse shadow-[0_0_6px_rgba(var(--brand),0.5)]" />
+                                                </div>
+                                                <div className="space-y-1 max-w-xs">
+                                                    <h5 className="text-[10.5px] font-black uppercase text-text-main tracking-wider">Bitácora Técnica Inactiva</h5>
+                                                    <p className="text-[10px] text-text-dim leading-relaxed font-medium">
+                                                        No se registran firmas ni cambios de estado en este periodo. Las acciones inmutables del portafolio se sincronizan aquí en tiempo real.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
 
                                 {/* Integraciones */}
-                                <div className="bento-card static p-5 lg:col-span-1 flex flex-col justify-between gap-4 bg-gradient-to-b from-surface to-brand/5">
-                                    <div className="space-y-1.5">
+                                <div className="bento-card static p-5 lg:col-span-1 flex flex-col justify-between gap-4 bg-gradient-to-b from-surface to-brand/5 border border-border-thin/60 hover:border-brand/20 transition-all duration-300">
+                                    <div className="space-y-2">
                                         <div className="flex items-center gap-1.5 text-brand">
-                                            <Globe size={14} />
-                                            <h4 className="text-[9px] font-black uppercase tracking-widest">Servicios Conectados</h4>
+                                            <Globe size={14} className="animate-pulse" />
+                                            <h4 className="text-[9px] font-black uppercase tracking-widest font-mono">Servicios Conectados</h4>
                                         </div>
-                                        <h3 className="text-sm font-black text-text-main">Preservación Digital DSpace</h3>
+                                        <h3 className="text-sm font-black text-text-main font-sans tracking-tight">Preservación Digital DSpace</h3>
                                         <p className="text-xs text-text-dim leading-relaxed font-medium">
                                             Sincronización automatizada de metadatos firmados con el repositorio abierto del instituto. Se garantiza el resguardo digital permanente bajo las directrices del CACES.
                                         </p>
                                     </div>
 
-                                    <div className="p-3.5 bg-bg-deep/80 border border-border-thin rounded-2xl space-y-2 text-[9.5px] font-bold font-mono">
+                                    <div className="p-3.5 bg-bg-deep/60 border border-border-thin/80 rounded-2xl space-y-3 text-[9.5px] font-bold font-mono">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-text-dim uppercase">Servidor DSpace</span>
-                                            <span className="text-success flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                            <span className="text-text-dim uppercase tracking-wider text-[8px]">Servidor DSpace</span>
+                                            <span className="text-success flex items-center gap-1.5 font-bold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse" />
                                                 ONLINE
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-text-dim uppercase">SSO Institucional</span>
-                                            <span className="text-success flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                                            <span className="text-text-dim uppercase tracking-wider text-[8px]">SSO Autenticación</span>
+                                            <span className="text-success flex items-center gap-1.5 font-bold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse" />
                                                 ONLINE
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-text-dim uppercase">Firma Avanzada</span>
-                                            <span className="text-success flex items-center gap-1">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-success" />
-                                                READY
+                                            <span className="text-text-dim uppercase tracking-wider text-[8px]">Integridad de Firma</span>
+                                            <span className="text-success flex items-center gap-1.5 font-bold">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
+                                                SECURE
                                             </span>
                                         </div>
                                     </div>
 
                                     <button
                                         onClick={() => alert("Redireccionando al portal del Repositorio Abierto del IST Traversari...")}
-                                        className="btn-vercel-secondary w-full flex items-center justify-between group text-[9.5px]"
+                                        className="btn-vercel-secondary w-full flex items-center justify-between group text-[9.5px] !py-2.5"
                                         id="dspace-redirect-btn"
                                     >
                                         <span>Ver Repositorio Abierto</span>
@@ -986,7 +1012,6 @@ const AnalyticsPage = () => {
 
                     {activeTab === 'caces' && (
                         <div className="space-y-6 animate-fade-up">
-                            {/* Alerta CACES */}
                             <div className="p-4 bg-brand/5 border border-brand/20 rounded-2xl flex items-start gap-3">
                                 <AlertCircle size={16} className="text-brand mt-0.5 shrink-0" />
                                 <div className="space-y-1">
