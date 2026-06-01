@@ -516,12 +516,20 @@ namespace diitra_infrastructure.Research
             // ── Métricas Globales (siempre las calculamos para Admin/Director) ──
             var proyectosQuery = _context.InvProyectos.AsQueryable();
 
-            stats.TotalProyectos = await proyectosQuery.CountAsync();
-            stats.ProyectosBorrador = await proyectosQuery.CountAsync(p => p.Estado == "Borrador");
-            stats.ProyectosEnRevision = await proyectosQuery.CountAsync(p => p.Estado == "En Revisión" || p.Estado == "Enviado");
-            stats.ProyectosAprobados = await proyectosQuery.CountAsync(p => p.Estado == "Aprobado");
-            stats.ProyectosEnEjecucion = await proyectosQuery.CountAsync(p => p.Estado == "En Ejecución");
-            stats.ProyectosFinalizados = await proyectosQuery.CountAsync(p => p.Estado == "Finalizado");
+            // Optimización: Un único GroupBy para obtener el conteo de todos los estados en una sola consulta
+            var conteoEstados = await proyectosQuery
+                .GroupBy(p => p.Estado)
+                .Select(g => new { Estado = g.Key ?? "Borrador", Cantidad = g.Count() })
+                .ToListAsync();
+
+            var conteoDict = conteoEstados.ToDictionary(x => x.Estado, x => x.Cantidad, StringComparer.OrdinalIgnoreCase);
+
+            stats.TotalProyectos = conteoDict.Values.Sum();
+            stats.ProyectosBorrador = conteoDict.GetValueOrDefault("Borrador", 0);
+            stats.ProyectosEnRevision = conteoDict.GetValueOrDefault("En Revisión", 0) + conteoDict.GetValueOrDefault("Enviado", 0);
+            stats.ProyectosAprobados = conteoDict.GetValueOrDefault("Aprobado", 0);
+            stats.ProyectosEnEjecucion = conteoDict.GetValueOrDefault("En Ejecución", 0);
+            stats.ProyectosFinalizados = conteoDict.GetValueOrDefault("Finalizado", 0);
 
             stats.TotalConvocatoriasAbiertas = await _context.InvConvocatorias
                 .CountAsync(c => c.Estado == "Abierta");
@@ -553,8 +561,8 @@ namespace diitra_infrastructure.Research
                 .Distinct()
                 .CountAsync();
 
-            // Distribución por estado para el gráfico
-            var colorMap = new Dictionary<string, string>
+            // Distribución por estado para el gráfico (mapeo seguro en memoria sin consultas SQL adicionales)
+            var colorMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
                 { "Borrador", "#6B7280" },
                 { "Enviado", "#3B82F6" },
@@ -565,15 +573,14 @@ namespace diitra_infrastructure.Research
                 { "Rechazado", "#EF4444" }
             };
 
-            stats.ProyectosPorEstado = await _context.InvProyectos
-                .GroupBy(p => p.Estado)
-                .Select(g => new EstadoConteoDto
+            stats.ProyectosPorEstado = conteoEstados
+                .Select(x => new EstadoConteoDto
                 {
-                    Estado = g.Key,
-                    Cantidad = g.Count(),
-                    Color = colorMap.ContainsKey(g.Key) ? colorMap[g.Key] : "#6B7280"
+                    Estado = x.Estado,
+                    Cantidad = x.Cantidad,
+                    Color = colorMap.TryGetValue(x.Estado, out var col) ? col : "#6B7280"
                 })
-                .ToListAsync();
+                .ToList();
 
             // ── Métricas del Investigador (siempre calculamos para el usuario actual) ──
             var userId = await _context.Users
@@ -623,19 +630,30 @@ namespace diitra_infrastructure.Research
                 })
                 .ToListAsync();
 
-            var ultimosInformes = await _context.InvInformesAvance
+            var ultimosInformesDb = await _context.InvInformesAvance
                 .Include(i => i.IdProyectoNavigation)
                 .OrderByDescending(i => i.IdInforme)
                 .Take(5)
-                .Select(i => new ActividadRecienteDto
+                .Select(i => new
                 {
-                    Tipo = "informe",
-                    Descripcion = $"Informe #{i.NumeroInforme} — {i.IdProyectoNavigation.Titulo}",
-                    Fecha = DateTime.Now,
-                    Uuid = i.Uuid.ToString(),
-                    Estado = i.Estado
+                    i.NumeroInforme,
+                    TituloProyecto = i.IdProyectoNavigation.Titulo,
+                    i.FechaFirma,
+                    i.FechaReporte,
+                    UuidString = i.Uuid.ToString(),
+                    i.Estado
                 })
                 .ToListAsync();
+
+            var ultimosInformes = ultimosInformesDb.Select(i => new ActividadRecienteDto
+            {
+                Tipo = "informe",
+                Descripcion = $"Informe #{i.NumeroInforme} — {i.TituloProyecto}",
+                // Solución del Bug de Fecha: Convertir la fecha real de base de datos de DateOnly a DateTime en memoria
+                Fecha = i.FechaFirma ?? new DateTime(i.FechaReporte.Year, i.FechaReporte.Month, i.FechaReporte.Day, 0, 0, 0, DateTimeKind.Utc),
+                Uuid = i.UuidString,
+                Estado = i.Estado
+            }).ToList();
 
             stats.ActividadReciente = ultimosProyectos
                 .Concat(ultimosInformes)
