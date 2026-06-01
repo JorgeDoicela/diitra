@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { Loader2, Mail, ArrowRight, AlertTriangle, CheckCircle2, Sun, Moon } from 'lucide-react';
 
@@ -134,9 +134,9 @@ const MagicResend = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'd
                     </form>
 
                     <div className="text-center pt-2">
-                        <button onClick={() => navigate('/login')} className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium">
+                        <Link to="/login" className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium no-underline">
                             Volver al Login con contraseña
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>

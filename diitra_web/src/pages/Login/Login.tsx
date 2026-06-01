@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import { Loader2, Lock, Sun, Moon } from 'lucide-react';
 import { z } from 'zod';
@@ -213,27 +213,27 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
                         {/* Acceso para revisores externos */}
                         <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => navigate('/auth/pin')}
-                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5"
+                            <Link
+                                to="/auth/pin"
+                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5 no-underline"
                                 title="Ingresar con código PIN de handoff"
                             >
                                 <span className="uppercase tracking-widest">Tengo un PIN</span>
-                            </button>
+                            </Link>
 
-                            <button
-                                onClick={() => navigate('/auth/magic-resend')}
-                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5"
+                            <Link
+                                to="/auth/magic-resend"
+                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5 no-underline"
                                 title="Solicitar reenvío de enlace de acceso"
                             >
                                 <span className="uppercase tracking-widest">Perdí mi Enlace</span>
-                            </button>
+                            </Link>
                         </div>
 
                         <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
-                            <button onClick={() => navigate('/')} className="hover:text-text-main transition-colors">Inicio</button>
+                            <Link to="/" className="hover:text-text-main transition-colors no-underline">Inicio</Link>
                             <span>/</span>
-                            <a href="#" className="hover:text-text-main transition-colors">Ayuda</a>
+                            <a href="#" className="hover:text-text-main transition-colors no-underline">Ayuda</a>
                         </div>
                     </div>
                 </div>

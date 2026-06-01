@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import {
     Loader2, ShieldCheck, Key, AlertTriangle,
@@ -84,9 +84,9 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <p className="text-xs text-text-dim">
                                 Este enlace no contiene un token válido. Verifica el correo recibido o contacta al administrador de DIITRA.
                             </p>
-                            <button onClick={() => navigate('/login')} className="btn-vercel-secondary w-full h-11">
+                            <Link to="/login" className="btn-vercel-secondary w-full h-11 flex items-center justify-center no-underline">
                                 Volver al Login
-                            </button>
+                            </Link>
                         </div>
 
                     /* ── Estado: esperando confirmación ── */
@@ -148,13 +148,13 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 <p className="text-[10px] text-text-dim leading-relaxed">
                                     Haz clic para ingresar directamente al portal de revisiones en este navegador.
                                 </p>
-                                <button
-                                    onClick={() => navigate('/revisiones')}
-                                    className="btn-vercel-primary w-full h-10 flex items-center justify-center gap-2 group"
+                                <Link
+                                    to="/revisiones"
+                                    className="btn-vercel-primary w-full h-10 flex items-center justify-center gap-2 group no-underline"
                                 >
                                     <span>Ir a mis Revisiones</span>
                                     <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-                                </button>
+                                </Link>
                             </div>
 
                             {/* Opción B: Transferir sesión a PC */}
@@ -216,9 +216,9 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <p className="text-xs text-text-dim leading-relaxed">
                                 {error}
                             </p>
-                            <button onClick={() => navigate('/login')} className="btn-vercel-secondary w-full h-11">
+                            <Link to="/login" className="btn-vercel-secondary w-full h-11 flex items-center justify-center no-underline">
                                 Volver al Login Principal
-                            </button>
+                            </Link>
                         </div>
                     )}
                 </div>
