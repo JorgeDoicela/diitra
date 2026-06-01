@@ -16,7 +16,7 @@
             const savedTheme = localStorage.getItem('theme');
             let theme = savedTheme;
             if (theme !== 'dark' && theme !== 'light') {
-                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
             }
             document.documentElement.setAttribute('data-theme', theme);
         })();
