@@ -18,7 +18,7 @@ const ResearchProjectsPage = () => {
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-12 px-2 animate-fade-up gap-6 md:gap-0">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-12 animate-fade-up gap-6 md:gap-0">
                 <div className="space-y-2">
                     <div className="section-label text-brand">
                         <ClipboardList size={10} />
@@ -42,7 +42,7 @@ const ResearchProjectsPage = () => {
             </header>
 
             {/* ── ACCIONES RÁPIDAS ── */}
-            <section className="mb-12 animate-fade-up [animation-delay:100ms] px-2">
+            <section className="mb-12 animate-fade-up [animation-delay:100ms]">
                 <div className="section-label text-brand mb-4">
                     <span>Centro de Control</span>
                 </div>
@@ -67,7 +67,7 @@ const ResearchProjectsPage = () => {
             </section>
 
             {/* ── HISTORIAL DE DOCUMENTOS ── */}
-            <section className="space-y-6 animate-fade-up [animation-delay:200ms] px-2">
+            <section className="space-y-6 animate-fade-up [animation-delay:200ms]">
                 <div>
                     <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-3">
                         Documentos Generados

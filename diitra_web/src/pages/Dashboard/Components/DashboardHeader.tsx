@@ -10,7 +10,7 @@ interface DashboardHeaderProps {
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, subtitle, roleName, actions }) => {
     return (
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 animate-fade-up gap-6 md:gap-0">
             <div className="space-y-2">
                 <div className="section-label text-text-main">
                     <Activity size={10} strokeWidth={2} />

@@ -31,7 +31,7 @@ const VerifyDocument = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 animate-fade-up gap-6 md:gap-0">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 animate-fade-up gap-6 md:gap-0">
                 <div className="space-y-2">
                     <div className="section-label text-brand">
                         <ShieldCheck size={10} />
@@ -44,7 +44,7 @@ const VerifyDocument = () => {
                 </div>
             </header>
 
-            <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-up [animation-delay:100ms] px-2">
+            <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-up [animation-delay:100ms]">
                 {!result && !loading && (
                     <div className="lg:col-span-5 bento-card static p-8 md:p-10 text-center">
                         <div className="flex justify-center mb-6 text-brand">

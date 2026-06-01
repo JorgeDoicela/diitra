@@ -689,7 +689,7 @@ export const ProjectWorkspace: React.FC = () => {
             {/* ── Main Content ── */}
             <main className="max-w-[1600px] mx-auto p-4 md:p-10 animate-fade-up">
                 {/* ── Page Title (DashboardHeader pattern) ── */}
-                <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 px-2 gap-6 md:gap-0">
+                <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6 md:gap-0">
                     <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                             <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px]`}>
@@ -707,7 +707,7 @@ export const ProjectWorkspace: React.FC = () => {
                 </header>
 
                 {templateCode && templateCode !== 'PROTOCOLO_INVESTIGACION' && (
-                    <div className="mb-8 mx-2 p-6 rounded-2xl bg-surface border border-brand/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in shadow-xl relative overflow-hidden group">
+                    <div className="mb-8 p-6 rounded-2xl bg-surface border border-brand/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in shadow-xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-brand/5 rounded-full blur-3xl -mr-5 -mt-5 group-hover:bg-brand/10 transition-colors duration-500" />
                         <div className="flex items-start gap-4">
                             <div className="icon-circle-brand shrink-0 !p-3">
