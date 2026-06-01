@@ -270,10 +270,35 @@ const GroupsPage = () => {
             alert("Este docente ya es un integrante del grupo y no puede ser asignado como Coordinador Responsable.");
             return;
         }
-        setFormData(prev => ({
-            ...prev,
-            id_profesor_coordinador: teacher.cedula
-        }));
+        
+        if (teacher.carrera) {
+            const teacherCareers = teacher.carrera.split(',').map((c: string) => c.trim().toUpperCase());
+            const matchedIds = carreras
+                .filter(c => teacherCareers.includes(c.carrera1.trim().toUpperCase()))
+                .map(c => c.id_carrera);
+
+            if (matchedIds.length > 0) {
+                setFormData(prev => {
+                    const newIds = new Set([...prev.carreras_ids, ...matchedIds]);
+                    return {
+                        ...prev,
+                        id_profesor_coordinador: teacher.cedula,
+                        carreras_ids: Array.from(newIds)
+                    };
+                });
+            } else {
+                setFormData(prev => ({
+                    ...prev,
+                    id_profesor_coordinador: teacher.cedula
+                }));
+            }
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                id_profesor_coordinador: teacher.cedula
+            }));
+        }
+
         setSelectedCoordName(teacher.nombre);
         setCoordSearchQuery('');
         setShowCoordResults(false);
@@ -375,6 +400,21 @@ const GroupsPage = () => {
                 return;
             }
             setGroupMembers(prev => [...prev, newMember as any]);
+        }
+
+        // Auto-check teacher member careers on the frontend form
+        if (selectedTeacher.carrera) {
+            const teacherCareers = selectedTeacher.carrera.split(',').map((c: string) => c.trim().toUpperCase());
+            const matchedIds = carreras
+                .filter(c => teacherCareers.includes(c.carrera1.trim().toUpperCase()))
+                .map(c => c.id_carrera);
+
+            if (matchedIds.length > 0) {
+                setFormData(prev => {
+                    const newIds = new Set([...prev.carreras_ids, ...matchedIds]);
+                    return { ...prev, carreras_ids: Array.from(newIds) };
+                });
+            }
         }
 
         setSelectedTeacher(null);
