@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    ClipboardList, Plus, 
-    FileCheck, ShieldCheck, ListChecks
+import {
+    ClipboardList, Plus,
+    FileCheck, ListChecks
 } from 'lucide-react';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import DocumentTray from '../../../components/DIITRA/DocumentTray';
@@ -31,7 +31,7 @@ const ResearchProjectsPage = () => {
                 </div>
 
                 {!isDocente && (
-                    <button 
+                    <button
                         onClick={() => setShowWizard(true)}
                         className="btn-vercel-primary w-full md:w-auto px-6 py-3 md:py-2.5"
                     >
@@ -47,7 +47,7 @@ const ResearchProjectsPage = () => {
                     <span>Centro de Control</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div 
+                    <div
                         onClick={() => navigate('/investigacion/mis-proyectos')}
                         className="bento-card p-6 cursor-pointer group"
                     >
@@ -55,21 +55,13 @@ const ResearchProjectsPage = () => {
                         <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Mis Proyectos</h4>
                         <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Expediente Personal</p>
                     </div>
-                    <div 
+                    <div
                         onClick={() => setShowReportLauncher(true)}
                         className="bento-card p-6 cursor-pointer group"
                     >
                         <FileCheck className="text-brand mb-4 group-hover:scale-110 transition-transform" size={24} />
                         <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Informe Final</h4>
                         <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Consolidación de Resultados</p>
-                    </div>
-                    <div 
-                        onClick={() => navigate('/investigacion/mis-proyectos')}
-                        className="bento-card p-6 cursor-pointer group"
-                    >
-                        <ShieldCheck className="text-success mb-4 group-hover:scale-110 transition-transform" size={24} />
-                        <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Verificar Firma</h4>
-                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Trazabilidad & CACES</p>
                     </div>
                 </div>
             </section>
@@ -82,9 +74,9 @@ const ResearchProjectsPage = () => {
                     </h3>
                     <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">Auditoría LOPDP y Trazabilidad en tiempo real</p>
                 </div>
-                
-                <DocumentTray 
-                    entityUuid="GLOBAL" 
+
+                <DocumentTray
+                    entityUuid="GLOBAL"
                     title="Historial Maestro del Núcleo"
                 />
             </section>
