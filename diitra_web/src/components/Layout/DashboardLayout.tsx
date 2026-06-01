@@ -117,10 +117,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         <div className="flex items-center">
                             <button
                                 onClick={() => setIsHelpOpen(true)}
-                                className="p-2 rounded-lg hover:bg-surface-hover text-text-dim hover:text-text-main transition-all duration-150 cursor-pointer flex items-center justify-center border border-border-thin bg-surface/30 hover:border-border-hover hover:scale-105"
+                                className="p-1 text-text-dim/50 hover:text-text-main transition-colors duration-150 cursor-pointer flex items-center justify-center bg-transparent border-0 outline-none hover:scale-110"
                                 title="Ayuda e Información"
                             >
-                                <MoreHorizontal size={16} />
+                                <MoreHorizontal size={18} />
                             </button>
                         </div>
                     </div>

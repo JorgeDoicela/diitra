@@ -8,6 +8,7 @@ import {
 interface HelpStep {
     title: string;
     description: string;
+    highlight: 'sidebar' | 'topbar' | 'content-top' | 'content-bottom' | 'all';
 }
 
 interface HelpConfig {
@@ -28,327 +29,783 @@ interface HelpModalProps {
 
 const DEFAULT_CONFIG: HelpConfig = {
     icon: <Settings2 size={24} className="text-brand" />,
-    title: "Módulo del Sistema",
-    summary: "Sección de configuración y visualización general de DIITRA.",
-    description: "Este módulo te permite interactuar con los procesos y herramientas del sistema de investigación institucional.",
+    title: "Módulo General del Sistema",
+    summary: "Consola unificada de acceso y administración del ecosistema de investigación y desarrollo tecnológico DIITRA.",
+    description: "Este módulo sirve como marco operativo para interactuar de forma segura con todas las funciones de investigación. Centraliza el panel de navegación de la plataforma, el lanzador de comandos de acceso global y el conmutador de visualización visual adaptativa para los perfiles académicos de la institución.",
     steps: [
         {
-            title: "Navegación general",
-            description: "Utiliza el panel lateral izquierdo para moverte entre los diferentes módulos disponibles según tu rol institucional."
+            title: "Navegación general y jerarquía lateral",
+            description: "Usa el panel de navegación principal situado a la izquierda para desplazarte entre los módulos disponibles. Las opciones del menú se cargan dinámicamente según tus permisos asignados (Docente Investigador, Revisor de Pares, Comité Evaluador o Administrador). La barra puede contraerse mediante el control en la esquina superior para maximizar el área de trabajo en pantallas táctiles o portátiles.",
+            highlight: 'sidebar'
         },
         {
-            title: "Ayuda contextual",
-            description: "Puedes abrir esta guía en cualquier momento para obtener información específica del módulo que estás visualizando."
+            title: "Ayuda e información contextual en vivo",
+            description: "Puedes invocar la guía interactiva en cualquier momento del flujo de trabajo haciendo clic en el control de tres puntos de la barra superior. La guía analizará de manera transparente la ruta del sistema en la que te encuentras y ofrecerá explicaciones detalladas y específicas del módulo actual.",
+            highlight: 'topbar'
         }
     ],
-    compliance: "Alineado con los estándares del Modelo de Evaluación del CACES para asegurar la calidad académica.",
+    compliance: "Este módulo cumple con los estándares mínimos de accesibilidad digital y seguridad de la información exigidos en los criterios generales de administración e infraestructura de los modelos de evaluación externa y acreditación del CACES.",
     tips: [
-        "Usa el atajo rápido para buscar en todo el sistema presionando 'Buscar' en la barra lateral.",
-        "Cambia entre modo claro y oscuro desde el panel de perfil en la esquina inferior izquierda."
+        "Presiona 'Ctrl + K' en Windows/Linux o 'Cmd + K' en macOS en cualquier parte del sistema para desplegar la paleta de comandos de búsqueda profesional de archivos y acciones.",
+        "Ajusta el tamaño del menú de navegación lateral arrastrando el borde exterior hacia la derecha o hacia la izquierda según tu preferencia visual."
     ]
 };
 
 const HELP_MAP: Record<string, HelpConfig> = {
     '/dashboard': {
         icon: <Activity size={24} className="text-brand animate-pulse" />,
-        title: "Panel de Control",
-        summary: "Visualización en tiempo real de indicadores y accesos directos de tu perfil de investigación.",
-        description: "El panel principal centraliza el estado global de tus investigaciones y del cumplimiento del instituto, permitiéndote tomar acciones inmediatas y revisar tus pendientes.",
+        title: "Panel de Control de Investigación",
+        summary: "Tablero centralizado de mando ejecutivo con indicadores cuantitativos y accesos directos al perfil del investigador.",
+        description: "El panel principal centraliza el estado global de tus investigaciones académicas y del nivel de cumplimiento científico del instituto. Ofrece información instantánea sobre tu carga horaria dedicada a la investigación científica, presupuesto del departamento, estado de revisiones en curso y enlaces interactivos para iniciar tareas clave en pocos clics.",
         steps: [
             {
-                title: "Monitoreo de KPIs",
-                description: "Revisa las tarjetas de estadísticas superiores para ver tus proyectos aprobados, productos académicos y presupuesto ejecutado."
+                title: "Monitoreo en tiempo real de KPIs científicos",
+                description: "Examina los contadores principales en la parte superior del tablero. Estas tarjetas informativas reflejan el número de proyectos aprobados, los productos científicos publicados en el periodo actual, las horas asignadas en tu distributivo académico y el presupuesto financiero ejecutado. Se sincronizan directamente con las bases del SIGAFI.",
+                highlight: 'content-top'
             },
             {
-                title: "Accesos rápidos y directos",
-                description: "Accede con un solo clic a la creación de proyectos, informe final o historial desde las tarjetas bento."
+                title: "Accesos directos Bento y bandeja de actividades",
+                description: "Interactúa con las tarjetas dinámicas de estilo Bento para ejecutar acciones rápidas. Desde aquí puedes crear una nueva postulación de proyecto, acceder a la bandeja de firmas del informe final, revisar la bitácora histórica de transacciones o consultar los expedientes inmutables sin navegar manualmente por el menú.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Rol institucional y capacidades",
-                description: "Verifica tu rol activo e instituto asignado en la cabecera. Los docentes pueden ver sus horas asignadas a investigación."
+                title: "Identificación de rol institucional y sesión activa",
+                description: "Verifica tu cargo activo, departamento académico y el campus asignado (por ejemplo, Instituto Tecnológico Traversari) que se muestran de forma destacada en la cabecera. Es de suma importancia corroborar que tu rol (como Docente Investigador) sea el correcto para que se activen las reglas de negocio de tus convocatorias y el flujo de firmas digitales.",
+                highlight: 'topbar'
             }
         ],
-        compliance: "Registra en tiempo real los indicadores de vinculación del cuerpo académico con la investigación, exigido por el CACES.",
+        compliance: "Mapea directamente los indicadores del Criterio B.1.1 (Vinculación del Claustro Docente con la Investigación) del CACES, certificando el porcentaje de profesores de tiempo completo asignados formalmente a proyectos y la ejecución de horas de investigación validadas.",
         tips: [
-            "Si eres docente, asegúrate de que tu carga de horas de investigación esté correctamente sincronizada desde el SIGAFI.",
-            "Utiliza el buscador superior para buscar proyectos por código institucional rápidamente."
+            "Si observas que tus horas asignadas en investigación no corresponden a tu distributivo, contacta al administrador del sistema para iniciar una resincronización forzada con el área académica.",
+            "Utiliza el atajo del buscador rápido superior para localizar expedientes de investigación utilizando únicamente el código alfanumérico institucional."
         ]
     },
     '/investigacion': {
         icon: <PenTool size={24} className="text-brand" />,
-        title: "Proyectos de I+D+i",
-        summary: "Consola de creación y administración de protocolos de investigación y desarrollo.",
-        description: "Espacio diseñado para formular nuevas propuestas, dar seguimiento a borradores y coordinar los resultados formales de los proyectos de desarrollo tecnológico del instituto.",
+        title: "Propuestas y Proyectos de I+D+i",
+        summary: "Módulo administrativo central para la formulación, registro y postulación de protocolos de investigación y desarrollo.",
+        description: "Esta consola proporciona un entorno estructurado para la planificación y postulación de proyectos científicos y tecnológicos de la institución. Permite a los investigadores completar el formulario digital, estructurar los presupuestos detallados por partidas, conformar el equipo de coinvestigadores y adjuntar documentos anexos requeridos por las bases de las convocatorias.",
         steps: [
             {
-                title: "Creación de propuestas (Postulación)",
-                description: "Usa el botón 'Nueva Postulación' para iniciar el asistente de registro de proyecto. Define el título, resumen, presupuesto e investigadores."
+                title: "Creación y formulación de propuestas de investigación",
+                description: "Usa el botón de acción principal 'Nueva Postulación' para lanzar el asistente interactivo. Este formulario te guiará en la definición del título del proyecto, el resumen científico, la justificación metodológica, la selección de la línea de investigación oficial de la institución, el cronograma detallado de entregables y la distribución de recursos económicos por categorías presupuestarias.",
+                highlight: 'content-top'
             },
             {
-                title: "Buzón de Documentos",
-                description: "Revisa el historial de documentos generados por el núcleo del sistema, incluyendo contratos y resoluciones asociadas."
+                title: "Buzón de expedientes y contratos firmados",
+                description: "Inspecciona el buzón inferior de documentos generados por el núcleo de DIITRA. Aquí se listan en tiempo real los contratos de asignación de fondos, resoluciones del comité científico y actas de aceptación. Todos estos documentos incorporan una firma electrónica válida y certificados de validación criptográfica en formato PDF/A.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Lanzador de Informe Final",
-                description: "Al culminar un proyecto, usa esta herramienta para compilar y enviar los resultados de tu investigación al comité evaluador."
+                title: "Compilación y envío del Informe Final de Resultados",
+                description: "Al completar el cronograma, utiliza la herramienta de cierre para generar tu Informe Final. El sistema compilará automáticamente los entregables aprobados a lo largo del periodo, los informes de monitoreo mensual y te permitirá adjuntar las evidencias físicas del producto científico final (como enlaces a artículos indexados, certificados de ponencias o patentes registradas) antes de enviarlo al comité evaluador.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Garantiza la formalización institucional de proyectos con pertinencia social y tecnológica bajo rúbricas acreditables ante el CACES.",
+        compliance: "Alineado con el Criterio B.1.2 (Proyectos de Investigación Científica y Tecnológica) del CACES, asegurando que cada propuesta siga un flujo formal de validación, aprobación colegiada, presupuesto delimitado y asignación clara de metas e investigadores institucionales.",
         tips: [
-            "Antes de postular, descarga y lee detenidamente las bases de la convocatoria correspondiente en el módulo de Convocatorias.",
-            "Puedes asociar alumnos colaboradores para potenciar el indicador de semilleros académicos."
+            "Guarda borradores de tus propuestas de manera local utilizando el guardado automático integrado antes de realizar el envío formal, ya que una vez enviada, la propuesta entrará en estado de bloqueo para edición.",
+            "Puedes asociar estudiantes colaboradores en tu postulación para sumar puntos en el indicador de semilleros y fomento a la investigación formativa."
         ]
     },
     '/investigacion/mis-proyectos': {
         icon: <BookOpen size={24} className="text-brand" />,
-        title: "Mis Proyectos",
-        summary: "Expediente personal y seguimiento de tus postulaciones e investigaciones activas.",
-        description: "Visualiza de forma detallada el progreso de tus postulaciones a convocatorias. Puedes editar borradores, revisar observaciones de revisores y acceder a tu espacio de trabajo.",
+        title: "Mis Proyectos Académicos",
+        summary: "Expediente personal e histórico de tus postulaciones e investigaciones activas.",
+        description: "Espacio de trabajo personal donde puedes realizar el seguimiento pormenorizado del estado de tus propuestas de investigación. Permite editar borradores inconclusos, revisar las observaciones detalladas emitidas por los revisores pares, cargar los entregables periódicos definidos en tu cronograma y consultar resoluciones oficiales.",
         steps: [
             {
-                title: "Estados del Proyecto",
-                description: "Sigue el ciclo de vida: Borrador (editable), Enviado (bajo revisión), En Ejecución (aprobado y activo), y Finalizado."
+                title: "Ciclo de vida y estados del proyecto",
+                description: "Monitorea la columna de estados en la tabla de proyectos. Los estados incluyen: 'Borrador' (permite edición completa y carga de archivos), 'Enviado' (bloqueado para edición, bajo revisión técnica), 'En Ejecución' (aprobado formalmente con presupuesto asignado y cronograma activo), 'Devuelto con Observaciones' (requiere modificaciones del docente) y 'Finalizado' (con informe final aprobado).",
+                highlight: 'content-bottom'
             },
             {
-                title: "Workspace Colaborativo",
-                description: "Haz clic en cualquier proyecto para abrir el espacio de trabajo en tiempo real, donde redactarás y subirás los entregables con tu equipo."
+                title: "Acceso al Workspace colaborativo en tiempo real",
+                description: "Haz clic sobre cualquier proyecto en estado 'En Ejecución' para abrir tu área de trabajo colaborativa. En esta sección podrás registrar las bitácoras de avance semanal, subir informes de hitos del cronograma, cargar facturas de presupuesto y chatear con los miembros del equipo y coinvestigadores asignados.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Eliminación de borradores",
-                description: "Puedes descartar propuestas en estado 'Borrador' si deseas iniciar una nueva postulación desde cero."
+                title: "Gestión y descarte de borradores",
+                description: "En caso de propuestas desestimadas o creadas por error, puedes descartarlas permanentemente directamente desde el menú de acciones de la fila, siempre y cuando se encuentren en estado de 'Borrador'. Esta acción es irreversible y liberará el código temporal del sistema.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Estándar CES de seguimiento e informes de avance inmutables para el control de la carga horaria dedicada a la investigación.",
+        compliance: "Garantiza la inmutabilidad y la trazabilidad de los informes de avance de investigación exigidos por los comités de evaluación del CES y CACES, demostrando el cumplimiento riguroso de las horas docentes dedicadas al desarrollo científico.",
         tips: [
-            "Si tu propuesta es rechazada o devuelta con observaciones, verás una alerta amarilla con los comentarios de los evaluadores.",
-            "Mantén actualizados los entregables de tu cronograma para evitar retrasos en el informe de monitoreo."
+            "Cuando tu propuesta reciba observaciones, haz clic en el botón amarillo de alerta para ver la rúbrica detallada del revisor paso a paso con los comentarios específicos de lo que debes reformular.",
+            "Mantén al día la carga de evidencias de avance en tu cronograma para evitar bloqueos administrativos automáticos al final del periodo académico."
         ]
     },
     '/usuarios': {
         icon: <Shield size={24} className="text-brand" />,
-        title: "Gestión de Usuarios",
-        summary: "Control administrativo de acceso, roles y perfiles del personal académico.",
-        description: "Sección exclusiva de administración central para gestionar la asignación de permisos de docentes, alumnos y registrar evaluadores pares externos del sistema.",
+        title: "Consola de Gestión de Usuarios y Roles",
+        summary: "Control administrativo de identidades, perfiles académicos y asignación de capacidades del claustro.",
+        description: "Sección exclusiva para la administración central orientada a la gestión de accesos y configuración de permisos de usuarios en DIITRA. Facilita la asignación rápida de roles clave, la habilitación de firmas digitales y el registro exhaustivo de evaluadores y revisores pares externos para procesos de evaluación doble ciego.",
         steps: [
             {
-                title: "Asignación rápida de roles",
-                description: "Activa o desactiva capacidades específicas de usuario (como Revisor o Administrador) mediante los selectores interactivos de la tabla."
+                title: "Asignación dinámica de roles y capacidades",
+                description: "Administra los accesos activando o desactivando permisos específicos directamente en la lista de usuarios. Puedes otorgar múltiples roles a un docente (por ejemplo: Docente e Investigador o Revisor Externo) lo que modificará de inmediato las vistas, opciones del menú lateral y facultades operativas del usuario al iniciar sesión.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Registro de evaluadores externos",
-                description: "Usa el botón 'Nuevo Externo' para registrar perfiles de otras universidades, ingresando su cédula, especialidad académica y código ORCID."
+                title: "Registro formal de evaluadores externos",
+                description: "Usa el botón de acción rápida 'Nuevo Externo' para registrar profesionales evaluadores de otras universidades del país o del extranjero. Es obligatorio detallar su cédula o pasaporte, afiliación institucional, correo electrónico formal, especialidad UNESCO y su enlace de perfil ORCID para la validación automática de producción científica.",
+                highlight: 'content-top'
             },
             {
-                title: "Inspección de perfiles",
-                description: "Haz clic en cualquier fila de la tabla para abrir el panel lateral con la metadata extendida, incluyendo su firma electrónica habilitada."
+                title: "Auditoría de firmas y perfiles digitales académicos",
+                description: "Haz clic en cualquier usuario de la tabla para abrir el panel lateral de detalles de metadatos. Aquí se almacena la información complementaria de la hoja de vida académica, el estado de validación de su firma electrónica (firma en archivo o token), su historial de accesos recientes e IP de conexión para fines de control de seguridad.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Asegura la transparencia y la idoneidad docente en los procesos de auditoría del CACES mediante perfiles académicos validados.",
+        compliance: "Respalda la transparencia en la conformación del tribunal evaluador externo exigido por el CACES, asegurando el debido proceso y la idoneidad técnica en las evaluaciones de proyectos bajo normas nacionales e internacionales.",
         tips: [
-            "Recuerda que al registrar un evaluador externo, el sistema le genera credenciales de acceso convencionales por defecto.",
-            "Filtra la lista por 'Externos' para gestionar únicamente al tribunal evaluador interinstitucional."
+            "Al crear un nuevo evaluador externo, el sistema le enviará de manera automática un correo con sus credenciales de acceso seguras y un enlace temporal de activación de firma electrónica.",
+            "Utiliza el filtro de roles para listar únicamente a los usuarios con permisos de revisión académica externa para agilizar las designaciones de tribunales."
         ]
     },
     '/auditoria': {
         icon: <History size={24} className="text-brand" />,
-        title: "Auditoría Forense",
-        summary: "Bitácora inmutable de trazabilidad de acciones críticas en la base de datos.",
-        description: "Módulo forense diseñado para rastrear qué usuario realizó qué cambio, cuándo y desde dónde, asegurando la inmutabilidad de la información institucional.",
+        title: "Trazabilidad de Auditoría Forense",
+        summary: "Bitácora inmutable de transacciones y control de cambios forenses en la base de datos.",
+        description: "Módulo forense de alta seguridad diseñado para el registro cronológico e inmutable de toda acción crítica realizada en la base de datos de DIITRA. Permite rastrear con precisión absoluta qué usuario realizó una modificación, qué campos cambiaron, la fecha, hora exacta, dirección IP, User Agent de conexión y el hash de verificación de la transacción.",
         steps: [
             {
-                title: "Búsqueda y filtros avanzados",
-                description: "Filtra la lista de transacciones por palabra clave, módulo administrativo, acción específica o rango de fechas."
+                title: "Filtros de búsqueda y parametrización forense",
+                description: "Utiliza el panel de búsqueda superior para filtrar las transacciones. Puedes acotar los registros por módulo específico del sistema (por ejemplo: Proyectos, Usuarios, Finanzas), acción ejecutada (Inserción, Actualización, Eliminación), rango de fechas con marcas de tiempo y el identificador único del usuario operante.",
+                highlight: 'content-top'
             },
             {
-                title: "Visualización de diferencias (Diff)",
-                description: "Haz clic en cualquier registro para abrir la vista forense. Compara los datos del registro 'Antes' y 'Después' en un formato visual estructurado."
+                title: "Inspección de diferencias estructuradas (Diff)",
+                description: "Haz clic en cualquier registro de la bitácora para desplegar el visor de diferencias comparativo. El sistema mostrará un análisis de campos estructurado, indicando el estado del registro 'Antes' de la modificación (en color rojo/negativo) y el estado del registro 'Después' de la modificación (en color verde/positivo) en formato JSON.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Exportación XLSX certificada",
-                description: "Usa el botón 'Exportar Reporte' para generar un archivo Excel con todas las columnas técnicas (IP, User Agent, etc.) para auditorías externas."
+                title: "Exportación certificada de reportes y firmas criptográficas",
+                description: "Utiliza el botón 'Exportar Reporte' para generar un archivo Excel certificado digitalmente. Este archivo incluye todas las columnas de auditoría técnica y se encuentra firmado con el hash SHA-256 del servidor de base de datos, garantizando que los registros no han sido alterados manualmente desde su creación.",
+                highlight: 'content-top'
             }
         ],
-        compliance: "Cumple con el estándar de inmutabilidad y seguridad de la información del CACES, certificando las actas de arbitraje y dictámenes.",
+        compliance: "Garantiza el cumplimiento estricto de los estándares internacionales de seguridad y la normativa de inmutabilidad de la información exigida en los procesos de auditoría tecnológica y licenciamiento del CACES y entes reguladores de protección de datos (LOPDP).",
         tips: [
-            "El panel forense te permite copiar directamente los fragmentos JSON del estado de los registros en caso de requerir soporte técnico.",
-            "Usa la pestaña 'Campos sin cambios' en el inspector para revisar el registro completo original."
+            "Puedes copiar directamente el fragmento JSON del Diff de cambios con el botón de copiado rápido en el panel lateral para compartirlo con el equipo de soporte técnico en caso de auditorías externas.",
+            "Los registros de eliminación de borradores de proyectos guardan el contenido completo del protocolo para permitir su recuperación rápida en caso de incidentes."
         ]
     },
     '/configuracion': {
         icon: <Settings2 size={24} className="text-brand" />,
-        title: "Configuración del Sistema",
-        summary: "Mantenimiento de parámetros globales, catálogos e indicadores del DIITRA.",
-        description: "Consola de administración para catalogar dominios, líneas de investigación institucionales, períodos académicos, tipos de productos y metas del CACES.",
+        title: "Consola de Configuración del Sistema",
+        summary: "Panel de control para la parametrización de catálogos oficiales, ciclos académicos e indicadores del CACES.",
+        description: "Módulo administrativo enfocado en la configuración global de los parámetros operativos de DIITRA. Permite a los directivos actualizar las líneas oficiales de investigación del instituto, dar mantenimiento a las ponderaciones de productos académicos, establecer períodos académicos de postulación y definir las metas anuales de los indicadores del CACES.",
         steps: [
             {
-                title: "Gestión de Líneas y Dominios",
-                description: "Crea y edita las líneas de investigación oficiales del ISTPET a las que deben alinearse obligatoriamente todos los proyectos."
+                title: "Catálogo de líneas y dominios de investigación",
+                description: "Define, edita y administra el catálogo oficial de líneas y sublíneas de investigación alineadas con los dominios académicos aprobados por el Consejo de Educación Superior (CES) y la SENESCYT. Las nuevas propuestas de proyectos deberán alinearse de forma obligatoria a estas directrices para ser admitidas.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Períodos y productos académicos",
-                description: "Abre o cierra semestres de investigación. Configura los tipos de entregables (como artículos o ponencias) y si requieren indexación."
+                title: "Administración de periodos académicos y productos",
+                description: "Abre o cierra los semestres de investigación del sistema. Configura los tipos de productos científicos admisibles (artículos en Scopus, Latindex, libros, capítulos de libros, patentes) indicando las evidencias digitales obligatorias para cada uno y su puntaje de peso relativo dentro del indicador institucional.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Metas CACES",
-                description: "Configura el año de normativa e introduce los valores mínimos de referencia nacionales requeridos para acreditar el indicador."
+                title: "Ponderaciones y metas cuantitativas del CACES",
+                description: "Introduce las metas anuales exigidas por la normativa vigente para acreditar los indicadores institucionales (como la relación de horas del cuerpo académico, número mínimo de artículos indexados por docente). El módulo de Analíticas comparará los datos reales con estos parámetros definidos para medir el nivel de preparación institucional.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Define los catálogos normativos requeridos por SENESCYT y CES para clasificar correctamente la producción científica y tecnológica.",
+        compliance: "Estructura la base paramétrica e institucional de clasificación científica exigida por el CES, la SENESCYT y los entes de acreditación nacional para los reportes oficiales anuales de producción de educación superior.",
         tips: [
-            "Si desactivas una línea de investigación, los proyectos vigentes seguirán usándola pero no se podrá seleccionar para nuevas postulaciones.",
-            "Asegúrate de configurar correctamente la fecha de cierre de los períodos académicos para automatizar las alertas."
+            "Desactivar una línea de investigación no afectará a los proyectos en curso que la utilicen, pero impedirá que nuevos investigadores la seleccionen en futuras convocatorias.",
+            "Establece las fechas de cierre de periodos académicos con suficiente antelación para que el sistema envíe recordatorios automáticos de carga horaria a los docentes."
         ]
     },
     '/analiticas': {
         icon: <BarChart3 size={24} className="text-brand" />,
-        title: "Analíticas de Investigación",
-        summary: "Cuadro de mando directivo con indicadores predictivos de acreditación.",
-        description: "Permite a los directivos evaluar el avance de los indicadores CACES del instituto en tiempo real, proyectando si se cumplirán las metas anuales.",
+        title: "Analíticas de Investigación y Acreditación",
+        summary: "Tablero predictivo y de Business Intelligence para el monitoreo de indicadores de calidad institucional.",
+        description: "Consola gerencial de analíticas diseñada para evaluar el desempeño de la producción científica y tecnológica de la institución. Permite a las autoridades analizar gráficos interactivos de avance, proyectar el cumplimiento de metas y exportar reportes ejecutivos consolidados para la toma de decisiones estratégicas ante el comité directivo.",
         steps: [
             {
-                title: "Variables de corte",
-                description: "Filtra todas las métricas bento por periodo académico o por tecnología/carrera para evaluar el rendimiento de áreas específicas."
+                title: "Filtros multidimensionales y segmentación de datos",
+                description: "Utiliza las herramientas superiores para segmentar la información estadística de la plataforma. Puedes filtrar los indicadores generales por periodo académico, instituto, facultades, carreras docentes específicas, líneas de investigación o estados de proyectos, actualizando los gráficos al instante.",
+                highlight: 'content-top'
             },
             {
-                title: "Pestaña de Cumplimiento CACES",
-                description: "Compara el porcentaje de cumplimiento real versus la meta nacional para el claustro docente y producción indexada."
+                title: "Análisis comparativo de indicadores CACES",
+                description: "Monitorea la sección de cumplimiento donde se grafican en tiempo real tus métricas versus las metas nacionales. El sistema despliega alertas visuales en semáforo (Rojo: Alerta Crítica, Amarillo: Cerca de la Meta, Verde: Cumplimiento Aprobado) analizando indicadores de publicaciones por docente y presupuestos ejecutados.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Reporte PDF institucional",
-                description: "Usa el botón 'Exportar PDF' para descargar el dossier ejecutivo formateado listo para presentar ante el comité directivo."
+                title: "Exportación y generación de Dossiers Ejecutivos PDF",
+                description: "Usa el botón 'Exportar PDF' para generar y descargar un informe ejecutivo completo con todos los gráficos, tablas comparativas de rendimiento, listados de publicaciones indexadas activas y dictámenes cuantitativos del periodo, optimizado para impresión y presentación formal.",
+                highlight: 'content-top'
             }
         ],
-        compliance: "Instrumento directo para la justificación del indicador cuantitativo de investigación en las fases de evaluación externa del CACES.",
+        compliance: "Módulo principal de justificación cuantitativa y análisis predictivo en las fases de evaluación interna y externa del CACES, certificando las métricas de efectividad de las políticas de fomento a la investigación institucional.",
         tips: [
-            "Haz clic en los segmentos del gráfico de donut de estado de proyectos para filtrar rápidamente la tabla de proyectos asociada.",
-            "Utiliza el botón de actualización en tiempo real para sincronizar las métricas con las últimas actas aprobadas."
+            "Haz clic sobre los segmentos del gráfico de donut de estados de proyectos para abrir la lista filtrada de las propuestas específicas vinculadas a esa métrica.",
+            "Usa el botón de actualización forzada de datos para recalcular las proyecciones en caso de que existan actas de arbitraje firmadas recientemente."
         ]
     },
     '/notificaciones': {
         icon: <Bell size={24} className="text-brand" />,
-        title: "Centro de Notificaciones",
-        summary: "Bandeja de notificaciones y alertas contextuales del sistema.",
-        description: "Monitorea comunicados, solicitudes de revisión académica por pares, alertas de finalización de plazos y firmas de actas institucionales.",
+        title: "Bandeja y Centro de Notificaciones",
+        summary: "Canal formal de notificaciones del sistema, alertas del flujo de trabajo académico y firmas pendientes.",
+        description: "Bandeja centralizada que agrupa todas las comunicaciones automáticas y alertas del sistema. Te notifica sobre asignaciones de proyectos para revisión, comentarios de evaluadores pares, plazos de entregables a vencer, citaciones a comités de arbitraje y solicitudes de firma digital de actas y contratos oficiales.",
         steps: [
             {
-                title: "Filtros temáticos",
-                description: "Navega entre las pestañas 'Sin leer', 'Urgente', 'Investigación' y 'Sistema' para priorizar tus acciones."
+                title: "Filtros temáticos y pestañas de bandeja",
+                description: "Organiza tu flujo de trabajo navegando entre las pestañas del buzón: 'Sin leer' (alertas nuevas prioritarias), 'Urgente' (solicitudes de firmas o hitos vencidos), 'Investigaciones' (cambios en el estado de tus propuestas) y 'Sistema' (mensajes de mantenimiento general o actualizaciones de la cuenta).",
+                highlight: 'content-top'
             },
             {
-                title: "Acción en bloque",
-                description: "Marca todas las alertas pendientes como leídas simultáneamente para mantener limpia tu bandeja principal."
+                title: "Acciones masivas y limpieza del Inbox",
+                description: "Mantén ordenado tu buzón de alertas utilizando la opción de 'Marcar como leídas' en bloque. Esto desactivará los contadores numéricos y los globos de notificación en la barra superior, pero conservará los mensajes en el archivo histórico para futuras referencias.",
+                highlight: 'content-top'
             },
             {
-                title: "Enlaces contextuales rápidos",
-                description: "Haz clic en el cuerpo de cualquier notificación para ir directamente a la vista o documento específico asociado."
+                title: "Enlaces contextuales y navegación al origen",
+                description: "Haz clic sobre el cuerpo de cualquier notificación para ir directamente al módulo de origen del mensaje. El sistema abrirá automáticamente el contrato específico que debes firmar, el entregable rechazado por el revisor o la bitácora de observaciones que debes subsanar.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Garantiza la trazabilidad y la notificación formal oportuna de actos administrativos requeridos por la normativa de régimen académico.",
+        compliance: "Cumple con las directrices de comunicación formal y debido proceso exigidas en los reglamentos de régimen académico de la institución, asegurando la trazabilidad de la entrega de dictámenes y requerimientos oficiales.",
         tips: [
-            "Las alertas de categoría 'Urgente' contienen plazos de firmas electrónicas de actas que no debes ignorar.",
-            "Recuerda que también recibes una notificación resumida en la campanilla de tu perfil en la barra lateral."
+            "Las notificaciones de la categoría 'Urgente' contienen plazos de validez para firmas electrónicas que expiran automáticamente en la fecha indicada.",
+            "Puedes configurar alertas secundarias a tu correo electrónico institucional desde tu panel de perfil en la barra lateral."
         ]
     },
     '/verify': {
         icon: <ShieldCheck size={24} className="text-brand" />,
-        title: "Verificación Documental",
-        summary: "Validación criptográfica de autenticidad e inmutabilidad de certificados.",
-        description: "Herramienta pública para verificar la autenticidad de cualquier reporte, resolución o acta generada por el sistema DIITRA mediante su hash SHA-256.",
+        title: "Verificación de Certificados y Autenticidad",
+        summary: "Portal criptográfico público para la validación de reportes y actas electrónicas del sistema.",
+        description: "Herramienta pública y de acceso abierto para la validación criptográfica de cualquier documento formal, acta de arbitraje o certificado generado por DIITRA. Al ingresar el código único del documento o escanear el QR, el sistema realiza una comprobación hash SHA-256 en la base de datos central para certificar su validez e inmutabilidad.",
         steps: [
             {
-                title: "Verificación por código",
-                description: "Introduce el código alfanumérico impreso en el documento para iniciar la validación en la base de datos central."
+                title: "Validación por código institucional",
+                description: "Ingresa el identificador alfanumérico único impreso en el pie de página del certificado físico en el campo de búsqueda. Haz clic en 'Validar' para consultar el estado del registro, devolviendo la fecha exacta de emisión y los nombres de los firmantes autorizados.",
+                highlight: 'content-top'
             },
             {
-                title: "Verificación QR automatizada",
-                description: "Escanea el código QR del documento físico con tu teléfono para abrir el enlace directo que realiza la verificación de forma transparente."
+                title: "Escaneo rápido mediante código QR",
+                description: "Utiliza tu cámara web o el escáner de tu dispositivo móvil sobre el código QR del documento para acceder al enlace de validación directa. Este método evita errores de transcripción alfanumérica y procesa la autenticación de manera automática e instantánea.",
+                highlight: 'content-top'
             },
             {
-                title: "Dictamen de autenticidad",
-                description: "Verifica si el documento está 'VIGENTE', los firmantes autorizados que estamparon su firma digital y la fecha de inmutabilidad en el servidor."
+                title: "Dictamen de autenticidad y firmas digitales",
+                description: "Inspecciona el bloque de resultados del validador. Mostrará la información detallada del documento: estado actual ('VIGENTE' o 'ANULADO'), el firmante del comité y la validez legal del archivo basada en el hash de auditoría inmutable del servidor de base de datos.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Cumple con las directrices de la LOPDP y normativas del CES sobre validez documental de actas de titulación y de investigación.",
+        compliance: "Alineado con las directrices de la Ley de Comercio Electrónico, Firmas Electrónicas y Mensajes de Datos del Ecuador, asegurando la validez legal de las actas de investigación ante visitas de acreditación del CACES.",
         tips: [
-            "Esta herramienta no requiere inicio de sesión y está disponible públicamente para validaciones de entidades de control externas.",
-            "Si el hash no coincide con ningún registro, el sistema te alertará de que el documento no es auténtico."
+            "Este portal público de validación no requiere inicio de sesión, facilitando que entidades externas de educación superior o auditores del CES verifiquen la autenticidad del documento de manera autónoma.",
+            "Si un documento modificado ilegalmente es procesado por este módulo, el sistema alertará de inmediato que el hash de verificación no coincide, detectando posibles falsificaciones."
         ]
     },
     '/revisiones': {
         icon: <Scale size={24} className="text-brand" />,
-        title: "Revisiones por Pares",
-        summary: "Consola de evaluación de proyectos para revisores internos y externos.",
-        description: "Permite a los revisores calificar los protocolos de investigación asignados bajo la metodología doble ciego, garantizando imparcialidad.",
+        title: "Consola de Revisores Pares",
+        summary: "Entorno de evaluación ciega para revisores pares internos y externos de propuestas científicas.",
+        description: "Plataforma de trabajo especializada para revisores pares académicos, diseñada para realizar la evaluación doble ciego de propuestas de investigación. Asegura la total confidencialidad de la identidad de los proponentes y proporciona una rúbrica estructurada de calificación y herramientas para el registro de retroalimentación verbal por audio.",
         steps: [
             {
-                title: "Proyectos asignados",
-                description: "Visualiza la lista de proyectos en estado 'En Revisión'. Accede a los detalles anonimizados del investigador."
+                title: "Buzón de expedientes asignados en doble ciego",
+                description: "Revisa la lista de propuestas asignadas a tu perfil de revisor. Al abrir cualquier propuesta, accederás a la documentación anonimizada (resumen, metodología, presupuesto). La información del docente autor se mantiene oculta para garantizar la imparcialidad del dictamen.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Evaluación rúbrica paso a paso",
-                description: "Califica cada criterio normado (metodología, viabilidad, coherencia) asignando puntajes según el reglamento del ISTPET."
+                title: "Evaluación paramétrica por rúbrica CACES",
+                description: "Califica de manera individual cada uno de los criterios obligatorios definidos en la rúbrica oficial (Relevancia Científica, Coherencia Metodológica, Viabilidad Presupuestaria, Pertinencia Social). Selecciona la puntuación correspondiente de la escala de evaluación del sistema.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Dictamen y retroalimentación de audio",
-                description: "Emite tu dictamen final y graba comentarios verbales usando la grabadora de audio integrada para guiar al docente."
+                title: "Dictamen final y grabadora de audio integrada",
+                description: "Establece tu dictamen final ('Aprobado', 'Devuelto con Observaciones' o 'Rechazado'). Puedes grabar un comentario de audio de hasta 3 minutos utilizando la grabadora de voz integrada del sistema, lo que brindará una retroalimentación detallada y humana al docente investigador.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Cumple con el criterio CACES de evaluación por pares externos doble ciego de la producción científica y proyectos institucionales.",
+        compliance: "Garantiza la aplicación estricta del estándar del CACES sobre evaluación por pares externos bajo la metodología doble ciego, documentando la idoneidad académica del tribunal evaluador y la rigurosidad de los procesos de arbitraje institucional.",
         tips: [
-            "Asegúrate de guardar tus cambios frecuentemente si estás realizando una evaluación extensa para evitar pérdida de datos.",
-            "Recuerda que tu identidad se mantiene oculta para el proponente en todo momento."
+            "El sistema guarda borradores parciales de tu evaluación para que puedas interrumpir y retomar tu trabajo en cualquier momento sin perder la información ingresada.",
+            "Recuerda que tus audios de retroalimentación son distorsionados levemente de forma digital por el sistema para evitar la identificación de la voz del revisor por parte del docente."
         ]
     },
     '/arbitraje': {
         icon: <Scale size={24} className="text-brand" />,
-        title: "Consola de Arbitraje",
-        summary: "Módulo administrativo para dirimir evaluaciones de proyectos discordantes.",
-        description: "En caso de discrepancias mayores entre las calificaciones de los revisores, el comité utiliza este panel para emitir la resolución final aprobatoria o denegatoria.",
+        title: "Módulo de Arbitraje y Resolución",
+        summary: "Espacio administrativo para dirimir evaluaciones de proyectos discordantes o en apelación.",
+        description: "Sección de arbitraje utilizada por el comité científico de investigación de la institución para dirimir evaluaciones con resultados divergentes (por ejemplo, un revisor aprueba y otro rechaza una propuesta). El comité utiliza esta herramienta para revisar los dictámenes, oír la retroalimentación y emitir una resolución definitiva.",
         steps: [
             {
-                title: "Inspección de discrepancias",
-                description: "Compara en columnas paralelas el puntaje y las observaciones cualitativas provistas por los revisores del proyecto."
+                title: "Comparación de dictámenes discrepantes",
+                description: "Examina los dictámenes conflictivos mostrados en columnas paralelas en la pantalla de arbitraje. Podrás ver los comentarios específicos del evaluador 1 y del evaluador 2, sus calificaciones numéricas por criterios y reproducir los comentarios de audio para evaluar las divergencias técnicas.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Resolución del comité",
-                description: "Introduce los datos de la resolución oficial del comité institucional y aprueba o rechaza definitivamente la propuesta."
+                title: "Resolución del comité y carga de actas",
+                description: "Registra la decisión unificada del comité (Aprobación Definitiva, Correcciones Mayores con Nuevo Revisor o Rechazo Permanente). Es obligatorio transcribir el acta de resolución del comité, ingresar el código de la sesión plenaria del consejo científico y adjuntar el acta escaneada debidamente firmada.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Notificación automatizada",
-                description: "El sistema actualizará el expediente del docente y enviará las actas definitivas firmadas al proponente de forma automática."
+                title: "Firma electrónica de resolución y auto-notificación",
+                description: "Estampa tu firma digital en el acta de arbitraje. Al completar el firmado, DIITRA actualizará el expediente general del proyecto en tiempo real, generará los certificados de aprobación si aplica y enviará una notificación con el dictamen de arbitraje al docente investigador.",
+                highlight: 'content-bottom'
             }
         ],
-        compliance: "Garantiza el debido proceso y la imparcialidad del dictamen de evaluación bajo estándares de control y auditoría interna.",
+        compliance: "Asegura el debido proceso y la transparencia institucional en las fases de dictaminación científica, mitigando conflictos de interés en procesos de asignación de financiamiento público evaluados bajo estándares del CACES.",
         tips: [
-            "Puedes acceder a los audios explicativos dejados por los revisores antes de redactar la resolución de arbitraje.",
-            "La resolución ingresada quedará registrada de forma permanente en la bitácora inmutable de auditoría forense."
+            "Puedes convocar a un tercer revisor dirimente ('Evaluador Ciego 3') desde la misma consola en caso de que el comité científico requiera un dictamen técnico adicional.",
+            "Todas las resoluciones de arbitraje quedan grabadas con sellos de tiempo inmutables en la bitácora de auditoría forense para fines de auditoría externa."
         ]
     },
     '/convocatorias': {
         icon: <Award size={24} className="text-brand" />,
-        title: "Ciclos de Convocatorias",
-        summary: "Administración y visualización de oportunidades de financiamiento de I+D.",
-        description: "Permite a los docentes explorar las convocatorias vigentes y postular proyectos, y a los administradores crear nuevos ciclos con rúbricas asociadas.",
+        title: "Administración de Convocatorias Científicas",
+        summary: "Consola de visualización, exploración y administración de ciclos de financiamiento y postulación científica.",
+        description: "Módulo enfocado en la visualización de las oportunidades de postulación a fondos internos y externos de investigación. Permite a los docentes explorar las bases y cronogramas de participación, y a los directores del departamento crear nuevos periodos de postulación, definir presupuestos máximos y vincular las rúbricas de evaluación oficiales.",
         steps: [
             {
-                title: "Visualización de bases",
-                description: "Explora la descripción, fecha límite de cierre, financiamiento máximo del proyecto y descarga el enlace de las bases oficiales."
+                title: "Consulta de bases y límites financieros",
+                description: "Explora la ficha técnica de la convocatoria activa. Revisa la descripción, la población objetivo (por ejemplo: Docentes investigadores a tiempo completo), las fechas límite improrrogables de postulación, el financiamiento máximo asignable por propuesta y descarga las guías oficiales en PDF.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Postulación directa",
-                description: "Usa el botón 'Postular Ahora' en la convocatoria abierta para precargar los límites financieros y de rúbrica en tu proyecto."
+                title: "Postulación y precarga de parámetros de la convocatoria",
+                description: "Al hacer clic en 'Postular Ahora' en una convocatoria abierta, el sistema abrirá el asistente de postulación de proyectos precargando automáticamente las reglas presupuestarias correspondientes. Esto evitará que ingreses rubros de gastos no permitidos o superes el presupuesto máximo.",
+                highlight: 'content-bottom'
             },
             {
-                title: "Creación de ciclos (Admin)",
-                description: "Define el presupuesto global del periodo, el año de normativa CACES y asocia la rúbrica evaluativa predefinida."
+                title: "Creación y parametrización de convocatorias (Administrador)",
+                description: "Crea y configura nuevos ciclos de investigación definiendo las fechas de postulación, las fechas de evaluación ciega, el presupuesto total institucional asignado, y vinculando la rúbrica de evaluación CACES obligatoria que utilizarán los revisores externos.",
+                highlight: 'content-top'
             }
         ],
-        compliance: "Asegura la distribución equitativa y transparente del presupuesto institucional destinado al desarrollo científico y tecnológico.",
+        compliance: "Garantiza la distribución equitativa, transparente y por concurso de méritos de los presupuestos asignados a la investigación científica en las instituciones de educación superior, un indicador clave del Modelo de Evaluación del CACES.",
         tips: [
-            "Revisa siempre la fecha límite de cierre; el sistema bloqueará automáticamente las postulaciones a las 23:59 de ese día.",
-            "Asegúrate de que el presupuesto de tu proyecto no supere el monto máximo especificado por la convocatoria."
+            "El sistema bloquea automáticamente la postulación a las 23:59:59 del día de cierre indicado en la convocatoria. No se podrán realizar excepciones ya que los plazos están firmados criptográficamente.",
+            "Asegúrate de que la línea de investigación seleccionada en tu propuesta esté habilitada en los términos específicos de la convocatoria para evitar descalificaciones automáticas."
         ]
     }
+};
+
+interface LayoutMockupProps {
+    highlight: 'sidebar' | 'topbar' | 'content-top' | 'content-bottom' | 'all' | 'none';
+    stepTitle: string;
+    pathname: string;
+}
+
+const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathname }) => {
+    // Determine pointer positions dynamically based on highlight target area and pathname
+    const getPointerStyle = () => {
+        switch (highlight) {
+            case 'sidebar':
+                return { left: '12%', top: '55%' };
+            case 'topbar':
+                return { left: '60%', top: '15%' };
+            case 'content-top':
+                return { left: '55%', top: '35%' };
+            case 'content-bottom':
+                return { left: '55%', top: '65%' };
+            case 'all':
+                return { left: '50%', top: '50%' };
+            default:
+                return null;
+        }
+    };
+
+    const pointerPos = getPointerStyle();
+
+    // Dynamically render the page mockup content based on pathname
+    const renderContentMockup = () => {
+        const isHighlightTop = highlight === 'content-top';
+        const isHighlightBottom = highlight === 'content-bottom';
+        const highlightTopClass = isHighlightTop ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)]' : 'border-border-thin bg-surface';
+        const highlightBottomClass = isHighlightBottom ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)] border-2' : 'border-border-thin bg-surface';
+
+        switch (pathname) {
+            case '/dashboard':
+                return (
+                    <>
+                        {/* Upper Stats / KPIs */}
+                        <div className="grid grid-cols-3 gap-1.5 shrink-0">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className={`rounded-lg border p-1.5 flex flex-col gap-1 transition-all duration-300 ${highlightTopClass}`}>
+                                    <div className="w-2/3 h-1.5 bg-text-dim/20 rounded" />
+                                    <div className="w-1/2 h-3.5 bg-text-main/30 rounded" />
+                                </div>
+                            ))}
+                        </div>
+                        {/* Bento Grid layout */}
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Left Bento: Chart mockup */}
+                            <div className={`flex-[1.2] rounded-lg border p-2 flex flex-col justify-between transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-1/2 h-2 bg-text-main/20 rounded" />
+                                <div className="flex items-end gap-1 h-12 pt-2">
+                                    <div className="w-1/4 h-3/5 bg-brand/40 rounded-sm" />
+                                    <div className="w-1/4 h-4/5 bg-brand/60 rounded-sm animate-pulse" />
+                                    <div className="w-1/4 h-2/5 bg-brand/30 rounded-sm" />
+                                    <div className="w-1/4 h-full bg-brand rounded-sm" />
+                                </div>
+                            </div>
+                            {/* Right Bento: Actions quicklist */}
+                            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-3/4 h-2 bg-text-main/15 rounded" />
+                                <div className="space-y-1 flex-1 py-1">
+                                    <div className="w-full h-3.5 bg-text-dim/10 rounded-md border border-border-thin flex items-center justify-center text-[7px] text-text-dim">Crear</div>
+                                    <div className="w-full h-3.5 bg-text-dim/10 rounded-md border border-border-thin flex items-center justify-center text-[7px] text-text-dim">Informe</div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/investigacion':
+            case '/investigacion/mis-proyectos':
+                return (
+                    <>
+                        {/* Projects active button & Search */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/3 h-5 bg-brand/85 rounded-md flex items-center justify-center text-[7px] font-black text-white">Nuevo Proyecto</div>
+                        </div>
+                        {/* Projects list table and detail panel split */}
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Projects Table */}
+                            <div className={`flex-[1.5] rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="flex justify-between border-b border-border-thin/40 pb-1 text-[7px] text-text-dim">
+                                    <span className="w-1/2">Título</span>
+                                    <span>Estado</span>
+                                </div>
+                                <div className="space-y-1 flex-1 py-1">
+                                    <div className="flex justify-between items-center py-0.5">
+                                        <div className="w-12 h-1.5 bg-text-main/20 rounded" />
+                                        <div className="w-8 h-2.5 rounded-full bg-success/20 border border-success/30" />
+                                    </div>
+                                    <div className="flex justify-between items-center py-0.5">
+                                        <div className="w-14 h-1.5 bg-text-main/20 rounded" />
+                                        <div className="w-8 h-2.5 rounded-full bg-warning/20 border border-warning/30" />
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Detail Panel */}
+                            <div className={`w-[35%] rounded-lg border p-1.5 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-full h-1.5 bg-text-main/30 rounded" />
+                                <div className="w-4/5 h-1 bg-text-dim/10 rounded" />
+                                <div className="flex-1 border border-dashed border-border-thin rounded-sm mt-1 flex items-center justify-center text-[6px] text-text-dim">Detalle</div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/usuarios':
+                return (
+                    <>
+                        {/* Filters & creation button */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/4 h-5 bg-brand/85 rounded-md flex items-center justify-center text-[7px] font-black text-white">Nuevo Externo</div>
+                        </div>
+                        {/* Users Table */}
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="flex justify-between border-b border-border-thin/40 pb-1 text-[7px] text-text-dim">
+                                <span className="w-1/3">Usuario</span>
+                                <span className="w-1/4">Roles</span>
+                                <span>Acción</span>
+                            </div>
+                            <div className="space-y-1 flex-1 py-1">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="flex justify-between items-center py-0.5 border-b border-border-thin/20">
+                                        <div className="w-10 h-1.5 bg-text-main/20 rounded" />
+                                        <div className="w-12 h-2.5 bg-text-dim/10 rounded-sm border border-border-thin" />
+                                        <div className="w-3.5 h-3.5 rounded bg-brand/20 border border-brand/40" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/auditoria':
+                return (
+                    <>
+                        {/* Filters and export button */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/4 h-5 bg-text-main/20 rounded-md border border-border-thin flex items-center justify-center text-[6px] text-text-dim">Exportar</div>
+                        </div>
+                        {/* Log list vs Diff comparison split */}
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Log list */}
+                            <div className={`flex-[1.2] rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-1/2 h-1.5 bg-text-dim/30 rounded" />
+                                <div className="space-y-1 py-1 flex-1">
+                                    <div className="w-full h-3 bg-text-main/15 rounded-sm" />
+                                    <div className="w-full h-3 bg-text-dim/10 rounded-sm" />
+                                </div>
+                            </div>
+                            {/* Diff panel */}
+                            <div className={`flex-1 rounded-lg border p-1.5 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-3/4 h-2 bg-text-main/20 rounded" />
+                                <div className="flex-1 grid grid-cols-2 gap-1 mt-1">
+                                    <div className="bg-error/15 border border-error/20 rounded p-0.5 flex flex-col justify-center"><div className="w-full h-1 bg-error/30 rounded" /></div>
+                                    <div className="bg-success/15 border border-success/20 rounded p-0.5 flex flex-col justify-center"><div className="w-full h-1 bg-success/30 rounded" /></div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/configuracion':
+                return (
+                    <>
+                        {/* Settings sub-tabs */}
+                        <div className="flex gap-1 shrink-0">
+                            {['Líneas', 'Períodos', 'Metas'].map((tab, idx) => (
+                                <div key={idx} className="w-12 h-4 rounded-t bg-text-dim/10 border border-b-0 border-border-thin flex items-center justify-center text-[6px] text-text-dim font-bold">{tab}</div>
+                            ))}
+                        </div>
+                        {/* Config elements */}
+                        <div className={`flex-1 rounded-lg rounded-tl-none border p-2.5 flex flex-col gap-2 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="w-1/2 h-2 bg-text-main/20 rounded" />
+                            <div className="space-y-1.5 flex-1">
+                                <div className="flex gap-1.5 items-center">
+                                    <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                                    <div className="w-1/2 h-3 bg-text-dim/10 rounded" />
+                                </div>
+                                <div className="flex gap-1.5 items-center">
+                                    <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                                    <div className="w-1/2 h-3 bg-text-dim/10 rounded" />
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/analiticas':
+                return (
+                    <>
+                        {/* Top controls */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-brand/10 border border-brand/20 rounded flex items-center justify-center text-[6px] text-brand font-bold">PDF</div>
+                        </div>
+                        {/* Charts panel */}
+                        <div className={`flex-1 rounded-lg border p-2 flex gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            {/* Donut chart mockup */}
+                            <div className="flex-1 flex flex-col items-center justify-center gap-1 border border-border-thin/40 rounded p-1 bg-surface-hover/30">
+                                <div className="w-7 h-7 rounded-full border-4 border-brand border-r-transparent animate-spin-slow" />
+                                <div className="w-10 h-1 bg-text-dim/20 rounded" />
+                            </div>
+                            {/* Bar charts mockup */}
+                            <div className="flex-1 flex items-end gap-1 border border-border-thin/40 rounded p-1.5 justify-center">
+                                <div className="w-2.5 h-1/3 bg-success/60 rounded-t-sm" />
+                                <div className="w-2.5 h-2/3 bg-brand/60 rounded-t-sm" />
+                                <div className="w-2.5 h-full bg-brand/80 rounded-t-sm animate-pulse" />
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/notificaciones':
+                return (
+                    <>
+                        {/* Top Category tabs */}
+                        <div className={`h-7 rounded-lg border px-1.5 flex items-center gap-1 transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-8 h-3.5 rounded bg-brand/10 border border-brand/20 text-[6px] text-brand flex items-center justify-center font-bold">Inbox</div>
+                            <div className="w-8 h-3.5 rounded bg-text-dim/5 text-[6px] text-text-dim flex items-center justify-center">Leídas</div>
+                        </div>
+                        {/* List */}
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="flex items-center gap-2 py-0.5 border-b border-border-thin/20">
+                                <div className="w-2 h-2 rounded-full bg-error shrink-0" />
+                                <div className="w-2/3 h-1.5 bg-text-main/20 rounded" />
+                            </div>
+                            <div className="flex items-center gap-2 py-0.5 border-b border-border-thin/20">
+                                <div className="w-2 h-2 rounded-full bg-success shrink-0" />
+                                <div className="w-3/4 h-1.5 bg-text-main/20 rounded" />
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/verify':
+                return (
+                    <>
+                        {/* Big Search Input */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-2/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-brand text-white rounded flex items-center justify-center text-[7px] font-black">Validar</div>
+                        </div>
+                        {/* Scanner / Result card */}
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-2 justify-center items-center transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="w-12 h-12 border-2 border-brand/50 border-dashed rounded-lg flex items-center justify-center relative bg-brand/5">
+                                <div className="absolute inset-x-2 h-[1px] bg-brand animate-bounce" />
+                                <div className="w-8 h-8 bg-text-dim/10 rounded-sm" />
+                            </div>
+                            <div className="w-20 h-2 bg-success/20 border border-success/30 rounded text-[6px] text-success text-center">Documento Auténtico</div>
+                        </div>
+                    </>
+                );
+
+            case '/revisiones':
+            case '/arbitraje':
+                return (
+                    <>
+                        {/* Peer review workspace */}
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Left Side: Document View */}
+                            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightTopClass}`}>
+                                <div className="w-1/2 h-2 bg-text-main/30 rounded mb-1" />
+                                <div className="space-y-1.5 flex-1 border border-border-thin bg-surface-hover/30 rounded p-1">
+                                    <div className="w-full h-1 bg-text-dim/10 rounded" />
+                                    <div className="w-11/12 h-1 bg-text-dim/10 rounded" />
+                                </div>
+                            </div>
+                            {/* Right Side: Evaluation Rubric details */}
+                            <div className={`flex-[0.9] rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-2/3 h-1.5 bg-text-main/20 rounded" />
+                                {/* Rubric stars */}
+                                <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((s) => <div key={s} className="w-1.5 h-1.5 rounded-full bg-amber-400" />)}
+                                </div>
+                                {/* Audio comment block */}
+                                <div className="h-4 rounded bg-brand/10 border border-brand/20 flex items-center px-1 gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 animate-pulse" />
+                                    <div className="w-8 h-1 bg-brand/35 rounded" />
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/convocatorias':
+                return (
+                    <>
+                        {/* Main active convocatorias card grid */}
+                        <div className={`flex-1 grid grid-cols-2 gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            {[1, 2].map((i) => (
+                                <div key={i} className="rounded-lg border p-1.5 flex flex-col justify-between bg-surface border-border-thin">
+                                    <div className="space-y-1">
+                                        <div className="w-4/5 h-2 bg-text-main/20 rounded" />
+                                        <div className="w-full h-1 bg-text-dim/10 rounded" />
+                                    </div>
+                                    <div className="w-full h-3.5 bg-brand text-white rounded flex items-center justify-center text-[5px] font-black mt-2">Postular</div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                );
+
+            default:
+                return (
+                    <>
+                        {/* Default Stats / KPI cards */}
+                        <div className={`grid grid-cols-3 gap-1.5 shrink-0 transition-all duration-300 ${highlightTopClass}`}>
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="rounded-lg border p-1 flex flex-col gap-1">
+                                    <div className="w-2/3 h-1.5 bg-text-dim/20 rounded" />
+                                    <div className="w-1/2 h-3.5 bg-text-main/30 rounded" />
+                                </div>
+                            ))}
+                        </div>
+                        {/* Default Lower Main Panel */}
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="flex items-center justify-between border-b border-border-thin/40 pb-1">
+                                <div className="w-1/3 h-2 bg-text-main/20 rounded" />
+                                <div className="w-1/6 h-2 bg-text-dim/15 rounded" />
+                            </div>
+                            <div className="space-y-1 flex-1 py-1">
+                                <div className="w-full h-2 bg-text-dim/10 rounded-sm" />
+                                <div className="w-full h-2 bg-text-dim/5 rounded-sm" />
+                            </div>
+                        </div>
+                    </>
+                );
+        }
+    };
+
+    return (
+        <div className="relative w-full max-w-[420px] aspect-[16/10] bg-bg-deep/40 border border-border-thin rounded-2xl p-2.5 shadow-inner select-none transition-all duration-300">
+            {/* Inner Mockup grid layout representing DIITRA */}
+            <div className={`w-full h-full flex flex-col gap-1.5 rounded-xl overflow-hidden p-1.5 transition-all duration-300 ${
+                highlight === 'all' 
+                    ? 'border-2 border-brand shadow-[0_0_15px_rgba(0,112,243,0.35)] bg-brand/5' 
+                    : 'border border-border-thin'
+            }`}>
+                
+                {/* Simulated TopBar */}
+                <div className={`h-8 border rounded-lg px-2 flex items-center justify-between transition-all duration-300 ${
+                    highlight === 'topbar' 
+                        ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)]' 
+                        : 'border-border-thin bg-surface'
+                }`}>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-border-hover" />
+                        <div className="w-12 h-2 rounded bg-text-dim/20" />
+                    </div>
+                    {/* Simulated Page Title Center */}
+                    <div className="w-20 h-2 bg-text-main/20 rounded hidden xs:block" />
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-8 h-3 rounded bg-text-dim/15 border border-border-thin" />
+                        <div className="w-4 h-4 rounded-full bg-text-dim/20" />
+                    </div>
+                </div>
+
+                {/* Simulated Body Grid */}
+                <div className="flex-1 flex gap-1.5 min-h-0">
+                    
+                    {/* Simulated Sidebar */}
+                    <div className={`w-[22%] rounded-lg border p-1 flex flex-col justify-between transition-all duration-300 ${
+                        highlight === 'sidebar' 
+                            ? 'border-brand bg-brand/10 shadow-[0_0_12px_rgba(0,112,243,0.3)]' 
+                            : 'border-border-thin bg-surface'
+                    }`}>
+                        <div className="space-y-1.5">
+                            {/* Logo */}
+                            <div className="w-8 h-2.5 bg-brand/35 rounded-sm mx-auto mb-2" />
+                            {/* Items */}
+                            <div className="w-full h-2 bg-text-main/15 rounded-sm" />
+                            <div className="w-4/5 h-2 bg-text-dim/10 rounded-sm" />
+                            <div className="w-full h-2 bg-text-dim/10 rounded-sm" />
+                            <div className="w-3/5 h-2 bg-text-dim/10 rounded-sm" />
+                        </div>
+                        <div className="w-full h-2.5 bg-text-dim/20 rounded-sm" />
+                    </div>
+
+                    {/* Simulated Main Content Workspace */}
+                    <div className="flex-1 flex flex-col gap-1.5 min-h-0">
+                        {renderContentMockup()}
+                    </div>
+                </div>
+            </div>
+
+            {/* Glowing Pointer Arrow & Tooltip Onboarding Indicator */}
+            {pointerPos && (
+                <div 
+                    style={{ left: pointerPos.left, top: pointerPos.top }}
+                    className="absolute z-20 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none transition-all duration-500 ease-out"
+                >
+                    {/* Ring Pointer pulse */}
+                    <div className="relative flex items-center justify-center">
+                        <span className="animate-ping absolute inline-flex h-6 w-6 rounded-full bg-brand opacity-60"></span>
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-brand border border-white shadow-md"></span>
+                    </div>
+
+                    {/* Floating Info Tag under the pointer */}
+                    <div className="mt-1 bg-brand text-[8px] font-black uppercase tracking-wider text-white px-1.5 py-0.5 rounded shadow-lg border border-brand-light whitespace-nowrap animate-fade-in">
+                        {stepTitle}
+                    </div>
+
+                    {/* SVG Connector Arrow pointing to highlight */}
+                    <svg className="w-4 h-4 text-brand -mt-1.5 fill-current animate-bounce" viewBox="0 0 20 20">
+                        <path d="M10 5l-5 6h10l-5-6z" />
+                    </svg>
+                </div>
+            )}
+        </div>
+    );
 };
 
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname }) => {
@@ -388,6 +845,21 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
         setCurrentStep(index);
     };
 
+    // Calculate active highlight zone for the mockup
+    const getActiveHighlight = () => {
+        if (currentStep === 0) return 'all';
+        if (currentStep === totalSteps - 1) return 'none';
+        const stepIdx = currentStep - 1;
+        return config.steps[stepIdx]?.highlight || 'none';
+    };
+
+    // Get active step label for mockup tooltip
+    const getActiveStepLabel = () => {
+        if (currentStep === 0) return 'Módulo General';
+        if (currentStep === totalSteps - 1) return 'Cumplimiento';
+        return `Paso ${currentStep}`;
+    };
+
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             {/* Backdrop Blur Overlay */}
@@ -396,11 +868,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                 onClick={onClose}
             />
 
-            {/* Modal Dialog Card */}
-            <div className="relative w-full max-w-lg bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-up overflow-hidden max-h-[85vh]">
+            {/* Modal Dialog Card (Scaled to max-w-3xl for SharePoint Onboarding mockup) */}
+            <div className="relative w-full max-w-3xl bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-scale-up overflow-hidden max-h-[90vh]">
                 
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-surface border border-border-thin flex items-center justify-center">
                             {config.icon}
@@ -423,101 +895,113 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     </button>
                 </div>
 
-                {/* Animated Body Container */}
-                <div className="flex-1 overflow-y-auto px-6 py-8 custom-scrollbar relative min-h-[300px] flex flex-col justify-between">
-                    <div 
-                        key={currentStep}
-                        className={`flex-1 flex flex-col justify-center ${
-                            direction === 'next' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'
-                        }`}
-                    >
-                        {currentStep === 0 && (
-                            /* Step 0: Overview & Summary */
-                            <div className="space-y-5 text-center px-2">
-                                <div className="mx-auto w-14 h-14 rounded-2xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand shadow-inner animate-pulse">
-                                    {config.icon}
-                                </div>
-                                <div className="space-y-2">
-                                    <h4 className="text-sm font-black uppercase tracking-wider text-text-main">
-                                        {config.title}
-                                    </h4>
-                                    <p className="text-[12px] font-bold text-text-main leading-snug max-w-sm mx-auto">
+                {/* Two-Column Body Grid (Side-by-side on desktop, vertical stack on mobile) */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar relative min-h-[380px] flex flex-col md:flex-row border-b border-border-thin">
+                    
+                    {/* Left Column: Explanations & Text Wizard (45% width on desktop) */}
+                    <div className="w-full md:w-[45%] p-6 md:p-8 flex flex-col justify-between border-b md:border-b-0 md:border-r border-border-thin">
+                        <div 
+                            key={currentStep}
+                            className={`flex-1 flex flex-col justify-center ${
+                                direction === 'next' ? 'animate-slide-in-from-right' : 'animate-slide-in-from-left'
+                            }`}
+                        >
+                            {currentStep === 0 && (
+                                /* Step 0: Overview & Summary */
+                                <div className="space-y-4 py-2">
+                                    <div className="w-12 h-12 rounded-2xl bg-brand/5 border border-brand/10 flex items-center justify-center text-brand shadow-inner animate-pulse">
+                                        {config.icon}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[9px] font-black uppercase tracking-widest text-brand">
+                                            Introducción
+                                        </span>
+                                        <h4 className="text-sm font-black uppercase tracking-wider text-text-main">
+                                            {config.title}
+                                        </h4>
+                                    </div>
+                                    <p className="text-[11.5px] font-bold text-text-main leading-snug">
                                         {config.summary}
                                     </p>
-                                </div>
-                                <div className="p-4 rounded-xl bg-bg-deep/30 border border-border-thin text-left">
                                     <p className="text-[11px] text-text-dim leading-relaxed font-medium">
                                         {config.description}
                                     </p>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {currentStep > 0 && currentStep <= config.steps.length && (() => {
-                            const stepIdx = currentStep - 1;
-                            const step = config.steps[stepIdx];
-                            return (
-                                /* Step 1 to N: Sequential Instructions */
-                                <div className="space-y-6 px-2 text-center">
-                                    <div className="mx-auto w-10 h-10 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-xs font-mono font-black text-brand">
-                                        {currentStep}
-                                    </div>
-                                    <div className="space-y-2">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-brand">
-                                            Paso {currentStep} de {config.steps.length}
-                                        </span>
-                                        <h4 className="text-sm font-bold text-text-main tracking-tight">
-                                            {step.title}
-                                        </h4>
-                                    </div>
-                                    <div className="p-5 rounded-xl bg-bg-deep/30 border border-border-thin text-left">
+                            {currentStep > 0 && currentStep <= config.steps.length && (() => {
+                                const stepIdx = currentStep - 1;
+                                const step = config.steps[stepIdx];
+                                return (
+                                    /* Step 1 to N: Sequential Instructions */
+                                    <div className="space-y-4 py-2">
+                                        <div className="w-9 h-9 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-xs font-mono font-black text-brand">
+                                            {currentStep}
+                                        </div>
+                                        <div className="space-y-1">
+                                            <span className="text-[9px] font-black uppercase tracking-widest text-brand">
+                                                Paso {currentStep} de {config.steps.length}
+                                            </span>
+                                            <h4 className="text-xs font-black uppercase tracking-wider text-text-main">
+                                                {step.title}
+                                            </h4>
+                                        </div>
                                         <p className="text-[11.5px] text-text-dim leading-relaxed font-medium">
                                             {step.description}
                                         </p>
                                     </div>
-                                </div>
-                            );
-                        })()}
+                                );
+                            })()}
 
-                        {currentStep === totalSteps - 1 && (
-                            /* Final Step: Compliance & Quick Tips */
-                            <div className="space-y-6 px-2">
-                                {/* Compliance Banner */}
-                                <div className="p-4 rounded-xl bg-brand/5 border border-brand/10 flex items-start gap-4">
-                                    <div className="p-2 bg-brand/10 rounded-lg text-brand shrink-0">
-                                        <Award size={18} />
+                            {currentStep === totalSteps - 1 && (
+                                /* Final Step: Compliance & Quick Tips */
+                                <div className="space-y-5 py-2">
+                                    {/* Compliance Banner */}
+                                    <div className="p-3.5 rounded-xl bg-brand/5 border border-brand/10 flex items-start gap-3">
+                                        <div className="p-1.5 bg-brand/10 rounded-lg text-brand shrink-0">
+                                            <Award size={16} />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <h5 className="text-[9px] font-black uppercase tracking-widest text-text-main">
+                                                Cumplimiento CACES
+                                            </h5>
+                                            <p className="text-[10px] text-text-dim leading-relaxed font-medium">
+                                                {config.compliance}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-0.5">
-                                        <h5 className="text-[10px] font-black uppercase tracking-widest text-text-main">
-                                            Acreditación e Indicadores CACES
+
+                                    {/* Tips list */}
+                                    <div className="space-y-2">
+                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
+                                            Accesibilidad y Consejos
                                         </h5>
-                                        <p className="text-[10.5px] text-text-dim leading-relaxed font-medium">
-                                            {config.compliance}
-                                        </p>
+                                        <ul className="space-y-2">
+                                            {config.tips.map((tip, idx) => (
+                                                <li key={idx} className="flex items-start gap-2 text-[10px] text-text-dim leading-relaxed font-medium">
+                                                    <Zap size={10} className="text-amber-400 shrink-0 mt-0.5 animate-bounce" />
+                                                    <span>{tip}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 </div>
+                            )}
+                        </div>
+                    </div>
 
-                                {/* Tips list */}
-                                <div className="space-y-3">
-                                    <h5 className="text-[9px] font-black uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
-                                        Consejos y Accesibilidad
-                                    </h5>
-                                    <ul className="space-y-2.5">
-                                        {config.tips.map((tip, idx) => (
-                                            <li key={idx} className="flex items-start gap-2 text-[10.5px] text-text-dim leading-relaxed font-medium">
-                                                <Zap size={11} className="text-amber-400 shrink-0 mt-0.5" />
-                                                <span>{tip}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-                        )}
+                    {/* Right Column: Interactive UI Mockup Simulator (55% width on desktop) */}
+                    <div className="w-full md:w-[55%] p-6 md:p-8 bg-bg-deep/10 flex flex-col justify-center items-center select-none">
+                        <LayoutMockup 
+                            highlight={getActiveHighlight()} 
+                            stepTitle={getActiveStepLabel()}
+                            pathname={pathname}
+                        />
                     </div>
                 </div>
 
                 {/* Footer Controls */}
-                <div className="px-6 py-4 border-t border-border-thin bg-surface/50 flex items-center justify-between">
+                <div className="px-6 py-4 border-t border-border-thin bg-surface/50 flex items-center justify-between shrink-0">
                     {/* Previous Button */}
                     <button
                         onClick={handlePrev}
@@ -530,7 +1014,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                         title="Anterior"
                     >
                         <ChevronLeft size={14} />
-                        <span>Atras</span>
+                        <span>Atrás</span>
                     </button>
 
                     {/* Navigation Dots Indicator */}
