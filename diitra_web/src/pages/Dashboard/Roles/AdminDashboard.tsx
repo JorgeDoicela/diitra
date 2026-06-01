@@ -40,14 +40,17 @@ export const AdminDashboard: React.FC = () => {
     const firstName = user?.nombre_completo?.split(' ')[0] || 'Admin';
     const [stats, setStats] = useState<GlobalStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     const fetchData = async () => {
         setLoading(true);
+        setError(null);
         try {
             const res = await api.get('/projects/stats');
             setStats(res.data);
         } catch (e) {
             console.error('[DIITRA] Error al cargar datos:', e);
+            setError('No se pudieron obtener las estadísticas de investigación de la base de datos. Por favor, comprueba que el servidor esté activo o intenta de nuevo.');
         } finally {
             setLoading(false);
         }
@@ -90,6 +93,22 @@ export const AdminDashboard: React.FC = () => {
             {loading ? (
                 <div className="flex items-center justify-center py-20">
                     <Loader2 className="animate-spin text-text-dim" size={24} />
+                </div>
+            ) : error ? (
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center max-w-lg mx-auto bg-surface border border-border-thin shadow-md rounded-xl animate-fade-up mt-6">
+                    <div className="w-12 h-12 rounded-full bg-error/10 border border-error/20 flex items-center justify-center mb-4 text-error animate-pulse">
+                        <Activity size={22} />
+                    </div>
+                    <h3 className="text-base font-bold text-text-main mb-2">Error de Sincronización</h3>
+                    <p className="text-xs text-text-dim leading-relaxed max-w-sm mb-6">
+                        {error}
+                    </p>
+                    <button
+                        onClick={fetchData}
+                        className="btn-vercel-primary px-5 py-2 text-xs font-semibold flex items-center gap-2 hover:shadow-md transition-all active:scale-98"
+                    >
+                        <span>Reintentar Carga</span>
+                    </button>
                 </div>
             ) : (
                 /* Two-column Vercel Layout */
