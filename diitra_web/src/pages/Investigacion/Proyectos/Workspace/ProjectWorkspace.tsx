@@ -543,16 +543,13 @@ export const ProjectWorkspace: React.FC = () => {
     };
 
     if (activeDocument) {
-        const isMainProtocol = 
-            activeDocument === 'PROTOCOLO_INVESTIGACION' || 
-            activeDocument === 'PROTOCOLO_PEER_REVIEW' || 
-            activeDocument?.toUpperCase() === templateCode?.toUpperCase();
+        const isPrimaryDocument = activeDocument?.toUpperCase() === templateCode?.toUpperCase();
 
-        const editorUuid = isMainProtocol
+        const editorUuid = isPrimaryDocument
             ? documentUuid
             : subDocumentUuids[activeDocument];
 
-        if (!isMainProtocol && !editorUuid) {
+        if (!isPrimaryDocument && !editorUuid) {
             return (
                 <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                     <div className="flex flex-col items-center gap-4">
@@ -563,18 +560,27 @@ export const ProjectWorkspace: React.FC = () => {
             );
         }
 
-        const isNotEditableState = currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección';
-        
-        // El protocolo principal se rige por puedeEditar.
-        // La rúbrica de evaluación en este workspace es de sólo lectura para el investigador.
-        // El informe de avance es editable a menos que el proyecto esté completamente finalizado.
-        const isReadOnly = isMainProtocol
-            ? !currentProject.puedeEditar
-            : (activeDocument === 'RUBRICA_EVALUACION' ? true : currentProject.status === 'Finalizado');
+        // Determinar permisos de sólo lectura por tipo de documento y estado del proyecto
+        let isReadOnly = false;
+        let readOnlyReason: 'state' | 'membership' | 'review' = 'state';
 
-        const readOnlyReason = isMainProtocol
-            ? (isNotEditableState ? 'state' : 'membership')
-            : (activeDocument === 'RUBRICA_EVALUACION' ? 'review' : 'state');
+        if (activeDocument === 'PROTOCOLO_INVESTIGACION' || activeDocument === 'PROTOCOLO_PEER_REVIEW') {
+            isReadOnly = !currentProject.puedeEditar;
+            readOnlyReason = (currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección') ? 'state' : 'membership';
+        } else if (activeDocument === 'RUBRICA_EVALUACION') {
+            isReadOnly = true;
+            readOnlyReason = 'review';
+        } else if (activeDocument === 'INFORME_AVANCE') {
+            isReadOnly = currentProject.status === 'Finalizado';
+            readOnlyReason = 'state';
+        } else if (activeDocument === 'INFORME_FINAL_INVESTIGACION') {
+            // El Informe Final es editable en ejecución o aprobado, pero de sólo lectura si ya está Finalizado o en fases tempranas
+            isReadOnly = currentProject.status !== 'En Ejecución' && currentProject.status !== 'Aprobado';
+            readOnlyReason = 'state';
+        } else {
+            isReadOnly = currentProject.status === 'Finalizado';
+            readOnlyReason = 'state';
+        }
 
         return (
             <DocumentEditor 
@@ -731,7 +737,13 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'Borrador' && (
                                                     <div className="mt-4">
                                                         <button 
-                                                            onClick={() => setActiveDocument(templateCode || 'PROTOCOLO_INVESTIGACION')}
+                                                            onClick={() => {
+                                                                if (templateCode === 'PROTOCOLO_INVESTIGACION') {
+                                                                    setActiveDocument('PROTOCOLO_INVESTIGACION');
+                                                                } else {
+                                                                    resolveDocumentInstance('PROTOCOLO_INVESTIGACION');
+                                                                }
+                                                            }}
                                                             className="btn-vercel-secondary !py-2"
                                                         >
                                                             <FileText size={14} />
@@ -790,7 +802,21 @@ export const ProjectWorkspace: React.FC = () => {
                                                             className="btn-vercel-primary !py-2"
                                                         >
                                                             <BarChart size={14} />
-                                                            <span>Generar Informe</span>
+                                                            <span>Informe de Avance</span>
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                if (templateCode === 'INFORME_FINAL_INVESTIGACION') {
+                                                                    setActiveDocument('INFORME_FINAL_INVESTIGACION');
+                                                                } else {
+                                                                    resolveDocumentInstance('INFORME_FINAL_INVESTIGACION');
+                                                                }
+                                                            }}
+                                                            disabled={resolvingDocument === 'INFORME_FINAL_INVESTIGACION'}
+                                                            className="btn-vercel-primary !py-2"
+                                                        >
+                                                            <FileSignature size={14} />
+                                                            <span>{currentProject.status === 'Finalizado' ? 'Ver Informe Final' : 'Informe Final'}</span>
                                                         </button>
                                                         <button 
                                                             onClick={() => navigate(`/investigacion/monitoreo/${currentProject.uuid}`)}

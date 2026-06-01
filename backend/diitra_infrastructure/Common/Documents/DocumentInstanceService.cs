@@ -183,7 +183,9 @@ namespace Diitra.Infrastructure.Common.Documents
                         PropertyNameCaseInsensitive = true
                     };
                     var existingObj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(instance.DataSnapshotJson, options);
-                    var incomingObj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(metadataJson, options);
+                    var incomingObj = !string.IsNullOrEmpty(metadataJson)
+                        ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(metadataJson, options)
+                        : null;
                     
                     if (existingObj != null && incomingObj != null)
                     {

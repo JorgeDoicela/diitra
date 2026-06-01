@@ -81,7 +81,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                 title: `Informe Final - ${projects.find(p => p.uuid === projectUuid)?.titulo}`
             });
 
-            navigate(`/investigacion/workspace/INFORME_FINAL_INVESTIGACION/${response.data.uuid}`);
+            navigate(`/investigacion/workspace/INFORME_FINAL_INVESTIGACION/${response.data.uuid}?edit=true`);
             onClose();
         } catch (err: any) {
             console.error("[DIITRA] Error al lanzar informe:", err.response?.data || err.message);
