@@ -6,7 +6,7 @@ import { useNotifications } from '../../api/NotificationsContext';
 const NotificationBell = () => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const { notifications, unreadCount, markAsRead } = useNotifications();
+    const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
     const handleNotificationClick = async (n: any) => {
         if (!n.leido) {
@@ -45,11 +45,21 @@ const NotificationBell = () => {
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
                     <div className="absolute right-0 mt-4 w-80 md:w-96 bg-bg-deep border border-border-thin rounded-2xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                         <header className="p-4 border-b border-border-thin bg-surface/30 flex justify-between items-center">
-                            <h4 className="text-[10px] font-bold text-text-main uppercase tracking-widest">Notificaciones</h4>
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-[10px] font-bold text-text-main uppercase tracking-widest">Notificaciones</h4>
+                                {unreadCount > 0 && (
+                                    <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter">
+                                        {unreadCount} Nuevas
+                                    </span>
+                                )}
+                            </div>
                             {unreadCount > 0 && (
-                                <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter">
-                                    {unreadCount} Nuevas
-                                </span>
+                                <button 
+                                    onClick={markAllAsRead}
+                                    className="text-[9px] font-bold text-brand hover:underline uppercase tracking-wider"
+                                >
+                                    Marcar todo leído
+                                </button>
                             )}
                         </header>
 
@@ -77,13 +87,11 @@ const NotificationBell = () => {
                                                 </div>
                                                 <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2">{n.mensaje}</p>
                                                 {n.url_accion && (
-                                                    <a 
-                                                        href={n.url_accion} 
-                                                        className="inline-flex items-center gap-1 text-[9px] font-bold text-text-main uppercase mt-2 hover:underline"
-                                                        onClick={(e) => e.stopPropagation()}
+                                                    <span 
+                                                        className="inline-flex items-center gap-1 text-[9px] font-bold text-text-main uppercase mt-2 hover:underline cursor-pointer"
                                                     >
                                                         Ir al detalle <ExternalLink size={10} />
-                                                    </a>
+                                                    </span>
                                                 )}
                                             </div>
                                             {!n.leido && (
