@@ -53,6 +53,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         const initWebPush = async () => {
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                 console.log('Este navegador no soporta notificaciones Web Push.');
+                localStorage.setItem('web_push_active', 'false');
                 return;
             }
 
@@ -68,10 +69,12 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     const permission = await Notification.requestPermission();
                     if (permission !== 'granted') {
                         console.log('El usuario rechazó los permisos de notificación.');
+                        localStorage.setItem('web_push_active', 'false');
                         return;
                     }
                 } else if (Notification.permission === 'denied') {
                     console.log('Permiso de notificación denegado previamente.');
+                    localStorage.setItem('web_push_active', 'false');
                     return;
                 }
 
@@ -112,8 +115,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     plataforma: 'web_push'
                 });
                 console.log('Suscripción Web Push sincronizada profesionalmente con el servidor.');
+                localStorage.setItem('web_push_active', 'true');
             } catch (error) {
                 console.error('Error al inicializar las notificaciones Web Push nativas:', error);
+                localStorage.setItem('web_push_active', 'false');
             }
         };
 

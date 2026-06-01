@@ -48,18 +48,25 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const addToast = useCallback((title: string, body: string, url?: string) => {
         const id = Math.random().toString(36).substring(2, 9);
-        setToasts(prev => [...prev, { id, title, body, url }]);
+        
+        // Limpiar etiquetas HTML para que el toast en app se vea limpio y profesional
+        const cleanBody = body.replace(/<\/?[^>]+(>|$)/g, "");
+        
+        setToasts(prev => [...prev, { id, title, body: cleanBody, url }]);
         
         // Auto-remove after 6 seconds
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 6000);
 
-        // Native OS Desktop Notification (spawns even if browser tab is in background)
-        if ('Notification' in window && Notification.permission === 'granted') {
+        // Evitar duplicar la notificación nativa si Web Push está activo y sincronizado en este navegador
+        const isWebPushActive = localStorage.getItem('web_push_active') === 'true';
+
+        // Solo lanzamos la notificación nativa de SignalR si Web Push no está activo y tenemos permisos
+        if (!isWebPushActive && 'Notification' in window && Notification.permission === 'granted') {
             try {
                 const n = new window.Notification(title, {
-                    body: body,
+                    body: cleanBody, // Usar cuerpo limpio de HTML
                     icon: '/favicon.ico'
                 });
                 
