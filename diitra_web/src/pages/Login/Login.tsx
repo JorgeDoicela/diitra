@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, Sun, Moon } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -15,9 +15,10 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 interface LoginProps {
     currentTheme?: 'dark' | 'light';
+    toggleTheme?: () => void;
 }
 
-const Login = ({ currentTheme = 'dark' }: LoginProps) => {
+const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
     const { login } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -95,6 +96,16 @@ const Login = ({ currentTheme = 'dark' }: LoginProps) => {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+            {/* Theme Toggle Button */}
+            {toggleTheme && (
+                <button
+                    onClick={toggleTheme}
+                    className="absolute top-6 right-6 p-2 rounded-lg border border-border-thin bg-surface/50 text-text-dim hover:text-text-main hover:border-border-hover transition-all duration-300 z-30 cursor-pointer"
+                    title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                >
+                    {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                </button>
+            )}
             {/* Background Grid - Very subtle */}
 
 

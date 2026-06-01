@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2, Laptop, ArrowRight, AlertTriangle } from 'lucide-react';
+import { Loader2, Laptop, ArrowRight, AlertTriangle, Sun, Moon } from 'lucide-react';
 
-const PinHandoff = ({ currentTheme = 'dark' }: { currentTheme?: 'dark' | 'light' }) => {
+const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'dark' | 'light'; toggleTheme?: () => void }) => {
     const { handoffLogin } = useAuth();
     const navigate = useNavigate();
     
@@ -40,6 +40,16 @@ const PinHandoff = ({ currentTheme = 'dark' }: { currentTheme?: 'dark' | 'light'
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+            {/* Theme Toggle Button */}
+            {toggleTheme && (
+                <button
+                    onClick={toggleTheme}
+                    className="absolute top-6 right-6 p-2 rounded-lg border border-border-thin bg-surface/50 text-text-dim hover:text-text-main hover:border-border-hover transition-all duration-300 z-30 cursor-pointer"
+                    title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                >
+                    {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                </button>
+            )}
             <div className="w-full max-w-[380px] space-y-8 relative z-20 animate-fade-up">
                 {/* Logo & Header */}
                 <div className="flex flex-col items-center space-y-6">
