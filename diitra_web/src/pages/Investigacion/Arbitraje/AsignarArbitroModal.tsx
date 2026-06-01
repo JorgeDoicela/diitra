@@ -197,7 +197,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                     <div className="truncate">
                                                         <p className="text-xs font-semibold leading-tight text-text-main">{formatNombre(rev.nombre_completo)}</p>
                                                         <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">
-                                                            {rev.es_externo && rev.institucion ? `${formatNombre(rev.institucion)} — ` : rev.carrera ? `${rev.carrera} — ` : ''}
+                                                            {rev.es_externo && rev.institucion ? `${formatNombre(rev.institucion)} — ` : rev.carrera ? `${rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())} — ` : ''}
                                                             {rev.email}
                                                         </p>
                                                     </div>
@@ -254,7 +254,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                         </span>
                                                     </div>
                                                     <span className="text-[10px] text-text-dim block truncate">
-                                                        {rev.es_externo ? `Externo CACES · ${rev.email}` : `${rev.carrera || 'Par Interno'} · ${rev.email}`}
+                                                        {rev.es_externo ? `Externo CACES · ${rev.email}` : `${rev.carrera ? rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase()) : 'Par Interno'} · ${rev.email}`}
                                                     </span>
                                                 </div>
                                                 <button
