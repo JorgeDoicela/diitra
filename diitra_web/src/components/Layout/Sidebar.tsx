@@ -289,7 +289,7 @@ const Sidebar = ({
         }}
         className={`
           fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-4 pb-3
-          lg:translate-x-0 lg:static lg:h-screen relative
+          lg:translate-x-0 lg:static lg:h-screen lg:relative
           ${isResizing ? '' : 'transition-all duration-200 ease-in-out'}
           ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full lg:translate-x-0'}
           ${isCollapsed ? 'lg:border-r-0 lg:opacity-0 lg:pointer-events-none lg:w-0 lg:p-0 lg:overflow-hidden' : 'w-64'}
