@@ -83,7 +83,7 @@ export const CommandPalette = () => {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+            if (e.altKey && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
                 setIsOpen((prev) => !prev);
                 setQuery('');
@@ -146,7 +146,7 @@ export const CommandPalette = () => {
                             setSelectedIndex(0);
                         }}
                         placeholder="Buscar módulos, páginas o comandos..."
-                        className="flex-1 bg-transparent border-none outline-none text-text-main text-sm placeholder:text-text-dim font-sans"
+                        className="flex-1 bg-transparent border-none outline-none text-text-main text-sm placeholder:text-text-dim font-sans focus:!outline-none focus:!border-none focus:!shadow-none focus-visible:!outline-none focus-visible:!border-none focus-visible:!shadow-none"
                     />
                     <kbd className="text-[10px] bg-surface px-2 py-1 rounded border border-border-thin text-text-dim font-mono">ESC</kbd>
                 </div>

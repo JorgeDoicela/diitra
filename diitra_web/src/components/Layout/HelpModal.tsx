@@ -46,7 +46,7 @@ const DEFAULT_CONFIG: HelpConfig = {
     ],
     compliance: "Este módulo cumple con los estándares mínimos de accesibilidad digital y seguridad de la información exigidos en los criterios generales de administración e infraestructura de los modelos de evaluación externa y acreditación del CACES.",
     tips: [
-        "Presiona 'Ctrl + K' en Windows/Linux o 'Cmd + K' en macOS en cualquier parte del sistema para desplegar la paleta de comandos de búsqueda profesional de archivos y acciones.",
+        "Presiona 'Alt + K' en Windows/Linux o 'Option + K' en macOS en cualquier parte del sistema para desplegar la paleta de comandos de búsqueda profesional de archivos y acciones.",
         "Ajusta el tamaño del menú de navegación lateral arrastrando el borde exterior hacia la derecha o hacia la izquierda según tu preferencia visual."
     ]
 };
