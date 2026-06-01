@@ -1495,7 +1495,7 @@ const GroupsPage = () => {
                                                                     >
                                                                         <div className="space-y-1 truncate pr-2">
                                                                             <p className="font-bold text-text-main text-xs uppercase truncate">{selectedUser.nombre}</p>
-                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {selectedUser.cedula} | {selectedUser.email} {selectedUser.carrera && `| ${selectedUser.carrera}`}</p>
+                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {selectedUser.cedula} | {selectedUser.email} {selectedUser.carrera && `| ${selectedUser.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())}`}</p>
                                                                         </div>
                                                                         <span className="px-2 py-0.5 rounded text-[8px] shrink-0 font-extrabold tracking-wider uppercase border bg-text-main/10 border-text-main/20 text-text-main">
                                                                             Docente
@@ -1613,7 +1613,7 @@ const GroupsPage = () => {
                                                                                     >
                                                                                         <div className="space-y-0.5">
                                                                                             <p className="font-bold text-text-main text-xs uppercase">{teacher.nombre}</p>
-                                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {teacher.cedula} | {teacher.email || 'S/D'} {teacher.carrera && `| ${teacher.carrera}`}</p>
+                                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {teacher.cedula} | {teacher.email || 'S/D'} {teacher.carrera && `| ${teacher.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())}`}</p>
                                                                                         </div>
                                                                                         <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-emerald-500/15 border-emerald-500/25 text-emerald-400">
                                                                                             Docente

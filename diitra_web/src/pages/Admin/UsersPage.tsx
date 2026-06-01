@@ -39,6 +39,14 @@ interface AuditLog {
     date: string;
 }
 
+const formatCarrera = (carrera: string | null | undefined) => {
+    if (!carrera) return 'Sin carrera asignada';
+    return carrera
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase())
+        .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m) => m.toLowerCase());
+};
+
 const UsersPage = () => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
@@ -304,35 +312,35 @@ const UsersPage = () => {
                                     </td>
                                     <td className="p-4">
                                         {u.type === 'DOCENTE' ? (
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-center gap-2">
-                                                    <span className={`badge-vercel ${(u.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
-                                                        <Activity size={10} />
-                                                        {u.horas_investigacion || 0}h Investigación
-                                                    </span>
-                                                </div>
-                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
-                                                    {u.tipo_dedicacion || 'Sin contrato activo'}
-                                                </p>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="badge-vercel badge-vercel-neutral">
-                                                        <GraduationCap size={10} />
-                                                        {u.carrera || 'Sin Carrera'}
-                                                    </span>
-                                                </div>
-                                            </div>
+                                             <div className="space-y-1">
+                                                 <div className="flex items-center gap-2">
+                                                     <span className={`badge-vercel ${(u.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
+                                                         <Activity size={10} />
+                                                         {u.horas_investigacion || 0}h Investigación
+                                                     </span>
+                                                 </div>
+                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                     {u.tipo_dedicacion || 'Sin contrato activo'}
+                                                 </p>
+                                                 <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
+                                                     <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
+                                                     <span className="truncate max-w-[190px]" title={u.carrera}>
+                                                         {formatCarrera(u.carrera)}
+                                                     </span>
+                                                 </div>
+                                             </div>
                                         ) : u.type === 'ESTUDIANTE' ? (
-                                            <div className="space-y-1.5">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="badge-vercel badge-vercel-neutral">
-                                                        <GraduationCap size={10} />
-                                                        {u.carrera || 'Sin Carrera'}
-                                                    </span>
-                                                </div>
-                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
-                                                    {u.nivel || 'Nivel no definido'}
-                                                </p>
-                                            </div>
+                                             <div className="space-y-1">
+                                                 <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide pr-2">
+                                                     <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
+                                                     <span className="truncate max-w-[190px]" title={u.carrera}>
+                                                         {formatCarrera(u.carrera)}
+                                                     </span>
+                                                 </div>
+                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                     {u.nivel || 'Nivel no definido'}
+                                                 </p>
+                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
@@ -623,7 +631,7 @@ const UsersPage = () => {
                                             <p className="section-label text-text-dim mb-1">Carrera / Tecnología</p>
                                             <p className="text-sm font-bold text-text-main flex items-center gap-1.5">
                                                 <GraduationCap size={14} className="text-text-dim" />
-                                                {detailUser.carrera || 'Sin carrera asignada'}
+                                                {formatCarrera(detailUser.carrera)}
                                             </p>
                                         </div>
                                     </div>
@@ -639,7 +647,7 @@ const UsersPage = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Carrera</p>
-                                            <p className="text-sm font-bold text-text-main">{detailUser.carrera || 'Sin carrera'}</p>
+                                            <p className="text-sm font-bold text-text-main">{formatCarrera(detailUser.carrera)}</p>
                                         </div>
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Nivel</p>
