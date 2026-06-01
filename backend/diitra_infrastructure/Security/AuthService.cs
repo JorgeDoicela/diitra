@@ -735,14 +735,23 @@ public class AuthService : IAuthService
         var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
 
         var emailTitle = "Acceso de Arbitraje Científico - DIITRA (Reenvío)";
-        var emailBody = $"Estimado/a {user.Nombre},\n\n" +
-                        $"Usted ha solicitado el reenvío de su enlace de acceso para el módulo de arbitraje científico.\n\n" +
-                        $"Para ingresar a la plataforma y continuar con sus revisiones pendientes, utilice el siguiente enlace único de acceso (vigente hasta la fecha límite {activeLink.FechaExpiracion:dd/MM/yyyy}):\n\n" +
-                        $"{magicLinkUrl}\n\n" +
-                        $"Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:\n" +
-                        $"• Usuario: {user.IdSigafi}\n" +
-                        $"• Contraseña por defecto: Diitra2026*\n\n" +
-                        $"Recuerde que por seguridad es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.";
+        var emailBody = $"<p>Usted ha solicitado el reenvío de su enlace de acceso para el módulo de arbitraje científico.</p>" +
+                        $"<p>Para ingresar a la plataforma de forma directa y segura y continuar con sus revisiones pendientes sin requerir contraseña, utilice el botón <strong>VER DETALLES EN DIITRA</strong> a continuación (vigente hasta la fecha límite <strong>{activeLink.FechaExpiracion:dd/MM/yyyy}</strong>).</p>" +
+                        $"<div style=\"margin-top: 28px; padding: 22px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px;\">" +
+                        $"  <h4 style=\"margin: 0 0 12px 0; color: #475569; font-size: 14.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;\">Credenciales de Acceso Convencional</h4>" +
+                        $"  <p style=\"margin: 0 0 12px 0; font-size: 13.5px; color: #334155; line-height: 1.5;\">Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:</p>" +
+                        $"  <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin-bottom: 12px;\">" +
+                        $"    <tr>" +
+                        $"      <td style=\"padding: 4px 12px 4px 0; color: #64748b; font-size: 13.5px;\"><strong>Usuario:</strong></td>" +
+                        $"      <td style=\"padding: 4px 0; color: #0f172a; font-size: 13.5px; font-family: monospace;\">{user.IdSigafi}</td>" +
+                        $"    </tr>" +
+                        $"    <tr>" +
+                        $"      <td style=\"padding: 4px 12px 4px 0; color: #64748b; font-size: 13.5px;\"><strong>Contraseña:</strong></td>" +
+                        $"      <td style=\"padding: 4px 0; color: #0f172a; font-size: 13.5px;\"><code style=\"background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px;\">Diitra2026*</code></td>" +
+                        $"    </tr>" +
+                        $"  </table>" +
+                        $"  <p style=\"margin: 0; font-size: 12px; color: #64748b; font-style: italic; line-height: 1.4;\">* Por motivos de seguridad, es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.</p>" +
+                        $"</div>";
 
         await _notificationService.NotifyUserAsync(
             user.IdUsuario,
