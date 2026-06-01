@@ -282,5 +282,48 @@ namespace diitra_infrastructure.Common.Notifications
 
             await _context.SaveChangesAsync();
         }
+        
+        public async Task SubscribeUserAsync(int userId, string deviceToken, string plataforma)
+        {
+            // Buscar si el token del navegador ya está registrado por CUALQUIER usuario en la base de datos
+            var existing = await _context.InvDispositivosTokens
+                .FirstOrDefaultAsync(t => t.DeviceToken == deviceToken);
+
+            if (existing != null)
+            {
+                // Si el dispositivo ya existía pero estaba asignado a otro usuario (ej: prestaron la laptop)
+                // reasignamos el token de forma segura al nuevo usuario activo y actualizamos la sincronización
+                existing.IdUsuario = userId;
+                existing.UltimaSincronizacion = DateTime.UtcNow;
+                existing.Plataforma = plataforma;
+            }
+            else
+            {
+                // Si es un dispositivo o navegador completamente nuevo, lo registramos normalmente
+                var token = new InvDispositivoToken
+                {
+                    IdUsuario = userId,
+                    DeviceToken = deviceToken,
+                    Plataforma = plataforma,
+                    UltimaSincronizacion = DateTime.UtcNow
+                };
+                _context.InvDispositivosTokens.Add(token);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UnsubscribeUserAsync(int userId, string deviceToken)
+        {
+            var tokens = await _context.InvDispositivosTokens
+                .Where(t => t.IdUsuario == userId && t.DeviceToken == deviceToken)
+                .ToListAsync();
+
+            if (tokens.Any())
+            {
+                _context.InvDispositivosTokens.RemoveRange(tokens);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

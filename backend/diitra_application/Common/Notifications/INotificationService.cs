@@ -10,5 +10,7 @@ namespace diitra_application.Common.Notifications
         Task<IEnumerable<object>> GetMyNotificationsAsync(int userId);
         Task<bool> MarkAsReadAsync(string uuid);
         Task MarkAllAsReadAsync(int userId);
+        Task SubscribeUserAsync(int userId, string deviceToken, string plataforma);
+        Task UnsubscribeUserAsync(int userId, string deviceToken);
     }
 }

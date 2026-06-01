@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
@@ -6,6 +6,7 @@ import { CommandPalette } from '../Common/CommandPalette';
 import { Menu, MoreHorizontal } from 'lucide-react';
 import NotificationBell from '../Notifications/NotificationBell';
 import { HelpModal } from './HelpModal';
+import api from '../../api/axios_config';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -47,6 +48,82 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         const saved = localStorage.getItem('sidebar_collapsed');
         return saved === 'true';
     });
+
+    useEffect(() => {
+        const initWebPush = async () => {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                console.log('Este navegador no soporta notificaciones Web Push.');
+                return;
+            }
+
+            try {
+                // 1. Registrar Service Worker de forma explícita
+                const registration = await navigator.serviceWorker.register('/sw.js');
+                
+                // 2. Esperar a que el service worker esté completamente listo
+                await navigator.serviceWorker.ready;
+
+                // 3. Solicitar permiso para mostrar notificaciones si no está decidido
+                if (Notification.permission === 'default') {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        console.log('El usuario rechazó los permisos de notificación.');
+                        return;
+                    }
+                } else if (Notification.permission === 'denied') {
+                    console.log('Permiso de notificación denegado previamente.');
+                    return;
+                }
+
+                // 4. Suscribirse al servidor de Push con la llave VAPID pública generada
+                const VAPID_PUBLIC_KEY = 'BD70Tf6OvtNDv7woB_utltQMF-NeJnLXqKyQ9UuEOC5YlDVfZgEKrsE1Fgkut8dPzQrPWhRGZXZeWZeTHahIhRc';
+                
+                const urlBase64ToUint8Array = (base64String: string) => {
+                    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+                    const base64 = (base64String + padding)
+                        .replace(/\-/g, '+')
+                        .replace(/_/g, '/');
+
+                    const rawData = window.atob(base64);
+                    const outputArray = new Uint8Array(rawData.length);
+
+                    for (let i = 0; i < rawData.length; ++i) {
+                        outputArray[i] = rawData.charCodeAt(i);
+                    }
+                    return outputArray;
+                };
+
+                let subscription = await registration.pushManager.getSubscription();
+                
+                if (!subscription) {
+                    subscription = await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                    });
+                    console.log('Nueva suscripción Web Push creada:', subscription);
+                }
+
+                // 5. Condensar la suscripción para que quepa de forma segura en el límite de 512 caracteres de la BD
+                const subJson = subscription.toJSON();
+                const tokenString = `${subJson.endpoint}|${subJson.keys?.p256dh || ''}|${subJson.keys?.auth || ''}`;
+
+                await api.post('/Admin/notifications/subscribe', {
+                    device_token: tokenString,
+                    plataforma: 'web_push'
+                });
+                console.log('Suscripción Web Push sincronizada profesionalmente con el servidor.');
+            } catch (error) {
+                console.error('Error al inicializar las notificaciones Web Push nativas:', error);
+            }
+        };
+
+        // Retardo estratégico de 2 segundos para no interferir con la carga crítica del dashboard
+        const timer = setTimeout(() => {
+            initWebPush();
+        }, 2000);
+
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleCollapseToggle = () => {
         setIsCollapsed(prev => {

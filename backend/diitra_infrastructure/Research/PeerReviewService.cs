@@ -704,7 +704,7 @@ public class PeerReviewService : IPeerReviewService
                                 $"  <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin-bottom: 12px;\">" +
                                 $"    <tr>" +
                                 $"      <td style=\"padding: 4px 12px 4px 0; color: #64748b; font-size: 13.5px;\"><strong>Usuario:</strong></td>" +
-                                $"      <td style=\"padding: 4px 0; color: #0f172a; font-size: 13.5px; font-family: monospace;\">{revisorUser.IdSigafi}</td>" +
+                                            $"      <td style=\"padding: 4px 0; color: #0f172a; font-size: 13.5px; font-family: monospace;\">{revisorUser.IdSigafi}</td>" +
                                 $"    </tr>" +
                                 $"    <tr>" +
                                 $"      <td style=\"padding: 4px 12px 4px 0; color: #64748b; font-size: 13.5px;\"><strong>Contraseña:</strong></td>" +
@@ -720,6 +720,27 @@ public class PeerReviewService : IPeerReviewService
                     emailBody,
                     "PEER_REVIEW",
                     magicLinkUrl
+                );
+            }
+        }
+        else
+        {
+            var revisorUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == dto.IdRevisor);
+            if (revisorUser != null)
+            {
+                var emailTitle = $"Nueva Asignación de Arbitraje Científico - DIITRA";
+                var emailBody = $"<p>Estimado/a docente, ha sido asignado/a como árbitro científico para realizar la evaluación técnica del proyecto de investigación titulado:</p>" +
+                                $"<div style=\"margin: 18px 0; padding: 18px 24px; background-color: #f1f5f9; border-left: 4px solid #b9975b; border-radius: 4px; font-style: italic; color: #1e293b; font-weight: 600; line-height: 1.6;\">" +
+                                $"  \"{project.Titulo}\"" +
+                                $"</div>" +
+                                $"<p>Por favor, ingrese a la plataforma de DIITRA para revisar los detalles del proyecto y emitir su dictamen técnico antes de la fecha límite: <strong>{dto.FechaLimite:dd/MM/yyyy}</strong>.</p>";
+
+                await _notificationService.NotifyUserAsync(
+                    revisorUser.IdUsuario,
+                    emailTitle,
+                    emailBody,
+                    "PEER_REVIEW",
+                    "/revisiones"
                 );
             }
         }
