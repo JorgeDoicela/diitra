@@ -691,28 +691,27 @@ public class PeerReviewService : IPeerReviewService
                 var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
                 var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
 
-                // Notificar vía correo electrónico (con plantilla corporativa)
+                // Notificar vía correo electrónico (con plantilla corporativa desacoplada)
                 var emailTitle = $"Acceso de Arbitraje Científico - DIITRA";
-                var emailBody = $"<p>Ha sido asignado/a para realizar el arbitraje técnico del proyecto de investigación titulado:</p>" +
-                                $"<div style=\"margin: 18px 0; padding: 18px 24px; background-color: #f1f5f9; border-left: 4px solid #b9975b; border-radius: 4px 12px 12px 4px; font-style: italic; color: #1e293b; font-weight: 600; line-height: 1.6;\">" +
-                                $"  \"{project.Titulo}\"" +
-                                $"</div>" +
-                                $"<p>Para ingresar a la plataforma y emitir su dictamen de forma segura sin requerir contraseña, utilice el botón <strong>VER DETALLES EN DIITRA</strong> a continuación (vigente hasta la fecha límite <strong>{dto.FechaLimite:dd/MM/yyyy}</strong>).</p>" +
-                                $"<div style=\"margin-top: 28px; padding: 22px; background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 16px;\">" +
-                                $"  <h4 style=\"margin: 0 0 12px 0; color: #475569; font-size: 14.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;\">Credenciales de Acceso Convencional</h4>" +
-                                $"  <p style=\"margin: 0 0 12px 0; font-size: 13.5px; color: #334155; line-height: 1.5;\">Si prefiere iniciar sesión de forma convencional a través de la página de login principal, puede utilizar las siguientes credenciales temporales:</p>" +
-                                $"  <table cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin-bottom: 12px;\">" +
-                                $"    <tr>" +
-                                $"      <td style=\"padding: 4px 12px 4px 0; color: #64748b; font-size: 13.5px;\"><strong>Usuario:</strong></td>" +
-                                            $"      <td style=\"padding: 4px 0; color: #0f172a; font-size: 13.5px; font-family: monospace;\">{revisorUser.IdSigafi}</td>" +
-                                $"    </tr>" +
-                                $"    <tr>" +
-                                $"      <td style=\"padding: 4px 12px 4px 0; color: #64748b; font-size: 13.5px;\"><strong>Contraseña:</strong></td>" +
-                                $"      <td style=\"padding: 4px 0; color: #0f172a; font-size: 13.5px;\"><code style=\"background-color: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px;\">Diitra2026*</code></td>" +
-                                $"    </tr>" +
-                                $"  </table>" +
-                                $"  <p style=\"margin: 0; font-size: 12px; color: #64748b; font-style: italic; line-height: 1.4;\">* Por motivos de seguridad, es aconsejable cambiar su contraseña temporal una vez que haya ingresado al sistema.</p>" +
-                                $"</div>";
+                string emailBody;
+
+                var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "AsignarArbitroExterno.html");
+                if (File.Exists(templatePath))
+                {
+                    var templateHtml = await File.ReadAllTextAsync(templatePath);
+                    var template = HandlebarsDotNet.Handlebars.Compile(templateHtml);
+                    emailBody = template(new
+                    {
+                        project_title = project.Titulo,
+                        fecha_limite = dto.FechaLimite.ToString("dd/MM/yyyy"),
+                        username = revisorUser.IdSigafi
+                    });
+                }
+                else
+                {
+                    emailBody = $"<p>Ha sido asignado/a para realizar el arbitraje técnico del proyecto de investigación: <strong>{project.Titulo}</strong>.</p>" +
+                                $"<p>Fecha límite: {dto.FechaLimite:dd/MM/yyyy}</p>";
+                }
 
                 await _notificationService.NotifyUserAsync(
                     revisorUser.IdUsuario,
@@ -729,11 +728,23 @@ public class PeerReviewService : IPeerReviewService
             if (revisorUser != null)
             {
                 var emailTitle = $"Nueva Asignación de Arbitraje Científico - DIITRA";
-                var emailBody = $"<p>Estimado/a docente, ha sido asignado/a como árbitro científico para realizar la evaluación técnica del proyecto de investigación titulado:</p>" +
-                                $"<div style=\"margin: 18px 0; padding: 18px 24px; background-color: #f1f5f9; border-left: 4px solid #b9975b; border-radius: 4px; font-style: italic; color: #1e293b; font-weight: 600; line-height: 1.6;\">" +
-                                $"  \"{project.Titulo}\"" +
-                                $"</div>" +
-                                $"<p>Por favor, ingrese a la plataforma de DIITRA para revisar los detalles del proyecto y emitir su dictamen técnico antes de la fecha límite: <strong>{dto.FechaLimite:dd/MM/yyyy}</strong>.</p>";
+                string emailBody;
+
+                var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "AsignarArbitroInterno.html");
+                if (File.Exists(templatePath))
+                {
+                    var templateHtml = await File.ReadAllTextAsync(templatePath);
+                    var template = HandlebarsDotNet.Handlebars.Compile(templateHtml);
+                    emailBody = template(new
+                    {
+                        project_title = project.Titulo,
+                        fecha_limite = dto.FechaLimite.ToString("dd/MM/yyyy")
+                    });
+                }
+                else
+                {
+                    emailBody = $"<p>Estimado/a docente, ha sido asignado/a como árbitro científico para evaluar el proyecto: <strong>{project.Titulo}</strong> antes de la fecha límite {dto.FechaLimite:dd/MM/yyyy}.</p>";
+                }
 
                 await _notificationService.NotifyUserAsync(
                     revisorUser.IdUsuario,

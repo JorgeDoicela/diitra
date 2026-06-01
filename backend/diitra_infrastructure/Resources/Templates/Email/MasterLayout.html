@@ -5,7 +5,7 @@
 
     Esta plantilla define el diseño visual unificado, responsivo y minimalista de DIITRA,
     siguiendo estrictamente las directrices del Vercel Geist Design System.
-    Maquetada con tablas tradicionales y estilos en línea optimizados para máxima 
+    Maquetada con tablas tradicionales y estilos en línea optimizados para máxima
     compatibilidad en clientes de correo modernos (Gmail, Outlook, Apple Mail, etc.).
 
     PLACEHOLDERS DINÁMICOS DISPONIBLES (HANDLEBARS):
@@ -28,7 +28,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
     <!-- Importamos Geist y Geist Mono para clientes compatibles (Apple Mail, iOS, Thunderbird) -->
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         /* Estilos generales responsivos */
         @media only screen and (max-width: 620px) {
@@ -70,13 +72,17 @@
                     <table width="100%" border="0" cellpadding="0" cellspacing="0">
                         <tr>
                             <td align="center">
-                                <div style="display: inline-block; padding-bottom: 4px;">
-                                    <h1 style="color: #000000; margin: 0; font-size: 20px; letter-spacing: 3px; font-weight: 800; text-transform: uppercase; font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;">
-                                        ISTPET <span style="font-weight: 300; color: #888888; font-size: 16px; margin: 0 4px; vertical-align: middle;">▲</span> DIITRA
-                                    </h1>
+                                <div style="display: inline-block; padding-bottom: 8px; vertical-align: middle;">
+                                    <img src="{{logo_istpet}}" alt="ISTPET Logo" height="38"
+                                        style="display: inline-block; vertical-align: middle; border: 0; margin-right: 4px;">
+                                    <span
+                                        style="font-weight: 300; color: #eaeaea; font-size: 24px; margin: 0 12px; vertical-align: middle;">|</span>
+                                    <img src="{{logo_diitra}}" alt="DIITRA Logo" height="32"
+                                        style="display: inline-block; vertical-align: middle; border: 0; margin-left: 4px;">
                                 </div>
-                                <p style="color: #666666; margin: 6px 0 0 0; font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;">
-                                    Departamento de Investigación e Innovación Tecnológica
+                                <p
+                                    style="color: #666666; margin: 6px 0 0 0; font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;">
+                                    Departamento de Investigación e Innovación Traversari
                                 </p>
                             </td>
                         </tr>
@@ -88,28 +94,35 @@
             <tr>
                 <td class="content-td" style="padding: 32px 48px 48px 48px;">
                     <!-- Saludo Principal -->
-                    <h2 style="color: #000000; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; letter-spacing: -0.4px; line-height: 1.4; font-family: 'Geist', sans-serif;">
+                    <h2
+                        style="color: #000000; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; letter-spacing: -0.4px; line-height: 1.4; font-family: 'Geist', sans-serif;">
                         Hola {{recipient_name}},
                     </h2>
 
                     <!-- Cuerpo del Mensaje -->
-                    <div style="color: #333333; font-size: 14px; line-height: 1.6; margin: 0 0 28px 0; font-family: 'Geist', sans-serif;">
+                    <div
+                        style="color: #333333; font-size: 14px; line-height: 1.6; margin: 0 0 28px 0; font-family: 'Geist', sans-serif;">
                         {{{body_text}}}
                     </div>
 
                     <!-- Bento Card de Detalles de la Notificación (extra_data) -->
                     {{#if has_extra_data}}
-                    <div style="margin: 28px 0; background-color: #fafafa; border-radius: 8px; padding: 18px 20px; border: 1px solid #eaeaea;">
-                        <h3 style="margin: 0 0 12px 0; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-family: 'Geist', sans-serif;">
+                    <div
+                        style="margin: 28px 0; background-color: #fafafa; border-radius: 8px; padding: 18px 20px; border: 1px solid #eaeaea;">
+                        <h3
+                            style="margin: 0 0 12px 0; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-family: 'Geist', sans-serif;">
                             Detalles de la Notificación
                         </h3>
-                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: 'Geist Mono', 'JetBrains Mono', 'Courier New', monospace; font-size: 13px;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                            style="font-family: 'Geist Mono', 'JetBrains Mono', 'Courier New', monospace; font-size: 13px;">
                             {{#each extra_data}}
                             <tr>
-                                <td style="padding: 8px 0; color: #666666; width: 35%; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
+                                <td
+                                    style="padding: 8px 0; color: #666666; width: 35%; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
                                     {{key}}:
                                 </td>
-                                <td style="padding: 8px 0; color: #000000; font-weight: 500; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
+                                <td
+                                    style="padding: 8px 0; color: #000000; font-weight: 500; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
                                     {{value}}
                                 </td>
                             </tr>
@@ -135,8 +148,10 @@
                     {{/if}}
 
                     <!-- Nota final discreta -->
-                    <p style="color: #888888; font-size: 12px; line-height: 1.5; margin: 28px 0 0 0; font-family: 'Geist', sans-serif;">
-                        Si tiene alguna duda sobre esta notificación, puede responder directamente a este correo o contactarnos a través de nuestra plataforma institucional.
+                    <p
+                        style="color: #888888; font-size: 12px; line-height: 1.5; margin: 28px 0 0 0; font-family: 'Geist', sans-serif;">
+                        Si tiene alguna duda sobre esta notificación, puede responder directamente a este correo o
+                        contactarnos a través de nuestra plataforma institucional.
                     </p>
 
                     <!-- Pie de Página Institucional -->
@@ -144,15 +159,18 @@
                         <table width="100%" border="0" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td style="text-align: left; vertical-align: top;">
-                                    <p style="color: #000000; font-size: 13px; margin: 0 0 2px 0; font-weight: 600; font-family: 'Geist', sans-serif;">
+                                    <p
+                                        style="color: #000000; font-size: 13px; margin: 0 0 2px 0; font-weight: 600; font-family: 'Geist', sans-serif;">
                                         Tecnológico Traversari
                                     </p>
-                                    <p style="color: #888888; font-size: 11px; margin: 0; font-family: 'Geist', sans-serif;">
+                                    <p
+                                        style="color: #888888; font-size: 11px; margin: 0; font-family: 'Geist', sans-serif;">
                                         Excelencia Académica y Tecnológica
                                     </p>
                                 </td>
                                 <td style="text-align: right; vertical-align: top;">
-                                    <div style="color: #000000; font-weight: 600; font-size: 11px; font-family: 'Geist', sans-serif;">
+                                    <div
+                                        style="color: #000000; font-weight: 600; font-size: 11px; font-family: 'Geist', sans-serif;">
                                         ISTPET {{anio_actual}}
                                     </div>
                                 </td>
@@ -160,9 +178,17 @@
                         </table>
 
                         <!-- Advertencia LOPDP Ecuador en Bento Box -->
-                        <div style="margin-top: 24px; background-color: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #eaeaea;">
-                            <p style="color: #666666; font-size: 10.5px; line-height: 1.6; margin: 0; font-family: 'Geist', sans-serif;">
-                                <strong style="color: #000000;">Aviso de Protección de Datos (LOPDP):</strong> Conforme a la Ley Orgánica de Protección de Datos Personales de la República del Ecuador, le informamos que sus datos personales son tratados con el único fin de gestionar actividades de investigación en el sistema DIITRA. Para ejercer sus derechos de acceso, rectificación, eliminación o limitación, puede dirigirse por escrito al correo institucional <a href="mailto:admisiones@istpet.edu.ec" style="color: #0070f3; text-decoration: none; font-weight: 500;">admisiones@istpet.edu.ec</a>.
+                        <div
+                            style="margin-top: 24px; background-color: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #eaeaea;">
+                            <p
+                                style="color: #666666; font-size: 10.5px; line-height: 1.6; margin: 0; font-family: 'Geist', sans-serif;">
+                                <strong style="color: #000000;">Aviso de Protección de Datos (LOPDP):</strong> Conforme
+                                a la Ley Orgánica de Protección de Datos Personales de la República del Ecuador, le
+                                informamos que sus datos personales son tratados con el único fin de gestionar
+                                actividades de investigación en el sistema DIITRA. Para ejercer sus derechos de acceso,
+                                rectificación, eliminación o limitación, puede dirigirse por escrito al correo
+                                institucional <a href="mailto:admisiones@istpet.edu.ec"
+                                    style="color: #0070f3; text-decoration: none; font-weight: 500;">admisiones@istpet.edu.ec</a>.
                             </p>
                         </div>
 

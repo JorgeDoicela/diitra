@@ -59,6 +59,14 @@ namespace diitra_infrastructure.Common.Notifications
             var absoluteUrl = url != null ? (url.StartsWith("http") ? url : $"{frontendUrl}{url}") : null;
             var name = recipientName ?? "Investigador";
 
+            // Determine if SMTP is active
+            var host = _configuration["Email:Host"];
+            var isMock = string.IsNullOrEmpty(host);
+
+            // Configure logo values for template context
+            var logoIstpetVal = isMock ? $"{frontendUrl}/logo_istpet_negro.png" : "cid:logo_istpet";
+            var logoDiitraVal = isMock ? $"{frontendUrl}/logo_negro.png" : "cid:logo_diitra";
+
             // 1. CARGA DINÁMICA DE LA PLANTILLA MAESTRA
             // Obtenemos la ruta del MasterLayout.html en el directorio de ejecución bin/
             var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "MasterLayout.html");
@@ -87,7 +95,10 @@ namespace diitra_infrastructure.Common.Notifications
                         has_action = absoluteUrl != null,
                         action_url = absoluteUrl,
                         action_text = "VER DETALLES EN DIITRA",
-                        anio_actual = DateTime.UtcNow.Year
+                        anio_actual = DateTime.UtcNow.Year,
+                        frontend_url = frontendUrl,
+                        logo_istpet = logoIstpetVal,
+                        logo_diitra = logoDiitraVal
                     };
 
                     htmlBody = template(context);
@@ -104,17 +115,15 @@ namespace diitra_infrastructure.Common.Notifications
                 htmlBody = $"<h2>Hola {name},</h2><p>{body}</p>";
             }
 
-            var host = _configuration["Email:Host"];
-            var port = int.Parse(_configuration["Email:Port"] ?? "587");
-            var user = _configuration["Email:Username"];
-            var pass = _configuration["Email:Password"];
-
-            if (string.IsNullOrEmpty(host))
+            if (isMock)
             {
                 _logger.LogWarning("[MOCK EMAIL] Para: {Recipient} | Titulo: {Title}", recipient, title);
                 return;
             }
 
+            var port = int.Parse(_configuration["Email:Port"] ?? "587");
+            var user = _configuration["Email:Username"];
+            var pass = _configuration["Email:Password"];
             var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
             var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
 
@@ -127,11 +136,46 @@ namespace diitra_infrastructure.Common.Notifications
             var mailMessage = new MailMessage
             {
                 From = new MailAddress(fromEmail, fromName),
-                Subject = title,
-                Body = htmlBody,
-                IsBodyHtml = true
+                Subject = title
             };
             mailMessage.To.Add(recipient);
+
+            // Construct AlternateView to embed images inline with Content-IDs
+            var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, System.Net.Mime.MediaTypeNames.Text.Html);
+
+            var templateDir = Path.GetDirectoryName(templatePath);
+            if (templateDir != null)
+            {
+                var logoIstpetPath = Path.Combine(templateDir, "logo_istpet_negro.png");
+                if (File.Exists(logoIstpetPath))
+                {
+                    var logoIstpetRes = new LinkedResource(logoIstpetPath, "image/png")
+                    {
+                        ContentId = "logo_istpet"
+                    };
+                    htmlView.LinkedResources.Add(logoIstpetRes);
+                }
+                else
+                {
+                    _logger.LogWarning("No se encontro la imagen del logo ISTPET para incrustar en {Path}", logoIstpetPath);
+                }
+
+                var logoDiitraPath = Path.Combine(templateDir, "logo_negro.png");
+                if (File.Exists(logoDiitraPath))
+                {
+                    var logoDiitraRes = new LinkedResource(logoDiitraPath, "image/png")
+                    {
+                        ContentId = "logo_diitra"
+                    };
+                    htmlView.LinkedResources.Add(logoDiitraRes);
+                }
+                else
+                {
+                    _logger.LogWarning("No se encontro la imagen del logo DIITRA para incrustar en {Path}", logoDiitraPath);
+                }
+            }
+
+            mailMessage.AlternateViews.Add(htmlView);
 
             await client.SendMailAsync(mailMessage);
             _logger.LogInformation("Email enviado con exito a {Recipient}", recipient);
