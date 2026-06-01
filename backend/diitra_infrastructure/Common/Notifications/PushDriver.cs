@@ -40,14 +40,15 @@ namespace diitra_infrastructure.Common.Notifications
                 return;
             }
 
-            // 1. Obtener todas las suscripciones activas del usuario
+            // 1. Obtener todas las suscripciones activas del usuario (sincronizadas en los últimos 30 días)
+            var limiteInactividad = DateTime.UtcNow.AddDays(-30);
             var tokens = await _context.InvDispositivosTokens
-                .Where(t => t.IdUsuario == userId)
+                .Where(t => t.IdUsuario == userId && t.UltimaSincronizacion >= limiteInactividad)
                 .ToListAsync();
 
             if (tokens.Count == 0)
             {
-                _logger.LogInformation("Usuario {UserId} no tiene dispositivos registrados para Push", userId);
+                _logger.LogInformation("Usuario {UserId} no tiene dispositivos activos para recibir notificaciones Push (inactivo en los últimos 30 días)", userId);
                 return;
             }
 
