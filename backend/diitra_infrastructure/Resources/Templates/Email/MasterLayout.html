@@ -28,9 +28,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
     <style>
-        /* Force Arial globally across all email clients */
+        /* Force Segoe UI / Arial globally across all email clients */
         body, table, td, p, a, li, blockquote, div, span, h1, h2, h3, h4, h5, h6, strong, b, em, i {
-            font-family: Arial, Helvetica, sans-serif !important;
+            font-family: Segoe UI, Arial, sans-serif !important;
         }
 
         /* Estilos generales responsivos */
@@ -61,22 +61,22 @@
     <!--[if mso]>
     <style type="text/css">
         body, table, td, p, a, li, blockquote, div, span, h1, h2, h3, h4, h5, h6, strong, b, em, i {
-            font-family: Arial, Helvetica, sans-serif !important;
+            font-family: Segoe UI, Arial, sans-serif !important;
         }
     </style>
     <![endif]-->
 </head>
 
 <body
-    style="margin: 0; padding: 0; background-color: #fafafa; font-family: Arial, Helvetica, sans-serif; -webkit-font-smoothing: antialiased; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+    style="margin: 0; padding: 0; background-color: #fafafa; font-family: Segoe UI, Arial, sans-serif; -webkit-font-smoothing: antialiased; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
     <div style="background-color: #fafafa; padding: 40px 0; min-height: 100%;">
         <!-- Contenedor Maestro Centrado al Estilo Vercel Dashboard -->
         <table class="container-table" align="center" border="0" cellpadding="0" cellspacing="0" width="560"
-            style="background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #eaeaea; border-collapse: separate;">
+            style="background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #eaeaea; border-collapse: separate; font-family: Segoe UI, Arial, sans-serif;">
 
             <!-- Cabecera de Marca (Branding Minimalista Monocromático) -->
             <tr>
-                <td class="header-td" style="padding: 48px 48px 16px 48px; background-color: #ffffff;">
+                <td class="header-td" style="padding: 48px 48px 16px 48px; background-color: #ffffff; font-family: Segoe UI, Arial, sans-serif;">
                     <!-- Row for Logos (ISTPET Top Left, DIITRA Top Right) -->
                     <table width="100%" border="0" cellpadding="0" cellspacing="0">
                         <tr>
@@ -90,18 +90,18 @@
                     </table>
                     
                     <!-- Spacing between logos and text -->
-                    <div style="height: 12px; line-height: 12px; font-size: 1px;">&nbsp;</div>
+                    <div style="height: 6px; line-height: 6px; font-size: 1px;">&nbsp;</div>
                     
                     <!-- Row for Centered Branding Text (Below Logos) -->
                     <table width="100%" border="0" cellpadding="0" cellspacing="0">
                         <tr>
-                            <td align="center" style="font-family: Arial, Helvetica, sans-serif;">
+                            <td align="center" style="font-family: Segoe UI, Arial, sans-serif;">
                                 <p
-                                    style="color: #000000; margin: 0; font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif; line-height: 1.2;">
+                                    style="color: #000000; margin: 0; font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-family: Segoe UI, Arial, sans-serif; line-height: 1.2;">
                                     SISTEMA DIITRA
                                 </p>
                                 <p
-                                    style="color: #666666; margin: 6px 0 0 0; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; font-family: Arial, Helvetica, sans-serif; line-height: 1.3;">
+                                    style="color: #666666; margin: 6px 0 0 0; font-size: 10px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; font-family: Segoe UI, Arial, sans-serif; line-height: 1.3;">
                                     Departamento de Investigación e Innovación Traversari
                                 </p>
                             </td>
@@ -112,37 +112,37 @@
 
             <!-- Contenido Principal -->
             <tr>
-                <td class="content-td" style="padding: 32px 48px 48px 48px;">
+                <td class="content-td" style="padding: 32px 48px 48px 48px; font-family: Segoe UI, Arial, sans-serif;">
                     <!-- Saludo Principal -->
                     <h2
-                        style="color: #000000; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; letter-spacing: -0.4px; line-height: 1.4; font-family: Arial, Helvetica, sans-serif;">
+                        style="color: #000000; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; letter-spacing: -0.4px; line-height: 1.4; font-family: Segoe UI, Arial, sans-serif;">
                         Hola {{recipient_name}},
                     </h2>
 
                     <!-- Cuerpo del Mensaje -->
                     <div
-                        style="color: #333333; font-size: 14px; line-height: 1.6; margin: 0 0 28px 0; font-family: Arial, Helvetica, sans-serif;">
+                        style="color: #333333; font-size: 14px; line-height: 1.6; margin: 0 0 28px 0; font-family: Segoe UI, Arial, sans-serif;">
                         {{{body_text}}}
                     </div>
 
                     <!-- Bento Card de Detalles de la Notificación (extra_data) -->
                     {{#if has_extra_data}}
                     <div
-                        style="margin: 28px 0; background-color: #fafafa; border-radius: 8px; padding: 18px 20px; border: 1px solid #eaeaea;">
+                        style="margin: 28px 0; background-color: #fafafa; border-radius: 8px; padding: 18px 20px; border: 1px solid #eaeaea; font-family: Segoe UI, Arial, sans-serif;">
                         <h3
-                            style="margin: 0 0 12px 0; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
+                            style="margin: 0 0 12px 0; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-family: Segoe UI, Arial, sans-serif;">
                             Detalles de la Notificación
                         </h3>
                         <table width="100%" cellpadding="0" cellspacing="0" border="0"
-                            style="font-family: Arial, Helvetica, sans-serif; font-size: 13px;">
+                            style="font-family: Segoe UI, Arial, sans-serif; font-size: 13px;">
                             {{#each extra_data}}
                             <tr>
                                 <td
-                                    style="padding: 8px 0; color: #666666; width: 35%; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
+                                    style="padding: 8px 0; color: #666666; width: 35%; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse; font-family: Segoe UI, Arial, sans-serif;">
                                     {{key}}:
                                 </td>
                                 <td
-                                    style="padding: 8px 0; color: #000000; font-weight: 500; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
+                                    style="padding: 8px 0; color: #000000; font-weight: 500; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse; font-family: Segoe UI, Arial, sans-serif;">
                                     {{value}}
                                 </td>
                             </tr>
@@ -161,7 +161,7 @@
                         </v:roundrect>
                         <![endif]-->
                         <a class="action-btn" href="{{action_url}}"
-                            style="background-color: #000000; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px; display: inline-block; transition: background-color 0.15s ease, transform 0.15s ease; font-family: Arial, Helvetica, sans-serif;">
+                            style="background-color: #000000; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px; display: inline-block; transition: background-color 0.15s ease, transform 0.15s ease; font-family: Segoe UI, Arial, sans-serif;">
                             {{action_text}}
                         </a>
                     </div>
@@ -169,28 +169,28 @@
 
                     <!-- Nota final discreta -->
                     <p
-                        style="color: #888888; font-size: 12px; line-height: 1.5; margin: 28px 0 0 0; font-family: Arial, Helvetica, sans-serif;">
+                        style="color: #888888; font-size: 12px; line-height: 1.5; margin: 28px 0 0 0; font-family: Segoe UI, Arial, sans-serif;">
                         Si tiene alguna duda sobre esta notificación, puede responder directamente a este correo o
                         contactarnos a través de nuestra plataforma institucional.
                     </p>
 
                     <!-- Pie de Página Institucional -->
-                    <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #eaeaea;">
+                    <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #eaeaea; font-family: Segoe UI, Arial, sans-serif;">
                         <table width="100%" border="0" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td style="text-align: left; vertical-align: top;">
+                                <td style="text-align: left; vertical-align: top; font-family: Segoe UI, Arial, sans-serif;">
                                     <p
-                                        style="color: #000000; font-size: 13px; margin: 0 0 2px 0; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
+                                        style="color: #000000; font-size: 13px; margin: 0 0 2px 0; font-weight: 600; font-family: Segoe UI, Arial, sans-serif;">
                                         Tecnológico Traversari
                                     </p>
                                     <p
-                                        style="color: #888888; font-size: 11px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
+                                        style="color: #888888; font-size: 11px; margin: 0; font-family: Segoe UI, Arial, sans-serif;">
                                         Excelencia Académica y Tecnológica
                                     </p>
                                 </td>
-                                <td style="text-align: right; vertical-align: top;">
+                                <td style="text-align: right; vertical-align: top; font-family: Segoe UI, Arial, sans-serif;">
                                     <div
-                                        style="color: #000000; font-weight: 600; font-size: 11px; font-family: Arial, Helvetica, sans-serif;">
+                                        style="color: #000000; font-weight: 600; font-size: 11px; font-family: Segoe UI, Arial, sans-serif;">
                                         ISTPET {{anio_actual}}
                                     </div>
                                 </td>
@@ -199,22 +199,22 @@
 
                         <!-- Advertencia LOPDP Ecuador en Bento Box -->
                         <div
-                            style="margin-top: 24px; background-color: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #eaeaea;">
+                            style="margin-top: 24px; background-color: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #eaeaea; font-family: Segoe UI, Arial, sans-serif;">
                             <p
-                                style="color: #666666; font-size: 10.5px; line-height: 1.6; margin: 0; font-family: Arial, Helvetica, sans-serif;">
+                                style="color: #666666; font-size: 10.5px; line-height: 1.6; margin: 0; font-family: Segoe UI, Arial, sans-serif;">
                                 <strong style="color: #000000;">Aviso de Protección de Datos (LOPDP):</strong> Conforme
                                 a la Ley Orgánica de Protección de Datos Personales de la República del Ecuador, le
                                 informamos que sus datos personales son tratados con el único fin de gestionar
                                 actividades de investigación en el sistema DIITRA. Para ejercer sus derechos de acceso,
                                 rectificación, eliminación o limitación, puede dirigirse por escrito al correo
                                 institucional <a href="mailto:admisiones@istpet.edu.ec"
-                                    style="color: #0070f3; text-decoration: none; font-weight: 500;">admisiones@istpet.edu.ec</a>.
+                                    style="color: #0070f3; text-decoration: none; font-weight: 500; font-family: Segoe UI, Arial, sans-serif;">admisiones@istpet.edu.ec</a>.
                             </p>
                         </div>
 
                         <!-- Dirección física -->
-                        <div style="text-align: center; margin-top: 24px;">
-                            <p style="color: #888888; font-size: 10px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
+                        <div style="text-align: center; margin-top: 24px; font-family: Segoe UI, Arial, sans-serif;">
+                            <p style="color: #888888; font-size: 10px; margin: 0; font-family: Segoe UI, Arial, sans-serif;">
                                 Av. Matilde Álvarez y Hugo Díaz Romero. Sector Chillogallo. Quito, Ecuador.
                             </p>
                         </div>
@@ -224,8 +224,8 @@
         </table>
 
         <!-- Derechos reservados final -->
-        <div style="text-align: center; padding: 20px 0 0 0;">
-            <p style="color: #888888; font-size: 11px; margin: 0; font-family: Arial, Helvetica, sans-serif;">
+        <div style="text-align: center; padding: 20px 0 0 0; font-family: Segoe UI, Arial, sans-serif;">
+            <p style="color: #888888; font-size: 11px; margin: 0; font-family: Segoe UI, Arial, sans-serif;">
                 &copy; {{anio_actual}} Sistema DIITRA. Todos los derechos reservados.
             </p>
         </div>
