@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     TrendingUp, Briefcase, Loader2, ClipboardList,
-    Activity, Fingerprint, FileText, Layers, ExternalLink
+    Fingerprint, FileText, Layers, ExternalLink
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -23,15 +23,7 @@ interface DashboardStats {
     }>;
 }
 
-const ESTADO_DOT: Record<string, string> = {
-    'Borrador': 'dot-neutral',
-    'Enviado': 'dot-info',
-    'En Revisión': 'dot-warning dot-pulse',
-    'Aprobado': 'dot-success',
-    'En Ejecución': 'dot-brand dot-pulse',
-    'Finalizado': 'dot-success',
-    'Pendiente': 'dot-warning',
-};
+
 
 export const DocenteDashboard: React.FC = () => {
     const { user } = useAuth();

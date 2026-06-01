@@ -13,8 +13,8 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (pin.replace('-', '').length !== 8) {
-            setError('El código PIN debe tener 8 caracteres (formato XXXX-XXXX).');
+        if (pin.length !== 5) {
+            setError('El código PIN debe tener 5 caracteres.');
             return;
         }
 
@@ -32,10 +32,8 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     };
 
     const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const raw = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 8);
-        // Auto-insert dash after first 4 chars
-        const formatted = raw.length > 4 ? `${raw.slice(0, 4)}-${raw.slice(4)}` : raw;
-        setPin(formatted);
+        const raw = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 5);
+        setPin(raw);
     };
 
     return (
@@ -44,10 +42,10 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
             {toggleTheme && (
                 <button
                     onClick={toggleTheme}
-                    className="absolute top-6 right-6 p-2 rounded-lg border border-border-thin bg-surface/50 text-text-dim hover:text-text-main hover:border-border-hover transition-all duration-300 z-30 cursor-pointer"
+                    className="absolute top-6 right-6 text-text-dim hover:text-text-main transition-all duration-300 z-30 cursor-pointer"
                     title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
                 >
-                    {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                    {currentTheme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
                 </button>
             )}
             <div className="w-full max-w-[380px] space-y-8 relative z-20 animate-fade-up">
@@ -73,7 +71,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                     <p className="font-bold uppercase tracking-wider text-text-main">¿Cómo funciona?</p>
                     <p>
                         Abriste el enlace mágico de tu correo en tu <strong>teléfono</strong>. 
-                        Allí encontrarás un código PIN de 6 dígitos. Ingrésalo aquí para iniciar sesión 
+                        Allí encontrarás un código PIN de 5 caracteres. Ingrésalo aquí para iniciar sesión 
                         en esta computadora sin necesidad de contraseña.
                     </p>
                 </div>
@@ -81,11 +79,11 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                 {/* Form Card */}
                 <div className="bento-card static p-8 border border-border-thin bg-surface/30 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
                     <div className="space-y-4 text-center">
-                        <div className="mx-auto w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center text-text-main">
+                        <div className="mx-auto flex items-center justify-center text-text-main">
                             <Laptop size={24} />
                         </div>
                         <p className="text-xs text-text-dim leading-relaxed">
-                            Introduce el código PIN de 6 dígitos que se muestra en tu teléfono móvil para iniciar sesión en esta computadora de forma segura.
+                            Introduce el código PIN de 5 caracteres que se muestra en tu teléfono móvil para iniciar sesión en esta computadora de forma segura.
                         </p>
                     </div>
 
@@ -99,9 +97,9 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 type="text"
                                 value={pin}
                                 onChange={handlePinChange}
-                                placeholder="XXXX-XXXX"
+                                placeholder="XXXXX"
                                 className="input-vercel h-14 text-center text-xl font-mono font-bold tracking-[0.3em] uppercase"
-                                maxLength={9}
+                                maxLength={5}
                                 autoComplete="off"
                                 disabled={isSubmitting}
                                 spellCheck={false}
@@ -117,7 +115,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
 
                         <button
                             type="submit"
-                            disabled={isSubmitting || pin.replace('-', '').length !== 8}
+                            disabled={isSubmitting || pin.length !== 5}
                             className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 group"
                         >
                             {isSubmitting ? (

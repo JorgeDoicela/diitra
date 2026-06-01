@@ -47,10 +47,10 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
             {toggleTheme && (
                 <button
                     onClick={toggleTheme}
-                    className="absolute top-6 right-6 p-2 rounded-lg border border-border-thin bg-surface/50 text-text-dim hover:text-text-main hover:border-border-hover transition-all duration-300 z-30 cursor-pointer"
+                    className="absolute top-6 right-6 text-text-dim hover:text-text-main transition-all duration-300 z-30 cursor-pointer"
                     title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
                 >
-                    {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
+                    {currentTheme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
                 </button>
             )}
             <div className="w-full max-w-[460px] space-y-8 relative z-20 animate-fade-up">
@@ -77,7 +77,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                     {/* ── Estado: sin token ── */}
                     {!token ? (
                         <div className="space-y-4 text-center">
-                            <div className="mx-auto w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
+                            <div className="mx-auto flex items-center justify-center text-error">
                                 <AlertTriangle size={24} />
                             </div>
                             <h3 className="text-sm font-bold text-text-main uppercase">Falta el Token de Acceso</h3>
@@ -92,7 +92,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                     /* ── Estado: esperando confirmación ── */
                     ) : status === 'idle' ? (
                         <div className="space-y-6 text-center">
-                            <div className="mx-auto w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center text-text-main">
+                            <div className="mx-auto flex items-center justify-center text-text-main">
                                 <Key size={24} />
                             </div>
                             <div className="space-y-2">
@@ -124,7 +124,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                         <div className="space-y-5">
                             {/* Header de éxito */}
                             <div className="text-center space-y-3">
-                                <div className="mx-auto w-12 h-12 rounded-full bg-success/10 flex items-center justify-center text-success">
+                                <div className="mx-auto flex items-center justify-center text-success">
                                     <ShieldCheck size={28} />
                                 </div>
                                 <div>
@@ -140,9 +140,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             {/* Opción A: Continuar en este dispositivo */}
                             <div className="p-4 rounded-xl border border-border-thin bg-bg-deep/50 space-y-3">
                                 <div className="flex items-center gap-2 text-text-main">
-                                    <div className="w-7 h-7 rounded-md bg-brand/10 flex items-center justify-center">
-                                        <Smartphone size={15} />
-                                    </div>
+                                    <Smartphone size={15} className="text-brand" />
                                     <span className="text-[11px] font-bold uppercase tracking-wider">
                                         Opción A — Revisar en este dispositivo
                                     </span>
@@ -163,9 +161,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             {pin && (
                                 <div className="p-4 rounded-xl border border-border-thin bg-bg-deep/50 space-y-3">
                                     <div className="flex items-center gap-2 text-text-main">
-                                        <div className="w-7 h-7 rounded-md bg-surface flex items-center justify-center">
-                                            <Laptop size={15} />
-                                        </div>
+                                        <Laptop size={15} className="text-text-dim" />
                                         <span className="text-[11px] font-bold uppercase tracking-wider">
                                             Opción B — Transferir a PC u otro dispositivo
                                         </span>
@@ -200,7 +196,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                         <p className="text-[9px] text-text-dim font-medium text-center">
                                             Válido durante 30 minutos. Úsalo una sola vez.
                                         </p>
-                                        <div className="mt-2 p-2 bg-brand/5 border border-brand/20 rounded-md">
+                                        <div className="mt-2">
                                             <p className="text-[9px] text-brand text-center leading-relaxed">
                                                 <strong>Aviso de seguridad:</strong> Cada vez que abres este enlace desde tu correo, se genera un nuevo PIN y el anterior se invalida automáticamente.
                                             </p>
