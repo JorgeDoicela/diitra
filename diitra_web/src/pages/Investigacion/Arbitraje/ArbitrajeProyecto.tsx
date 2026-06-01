@@ -156,7 +156,7 @@ const ArbitrajeProyecto: React.FC = () => {
                 <div className="lg:col-span-3 space-y-6">
                     {/* Aviso si hay desempate */}
                     {arbitraje.estado_arbitraje === 'Desempate' && (
-                        <div className="bento-card p-4 border-error/40 flex items-start gap-4 animate-fade-up">
+                        <div className="bento-card static p-4 border-error/40 flex items-start gap-4 animate-fade-up">
                             <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-sm font-bold text-text-main">Caso de Desempate Detectado</p>
@@ -306,7 +306,7 @@ const ArbitrajeProyecto: React.FC = () => {
 
                 {/* Progress bar */}
                 {arbitraje.total_arbitros > 0 && (
-                    <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                    <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
                         <div className="flex items-center justify-between mb-3">
                             <div className="section-label">
                                 <CheckCircle2 size={12} className="text-brand" />
@@ -356,7 +356,7 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = 
     const avStyle = getAvatarStyle(review.revisor_nombre);
 
     return (
-        <div className="bento-card p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-text-dim/30 hover:bg-surface/50 hover:-translate-y-0.5 transition-all duration-200">
+        <div className="bento-card static p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200">
             <div className="flex items-center gap-4 flex-1 min-w-0">
                 <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avStyle.bg} border text-xs font-bold flex items-center justify-center shrink-0`}>
                     {review.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
@@ -413,7 +413,7 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = 
 };
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (

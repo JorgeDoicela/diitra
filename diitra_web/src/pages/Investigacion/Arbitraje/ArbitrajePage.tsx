@@ -107,7 +107,7 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
-            <div className="bento-card w-full max-w-lg p-6 animate-fade-up">
+            <div className="bento-card static w-full max-w-lg p-6 animate-fade-up">
                 <div className="flex items-center justify-between mb-5">
                     <div>
                         <div className="section-label mb-1">
@@ -521,7 +521,7 @@ const ArbitrajePage: React.FC = () => {
                                                                                 return (
                                                                                     <div
                                                                                         key={r.uuid}
-                                                                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between hover:border-text-dim/30 hover:bg-surface/50 hover:-translate-y-0.5 transition-all duration-200"
+                                                                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between transition-all duration-200"
                                                                                     >
                                                                                         <div className="flex items-center gap-2.5 min-w-0">
                                                                                             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
@@ -583,7 +583,7 @@ const ArbitrajePage: React.FC = () => {
                                                                                 return (
                                                                                     <div
                                                                                         key={r.uuid}
-                                                                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between hover:border-text-dim/30 hover:bg-surface/50 hover:-translate-y-0.5 transition-all duration-200"
+                                                                                        className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between transition-all duration-200"
                                                                                     >
                                                                                         <div className="flex items-center gap-2.5 min-w-0">
                                                                                             <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>

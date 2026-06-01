@@ -203,7 +203,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
 
                 {/* Section: Tecnologia Contextual */}
                 <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bento-card p-10 space-y-8">
+                    <div className="bento-card static p-10 space-y-8">
                         <div className="flex items-center gap-3">
                             <FileSignature size={24} strokeWidth={1.5} />
                             <h3 className="text-2xl font-bold tracking-tight">Firma Electrónica IST</h3>
@@ -216,7 +216,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                             <span>Seguridad Nivel Gubernamental</span>
                         </div>
                     </div>
-                    <div className="bento-card p-10 space-y-8">
+                    <div className="bento-card static p-10 space-y-8">
                         <div className="flex items-center gap-3">
                             <Cpu size={24} strokeWidth={1.5} />
                             <h3 className="text-2xl font-bold tracking-tight">Inteligencia Artificial</h3>

@@ -84,7 +84,7 @@ export const DocenteDashboard: React.FC = () => {
                     <div className="lg:col-span-3 space-y-6">
                         
                         {/* Gestión de Proyectos */}
-                        <div className="bento-card p-6 flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl">
+                        <div className="bento-card static p-6 flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl">
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
                                     <Briefcase size={14} className="text-text-dim" />
@@ -126,7 +126,7 @@ export const DocenteDashboard: React.FC = () => {
                         </div>
 
                         {/* Actividad reciente */}
-                        <div className="bento-card p-6 bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
+                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
                             <div className="flex items-center gap-2">
                                 <TrendingUp size={14} className="text-text-dim" />
                                 <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Actividad Reciente</span>
@@ -202,7 +202,7 @@ export const DocenteDashboard: React.FC = () => {
 
                         {/* Carga Horaria progress card */}
                         {stats?.mis_horas_investigacion !== undefined && (
-                            <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                            <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="section-label">
                                         <ClipboardList size={12} className="text-info" />
@@ -231,7 +231,7 @@ export const DocenteDashboard: React.FC = () => {
 };
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (

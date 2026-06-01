@@ -69,7 +69,7 @@ const PinHandoff = ({ currentTheme = 'dark' }: { currentTheme?: 'dark' | 'light'
                 </div>
 
                 {/* Form Card */}
-                <div className="bento-card p-8 border border-border-thin bg-surface/30 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
+                <div className="bento-card static p-8 border border-border-thin bg-surface/30 backdrop-blur-md rounded-2xl shadow-xl space-y-6">
                     <div className="space-y-4 text-center">
                         <div className="mx-auto w-12 h-12 rounded-full bg-brand/10 flex items-center justify-center text-text-main">
                             <Laptop size={24} />

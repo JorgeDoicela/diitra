@@ -313,7 +313,7 @@ const PeerReviewPage: React.FC = () => {
 
                 {/* Completion rate card (Visual progress) */}
                 {totalCount > 0 && (
-                    <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                    <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
                         <div className="flex items-center justify-between mb-3">
                             <div className="section-label">
                                 <ShieldCheck size={12} className="text-success" />
@@ -338,7 +338,7 @@ const PeerReviewPage: React.FC = () => {
 };
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (

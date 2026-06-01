@@ -98,7 +98,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="lg:col-span-3 space-y-6">
                         
                         {/* Embudo de proyectos */}
-                        <div className="bento-card p-6 bg-surface border border-border-thin shadow-sm rounded-xl">
+                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl">
                             <div className="flex items-center gap-2 mb-3">
                                 <ClipboardList size={14} className="text-text-dim" />
                                 <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Proyectos Institucionales</span>
@@ -141,7 +141,7 @@ export const AdminDashboard: React.FC = () => {
                         </div>
 
                         {/* Ejecución presupuestaria global */}
-                        <div className="bento-card p-6 bg-surface border border-border-thin shadow-sm rounded-xl">
+                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl">
                             <div className="flex items-center gap-2 mb-3">
                                 <TrendingUp size={14} className="text-text-dim" />
                                 <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Ejecución Presupuestaria</span>
@@ -170,7 +170,7 @@ export const AdminDashboard: React.FC = () => {
                         </div>
 
                         {/* Actividad reciente */}
-                        <div className="bento-card p-6 bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
+                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
                             <div className="flex items-center gap-2">
                                 <Activity size={14} className="text-text-dim" />
                                 <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Actividad Institucional Reciente</span>
@@ -248,7 +248,7 @@ export const AdminDashboard: React.FC = () => {
 
                         {/* Producción Científica breakdown card */}
                         {stats && (
-                            <div className="bento-card p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
+                            <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
                                 <div className="flex items-center gap-2 pb-1 border-b border-border-thin/50">
                                     <BarChart3 size={14} className="text-text-dim" />
                                     <span className="text-[13px] font-semibold text-text-main">Producción Científica</span>
@@ -278,7 +278,7 @@ export const AdminDashboard: React.FC = () => {
 };
 
 const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
