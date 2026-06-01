@@ -24,6 +24,8 @@ DROP TABLE IF EXISTS
     inv_dispositivos_tokens,
     inv_config_indicadores,
     inv_audit_admin,
+    inv_email_templates,
+    inv_email_historial,
 
     -- DIITRA Document Engine (Plantillas y Auditoría)
     inv_document_audit,
@@ -381,7 +383,8 @@ CREATE TABLE inv_proyectos (
     fechaInicio           DATE,
     fechaFin              DATE,
     tiempoEjecucion       VARCHAR(100),
-    estado                ENUM('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado') DEFAULT 'Borrador',
+    estado                ENUM('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado','Inconcluso') DEFAULT 'Borrador',
+    disponibleAdopcion    TINYINT(1)    DEFAULT 0 COMMENT 'Indica si el proyecto inconcluso esta disponible para adopcion por otros profesores',
     puntajeEvaluacion     DECIMAL(5,2)  NULL,
     valorEjecucion        DECIMAL(12,2) DEFAULT 0.00,
     idObjetivoPnd         INT           NULL COMMENT 'Vínculo con el Plan Nacional de Desarrollo',
@@ -1311,3 +1314,83 @@ VALUES
         1,   -- requires_traceability = TRUE
         0    -- requires_lopdp = FALSE (no datos personales sensibles en el acta)
     );
+
+-- =============================================================================
+-- SECCIÓN: MOTOR DE CORREOS PERSONALIZADO (DIITRA)
+-- =============================================================================
+
+CREATE TABLE inv_email_templates (
+    idEmailTemplate INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid            VARCHAR(36)   NOT NULL UNIQUE,
+    codigo          VARCHAR(100)  NOT NULL UNIQUE COMMENT 'Código único del template',
+    nombre          VARCHAR(255)  NOT NULL,
+    descripcion     TEXT          NULL,
+    asunto          VARCHAR(255)  NOT NULL,
+    cuerpoHtml      LONGTEXT      NOT NULL,
+    activo          TINYINT(1)    NOT NULL DEFAULT 1,
+    fechaCreado     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fechaActualizado TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE inv_email_historial (
+    idEmailHistorial INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)  NOT NULL UNIQUE,
+    destinatario     VARCHAR(255) NOT NULL COMMENT 'Correo electrónico destino',
+    idUsuarioDestinatario INT(11) NULL COMMENT 'Vínculo al usuario en la tabla usuarios si aplica',
+    asunto           VARCHAR(255) NOT NULL,
+    cuerpo           LONGTEXT     NOT NULL,
+    estado           ENUM('Pendiente', 'Enviado', 'Fallido') NOT NULL DEFAULT 'Pendiente',
+    errorMensaje     TEXT         NULL,
+    fechaEnvio       TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    adjuntosJson     JSON         NULL COMMENT 'JSON array con metadatos de archivos adjuntos',
+    metadataJson     JSON         NULL COMMENT 'JSON con metadatos del sistema (proyecto_uuid, etc)',
+    FOREIGN KEY (idUsuarioDestinatario) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Plantilla semilla para notificar proyectos inconclusos disponibles
+INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
+(
+    UUID(),
+    'PROYECTO_INCONCLUSO_DISPONIBLE',
+    'Proyecto Inconcluso Disponible para Adopción',
+    'Notificación a docentes sobre proyectos que quedaron inconclusos y están disponibles para adopción.',
+    'DIITRA: Oportunidad de Adopción de Proyecto - [[proyecto_titulo]]',
+    '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
+            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; tracking: -0.05em;">DIITRA</h1>
+            <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
+        </div>
+        
+        <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Docente Investigador/a,</h2>
+        
+        <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            El Administrador del sistema DIITRA ha marcado un proyecto de investigación institucional como <strong>Inconcluso y Disponible para Adopción</strong>. Esta es una excelente oportunidad para asumir la dirección y continuar con su desarrollo bajo el marco normativo de la SENESCYT y el CACES.
+        </p>
+
+        <div style="background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+            <h3 style="color: #111111; font-size: 13px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Detalles del Proyecto</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333333;">
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600; width: 120px;">Código:</td><td style="padding: 8px 0;">[[proyecto_codigo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Título:</td><td style="padding: 8px 0;">[[proyecto_titulo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Línea:</td><td style="padding: 8px 0;">[[linea_investigacion]]</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Descripción:</td><td style="padding: 8px 0; line-height: 1.5;">[[proyecto_descripcion]]</td></tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="[[url_adopcion]]" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Ver Proyecto y Postular Adopción</a>
+        </div>
+
+        <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
+            Si tiene alguna duda sobre la carga horaria requerida o los entregables comprometidos ante el CACES, por favor póngase en contacto con el Director de Investigación.
+        </p>
+
+        <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
+            <p style="margin: 0 0 4px 0;">DIITRA — Instituto Superior Tecnológico Traversari</p>
+            <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
+            <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
+        </div>
+    </div>',
+    1
+);
+

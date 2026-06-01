@@ -27,6 +27,8 @@ import VerifyDocument from './pages/Public/VerifyDocument';
 import UnderDevelopment from './components/Common/UnderDevelopment';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 import NotificationsPage from './pages/Notificaciones/NotificationsPage';
+import EmailEnginePage from './pages/Admin/Emails/EmailEnginePage';
+import ProjectAdoptionPage from './pages/Investigacion/Proyectos/ProjectAdoptionPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -175,6 +177,7 @@ function App() {
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><GroupsPage /></RoleRoute>} />
                             <Route path="/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
+                            <Route path="/admin/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
                             <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
                             <Route path="/admin/groups" element={<Navigate to="/grupos" replace />} />
                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
@@ -182,6 +185,7 @@ function App() {
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
                             <Route path="/investigacion" element={<ResearchProjectsPage />} />
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
+                            <Route path="/investigacion/adopcion" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><ProjectAdoptionPage /></RoleRoute>} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<MonitoringPage />} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />

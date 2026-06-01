@@ -70,6 +70,8 @@ public partial class DiitraContext : DbContext
 
     // --- Sistema y Seguridad ---
     public virtual DbSet<InvNotificacion>       InvNotificaciones      { get; set; }
+    public virtual DbSet<InvEmailTemplate>     InvEmailTemplates      { get; set; }
+    public virtual DbSet<InvEmailHistorial>    InvEmailHistorials     { get; set; }
     public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
@@ -913,7 +915,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
             entity.Property(e => e.TiempoEjecucion).HasColumnName("tiempoEjecucion").HasMaxLength(100);
-            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado')").HasDefaultValueSql("'Borrador'");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado','Inconcluso')").HasDefaultValueSql("'Borrador'");
+            entity.Property(e => e.DisponibleAdopcion).HasColumnName("disponibleAdopcion").HasColumnType("tinyint(1)").HasDefaultValue(false);
             entity.Property(e => e.PuntajeEvaluacion).HasColumnName("puntajeEvaluacion").HasPrecision(5, 2);
             entity.Property(e => e.ValorEjecucion).HasColumnName("valorEjecucion").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
             entity.Property(e => e.IdDspaceHandle).HasColumnName("idDspaceHandle").HasMaxLength(255);
@@ -1869,6 +1872,45 @@ public partial class DiitraContext : DbContext
             entity.HasKey(e => e.IdComentario).HasName("PRIMARY");
             entity.ToTable("inv_collaboration_comments");
             entity.HasIndex(e => e.DocumentoUuid);
+        });
+
+        modelBuilder.Entity<InvEmailTemplate>(entity =>
+        {
+            entity.HasKey(e => e.IdEmailTemplate).HasName("PRIMARY");
+            entity.ToTable("inv_email_templates");
+            entity.Property(e => e.IdEmailTemplate).HasColumnName("idEmailTemplate");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Codigo).HasColumnName("codigo").HasMaxLength(100).IsRequired();
+            entity.HasIndex(e => e.Codigo).IsUnique();
+            entity.Property(e => e.Nombre).HasColumnName("nombre").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
+            entity.Property(e => e.Asunto).HasColumnName("asunto").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.CuerpoHtml).HasColumnName("cuerpoHtml").HasColumnType("longtext").IsRequired();
+            entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValue(true);
+            entity.Property(e => e.FechaCreado).HasColumnName("fechaCreado").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaActualizado).HasColumnName("fechaActualizado").HasDefaultValueSql("CURRENT_TIMESTAMP").ValueGeneratedOnAddOrUpdate();
+        });
+
+        modelBuilder.Entity<InvEmailHistorial>(entity =>
+        {
+            entity.HasKey(e => e.IdEmailHistorial).HasName("PRIMARY");
+            entity.ToTable("inv_email_historial");
+            entity.Property(e => e.IdEmailHistorial).HasColumnName("idEmailHistorial");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.Destinatario).HasColumnName("destinatario").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.IdUsuarioDestinatario).HasColumnName("idUsuarioDestinatario");
+            entity.Property(e => e.Asunto).HasColumnName("asunto").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.Cuerpo).HasColumnName("cuerpo").HasColumnType("longtext").IsRequired();
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Pendiente','Enviado','Fallido')").HasDefaultValueSql("'Pendiente'");
+            entity.Property(e => e.ErrorMensaje).HasColumnName("errorMensaje").HasColumnType("text");
+            entity.Property(e => e.FechaEnvio).HasColumnName("fechaEnvio").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.AdjuntosJson).HasColumnName("adjuntosJson").HasColumnType("json");
+            entity.Property(e => e.MetadataJson).HasColumnName("metadataJson").HasColumnType("json");
+
+            entity.HasOne(d => d.IdUsuarioDestinatarioNavigation).WithMany()
+                .HasForeignKey(d => d.IdUsuarioDestinatario).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_email_hist_usuario");
         });
 
         OnModelCreatingPartial(modelBuilder);

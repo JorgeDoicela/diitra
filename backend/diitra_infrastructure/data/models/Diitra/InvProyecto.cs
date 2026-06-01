@@ -31,6 +31,7 @@ public partial class InvProyecto
     public string? IdDspaceHandle { get; set; }
     public string? MetadataCacesJson { get; set; }
     public bool? Activo { get; set; }
+    public bool? DisponibleAdopcion { get; set; }
     public DateTime? FechaRegistro { get; set; }
     public DateTime? FechaModificacion { get; set; }
     public int? IdObjetivoPnd { get; set; }
