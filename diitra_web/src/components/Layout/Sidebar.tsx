@@ -260,7 +260,7 @@ const Sidebar = ({
           width: window.innerWidth >= 1024 ? (isCollapsed ? 0 : width) : undefined
         }}
         className={`
-          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-5 pb-3
+          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-4 pb-3
           lg:translate-x-0 lg:static lg:h-screen relative
           ${isResizing ? '' : 'transition-all duration-200 ease-in-out'}
           ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full lg:translate-x-0'}
@@ -270,13 +270,13 @@ const Sidebar = ({
         {/* Mobile Close Button */}
         <button 
           onClick={onClose}
-          className="absolute right-4 top-5 p-2 text-text-dim hover:text-text-main lg:hidden"
+          className="absolute right-4 top-4 p-2 text-text-dim hover:text-text-main lg:hidden"
         >
           <X size={20} />
         </button>
 
         {/* Brand Header */}
-        <div className="px-5 mb-5.5 flex items-center gap-2.5 cursor-pointer select-none" onClick={() => handleNavigation('/dashboard')}>
+        <div className="px-5 mb-4 flex items-center gap-2.5 cursor-pointer select-none" onClick={() => handleNavigation('/dashboard')}>
           <img 
             src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
             alt="DIITRA Logo" 
@@ -288,7 +288,7 @@ const Sidebar = ({
         </div>
 
         {/* Navigator Search */}
-        <div className="px-4 mb-5">
+        <div className="px-4 mb-4">
           <div 
             onClick={triggerCommandPalette}
             className="flex h-8.5 items-center gap-2 px-2.5 bg-surface border border-border-thin rounded-md group hover:border-text-dim/50 hover:bg-surface-hover/30 transition-all cursor-pointer"
