@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
 import { CommandPalette } from '../Common/CommandPalette';
@@ -11,8 +12,30 @@ interface LayoutProps {
     toggleTheme: () => void;
 }
 
+const getPageTitle = (pathname: string): string => {
+    if (pathname === '/dashboard') return 'Panel de Control';
+    if (pathname === '/settings') return 'Configuración';
+    if (pathname === '/analiticas') return 'Analíticas';
+    if (pathname === '/notificaciones') return 'Notificaciones';
+    if (pathname === '/usuarios') return 'Gestión de Usuarios';
+    if (pathname === '/auditoria') return 'Auditoría Forense';
+    if (pathname === '/grupos') return 'Grupos de Investigación';
+    if (pathname === '/configuracion') return 'Configuración del Sistema';
+    if (pathname === '/investigacion') return 'Proyectos de I+D+i';
+    if (pathname === '/investigacion/mis-proyectos') return 'Mis Proyectos';
+    if (pathname.startsWith('/investigacion/monitoreo/')) return 'Monitoreo de Proyecto';
+    if (pathname === '/convocatorias') return 'Convocatorias';
+    if (pathname === '/revisiones') return 'Revisiones por Pares';
+    if (pathname.startsWith('/revisiones/')) return 'Evaluación de Proyecto';
+    if (pathname === '/arbitraje') return 'Arbitraje';
+    if (pathname.startsWith('/arbitraje/proyecto/')) return 'Arbitraje de Proyecto';
+    if (pathname === '/verify') return 'Verificación Documental';
+    return '';
+};
+
 const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }) => {
     const { user, roleDisplayName } = useAuth();
+    const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
         const saved = localStorage.getItem('sidebar_width');
@@ -54,7 +77,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Desktop TopBar */}
                 <header className="hidden lg:flex items-center justify-between py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-[40]">
-                    <div className="max-w-[1600px] mx-auto w-full px-4 md:px-10 flex items-center justify-between">
+                    <div className="max-w-[1600px] mx-auto w-full px-4 md:px-10 flex items-center justify-between relative">
                         <div className="flex items-center gap-4">
                             {isCollapsed && (
                                 <>
@@ -83,6 +106,10 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                 </>
                             )}
                             <span className="section-label text-text-dim">Tecnológico Traversari</span>
+                        </div>
+                        
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-text-main pointer-events-none select-none">
+                            {getPageTitle(location.pathname)}
                         </div>
                     </div>
                 </header>
