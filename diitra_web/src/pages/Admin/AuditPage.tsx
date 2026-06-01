@@ -521,7 +521,7 @@ const AuditPage: React.FC = () => {
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <div className="max-w-[1600px] mx-auto">
-                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 px-2 animate-fade-up">
+                <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 animate-fade-up">
                     <div className="space-y-2">
                         <div className="section-label text-text-main">
                             <Shield size={10} strokeWidth={2} />

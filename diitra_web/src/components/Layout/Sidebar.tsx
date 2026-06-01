@@ -1,67 +1,172 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useNotifications } from '../../api/NotificationsContext';
+import { useState } from 'react';
 
 interface SidebarProps {
   currentTheme: 'dark' | 'light';
   toggleTheme: () => void;
   isOpen?: boolean;
   onClose?: () => void;
+  width: number;
+  isCollapsed: boolean;
+  onWidthChange: (w: number) => void;
+  onCollapseToggle: () => void;
 }
 
-const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) => {
-  const { logout, hasPermission, roles, isAdmin, isDocente, isEstudiante, isRevisor } = useAuth();
+// Custom simple SVG icons to ensure consistency and speed
+const ChevronsUpDownIcon = ({ className = "w-3.5 h-3.5", size = 14 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m7 15 5 5 5-5" />
+    <path d="m7 9 5-5 5 5" />
+  </svg>
+);
+
+const ChevronRightIcon = ({ className = "w-3 h-3", size = 12 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="m9 18 6-6-6-6" />
+  </svg>
+);
+
+const MoreHorizontalIcon = ({ className = "w-4 h-4", size = 16 }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="19" cy="12" r="1" />
+    <circle cx="5" cy="12" r="1" />
+  </svg>
+);
+
+const Sidebar = ({
+  currentTheme,
+  toggleTheme,
+  isOpen,
+  onClose,
+  width,
+  isCollapsed,
+  onWidthChange,
+  onCollapseToggle
+}: SidebarProps) => {
+  const { logout, hasPermission, roles, isAdmin, isDocente, isEstudiante, isRevisor, user, roleDisplayName } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
+  const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
+  const searchShortcut = isMac ? '⌘K' : 'Ctrl+K';
+
+  const [isResizing, setIsResizing] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  let notifications: any[] = [];
+  let unreadCount = 0;
+  let markAsRead = async (uuid: string) => {};
+  let markAllAsRead = async () => {};
+
+  try {
+    const notificationsData = useNotifications();
+    notifications = notificationsData.notifications;
+    unreadCount = notificationsData.unreadCount;
+    markAsRead = notificationsData.markAsRead;
+    markAllAsRead = notificationsData.markAllAsRead;
+  } catch (e) {
+    // Fallback if context is not loaded
+  }
+
+  const getNotificationIcon = (category: string) => {
+    switch (category) {
+      case 'INVESTIGACION': return <ExternalLink size={12} className="text-info" />;
+      case 'SISTEMA': return <Info size={12} className="text-text-dim" />;
+      case 'URGENTE': return <AlertTriangle size={12} className="text-error" />;
+      default: return <Mail size={12} className="text-text-dim" />;
+    }
+  };
+
+  const handleNotificationClick = async (n: any) => {
+    if (!n.leido) {
+      await markAsRead(n.uuid);
+    }
+    
+    if (n.url_accion) {
+      navigate(n.url_accion);
+      setIsNotificationsOpen(false);
+    }
+  };
+
   const allMenuItems = [
-    { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'] },
-    { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
-    { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true },
-    { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE', 'DOCENTE_INV'] },
-    { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
-    { name: 'Arbitraje', icon: Gavel, path: '/arbitraje', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
-    { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'] },
-    { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
-    { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'] },
-    { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER' },
-    { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
-    { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
-    { name: 'Configuración', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+    // Grupo 1: Principal
+    { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
+    { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
+    { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true, group: 1 },
+    
+    // Grupo 2: Procesos y Analíticas
+    { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE', 'DOCENTE_INV'], group: 2 },
+    { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 2 },
+    { name: 'Arbitraje', icon: Gavel, path: '/arbitraje', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 2 },
+    { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'], group: 2 },
+    { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 2, hasChevron: true },
+    
+    // Grupo 3: Sistema y Admin
+    { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 3 },
+    { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
+    { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
+    { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 3 },
+    { name: 'Configuración', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },
   ];
 
   const menuItems = allMenuItems.filter(item => {
-    // 1. Admins see everything
     if (isAdmin) return true;
-
-    // 2. Specific permission check
     if (item.permission) {
         const [module, op] = item.permission.split(':');
         return hasPermission(module, op);
     }
-
-    // 3. Role-based restrictions
     if (item.roles) {
         if (item.roles.includes('ANY')) return true;
-        
         const checkRoles = item.roles.map(r => r.toUpperCase());
-        
         if (checkRoles.includes('DIITRA_DOCENTE') || checkRoles.includes('DOCENTE_INV')) {
             if (isDocente) return true;
         }
-        
         if (checkRoles.includes('DIITRA_ESTUDIANTE')) {
             if (isEstudiante) return true;
         }
-        
         if (checkRoles.includes('DIITRA_REVISOR_EXTERNO')) {
             if (isRevisor) return true;
         }
-
-        // Generic fallback for any other roles
         return item.roles.some(r => roles.includes(r.toUpperCase()));
     }
-
     return true;
   });
 
@@ -70,7 +175,6 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     if (onClose) onClose();
   };
 
-  // Determine the most specific active item to avoid multiple highlights
   const activeItem = menuItems.reduce<typeof menuItems[0] | null>((best, item) => {
     const isMatch = location.pathname === item.path
       || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
@@ -79,6 +183,84 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
     }
     return best;
   }, null);
+
+  const group1 = menuItems.filter(item => item.group === 1);
+  const group2 = menuItems.filter(item => item.group === 2);
+  const group3 = menuItems.filter(item => item.group === 3);
+
+  const startResizing = (mouseDownEvent: React.MouseEvent) => {
+    mouseDownEvent.preventDefault();
+    setIsResizing(true);
+    const startWidth = width;
+    const startX = mouseDownEvent.clientX;
+
+    const stopDrag = () => {
+      setIsResizing(false);
+      document.removeEventListener('mousemove', doDrag);
+      document.removeEventListener('mouseup', stopDrag);
+    };
+
+    const doDrag = (mouseMoveEvent: MouseEvent) => {
+      const currentWidth = startWidth + (mouseMoveEvent.clientX - startX);
+      if (currentWidth < 150) {
+        onCollapseToggle();
+        stopDrag();
+      } else if (currentWidth >= 150 && currentWidth <= 450) {
+        onWidthChange(currentWidth);
+      }
+    };
+
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('mouseup', stopDrag);
+  };
+
+  const triggerCommandPalette = () => {
+    const event = new KeyboardEvent('keydown', {
+      key: 'k',
+      ctrlKey: true,
+      metaKey: true,
+      bubbles: true
+    });
+    window.dispatchEvent(event);
+  };
+
+  const renderMenuItem = (item: typeof allMenuItems[0]) => {
+    const isActive = item === activeItem;
+    return (
+      <div
+        key={item.name}
+        onClick={() => handleNavigation(item.path)}
+        className={`flex items-center justify-between px-3 py-1.5 rounded-md cursor-pointer transition-all duration-150 group ${
+          item.indent ? 'ml-3 border-l border-border-thin pl-4' : ''
+        } ${
+          isActive 
+            ? 'bg-surface text-text-main shadow-sm' 
+            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <item.icon size={item.indent ? 13 : 15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+          <span className={`text-[13px] tracking-tight truncate ${
+            item.indent ? 'text-[12px]' : ''
+          } ${isActive ? 'font-semibold' : 'font-medium'}`}>
+            {item.name}
+          </span>
+        </div>
+        {item.hasChevron && (
+          <ChevronRightIcon className="text-text-dim/30 group-hover:text-text-dim/70 transition-colors shrink-0 ml-1.5" />
+        )}
+      </div>
+    );
+  };
+
+  const userInitials = user?.nombre_completo
+    ?.split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase() || 'JD';
+
+  const username = user?.email?.split('@')[0] || user?.nombre_completo || 'jorgedoicela';
 
   return (
     <>
@@ -90,96 +272,239 @@ const Sidebar = ({ currentTheme, toggleTheme, isOpen, onClose }: SidebarProps) =
         />
       )}
 
-      <aside className={`
-        fixed inset-y-0 left-0 z-[70] w-64 bg-bg-deep border-r border-border-thin flex flex-col pt-8 pb-4 transition-transform duration-300 ease-in-out
-        lg:translate-x-0 lg:static lg:h-screen
-        ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full lg:translate-x-0'}
-      `}>
+      <aside 
+        style={{
+          width: window.innerWidth >= 1024 ? (isCollapsed ? 0 : width) : undefined
+        }}
+        className={`
+          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-5 pb-3
+          lg:translate-x-0 lg:static lg:h-screen relative
+          ${isResizing ? '' : 'transition-all duration-200 ease-in-out'}
+          ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full lg:translate-x-0'}
+          ${isCollapsed ? 'lg:border-r-0 lg:opacity-0 lg:pointer-events-none lg:w-0 lg:p-0 lg:overflow-hidden' : 'w-64'}
+        `}
+      >
         {/* Mobile Close Button */}
         <button 
           onClick={onClose}
-          className="absolute right-4 top-8 p-2 text-text-dim hover:text-text-main lg:hidden"
+          className="absolute right-4 top-5 p-2 text-text-dim hover:text-text-main lg:hidden"
         >
           <X size={20} />
         </button>
 
-        {/* Brand - Vercel Inspired */}
-        <div className="mb-12 px-6 flex items-center cursor-pointer" onClick={() => handleNavigation('/')}>
+        {/* Brand Header */}
+        <div className="px-5 mb-5.5 flex items-center gap-2.5 cursor-pointer select-none" onClick={() => handleNavigation('/dashboard')}>
           <img 
             src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
             alt="DIITRA Logo" 
-            className="h-10 w-auto object-contain transition-all duration-300 hover:opacity-80"
+            className="h-6 w-auto object-contain"
           />
+          <span className="text-[14px] font-black text-text-main tracking-[0.2em] font-sans uppercase">
+            DIITRA
+          </span>
         </div>
 
         {/* Navigator Search */}
-        <div className="px-4 mb-10">
-          <div className="flex h-10 items-center gap-2 px-3 bg-surface border border-border-thin rounded-md group hover:border-text-dim transition-colors cursor-pointer">
-              <Search size={14} className="text-text-dim" />
-              <span className="text-xs text-text-dim flex-1">Buscar...</span>
-              <kbd className="text-[10px] bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim font-sans transition-colors">⌘K</kbd>
+        <div className="px-4 mb-5">
+          <div 
+            onClick={triggerCommandPalette}
+            className="flex h-8.5 items-center gap-2 px-2.5 bg-surface border border-border-thin rounded-md group hover:border-text-dim/50 hover:bg-surface-hover/30 transition-all cursor-pointer"
+          >
+            <Search size={13} className="text-text-dim group-hover:text-text-main transition-colors" />
+            <span className="text-xs text-text-dim flex-1 font-medium group-hover:text-text-main transition-colors">Buscar</span>
+            <kbd className="text-[10px] font-sans font-bold bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim shadow-sm">{searchShortcut}</kbd>
           </div>
         </div>
         
-        <nav className="flex-1 px-3 space-y-1">
-          {menuItems.map((item) => {
-            const isActive = item === activeItem;
-            return (
-              <div
-                key={item.name}
-                onClick={() => handleNavigation(item.path)}
-                className={`flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer transition-all duration-150 group ${
-                  (item as any).indent ? 'ml-3 border-l border-border-thin pl-4' : ''
-                } ${
-                  isActive 
-                    ? 'bg-surface text-text-main shadow-sm' 
-                    : 'text-text-dim hover:text-text-main hover:bg-surface/50'
-                }`}
-              >
-                <item.icon size={(item as any).indent ? 14 : 16} strokeWidth={isActive ? 2 : 1.5} />
-                <span className={`text-sm tracking-tight ${
-                  (item as any).indent ? 'text-xs' : ''
-                } ${isActive ? 'font-semibold' : 'font-medium'}`}>{item.name}</span>
-              </div>
-            );
-          })}
+        {/* Navigation list */}
+        <nav className="flex-1 px-3 space-y-1 overflow-y-auto pr-1 select-none">
+          {/* Grupo 1 */}
+          {group1.map(renderMenuItem)}
+          
+          {group2.length > 0 && (
+            <>
+              <hr className="border-border-thin my-3" />
+              {group2.map(renderMenuItem)}
+            </>
+          )}
+
+          {group3.length > 0 && (
+            <>
+              <hr className="border-border-thin my-3" />
+              {group3.map(renderMenuItem)}
+            </>
+          )}
         </nav>
 
-        {/* Theme Toggle & Bottom Actions */}
-        <div className="px-3 pt-4 border-t border-border-thin space-y-1">
-          <div 
-            onClick={toggleTheme}
-            className="flex items-center justify-between px-3 py-2 text-text-dim cursor-pointer hover:bg-surface rounded-md transition-all group"
-          >
-            <div className="flex items-center gap-3">
-              {currentTheme === 'dark' ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
-              <span className="text-sm font-medium group-hover:text-text-main transition-colors">
-                {currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
-              </span>
+        {/* Vercel Footer profile section */}
+        <div className="px-3 pt-3 border-t border-border-thin mt-auto relative">
+          {isUserMenuOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+              <div className="absolute bottom-14 left-3 right-3 bg-bg-deep border border-border-thin rounded-lg shadow-xl z-50 p-1.5 space-y-0.5 animate-in fade-in duration-200 slide-in-from-bottom-2">
+                <div 
+                  onClick={() => {
+                    toggleTheme();
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                >
+                  {currentTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                  <span>{currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+                </div>
+                <div 
+                  onClick={() => {
+                    navigate('/settings');
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                >
+                  <Settings size={14} />
+                  <span>Configuración</span>
+                </div>
+                <hr className="border-border-thin my-1" />
+                <div 
+                  onClick={async () => {
+                    setIsUserMenuOpen(false);
+                    await logout();
+                    navigate('/');
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2 text-xs text-error hover:bg-error/10 rounded-md cursor-pointer transition-colors"
+                >
+                  <LogOut size={14} />
+                  <span>Cerrar Sesión</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {isNotificationsOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsNotificationsOpen(false)} />
+              <div className="absolute bottom-14 left-3 w-80 sm:w-90 bg-bg-deep border border-border-thin rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in duration-200 slide-in-from-bottom-2">
+                <header className="p-3 border-b border-border-thin bg-surface/30 flex justify-between items-center">
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="text-[10px] font-bold text-text-main uppercase tracking-widest">Notificaciones</h4>
+                    {unreadCount > 0 && (
+                      <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter">
+                        {unreadCount} Nuevas
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={markAllAsRead}
+                      className="text-[9px] font-bold text-brand hover:underline uppercase tracking-wider bg-transparent border-0 cursor-pointer"
+                    >
+                      Marcar todo leído
+                    </button>
+                  )}
+                </header>
+
+                <div className="max-h-[300px] overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center space-y-2">
+                      <Bell size={20} className="mx-auto text-text-dim opacity-20" />
+                      <p className="text-[9px] text-text-dim uppercase font-bold tracking-widest">Todo en orden</p>
+                    </div>
+                  ) : (
+                    notifications.map((n: any) => (
+                      <div 
+                        key={n.uuid} 
+                        className={`p-3 border-b border-border-thin last:border-0 hover:bg-surface/50 transition-colors cursor-pointer group ${!n.leido ? 'bg-surface/30' : 'opacity-70'}`}
+                        onClick={() => handleNotificationClick(n)}
+                      >
+                        <div className="flex gap-2.5">
+                          <div className="mt-0.5 shrink-0">
+                            {getNotificationIcon(n.categoria)}
+                          </div>
+                          <div className="space-y-0.5 flex-1 min-w-0">
+                            <div className="flex justify-between items-start gap-1">
+                              <h5 className="text-[11px] font-bold text-text-main leading-tight truncate">{n.titulo}</h5>
+                              <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2">{n.mensaje}</p>
+                            {n.url_accion && (
+                              <span 
+                                className="inline-flex items-center gap-1 text-[9px] font-bold text-text-main uppercase mt-1 hover:underline cursor-pointer"
+                              >
+                                Ir al detalle
+                              </span>
+                            )}
+                          </div>
+                          {!n.leido && (
+                            <div className="w-1.5 h-1.5 bg-text-main rounded-full mt-1 shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <footer className="p-2 border-t border-border-thin bg-surface/30 text-center">
+                  <button 
+                    onClick={() => { setIsNotificationsOpen(false); navigate('/notificaciones'); }}
+                    className="text-[9px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors bg-transparent border-0 cursor-pointer"
+                  >
+                    Ver todo el historial
+                  </button>
+                </footer>
+              </div>
+            </>
+          )}
+
+          <div className="flex items-center justify-between gap-1 p-1 select-none">
+            <div 
+              className="flex items-center gap-2 min-w-0 cursor-pointer flex-1 group py-1" 
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            >
+              {/* User Avatar with circular hover shade wrapper */}
+              <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 transition-colors shrink-0">
+                <div className="w-5.5 h-5.5 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                  {userInitials}
+                </div>
+              </div>
+              {/* Username & Role - no hover background shade */}
+              <div className="flex-1 min-w-0 flex flex-col items-start leading-tight">
+                <span className="text-[12px] font-semibold text-text-main truncate w-full group-hover:text-text-main transition-colors">
+                  {user?.nombre_completo || username}
+                </span>
+                <span className="text-[9px] font-bold text-text-dim truncate w-full uppercase tracking-wider mt-0.5">
+                  {roleDisplayName}
+                </span>
+              </div>
+              {/* Options Button with circular hover shade wrapper */}
+              <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 text-text-dim group-hover:text-text-main transition-colors shrink-0">
+                <MoreHorizontalIcon className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            
+            {/* Notification Bell */}
+            <div className="relative shrink-0 border-l border-border-thin pl-1.5 ml-1">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="w-7 h-7 rounded-full hover:bg-surface-hover/50 text-text-dim hover:text-text-main transition-colors relative flex items-center justify-center cursor-pointer"
+                title="Ver notificaciones"
+              >
+                <Bell size={14} strokeWidth={1.5} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                )}
+              </button>
             </div>
           </div>
-          <div 
-            onClick={() => handleNavigation('/settings')}
-            className="flex items-center gap-3 px-3 py-2 text-text-dim cursor-pointer hover:bg-surface rounded-md transition-all group"
-          >
-            <Settings size={16} strokeWidth={1.5} className="group-hover:text-text-main transition-colors" />
-            <span className="text-sm font-medium group-hover:text-text-main transition-colors">Configuración</span>
-          </div>
-          <div 
-            onClick={async () => {
-              await logout();
-              handleNavigation('/');
-            }}
-            className="flex items-center gap-3 px-3 py-2 text-text-dim cursor-pointer hover:bg-error/10 hover:text-error rounded-md transition-all group"
-          >
-            <LogOut size={16} strokeWidth={1.5} className="group-hover:text-error transition-colors" />
-            <span className="text-sm font-medium transition-colors">Cerrar Sesión</span>
-          </div>
         </div>
+
+        {/* Drag Resizer Handle */}
+        {!isCollapsed && (
+          <div
+            onMouseDown={startResizing}
+            className="hidden lg:block absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-brand/30 active:bg-brand/50 transition-colors z-[80]"
+          />
+        )}
       </aside>
     </>
   );
 };
 
 export default Sidebar;
-

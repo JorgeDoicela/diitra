@@ -151,7 +151,7 @@ const NotificationsPage = () => {
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto custom-scrollbar">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 px-2 animate-fade-up">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 animate-fade-up">
                 <div className="space-y-1.5">
                     <div className="section-label text-brand animate-pulse">
                         <Bell size={10} />

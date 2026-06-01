@@ -195,7 +195,7 @@ const UsersPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300">
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 px-2 animate-fade-up gap-8 lg:gap-0">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="section-label text-text-main">
                         <Shield size={10} strokeWidth={2} />

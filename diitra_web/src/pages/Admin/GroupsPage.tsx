@@ -1087,7 +1087,7 @@ const GroupsPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 px-2 animate-fade-up gap-8 lg:gap-0">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
                         <Shield size={10} className="text-text-main" />

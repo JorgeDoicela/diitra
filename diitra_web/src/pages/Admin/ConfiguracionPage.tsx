@@ -484,7 +484,7 @@ const ConfiguracionPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
-            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 px-2 animate-fade-up gap-8 lg:gap-0">
+            <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="section-label text-text-main">
                         <Settings2 size={10} className="text-text-main animate-spin-slow" />
@@ -557,7 +557,7 @@ const ConfiguracionPage = () => {
                 </div>
             </header>
 
-            <div className="tabs-vercel px-2">
+            <div className="tabs-vercel">
                 <button
                     onClick={() => { setActiveTab('lineas'); setSearch(''); }}
                     className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
