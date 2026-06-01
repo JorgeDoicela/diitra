@@ -1,6 +1,6 @@
 import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useState } from 'react';
 
@@ -210,10 +210,13 @@ const Sidebar = ({
   const renderMenuItem = (item: typeof allMenuItems[0]) => {
     const isActive = item === activeItem;
     return (
-      <div
+      <Link
         key={item.name}
-        onClick={() => handleNavigation(item.path)}
-        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group ${
+        to={item.path}
+        onClick={() => {
+          if (onClose) onClose();
+        }}
+        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ${
           item.indent ? 'ml-3 pl-4' : ''
         } ${
           isActive 
@@ -260,7 +263,7 @@ const Sidebar = ({
               : 'text-text-dim/30 group-hover:text-text-dim/70'
           }`} />
         )}
-      </div>
+      </Link>
     );
   };
 
@@ -304,7 +307,13 @@ const Sidebar = ({
         </button>
 
         {/* Brand Header */}
-        <div className="px-5 mb-4 flex items-center gap-2.5 cursor-pointer select-none" onClick={() => handleNavigation('/dashboard')}>
+        <Link
+          to="/dashboard"
+          onClick={() => {
+            if (onClose) onClose();
+          }}
+          className="px-5 mb-4 flex items-center gap-2.5 cursor-pointer select-none no-underline"
+        >
           <img 
             src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
             alt="DIITRA Logo" 
@@ -313,7 +322,7 @@ const Sidebar = ({
           <span className="text-[14px] font-black text-text-main tracking-[0.2em] font-sans uppercase">
             DIITRA
           </span>
-        </div>
+        </Link>
 
         {/* Navigator Search */}
         <div className="px-4 mb-4">
