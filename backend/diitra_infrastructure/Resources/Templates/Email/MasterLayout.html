@@ -1,29 +1,24 @@
 <!--
     =================================================================================
-    PLANTILLA MAESTRA DE CORREO ELECTRÓNICO INSTITUCIONAL - DIITRA (ISTPET)
+    PLANTILLA MAESTRA DE CORREO ELECTRÓNICO INSTITUCIONAL - DIITRA (ESTILO VERCEL GEIST)
     =================================================================================
 
-    Esta plantilla define el diseño visual unificado, responsivo y adaptativo de DIITRA.
-    Fue maquetada utilizando tablas tradicionales y estilos en línea (inline-styles)
-    para garantizar máxima compatibilidad con clientes de correo (Gmail, Outlook, etc.).
+    Esta plantilla define el diseño visual unificado, responsivo y minimalista de DIITRA,
+    siguiendo estrictamente las directrices del Vercel Geist Design System.
+    Maquetada con tablas tradicionales y estilos en línea optimizados para máxima 
+    compatibilidad en clientes de correo modernos (Gmail, Outlook, Apple Mail, etc.).
 
     PLACEHOLDERS DINÁMICOS DISPONIBLES (HANDLEBARS):
     ---------------------------------------------------------------------------------
     - {{title}}              : El asunto o título destacado del correo.
     - {{recipient_name}}     : El nombre completo del docente o investigador receptor.
-    - {{{body_text}}}         : El mensaje principal. ¡Importante usar triple llave para admitir HTML!
+    - {{{body_text}}}        : El mensaje principal (admite HTML).
     - {{has_extra_data}}     : Booleano que controla si se renderiza la tarjeta de detalles.
     - {{extra_data}}         : Lista de objetos clave-valor (cada uno con {{key}} y {{value}})
-                               para desplegar información detallada del evento.
     - {{has_action}}         : Booleano que controla si se muestra el botón de llamado a la acción.
     - {{action_url}}         : URL hacia donde redirige el botón.
     - {{action_text}}        : Texto visible en el botón (ej. "VER DETALLES EN DIITRA").
-    - {{anio_actual}}        : Inyectado automáticamente por el servidor para el pie de firma y LOPDP.
-
-    CONSEJO PARA FUTURAS MODIFICACIONES:
-    ---------------------------------------------------------------------------------
-    Puedes cambiar colores, logos, direcciones físicas o la cláusula de la LOPDP directamente
-    en este archivo HTML. Los cambios se reflejarán instantáneamente sin tener que recompilar el backend.
+    - {{anio_actual}}        : Inyectado automáticamente por el servidor.
 -->
 <!DOCTYPE html>
 <html>
@@ -32,6 +27,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{title}}</title>
+    <!-- Importamos Geist y Geist Mono para clientes compatibles (Apple Mail, iOS, Thunderbird) -->
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         /* Estilos generales responsivos */
         @media only screen and (max-width: 620px) {
@@ -43,7 +40,7 @@
             }
 
             .content-td {
-                padding: 40px 30px !important;
+                padding: 32px 24px !important;
             }
 
             .action-btn {
@@ -54,37 +51,33 @@
             }
 
             .header-td {
-                padding: 40px 30px !important;
+                padding: 32px 24px 16px 24px !important;
             }
         }
     </style>
 </head>
 
 <body
-    style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
-    <div style="background-color: #f8fafc; padding: 40px 0; min-height: 100%;">
-        <!-- Contenedor Maestro Centrado -->
-        <table class="container-table" align="center" border="0" cellpadding="0" cellspacing="0" width="600"
-            style="background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02); border: 1px solid #e2e8f0; border-collapse: separate;">
+    style="margin: 0; padding: 0; background-color: #fafafa; font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+    <div style="background-color: #fafafa; padding: 40px 0; min-height: 100%;">
+        <!-- Contenedor Maestro Centrado al Estilo Vercel Dashboard -->
+        <table class="container-table" align="center" border="0" cellpadding="0" cellspacing="0" width="560"
+            style="background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #eaeaea; border-collapse: separate;">
 
-            <!-- Cabecera de Marca (Branding ISTPET | DIITRA) -->
+            <!-- Cabecera de Marca (Branding Minimalista Monocromático) -->
             <tr>
-                <td class="header-td" align="center"
-                    style="padding: 45px 40px; background-color: #111827; background-image: radial-gradient(circle at top right, #1f2937 0%, #111827 100%);">
+                <td class="header-td" align="center" style="padding: 48px 48px 16px 48px; background-color: #ffffff;">
                     <table width="100%" border="0" cellpadding="0" cellspacing="0">
                         <tr>
                             <td align="center">
-                                <div
-                                    style="background-color: rgba(255, 255, 255, 0.04); padding: 12px 28px; border-radius: 12px; display: inline-block; border: 1px solid rgba(255, 255, 255, 0.08);">
-                                    <h1
-                                        style="color: #ffffff; margin: 0; font-size: 24px; letter-spacing: 4px; font-weight: 800; text-transform: uppercase; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
-                                        <span style="color: #b9975b;">ISTPET</span><span
-                                            style="margin: 0 10px; opacity: 0.3; color: #ffffff;">|</span>DIITRA
+                                <div style="display: inline-block; padding-bottom: 4px;">
+                                    <h1 style="color: #000000; margin: 0; font-size: 20px; letter-spacing: 3px; font-weight: 800; text-transform: uppercase; font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;">
+                                        ISTPET <span style="font-weight: 300; color: #888888; font-size: 16px; margin: 0 4px; vertical-align: middle;">▲</span> DIITRA
                                     </h1>
                                 </div>
-                                <p
-                                    style="color: #94a3b8; margin: 14px 0 0 0; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;">
-                                    Departamento de Investigación e Innovación Tecnológica</p>
+                                <p style="color: #666666; margin: 6px 0 0 0; font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; font-family: 'Geist', -apple-system, BlinkMacSystemFont, sans-serif;">
+                                    Departamento de Investigación e Innovación Tecnológica
+                                </p>
                             </td>
                         </tr>
                     </table>
@@ -93,95 +86,91 @@
 
             <!-- Contenido Principal -->
             <tr>
-                <td class="content-td" style="padding: 50px 60px;">
-                    <h2
-                        style="color: #0f172a; font-size: 22px; margin: 0 0 20px 0; font-weight: 700; letter-spacing: -0.5px; line-height: 1.3;">
-                        Hola {{recipient_name}},</h2>
+                <td class="content-td" style="padding: 32px 48px 48px 48px;">
+                    <!-- Saludo Principal -->
+                    <h2 style="color: #000000; font-size: 20px; margin: 0 0 16px 0; font-weight: 600; letter-spacing: -0.4px; line-height: 1.4; font-family: 'Geist', sans-serif;">
+                        Hola {{recipient_name}},
+                    </h2>
 
-                    <div style="color: #334155; font-size: 15px; line-height: 1.8; margin: 0 0 30px 0;">
+                    <!-- Cuerpo del Mensaje -->
+                    <div style="color: #333333; font-size: 14px; line-height: 1.6; margin: 0 0 28px 0; font-family: 'Geist', sans-serif;">
                         {{{body_text}}}
                     </div>
 
-                    <!-- Bloque de Detalles de la Notificación (ExtraData) -->
+                    <!-- Bento Card de Detalles de la Notificación (extra_data) -->
                     {{#if has_extra_data}}
-                    <div
-                        style="margin: 35px 0; background-color: #f8fafc; border-radius: 16px; padding: 22px; border: 1px solid #e2e8f0;">
-                        <h3
-                            style="margin: 0 0 15px 0; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1.2px; font-weight: 700;">
-                            Detalles de la Notificación</h3>
-                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <div style="margin: 28px 0; background-color: #fafafa; border-radius: 8px; padding: 18px 20px; border: 1px solid #eaeaea;">
+                        <h3 style="margin: 0 0 12px 0; font-size: 11px; color: #666666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; font-family: 'Geist', sans-serif;">
+                            Detalles de la Notificación
+                        </h3>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family: 'Geist Mono', 'JetBrains Mono', 'Courier New', monospace; font-size: 13px;">
                             {{#each extra_data}}
                             <tr>
-                                <td
-                                    style="padding: 10px 0; color: #475569; font-weight: 600; font-size: 13.5px; width: 35%; vertical-align: top; border-bottom: 1px solid #f1f5f9;">
-                                    {{key}}:</td>
-                                <td
-                                    style="padding: 10px 0; color: #0f172a; font-size: 13.5px; border-bottom: 1px solid #f1f5f9; vertical-align: top;">
-                                    {{value}}</td>
+                                <td style="padding: 8px 0; color: #666666; width: 35%; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
+                                    {{key}}:
+                                </td>
+                                <td style="padding: 8px 0; color: #000000; font-weight: 500; vertical-align: top; border-bottom: 1px solid #fafafa; border-collapse: collapse;">
+                                    {{value}}
+                                </td>
                             </tr>
                             {{/each}}
                         </table>
                     </div>
                     {{/if}}
 
-                    <!-- Botón de Acción Principal (Call to Action) -->
+                    <!-- Botón de Acción Principal (Call to Action Vercel-Style) -->
                     {{#if has_action}}
-                    <div style="text-align: center; margin: 40px 0 35px 0;">
+                    <div style="text-align: center; margin: 32px 0 28px 0;">
                         <!--[if mso]>
-                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{action_url}}" style="height:54px;v-text-anchor:middle;width:240px;" arcsize="20%" stroke="f" fillcolor="#111827">
+                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{action_url}}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="12%" stroke="f" fillcolor="#000000">
                           <w:anchorlock/>
-                          <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:bold;">{{action_text}}</center>
+                          <center style="color:#ffffff;font-family:sans-serif;font-size:14px;font-weight:600;">{{action_text}}</center>
                         </v:roundrect>
                         <![endif]-->
                         <a class="action-btn" href="{{action_url}}"
-                            style="background-color: #111827; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 14px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); transition: background-color 0.2s ease, transform 0.2s ease;">
+                            style="background-color: #000000; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: 500; font-size: 14px; display: inline-block; transition: background-color 0.15s ease, transform 0.15s ease; font-family: 'Geist', sans-serif;">
                             {{action_text}}
                         </a>
                     </div>
                     {{/if}}
 
-                    <!-- Nota adicional -->
-                    <p style="color: #64748b; font-size: 13px; line-height: 1.6; margin-top: 30px;">Si tiene alguna duda
-                        sobre esta notificación, puede responder directamente a este correo o contactarnos a través de
-                        nuestra plataforma institucional.</p>
+                    <!-- Nota final discreta -->
+                    <p style="color: #888888; font-size: 12px; line-height: 1.5; margin: 28px 0 0 0; font-family: 'Geist', sans-serif;">
+                        Si tiene alguna duda sobre esta notificación, puede responder directamente a este correo o contactarnos a través de nuestra plataforma institucional.
+                    </p>
 
                     <!-- Pie de Página Institucional -->
-                    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #f1f5f9;">
+                    <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #eaeaea;">
                         <table width="100%" border="0" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td style="text-align: left; vertical-align: top;">
-                                    <p style="color: #0f172a; font-size: 12.5px; margin: 0 0 4px 0; font-weight: 700;">
-                                        Tecnológico Traversari</p>
-                                    <p style="color: #94a3b8; font-size: 11px; margin: 0;">Excelencia Académica y
-                                        Tecnológica</p>
+                                    <p style="color: #000000; font-size: 13px; margin: 0 0 2px 0; font-weight: 600; font-family: 'Geist', sans-serif;">
+                                        Tecnológico Traversari
+                                    </p>
+                                    <p style="color: #888888; font-size: 11px; margin: 0; font-family: 'Geist', sans-serif;">
+                                        Excelencia Académica y Tecnológica
+                                    </p>
                                 </td>
                                 <td style="text-align: right; vertical-align: top;">
-                                    <div
-                                        style="color: #b9975b; font-weight: 700; font-size: 11px; letter-spacing: 1px;">
-                                        ISTPET {{anio_actual}}</div>
+                                    <div style="color: #000000; font-weight: 600; font-size: 11px; font-family: 'Geist', sans-serif;">
+                                        ISTPET {{anio_actual}}
+                                    </div>
                                 </td>
                             </tr>
                         </table>
 
-                        <!-- Advertencia LOPDP Ecuador -->
-                        <div
-                            style="margin-top: 25px; background-color: #f8fafc; border-radius: 12px; padding: 18px; border: 1px solid #e2e8f0;">
-                            <p style="color: #94a3b8; font-size: 10.5px; line-height: 1.6; margin: 0;">
-                                <strong>Aviso de Confidencialidad y Protección de Datos:</strong> Conforme a lo
-                                establecido en la Ley Orgánica de Protección de Datos Personales (LOPDP) de la República
-                                del Ecuador, le informamos que la información contenida en esta comunicación es
-                                confidencial y para uso exclusivo del destinatario. Sus datos personales son tratados
-                                con el único fin de gestionar actividades de investigación en el sistema DIITRA. Para
-                                ejercer sus derechos de acceso, rectificación, eliminación o limitación, puede dirigirse
-                                por escrito al correo institucional <a href="mailto:admisiones@istpet.edu.ec"
-                                    style="color: #b9975b; text-decoration: none; font-weight: 600;">admisiones@istpet.edu.ec</a>.
+                        <!-- Advertencia LOPDP Ecuador en Bento Box -->
+                        <div style="margin-top: 24px; background-color: #fafafa; border-radius: 8px; padding: 16px; border: 1px solid #eaeaea;">
+                            <p style="color: #666666; font-size: 10.5px; line-height: 1.6; margin: 0; font-family: 'Geist', sans-serif;">
+                                <strong style="color: #000000;">Aviso de Protección de Datos (LOPDP):</strong> Conforme a la Ley Orgánica de Protección de Datos Personales de la República del Ecuador, le informamos que sus datos personales son tratados con el único fin de gestionar actividades de investigación en el sistema DIITRA. Para ejercer sus derechos de acceso, rectificación, eliminación o limitación, puede dirigirse por escrito al correo institucional <a href="mailto:admisiones@istpet.edu.ec" style="color: #0070f3; text-decoration: none; font-weight: 500;">admisiones@istpet.edu.ec</a>.
                             </p>
                         </div>
 
                         <!-- Dirección física -->
-                        <div style="text-align: center; margin-top: 25px;">
-                            <p style="color: #cbd5e1; font-size: 9.5px; margin: 0;">Av. Matilde Álvarez y Hugo Díaz
-                                Romero. Sector Chillogallo. Quito, Ecuador.</p>
+                        <div style="text-align: center; margin-top: 24px;">
+                            <p style="color: #888888; font-size: 10px; margin: 0; font-family: 'Geist', sans-serif;">
+                                Av. Matilde Álvarez y Hugo Díaz Romero. Sector Chillogallo. Quito, Ecuador.
+                            </p>
                         </div>
                     </div>
                 </td>
@@ -189,9 +178,10 @@
         </table>
 
         <!-- Derechos reservados final -->
-        <div style="text-align: center; padding: 25px 0 0 0;">
-            <p style="color: #94a3b8; font-size: 11px; margin: 0;">&copy; {{anio_actual}} Sistema DIITRA. Todos los
-                derechos reservados.</p>
+        <div style="text-align: center; padding: 20px 0 0 0;">
+            <p style="color: #888888; font-size: 11px; margin: 0; font-family: 'Geist', sans-serif;">
+                &copy; {{anio_actual}} Sistema DIITRA. Todos los derechos reservados.
+            </p>
         </div>
     </div>
 </body>
