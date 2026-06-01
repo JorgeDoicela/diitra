@@ -3,8 +3,9 @@ import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
 import { CommandPalette } from '../Common/CommandPalette';
-import { Menu } from 'lucide-react';
+import { Menu, MoreHorizontal } from 'lucide-react';
 import NotificationBell from '../Notifications/NotificationBell';
+import { HelpModal } from './HelpModal';
 
 interface LayoutProps {
     children: React.ReactNode;
@@ -34,8 +35,9 @@ const getPageTitle = (pathname: string): string => {
 };
 
 const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }) => {
-    const { user, roleDisplayName } = useAuth();
+    useAuth();
     const location = useLocation();
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
         const saved = localStorage.getItem('sidebar_width');
@@ -111,6 +113,16 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-text-main pointer-events-none select-none">
                             {getPageTitle(location.pathname)}
                         </div>
+
+                        <div className="flex items-center">
+                            <button
+                                onClick={() => setIsHelpOpen(true)}
+                                className="p-2 rounded-lg hover:bg-surface-hover text-text-dim hover:text-text-main transition-all duration-150 cursor-pointer flex items-center justify-center border border-border-thin bg-surface/30 hover:border-border-hover hover:scale-105"
+                                title="Ayuda e Información"
+                            >
+                                <MoreHorizontal size={16} />
+                            </button>
+                        </div>
                     </div>
                 </header>
 
@@ -136,6 +148,12 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     </div>
                 </div>
             </div>
+
+            <HelpModal
+                isOpen={isHelpOpen}
+                onClose={() => setIsHelpOpen(false)}
+                pathname={location.pathname}
+            />
         </div>
     );
 };

@@ -179,6 +179,8 @@ en el elemento principal:
   --animate-fade-left: fadeLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-slide-in-right: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-scale-up: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in-from-right: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-slide-in-from-left: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeUp {
@@ -209,6 +211,16 @@ en el elemento principal:
 @keyframes scaleUp {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-30px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 :root {
