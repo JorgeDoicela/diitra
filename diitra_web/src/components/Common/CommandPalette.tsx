@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import {
     Search,
-    Command,
     PlusCircle,
     LayoutDashboard,
     Users,
@@ -30,6 +29,7 @@ interface SearchItem {
     action?: () => void;
     shortcut?: string;
     roles?: string[];
+    permission?: string;
 }
 
 export const CommandPalette = () => {
@@ -38,42 +38,49 @@ export const CommandPalette = () => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const navigate = useNavigate();
     const inputRef = useRef<HTMLInputElement>(null);
-    const { isAdmin, isDocente, isEstudiante, isRevisor, roles } = useAuth();
+    const { isAdmin, isDocente, isEstudiante, isRevisor, roles, hasPermission } = useAuth();
 
     const items: SearchItem[] = [
-        { id: 'dashboard', label: 'Tablero Principal', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D' },
-        { id: 'investigacion', label: 'Investigación (Proyectos I+D+i)', category: 'Navegación', icon: ClipboardList, path: '/investigacion', shortcut: 'P' },
-        { id: 'mis-proyectos', label: 'Mis Proyectos', category: 'Navegación', icon: ListChecks, path: '/investigacion/mis-proyectos' },
+        { id: 'dashboard', label: 'Tablero Principal', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D', roles: ['ANY'] },
+        { id: 'investigacion', label: 'Investigación (Proyectos I+D+i)', category: 'Navegación', icon: ClipboardList, path: '/investigacion', shortcut: 'P', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
+        { id: 'mis-proyectos', label: 'Mis Proyectos', category: 'Navegación', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'] },
         { id: 'convocatorias', label: 'Convocatorias Activas', category: 'Navegación', icon: PenTool, path: '/convocatorias', shortcut: 'G', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
-        { id: 'analiticas', label: 'Analíticas de Investigación', category: 'Navegación', icon: BarChart3, path: '/analiticas', shortcut: 'A' },
-        { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R' },
-        { id: 'grupos', label: 'Grupos de Investigación', category: 'Navegación', icon: Award, path: '/grupos' },
-        { id: 'verificar', label: 'Verificar Documento (Trazabilidad)', category: 'Navegación', icon: ShieldCheck, path: '/verify' },
-        { id: 'notificaciones', label: 'Centro de Notificaciones', category: 'Navegación', icon: Bell, path: '/notificaciones' },
-        { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/usuarios', shortcut: 'U', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+        { id: 'analiticas', label: 'Analíticas de Investigación', category: 'Navegación', icon: BarChart3, path: '/analiticas', shortcut: 'A', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+        { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'] },
+        { id: 'grupos', label: 'Grupos de Investigación', category: 'Navegación', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
+        { id: 'verificar', label: 'Verificar Documento (Trazabilidad)', category: 'Navegación', icon: ShieldCheck, path: '/verify', roles: ['ANY'] },
+        { id: 'notificaciones', label: 'Centro de Notificaciones', category: 'Navegación', icon: Bell, path: '/notificaciones', roles: ['ANY'] },
+        { id: 'usuarios', label: 'Gestión de Usuarios', category: 'Navegación', icon: Users, path: '/usuarios', shortcut: 'U', permission: 'USUARIOS:VER' },
         { id: 'auditoria', label: 'Auditoría del Sistema', category: 'Navegación', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
         { id: 'configuracion', label: 'Configuración Institucional', category: 'Navegación', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
-        { id: 'new-project', label: 'Nueva Postulación de Investigación', category: 'Acciones', icon: PlusCircle, shortcut: 'N', action: () => navigate('/investigacion') },
-        { id: 'export-analiticas', label: 'Exportar Reporte PDF de Analíticas', category: 'Acciones', icon: FileDown, shortcut: 'E', action: () => navigate('/analiticas') },
-        { id: 'builder', label: 'DIITRA Builder (Motor de Documentos)', category: 'Módulos', icon: Cpu, path: '/investigacion' },
-        { id: 'logout', label: 'Cerrar Sesión', category: 'Acciones', icon: LogOut, action: () => navigate('/login') },
+        { id: 'new-project', label: 'Nueva Postulación de Investigación', category: 'Acciones', icon: PlusCircle, shortcut: 'N', action: () => navigate('/investigacion'), roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
+        { id: 'export-analiticas', label: 'Exportar Reporte PDF de Analíticas', category: 'Acciones', icon: FileDown, shortcut: 'E', action: () => navigate('/analiticas'), roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'] },
+        { id: 'builder', label: 'DIITRA Builder (Motor de Documentos)', category: 'Módulos', icon: Cpu, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
+        { id: 'logout', label: 'Cerrar Sesión', category: 'Acciones', icon: LogOut, action: () => navigate('/login'), roles: ['ANY'] },
     ];
 
     const filteredItems = items
         .filter(item => {
-            if (!item.roles) return true;
             if (isAdmin) return true;
-            const checkRoles = item.roles.map(r => r.toUpperCase());
-            if (checkRoles.includes('DIITRA_DOCENTE') || checkRoles.includes('DOCENTE_INV')) {
-                if (isDocente) return true;
+            if (item.permission) {
+                const [module, op] = item.permission.split(':');
+                return hasPermission(module, op);
             }
-            if (checkRoles.includes('DIITRA_ESTUDIANTE')) {
-                if (isEstudiante) return true;
+            if (item.roles) {
+                if (item.roles.includes('ANY')) return true;
+                const checkRoles = item.roles.map(r => r.toUpperCase());
+                if (checkRoles.includes('DIITRA_DOCENTE') || checkRoles.includes('DOCENTE_INV')) {
+                    if (isDocente) return true;
+                }
+                if (checkRoles.includes('DIITRA_ESTUDIANTE')) {
+                    if (isEstudiante) return true;
+                }
+                if (checkRoles.includes('DIITRA_REVISOR_EXTERNO')) {
+                    if (isRevisor) return true;
+                }
+                return item.roles.some(r => roles.includes(r.toUpperCase()));
             }
-            if (checkRoles.includes('DIITRA_REVISOR_EXTERNO')) {
-                if (isRevisor) return true;
-            }
-            return item.roles.some(r => roles.includes(r.toUpperCase()));
+            return true;
         })
         .filter(item =>
             query === '' ||
@@ -186,13 +193,6 @@ export const CommandPalette = () => {
                     )}
                 </div>
 
-                <div className="bg-surface/30 px-4 py-3 border-t border-border-thin flex items-center justify-between">
-                    <span className="text-[10px] text-text-dim font-mono tracking-tighter uppercase">DIITRA_ISTPET_v1.0</span>
-                    <div className="flex items-center gap-1.5 text-[10px] bg-text-main text-bg-deep px-2 py-0.5 rounded-sm font-bold">
-                        <Command size={10} />
-                        <span>COMANDOS</span>
-                    </div>
-                </div>
             </div>
         </div>
     );

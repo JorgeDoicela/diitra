@@ -3,11 +3,9 @@ import { GraduationCap, Award, BookOpen, UserPlus, Star } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 export const EstudianteDashboard: React.FC = () => {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const firstName = user?.nombre_completo?.split(' ')[0] || 'Estudiante';
 
     return (
@@ -24,6 +22,7 @@ export const EstudianteDashboard: React.FC = () => {
                     description="Proyectos donde participas"
                     icon={<UserPlus size={14} />}
                     className="md:col-span-2"
+                    isStatic={true}
                 >
                     <div className="mt-4 empty-state">
                         <Star size={24} className="text-text-main/20 mb-2" />
@@ -38,6 +37,7 @@ export const EstudianteDashboard: React.FC = () => {
                     title="Mi Perfil" 
                     description="Puntuación acumulada"
                     icon={<GraduationCap size={14} />}
+                    isStatic={true}
                 >
                     <div className="mt-4">
                         <p className="stat-number">1,250</p>
@@ -49,6 +49,7 @@ export const EstudianteDashboard: React.FC = () => {
                     title="Certificados" 
                     description="Documentos validados"
                     icon={<Award size={14} />}
+                    isStatic={true}
                 >
                     <div className="mt-4 flex flex-col gap-1">
                         <p className="stat-number stat-number--sm">00</p>
@@ -61,10 +62,19 @@ export const EstudianteDashboard: React.FC = () => {
                     description="Habilidades requeridas por el instituto"
                     icon={<BookOpen size={14} />}
                     className="md:col-span-4"
+                    isStatic={true}
                 >
                     <div className="mt-4 flex flex-wrap gap-2">
-                        {['Metodología Ágil', 'Python for Science', 'Escritura APA 7', 'Gestión de Datos', 'IA Generativa'].map(tag => (
-                            <span key={tag} className="badge-vercel">{tag}</span>
+                        {[
+                            { name: 'Metodología Ágil', color: 'badge-vercel-info' },
+                            { name: 'Python for Science', color: 'badge-vercel-violet' },
+                            { name: 'Escritura APA 7', color: 'badge-vercel-warning' },
+                            { name: 'Gestión de Datos', color: 'badge-vercel-success' },
+                            { name: 'IA Generativa', color: 'badge-vercel-violet' }
+                        ].map(tag => (
+                            <span key={tag.name} className={`badge-vercel ${tag.color} !py-1 !px-3 text-xs font-semibold`}>
+                                {tag.name}
+                            </span>
                         ))}
                     </div>
                 </BentoCard>

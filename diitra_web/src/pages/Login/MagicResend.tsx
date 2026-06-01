@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { Loader2, Mail, ArrowRight, AlertTriangle, CheckCircle2, Sun, Moon } from 'lucide-react';
 
 const MagicResend = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'dark' | 'light'; toggleTheme?: () => void }) => {
-    const navigate = useNavigate();
     
     const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
