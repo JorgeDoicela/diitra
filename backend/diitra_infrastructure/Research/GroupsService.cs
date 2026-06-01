@@ -112,10 +112,52 @@ public class GroupsService : IGroupsService
             foreach (var linea in lineas) group.IdLineas.Add(linea);
         }
 
-        if (dto.CarrerasIds.Any())
+        var uniqueCarreraIds = new HashSet<int>(dto.CarrerasIds);
+
+        // Auto-link careers based on selected teachers (coordinator & members) for active period
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+            .ThenByDescending(p => p.Activo == true)
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync();
+
+        if (currentPeriod != null)
+        {
+            var teacherCedulas = new List<string>();
+            if (!string.IsNullOrEmpty(dto.IdProfesorCoordinador))
+            {
+                teacherCedulas.Add(dto.IdProfesorCoordinador.Trim());
+            }
+            if (dto.Miembros != null && dto.Miembros.Any())
+            {
+                foreach (var memberDto in dto.Miembros)
+                {
+                    if (!string.IsNullOrEmpty(memberDto.Cedula))
+                    {
+                        teacherCedulas.Add(memberDto.Cedula.Trim());
+                    }
+                }
+            }
+
+            if (teacherCedulas.Any())
+            {
+                var profCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Where(pc => teacherCedulas.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == currentPeriod.IdPeriodo && pc.EsActivo == 1 && pc.IdCarrera != null)
+                    .Select(pc => pc.IdCarrera!.Value)
+                    .ToListAsync();
+                foreach (var idCarrera in profCareers)
+                {
+                    uniqueCarreraIds.Add(idCarrera);
+                }
+            }
+        }
+
+        if (uniqueCarreraIds.Any())
         {
             var carreras = await _context.Carreras
-                .Where(c => dto.CarrerasIds.Contains(c.IdCarrera))
+                .Where(c => uniqueCarreraIds.Contains(c.IdCarrera))
                 .ToListAsync();
             foreach (var carrera in carreras) group.IdCarreras.Add(carrera);
         }
@@ -287,9 +329,51 @@ public class GroupsService : IGroupsService
         // Actualizar carreras (M:N)
         var currentGroupWithCarreras = await _context.InvGruposInvestigacion.Include(g => g.IdCarreras).FirstOrDefaultAsync(g => g.IdGrupo == group.IdGrupo);
         currentGroupWithCarreras?.IdCarreras.Clear();
-        if (dto.CarrerasIds.Any())
+        var uniqueCarreraIds = new HashSet<int>(dto.CarrerasIds);
+
+        // Auto-link careers based on selected teachers (coordinator & members) for active period
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+            .ThenByDescending(p => p.Activo == true)
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync();
+
+        if (currentPeriod != null)
         {
-            var carreras = await _context.Carreras.Where(c => dto.CarrerasIds.Contains(c.IdCarrera)).ToListAsync();
+            var teacherCedulas = new List<string>();
+            if (!string.IsNullOrEmpty(dto.IdProfesorCoordinador))
+            {
+                teacherCedulas.Add(dto.IdProfesorCoordinador.Trim());
+            }
+            if (dto.Miembros != null && dto.Miembros.Any())
+            {
+                foreach (var memberDto in dto.Miembros)
+                {
+                    if (!string.IsNullOrEmpty(memberDto.Cedula))
+                    {
+                        teacherCedulas.Add(memberDto.Cedula.Trim());
+                    }
+                }
+            }
+
+            if (teacherCedulas.Any())
+            {
+                var profCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Where(pc => teacherCedulas.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == currentPeriod.IdPeriodo && pc.EsActivo == 1 && pc.IdCarrera != null)
+                    .Select(pc => pc.IdCarrera!.Value)
+                    .ToListAsync();
+                foreach (var idCarrera in profCareers)
+                {
+                    uniqueCarreraIds.Add(idCarrera);
+                }
+            }
+        }
+
+        if (uniqueCarreraIds.Any())
+        {
+            var carreras = await _context.Carreras.Where(c => uniqueCarreraIds.Contains(c.IdCarrera)).ToListAsync();
             foreach (var carrera in carreras) currentGroupWithCarreras?.IdCarreras.Add(carrera);
         }
 
@@ -390,7 +474,9 @@ public class GroupsService : IGroupsService
 
     public async Task<bool> AddMemberAsync(string groupUuid, GroupMemberDto memberDto)
     {
-        var group = await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g => g.Uuid == groupUuid);
+        var group = await _context.InvGruposInvestigacion
+            .Include(g => g.IdCarreras)
+            .FirstOrDefaultAsync(g => g.Uuid == groupUuid);
         if (group == null) return false;
 
         int userId = memberDto.IdUsuario;
@@ -422,6 +508,37 @@ public class GroupsService : IGroupsService
 
         _context.InvGruposMiembros.Add(member);
         await _context.SaveChangesAsync();
+
+        if (!string.IsNullOrEmpty(memberDto.Cedula))
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var currentPeriod = await _context.Periodos
+                .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                .ThenByDescending(p => p.Activo == true)
+                .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                .ThenByDescending(p => p.FechaInicial)
+                .FirstOrDefaultAsync();
+
+            if (currentPeriod != null)
+            {
+                var profCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Where(pc => pc.IdProfesor.Trim() == memberDto.Cedula.Trim() && pc.IdPeriodo == currentPeriod.IdPeriodo && pc.EsActivo == 1 && pc.IdCarrera != null)
+                    .Select(pc => pc.IdCarrera!.Value)
+                    .ToListAsync();
+
+                if (profCareers.Any())
+                {
+                    var newCarreras = await _context.Carreras
+                        .Where(c => profCareers.Contains(c.IdCarrera) && !group.IdCarreras.Any(gc => gc.IdCarrera == c.IdCarrera))
+                        .ToListAsync();
+                    foreach (var carrera in newCarreras)
+                    {
+                        group.IdCarreras.Add(carrera);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
 
         var afterState = new
         {
