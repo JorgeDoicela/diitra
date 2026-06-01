@@ -15,7 +15,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
     const [filtroTipo, setFiltroTipo] = useState<'todos' | 'internos' | 'externos'>('todos');
     const [revisores, setRevisores] = useState<RevisorDisponibleDto[]>([]);
     const [buscando, setBuscando] = useState(false);
-    const [revisorSeleccionado, setRevisorSeleccionado] = useState<RevisorDisponibleDto | null>(null);
+    const [revisoresSeleccionados, setRevisoresSeleccionados] = useState<RevisorDisponibleDto[]>([]);
     const [fechaLimite, setFechaLimite] = useState(() => {
         const d = new Date();
         d.setDate(d.getDate() + 21);
@@ -31,17 +31,21 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
             const serverSoloExternos = filtroTipo === 'externos';
             const result = await searchRevisores(query, serverSoloExternos, proyecto.proyecto_uuid);
             
+            // Exclude already assigned reviewers
+            const asignadosIds = new Set(proyecto.revisiones.map(r => r.id_revisor));
+            const disponibles = result.filter(r => !asignadosIds.has(r.id_usuario));
+            
             if (filtroTipo === 'internos') {
-                setRevisores(result.filter(r => !r.es_externo));
+                setRevisores(disponibles.filter(r => !r.es_externo));
             } else {
-                setRevisores(result);
+                setRevisores(disponibles);
             }
         } catch {
             setRevisores([]);
         } finally {
             setBuscando(false);
         }
-    }, [query, filtroTipo, proyecto.proyecto_uuid]);
+    }, [query, filtroTipo, proyecto.proyecto_uuid, proyecto.revisiones]);
 
     useEffect(() => {
         if (query === '') {
@@ -52,21 +56,35 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
         }
     }, [query, buscar]);
 
+    const toggleRevisor = (rev: RevisorDisponibleDto) => {
+        setRevisoresSeleccionados(prev => {
+            const exists = prev.some(r => r.id_usuario === rev.id_usuario);
+            if (exists) {
+                return prev.filter(r => r.id_usuario !== rev.id_usuario);
+            } else {
+                return [...prev, rev];
+            }
+        });
+    };
+
     const handleAsignar = async () => {
-        if (!revisorSeleccionado) return;
+        if (revisoresSeleccionados.length === 0) return;
         setEnviando(true);
         setError('');
         try {
-            await asignarArbitro({
-                project_uuid: proyecto.proyecto_uuid,
-                id_revisor: revisorSeleccionado.id_usuario,
-                fecha_limite: new Date(fechaLimite + 'T23:59:59').toISOString(),
-                es_externo: revisorSeleccionado.es_externo,
-                es_doble_ciego: esDobleCiego,
-            });
+            // Assign all selected reviewers sequentially to avoid DB locks/concurrency issues
+            for (const rev of revisoresSeleccionados) {
+                await asignarArbitro({
+                    project_uuid: proyecto.proyecto_uuid,
+                    id_revisor: rev.id_usuario,
+                    fecha_limite: new Date(fechaLimite + 'T23:59:59').toISOString(),
+                    es_externo: rev.es_externo,
+                    es_doble_ciego: esDobleCiego,
+                });
+            }
             onSuccess();
         } catch (err: any) {
-            setError(err?.response?.data?.message ?? 'Error al asignar el árbitro.');
+            setError(err?.response?.data?.message ?? 'Error al asignar los árbitros.');
         } finally {
             setEnviando(false);
         }
@@ -100,21 +118,8 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                 <div className="modal-body grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 min-h-[380px]">
                     {/* LEFT PANEL: Búsqueda y Selección Directa */}
                     <div className="flex flex-col space-y-4">
-                        <div>
-                            <label className="section-label mb-2 block">
-                                <Search size={10} className="inline mr-1" /> Escribe el nombre o cédula para buscar
-                            </label>
-                            <input
-                                type="text"
-                                className="input-vercel"
-                                placeholder="Escribe para buscar árbitros..."
-                                value={query}
-                                onChange={(e) => setQuery(e.target.value)}
-                                autoFocus
-                            />
-                        </div>
-
                         <div className="flex-1 flex flex-col">
+                            {/* Tab filter at the top */}
                             <div className="flex bg-bg-deep/40 rounded-lg p-0.5 border border-border-thin/50 gap-0.5 mb-3">
                                 {[
                                     { id: 'todos', label: 'Todos' },
@@ -139,6 +144,18 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                 })}
                             </div>
 
+                            {/* Search bar below the tab filter */}
+                            <div className="mb-4">
+                                <input
+                                    type="text"
+                                    className="input-vercel"
+                                    placeholder="Buscar por nombre o cédula..."
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+
                             <label className="section-label block mb-2">
                                 Árbitros Disponibles ({revisores.length})
                             </label>
@@ -154,13 +171,13 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                     </div>
                                 ) : (
                                     revisores.map((rev) => {
-                                        const isSelected = revisorSeleccionado?.id_usuario === rev.id_usuario;
+                                        const isSelected = revisoresSeleccionados.some(r => r.id_usuario === rev.id_usuario);
                                         const avStyle = getAvatarStyle(rev.nombre_completo);
                                         return (
                                             <button
                                                 key={rev.id_usuario}
                                                 type="button"
-                                                onClick={() => setRevisorSeleccionado(rev)}
+                                                onClick={() => toggleRevisor(rev)}
                                                 className={`w-full text-left p-2 rounded-md transition-all flex items-center justify-between border hover:-translate-y-0.5 duration-200 ${
                                                     isSelected
                                                         ? 'bg-surface-hover border-text-main text-text-main font-semibold shadow-inner'
@@ -168,6 +185,12 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-2.5 min-w-0">
+                                                    {/* Checkbox indicator */}
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                                                        isSelected ? 'border-text-main bg-text-main text-bg-deep' : 'border-border-thin'
+                                                    }`}>
+                                                        {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                                                    </div>
                                                     <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
                                                         {rev.nombre_completo.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                     </div>
@@ -198,57 +221,49 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
 
                     {/* RIGHT PANEL: Configuración, Parámetros y Detalles */}
                     <div className="flex flex-col justify-between border-t md:border-t-0 md:border-l border-border-thin pt-5 md:pt-0 md:pl-6">
-                        {revisorSeleccionado ? (
+                        {revisoresSeleccionados.length > 0 ? (
                             <div className="space-y-4 flex-1 flex flex-col justify-between">
-                                {/* Datos del árbitro */}
+                                {/* Selected reviewers list */}
                                 <div className="space-y-2.5 p-3.5 bg-surface rounded-lg border border-border-thin shadow-sm">
                                     <div className="flex items-center gap-2 text-text-main border-b border-border-thin/50 pb-2 mb-1">
                                         <UserCheck size={13} />
-                                        <span className="text-xs font-bold uppercase tracking-wider">Árbitro Seleccionado</span>
+                                        <span className="text-xs font-bold uppercase tracking-wider">Árbitros Seleccionados ({revisoresSeleccionados.length})</span>
                                     </div>
-                                    <div className="space-y-2 text-xs">
-                                        <div>
-                                            <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">Nombre Completo</p>
-                                            <p className="font-semibold text-text-main mt-0.5">{formatNombre(revisorSeleccionado.nombre_completo)}</p>
-                                        </div>
-                                        {revisorSeleccionado.especialidad && (
-                                            <div>
-                                                <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">Especialidad</p>
-                                                <p className="font-semibold text-text-main mt-0.5">{revisorSeleccionado.especialidad}</p>
+                                    <div className="space-y-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
+                                        {revisoresSeleccionados.map((rev) => (
+                                            <div
+                                                key={rev.id_usuario}
+                                                className={`flex items-center justify-between p-2.5 rounded-lg border text-xs shadow-sm bg-surface transition-colors ${
+                                                    rev.es_externo
+                                                        ? 'border-l-4 border-l-blue-500 border-border-thin'
+                                                        : 'border-l-4 border-l-purple-500 border-border-thin'
+                                                }`}
+                                            >
+                                                <div className="min-w-0 pr-2 flex-1">
+                                                    <div className="flex items-center gap-2 mb-0.5">
+                                                        <span className="font-semibold text-text-main truncate leading-tight">{formatNombre(rev.nombre_completo)}</span>
+                                                        <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 border ${
+                                                            rev.es_externo
+                                                                ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                                                                : 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                                                        }`}>
+                                                            {rev.es_externo ? 'Ext' : 'Int'}
+                                                        </span>
+                                                    </div>
+                                                    <span className="text-[10px] text-text-dim block truncate">
+                                                        {rev.es_externo ? `Externo CACES · ${rev.email}` : `Par Interno · ${rev.email}`}
+                                                    </span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleRevisor(rev)}
+                                                    className="text-text-dim hover:text-error transition-colors p-1 shrink-0 cursor-pointer"
+                                                    title="Quitar árbitro"
+                                                >
+                                                    <X size={14} />
+                                                </button>
                                             </div>
-                                        )}
-                                        <div>
-                                            <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">Correo Electrónico</p>
-                                            <p className="font-semibold text-text-dim truncate mt-0.5">{revisorSeleccionado.email}</p>
-                                        </div>
-                                        {revisorSeleccionado.es_externo && revisorSeleccionado.institucion && (
-                                            <div>
-                                                <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">Institución de Origen</p>
-                                                <p className="font-semibold text-text-main mt-0.5">{formatNombre(revisorSeleccionado.institucion)}</p>
-                                            </div>
-                                        )}
-                                        {revisorSeleccionado.orcid_id && (
-                                            <div>
-                                                <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">ORCID iD</p>
-                                                <p className="font-mono font-semibold text-text-main mt-0.5">{revisorSeleccionado.orcid_id}</p>
-                                            </div>
-                                        )}
-                                        <div className="pt-1 flex gap-2">
-                                            {revisorSeleccionado.es_externo ? (
-                                                <span className="text-[8px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-widest">
-                                                    Externo CACES
-                                                </span>
-                                            ) : (
-                                                <span className="text-[8px] bg-purple-500/10 text-purple-500 border border-purple-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-widest">
-                                                    Par Interno
-                                                </span>
-                                            )}
-                                            {revisorSeleccionado.revisiones_activas > 0 && (
-                                                <span className="text-[8px] bg-warning/10 text-warning border border-warning/20 px-2 py-0.5 rounded font-bold uppercase tracking-widest">
-                                                    {revisorSeleccionado.revisiones_activas} Activas
-                                                </span>
-                                            )}
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
 
@@ -300,7 +315,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                 <UserCheck size={32} className="opacity-30 mb-2.5" />
                                 <p className="text-xs font-bold uppercase tracking-wider text-text-main">Configuración de Evaluación</p>
                                 <p className="text-[10px] mt-1 max-w-[200px] leading-relaxed">
-                                    Selecciona un evaluador disponible del listado de la izquierda para comenzar a configurar su fecha límite y modalidad.
+                                    Selecciona uno o más evaluadores disponibles del listado de la izquierda para comenzar a configurar su fecha límite y modalidad.
                                 </p>
                             </div>
                         )}
@@ -312,11 +327,11 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                     <button onClick={onClose} className="btn-vercel-secondary">Cancelar</button>
                     <button
                         onClick={handleAsignar}
-                        disabled={!revisorSeleccionado || enviando}
+                        disabled={revisoresSeleccionados.length === 0 || enviando}
                         className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed font-bold font-sans"
                     >
                         {enviando ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
-                        Asignar Árbitro
+                        {revisoresSeleccionados.length > 1 ? `Asignar ${revisoresSeleccionados.length} Árbitros` : 'Asignar Árbitro'}
                     </button>
                 </div>
             </div>
