@@ -78,7 +78,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                 {/* Desktop TopBar */}
-                <header className="hidden lg:flex items-center justify-between py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-[40]">
+                <header className="hidden lg:flex items-center justify-between h-14 bg-bg-deep border-b border-border-thin sticky top-0 z-[40]">
                     <div className="max-w-[1600px] mx-auto w-full px-4 md:px-10 flex items-center justify-between relative">
                         <div className="flex items-center gap-4">
                             {isCollapsed && (
@@ -107,7 +107,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                     <div className="h-4 w-[1px] bg-border-thin mx-1" />
                                 </>
                             )}
-                            <span className="section-label text-text-dim">Tecnológico Traversari</span>
+                            <span className="section-label !text-text-main">Tecnológico Traversari</span>
                         </div>
                         
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-text-main pointer-events-none select-none">
@@ -117,7 +117,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         <div className="flex items-center">
                             <button
                                 onClick={() => setIsHelpOpen(true)}
-                                className="p-1 text-text-dim/50 hover:text-text-main transition-colors duration-150 cursor-pointer flex items-center justify-center bg-transparent border-0 outline-none hover:scale-110"
+                                className="p-1 text-text-main transition-colors duration-150 cursor-pointer flex items-center justify-center bg-transparent border-0 outline-none hover:scale-110"
                                 title="Ayuda e Información"
                             >
                                 <MoreHorizontal size={18} />
