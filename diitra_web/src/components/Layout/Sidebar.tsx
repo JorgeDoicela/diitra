@@ -16,23 +16,6 @@ interface SidebarProps {
 }
 
 // Custom simple SVG icons to ensure consistency and speed
-const ChevronsUpDownIcon = ({ className = "w-3.5 h-3.5", size = 14 }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="m7 15 5 5 5-5" />
-    <path d="m7 9 5-5 5 5" />
-  </svg>
-);
 
 const ChevronRightIcon = ({ className = "w-3 h-3", size = 12 }) => (
   <svg
@@ -93,7 +76,7 @@ const Sidebar = ({
 
   let notifications: any[] = [];
   let unreadCount = 0;
-  let markAsRead = async (uuid: string) => {};
+  let markAsRead = async (_uuid: string) => {};
   let markAllAsRead = async () => {};
 
   try {
@@ -260,7 +243,7 @@ const Sidebar = ({
     .slice(0, 2)
     .toUpperCase() || 'JD';
 
-  const username = user?.email?.split('@')[0] || user?.nombre_completo || 'jorgedoicela';
+  const username = user?.usuario?.split('@')[0] || user?.nombre_completo || 'jorgedoicela';
 
   return (
     <>
