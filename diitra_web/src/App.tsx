@@ -103,7 +103,10 @@ const RoleRoute = ({ children, allowedRoles }: { children: React.ReactNode; allo
 };
 
 const ConvocatoriaRoute = () => {
-    const { isAdmin } = useAuth();
+    const { isAdmin, isEstudiante } = useAuth();
+    if (isEstudiante) {
+        return <Navigate to="/dashboard" replace />;
+    }
     return isAdmin ? <ConvocatoriasPage /> : <PublicConvocatoriasPage />;
 };
 

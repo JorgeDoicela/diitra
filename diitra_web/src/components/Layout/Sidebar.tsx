@@ -116,7 +116,7 @@ const Sidebar = ({
     { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true, group: 1 },
     
     // Grupo 2: Procesos y Analíticas
-    { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE', 'DOCENTE_INV'], group: 2 },
+    { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 2 },
     { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 2 },
     { name: 'Arbitraje', icon: Gavel, path: '/arbitraje', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 2 },
     { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'], group: 2 },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../api/AuthContext';
 import {
     Search,
     Command,
@@ -37,12 +38,13 @@ export const CommandPalette = () => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const navigate = useNavigate();
     const inputRef = useRef<HTMLInputElement>(null);
+    const { isAdmin, isDocente, isEstudiante, isRevisor, roles } = useAuth();
 
     const items: SearchItem[] = [
         { id: 'dashboard', label: 'Tablero Principal', category: 'Navegación', icon: LayoutDashboard, path: '/dashboard', shortcut: 'D' },
         { id: 'investigacion', label: 'Investigación (Proyectos I+D+i)', category: 'Navegación', icon: ClipboardList, path: '/investigacion', shortcut: 'P' },
         { id: 'mis-proyectos', label: 'Mis Proyectos', category: 'Navegación', icon: ListChecks, path: '/investigacion/mis-proyectos' },
-        { id: 'convocatorias', label: 'Convocatorias Activas', category: 'Navegación', icon: PenTool, path: '/convocatorias', shortcut: 'G' },
+        { id: 'convocatorias', label: 'Convocatorias Activas', category: 'Navegación', icon: PenTool, path: '/convocatorias', shortcut: 'G', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'] },
         { id: 'analiticas', label: 'Analíticas de Investigación', category: 'Navegación', icon: BarChart3, path: '/analiticas', shortcut: 'A' },
         { id: 'revisiones', label: 'Revisiones por Pares', category: 'Navegación', icon: ShieldCheck, path: '/revisiones', shortcut: 'R' },
         { id: 'grupos', label: 'Grupos de Investigación', category: 'Navegación', icon: Award, path: '/grupos' },
@@ -57,9 +59,24 @@ export const CommandPalette = () => {
         { id: 'logout', label: 'Cerrar Sesión', category: 'Acciones', icon: LogOut, action: () => navigate('/login') },
     ];
 
-    const filteredItems = query === ''
-        ? items
-        : items.filter(item =>
+    const filteredItems = items
+        .filter(item => {
+            if (!item.roles) return true;
+            if (isAdmin) return true;
+            const checkRoles = item.roles.map(r => r.toUpperCase());
+            if (checkRoles.includes('DIITRA_DOCENTE') || checkRoles.includes('DOCENTE_INV')) {
+                if (isDocente) return true;
+            }
+            if (checkRoles.includes('DIITRA_ESTUDIANTE')) {
+                if (isEstudiante) return true;
+            }
+            if (checkRoles.includes('DIITRA_REVISOR_EXTERNO')) {
+                if (isRevisor) return true;
+            }
+            return item.roles.some(r => roles.includes(r.toUpperCase()));
+        })
+        .filter(item =>
+            query === '' ||
             item.label.toLowerCase().includes(query.toLowerCase()) ||
             item.category.toLowerCase().includes(query.toLowerCase())
         );

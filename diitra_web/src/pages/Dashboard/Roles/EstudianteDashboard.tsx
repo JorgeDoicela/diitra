@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, GraduationCap, Award, BookOpen, UserPlus, Star } from 'lucide-react';
+import { GraduationCap, Award, BookOpen, UserPlus, Star } from 'lucide-react';
 import { BentoGrid, BentoCard } from '../../../components/Common/BentoGrid';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -16,17 +16,6 @@ export const EstudianteDashboard: React.FC = () => {
                 title={`Hola, ${firstName}`} 
                 subtitle="Participa en proyectos de vanguardia, gana experiencia y construye tu perfil científico." 
                 roleName="Estudiante Colaborador"
-                actions={
-                    <>
-                        <button 
-                            onClick={() => navigate('/convocatorias')}
-                            className="btn-vercel-primary flex-1 md:flex-none"
-                        >
-                            <Search size={16} />
-                            <span>Ver Convocatorias</span>
-                        </button>
-                    </>
-                }
             />
 
             <BentoGrid className="px-2 animate-fade-up [animation-delay:200ms] pb-10">
@@ -39,12 +28,9 @@ export const EstudianteDashboard: React.FC = () => {
                     <div className="mt-4 empty-state">
                         <Star size={24} className="text-text-main/20 mb-2" />
                         <p className="text-[10px] text-text-dim uppercase font-bold">No tienes participaciones activas</p>
-                        <button 
-                            onClick={() => navigate('/convocatorias')}
-                            className="btn-vercel-secondary mt-4"
-                        >
-                            Postular a una vacante
-                        </button>
+                        <p className="text-[11px] text-text-dim mt-2 max-w-xs text-center">
+                            Contacta con un docente investigador para unirte a un proyecto de investigación.
+                        </p>
                     </div>
                 </BentoCard>
 
@@ -86,3 +72,4 @@ export const EstudianteDashboard: React.FC = () => {
         </>
     );
 };
+
