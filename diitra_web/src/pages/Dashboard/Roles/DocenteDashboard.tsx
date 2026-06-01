@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
-    TrendingUp, Briefcase, Loader2, ClipboardList
+    TrendingUp, Briefcase, Loader2, ClipboardList,
+    Activity, Fingerprint, FileText, Layers, ExternalLink
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
@@ -126,36 +127,109 @@ export const DocenteDashboard: React.FC = () => {
                         </div>
 
                         {/* Actividad reciente */}
-                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl space-y-4">
-                            <div className="flex items-center gap-2">
+                        <div className="bento-card static bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden animate-fade-up">
+                            <div className="flex items-center gap-2 px-6 py-4 border-b border-border-thin bg-surface/30">
                                 <TrendingUp size={14} className="text-text-dim" />
                                 <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Actividad Reciente</span>
                             </div>
                             
-                            <div className="space-y-2.5">
+                            <div className="divide-y divide-border-thin bg-bg-deep/10">
                                 {(!stats?.actividad_reciente || stats.actividad_reciente.length === 0) ? (
-                                    <div className="empty-state py-8">
+                                    <div className="empty-state m-6 py-8">
                                         <p className="text-xs text-text-dim italic">
                                             Aún no hay actividad registrada en este periodo.
                                         </p>
                                     </div>
                                 ) : (
-                                    stats.actividad_reciente.slice(0, 5).map((item, i) => (
-                                        <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-bg-deep border border-border-thin/40 hover:border-border-hover/60 transition-colors cursor-pointer group" onClick={() => navigate('/investigacion/mis-proyectos')}>
-                                            <div className={`dot ${ESTADO_DOT[item.estado ?? ''] ?? 'dot-neutral'} w-2 h-2 shrink-0`} />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-[11px] font-bold text-text-main truncate group-hover:text-brand transition-colors">{item.descripcion}</p>
-                                                <p className="text-[9px] text-text-dim uppercase tracking-wide mt-0.5">
-                                                    {item.tipo} · {new Date(item.fecha).toLocaleDateString('es-EC')}
-                                                </p>
+                                    stats.actividad_reciente.slice(0, 5).map((item, i) => {
+                                        // 1. Status styling
+                                        let statusColor = 'bg-info';
+                                        let statusText = item.estado || 'Procesando';
+                                        const upperEstado = item.estado?.toUpperCase();
+                                        if (upperEstado === 'APROBADO' || upperEstado === 'FINALIZADO') {
+                                            statusColor = 'bg-success';
+                                            statusText = item.estado || 'Aprobado';
+                                        } else if (upperEstado === 'BORRADOR') {
+                                            statusColor = 'bg-neutral';
+                                            statusText = 'Borrador';
+                                        } else if (upperEstado === 'EN_REVISION' || upperEstado === 'EN REVISIÓN' || upperEstado === 'PENDIENTE') {
+                                            statusColor = 'bg-warning';
+                                            statusText = item.estado || 'En Revisión';
+                                        } else if (upperEstado === 'RECHAZADO' || upperEstado === 'ANULADO') {
+                                            statusColor = 'bg-error';
+                                            statusText = item.estado || 'Rechazado';
+                                        } else if (upperEstado === 'ENVIADO' || upperEstado === 'EN EJECUCIÓN' || upperEstado === 'EN_EJECUCION') {
+                                            statusColor = 'bg-brand';
+                                            statusText = item.estado || 'Enviado';
+                                        }
+
+                                        // 2. Real UUID from system (shortened)
+                                        const shortUuid = item.uuid ? item.uuid.substring(0, 8).toUpperCase() : 'SELLO PEND.';
+
+                                        const isInforme = item.tipo?.toLowerCase().includes('informe');
+
+                                        return (
+                                            <div 
+                                                key={i} 
+                                                onClick={() => {
+                                                    if (item.uuid) {
+                                                        if (item.tipo?.toLowerCase().includes('proyecto')) {
+                                                            navigate(`/proyectos/${item.uuid}`);
+                                                        } else {
+                                                            navigate('/investigacion/mis-proyectos');
+                                                        }
+                                                    } else {
+                                                        navigate('/investigacion/mis-proyectos');
+                                                    }
+                                                }}
+                                                className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer"
+                                            >
+                                                {/* Col 1: Title & Description */}
+                                                <div className="flex-1 min-w-0 md:max-w-xs lg:max-w-md xl:max-w-2xl">
+                                                    <h4 className="text-xs font-bold text-text-main truncate group-hover:text-brand transition-colors" title={item.descripcion}>
+                                                        {item.descripcion}
+                                                    </h4>
+                                                </div>
+
+                                                {/* Columns Group */}
+                                                <div className="flex flex-wrap md:flex-nowrap items-center justify-between md:justify-end gap-x-8 gap-y-2 text-[11px] text-text-dim font-medium w-full md:w-auto">
+                                                    
+                                                    {/* Col 2: Status with Dot */}
+                                                    <div className="flex items-center gap-1.5 min-w-[90px]">
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${statusColor} shrink-0`} />
+                                                        <span className="capitalize text-text-main/80">{statusText}</span>
+                                                    </div>
+
+                                                    {/* Col 3: Type Pill */}
+                                                    <div className="shrink-0 min-w-[100px]">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                                            isInforme 
+                                                                ? 'bg-info/10 text-info border border-info/20' 
+                                                                : 'bg-brand/10 text-brand border border-brand/20'
+                                                        }`}>
+                                                            {isInforme ? <FileText size={10} /> : <Layers size={10} />}
+                                                            {item.tipo}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Col 4: Identificador Único */}
+                                                    <div className="hidden sm:flex items-center gap-1.5 min-w-[110px]">
+                                                        <Fingerprint size={11} className="opacity-50" />
+                                                        <span className="font-mono text-[10px] text-text-main/70 uppercase tracking-tight" title={item.uuid ? `UUID: ${item.uuid}` : 'Sello Pendiente'}>{shortUuid}</span>
+                                                    </div>
+
+                                                    {/* Col 5: Fecha */}
+                                                    <div className="min-w-[75px] text-right ml-auto md:ml-0 flex items-center justify-end gap-1.5">
+                                                        <span className="text-[10px] text-text-dim/80 font-mono">
+                                                            {new Date(item.fecha).toLocaleDateString('es-EC', { month: 'short', day: 'numeric' })}
+                                                        </span>
+                                                        <ExternalLink size={10} className="text-text-dim opacity-0 group-hover:opacity-100 group-hover:text-brand transition-all duration-150 shrink-0" />
+                                                    </div>
+
+                                                </div>
                                             </div>
-                                            {item.estado && (
-                                                <span className="status-tag text-[9px] text-text-dim border-border-thin bg-surface">
-                                                    {item.estado}
-                                                </span>
-                                            )}
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>
