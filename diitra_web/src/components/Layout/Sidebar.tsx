@@ -213,24 +213,52 @@ const Sidebar = ({
       <div
         key={item.name}
         onClick={() => handleNavigation(item.path)}
-        className={`flex items-center justify-between px-3 py-1.5 rounded-md cursor-pointer transition-all duration-150 group ${
-          item.indent ? 'ml-3 border-l border-border-thin pl-4' : ''
+        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group ${
+          item.indent ? 'ml-3 pl-4' : ''
         } ${
           isActive 
-            ? 'bg-surface text-text-main shadow-sm' 
+            ? item.indent
+              ? 'border border-border-thin bg-transparent text-[#b87200] dark:text-[#f5a623]'
+              : 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
             : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+        } ${
+          item.indent && !isActive ? 'border-l border-border-thin' : ''
         }`}
       >
-        <div className="flex items-center gap-2.5 min-w-0">
-          <item.icon size={item.indent ? 13 : 15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+          <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+            isActive 
+              ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10' 
+              : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+          } ${
+            isActive && item.indent 
+              ? 'text-[#b87200] dark:text-[#f5a623]' 
+              : isActive 
+                ? 'text-text-main' 
+                : ''
+          }`}>
+            <item.icon size={item.indent ? 13 : 15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+          </div>
           <span className={`text-[13px] tracking-tight truncate ${
             item.indent ? 'text-[12px]' : ''
-          } ${isActive ? 'font-semibold' : 'font-medium'}`}>
+          } ${
+            isActive 
+              ? item.indent 
+                ? 'font-semibold text-[#b87200] dark:text-[#f5a623]' 
+                : 'font-semibold text-text-main' 
+              : 'font-medium'
+          }`}>
             {item.name}
           </span>
         </div>
         {item.hasChevron && (
-          <ChevronRightIcon className="text-text-dim/30 group-hover:text-text-dim/70 transition-colors shrink-0 ml-1.5" />
+          <ChevronRightIcon className={`shrink-0 ml-1.5 transition-colors ${
+            isActive 
+              ? item.indent 
+                ? 'text-[#b87200]/60 dark:text-[#f5a623]/60' 
+                : 'text-text-main/50' 
+              : 'text-text-dim/30 group-hover:text-text-dim/70'
+          }`} />
         )}
       </div>
     );

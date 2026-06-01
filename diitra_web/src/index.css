@@ -31,6 +31,8 @@ en el elemento principal:
 @import url("https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.0.3/index.css");
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /**
  * 2. VARIABLES DE COLOR Y FONDOS SEMÁNTICOS (ESCENARIOS VERCEL)
  * -----------------------------------------------------------------------------
