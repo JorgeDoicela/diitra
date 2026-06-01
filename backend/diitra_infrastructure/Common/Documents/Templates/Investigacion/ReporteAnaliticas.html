@@ -1,59 +1,321 @@
 <style>
-    .doc-container { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; color: #1e2a4a; line-height: 1.5; padding: 0; margin: 0; }
-    .cover-page { text-align: center; padding: 60px 40px 40px 40px; min-height: 700px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .cover-border { border: 3px solid #1e2a4a; padding: 40px 30px; width: 100%; }
-    .cover-institution { text-transform: uppercase; font-size: 9pt; letter-spacing: 3px; color: #64748b; margin-bottom: 8px; }
-    .cover-title { font-size: 18pt; font-weight: 900; text-transform: uppercase; margin: 15px 0 5px 0; letter-spacing: -0.5px; color: #1e2a4a; }
-    .cover-subtitle { font-size: 11pt; color: #b8912e; font-weight: 700; text-transform: uppercase; margin-bottom: 25px; }
-    .cover-meta { font-size: 9pt; color: #475569; margin-top: 20px; line-height: 1.8; }
-    .cover-meta strong { color: #1e2a4a; }
-    .cover-line { width: 80px; height: 3px; background: #b8912e; margin: 15px auto; border: none; }
-    .section-title { background: #1e2a4a; color: #fff; padding: 8px 20px; font-weight: bold; font-size: 10pt; margin: 20px 0 12px 0; text-transform: uppercase; border-radius: 3px; }
-    .kpi-row { display: flex; gap: 12px; margin-bottom: 15px; }
-    .kpi-card { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px; text-align: center; border-top: 3px solid #1e2a4a; }
-    .kpi-card.accent-gold { border-top-color: #b8912e; }
-    .kpi-card.accent-emerald { border-top-color: #059669; }
-    .kpi-card.accent-violet { border-top-color: #7c3aed; }
-    .kpi-value { font-size: 20pt; font-weight: 900; color: #1e2a4a; margin: 4px 0; }
-    .kpi-label { font-size: 7pt; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; }
-    .kpi-sub { font-size: 8pt; color: #475569; margin-top: 6px; }
-    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 8.5pt; }
-    .data-table th { background: #1e2a4a; color: #fff; padding: 6px 8px; text-align: left; text-transform: uppercase; font-size: 7.5pt; border: 1px solid #1e2a4a; }
-    .data-table td { border: 1px solid #cbd5e1; padding: 5px 8px; }
-    .data-table tr:nth-child(even) { background: #f8fafc; }
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 7pt; font-weight: 700; text-transform: uppercase; }
-    .badge-success { background: #dcfce7; color: #166534; }
-    .badge-warning { background: #fef3c7; color: #92400e; }
-    .badge-danger { background: #fee2e2; color: #991b1b; }
-    .badge-neutral { background: #f1f5f9; color: #475569; }
-    .progress-bar-container { background: #e2e8f0; border-radius: 4px; height: 14px; width: 100%; overflow: hidden; margin-top: 4px; }
-    .progress-bar-fill { height: 100%; border-radius: 4px; }
-    .progress-bar-fill.green { background: #059669; }
-    .progress-bar-fill.amber { background: #d97706; }
-    .progress-bar-fill.red { background: #dc2626; }
-    .caces-indicator { border: 1px solid #e2e8f0; border-radius: 4px; padding: 10px 12px; margin-bottom: 10px; background: #fff; }
-    .caces-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .caces-code { font-size: 7pt; font-weight: 800; background: #1e2a4a; color: #fff; padding: 2px 6px; border-radius: 3px; letter-spacing: 0.5px; }
-    .caces-title { font-size: 9.5pt; font-weight: 700; color: #1e2a4a; margin-bottom: 2px; }
-    .caces-desc { font-size: 7.5pt; color: #64748b; margin-bottom: 6px; }
-    .caces-meta { font-size: 7pt; color: #94a3b8; margin-top: 4px; }
-    .dual-col { display: flex; gap: 15px; margin-bottom: 15px; }
-    .dual-col-left { flex: 1; }
-    .dual-col-right { flex: 1.5; }
-    .state-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 8.5pt; }
-    .state-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .state-bar { height: 10px; border-radius: 3px; }
-    .state-label { flex: 1; }
-    .state-count { font-weight: 700; min-width: 24px; text-align: right; }
-    .info-footer { border-top: 2px solid #e2e8f0; margin-top: 30px; padding-top: 10px; font-size: 7.5pt; color: #94a3b8; text-align: center; }
-    @page { size: A4; margin: 1.5cm 1.5cm 2cm 1.5cm; }
+    .doc-container {
+        font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+        color: #1e2a4a;
+        line-height: 1.5;
+        padding: 0;
+        margin: 0;
+    }
+
+    .cover-page {
+        text-align: center;
+        padding: 60px 40px 40px 40px;
+        min-height: 700px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .cover-border {
+        border: 3px solid #1e2a4a;
+        padding: 40px 30px;
+        width: 100%;
+    }
+
+    .cover-institution {
+        text-transform: uppercase;
+        font-size: 9pt;
+        letter-spacing: 3px;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+
+    .cover-title {
+        font-size: 18pt;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 15px 0 5px 0;
+        letter-spacing: -0.5px;
+        color: #1e2a4a;
+    }
+
+    .cover-subtitle {
+        font-size: 11pt;
+        color: #b8912e;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin-bottom: 25px;
+    }
+
+    .cover-meta {
+        font-size: 9pt;
+        color: #475569;
+        margin-top: 20px;
+        line-height: 1.8;
+    }
+
+    .cover-meta strong {
+        color: #1e2a4a;
+    }
+
+    .cover-line {
+        width: 80px;
+        height: 3px;
+        background: #b8912e;
+        margin: 15px auto;
+        border: none;
+    }
+
+    .section-title {
+        background: #1e2a4a;
+        color: #fff;
+        padding: 8px 20px;
+        font-weight: bold;
+        font-size: 10pt;
+        margin: 20px 0 12px 0;
+        text-transform: uppercase;
+        border-radius: 3px;
+    }
+
+    .kpi-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 15px;
+    }
+
+    .kpi-card {
+        flex: 1;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 12px;
+        text-align: center;
+        border-top: 3px solid #1e2a4a;
+    }
+
+    .kpi-card.accent-gold {
+        border-top-color: #b8912e;
+    }
+
+    .kpi-card.accent-emerald {
+        border-top-color: #059669;
+    }
+
+    .kpi-card.accent-violet {
+        border-top-color: #7c3aed;
+    }
+
+    .kpi-value {
+        font-size: 20pt;
+        font-weight: 900;
+        color: #1e2a4a;
+        margin: 4px 0;
+    }
+
+    .kpi-label {
+        font-size: 7pt;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        font-weight: 700;
+    }
+
+    .kpi-sub {
+        font-size: 8pt;
+        color: #475569;
+        margin-top: 6px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        font-size: 8.5pt;
+    }
+
+    .data-table th {
+        background: #1e2a4a;
+        color: #fff;
+        padding: 6px 8px;
+        text-align: left;
+        text-transform: uppercase;
+        font-size: 7.5pt;
+        border: 1px solid #1e2a4a;
+    }
+
+    .data-table td {
+        border: 1px solid #cbd5e1;
+        padding: 5px 8px;
+    }
+
+    .data-table tr:nth-child(even) {
+        background: #f8fafc;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 7pt;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .badge-success {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-neutral {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .progress-bar-container {
+        background: #e2e8f0;
+        border-radius: 4px;
+        height: 14px;
+        width: 100%;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+    }
+
+    .progress-bar-fill.green {
+        background: #059669;
+    }
+
+    .progress-bar-fill.amber {
+        background: #d97706;
+    }
+
+    .progress-bar-fill.red {
+        background: #dc2626;
+    }
+
+    .caces-indicator {
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        background: #fff;
+    }
+
+    .caces-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px;
+    }
+
+    .caces-code {
+        font-size: 7pt;
+        font-weight: 800;
+        background: #1e2a4a;
+        color: #fff;
+        padding: 2px 6px;
+        border-radius: 3px;
+        letter-spacing: 0.5px;
+    }
+
+    .caces-title {
+        font-size: 9.5pt;
+        font-weight: 700;
+        color: #1e2a4a;
+        margin-bottom: 2px;
+    }
+
+    .caces-desc {
+        font-size: 7.5pt;
+        color: #64748b;
+        margin-bottom: 6px;
+    }
+
+    .caces-meta {
+        font-size: 7pt;
+        color: #94a3b8;
+        margin-top: 4px;
+    }
+
+    .dual-col {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .dual-col-left {
+        flex: 1;
+    }
+
+    .dual-col-right {
+        flex: 1.5;
+    }
+
+    .state-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 8.5pt;
+    }
+
+    .state-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .state-bar {
+        height: 10px;
+        border-radius: 3px;
+    }
+
+    .state-label {
+        flex: 1;
+    }
+
+    .state-count {
+        font-weight: 700;
+        min-width: 24px;
+        text-align: right;
+    }
+
+    .info-footer {
+        border-top: 2px solid #e2e8f0;
+        margin-top: 30px;
+        padding-top: 10px;
+        font-size: 7.5pt;
+        color: #94a3b8;
+        text-align: center;
+    }
+
+    @page {
+        size: A4;
+        margin: 1.5cm 1.5cm 2cm 1.5cm;
+    }
 </style>
 
 <div class="doc-container">
     <!-- PORTADA -->
     <div class="cover-page">
         <div class="cover-border">
-            <div class="cover-institution">Instituto Superior Tecnológico Público Emilio García — Quito, Ecuador</div>
+            <div class="cover-institution">Tecnológico Traversari — Quito, Ecuador</div>
             <hr class="cover-line">
             <div class="cover-title">Reporte de Analíticas de<br>Investigación e Innovación</div>
             <div class="cover-subtitle">Departamento DIITRA — Consola Directiva</div>

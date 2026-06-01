@@ -153,10 +153,7 @@ const Sidebar = ({
     return true;
   });
 
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (onClose) onClose();
-  };
+
 
   const activeItem = menuItems.reduce<typeof menuItems[0] | null>((best, item) => {
     const isMatch = location.pathname === item.path

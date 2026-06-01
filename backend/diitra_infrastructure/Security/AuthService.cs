@@ -599,15 +599,12 @@ public class AuthService : IAuthService
         magicLink.IpUtilizacion = ipAddress;
         magicLink.UserAgent = userAgent;
 
-        // Generar un PIN nuevo en cada uso — invalida automáticamente cualquier PIN anterior
-        // que el revisor pudiera haber anotado, ya que el PIN anterior queda sobrescrito.
+        // Generar un PIN nuevo en cada uso — de 5 caracteres
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I para evitar confusiones
         using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
-        var bytes = new byte[8];
+        var bytes = new byte[5];
         rng.GetBytes(bytes);
-        var rawPin = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
-        // Formato legible: XXXX-XXXX
-        var pin = $"{rawPin[..4]}-{rawPin[4..]}";
+        var pin = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
         magicLink.CodigoPinHandoff = pin;
         magicLink.FechaExpiracionPin = DateTime.UtcNow.AddMinutes(30);
 
