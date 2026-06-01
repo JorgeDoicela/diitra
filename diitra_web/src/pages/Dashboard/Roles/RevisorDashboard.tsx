@@ -35,6 +35,7 @@ export const RevisorDashboard: React.FC = () => {
                     description="Asignaciones en espera de evaluación"
                     icon={<AlertCircle size={14} />}
                     className="md:col-span-2"
+                    isStatic={true}
                 >
                     <div className="mt-4 space-y-3">
                         <div 
@@ -54,6 +55,7 @@ export const RevisorDashboard: React.FC = () => {
                     title="Estado del Pipeline" 
                     description="Tu progreso como evaluador"
                     icon={<FileSearch size={14} />}
+                    isStatic={true}
                 >
                     <div className="mt-4">
                         <p className="stat-number stat-number--sm">01</p>
@@ -65,6 +67,7 @@ export const RevisorDashboard: React.FC = () => {
                     title="Completadas" 
                     description="Revisiones entregadas"
                     icon={<CheckCircle2 size={14} />}
+                    isStatic={true}
                 >
                     <div className="mt-4">
                         <p className="stat-number stat-number--sm">12</p>
@@ -77,6 +80,7 @@ export const RevisorDashboard: React.FC = () => {
                     description="Cumplimiento de estándares de revisión"
                     icon={<Shield size={14} />}
                     className="md:col-span-4"
+                    isStatic={true}
                 >
                     <div className="mt-4 flex items-center gap-6 p-4 rounded-lg bg-surface/50 border border-border-thin">
 <div className="icon-circle icon-circle-success">

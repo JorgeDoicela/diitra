@@ -19,11 +19,12 @@ interface BentoCardProps {
   title?: string;
   description?: string;
   icon?: React.ReactNode;
+  isStatic?: boolean;
 }
 
-export const BentoCard = ({ children, className = "", title, description, icon }: BentoCardProps) => {
+export const BentoCard = ({ children, className = "", title, description, icon, isStatic = false }: BentoCardProps) => {
   return (
-    <div className={`bento-card p-6 flex flex-col justify-between group ${className}`}>
+    <div className={`bento-card ${isStatic ? 'static' : ''} p-6 flex flex-col justify-between group ${className}`}>
       {title && (
         <div className="mb-6">
           <div className="flex items-center gap-2.5 mb-1.5">
