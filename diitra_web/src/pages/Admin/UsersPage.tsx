@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Search, Shield, User as UserIcon, X, RefreshCw,
     Settings2, GraduationCap, UserPlus, History, Globe,
     Activity, ChevronRight, Mail, Hash,
-    Fingerprint, XCircle, AlertTriangle, CheckCircle
+    Fingerprint, XCircle, AlertTriangle, CheckCircle, FileText
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import UserProfileModal from './components/UserProfileModal';
@@ -67,6 +67,22 @@ const UsersPage = () => {
     const [showAudit, setShowAudit] = useState(false);
     const [error, setError] = useState('');
 
+    // Researcher profile metadata draft states
+    const [pendingUserDraft, setPendingUserDraft] = useState<{
+        type: 'edit';
+        uuid: string;
+        userName: string;
+        timestamp: number;
+    } | null>(null);
+
+    // External reviewer registration draft states
+    const [isExternalDraftRestored, setIsExternalDraftRestored] = useState(false);
+    const [pendingExternalDraft, setPendingExternalDraft] = useState<{
+        name: string;
+        timestamp: number;
+    } | null>(null);
+    const isExternalInitializedRef = useRef(false);
+
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean;
         title: string;
@@ -127,6 +143,26 @@ const UsersPage = () => {
     useEffect(() => {
         fetchRoles();
         fetchAuditLogs();
+
+        // Check researcher draft
+        const userMetaStr = localStorage.getItem('user_metadata_draft_metadata');
+        if (userMetaStr) {
+            try {
+                setPendingUserDraft(JSON.parse(userMetaStr));
+            } catch (e) {
+                console.error("Error reading user draft metadata", e);
+            }
+        }
+
+        // Check external evaluator draft
+        const extMetaStr = localStorage.getItem('external_draft_metadata');
+        if (extMetaStr) {
+            try {
+                setPendingExternalDraft(JSON.parse(extMetaStr));
+            } catch (e) {
+                console.error("Error reading external draft metadata", e);
+            }
+        }
     }, []);
 
     useEffect(() => {
@@ -139,6 +175,169 @@ const UsersPage = () => {
         }, 300);
         return () => clearTimeout(timer);
     }, [search, userType, page]);
+
+    // Auto-save externalForm
+    useEffect(() => {
+        if (!showExternalForm) {
+            isExternalInitializedRef.current = false;
+            setIsExternalDraftRestored(false);
+            return;
+        }
+
+        if (!isExternalInitializedRef.current) {
+            isExternalInitializedRef.current = true;
+            return;
+        }
+
+        const hasData = Object.values(externalForm).some(v => v.trim() !== '');
+        if (hasData) {
+            localStorage.setItem('new_external_form_draft', JSON.stringify(externalForm));
+            const name = `${externalForm.nombres} ${externalForm.apellidos}`.trim() || 'Evaluador sin nombre';
+            const meta = {
+                name,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('external_draft_metadata', JSON.stringify(meta));
+        } else {
+            localStorage.removeItem('new_external_form_draft');
+            localStorage.removeItem('external_draft_metadata');
+        }
+    }, [externalForm, showExternalForm]);
+
+    // Researcher profile draft handlers
+    const handleRestoreUserDraft = () => {
+        if (!pendingUserDraft) return;
+        const user = users.find(u => u.user_uuid === pendingUserDraft.uuid);
+        if (user) {
+            setSelectedUser(user);
+        } else {
+            // Partial user since UserProfileModal only needs uuid and name
+            setSelectedUser({
+                user_uuid: pendingUserDraft.uuid,
+                nombre_completo: pendingUserDraft.userName,
+                id_profesor: '',
+                email: '',
+                type: '',
+                roles: [],
+                role_codes: [],
+                firma_habilitada: false
+            } as any);
+        }
+    };
+
+    const handleDiscardUserDraft = () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Descartar Borrador de Perfil',
+            message: '¿Está seguro de descartar el borrador guardado del perfil de usuario? Esta acción no se puede deshacer.',
+            type: 'danger',
+            onConfirm: () => {
+                localStorage.removeItem('user_metadata_draft_metadata');
+                if (pendingUserDraft?.uuid) {
+                    localStorage.removeItem(`edit_user_metadata_draft_${pendingUserDraft.uuid}`);
+                }
+                setPendingUserDraft(null);
+                setConfirmDialog(p => ({ ...p, isOpen: false }));
+            }
+        });
+    };
+
+    // External reviewer draft handlers
+    const handleRestoreExternalDraft = () => {
+        const draftKey = 'new_external_form_draft';
+        const draft = localStorage.getItem(draftKey);
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                if (parsed && typeof parsed === 'object') {
+                    const validated = {
+                        cedula: typeof parsed.cedula === 'string' ? parsed.cedula : '',
+                        nombres: typeof parsed.nombres === 'string' ? parsed.nombres : '',
+                        apellidos: typeof parsed.apellidos === 'string' ? parsed.apellidos : '',
+                        email: typeof parsed.email === 'string' ? parsed.email : '',
+                        especialidad: typeof parsed.especialidad === 'string' ? parsed.especialidad : '',
+                        grado_academico: typeof parsed.grado_academico === 'string' ? parsed.grado_academico : '',
+                        institucion: typeof parsed.institucion === 'string' ? parsed.institucion : '',
+                        orcid_id: typeof parsed.orcid_id === 'string' ? parsed.orcid_id : ''
+                    };
+                    setExternalForm(validated);
+                    setIsExternalDraftRestored(true);
+                    setShowExternalForm(true);
+                } else {
+                    throw new Error("Estructura de borrador de evaluador externo inválida");
+                }
+            } catch (e) {
+                console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                localStorage.removeItem(draftKey);
+                localStorage.removeItem('external_draft_metadata');
+                setPendingExternalDraft(null);
+                setIsExternalDraftRestored(false);
+            }
+        }
+    };
+
+    const handleDiscardExternalDraft = () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Descartar Borrador de Evaluador',
+            message: '¿Está seguro de descartar el borrador del nuevo evaluador externo? Esta acción no se puede deshacer.',
+            type: 'danger',
+            onConfirm: () => {
+                localStorage.removeItem('new_external_form_draft');
+                localStorage.removeItem('external_draft_metadata');
+                setPendingExternalDraft(null);
+                setExternalForm({
+                    cedula: '',
+                    nombres: '',
+                    apellidos: '',
+                    email: '',
+                    especialidad: '',
+                    grado_academico: '',
+                    institucion: '',
+                    orcid_id: ''
+                });
+                setIsExternalDraftRestored(false);
+                setConfirmDialog(p => ({ ...p, isOpen: false }));
+            }
+        });
+    };
+
+    const clearExternalDraft = () => {
+        localStorage.removeItem('new_external_form_draft');
+        localStorage.removeItem('external_draft_metadata');
+        setPendingExternalDraft(null);
+        setIsExternalDraftRestored(false);
+    };
+
+    const handleCloseExternalModal = () => {
+        const hasChanges = Object.values(externalForm).some(v => v.trim() !== '');
+        if (hasChanges) {
+            setConfirmDialog({
+                isOpen: true,
+                title: 'Cambios no guardados',
+                message: '¿Está seguro de salir? Perderá todos los datos que ha ingresado en este formulario.',
+                type: 'warning',
+                onConfirm: () => {
+                    clearExternalDraft();
+                    setShowExternalForm(false);
+                    setExternalForm({
+                        cedula: '',
+                        nombres: '',
+                        apellidos: '',
+                        email: '',
+                        especialidad: '',
+                        grado_academico: '',
+                        institucion: '',
+                        orcid_id: ''
+                    });
+                    setConfirmDialog(p => ({ ...p, isOpen: false }));
+                }
+            });
+        } else {
+            clearExternalDraft();
+            setShowExternalForm(false);
+        }
+    };
 
     const handleRoleToggle = (userId: string, userName: string, roleCode: string, roleName: string, hasRole: boolean) => {
         setConfirmDialog({
@@ -178,6 +377,7 @@ const UsersPage = () => {
         const registeredNombre = `${externalForm.nombres} ${externalForm.apellidos}`.toUpperCase().trim();
         try {
             await api.post('/Admin/external', externalForm);
+            clearExternalDraft();
             setShowExternalForm(false);
             setExternalForm({ cedula: '', nombres: '', apellidos: '', email: '', especialidad: '', grado_academico: '', institucion: '', orcid_id: '' });
             fetchUsers();
@@ -267,6 +467,92 @@ const UsersPage = () => {
                     </div>
                 </div>
             </header>
+
+            {/* Banner de Recuperación de Borrador de Perfil de Investigador */}
+            {pendingUserDraft && (
+                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
+
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                            <FileText size={18} />
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Perfil en Borrador</h4>
+                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
+                                    No Guardado
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
+                                Tienes cambios sin guardar en el perfil de: <span className="text-text-main font-black">"{pendingUserDraft.userName}"</span>
+                            </p>
+                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                                Guardado automáticamente el {new Date(pendingUserDraft.timestamp).toLocaleDateString()} a las {new Date(pendingUserDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                        <button
+                            onClick={handleRestoreUserDraft}
+                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Restaurar Perfil
+                        </button>
+                        <button
+                            onClick={handleDiscardUserDraft}
+                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Banner de Recuperación de Borrador de Evaluador Externo */}
+            {pendingExternalDraft && (
+                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
+
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                            <FileText size={18} />
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Borrador de Evaluador</h4>
+                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
+                                    No Guardado
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
+                                Tienes un borrador de nuevo evaluador externo: <span className="text-text-main font-black">"{pendingExternalDraft.name}"</span>
+                            </p>
+                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                                Guardado automáticamente el {new Date(pendingExternalDraft.timestamp).toLocaleDateString()} a las {new Date(pendingExternalDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                        <button
+                            onClick={handleRestoreExternalDraft}
+                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Restaurar Evaluador
+                        </button>
+                        <button
+                            onClick={handleDiscardExternalDraft}
+                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className={`grid transition-all duration-500 gap-6 ${showAudit ? 'lg:grid-cols-[1fr,350px]' : 'grid-cols-1'}`}>
                 <div className="bento-card static overflow-hidden animate-fade-up">
@@ -468,7 +754,7 @@ const UsersPage = () => {
             </div>
 
             {showExternalForm && (
-                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowExternalForm(false); }}>
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleCloseExternalModal(); }}>
                     <div className="modal-card modal-card--lg animate-scale-up">
                         <div className="modal-header">
                             <div className="flex items-center gap-3">
@@ -478,7 +764,7 @@ const UsersPage = () => {
                                     <p className="section-label text-text-dim">Personal Externo DIITRA - IST Quito</p>
                                 </div>
                             </div>
-                            <button type="button" onClick={() => { setError(''); setShowExternalForm(false); }} className="text-text-dim hover:text-text-main transition-colors"><X size={20} /></button>
+                            <button type="button" onClick={handleCloseExternalModal} className="text-text-dim hover:text-text-main transition-colors"><X size={20} /></button>
                         </div>
                         
                         {error && (
@@ -489,6 +775,38 @@ const UsersPage = () => {
                         )}
                         
                         <form id="external-register-form" onSubmit={handleRegisterExternal} className="modal-body">
+                            {isExternalDraftRestored && (
+                                <div className="col-span-2 bg-brand-subtle border border-brand/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <FileText size={16} className="text-brand shrink-0" />
+                                        <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
+                                            <span className="text-brand font-black">Borrador Restaurado:</span> Se han recuperado los datos del evaluador no guardados.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setExternalForm({
+                                                cedula: '',
+                                                nombres: '',
+                                                apellidos: '',
+                                                email: '',
+                                                especialidad: '',
+                                                grado_academico: '',
+                                                institucion: '',
+                                                orcid_id: ''
+                                            });
+                                            localStorage.removeItem('new_external_form_draft');
+                                            localStorage.removeItem('external_draft_metadata');
+                                            setIsExternalDraftRestored(false);
+                                            setPendingExternalDraft(null);
+                                        }}
+                                        className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline cursor-pointer shrink-0"
+                                    >
+                                        Revertir al Original
+                                    </button>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-6">
                                 <div className="col-span-2 space-y-4">
                                     <label className="section-label text-text-main">Identificación y Contacto</label>
@@ -554,7 +872,7 @@ const UsersPage = () => {
                                 <span>Se asignará automáticamente el rol de Revisor Externo DIITRA</span>
                             </div>
                             <div className="flex gap-3">
-                                <button type="button" onClick={() => { setError(''); setShowExternalForm(false); }} className="btn-vercel-secondary">Cancelar</button>
+                                <button type="button" onClick={handleCloseExternalModal} className="btn-vercel-secondary">Cancelar</button>
                                 <button type="submit" form="external-register-form" className="btn-vercel-primary">Registrar Evaluador</button>
                             </div>
                         </div>
@@ -566,6 +884,7 @@ const UsersPage = () => {
                 <UserProfileModal
                     user={selectedUser}
                     onClose={() => { setSelectedUser(null); fetchUsers(); fetchAuditLogs(); }}
+                    onDraftCleared={() => setPendingUserDraft(null)}
                 />
             )}
 
