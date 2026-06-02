@@ -334,6 +334,15 @@ public class PeerReviewService : IPeerReviewService
 
     public async Task<IEnumerable<ArbitrajeProyectoDto>> GetArbitrajesActivosAsync()
     {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+            .ThenByDescending(p => p.Activo == true)
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync();
+        var periodId = currentPeriod?.IdPeriodo;
+
         var proyectosEnRevision = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
             .Where(p => p.Estado == "En Revisión" || p.Estado == "Enviado" || 
@@ -366,7 +375,20 @@ public class PeerReviewService : IPeerReviewService
                     ? await _context.Set<InvUsuarioMetadata>().FirstOrDefaultAsync(m => m.IdUsuario == rev.IdRevisor.Value)
                     : null;
                 var nombre = user?.Nombre ?? "Revisor Externo";
-                revDtos.Add(MapToDto(rev, nombre, meta));
+
+                string? careerNom = null;
+                if (user != null && user.TablaSigafi == "profesor" && !string.IsNullOrEmpty(user.IdSigafi) && !string.IsNullOrEmpty(periodId))
+                {
+                    var teacherId = user.IdSigafi.Trim();
+                    var linkedCareers = await _context.ProfesoresCarrerasPeriodos
+                        .Include(pc => pc.IdCarreraNavigation)
+                        .Where(pc => pc.IdProfesor.Trim() == teacherId && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
+                        .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                        .ToListAsync();
+                    careerNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+                }
+
+                revDtos.Add(MapToDto(rev, nombre, meta, careerNom));
             }
 
             result.Add(new ArbitrajeProyectoDto
@@ -427,6 +449,15 @@ public class PeerReviewService : IPeerReviewService
 
     public async Task<ArbitrajeProyectoDto?> GetArbitrajeByProjectAsync(string projectUuid)
     {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+            .ThenByDescending(p => p.Activo == true)
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync();
+        var periodId = currentPeriod?.IdPeriodo;
+
         var proyecto = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
             .FirstOrDefaultAsync(p => p.Uuid == projectUuid);
@@ -452,7 +483,20 @@ public class PeerReviewService : IPeerReviewService
                 ? await _context.Set<InvUsuarioMetadata>().FirstOrDefaultAsync(m => m.IdUsuario == rev.IdRevisor.Value)
                 : null;
             var nombre = user?.Nombre ?? "Revisor";
-            revDtos.Add(MapToDto(rev, nombre, meta));
+
+            string? careerNom = null;
+            if (user != null && user.TablaSigafi == "profesor" && !string.IsNullOrEmpty(user.IdSigafi) && !string.IsNullOrEmpty(periodId))
+            {
+                var teacherId = user.IdSigafi.Trim();
+                var linkedCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Include(pc => pc.IdCarreraNavigation)
+                    .Where(pc => pc.IdProfesor.Trim() == teacherId && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
+                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .ToListAsync();
+                careerNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+            }
+
+            revDtos.Add(MapToDto(rev, nombre, meta, careerNom));
         }
 
         return new ArbitrajeProyectoDto
@@ -924,6 +968,15 @@ public class PeerReviewService : IPeerReviewService
 
     public async Task<IEnumerable<PeerReviewDto>> GetProjectReviewsAsync(int projectId)
     {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+            .ThenByDescending(p => p.Activo == true)
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync();
+        var periodId = currentPeriod?.IdPeriodo;
+
         var revisiones = await _context.Set<InvRevisionesPares>()
             .Include(r => r.Proyecto)
             .Where(r => r.IdProyecto == projectId)
@@ -936,7 +989,24 @@ public class PeerReviewService : IPeerReviewService
                 ? await _context.Users.FindAsync(r.IdRevisor.Value)
                 : null;
             var nombre = user?.Nombre ?? "Revisor Externo";
-            result.Add(MapToDto(r, nombre));
+
+            string? careerNom = null;
+            if (user != null && user.TablaSigafi == "profesor" && !string.IsNullOrEmpty(user.IdSigafi) && !string.IsNullOrEmpty(periodId))
+            {
+                var teacherId = user.IdSigafi.Trim();
+                var linkedCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Include(pc => pc.IdCarreraNavigation)
+                    .Where(pc => pc.IdProfesor.Trim() == teacherId && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
+                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .ToListAsync();
+                careerNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+            }
+
+            var meta = r.IdRevisor.HasValue
+                ? await _context.Set<InvUsuarioMetadata>().FirstOrDefaultAsync(m => m.IdUsuario == r.IdRevisor.Value)
+                : null;
+
+            result.Add(MapToDto(r, nombre, meta, careerNom));
         }
         return result;
     }
@@ -948,7 +1018,8 @@ public class PeerReviewService : IPeerReviewService
     private static PeerReviewDto MapToDto(
         InvRevisionesPares r,
         string nombreRevisor,
-        InvUsuarioMetadata? meta = null)
+        InvUsuarioMetadata? meta = null,
+        string? revisorCarrera = null)
         => new()
         {
             Uuid = r.Uuid,
@@ -965,7 +1036,8 @@ public class PeerReviewService : IPeerReviewService
             EsExterno = r.EsExterno,
             EsDobleCiego = r.EsDobleCiego,
             PuntajeTotal = r.PuntajeTotal,
-            ObservacionesGral = r.ObservacionesGral
+            ObservacionesGral = r.ObservacionesGral,
+            RevisorCarrera = revisorCarrera
         };
 
     private static string DeterminarEstadoArbitraje(List<InvRevisionesPares> revisiones)

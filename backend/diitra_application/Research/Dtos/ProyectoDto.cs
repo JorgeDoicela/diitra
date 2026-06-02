@@ -208,6 +208,7 @@ namespace Diitra.Application.Research.Dtos
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
         public string? MotivoCambio { get; set; }
+        public string? Carrera { get; set; }
     }
 
     public class RecursoDisponibleDto

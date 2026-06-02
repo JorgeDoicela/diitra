@@ -431,6 +431,102 @@ namespace diitra_infrastructure.Research
 
             if (p == null) return null;
 
+            // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var currentPeriod = await _context.Periodos
+                .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                .ThenByDescending(p => p.Activo == true)
+                .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                .ThenByDescending(p => p.FechaInicial)
+                .FirstOrDefaultAsync();
+            var periodId = currentPeriod?.IdPeriodo;
+
+            var profCedulas = p.InvProyectosProfesores
+                .Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim())
+                .Where(c => !string.IsNullOrEmpty(c))
+                .Cast<string>()
+                .ToList();
+
+            var studentCedulas = p.InvProyectosAlumnos
+                .Select(pa => pa.IdUsuarioNavigation?.IdSigafi?.Trim())
+                .Where(c => !string.IsNullOrEmpty(c))
+                .Cast<string>()
+                .ToList();
+
+            var profCareers = new List<ProfesoresCarrerasPeriodo>();
+            if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
+            {
+                profCareers = await _context.ProfesoresCarrerasPeriodos
+                    .Include(pc => pc.IdCarreraNavigation)
+                    .Where(pc => profCedulas.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
+                    .ToListAsync();
+            }
+
+            var alumCareers = new List<AlumnosCarrera>();
+            if (studentCedulas.Any())
+            {
+                alumCareers = await _context.AlumnosCarreras
+                    .Where(ac => studentCedulas.Contains(ac.IdAlumno.Trim()))
+                    .ToListAsync();
+            }
+            var allCarrerasList = await _context.Carreras.ToListAsync();
+
+            var investigadoresList = new List<InvestigadorDto>();
+
+            foreach (var pp in p.InvProyectosProfesores)
+            {
+                var cedula = pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
+                var linkedCareers = profCareers
+                    .Where(pc => pc.IdProfesor.Trim() == cedula && pc.IdCarreraNavigation != null)
+                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .ToList();
+                var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+
+                investigadoresList.Add(new InvestigadorDto
+                {
+                    Nombre = pp.IdUsuarioNavigation?.Nombre,
+                    Cedula = pp.IdUsuarioNavigation?.IdSigafi,
+                    Email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "",
+                    Rol = pp.Rol,
+                    NivelAcademico = pp.NivelAcademico,
+                    Telefono = pp.Telefono,
+                    Activo = pp.Activo ?? true,
+                    FechaInicio = pp.FechaInicio,
+                    FechaFin = pp.FechaFin,
+                    MotivoCambio = pp.MotivoCambio,
+                    Carrera = carreraNom
+                });
+            }
+
+            foreach (var pa in p.InvProyectosAlumnos)
+            {
+                var cedula = pa.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
+                var sCareerIds = alumCareers
+                    .Where(ac => ac.IdAlumno.Trim() == cedula)
+                    .Select(ac => ac.IdCarrera)
+                    .ToList();
+                var sCareers = allCarrerasList
+                    .Where(c => sCareerIds.Contains(c.IdCarrera) && !string.IsNullOrEmpty(c.Carrera1))
+                    .Select(c => c.Carrera1!)
+                    .ToList();
+                var carreraNom = sCareers.Any() ? string.Join(", ", sCareers) : "Estudiante";
+
+                investigadoresList.Add(new InvestigadorDto
+                {
+                    Nombre = pa.IdUsuarioNavigation?.Nombre,
+                    Cedula = pa.IdUsuarioNavigation?.IdSigafi,
+                    Email = pa.IdUsuarioNavigation?.EmailInstitucional ?? pa.IdUsuarioNavigation?.IdSigafi ?? "",
+                    Rol = pa.Rol,
+                    NivelAcademico = pa.NivelAcademico,
+                    Telefono = pa.Telefono,
+                    Activo = pa.Activo ?? true,
+                    FechaInicio = pa.FechaInicio,
+                    FechaFin = pa.FechaFin,
+                    MotivoCambio = pa.MotivoCambio,
+                    Carrera = carreraNom
+                });
+            }
+
             return new ProyectoDto
             {
                 Uuid = p.Uuid,
@@ -454,29 +550,7 @@ namespace diitra_infrastructure.Research
                 LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
                 GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null,
                 CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad),
-                Investigadores = p.InvProyectosProfesores.Select(pp => new InvestigadorDto
-                {
-                    Nombre = pp.IdUsuarioNavigation?.Nombre,
-                    Cedula = pp.IdUsuarioNavigation?.IdSigafi,
-                    Rol = pp.Rol,
-                    NivelAcademico = pp.NivelAcademico,
-                    Telefono = pp.Telefono,
-                    Activo = pp.Activo ?? true,
-                    FechaInicio = pp.FechaInicio,
-                    FechaFin = pp.FechaFin,
-                    MotivoCambio = pp.MotivoCambio
-                }).Concat(p.InvProyectosAlumnos.Select(pa => new InvestigadorDto
-                {
-                    Nombre = pa.IdUsuarioNavigation?.Nombre,
-                    Cedula = pa.IdUsuarioNavigation?.IdSigafi,
-                    Rol = pa.Rol,
-                    NivelAcademico = pa.NivelAcademico,
-                    Telefono = pa.Telefono,
-                    Activo = pa.Activo ?? true,
-                    FechaInicio = pa.FechaInicio,
-                    FechaFin = pa.FechaFin,
-                    MotivoCambio = pa.MotivoCambio
-                })).ToList(),
+                Investigadores = investigadoresList,
                 ObjetivosEspecificos = p.InvObjetivosProyecto
                     .Where(o => !o.EsGeneral)
                     .OrderBy(o => o.Orden)

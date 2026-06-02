@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Gavel, UserCheck, AlertTriangle,
     CheckCircle2, Clock, PlusCircle, Trash2, Award,
-    Scale, Loader2, Users, Building
+    Scale, Loader2, Users, Building, GraduationCap
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion,
@@ -376,6 +376,11 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = 
                         </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-[10px] text-text-dim font-medium">
+                        {!review.es_externo && review.revisor_carrera && (
+                            <span className="flex items-center gap-1 bg-surface border border-border-thin px-1 py-0.5 rounded text-text-main font-bold">
+                                <GraduationCap size={10} /> {formatNombre(review.revisor_carrera)}
+                            </span>
+                        )}
                         {review.revisor_especialidad && (
                             <span className="flex items-center gap-1">
                                 <Award size={10} /> {review.revisor_especialidad}
