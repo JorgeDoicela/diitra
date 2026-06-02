@@ -27,6 +27,11 @@ public interface IPeerReviewService
     Task<DictamenDto> CerrarArbitrajeAsync(string projectUuid, int directorId);
     Task<byte[]> GenerateDictamenPdfAsync(string projectUuid, int directorId);
 
+    /// <summary>
+    /// Transiciona un proyecto de "Aprobado" a "En Ejecución" para iniciar la fase operativa CACES.
+    /// </summary>
+    Task<bool> IniciarEjecucionAsync(string projectUuid, int directorId);
+
     // ── Compatibilidad legado ──────────────────────────────────
     Task<string> AssignReviewerAsync(CreatePeerReviewDto dto);
     Task<IEnumerable<PeerReviewDto>> GetProjectReviewsAsync(int projectId);

@@ -46,6 +46,8 @@ public class ArbitrajeProyectoDto
     public int ArbitrosCompletados { get; set; }
     public decimal? PuntajePromedio { get; set; }
     public string EstadoArbitraje { get; set; } = "Pendiente"; // Subestados: Pendiente, EnProceso, Completado, Desempate
+    /// <summary>True si CerrarArbitrajeAsync ya fue ejecutado (nota definitiva registrada o estado post-cierre).</summary>
+    public bool ArbitrajeCerrado { get; set; }
     public List<PeerReviewDto> Revisiones { get; set; } = new();
 }
 

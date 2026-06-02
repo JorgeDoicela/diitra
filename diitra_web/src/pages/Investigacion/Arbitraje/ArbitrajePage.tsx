@@ -249,8 +249,9 @@ const ArbitrajePage: React.FC = () => {
             a.download = `DIITRA_DICTAMEN_${proyectoUuid.slice(0, 8).toUpperCase()}_${new Date().toISOString().slice(0, 10)}.pdf`;
             a.click();
             URL.revokeObjectURL(url);
-        } catch (err) {
+        } catch (err: any) {
             console.error('[DIITRA] Error descargando dictamen PDF:', err);
+            alert(err?.response?.data?.message ?? 'No se pudo descargar el Acta de Dictamen. Ejecute el cierre formal primero.');
         } finally {
             setDescargandoPdf(null);
         }
@@ -443,8 +444,8 @@ const ArbitrajePage: React.FC = () => {
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        {/* Botón PDF si está completado */}
-                                                        {p.estado_arbitraje === 'Completado' && (
+                                                        {/* Acta PDF: solo disponible después del cierre formal */}
+                                                        {p.arbitraje_cerrado && (
                                                             <button
                                                                 onClick={(e) => handleDescargarPdf(e, p.proyecto_uuid)}
                                                                 className="btn-vercel-secondary !py-1 !px-2.5 !text-[10px] flex items-center gap-1"

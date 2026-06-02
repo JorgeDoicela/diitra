@@ -40,6 +40,8 @@ export interface ArbitrajeProyectoDto {
     arbitros_completados: number;
     puntaje_promedio?: number;
     estado_arbitraje: 'Pendiente' | 'EnProceso' | 'Completado' | 'Desempate' | 'SinArbitros';
+    /** True si el cierre formal del arbitraje ya fue ejecutado */
+    arbitraje_cerrado?: boolean;
     revisiones: PeerReviewDto[];
 }
 
@@ -193,6 +195,10 @@ export const revocarAsignacion = (revisionUuid: string): Promise<{ message: stri
 
 export const cerrarArbitraje = (projectUuid: string): Promise<DictamenDto> =>
     api.post(`/PeerReviews/project/${projectUuid}/cerrar`).then(r => r.data);
+
+/** Inicia la fase de ejecución (Aprobado → En Ejecución). */
+export const iniciarEjecucion = (projectUuid: string): Promise<{ message: string; estado: string }> =>
+    api.post(`/PeerReviews/project/${projectUuid}/iniciar-ejecucion`).then(r => r.data);
 
 /** Descarga el Acta de Dictamen de Arbitraje como blob PDF. */
 export const downloadDictamenPdf = async (projectUuid: string): Promise<Blob> => {
