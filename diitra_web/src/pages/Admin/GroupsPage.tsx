@@ -100,6 +100,12 @@ const GroupsPage = () => {
     const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+    const [pendingDraft, setPendingDraft] = useState<{
+        type: 'new' | 'edit';
+        uuid?: string;
+        groupName: string;
+        timestamp: number;
+    } | null>(null);
 
     // Detail drawer trigger
     const [detailGroup, setDetailGroup] = useState<Group | null>(null);
@@ -168,6 +174,53 @@ const GroupsPage = () => {
     useEffect(() => {
         fetchData();
     }, [search]);
+
+    useEffect(() => {
+        const metaStr = localStorage.getItem('groups_draft_metadata');
+        if (metaStr) {
+            try {
+                setPendingDraft(JSON.parse(metaStr));
+            } catch (e) {
+                console.error("Error reading draft metadata", e);
+            }
+        }
+    }, []);
+
+    const handleRestoreDraft = () => {
+        if (!pendingDraft) return;
+
+        if (pendingDraft.type === 'new') {
+            setEditingGroup(null);
+            setIsReadOnly(false);
+            setIsModalOpen(true);
+        } else if (pendingDraft.type === 'edit' && pendingDraft.uuid) {
+            const group = groups.find(g => g.uuid === pendingDraft.uuid);
+            if (group) {
+                setEditingGroup(group);
+                setIsReadOnly(false);
+                setIsModalOpen(true);
+            } else {
+                alert("No se pudo encontrar el grupo original en la lista. Es posible que haya sido eliminado o no tenga permisos.");
+            }
+        }
+    };
+
+    const handleDiscardDraft = () => {
+        setConfirmDialog({
+            isOpen: true,
+            title: 'Descartar Borrador',
+            message: '¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.',
+            type: 'danger',
+            onConfirm: () => {
+                localStorage.removeItem('groups_draft_metadata');
+                localStorage.removeItem('new_group_form_draft');
+                if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
+                    localStorage.removeItem(`edit_group_form_draft_${pendingDraft.uuid}`);
+                }
+                setPendingDraft(null);
+            }
+        });
+    };
 
     const handleOpenModal = (group?: Group, readOnly = false) => {
         setIsReadOnly(readOnly);
@@ -364,6 +417,48 @@ const GroupsPage = () => {
                     </button>
                 </div>
             </header>
+
+            {pendingDraft && (
+                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
+                    
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                            <FileText size={18} />
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Borrador Detectado</h4>
+                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
+                                    No Guardado
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
+                                Tienes un borrador sin guardar de: <span className="text-text-main font-black">"{pendingDraft.groupName}"</span>
+                            </p>
+                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                                Guardado automáticamente el {new Date(pendingDraft.timestamp).toLocaleDateString()} a las {new Date(pendingDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                        <button
+                            onClick={handleRestoreDraft}
+                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Restaurar Borrador
+                        </button>
+                        <button
+                            onClick={handleDiscardDraft}
+                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-6">
                 <div className="bento-card static overflow-hidden animate-fade-up">
@@ -785,6 +880,7 @@ const GroupsPage = () => {
                 formatUserDetails={formatUserDetails}
                 formatCareerName={formatCareerName}
                 setIsCareerModalOpen={setIsCareerModalOpen}
+                onDraftCleared={() => setPendingDraft(null)}
             />
 
             <GroupDetailDrawer
