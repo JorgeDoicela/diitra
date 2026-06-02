@@ -47,6 +47,14 @@ namespace Diitra.Domain.Common.Documents
         /// <summary>Snapshot JSON de los datos exactos inyectados en la plantilla.</summary>
         public string? DataSnapshotJson { get; private set; }
 
+        /// <summary>Actualiza el hash del archivo cuando es firmado digitalmente.</summary>
+        public void UpdateFileHash(string newHash)
+        {
+            if (string.IsNullOrEmpty(newHash))
+                throw new ArgumentException("El hash no puede estar vacío.", nameof(newHash));
+            FileHash = newHash;
+        }
+
         // Para EF Core
         protected DocumentAuditEntry() { }
 
