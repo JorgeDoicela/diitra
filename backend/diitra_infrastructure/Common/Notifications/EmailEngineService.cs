@@ -25,19 +25,22 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly ILogger<EmailEngineService> _logger;
         private readonly IDocumentEngine _documentEngine;
         private readonly IProjectOrchestrator _projectOrchestrator;
+        private readonly diitra_infrastructure.Security.IFirmaElectronicaService _firmaElectronicaService;
 
         public EmailEngineService(
             DiitraContext context,
             IConfiguration configuration,
             ILogger<EmailEngineService> logger,
             IDocumentEngine documentEngine,
-            IProjectOrchestrator projectOrchestrator)
+            IProjectOrchestrator projectOrchestrator,
+            diitra_infrastructure.Security.IFirmaElectronicaService firmaElectronicaService)
         {
             _context = context;
             _configuration = configuration;
             _logger = logger;
             _documentEngine = documentEngine;
             _projectOrchestrator = projectOrchestrator;
+            _firmaElectronicaService = firmaElectronicaService;
         }
 
         public async Task<IEnumerable<EmailTemplateDto>> GetTemplatesAsync()
@@ -408,7 +411,35 @@ namespace diitra_infrastructure.Common.Notifications
                                     var docResult = await _documentEngine.GenerateAsync(docRequest);
                                     if (docResult?.PdfBytes != null && docResult.PdfBytes.Length > 0)
                                     {
-                                        var ms = new MemoryStream(docResult.PdfBytes);
+                                        byte[] finalBytes = docResult.PdfBytes;
+
+                                        // Aplicar firma electrónica digital avanzada si se provee certificado y contraseña (DIITRA Builder Style)
+                                        if (!string.IsNullOrEmpty(request.CertificateBase64) && !string.IsNullOrEmpty(request.SignaturePassword))
+                                        {
+                                            try
+                                            {
+                                                _logger.LogInformation("DIITRA Email Engine: Aplicando firma electrónica PAdES al documento del sistema '{TemplateCode}'...", templateCode);
+                                                byte[] certificateBytes = Convert.FromBase64String(request.CertificateBase64);
+
+                                                if (_firmaElectronicaService.ValidateCertificate(certificateBytes, request.SignaturePassword))
+                                                {
+                                                    finalBytes = _firmaElectronicaService.SignPdf(docResult.PdfBytes, certificateBytes, request.SignaturePassword,
+                                                        reason: $"Firma de Aprobación de Documento - {templateCode}",
+                                                        location: "Quito, Ecuador");
+                                                    _logger.LogInformation("Firma digital aplicada exitosamente al documento del sistema '{TemplateCode}'", templateCode);
+                                                }
+                                                else
+                                                {
+                                                    _logger.LogWarning("La firma electrónica para '{TemplateCode}' falló: Certificado corrupto o clave incorrecta.", templateCode);
+                                                }
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                _logger.LogError(ex, "Error crítico aplicando firma digital en Email Engine para '{TemplateCode}'", templateCode);
+                                            }
+                                        }
+
+                                        var ms = new MemoryStream(finalBytes);
                                         mailAttachment = new Attachment(ms, docResult.FileName ?? $"{templateCode.ToLower()}_{DateTime.Now:yyyyMMdd}.pdf", "application/pdf");
                                         _logger.LogInformation("Documento '{FileName}' generado y adjuntado con éxito.", docResult.FileName);
                                     }

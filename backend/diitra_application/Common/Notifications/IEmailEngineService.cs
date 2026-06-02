@@ -65,6 +65,9 @@ namespace diitra_application.Common.Notifications
 
         public string? EntityUuid { get; set; }
         public string? EntityType { get; set; }
+
+        public string? CertificateBase64 { get; set; }
+        public string? SignaturePassword { get; set; }
     }
 
     public class EmailAttachmentDto
