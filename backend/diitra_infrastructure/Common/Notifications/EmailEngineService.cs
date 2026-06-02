@@ -427,6 +427,26 @@ namespace diitra_infrastructure.Common.Notifications
                                                         reason: $"Firma de Aprobación de Documento - {templateCode}",
                                                         location: "Quito, Ecuador");
                                                     _logger.LogInformation("Firma digital aplicada exitosamente al documento del sistema '{TemplateCode}'", templateCode);
+
+                                                    // Actualizar el hash del archivo firmado en inv_document_audit para no romper la cadena de custodia CACES
+                                                    try
+                                                    {
+                                                        using var sha256 = System.Security.Cryptography.SHA256.Create();
+                                                        var signedHash = Convert.ToHexString(sha256.ComputeHash(finalBytes)).ToLower();
+
+                                                        var auditEntry = await _context.DocumentAuditEntries
+                                                            .FirstOrDefaultAsync(a => a.TraceabilityCode == docResult.TraceabilityCode);
+                                                         if (auditEntry != null)
+                                                         {
+                                                             auditEntry.UpdateFileHash(signedHash);
+                                                             await _context.SaveChangesAsync();
+                                                            _logger.LogInformation("Se actualizó el hash del documento firmado en inv_document_audit a: {Hash}", signedHash);
+                                                        }
+                                                    }
+                                                    catch (Exception ex)
+                                                    {
+                                                        _logger.LogError(ex, "Error al actualizar el hash del PDF firmado en inv_document_audit para la plantilla '{TemplateCode}'", templateCode);
+                                                    }
                                                 }
                                                 else
                                                 {

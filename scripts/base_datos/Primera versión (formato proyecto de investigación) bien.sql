@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS
     inv_audit_admin,
     inv_email_templates,
     inv_email_historial,
+    inv_magic_links,
 
     -- DIITRA Document Engine (Plantillas y Auditoría)
     inv_document_audit,
@@ -801,6 +802,36 @@ CREATE TRIGGER trg_evid_cat_uuid BEFORE INSERT ON inv_cat_tipo_evidencia FOR EAC
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_ent_ext_uuid BEFORE INSERT ON inv_entidades_externas FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+
+-- Triggers adicionales para asegurar la generación de UUIDs en todo el esquema
+CREATE TRIGGER trg_programas_uuid BEFORE INSERT ON inv_programas FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_dominios_uuid BEFORE INSERT ON inv_dominios FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_sublineas_uuid BEFORE INSERT ON inv_sublineas FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_tipos_inv_uuid BEFORE INSERT ON inv_tipos_investigacion FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_grupos_uuid BEFORE INSERT ON inv_grupos_investigacion FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_conv_hitos_uuid BEFORE INSERT ON inv_convocatorias_hitos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_conv_docreq_uuid BEFORE INSERT ON inv_convocatorias_documentos_req FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_pnd_obj_uuid BEFORE INSERT ON inv_pnd_objetivos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_proy_docadj_uuid BEFORE INSERT ON inv_proyectos_documentos_adjuntos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_trazabilidad_uuid BEFORE INSERT ON inv_trazabilidad_proyectos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_doc_instancias_uuid BEFORE INSERT ON inv_documentos_instancias FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_cowork_doc_uuid BEFORE INSERT ON inv_cowork_documentos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_email_temp_uuid BEFORE INSERT ON inv_email_templates FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_email_hist_uuid BEFORE INSERT ON inv_email_historial FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
 -- #############################################################################
@@ -930,6 +961,22 @@ CREATE TABLE inv_dispositivos_tokens (
     ultimaSincronizacion TIMESTAMP    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[MÓVIL] Almacén de tokens para Push Notifications (FCM)';
+
+CREATE TABLE inv_magic_links (
+    id_magic_link         INT          AUTO_INCREMENT PRIMARY KEY,
+    id_usuario            INT(11)      NOT NULL,
+    token_hash            VARCHAR(64)  NOT NULL,
+    fecha_creacion        DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_expiracion      DATETIME     NOT NULL,
+    utilizado             TINYINT(1)   NOT NULL DEFAULT 0,
+    fecha_utilizado       DATETIME     NULL,
+    ip_creacion           VARCHAR(45)  NULL,
+    ip_utilizacion        VARCHAR(45)  NULL,
+    user_agent            VARCHAR(255) NULL,
+    codigo_pin_handoff    VARCHAR(12)  NULL,
+    fecha_expiracion_pin  DATETIME     NULL,
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Enlaces mágicos para autenticación passwordless y handoff';
 
 
 -- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
@@ -1347,7 +1394,11 @@ CREATE TABLE inv_email_historial (
     FOREIGN KEY (idUsuarioDestinatario) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Plantilla semilla para notificar proyectos inconclusos disponibles
+-- =============================================================================
+-- SEMILLAS: MOTOR DE CORREOS PERSONALIZADO (DIITRA)
+-- =============================================================================
+
+-- Plantilla 1: Proyecto Inconcluso Disponible para Adopción
 INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
 (
     UUID(),
@@ -1357,7 +1408,7 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
     'DIITRA: Oportunidad de Adopción de Proyecto - [[proyecto_titulo]]',
     '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
         <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
-            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; tracking: -0.05em;">DIITRA</h1>
+            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
         
@@ -1378,7 +1429,7 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
         </div>
 
         <div style="text-align: center; margin-bottom: 30px;">
-            <a href="[[url_adopcion]]" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Ver Proyecto y Postular Adopción</a>
+            <a href="[[sistema_url]]/investigacion/adopcion" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Ver Proyecto y Postular Adopción</a>
         </div>
 
         <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
@@ -1386,7 +1437,238 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
         </p>
 
         <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
-            <p style="margin: 0 0 4px 0;">DIITRA — Instituto Superior Tecnológico Traversari</p>
+            <p style="margin: 0 0 4px 0;">DIITRA — [[institucion_nombre]]</p>
+            <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
+            <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
+        </div>
+    </div>',
+    1
+);
+
+-- Plantilla 2: Nueva Convocatoria Abierta
+INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
+(
+    UUID(),
+    'NUEVA_CONVOCATORIA',
+    'Apertura de Nueva Convocatoria de Proyectos',
+    'Notificación a docentes sobre el lanzamiento de una nueva convocatoria oficial para postulación de proyectos.',
+    'DIITRA: Apertura de Convocatoria Oficial - [[convocatoria_titulo]]',
+    '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
+            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
+            <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
+        </div>
+        
+        <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Docente Investigador/a,</h2>
+        
+        <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            Nos complace informar que el Departamento de Investigación e Innovación ha abierto oficialmente la convocatoria <strong>[[convocatoria_titulo]]</strong> para el periodo académico vigente. Le invitamos a postular sus propuestas de investigación aplicada e innovación tecnológica.
+        </p>
+
+        <div style="background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+            <h3 style="color: #111111; font-size: 13px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Información de la Convocatoria</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333333;">
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600; width: 150px;">Código:</td><td style="padding: 8px 0;">[[convocatoria_codigo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Título:</td><td style="padding: 8px 0;">[[convocatoria_titulo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Fecha de Apertura:</td><td style="padding: 8px 0;">[[convocatoria_apertura]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Fecha de Cierre:</td><td style="padding: 8px 0; color: #d9534f; font-weight: 700;">[[convocatoria_cierre]]</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600;">Monto Máx. Proyecto:</td><td style="padding: 8px 0;">[[convocatoria_monto_maximo]]</td></tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="[[sistema_url]]/investigacion/convocatorias" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Postular Propuesta</a>
+        </div>
+
+        <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
+            Las propuestas y toda la documentación requerida (protocolo, cronograma Gantt y presupuesto estructurado) deben ser cargadas antes de la fecha de cierre.
+        </p>
+
+        <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
+            <p style="margin: 0 0 4px 0;">DIITRA — [[institucion_nombre]]</p>
+            <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
+            <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
+        </div>
+    </div>',
+    1
+);
+
+-- Plantilla 3: Proyecto Postulado con Éxito
+INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
+(
+    UUID(),
+    'PROYECTO_POSTULADO',
+    'Confirmación de Postulación de Proyecto',
+    'Acuse de recibo enviado al docente director cuando finaliza la postulación digital de su protocolo.',
+    'DIITRA: Postulación de Proyecto Recibida - [[proyecto_titulo]]',
+    '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
+            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
+            <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
+        </div>
+        
+        <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a [[proyecto_director]],</h2>
+        
+        <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            Confirmamos que su propuesta titulada <strong>[[proyecto_titulo]]</strong> ha sido postulada exitosamente en el sistema DIITRA. El proyecto ha sido registrado con el estado <strong>[[proyecto_estado]]</strong> y entra formalmente al flujo de evaluación por pares.
+        </p>
+
+        <div style="background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+            <h3 style="color: #111111; font-size: 13px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Resumen del Registro</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333333;">
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600; width: 120px;">Código Temporal:</td><td style="padding: 8px 0;">[[proyecto_codigo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Título:</td><td style="padding: 8px 0;">[[proyecto_titulo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Línea:</td><td style="padding: 8px 0;">[[linea_investigacion]]</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600;">Director:</td><td style="padding: 8px 0;">[[proyecto_director]]</td></tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="[[proyecto_workspace_url]]" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Ver Workspace del Proyecto</a>
+        </div>
+
+        <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
+            Adjunto a este correo encontrará la Ficha del Protocolo de Investigación generada de forma automatizada por el sistema para sus archivos. Se le notificará tan pronto como el panel de revisores emita los dictámenes correspondientes.
+        </p>
+
+        <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
+            <p style="margin: 0 0 4px 0;">DIITRA — [[institucion_nombre]]</p>
+            <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
+            <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
+        </div>
+    </div>',
+    1
+);
+
+-- Plantilla 4: Asignación de Arbitraje (Revisor Par Ciego)
+INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
+(
+    UUID(),
+    'ASIGNACION_REVISOR',
+    'Asignación de Evaluación por Pares',
+    'Invitación al revisor (interno o externo) para evaluar una propuesta de investigación de manera anónima (doble ciego).',
+    'DIITRA: Solicitud de Evaluación por Pares Doble Ciego',
+    '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
+            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
+            <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
+        </div>
+        
+        <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Revisor/a [[revisor_nombre]],</h2>
+        
+        <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            De conformidad con el Reglamento de Régimen Académico y los procesos de aseguramiento de calidad institucional, el Departamento de Investigación le ha designado como **Evaluador/a Par** del proyecto de investigación adjunto.
+        </p>
+
+        <div style="background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+            <h3 style="color: #111111; font-size: 13px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Detalles del Arbitraje</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333333;">
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600; width: 140px;">Título del Proyecto:</td><td style="padding: 8px 0;">[[proyecto_titulo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Fecha de Asignación:</td><td style="padding: 8px 0;">[[fecha_postulacion]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Fecha Límite:</td><td style="padding: 8px 0; color: #d9534f; font-weight: 700;">[[peer_review_fecha_limite]]</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600;">Modalidad:</td><td style="padding: 8px 0;">[[peer_review_anonimo]]</td></tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="[[sistema_url]]/evaluacion/revisar/[[revisor_email]]" style="display: inline-block; background-color: #000000; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Llenar Rúbrica de Evaluación</a>
+        </div>
+
+        <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
+            Para garantizar la objetividad del arbitraje, se solicita mantener la reserva y anonimato respecto a los autores. El protocolo anonimizado está adjunto en este mensaje.
+        </p>
+
+        <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
+            <p style="margin: 0 0 4px 0;">DIITRA — [[institucion_nombre]]</p>
+            <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
+            <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
+        </div>
+    </div>',
+    1
+);
+
+-- Plantilla 5: Dictamen de Evaluación Final Disponible
+INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
+(
+    UUID(),
+    'DICTAMEN_DISPONIBLE',
+    'Dictamen Final de Evaluación de Proyecto',
+    'Notificación formal enviada al docente director cuando se consolida la evaluación por pares y el director emite la aprobación.',
+    'DIITRA: Dictamen de Evaluación Oficial - [[proyecto_titulo]]',
+    '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
+            <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
+            <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
+        </div>
+        
+        <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a [[proyecto_director]],</h2>
+        
+        <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            El proceso de evaluación por pares ciegos para su proyecto **[[proyecto_titulo]]** ha concluido oficialmente. Nos complace comunicarle el dictamen final emitido por la comisión académica.
+        </p>
+
+        <div style="background-color: #fafafa; border: 1px solid #eaeaea; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+            <h3 style="color: #111111; font-size: 13px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Dictamen de Arbitraje</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333333;">
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600; width: 140px;">Título del Proyecto:</td><td style="padding: 8px 0;">[[proyecto_titulo]]</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Calificación Final:</td><td style="padding: 8px 0; font-weight: 700;">[[peer_review_puntaje]]/100</td></tr>
+                <tr style="border-bottom: 1px solid #f0f0f0;"><td style="padding: 8px 0; font-weight: 600;">Resultado:</td><td style="padding: 8px 0; text-transform: uppercase; font-weight: 700; color: #5cb85c;">[[peer_review_dictamen]]</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; vertical-align: top;">Observaciones:</td><td style="padding: 8px 0; line-height: 1.5;">[[peer_review_observaciones]]</td></tr>
+            </table>
+        </div>
+
+        <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
+            Adjunto a este correo encontrará el **Acta de Dictamen de Arbitraje CACES**, debidamente **firmada de forma electrónica** por la Dirección de Investigación de Traversari. Este documento sirve como constancia oficial para fines de acreditación institucional.
+        </p>
+
+        <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
+            <p style="margin: 0 0 4px 0;">DIITRA — [[institucion_nombre]]</p>
+            <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
+            <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
+        </div>
+    </div>',
+    1
+);
+
+-- Plantilla 6: Alerta de Vencimiento de Hito de Cronograma (Autómata Scheduler)
+INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuerpoHtml, activo) VALUES
+(
+    UUID(),
+    'ALERTA_HITO_VENCIMIENTO',
+    'Alerta de Vencimiento de Hito de Cronograma',
+    'Recordatorio automatizado enviado al docente director cuando se acerca la fecha límite de entrega de evidencias en su cronograma Gantt.',
+    'DIITRA Alerta: Vencimiento de Hito Próximo - [[nombre_hito]]',
+    '<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, \'Open Sans\', \'Helvetica Neue\', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+        <div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f0f0f0; padding-bottom: 16px;">
+            <h1 style="color: #d9534f; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA ALERTA</h1>
+            <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
+        </div>
+        
+        <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Docente Director/a,</h2>
+        
+        <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
+            Le recordamos que de acuerdo al cronograma Gantt aprobado para su proyecto, se aproxima el vencimiento de una actividad crítica que requiere la entrega de evidencias documentales (CACES Compliance).
+        </p>
+
+        <div style="background-color: #fdf7f7; border: 1px solid #eed3d2; border-radius: 6px; padding: 16px; margin-bottom: 24px;">
+            <h3 style="color: #a94442; font-size: 13px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Detalles del Hito Próximo a Vencer</h3>
+            <table style="width: 100%; font-size: 13px; border-collapse: collapse; color: #333333;">
+                <tr style="border-bottom: 1px solid #eed3d2;"><td style="padding: 8px 0; font-weight: 600; width: 140px; color: #a94442;">Hito/Tarea:</td><td style="padding: 8px 0; font-weight: 600;">[[nombre_hito]]</td></tr>
+                <tr style="border-bottom: 1px solid #eed3d2;"><td style="padding: 8px 0; font-weight: 600; color: #a94442;">Proyecto:</td><td style="padding: 8px 0;">[[proyecto_titulo]]</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: 600; color: #a94442;">Fecha Límite:</td><td style="padding: 8px 0; color: #d9534f; font-weight: 700;">[[fecha_limite]]</td></tr>
+            </table>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="[[sistema_url]]/investigacion/proyectos/workspace" style="display: inline-block; background-color: #d9534f; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: 600; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Subir Evidencias / Informe</a>
+        </div>
+
+        <p style="color: #666666; font-size: 12px; line-height: 1.6; margin-bottom: 24px;">
+            Evite retrasos que comprometan el cumplimiento del proyecto. Si requiere reprogramar este hito por causas justificadas, por favor solicite una extensión al Director de Investigación en el portal CoWork.
+        </p>
+
+        <div style="border-top: 1px solid #eaeaea; padding-top: 16px; text-align: center; font-size: 11px; color: #888888; line-height: 1.5;">
+            <p style="margin: 0 0 4px 0;">DIITRA — [[institucion_nombre]]</p>
             <p style="margin: 0 0 12px 0;">Quito, Ecuador</p>
             <p style="margin: 0; font-size: 10px; color: #aaaaaa;">Este es un correo automático generado por el sistema. Por favor no responda directamente.</p>
         </div>
