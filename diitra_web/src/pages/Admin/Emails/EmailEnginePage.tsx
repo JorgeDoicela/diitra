@@ -3,7 +3,7 @@ import api from '../../../api/axios_config';
 import {
     Mail, Plus, Edit2, Trash2, Send, History, FileText, CheckCircle2,
     AlertTriangle, Eye, Loader2, ArrowRight,
-    Paperclip, X, RefreshCw, Layers, HelpCircle
+    Paperclip, X, RefreshCw, Layers, HelpCircle, Shield
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -164,6 +164,8 @@ const EmailEnginePage: React.FC = () => {
     const [detectedTokens, setDetectedTokens] = useState<string[]>([]);
     const [tokenValues, setTokenValues] = useState<Record<string, string>>({});
     const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
+    const [signatureFile, setSignatureFile] = useState<File | null>(null);
+    const [signaturePassword, setSignaturePassword] = useState<string>('');
 
     // Form: Manage Templates (Modal / Drawer)
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
@@ -414,6 +416,23 @@ const EmailEnginePage: React.FC = () => {
             return;
         }
 
+        let certificateBase64: string | null = null;
+        if (signatureFile) {
+            certificateBase64 = await new Promise<string | null>((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    if (event.target?.result) {
+                        const base64String = (event.target.result as string).split(',')[1];
+                        resolve(base64String);
+                    } else {
+                        resolve(null);
+                    }
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(signatureFile);
+            });
+        }
+
         const template = templates.find(t => t.idEmailTemplate.toString() === selectedTemplateId);
 
         const payload = {
@@ -440,7 +459,9 @@ const EmailEnginePage: React.FC = () => {
                     }))
             ],
             entityUuid: selectedEntityUuid || null,
-            entityType: contextType || null
+            entityType: contextType || null,
+            certificateBase64: certificateBase64,
+            signaturePassword: signaturePassword || null
         };
 
         try {
@@ -460,6 +481,8 @@ const EmailEnginePage: React.FC = () => {
             setSelectedRole('');
             setSelectedCarreraId('');
             setTokenValues({});
+            setSignatureFile(null);
+            setSignaturePassword('');
         } catch (err: any) {
             console.error('[DIITRA EMAIL ENGINE] Error sending templated email:', err);
             setSendResult({
@@ -884,6 +907,50 @@ const EmailEnginePage: React.FC = () => {
                                                      </label>
                                                  </div>
                                              </div>
+
+                                             {/* Firma Electrónica (.p12) para adjuntos del sistema (DIITRA Builder Style) */}
+                                             {Object.values(systemAttachments).some(v => v) && (
+                                                 <div className="mt-4 pt-3 border-t border-border-thin space-y-3 animate-fade-in">
+                                                     <div className="flex items-center justify-between">
+                                                         <span className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1">
+                                                             <Shield size={11} className="text-brand" /> Firma Electrónica (.p12)
+                                                         </span>
+                                                         <span className="text-[8px] text-text-dim uppercase tracking-wider">Opcional para Actas/Rúbricas</span>
+                                                     </div>
+                                                     
+                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                         <div className="space-y-1">
+                                                             <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Archivo de Firma (.p12)</label>
+                                                             <input
+                                                                 type="file"
+                                                                 accept=".p12,.pfx"
+                                                                 onChange={e => setSignatureFile(e.target.files?.[0] || null)}
+                                                                 className="w-full text-xs text-text-dim file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[8px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded p-1.5 bg-bg-deep/20"
+                                                             />
+                                                             {signatureFile && (
+                                                                 <span className="text-[8px] text-brand block mt-0.5 truncate">
+                                                                     ✓ {signatureFile.name} ({(signatureFile.size / 1024).toFixed(1)} KB)
+                                                                 </span>
+                                                             )}
+                                                         </div>
+                                                         
+                                                         <div className="space-y-1">
+                                                             <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Contraseña de la Firma</label>
+                                                             <input
+                                                                 type="password"
+                                                                 placeholder="Clave de Certificado"
+                                                                 value={signaturePassword}
+                                                                 onChange={e => setSignaturePassword(e.target.value)}
+                                                                 className="input-vercel !py-1.5 text-xs font-sans"
+                                                             />
+                                                         </div>
+                                                     </div>
+                                                     
+                                                     <p className="text-[8px] text-text-dim/80 leading-relaxed italic">
+                                                         * Al cargar tu firma y clave, los PDFs autogenerados se sellarán digitalmente antes de enviarse. Usa la clave <strong className="font-mono text-brand">diitra2026</strong> para bypass / demo en servidor.
+                                                     </p>
+                                                 </div>
+                                             )}
                                          </div>
 
                                         {/* Attachments Section */}
