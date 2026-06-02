@@ -87,10 +87,40 @@ namespace Diitra.Infrastructure.Common.Documents
 
         public async Task<IEnumerable<DocumentInstance>> GetByEntityAsync(string entityUuid, CancellationToken ct = default)
         {
-            return await _context.DocumentInstances
+            // 1. Documentos directamente vinculados al proyecto
+            var directDocs = await _context.DocumentInstances
                 .Where(i => i.EntityUuid == entityUuid)
                 .OrderByDescending(i => i.CreatedAt)
                 .ToListAsync(ct);
+
+            // 2. Agregar documentos de revisiones (RUBRICA_EVALUACION por árbitro).
+            //    Al cerrar arbitraje, cada árbitro genera su propia rúbrica con EntityUuid = revision.Uuid
+            //    y EntityType = "Revision". Las recuperamos aquí para que el workspace del proyecto
+            //    las muestre completas.
+            var project = await _context.InvProyectos
+                .FirstOrDefaultAsync(p => p.Uuid == entityUuid, ct);
+
+            if (project != null)
+            {
+                var revisionUuids = await _context.InvRevisionesPares
+                    .Where(r => r.IdProyecto == project.IdProyecto)
+                    .Select(r => r.Uuid)
+                    .ToListAsync(ct);
+
+                if (revisionUuids.Count > 0)
+                {
+                    var revisionDocs = await _context.DocumentInstances
+                        .Where(i => revisionUuids.Contains(i.EntityUuid))
+                        .OrderByDescending(i => i.CreatedAt)
+                        .ToListAsync(ct);
+
+                    return directDocs.Concat(revisionDocs)
+                        .OrderByDescending(i => i.CreatedAt)
+                        .ToList();
+                }
+            }
+
+            return directDocs;
         }
 
         public async Task<IEnumerable<DocumentInstance>> GetAllAsync(int limit = 20, CancellationToken ct = default)

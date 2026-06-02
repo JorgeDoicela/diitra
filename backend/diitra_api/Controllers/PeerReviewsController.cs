@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using System.Security.Claims;
+using diitra_infrastructure.Security;
+using Microsoft.Extensions.Configuration;
 
 namespace diitra_api.Controllers;
 
@@ -12,10 +14,17 @@ namespace diitra_api.Controllers;
 public class PeerReviewsController : ControllerBase
 {
     private readonly IPeerReviewService _peerReviewService;
+    private readonly IFirmaElectronicaService _firmaService;
+    private readonly IConfiguration _configuration;
 
-    public PeerReviewsController(IPeerReviewService peerReviewService)
+    public PeerReviewsController(
+        IPeerReviewService peerReviewService,
+        IFirmaElectronicaService firmaService,
+        IConfiguration configuration)
     {
         _peerReviewService = peerReviewService;
+        _firmaService = firmaService;
+        _configuration = configuration;
     }
 
     private int GetCurrentUserId()
@@ -176,7 +185,9 @@ public class PeerReviewsController : ControllerBase
 
     /// <summary>
     /// Descargar el Acta de Dictamen de Arbitraje en PDF (CACES).
-    /// Genera un PDF con doble ciego, código de trazabilidad y soporte de firma digital.
+    /// Genera un PDF con doble ciego y código de trazabilidad.
+    /// Solo disponible después de ejecutar el cierre formal del arbitraje.
+    /// Si el sistema tiene un certificado de firma configurado, el PDF se devuelve firmado digitalmente en formato PAdES.
     /// </summary>
     [HttpGet("project/{projectUuid}/dictamen-pdf")]
     public async Task<IActionResult> DescargarDictamenPdf(string projectUuid)
@@ -185,8 +196,45 @@ public class PeerReviewsController : ControllerBase
         try
         {
             var pdfBytes = await _peerReviewService.GenerateDictamenPdfAsync(projectUuid, directorId);
+
+            // ── Firma PAdES con certificado institucional del sistema (si está configurado) ──
+            // Configurar en appsettings.json bajo "Firma:SystemCertificateBase64" y "Firma:SystemPassword".
+            var certBase64 = _configuration["Firma:SystemCertificateBase64"];
+            var certPassword = _configuration["Firma:SystemPassword"];
+
+            if (!string.IsNullOrEmpty(certBase64) && !string.IsNullOrEmpty(certPassword))
+            {
+                try
+                {
+                    var certBytes = Convert.FromBase64String(certBase64);
+                    if (_firmaService.ValidateCertificate(certBytes, certPassword))
+                    {
+                        pdfBytes = _firmaService.SignPdf(
+                            pdfBytes, certBytes, certPassword,
+                            reason: $"Acta de Dictamen de Arbitraje CACES — DIITRA",
+                            location: "Quito, Ecuador");
+                    }
+                }
+                catch (Exception signEx)
+                {
+                    // La firma falló: se entrega el PDF sin firmar para no bloquear al Director
+                    // El error se registra para que el administrador corrija el certificado.
+                    Console.WriteLine($"[DIITRA] Advertencia: Firma PAdES no aplicada al dictamen. {signEx.Message}");
+                }
+            }
+
+            // Calcular hash de integridad del PDF final (firmado o no)
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashHex = Convert.ToHexString(sha256.ComputeHash(pdfBytes)).ToLower();
+
             var fileName = $"DIITRA_DICTAMEN_ARBITRAJE_{projectUuid[..8].ToUpper()}_{DateTime.Now:yyyyMMdd}.pdf";
+            Response.Headers.Append("X-Document-Hash", hashHex);
             return File(pdfBytes, "application/pdf", fileName);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Cierre aún no ejecutado
+            return BadRequest(new { message = ex.Message });
         }
         catch (ArgumentException ex)
         {

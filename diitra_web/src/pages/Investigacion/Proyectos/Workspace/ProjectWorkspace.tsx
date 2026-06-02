@@ -823,12 +823,11 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'En Ejecución' && (isCurrent || isPast) && (
                                                     <div className="mt-4 animate-fade-in flex flex-wrap gap-3">
                                                         <button 
-                                                            onClick={() => resolveDocumentInstance('INFORME_AVANCE')}
-                                                            disabled={resolvingDocument === 'INFORME_AVANCE'}
+                                                            onClick={() => navigate(`/investigacion/informes-avance/${currentProject.id}`)}
                                                             className="btn-vercel-primary !py-2"
                                                         >
                                                             <BarChart size={14} />
-                                                            <span>Informe de Avance</span>
+                                                            <span>Informes de Avance</span>
                                                         </button>
                                                         <button 
                                                             onClick={() => {

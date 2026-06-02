@@ -29,6 +29,7 @@ import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 import NotificationsPage from './pages/Notificaciones/NotificationsPage';
 import EmailEnginePage from './pages/Admin/Emails/EmailEnginePage';
 import ProjectAdoptionPage from './pages/Investigacion/Proyectos/ProjectAdoptionPage';
+import InformesAvancePage from './pages/Investigacion/Proyectos/InformesAvancePage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -187,6 +188,7 @@ function App() {
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
                             <Route path="/investigacion/adopcion" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><ProjectAdoptionPage /></RoleRoute>} />
                             <Route path="/investigacion/monitoreo/:projectUuid" element={<MonitoringPage />} />
+                            <Route path="/investigacion/informes-avance/:projectId" element={<InformesAvancePage />} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
