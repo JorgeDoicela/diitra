@@ -67,11 +67,48 @@ namespace diitra_api.Controllers
         [HttpPost("send")]
         public async Task<IActionResult> SendEmail([FromBody] EmailSendRequest request)
         {
+            request.DestinatariosEmails ??= new List<string>();
+            request.DestinatariosUserIds ??= new List<int>();
+            request.Attachments ??= new List<EmailAttachmentDto>();
+            request.TemplateData ??= new Dictionary<string, string>();
+
+            var hasExplicitEmails = request.DestinatariosEmails.Any(e => !string.IsNullOrWhiteSpace(e));
+            var hasRoleOrCarrera = !string.IsNullOrEmpty(request.TargetRole) || request.TargetCarreraId.HasValue;
+            var hasUserIds = request.DestinatariosUserIds.Any();
+
+            if (!hasExplicitEmails && !hasRoleOrCarrera && !hasUserIds)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Debe indicar al menos un destinatario (correo manual, rol, carrera o usuario)."
+                });
+            }
+
             var success = await _emailEngineService.SendTemplatedEmailAsync(request);
             if (success)
             {
                 return Ok(new { success = true, message = "Correos despachados correctamente." });
             }
+
+            if (!hasExplicitEmails && !hasUserIds && hasRoleOrCarrera)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "No se encontraron usuarios activos con correo institucional para el rol o carrera seleccionados."
+                });
+            }
+
+            if (hasExplicitEmails || hasUserIds)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "No se encontraron destinatarios válidos. Verifique que los correos estén bien escritos."
+                });
+            }
+
             return StatusCode(500, new { success = false, message = "Hubo un error al despachar algunos correos." });
         }
 

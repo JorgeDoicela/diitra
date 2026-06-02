@@ -15,6 +15,7 @@ import {
     TEMPLATE_RECOMMENDED_CONTEXT,
     applyTokenReplacements,
     buildBodyWithAdditionalMessage,
+    buildEmailSendPayload,
     buildTemplateDataForSend,
     getSubjectVariants,
     getTokenLabel,
@@ -454,12 +455,11 @@ const EmailEnginePage: React.FC = () => {
             });
         }
 
-        const payload = {
+        const payload = buildEmailSendPayload({
             templateCodigo: selectedTemplate.codigo,
             destinatariosEmails: emailsList,
-            destinatariosUserIds: [],
             targetRole: selectedRole || null,
-            targetCarreraId: selectedCarreraId ? parseInt(selectedCarreraId) : null,
+            targetCarreraId: selectedCarreraId ? parseInt(selectedCarreraId, 10) : null,
             customSubject: finalSubject,
             customBody: finalBody,
             templateData: buildTemplateDataForSend(tokenValues),
@@ -481,12 +481,12 @@ const EmailEnginePage: React.FC = () => {
             entityType: contextType || null,
             certificateBase64: certificateBase64,
             signaturePassword: signaturePassword || null
-        };
+        });
 
         try {
             const res = await api.post('/Admin/email-engine/send', payload);
             setSendResult({ success: true, message: res.data.message || 'Correos enviados con éxito.' });
-            
+
             // Clean fields upon success
             setManualEmails('');
             setAttachments([]);
@@ -506,9 +506,13 @@ const EmailEnginePage: React.FC = () => {
             if (selectedTemplateId) applyTemplate(selectedTemplateId);
         } catch (err: any) {
             console.error('[DIITRA EMAIL ENGINE] Error sending templated email:', err);
+            const apiMessage = err.response?.data?.message;
             setSendResult({
                 success: false,
-                message: err.response?.data?.message || 'Error al despachar el correo. Revise el log del servidor o la configuración SMTP.'
+                message: apiMessage
+                    || (err.response?.status === 400
+                        ? 'No se encontraron destinatarios válidos. Verifique los correos ingresados.'
+                        : 'Error al despachar el correo. Revise el log del servidor o la configuración SMTP.')
             });
         } finally {
             setSending(false);
@@ -622,10 +626,10 @@ const EmailEnginePage: React.FC = () => {
                             <span>Comunicaciones de Investigación</span>
                         </div>
                         <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
-                            Motor de Emails DIITRA
+                            Correos DIITRA
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                            Comunicaciones guiadas por plantillas del sistema: el contenido se arma automáticamente según el contexto que seleccione. No requiere escribir HTML.
+                            Comunicaciones guiadas por plantillas del sistema: el contenido se arma automáticamente según el contexto que seleccione.
                         </p>
                     </div>
 
@@ -633,33 +637,30 @@ const EmailEnginePage: React.FC = () => {
                     <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none">
                         <button
                             onClick={() => setActiveTab('send')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${
-                                activeTab === 'send'
-                                    ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
-                                    : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'send'
+                                ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
+                                : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             <Send size={12} />
                             Redactar
                         </button>
                         <button
                             onClick={() => setActiveTab('templates')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${
-                                activeTab === 'templates'
-                                    ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
-                                    : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'templates'
+                                ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
+                                : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             <Layers size={12} />
                             Plantillas
                         </button>
                         <button
                             onClick={() => setActiveTab('history')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${
-                                activeTab === 'history'
-                                    ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
-                                    : 'text-text-dim hover:text-text-main'
-                            }`}
+                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'history'
+                                ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
+                                : 'text-text-dim hover:text-text-main'
+                                }`}
                         >
                             <History size={12} />
                             Historial
@@ -771,66 +772,66 @@ const EmailEnginePage: React.FC = () => {
                                         </div>
 
                                         {/* Dual System Context Selection */}
-                                         <div className="space-y-4 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
-                                             <div className="flex items-center justify-between">
-                                                 <span className="text-[10px] font-black text-text-main uppercase tracking-widest">Vincular al sistema</span>
-                                                 <span className="text-[9px] font-mono text-brand font-semibold flex items-center gap-1">
-                                                     <Sparkles size={10} /> Datos automáticos
-                                                 </span>
-                                             </div>
-                                             {selectedTemplate && TEMPLATE_RECOMMENDED_CONTEXT[selectedTemplate.codigo] && (
-                                                 <p className="text-[9px] text-text-dim leading-relaxed -mt-2">
-                                                     {TEMPLATE_RECOMMENDED_CONTEXT[selectedTemplate.codigo].hint}
-                                                 </p>
-                                             )}
-                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                 {/* Entity Type Select */}
-                                                 <div className="space-y-1.5">
-                                                     <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Tipo de Entidad</label>
-                                                     <select
-                                                         className="input-vercel !py-2 text-xs"
-                                                         value={contextType}
-                                                         onChange={e => {
-                                                             setContextType(e.target.value);
-                                                             setSelectedEntityUuid('');
-                                                         }}
-                                                     >
-                                                         <option value="">-- Sin Contexto --</option>
-                                                         <option value="Proyecto">Proyecto de Investigación</option>
-                                                         <option value="Convocatoria">Convocatoria Oficial</option>
-                                                         <option value="PeerReview">Evaluación de Pares (Arbitraje)</option>
-                                                     </select>
-                                                 </div>
+                                        <div className="space-y-4 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black text-text-main uppercase tracking-widest">Vincular al sistema</span>
+                                                <span className="text-[9px] font-mono text-brand font-semibold flex items-center gap-1">
+                                                    <Sparkles size={10} /> Datos automáticos
+                                                </span>
+                                            </div>
+                                            {selectedTemplate && TEMPLATE_RECOMMENDED_CONTEXT[selectedTemplate.codigo] && (
+                                                <p className="text-[9px] text-text-dim leading-relaxed -mt-2">
+                                                    {TEMPLATE_RECOMMENDED_CONTEXT[selectedTemplate.codigo].hint}
+                                                </p>
+                                            )}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {/* Entity Type Select */}
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Tipo de Entidad</label>
+                                                    <select
+                                                        className="input-vercel !py-2 text-xs"
+                                                        value={contextType}
+                                                        onChange={e => {
+                                                            setContextType(e.target.value);
+                                                            setSelectedEntityUuid('');
+                                                        }}
+                                                    >
+                                                        <option value="">-- Sin Contexto --</option>
+                                                        <option value="Proyecto">Proyecto de Investigación</option>
+                                                        <option value="Convocatoria">Convocatoria Oficial</option>
+                                                        <option value="PeerReview">Evaluación de Pares (Arbitraje)</option>
+                                                    </select>
+                                                </div>
 
-                                                 {/* Instance Select */}
-                                                 <div className="space-y-1.5">
-                                                     <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Instancia del Sistema</label>
-                                                     <select
-                                                         className="input-vercel !py-2 text-xs"
-                                                         disabled={!contextType}
-                                                         value={selectedEntityUuid}
-                                                         onChange={e => setSelectedEntityUuid(e.target.value)}
-                                                     >
-                                                         <option value="">-- Seleccionar Instancia --</option>
-                                                         {contextType === 'Proyecto' && projects.map(p => (
-                                                             <option key={p.uuid} value={p.uuid}>
-                                                                 {p.codigo_institucional ? `[${p.codigo_institucional}] ` : ''}{p.titulo}
-                                                             </option>
-                                                         ))}
-                                                         {contextType === 'Convocatoria' && convocatorias.map(c => (
-                                                             <option key={c.uuid} value={c.uuid}>
-                                                                 {c.codigoConvocatoria ? `[${c.codigoConvocatoria}] ` : ''}{c.titulo}
-                                                             </option>
-                                                         ))}
-                                                         {contextType === 'PeerReview' && peerReviews.map(r => (
-                                                             <option key={r.uuid} value={r.uuid}>
-                                                                 [{r.estado.toUpperCase()}] {r.proyectoTitulo.substring(0, 30)}... ({r.revisorNombre})
-                                                             </option>
-                                                         ))}
-                                                     </select>
-                                                 </div>
-                                             </div>
-                                         </div>
+                                                {/* Instance Select */}
+                                                <div className="space-y-1.5">
+                                                    <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Instancia del Sistema</label>
+                                                    <select
+                                                        className="input-vercel !py-2 text-xs"
+                                                        disabled={!contextType}
+                                                        value={selectedEntityUuid}
+                                                        onChange={e => setSelectedEntityUuid(e.target.value)}
+                                                    >
+                                                        <option value="">-- Seleccionar Instancia --</option>
+                                                        {contextType === 'Proyecto' && projects.map(p => (
+                                                            <option key={p.uuid} value={p.uuid}>
+                                                                {p.codigo_institucional ? `[${p.codigo_institucional}] ` : ''}{p.titulo}
+                                                            </option>
+                                                        ))}
+                                                        {contextType === 'Convocatoria' && convocatorias.map(c => (
+                                                            <option key={c.uuid} value={c.uuid}>
+                                                                {c.codigoConvocatoria ? `[${c.codigoConvocatoria}] ` : ''}{c.titulo}
+                                                            </option>
+                                                        ))}
+                                                        {contextType === 'PeerReview' && peerReviews.map(r => (
+                                                            <option key={r.uuid} value={r.uuid}>
+                                                                [{r.estado.toUpperCase()}] {r.proyectoTitulo.substring(0, 30)}... ({r.revisorNombre})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
 
                                         {/* Asunto — variantes predefinidas */}
                                         <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
@@ -931,105 +932,105 @@ const EmailEnginePage: React.FC = () => {
                                             </div>
                                         )}
 
-                                         {/* Documentos del Sistema Checkboxes */}
-                                         <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
-                                             <div className="flex items-center justify-between border-b border-border-thin pb-2">
-                                                 <span className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
-                                                     <FileText size={12} className="text-brand" /> Documentos del Sistema (PDF Autogenerado)
-                                                 </span>
-                                                 <span className="text-[8px] font-mono text-brand font-semibold uppercase tracking-wider">Generación al Vuelo</span>
-                                             </div>
-                                             <div className="space-y-2.5 pt-1">
-                                                 <div className="flex items-center gap-2">
-                                                     <input
-                                                         type="checkbox"
-                                                         id="sys-protocolo"
-                                                         disabled={!selectedEntityUuid}
-                                                         checked={systemAttachments['PROTOCOLO_INVESTIGACION']}
-                                                         onChange={e => setSystemAttachments(prev => ({ ...prev, 'PROTOCOLO_INVESTIGACION': e.target.checked }))}
-                                                         className="rounded border-border-thin text-brand focus:ring-brand shrink-0 cursor-pointer disabled:opacity-50"
-                                                     />
-                                                     <label htmlFor="sys-protocolo" className={`text-xs font-bold select-none cursor-pointer ${!selectedEntityUuid ? 'text-text-dim/40' : 'text-text-main hover:text-brand transition-colors'} flex items-center gap-1.5`}>
-                                                         Generar Ficha / Protocolo de Investigación
-                                                         {!selectedEntityUuid && <span className="text-[9px] text-text-dim font-normal italic">(Requiere seleccionar un contexto)</span>}
-                                                     </label>
-                                                 </div>
+                                        {/* Documentos del Sistema Checkboxes */}
+                                        <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                            <div className="flex items-center justify-between border-b border-border-thin pb-2">
+                                                <span className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
+                                                    <FileText size={12} className="text-brand" /> Documentos del Sistema (PDF Autogenerado)
+                                                </span>
+                                                <span className="text-[8px] font-mono text-brand font-semibold uppercase tracking-wider">Generación al Vuelo</span>
+                                            </div>
+                                            <div className="space-y-2.5 pt-1">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="sys-protocolo"
+                                                        disabled={!selectedEntityUuid}
+                                                        checked={systemAttachments['PROTOCOLO_INVESTIGACION']}
+                                                        onChange={e => setSystemAttachments(prev => ({ ...prev, 'PROTOCOLO_INVESTIGACION': e.target.checked }))}
+                                                        className="rounded border-border-thin text-brand focus:ring-brand shrink-0 cursor-pointer disabled:opacity-50"
+                                                    />
+                                                    <label htmlFor="sys-protocolo" className={`text-xs font-bold select-none cursor-pointer ${!selectedEntityUuid ? 'text-text-dim/40' : 'text-text-main hover:text-brand transition-colors'} flex items-center gap-1.5`}>
+                                                        Generar Ficha / Protocolo de Investigación
+                                                        {!selectedEntityUuid && <span className="text-[9px] text-text-dim font-normal italic">(Requiere seleccionar un contexto)</span>}
+                                                    </label>
+                                                </div>
 
-                                                 <div className="flex items-center gap-2">
-                                                     <input
-                                                         type="checkbox"
-                                                         id="sys-dictamen"
-                                                         disabled={!selectedEntityUuid}
-                                                         checked={systemAttachments['DICTAMEN_ARBITRAJE']}
-                                                         onChange={e => setSystemAttachments(prev => ({ ...prev, 'DICTAMEN_ARBITRAJE': e.target.checked }))}
-                                                         className="rounded border-border-thin text-brand focus:ring-brand shrink-0 cursor-pointer disabled:opacity-50"
-                                                     />
-                                                     <label htmlFor="sys-dictamen" className={`text-xs font-bold select-none cursor-pointer ${!selectedEntityUuid ? 'text-text-dim/40' : 'text-text-main hover:text-brand transition-colors'} flex items-center gap-1.5`}>
-                                                         Generar Acta de Dictamen de Arbitraje CACES
-                                                         {!selectedEntityUuid && <span className="text-[9px] text-text-dim font-normal italic">(Requiere seleccionar un contexto)</span>}
-                                                     </label>
-                                                 </div>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="sys-dictamen"
+                                                        disabled={!selectedEntityUuid}
+                                                        checked={systemAttachments['DICTAMEN_ARBITRAJE']}
+                                                        onChange={e => setSystemAttachments(prev => ({ ...prev, 'DICTAMEN_ARBITRAJE': e.target.checked }))}
+                                                        className="rounded border-border-thin text-brand focus:ring-brand shrink-0 cursor-pointer disabled:opacity-50"
+                                                    />
+                                                    <label htmlFor="sys-dictamen" className={`text-xs font-bold select-none cursor-pointer ${!selectedEntityUuid ? 'text-text-dim/40' : 'text-text-main hover:text-brand transition-colors'} flex items-center gap-1.5`}>
+                                                        Generar Acta de Dictamen de Arbitraje CACES
+                                                        {!selectedEntityUuid && <span className="text-[9px] text-text-dim font-normal italic">(Requiere seleccionar un contexto)</span>}
+                                                    </label>
+                                                </div>
 
-                                                 <div className="flex items-center gap-2">
-                                                     <input
-                                                         type="checkbox"
-                                                         id="sys-rubrica"
-                                                         disabled={!selectedEntityUuid}
-                                                         checked={systemAttachments['RUBRICA_DINAMICA']}
-                                                         onChange={e => setSystemAttachments(prev => ({ ...prev, 'RUBRICA_DINAMICA': e.target.checked }))}
-                                                         className="rounded border-border-thin text-brand focus:ring-brand shrink-0 cursor-pointer disabled:opacity-50"
-                                                     />
-                                                     <label htmlFor="sys-rubrica" className={`text-xs font-bold select-none cursor-pointer ${!selectedEntityUuid ? 'text-text-dim/40' : 'text-text-main hover:text-brand transition-colors'} flex items-center gap-1.5`}>
-                                                         Generar Rúbrica de Evaluación Dinámica
-                                                         {!selectedEntityUuid && <span className="text-[9px] text-text-dim font-normal italic">(Requiere seleccionar un contexto)</span>}
-                                                     </label>
-                                                 </div>
-                                             </div>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="sys-rubrica"
+                                                        disabled={!selectedEntityUuid}
+                                                        checked={systemAttachments['RUBRICA_DINAMICA']}
+                                                        onChange={e => setSystemAttachments(prev => ({ ...prev, 'RUBRICA_DINAMICA': e.target.checked }))}
+                                                        className="rounded border-border-thin text-brand focus:ring-brand shrink-0 cursor-pointer disabled:opacity-50"
+                                                    />
+                                                    <label htmlFor="sys-rubrica" className={`text-xs font-bold select-none cursor-pointer ${!selectedEntityUuid ? 'text-text-dim/40' : 'text-text-main hover:text-brand transition-colors'} flex items-center gap-1.5`}>
+                                                        Generar Rúbrica de Evaluación Dinámica
+                                                        {!selectedEntityUuid && <span className="text-[9px] text-text-dim font-normal italic">(Requiere seleccionar un contexto)</span>}
+                                                    </label>
+                                                </div>
+                                            </div>
 
-                                             {/* Firma Electrónica (.p12) para adjuntos del sistema (DIITRA Builder Style) */}
-                                             {Object.values(systemAttachments).some(v => v) && (
-                                                 <div className="mt-4 pt-3 border-t border-border-thin space-y-3 animate-fade-in">
-                                                     <div className="flex items-center justify-between">
-                                                         <span className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1">
-                                                             <Shield size={11} className="text-brand" /> Firma Electrónica (.p12)
-                                                         </span>
-                                                         <span className="text-[8px] text-text-dim uppercase tracking-wider">Opcional para Actas/Rúbricas</span>
-                                                     </div>
-                                                     
-                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                         <div className="space-y-1">
-                                                             <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Archivo de Firma (.p12)</label>
-                                                             <input
-                                                                 type="file"
-                                                                 accept=".p12,.pfx"
-                                                                 onChange={e => setSignatureFile(e.target.files?.[0] || null)}
-                                                                 className="w-full text-xs text-text-dim file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[8px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded p-1.5 bg-bg-deep/20"
-                                                             />
-                                                             {signatureFile && (
-                                                                 <span className="text-[8px] text-brand block mt-0.5 truncate">
-                                                                     ✓ {signatureFile.name} ({(signatureFile.size / 1024).toFixed(1)} KB)
-                                                                 </span>
-                                                             )}
-                                                         </div>
-                                                         
-                                                         <div className="space-y-1">
-                                                             <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Contraseña de la Firma</label>
-                                                             <input
-                                                                 type="password"
-                                                                 placeholder="Clave de Certificado"
-                                                                 value={signaturePassword}
-                                                                 onChange={e => setSignaturePassword(e.target.value)}
-                                                                 className="input-vercel !py-1.5 text-xs font-sans"
-                                                             />
-                                                         </div>
-                                                     </div>
-                                                     
-                                                     <p className="text-[8px] text-text-dim/80 leading-relaxed italic">
-                                                         * Al cargar tu firma y clave, los PDFs autogenerados se sellarán digitalmente antes de enviarse. Usa la clave <strong className="font-mono text-brand">diitra2026</strong> para bypass / demo en servidor.
-                                                     </p>
-                                                 </div>
-                                             )}
-                                         </div>
+                                            {/* Firma Electrónica (.p12) para adjuntos del sistema (DIITRA Builder Style) */}
+                                            {Object.values(systemAttachments).some(v => v) && (
+                                                <div className="mt-4 pt-3 border-t border-border-thin space-y-3 animate-fade-in">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1">
+                                                            <Shield size={11} className="text-brand" /> Firma Electrónica (.p12)
+                                                        </span>
+                                                        <span className="text-[8px] text-text-dim uppercase tracking-wider">Opcional para Actas/Rúbricas</span>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Archivo de Firma (.p12)</label>
+                                                            <input
+                                                                type="file"
+                                                                accept=".p12,.pfx"
+                                                                onChange={e => setSignatureFile(e.target.files?.[0] || null)}
+                                                                className="w-full text-xs text-text-dim file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[8px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded p-1.5 bg-bg-deep/20"
+                                                            />
+                                                            {signatureFile && (
+                                                                <span className="text-[8px] text-brand block mt-0.5 truncate">
+                                                                    ✓ {signatureFile.name} ({(signatureFile.size / 1024).toFixed(1)} KB)
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="space-y-1">
+                                                            <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Contraseña de la Firma</label>
+                                                            <input
+                                                                type="password"
+                                                                placeholder="Clave de Certificado"
+                                                                value={signaturePassword}
+                                                                onChange={e => setSignaturePassword(e.target.value)}
+                                                                className="input-vercel !py-1.5 text-xs font-sans"
+                                                            />
+                                                        </div>
+                                                    </div>
+
+                                                    <p className="text-[8px] text-text-dim/80 leading-relaxed italic">
+                                                        * Al cargar tu firma y clave, los PDFs autogenerados se sellarán digitalmente antes de enviarse. Usa la clave <strong className="font-mono text-brand">diitra2026</strong> para bypass / demo en servidor.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
 
                                         {/* Attachments Section */}
                                         <div className="space-y-3">
@@ -1078,11 +1079,10 @@ const EmailEnginePage: React.FC = () => {
 
                                         {/* Status Alert Banner */}
                                         {sendResult && (
-                                            <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                                                sendResult.success
-                                                    ? 'bg-success-subtle border-success/30 text-success'
-                                                    : 'bg-error-subtle border-error/30 text-error'
-                                            }`}>
+                                            <div className={`p-4 rounded-xl border flex items-start gap-3 ${sendResult.success
+                                                ? 'bg-success-subtle border-success/30 text-success'
+                                                : 'bg-error-subtle border-error/30 text-error'
+                                                }`}>
                                                 {sendResult.success ? <CheckCircle2 size={16} className="shrink-0 mt-0.5" /> : <AlertTriangle size={16} className="shrink-0 mt-0.5" />}
                                                 <div className="space-y-1">
                                                     <h5 className="text-xs font-bold uppercase tracking-tight">
@@ -1139,7 +1139,7 @@ const EmailEnginePage: React.FC = () => {
                                         {/* HTML Preview Frame */}
                                         <div className="flex-1 p-6 overflow-y-auto bg-white">
                                             {parsedPreview.body ? (
-                                                <div 
+                                                <div
                                                     dangerouslySetInnerHTML={{ __html: parsedPreview.body }}
                                                     className="prose prose-sm max-w-none text-black"
                                                 />
@@ -1308,7 +1308,7 @@ const EmailEnginePage: React.FC = () => {
                                                                 const parsed = JSON.parse(log.adjuntosJson);
                                                                 if (Array.isArray(parsed)) attCount = parsed.length;
                                                             }
-                                                        } catch {}
+                                                        } catch { }
 
                                                         return (
                                                             <tr
@@ -1463,43 +1463,43 @@ const EmailEnginePage: React.FC = () => {
                                         Los usuarios en Redactar no ven HTML: solo eligen el tipo de comunicación. Aquí se define la plantilla institucional.
                                     </p>
                                     {showTemplateHtmlEditor && (
-                                    <textarea
-                                        rows={12}
-                                        className="input-vercel font-mono text-xs leading-relaxed"
-                                        placeholder="<div style='...'>...</div>"
-                                        value={templateForm.cuerpoHtml}
-                                        onChange={e => setTemplateForm(prev => ({ ...prev, cuerpoHtml: e.target.value }))}
-                                    />
+                                        <textarea
+                                            rows={12}
+                                            className="input-vercel font-mono text-xs leading-relaxed"
+                                            placeholder="<div style='...'>...</div>"
+                                            value={templateForm.cuerpoHtml}
+                                            onChange={e => setTemplateForm(prev => ({ ...prev, cuerpoHtml: e.target.value }))}
+                                        />
                                     )}
                                     {!showTemplateHtmlEditor && templateForm.cuerpoHtml && (
                                         <p className="text-[9px] text-text-dim italic p-2 border border-dashed border-border-thin rounded-lg">
                                             Plantilla HTML configurada ({templateForm.cuerpoHtml.length} caracteres). Use el editor avanzado para modificarla.
                                         </p>
                                     )}
-                                                    <div className="space-y-2 mt-2 select-none">
-                                                        {[
-                                                            { label: 'Globales', tokens: ['[[destinatario_nombre]]', '[[destinatario_email]]', '[[anio_actual]]', '[[institucion_nombre]]', '[[sistema_url]]'] },
-                                                            { label: 'Proyecto', tokens: ['[[proyecto_titulo]]', '[[proyecto_codigo]]', '[[proyecto_descripcion]]', '[[proyecto_estado]]', '[[proyecto_director]]', '[[proyecto_director_email]]', '[[linea_investigacion]]', '[[proyecto_sublinea]]', '[[proyecto_workspace_url]]'] },
-                                                            { label: 'Convocatoria', tokens: ['[[convocatoria_titulo]]', '[[convocatoria_codigo]]', '[[convocatoria_anio]]', '[[convocatoria_apertura]]', '[[convocatoria_cierre]]', '[[convocatoria_presupuesto]]', '[[convocatoria_monto_maximo]]', '[[convocatoria_bases_url]]', '[[convocatoria_estado]]'] },
-                                                            { label: 'PeerReview', tokens: ['[[revisor_nombre]]', '[[revisor_email]]', '[[peer_review_dictamen]]', '[[peer_review_estado]]', '[[peer_review_fecha_limite]]', '[[peer_review_puntaje]]', '[[peer_review_observaciones]]', '[[peer_review_tipo]]', '[[peer_review_anonimo]]'] }
-                                                        ].map(group => (
-                                                            <div key={group.label}>
-                                                                <span className="text-[8px] font-black text-text-dim uppercase tracking-widest block mb-1">{group.label}:</span>
-                                                                <div className="flex flex-wrap gap-1">
-                                                                    {group.tokens.map(tok => (
-                                                                        <button
-                                                                            key={tok}
-                                                                            type="button"
-                                                                            onClick={() => setTemplateForm(prev => ({ ...prev, cuerpoHtml: prev.cuerpoHtml + tok }))}
-                                                                            className="px-1.5 py-0.5 rounded border border-border-thin bg-surface text-[8px] font-mono text-text-dim hover:text-brand hover:border-brand/40 transition-all cursor-pointer"
-                                                                        >
-                                                                            {tok}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
+                                    <div className="space-y-2 mt-2 select-none">
+                                        {[
+                                            { label: 'Globales', tokens: ['[[destinatario_nombre]]', '[[destinatario_email]]', '[[anio_actual]]', '[[institucion_nombre]]', '[[sistema_url]]'] },
+                                            { label: 'Proyecto', tokens: ['[[proyecto_titulo]]', '[[proyecto_codigo]]', '[[proyecto_descripcion]]', '[[proyecto_estado]]', '[[proyecto_director]]', '[[proyecto_director_email]]', '[[linea_investigacion]]', '[[proyecto_sublinea]]', '[[proyecto_workspace_url]]'] },
+                                            { label: 'Convocatoria', tokens: ['[[convocatoria_titulo]]', '[[convocatoria_codigo]]', '[[convocatoria_anio]]', '[[convocatoria_apertura]]', '[[convocatoria_cierre]]', '[[convocatoria_presupuesto]]', '[[convocatoria_monto_maximo]]', '[[convocatoria_bases_url]]', '[[convocatoria_estado]]'] },
+                                            { label: 'PeerReview', tokens: ['[[revisor_nombre]]', '[[revisor_email]]', '[[peer_review_dictamen]]', '[[peer_review_estado]]', '[[peer_review_fecha_limite]]', '[[peer_review_puntaje]]', '[[peer_review_observaciones]]', '[[peer_review_tipo]]', '[[peer_review_anonimo]]'] }
+                                        ].map(group => (
+                                            <div key={group.label}>
+                                                <span className="text-[8px] font-black text-text-dim uppercase tracking-widest block mb-1">{group.label}:</span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {group.tokens.map(tok => (
+                                                        <button
+                                                            key={tok}
+                                                            type="button"
+                                                            onClick={() => setTemplateForm(prev => ({ ...prev, cuerpoHtml: prev.cuerpoHtml + tok }))}
+                                                            className="px-1.5 py-0.5 rounded border border-border-thin bg-surface text-[8px] font-mono text-text-dim hover:text-brand hover:border-brand/40 transition-all cursor-pointer"
+                                                        >
+                                                            {tok}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
 
                                 {/* Activo */}
@@ -1614,7 +1614,7 @@ const EmailEnginePage: React.FC = () => {
                                                         </div>
                                                     ));
                                                 }
-                                            } catch {}
+                                            } catch { }
                                             return <span className="text-[10px] text-text-dim italic p-2 block">Ninguno</span>;
                                         })()}
                                     </div>
@@ -1635,8 +1635,8 @@ const EmailEnginePage: React.FC = () => {
                             <div className="space-y-2">
                                 <label className="section-label text-text-dim">Contenido HTML Enviado</label>
                                 <div className="bento-card static p-4 bg-white text-black rounded-xl max-h-96 overflow-y-auto border border-border-thin">
-                                    <div 
-                                        dangerouslySetInnerHTML={{ __html: selectedHistoryLog.cuerpo }} 
+                                    <div
+                                        dangerouslySetInnerHTML={{ __html: selectedHistoryLog.cuerpo }}
                                         className="prose prose-sm text-black max-w-none font-sans"
                                     />
                                 </div>
