@@ -150,14 +150,14 @@ namespace diitra_infrastructure.Common.Notifications
                 recipientEmails.Add((email, user?.IdUsuario, displayName));
             }
 
-            // Destinatarios por IdUsuario
+            // Destinatarios por IdUsuario (correo en usuario, profesor o alumno vinculado)
             foreach (var userId in request.DestinatariosUserIds)
             {
                 var user = await _context.Users.FindAsync(userId);
-                if (user != null && !string.IsNullOrEmpty(user.EmailInstitucional))
-                {
-                    recipientEmails.Add((user.EmailInstitucional, user.IdUsuario, user.Nombre ?? "Investigador/a"));
-                }
+                if (user == null) continue;
+                var (email, name) = await ResolveRecipientFromUserAsync(user);
+                if (!string.IsNullOrEmpty(email))
+                    recipientEmails.Add((email, user.IdUsuario, name));
             }
 
             // Destinatarios por Rol y Carrera
@@ -192,10 +192,9 @@ namespace diitra_infrastructure.Common.Notifications
                 var list = await usersQuery.ToListAsync();
                 foreach (var u in list)
                 {
-                    if (!string.IsNullOrEmpty(u.EmailInstitucional))
-                    {
-                        recipientEmails.Add((u.EmailInstitucional, u.IdUsuario, u.Nombre ?? "Investigador/a"));
-                    }
+                    var (email, name) = await ResolveRecipientFromUserAsync(u);
+                    if (!string.IsNullOrEmpty(email))
+                        recipientEmails.Add((email, u.IdUsuario, name));
                 }
             }
 
@@ -1008,6 +1007,48 @@ namespace diitra_infrastructure.Common.Notifications
                 ["revisiones"] = revisionsData,
                 ["institucion_nombre"] = "Instituto Superior Tecnológico Traversari"
             };
+        }
+
+        /// <summary>Resuelve correo desde usuario DIITRA o tablas SIGAFI (profesor/alumno).</summary>
+        private async Task<(string? Email, string Name)> ResolveRecipientFromUserAsync(User user)
+        {
+            var name = user.Nombre ?? "Investigador/a";
+            var email = user.EmailInstitucional?.Trim();
+            if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                return (email, name);
+
+            var sigafiId = user.IdSigafi?.Trim() ?? "";
+            if (user.TablaSigafi == "profesor" && !string.IsNullOrEmpty(sigafiId))
+            {
+                var p = await _context.Profesores.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.IdProfesor.Trim() == sigafiId);
+                if (p != null)
+                {
+                    email = (p.EmailInstitucional ?? p.Email)?.Trim();
+                    var profName = $"{p.PrimerNombre} {p.PrimerApellido}".Replace("  ", " ").Trim();
+                    if (!string.IsNullOrWhiteSpace(profName)) name = profName;
+                }
+            }
+            else if (user.TablaSigafi == "alumno" && !string.IsNullOrEmpty(sigafiId))
+            {
+                var a = await _context.Alumnos.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.IdAlumno.Trim() == sigafiId);
+                if (a != null)
+                {
+                    email = (a.EmailInstitucional ?? a.Email)?.Trim();
+                    var alumName = $"{a.PrimerNombre} {a.ApellidoPaterno}".Replace("  ", " ").Trim();
+                    if (!string.IsNullOrWhiteSpace(alumName)) name = alumName;
+                }
+            }
+            else if (user.TablaSigafi == "otros" && sigafiId.Contains('@'))
+            {
+                email = sigafiId;
+            }
+
+            if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                return (email, name);
+
+            return (null, name);
         }
     }
 }
