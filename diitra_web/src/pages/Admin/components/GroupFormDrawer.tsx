@@ -145,16 +145,37 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             if (draft && !isReadOnly) {
                 try {
                     const parsed = JSON.parse(draft);
-                    setFormData(parsed.formData);
-                    setSelectedCoordName(parsed.selectedCoordName);
-                    setSelectedCoordCareer(parsed.selectedCoordCareer);
-                    setGroupMembers(parsed.groupMembers);
-                    setCoordSearchQuery('');
-                    setIsDraftRestored(true);
-                    isInitializedRef.current = true;
-                    return;
+                    if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                        const validatedFormData = {
+                            nombre: parsed.formData.nombre || '',
+                            siglas: parsed.formData.siglas || '',
+                            tipo_grupo: parsed.formData.tipo_grupo || 'Investigación',
+                            id_dominio: parsed.formData.id_dominio || '',
+                            id_profesor_coordinador: parsed.formData.id_profesor_coordinador || '',
+                            objetivo_general: parsed.formData.objetivo_general || '',
+                            mision: parsed.formData.mision || '',
+                            vision: parsed.formData.vision || '',
+                            resolucion_aprobacion: parsed.formData.resolucion_aprobacion || '',
+                            fecha_creacion: parsed.formData.fecha_creacion || '',
+                            categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
+                            lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : []
+                        };
+                        setFormData(validatedFormData);
+                        setSelectedCoordName(parsed.selectedCoordName || '');
+                        setSelectedCoordCareer(parsed.selectedCoordCareer || '');
+                        setGroupMembers(Array.isArray(parsed.groupMembers) ? parsed.groupMembers : []);
+                        setCoordSearchQuery('');
+                        setIsDraftRestored(true);
+                        isInitializedRef.current = true;
+                        return;
+                    } else {
+                        throw new Error("Estructura de borrador de grupo inválida");
+                    }
                 } catch (e) {
-                    console.error("Error parsing edit draft", e);
+                    console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                    localStorage.removeItem(draftKey);
+                    localStorage.removeItem('groups_draft_metadata');
                 }
             }
 
@@ -184,20 +205,42 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 setGroupMembers([]);
             }
         } else {
-            const draft = localStorage.getItem('new_group_form_draft');
+            const draftKey = 'new_group_form_draft';
+            const draft = localStorage.getItem(draftKey);
             if (draft && !isReadOnly) {
                 try {
                     const parsed = JSON.parse(draft);
-                    setFormData(parsed.formData);
-                    setSelectedCoordName(parsed.selectedCoordName);
-                    setSelectedCoordCareer(parsed.selectedCoordCareer);
-                    setGroupMembers(parsed.groupMembers);
-                    setCoordSearchQuery('');
-                    setIsDraftRestored(true);
-                    isInitializedRef.current = true;
-                    return;
+                    if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                        const validatedFormData = {
+                            nombre: parsed.formData.nombre || '',
+                            siglas: parsed.formData.siglas || '',
+                            tipo_grupo: parsed.formData.tipo_grupo || 'Investigación',
+                            id_dominio: parsed.formData.id_dominio || '',
+                            id_profesor_coordinador: parsed.formData.id_profesor_coordinador || '',
+                            objetivo_general: parsed.formData.objetivo_general || '',
+                            mision: parsed.formData.mision || '',
+                            vision: parsed.formData.vision || '',
+                            resolucion_aprobacion: parsed.formData.resolucion_aprobacion || '',
+                            fecha_creacion: parsed.formData.fecha_creacion || '',
+                            categoria_consolidacion: parsed.formData.categoria_consolidacion || 'En Formación',
+                            lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                            carreras_ids: Array.isArray(parsed.formData.carreras_ids) ? parsed.formData.carreras_ids : []
+                        };
+                        setFormData(validatedFormData);
+                        setSelectedCoordName(parsed.selectedCoordName || '');
+                        setSelectedCoordCareer(parsed.selectedCoordCareer || '');
+                        setGroupMembers(Array.isArray(parsed.groupMembers) ? parsed.groupMembers : []);
+                        setCoordSearchQuery('');
+                        setIsDraftRestored(true);
+                        isInitializedRef.current = true;
+                        return;
+                    } else {
+                        throw new Error("Estructura de borrador de grupo nuevo inválida");
+                    }
                 } catch (e) {
-                    console.error("Error parsing new draft", e);
+                    console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                    localStorage.removeItem(draftKey);
+                    localStorage.removeItem('groups_draft_metadata');
                 }
             }
 

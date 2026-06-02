@@ -327,3 +327,92 @@ Inserta este banner en la parte superior de tu formulario `<form className="..."
     </div>
 )}
 ```
+
+---
+
+## 3. Consideraciones Avanzadas y Buenas Prácticas de Ingeniería (Nivel Senior)
+
+Para que el sistema de borradores sea considerado verdaderamente profesional y apto para producción a gran escala, debe cumplir con directrices estrictas sobre **seguridad, eficiencia de memoria y resiliencia de datos**.
+
+### A. ¿Qué NO se debe guardar en el Borrador? (Exclusión de Estados Efímeros)
+Un error común de desarrollo es serializar todo el estado del componente. **Solo se debe persistir el estado de valor final del formulario**. 
+Debes omitir estrictamente del guardado:
+1. **Buscadores y Queries de Autocompletado**: Estados como `coordSearchQuery`, `teacherSearchQuery` o `studentSearchQuery` no deben guardarse. Al restaurarse la página, estas barras de búsqueda deben aparecer vacías.
+2. **Resultados de Búsquedas en Curso**: Colecciones dinámicas como `coordSearchResults`, `teacherSearchResults` o `studentSearchResults` son respuestas efímeras del backend y no forman parte del formulario.
+3. **Visibilidad de Overlays / Dropdowns**: Banderas booleanas de UI como `showCoordResults`, `showTeacherResults` o `showStudentResults` siempre deben inicializarse en `false`.
+4. **Estados de Carga / Loaders**: Indicadores de carga como `isCoordSearching`, `isTeacherSearching` o `loading` son puramente operacionales y deben inicializarse por defecto.
+5. **Selecciones Intermedias no Vinculadas**: Si el usuario seleccionó un docente en el buscador pero **no** presionó el botón "Vincular", ese objeto temporal (`selectedTeacher`) no debe persistirse, ya que el usuario no completó la acción de agregarlo.
+
+### B. Seguridad y Datos Sensibles
+`localStorage` es vulnerable a ataques de secuestro de sesión (XSS). Por lo tanto:
+*   **PROHIBIDO GUARDAR**: Contraseñas en texto plano, tokens de autenticación (JWT), llaves de API o identificadores confidenciales privados.
+*   **INFORMACIÓN NO SENSIBLE**: Solo persiste cadenas descriptivas públicas (nombres, descripciones, siglas, selecciones de catálogos públicos como dominios académicos o categorías de vinculación).
+*   **EXCEPCIÓN DE ARCHIVOS (BLOBS/FILES)**: Si tu formulario incluye subida de imágenes o documentos PDF, **no intentes guardar el objeto `File` o un Blob en localStorage**. Esto causará excepciones de serialización o desbordamiento de memoria. En su lugar, simplemente no guardes el campo de archivo o guarda la URL temporal devuelta por el servidor una vez que el archivo haya sido pre-subido con éxito.
+
+### C. Manejo de Colecciones y Estructuras Complejas (Arrays de Integrantes / Relaciones)
+Cuando el formulario maneja listas dinámicas locales (como la lista de miembros agregados antes de enviar la propuesta), el borrador debe persistir el array completo de objetos planos:
+```typescript
+// Estructura guardada en localStorage
+const draftData = {
+    formData: {
+        nombre: '...',
+        lineas_ids: [1, 4, 8], // Arrays de IDs seleccionados
+        carreras_ids: [12, 15]
+    },
+    selectedCoordName: 'Dr. John Doe', // Nombres para mostrar la UI
+    selectedCoordCareer: 'Ingeniería de Software',
+    groupMembers: [ // Array completo de integrantes agregados en memoria
+        { id_usuario: 0, cedula: '172...', nombre_completo: 'Alice Smith', rol: 'Co-Investigador', activo: true }
+    ]
+};
+```
+Al restaurarse el estado, asegúrate de asignar cada array a su respectivo `useState` de React (`setGroupMembers`, `setFormData`, etc.), garantizando que la UI renderice automáticamente las tarjetas Bento y listas vinculadas.
+
+### D. Resiliencia ante Cambios de Esquema y Excepciones (Outdated Drafts)
+Si actualizas la estructura de base de datos o el formulario de tu aplicación en el futuro, los usuarios pueden tener en su navegador borradores antiguos almacenados en formato antiguo (JSON incompatible). Si intentas parsear este JSON, la aplicación podría crasear por propiedades no definidas (`undefined`).
+
+Para prevenir esto de manera profesional, implementa un **bloque de captura y saneamiento robusto** en tu hook de inicialización:
+```typescript
+try {
+    const parsed = JSON.parse(draft);
+    
+    // VALIDACIÓN DE SEGURIDAD: Comprueba que el borrador tenga la estructura mínima esperada
+    if (parsed && typeof parsed === 'object' && parsed.formData) {
+        setFormData(parsed.formData);
+        setSelectedCoordName(parsed.selectedCoordName || '');
+        setSelectedCoordCareer(parsed.selectedCoordCareer || '');
+        setGroupMembers(Array.isArray(parsed.groupMembers) ? parsed.groupMembers : []);
+        setIsDraftRestored(true);
+        isInitializedRef.current = true;
+        return;
+    } else {
+        // Estructura corrupta: Limpiar preventivamente para evitar bucles de error
+        throw new Error("Estructura de borrador inválida");
+    }
+} catch (e) {
+    console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+    localStorage.removeItem(draftKey); // Sanitización automática
+}
+```
+Este bloque try-catch actúa como un escudo protector: si el JSON no es válido o está desactualizado, limpia el borrador silenciosamente y carga los datos limpios por defecto, evitando pantallas de la muerte o bucles de crasheo.
+
+### E. Protección de Vistas de Solo Lectura (Read-Only Safety)
+Uno de los fallos de lógica más sutiles en la gestión de borradores ocurre cuando la misma interfaz del formulario se reutiliza para visualizar registros existentes en modo **Solo Lectura** (`isReadOnly = true`). 
+
+Si no se implementa una separación estricta, ocurrirán dos problemas críticos:
+1. **Contaminación del Visualizador**: Un administrador o supervisor abre un registro guardado en la base de datos para auditarlo, pero el sistema le carga un borrador local no guardado. El supervisor auditaría información falsa o desactualizada.
+2. **Auto-guardado Accidental**: El visualizador abre el registro en modo lectura y, debido al ciclo de renders de React, el `useEffect` de auto-guardado se activa, guardando una copia del registro en su `localStorage` como si estuviera editándolo.
+
+**La Solución Implementada (Reglas Fijas)**:
+*   **En la inicialización del estado**: Bloqueamos la lectura del borrador en modo lectura. Solo recuperamos borradores si `!isReadOnly`:
+    ```typescript
+    if (draft && !isReadOnly) { ... }
+    ```
+*   **En el trigger de auto-guardado**: Añadimos una cláusula de guarda inmediata para abortar cualquier operación de escritura si `isReadOnly` es `true`:
+    ```typescript
+    if (!isOpen || isReadOnly || !isInitializedRef.current) return;
+    ```
+
+Con esto, garantizamos que las consultas y visualizaciones históricas permanezcan 100% fieles a la base de datos oficial, protegiendo la integridad del sistema.
+
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { 
     Plus, Calendar, DollarSign, FileText, CheckCircle, 
@@ -60,6 +60,16 @@ const ConvocatoriasPage = () => {
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
+
+    // Draft management states
+    const [isDraftRestored, setIsDraftRestored] = useState(false);
+    const isInitializedRef = useRef(false);
+    const [pendingDraft, setPendingDraft] = useState<{
+        type: 'new' | 'edit';
+        uuid?: string;
+        groupName: string;
+        timestamp: number;
+    } | null>(null);
     
     const [formData, setFormData] = useState({
         codigo_convocatoria: '',
@@ -119,10 +129,291 @@ const ConvocatoriasPage = () => {
         }
     };
 
+    // Load draft metadata on mount
     useEffect(() => {
         fetchConvocatorias();
         fetchCatalogos();
+
+        const metaStr = localStorage.getItem('convocatoria_draft_metadata');
+        if (metaStr) {
+            try {
+                setPendingDraft(JSON.parse(metaStr));
+            } catch (e) {
+                console.error("Error reading draft metadata", e);
+            }
+        }
     }, []);
+
+    // Reset init reference when modal closes
+    useEffect(() => {
+        if (!showModal) {
+            isInitializedRef.current = false;
+            setIsDraftRestored(false);
+        }
+    }, [showModal]);
+
+    // Auto-save draft on state changes
+    useEffect(() => {
+        if (!showModal || !isInitializedRef.current) return;
+
+        const draftData = { formData };
+
+        if (isEditing && selectedUuid) {
+            const draftKey = `edit_convocatoria_form_draft_${selectedUuid}`;
+            localStorage.setItem(draftKey, JSON.stringify(draftData));
+
+            const meta = {
+                type: 'edit',
+                uuid: selectedUuid,
+                groupName: formData.titulo || 'Convocatoria sin título',
+                timestamp: Date.now()
+            };
+            localStorage.setItem('convocatoria_draft_metadata', JSON.stringify(meta));
+        } else {
+            localStorage.setItem('new_convocatoria_form_draft', JSON.stringify(draftData));
+
+            const meta = {
+                type: 'new',
+                groupName: formData.titulo || 'Nueva Convocatoria',
+                timestamp: Date.now()
+            };
+            localStorage.setItem('convocatoria_draft_metadata', JSON.stringify(meta));
+        }
+    }, [formData, showModal, isEditing, selectedUuid]);
+
+    const clearDraft = () => {
+        localStorage.removeItem('new_convocatoria_form_draft');
+        localStorage.removeItem('convocatoria_draft_metadata');
+        if (selectedUuid) {
+            localStorage.removeItem(`edit_convocatoria_form_draft_${selectedUuid}`);
+        }
+        setPendingDraft(null);
+        setIsDraftRestored(false);
+    };
+
+    const handleRestoreDraft = () => {
+        if (!pendingDraft) return;
+
+        if (pendingDraft.type === 'new') {
+            setIsEditing(false);
+            setSelectedUuid(null);
+            const draftKey = 'new_convocatoria_form_draft';
+            const draft = localStorage.getItem(draftKey);
+            if (draft) {
+                try {
+                    const parsed = JSON.parse(draft);
+                    if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                        const validated = {
+                            codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
+                            titulo: parsed.formData.titulo || '',
+                            id_periodo: parsed.formData.id_periodo || '',
+                            anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                            descripcion: parsed.formData.descripcion || '',
+                            presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
+                            monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                            url_bases: parsed.formData.url_bases || '',
+                            requisitos_minimos: parsed.formData.requisitos_minimos || '',
+                            id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
+                            id_agenda_zonal: parsed.formData.id_agenda_zonal,
+                            id_rubrica: parsed.formData.id_rubrica,
+                            puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                            financiamiento_ext: !!parsed.formData.financiamiento_ext,
+                            meta_produccion: parsed.formData.meta_produccion || '',
+                            fecha_apertura: parsed.formData.fecha_apertura || '',
+                            fecha_cierre: parsed.formData.fecha_cierre || '',
+                            lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                            hitos: Array.isArray(parsed.formData.hitos) ? parsed.formData.hitos : [],
+                            documentos_req: Array.isArray(parsed.formData.documentos_req) ? parsed.formData.documentos_req : []
+                        };
+                        setFormData(validated);
+                        setIsDraftRestored(true);
+                    } else {
+                        throw new Error("Estructura de borrador de nueva convocatoria inválida");
+                    }
+                } catch (e) {
+                    console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                    localStorage.removeItem(draftKey);
+                    localStorage.removeItem('convocatoria_draft_metadata');
+                    setIsDraftRestored(false);
+                }
+            }
+            isInitializedRef.current = true;
+            setShowModal(true);
+        } else if (pendingDraft.type === 'edit' && pendingDraft.uuid) {
+            const item = convocatorias.find(c => c.uuid === pendingDraft.uuid);
+            if (item) {
+                setIsEditing(true);
+                setSelectedUuid(item.uuid);
+                const draftKey = `edit_convocatoria_form_draft_${item.uuid}`;
+                const draft = localStorage.getItem(draftKey);
+                if (draft) {
+                    try {
+                        const parsed = JSON.parse(draft);
+                        if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                            const validated = {
+                                codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
+                                titulo: parsed.formData.titulo || '',
+                                id_periodo: parsed.formData.id_periodo || '',
+                                anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                                descripcion: parsed.formData.descripcion || '',
+                                presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
+                                monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                                url_bases: parsed.formData.url_bases || '',
+                                requisitos_minimos: parsed.formData.requisitos_minimos || '',
+                                id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
+                                id_agenda_zonal: parsed.formData.id_agenda_zonal,
+                                id_rubrica: parsed.formData.id_rubrica,
+                                puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                                financiamiento_ext: !!parsed.formData.financiamiento_ext,
+                                meta_produccion: parsed.formData.meta_produccion || '',
+                                fecha_apertura: parsed.formData.fecha_apertura || '',
+                                fecha_cierre: parsed.formData.fecha_cierre || '',
+                                lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                                hitos: Array.isArray(parsed.formData.hitos) ? parsed.formData.hitos : [],
+                                documentos_req: Array.isArray(parsed.formData.documentos_req) ? parsed.formData.documentos_req : []
+                            };
+                            setFormData(validated);
+                            setIsDraftRestored(true);
+                        } else {
+                            throw new Error("Estructura de borrador de edición de convocatoria inválida");
+                        }
+                    } catch (e) {
+                        console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                        localStorage.removeItem(draftKey);
+                        localStorage.removeItem('convocatoria_draft_metadata');
+                        setIsDraftRestored(false);
+                    }
+                } else {
+                    setFormData({
+                        codigo_convocatoria: item.codigo_convocatoria,
+                        titulo: item.titulo,
+                        id_periodo: item.id_periodo,
+                        anio: item.anio,
+                        descripcion: item.descripcion || '',
+                        presupuesto_total: item.presupuesto_total || 0,
+                        monto_maximo_proyecto: item.monto_maximo_proyecto || 0,
+                        url_bases: item.url_bases || '',
+                        requisitos_minimos: item.requisitos_minimos || '',
+                        id_tipo_convocatoria: item.id_tipo_convocatoria,
+                        id_agenda_zonal: item.id_agenda_zonal,
+                        id_rubrica: item.id_rubrica,
+                        puntaje_minimo_aprobacion: item.puntaje_minimo_aprobacion || 70,
+                        financiamiento_ext: item.financiamiento_ext,
+                        meta_produccion: item.meta_produccion || '',
+                        fecha_apertura: item.fecha_apertura,
+                        fecha_cierre: item.fecha_cierre,
+                        lineas_ids: item.lineas_ids || [],
+                        hitos: item.hitos || [],
+                        documentos_req: item.documentos_req || []
+                    });
+                }
+                isInitializedRef.current = true;
+                setShowModal(true);
+            } else {
+                alert("No se pudo encontrar el registro original de la convocatoria.");
+            }
+        }
+    };
+
+    const handleDiscardDraft = () => {
+        if (window.confirm('¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.')) {
+            localStorage.removeItem('convocatoria_draft_metadata');
+            localStorage.removeItem('new_convocatoria_form_draft');
+            if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
+                localStorage.removeItem(`edit_convocatoria_form_draft_${pendingDraft.uuid}`);
+            }
+            setPendingDraft(null);
+            setIsDraftRestored(false);
+        }
+    };
+
+    const handleNewConvocatoria = () => {
+        resetForm();
+        const draftKey = 'new_convocatoria_form_draft';
+        const draft = localStorage.getItem(draftKey);
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                    const validated = {
+                        codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
+                        titulo: parsed.formData.titulo || '',
+                        id_periodo: parsed.formData.id_periodo || '',
+                        anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                        descripcion: parsed.formData.descripcion || '',
+                        presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
+                        monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                        url_bases: parsed.formData.url_bases || '',
+                        requisitos_minimos: parsed.formData.requisitos_minimos || '',
+                        id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
+                        id_agenda_zonal: parsed.formData.id_agenda_zonal,
+                        id_rubrica: parsed.formData.id_rubrica,
+                        puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                        financiamiento_ext: !!parsed.formData.financiamiento_ext,
+                        meta_produccion: parsed.formData.meta_produccion || '',
+                        fecha_apertura: parsed.formData.fecha_apertura || '',
+                        fecha_cierre: parsed.formData.fecha_cierre || '',
+                        lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                        hitos: Array.isArray(parsed.formData.hitos) ? parsed.formData.hitos : [],
+                        documentos_req: Array.isArray(parsed.formData.documentos_req) ? parsed.formData.documentos_req : []
+                    };
+                    setFormData(validated);
+                    setIsDraftRestored(true);
+                } else {
+                    throw new Error("Estructura de borrador de nueva convocatoria inválida");
+                }
+            } catch (e) {
+                console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                localStorage.removeItem(draftKey);
+                localStorage.removeItem('convocatoria_draft_metadata');
+                setIsDraftRestored(false);
+            }
+        }
+        isInitializedRef.current = true;
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        let hasChanges = false;
+        if (isEditing && selectedUuid) {
+            const conv = convocatorias.find(c => c.uuid === selectedUuid);
+            if (conv) {
+                hasChanges = 
+                    formData.codigo_convocatoria !== conv.codigo_convocatoria ||
+                    formData.titulo !== conv.titulo ||
+                    formData.id_periodo !== conv.id_periodo ||
+                    formData.anio !== conv.anio ||
+                    formData.descripcion !== (conv.descripcion || '') ||
+                    formData.presupuesto_total !== (conv.presupuesto_total || 0) ||
+                    formData.monto_maximo_proyecto !== (conv.monto_maximo_proyecto || 0) ||
+                    formData.fecha_apertura !== conv.fecha_apertura ||
+                    formData.fecha_cierre !== conv.fecha_cierre ||
+                    JSON.stringify(formData.lineas_ids.slice().sort()) !== JSON.stringify((conv.lineas_ids || []).slice().sort()) ||
+                    JSON.stringify(formData.hitos) !== JSON.stringify(conv.hitos || []) ||
+                    JSON.stringify(formData.documentos_req) !== JSON.stringify(conv.documentos_req || []);
+            }
+        } else {
+            hasChanges = 
+                formData.codigo_convocatoria.trim() !== '' ||
+                formData.titulo.trim() !== '' ||
+                formData.descripcion.trim() !== '' ||
+                formData.lineas_ids.length > 0 ||
+                formData.hitos.length > 0 ||
+                formData.documentos_req.length > 0;
+        }
+
+        if (hasChanges) {
+            if (window.confirm('¿Está seguro de salir? Perderá todos los cambios no guardados en este formulario.')) {
+                clearDraft();
+                setShowModal(false);
+                resetForm();
+            }
+        } else {
+            clearDraft();
+            setShowModal(false);
+            resetForm();
+        }
+    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -132,6 +423,7 @@ const ConvocatoriasPage = () => {
             } else {
                 await api.post('/Convocatorias', formData);
             }
+            clearDraft();
             setShowModal(false);
             fetchConvocatorias();
             resetForm();
@@ -143,28 +435,72 @@ const ConvocatoriasPage = () => {
     const handleEdit = (conv: Convocatoria) => {
         setIsEditing(true);
         setSelectedUuid(conv.uuid);
-        setFormData({
-            codigo_convocatoria: conv.codigo_convocatoria,
-            titulo: conv.titulo,
-            id_periodo: conv.id_periodo,
-            anio: conv.anio,
-            descripcion: conv.descripcion || '',
-            presupuesto_total: conv.presupuesto_total || 0,
-            monto_maximo_proyecto: conv.monto_maximo_proyecto || 0,
-            url_bases: conv.url_bases || '',
-            requisitos_minimos: conv.requisitos_minimos || '',
-            id_tipo_convocatoria: conv.id_tipo_convocatoria,
-            id_agenda_zonal: conv.id_agenda_zonal,
-            id_rubrica: conv.id_rubrica,
-            puntaje_minimo_aprobacion: conv.puntaje_minimo_aprobacion || 70,
-            financiamiento_ext: conv.financiamiento_ext,
-            meta_produccion: conv.meta_produccion || '',
-            fecha_apertura: conv.fecha_apertura,
-            fecha_cierre: conv.fecha_cierre,
-            lineas_ids: conv.lineas_ids || [],
-            hitos: conv.hitos || [],
-            documentos_req: conv.documentos_req || []
-        });
+        
+        const draftKey = `edit_convocatoria_form_draft_${conv.uuid}`;
+        const draft = localStorage.getItem(draftKey);
+        if (draft) {
+            try {
+                const parsed = JSON.parse(draft);
+                if (parsed && typeof parsed === 'object' && parsed.formData && typeof parsed.formData === 'object') {
+                    const validated = {
+                        codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
+                        titulo: parsed.formData.titulo || '',
+                        id_periodo: parsed.formData.id_periodo || '',
+                        anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                        descripcion: parsed.formData.descripcion || '',
+                        presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
+                        monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                        url_bases: parsed.formData.url_bases || '',
+                        requisitos_minimos: parsed.formData.requisitos_minimos || '',
+                        id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
+                        id_agenda_zonal: parsed.formData.id_agenda_zonal,
+                        id_rubrica: parsed.formData.id_rubrica,
+                        puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                        financiamiento_ext: !!parsed.formData.financiamiento_ext,
+                        meta_produccion: parsed.formData.meta_produccion || '',
+                        fecha_apertura: parsed.formData.fecha_apertura || '',
+                        fecha_cierre: parsed.formData.fecha_cierre || '',
+                        lineas_ids: Array.isArray(parsed.formData.lineas_ids) ? parsed.formData.lineas_ids : [],
+                        hitos: Array.isArray(parsed.formData.hitos) ? parsed.formData.hitos : [],
+                        documentos_req: Array.isArray(parsed.formData.documentos_req) ? parsed.formData.documentos_req : []
+                    };
+                    setFormData(validated);
+                    setIsDraftRestored(true);
+                } else {
+                    throw new Error("Estructura de borrador de edición de convocatoria inválida");
+                }
+            } catch (e) {
+                console.warn("Borrador corrupto o desactualizado detectado. Limpiando almacenamiento...", e);
+                localStorage.removeItem(draftKey);
+                localStorage.removeItem('convocatoria_draft_metadata');
+                setIsDraftRestored(false);
+            }
+        } else {
+            setFormData({
+                codigo_convocatoria: conv.codigo_convocatoria,
+                titulo: conv.titulo,
+                id_periodo: conv.id_periodo,
+                anio: conv.anio,
+                descripcion: conv.descripcion || '',
+                presupuesto_total: conv.presupuesto_total || 0,
+                monto_maximo_proyecto: conv.monto_maximo_proyecto || 0,
+                url_bases: conv.url_bases || '',
+                requisitos_minimos: conv.requisitos_minimos || '',
+                id_tipo_convocatoria: conv.id_tipo_convocatoria,
+                id_agenda_zonal: conv.id_agenda_zonal,
+                id_rubrica: conv.id_rubrica,
+                puntaje_minimo_aprobacion: conv.puntaje_minimo_aprobacion || 70,
+                financiamiento_ext: conv.financiamiento_ext,
+                meta_produccion: conv.meta_produccion || '',
+                fecha_apertura: conv.fecha_apertura,
+                fecha_cierre: conv.fecha_cierre,
+                lineas_ids: conv.lineas_ids || [],
+                hitos: conv.hitos || [],
+                documentos_req: conv.documentos_req || []
+            });
+            setIsDraftRestored(false);
+        }
+        isInitializedRef.current = true;
         setShowModal(true);
     };
 
@@ -221,6 +557,7 @@ const ConvocatoriasPage = () => {
         setIsEditing(false);
         setSelectedUuid(null);
         setShowAdvanced(false);
+        setIsDraftRestored(false);
     };
 
     const toggleLinea = (id: number) => {
@@ -260,7 +597,7 @@ const ConvocatoriasPage = () => {
 
                 <div className="w-full lg:w-auto flex gap-4">
                     <button 
-                        onClick={() => { resetForm(); setShowModal(true); }}
+                        onClick={handleNewConvocatoria}
                         className="btn-vercel-primary flex-1 lg:flex-none"
                     >
                         <Plus size={14} strokeWidth={3} />
@@ -274,6 +611,49 @@ const ConvocatoriasPage = () => {
                     </button>
                 </div>
             </header>
+
+            {/* Banner de Recuperación de Borrador */}
+            {pendingDraft && (
+                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
+                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
+
+                    <div className="flex items-center gap-4 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
+                            <FileText size={18} />
+                        </div>
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Borrador Detectado</h4>
+                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
+                                    No Guardado
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
+                                Tienes un borrador sin guardar de: <span className="text-text-main font-black">"{pendingDraft.groupName}"</span>
+                            </p>
+                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                                Guardado automáticamente el {new Date(pendingDraft.timestamp).toLocaleDateString()} a las {new Date(pendingDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                        <button
+                            onClick={handleRestoreDraft}
+                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Restaurar Borrador
+                        </button>
+                        <button
+                            onClick={handleDiscardDraft}
+                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                        >
+                            Descartar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Two-column Vercel Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up" style={{ animationDelay: '100ms' }}>
@@ -417,12 +797,87 @@ const ConvocatoriasPage = () => {
                                 </h3>
                                 <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest">Registro de Ciclo de Investigación</p>
                             </div>
-                            <button onClick={() => setShowModal(false)} className="p-2 text-text-dim hover:text-text-main transition-colors">
+                            <button onClick={handleCloseModal} className="p-2 text-text-dim hover:text-text-main transition-colors">
                                 <X size={20} />
                             </button>
                         </div>
 
                         <form onSubmit={handleSave} className="modal-body space-y-6">
+                            {isDraftRestored && (
+                                <div className="bg-brand-subtle border border-brand/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
+                                    <div className="flex items-center gap-3">
+                                        <FileText size={16} className="text-brand shrink-0" />
+                                        <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
+                                            <span className="text-brand font-black">Borrador Restaurado:</span> Se han recuperado tus datos no guardados localmente.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isEditing && selectedUuid) {
+                                                const conv = convocatorias.find(c => c.uuid === selectedUuid);
+                                                if (conv) {
+                                                    setFormData({
+                                                        codigo_convocatoria: conv.codigo_convocatoria,
+                                                        titulo: conv.titulo,
+                                                        id_periodo: conv.id_periodo,
+                                                        anio: conv.anio,
+                                                        descripcion: conv.descripcion || '',
+                                                        presupuesto_total: conv.presupuesto_total || 0,
+                                                        monto_maximo_proyecto: conv.monto_maximo_proyecto || 0,
+                                                        url_bases: conv.url_bases || '',
+                                                        requisitos_minimos: conv.requisitos_minimos || '',
+                                                        id_tipo_convocatoria: conv.id_tipo_convocatoria,
+                                                        id_agenda_zonal: conv.id_agenda_zonal,
+                                                        id_rubrica: conv.id_rubrica,
+                                                        puntaje_minimo_aprobacion: conv.puntaje_minimo_aprobacion || 70,
+                                                        financiamiento_ext: conv.financiamiento_ext,
+                                                        meta_produccion: conv.meta_produccion || '',
+                                                        fecha_apertura: conv.fecha_apertura,
+                                                        fecha_cierre: conv.fecha_cierre,
+                                                        lineas_ids: conv.lineas_ids || [],
+                                                        hitos: conv.hitos || [],
+                                                        documentos_req: conv.documentos_req || []
+                                                    });
+                                                }
+                                            } else {
+                                                setFormData({
+                                                    codigo_convocatoria: '',
+                                                    titulo: '',
+                                                    id_periodo: periodos[0]?.id_periodo || '',
+                                                    anio: new Date().getFullYear(),
+                                                    descripcion: '',
+                                                    presupuesto_total: 0,
+                                                    monto_maximo_proyecto: 0,
+                                                    url_bases: '',
+                                                    requisitos_minimos: '',
+                                                    id_tipo_convocatoria: undefined,
+                                                    id_agenda_zonal: undefined,
+                                                    id_rubrica: undefined,
+                                                    puntaje_minimo_aprobacion: 70.00,
+                                                    financiamiento_ext: false,
+                                                    meta_produccion: '',
+                                                    fecha_apertura: '',
+                                                    fecha_cierre: '',
+                                                    lineas_ids: [],
+                                                    hitos: [],
+                                                    documentos_req: []
+                                                });
+                                            }
+                                            localStorage.removeItem('new_convocatoria_form_draft');
+                                            localStorage.removeItem('convocatoria_draft_metadata');
+                                            if (selectedUuid) {
+                                                localStorage.removeItem(`edit_convocatoria_form_draft_${selectedUuid}`);
+                                            }
+                                            setIsDraftRestored(false);
+                                            setPendingDraft(null);
+                                        }}
+                                        className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline cursor-pointer shrink-0"
+                                    >
+                                        Revertir al Original
+                                    </button>
+                                </div>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
@@ -741,7 +1196,7 @@ const ConvocatoriasPage = () => {
                             <div className="modal-footer">
                                 <button 
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={handleCloseModal}
                                     className="btn-vercel-secondary"
                                 >
                                     Cancelar
