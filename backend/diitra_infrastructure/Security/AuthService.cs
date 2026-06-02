@@ -237,6 +237,7 @@ public class AuthService : IAuthService
 
         // 2. Cargar Roles y Permisos Modulares
         var userRoles = await _context.UserRoles
+            .AsSplitQuery()
             .Include(ur => ur.Role)
                 .ThenInclude(r => r.RoleModuleOperations).ThenInclude(rmo => rmo.ModuleOperation).ThenInclude(mo => mo.Module)
             .Include(ur => ur.Role)
