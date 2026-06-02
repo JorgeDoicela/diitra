@@ -34,6 +34,7 @@ export interface InformeAvanceDto {
 
 export interface CreateInformeAvanceDto {
     id_proyecto: number;
+    project_uuid?: string;   // el backend resuelve el id numérico si id_proyecto es 0
     fecha_reporte: string;   // 'YYYY-MM-DD'
     resumen_actividades: string;
 }
@@ -49,8 +50,8 @@ export interface ObservarInformeDto {
 export const getInformeById = (id: number): Promise<InformeAvanceDto> =>
     api.get(`/informes-avance/${id}`).then(r => r.data);
 
-export const getInformesByProyecto = (projectId: number): Promise<InformeAvanceDto[]> =>
-    api.get(`/informes-avance/proyecto/${projectId}`).then(r => r.data);
+export const getInformesByProyecto = (projectUuid: string): Promise<InformeAvanceDto[]> =>
+    api.get(`/informes-avance/proyecto/uuid/${projectUuid}`).then(r => r.data);
 
 export const createInforme = (dto: CreateInformeAvanceDto): Promise<InformeAvanceDto> =>
     api.post('/informes-avance', dto).then(r => r.data);
@@ -60,6 +61,13 @@ export const aprobarInforme = (id: number): Promise<InformeAvanceDto> =>
 
 export const observarInforme = (id: number, observacion: string): Promise<InformeAvanceDto> =>
     api.post(`/informes-avance/${id}/observar`, { observacion }).then(r => r.data);
+
+export const firmarInforme = (
+    id: number,
+    certificadoBase64: string,
+    passwordCertificado: string
+): Promise<{ success: boolean; message: string }> =>
+    api.post(`/informes-avance/${id}/firmar`, { certificadoBase64, passwordCertificado }).then(r => r.data);
 
 // ─────────────────────────────────────────────────────────────
 //  Helpers de UI

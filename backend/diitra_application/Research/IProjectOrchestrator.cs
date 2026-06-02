@@ -31,6 +31,11 @@ namespace Diitra.Application.Research
         Task<ProyectoDto?> GetProjectDetailAsync(string uuid);
 
         /// <summary>
+        /// Resuelve un identificador de proyecto (UUID completo, prefijo corto o ID numérico) al UUID canónico.
+        /// </summary>
+        Task<string?> ResolveCanonicalUuidAsync(string identifier);
+
+        /// <summary>
         /// Estadísticas agregadas para el dashboard según el rol del usuario.
         /// </summary>
         Task<DashboardStatsDto> GetDashboardStatsAsync(string userIdReferencia, bool isAdmin);

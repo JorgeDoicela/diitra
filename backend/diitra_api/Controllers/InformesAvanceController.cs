@@ -1,10 +1,13 @@
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Diitra.Application.Research;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
+using diitra_infrastructure.data.models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Controllers;
 
@@ -18,10 +21,17 @@ namespace diitra_api.Controllers;
 public class InformesAvanceController : ControllerBase
 {
     private readonly IInformeAvanceService _service;
+    private readonly DiitraContext _context;
+    private readonly IProjectOrchestrator _projectOrchestrator;
 
-    public InformesAvanceController(IInformeAvanceService service)
+    public InformesAvanceController(
+        IInformeAvanceService service,
+        DiitraContext context,
+        IProjectOrchestrator projectOrchestrator)
     {
         _service = service;
+        _context = context;
+        _projectOrchestrator = projectOrchestrator;
     }
 
     /// <summary>Obtiene un informe por su ID.</summary>
@@ -33,7 +43,7 @@ public class InformesAvanceController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene todos los informes de avance de un proyecto específico, ordenados por número de informe.
+    /// Obtiene todos los informes de avance de un proyecto específico por ID numérico.
     /// </summary>
     [HttpGet("proyecto/{projectId:int}")]
     public async Task<IActionResult> GetByProject(int projectId)
@@ -43,8 +53,33 @@ public class InformesAvanceController : ControllerBase
     }
 
     /// <summary>
+    /// Obtiene todos los informes de avance de un proyecto específico por UUID.
+    /// Permite que el frontend use el UUID del proyecto (que está en la URL del workspace)
+    /// sin necesidad de conocer el ID numérico interno.
+    /// </summary>
+    [HttpGet("proyecto/uuid/{uuid}")]
+    public async Task<IActionResult> GetByProjectUuid(string uuid)
+    {
+        var canonicalUuid = await _projectOrchestrator.ResolveCanonicalUuidAsync(uuid);
+        if (canonicalUuid == null)
+            return NotFound(new { message = $"No se encontró un proyecto con identificador '{uuid}'." });
+
+        var project = await _context.InvProyectos
+            .Where(p => p.Uuid == canonicalUuid)
+            .Select(p => new { p.IdProyecto })
+            .FirstOrDefaultAsync();
+
+        if (project == null)
+            return NotFound(new { message = $"No se encontró un proyecto con UUID '{canonicalUuid}'." });
+
+        var informes = await _service.GetByProjectAsync(project.IdProyecto);
+        return Ok(informes);
+    }
+
+    /// <summary>
     /// Crea un nuevo informe de avance. El número se asigna automáticamente.
     /// Solo disponible para proyectos en estado 'En Ejecución'.
+    /// Si IdProyecto es 0 pero se proporciona ProjectUuid, se resuelve el ID numérico internamente.
     /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInformeAvanceDto dto)
@@ -52,6 +87,27 @@ public class InformesAvanceController : ControllerBase
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (!int.TryParse(userIdClaim, out int userId))
             return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
+
+        // Resolver IdProyecto desde UUID cuando el frontend solo tiene el UUID
+        if (dto.IdProyecto == 0 && !string.IsNullOrEmpty(dto.ProjectUuid))
+        {
+            var canonicalUuid = await _projectOrchestrator.ResolveCanonicalUuidAsync(dto.ProjectUuid);
+            if (canonicalUuid == null)
+                return NotFound(new { message = $"No se encontró un proyecto con identificador '{dto.ProjectUuid}'." });
+
+            var project = await _context.InvProyectos
+                .Where(p => p.Uuid == canonicalUuid)
+                .Select(p => new { p.IdProyecto })
+                .FirstOrDefaultAsync();
+
+            if (project == null)
+                return NotFound(new { message = $"No se encontró un proyecto con UUID '{canonicalUuid}'." });
+
+            dto.IdProyecto = project.IdProyecto;
+        }
+
+        if (dto.IdProyecto == 0)
+            return BadRequest(new { message = "Se requiere IdProyecto o ProjectUuid." });
 
         try
         {
