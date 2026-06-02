@@ -80,7 +80,8 @@ public class FirmaElectronicaService : IFirmaElectronicaService
         IPrivateKey pk = new PrivateKeyBC(key);
         IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256);
         
-        signer.SignDetached(pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CMS);
+        // PAdES (ETSI TS 102 778): subfilter ETSI.CAdES.detached — obligatorio CACES y Ley de Comercio Electrónico Ecuador
+        signer.SignDetached(pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
 
         return outputStream.ToArray();
     }

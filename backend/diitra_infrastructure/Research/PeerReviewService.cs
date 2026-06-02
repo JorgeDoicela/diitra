@@ -220,7 +220,10 @@ public class PeerReviewService : IPeerReviewService
 
         if (revision == null) return false;
 
-        var project = await _context.InvProyectos.FindAsync(revision.IdProyecto);
+        // Cargar el proyecto con su convocatoria para obtener el umbral de aprobación real
+        var project = await _context.InvProyectos
+            .Include(p => p.IdConvocatoriaNavigation)
+            .FirstOrDefaultAsync(p => p.IdProyecto == revision.IdProyecto);
         string estadoAnteriorProyecto = project?.Estado ?? "Desconocido";
 
         var beforeState = System.Text.Json.JsonSerializer.Serialize(new
@@ -247,21 +250,23 @@ public class PeerReviewService : IPeerReviewService
         var totalScore = dto.Detalles.Sum(d => d.Puntaje);
         revision.PuntajeTotal = totalScore;
 
-        // Calcular dictamen individual del árbitro (umbral estándar 70/100)
-        revision.DictamenRevisor = totalScore >= 70m ? "Aprueba" : "Rechaza";
+        // Usar el umbral de aprobación de la convocatoria (por defecto 70/100 si no está configurado)
+        decimal umbralAprobacion = project?.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+        revision.DictamenRevisor = totalScore >= umbralAprobacion ? "Aprueba" : "Rechaza";
 
         await _context.SaveChangesAsync();
 
         // ── SINCRONIZACIÓN AUTOMÁTICA CON EL SISTEMA DE DOCUMENTOS ──
-        // Criterio de usabilidad: Cuando un par evalúa, se llena y firma automáticamente 
-        // el documento "RUBRICA_EVALUACION" de la instancia correspondiente para que
-        // figure de forma automática y completada en el Workspace del proyecto.
+        // Una instancia RUBRICA_EVALUACION individual por revisión (EntityUuid = revision.Uuid,
+        // EntityType = "Revision") garantiza que cada evaluador tenga su propia rúbrica firmada
+        // en el Workspace. El workspace agrega estas instancias junto a las del proyecto.
         if (project != null && !string.IsNullOrEmpty(project.Uuid))
         {
             try
             {
+                // Clave de unicidad: la revisión individual, no el proyecto global
                 var existingDoc = await _context.DocumentInstances
-                    .FirstOrDefaultAsync(d => d.EntityUuid == project.Uuid && d.TemplateCode == "RUBRICA_EVALUACION");
+                    .FirstOrDefaultAsync(d => d.EntityUuid == revision.Uuid && d.TemplateCode == "RUBRICA_EVALUACION");
 
                 if (existingDoc == null)
                 {
@@ -269,13 +274,14 @@ public class PeerReviewService : IPeerReviewService
                         .FirstOrDefaultAsync(t => t.Code == "RUBRICA_EVALUACION" && t.IsActive);
                     if (template != null)
                     {
+                        string tipoEvaluador = revision.EsExterno ? "Evaluador Externo" : "Evaluador Interno";
                         existingDoc = Diitra.Domain.Common.Documents.DocumentInstance.Create(
-                            "RUBRICA_EVALUACION", 
-                            template.Version, 
-                            project.Uuid, 
-                            "sistema", 
-                            $"Rúbrica de Evaluación — {project.CodigoInstitucional ?? project.Titulo}", 
-                            "Proyecto"
+                            "RUBRICA_EVALUACION",
+                            template.Version,
+                            revision.Uuid,         // EntityUuid = UUID de la revisión (único por árbitro)
+                            "sistema",
+                            $"Rúbrica de Evaluación — {tipoEvaluador} — {project.CodigoInstitucional ?? project.Titulo}",
+                            "Revision"             // EntityType = "Revision" para distinguirla del documento del proyecto
                         );
                         _context.DocumentInstances.Add(existingDoc);
                         await _context.SaveChangesAsync();
@@ -291,20 +297,23 @@ public class PeerReviewService : IPeerReviewService
 
                     var dataSnapshot = new
                     {
+                        ProyectoUuid = project.Uuid,
+                        RevisionUuid = revision.Uuid,
+                        EsExterno = revision.EsExterno,
                         Pertinencia = pertinencia,
                         Metodologia = metodologia,
                         Viabilidad = viabilidad,
                         Impacto = impacto,
                         ComentariosGenerales = dto.ObservacionesGral ?? "",
-                        RecomendacionFinal = totalScore >= 70m ? "Aprobado sin modificaciones" : "Rechazado"
+                        RecomendacionFinal = totalScore >= umbralAprobacion ? "Aprobado sin modificaciones" : "Rechazado"
                     };
 
                     string json = System.Text.Json.JsonSerializer.Serialize(dataSnapshot);
                     existingDoc.UpdateDataSnapshot(json);
-                    
-                    // Transicionamos a Firmado para que sea de solo lectura y refleje la nota del par
+
+                    // Transicionamos a Firmado: solo lectura, evidencia de auditoría académica
                     existingDoc.TransitionTo(Diitra.Domain.Common.Documents.DocumentState.Signed);
-                    
+
                     await _context.SaveChangesAsync();
                 }
             }
@@ -319,6 +328,7 @@ public class PeerReviewService : IPeerReviewService
         {
             EstadoRevision = "Completada",
             PuntajeTotal = totalScore,
+            UmbralAprobacion = umbralAprobacion,
             DictamenRevisor = revision.DictamenRevisor
         });
 
@@ -347,7 +357,7 @@ public class PeerReviewService : IPeerReviewService
         var proyectosEnRevision = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
             .Where(p => p.Estado == "En Revisión" || p.Estado == "Enviado" || 
-                       ((p.Estado == "Aprobado" || p.Estado == "Rechazado") && 
+                       ((p.Estado == "Aprobado" || p.Estado == "En Ejecución" || p.Estado == "Rechazado") && 
                         _context.Set<InvRevisionesPares>().Any(r => r.IdProyecto == p.IdProyecto)))
             .ToListAsync();
 
@@ -364,7 +374,8 @@ public class PeerReviewService : IPeerReviewService
                 ? completadas.Where(r => r.PuntajeTotal.HasValue).Average(r => r.PuntajeTotal)
                 : null;
 
-            string estadoArbitraje = DeterminarEstadoArbitraje(revisiones);
+            decimal umbralProyecto = proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+            string estadoArbitraje = DeterminarEstadoArbitraje(revisiones, umbralProyecto);
 
             var revDtos = new List<PeerReviewDto>();
             foreach (var rev in revisiones)
@@ -416,7 +427,7 @@ public class PeerReviewService : IPeerReviewService
         var todasRevisiones = await _context.Set<InvRevisionesPares>()
             .Include(r => r.Proyecto)
             .Where(r => r.Proyecto.Estado == "En Revisión" || r.Proyecto.Estado == "Enviado" || 
-                       r.Proyecto.Estado == "Aprobado" || r.Proyecto.Estado == "Rechazado")
+                       r.Proyecto.Estado == "Aprobado" || r.Proyecto.Estado == "En Ejecución" || r.Proyecto.Estado == "Rechazado")
             .ToListAsync();
 
         int proyectos = todasRevisiones.Select(r => r.IdProyecto).Distinct().Count();
@@ -511,7 +522,7 @@ public class PeerReviewService : IPeerReviewService
             TotalArbitros = revisiones.Count,
             ArbitrosCompletados = completadas.Count,
             PuntajePromedio = promedio,
-            EstadoArbitraje = DeterminarEstadoArbitraje(revisiones),
+            EstadoArbitraje = DeterminarEstadoArbitraje(revisiones, proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m),
             Revisiones = revDtos
         };
     }
@@ -900,17 +911,36 @@ public class PeerReviewService : IPeerReviewService
         else if (aprobadosCount > rechazadosCount)
         {
             resultado = "Aprobado";
-            project.Estado = "Aprobado";
+            // El proyecto pasa directamente a ejecución: "Aprobado" es el resultado del dictamen,
+            // pero el ciclo de vida continúa en "En Ejecución" para habilitar informes de avance.
+            project.Estado = "En Ejecución";
             project.PuntajeEvaluacion = promedio;
             project.FechaModificacion = DateTime.Now;
 
-            // Generar código institucional si no tiene
+            // Generar código institucional con transacción serializable para evitar colisión
+            // concurrente en caso de aprobaciones simultáneas.
             if (string.IsNullOrEmpty(project.CodigoInstitucional))
             {
-                var anio = DateTime.Now.Year;
-                var seq = await _context.InvProyectos.CountAsync(p => p.FechaRegistro.HasValue &&
-                    p.FechaRegistro.Value.Year == anio && p.Estado == "Aprobado") + 1;
-                project.CodigoInstitucional = $"DIITRA-{anio}-{seq:D3}";
+                using var seqTransaction = await _context.Database.BeginTransactionAsync(
+                    System.Data.IsolationLevel.Serializable);
+                try
+                {
+                    var anio = DateTime.Now.Year;
+                    // Contar proyectos ya aprobados en la BD más el actual (que aún no está guardado)
+                    var seq = await _context.InvProyectos.CountAsync(p =>
+                        p.IdProyecto != project.IdProyecto &&
+                        p.FechaRegistro.HasValue &&
+                        p.FechaRegistro.Value.Year == anio &&
+                        p.Estado == "Aprobado") + 1;
+                    project.CodigoInstitucional = $"DIITRA-{anio}-{seq:D3}";
+                    await _context.SaveChangesAsync();
+                    await seqTransaction.CommitAsync();
+                }
+                catch
+                {
+                    await seqTransaction.RollbackAsync();
+                    throw;
+                }
             }
         }
         else
@@ -1042,14 +1072,14 @@ public class PeerReviewService : IPeerReviewService
             RevisorCarrera = revisorCarrera
         };
 
-    private static string DeterminarEstadoArbitraje(List<InvRevisionesPares> revisiones)
+    private static string DeterminarEstadoArbitraje(List<InvRevisionesPares> revisiones, decimal puntajeMinimo = 70m)
     {
         if (!revisiones.Any()) return "SinArbitros";
         if (revisiones.All(r => r.Estado == "Completada"))
         {
             var scores = revisiones.Where(r => r.PuntajeTotal.HasValue).Select(r => r.PuntajeTotal!.Value).ToList();
-            var aprobadosCount = scores.Count(s => s >= 70);
-            var rechazadosCount = scores.Count(s => s < 70);
+            var aprobadosCount = scores.Count(s => s >= puntajeMinimo);
+            var rechazadosCount = scores.Count(s => s < puntajeMinimo);
             if (aprobadosCount == rechazadosCount && scores.Count > 0) return "Desempate";
             return "Completado";
         }
@@ -1202,12 +1232,42 @@ public class PeerReviewService : IPeerReviewService
 
     public async Task<byte[]> GenerateDictamenPdfAsync(string projectUuid, int directorId)
     {
-        // 1. Obtener el dictamen (reutiliza la lógica de CerrarArbitrajeAsync sin persistir)
         var project = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
             .Include(p => p.IdSublineaNavigation)
             .FirstOrDefaultAsync(p => p.Uuid == projectUuid)
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
+
+        // ── GUARDIA: El PDF sólo está disponible después de cerrar el arbitraje ──────────────
+        // Se considera que el cierre fue ejecutado si el proyecto ya salió del estado pre-cierre:
+        //   • "En Ejecución" / "Rechazado" → cierre definitivo completado
+        //   • "En Revisión" con TODAS las revisiones completadas y empate → desempate post-cierre
+        // Cualquier otro caso significa que CerrarArbitrajeAsync aún no fue invocado.
+        var esCerradoDefinitivo = project.Estado is "En Ejecución" or "Rechazado" or "Aprobado";
+        if (!esCerradoDefinitivo)
+        {
+            var todasCompletadas = await _context.Set<InvRevisionesPares>()
+                .Where(r => r.IdProyecto == project.IdProyecto)
+                .AllAsync(r => r.Estado == "Completada");
+
+            var hayEmpate = false;
+            if (todasCompletadas)
+            {
+                decimal pm = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+                var revisadas = await _context.Set<InvRevisionesPares>()
+                    .Where(r => r.IdProyecto == project.IdProyecto && r.PuntajeTotal.HasValue)
+                    .Select(r => r.PuntajeTotal!.Value)
+                    .ToListAsync();
+                int ap = revisadas.Count(s => s >= pm);
+                int re = revisadas.Count(s => s < pm);
+                hayEmpate = revisadas.Count > 0 && ap == re;
+            }
+
+            if (!hayEmpate)
+                throw new InvalidOperationException(
+                    "El Acta de Dictamen aún no está disponible. El Director de Investigación debe ejecutar el cierre formal del arbitraje antes de descargar este documento.");
+        }
+        // ─────────────────────────────────────────────────────────────────────────────────────
 
         var revisiones = await _context.Set<InvRevisionesPares>()
             .Where(r => r.IdProyecto == project.IdProyecto && r.Estado == "Completada")

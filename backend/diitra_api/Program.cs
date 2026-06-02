@@ -158,6 +158,7 @@ builder.Services.AddScoped<diitra_application.Common.Notifications.INotification
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.PushDriver>();
 
 builder.Services.AddScoped<IPeerReviewService, PeerReviewService>();
+builder.Services.AddScoped<diitra_application.Research.IInformeAvanceService, diitra_infrastructure.Research.InformeAvanceService>();
 builder.Services.AddScoped<IConvocatoriaService, ConvocatoriaService>();
 builder.Services.AddScoped<IGroupsService, GroupsService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
