@@ -80,7 +80,7 @@ namespace Diitra.Domain.Common.Documents
             UpdatedAt = DateTime.UtcNow;
         }
 
-        public void UpdateDataSnapshot(string json)
+        public void UpdateDataSnapshot(string? json)
         {
             if (State == DocumentState.Signed || State == DocumentState.Archived)
                 throw new InvalidOperationException("No se puede modificar la data de un documento inmutable.");

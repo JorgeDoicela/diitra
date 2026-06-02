@@ -940,7 +940,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                             >
                                                                 <div>
                                                                     <p className="font-bold text-text-main text-xs">{su.nombre}</p>
-                                                                    <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula} {su.carrera && `| ${su.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())}`}</p>
+                                                                    <p className="text-text-dim font-mono text-[10px]">
+                                                                        C.I. {su.cedula} {su.email && su.email !== 'S/D' && `| ${su.email}`} {su.carrera && `| ${su.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())}`}
+                                                                    </p>
                                                                 </div>
                                                                 <span className={`badge-vercel text-[8px] font-bold ${
                                                                     su.tipo === 'profesor' ? 'badge-vercel-info' : 'badge-vercel-success'

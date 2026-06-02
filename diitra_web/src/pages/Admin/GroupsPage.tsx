@@ -5,7 +5,7 @@ import {
     Trash2, CheckCircle, XCircle, AlertTriangle,
     BookOpen, Shield, Award, Calendar, FileText,
     UserMinus, GraduationCap, User, ChevronRight, Target, ChevronDown,
-    MessageSquare, Send, Mic, Play, Pause, Loader2
+    MessageSquare, Send, Mic, Play, Pause, Loader2, Eye, X
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
@@ -19,6 +19,7 @@ interface GroupMember {
     activo: boolean;
     fecha_inicio?: string;
     fecha_fin?: string;
+    carrera?: string;
 }
 
 interface Group {
@@ -29,6 +30,7 @@ interface Group {
     id_coordinador: number | null;
     id_profesor_coordinador: string | null;
     nombre_coordinador: string;
+    carrera_coordinador?: string;
     objetivo_general: string;
     mision: string;
     vision: string;
@@ -60,6 +62,30 @@ interface Career {
     id_carrera: number;
     carrera1: string;
 }
+
+const formatUserDetails = (u: any) => {
+    if (!u) return '';
+    const parts = [`C.I. ${u.cedula || 'S/D'}`];
+    if (u.email && u.email.trim() !== '' && u.email !== 'S/D') {
+        parts.push(u.email);
+    }
+    if (u.carrera && u.carrera.trim() !== '' && u.carrera !== 'S/D') {
+        const formattedCarrera = u.carrera
+            .toLowerCase()
+            .replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase())
+            .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase());
+        parts.push(formattedCarrera);
+    }
+    return parts.join(' | ');
+};
+
+const formatCareerName = (name: string) => {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase())
+        .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase());
+};
 
 const AudioBubblePlayer = ({ src }: { src: string }) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -151,6 +177,7 @@ const GroupsPage = () => {
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
     const [isReadOnly, setIsReadOnly] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | null>(null);
 
@@ -236,9 +263,9 @@ const GroupsPage = () => {
         carreras_ids: [] as number[]
     });
 
-    // --- Coordinator Autocomplete States & Search ---
     const [coordSearchQuery, setCoordSearchQuery] = useState('');
     const [selectedCoordName, setSelectedCoordName] = useState('');
+    const [selectedCoordCareer, setSelectedCoordCareer] = useState('');
     const [coordSearchResults, setCoordSearchResults] = useState<any[]>([]);
     const [isCoordSearching, setIsCoordSearching] = useState(false);
     const [showCoordResults, setShowCoordResults] = useState(false);
@@ -300,6 +327,7 @@ const GroupsPage = () => {
         }
 
         setSelectedCoordName(teacher.nombre);
+        setSelectedCoordCareer(teacher.carrera || '');
         setCoordSearchQuery('');
         setShowCoordResults(false);
     };
@@ -368,7 +396,8 @@ const GroupsPage = () => {
             cedula: selectedTeacher.cedula,
             nombre_completo: selectedTeacher.nombre,
             rol: teacherRol,
-            activo: true
+            activo: true,
+            carrera: selectedTeacher.carrera
         };
 
         if (editingGroup) {
@@ -431,7 +460,8 @@ const GroupsPage = () => {
             cedula: selectedStudent.cedula,
             nombre_completo: selectedStudent.nombre,
             rol: studentRol,
-            activo: true
+            activo: true,
+            carrera: selectedStudent.carrera
         };
 
         if (editingGroup) {
@@ -894,6 +924,7 @@ const GroupsPage = () => {
                 carreras_ids: group.carreras_ids || []
             });
             setSelectedCoordName(group.nombre_coordinador || '');
+            setSelectedCoordCareer(group.carrera_coordinador || '');
             setCoordSearchQuery('');
 
             try {
@@ -916,6 +947,7 @@ const GroupsPage = () => {
                         carreras_ids: fullGroup.carreras_ids || []
                     });
                     setSelectedCoordName(fullGroup.nombre_coordinador || '');
+                    setSelectedCoordCareer(fullGroup.carrera_coordinador || '');
                     setCoordSearchQuery('');
 
                     if (fullGroup.miembros) {
@@ -944,6 +976,7 @@ const GroupsPage = () => {
                 carreras_ids: []
             });
             setSelectedCoordName('');
+            setSelectedCoordCareer('');
             setCoordSearchQuery('');
         }
         setIsModalOpen(true);
@@ -992,14 +1025,14 @@ const GroupsPage = () => {
         }));
     };
 
-    const toggleCarrera = (id: number) => {
-        setFormData(prev => ({
-            ...prev,
-            carreras_ids: prev.carreras_ids.includes(id)
-                ? prev.carreras_ids.filter(cId => cId !== id)
-                : [...prev.carreras_ids, id]
-        }));
-    };
+    // const toggleCarrera = (id: number) => {
+    //     setFormData(prev => ({
+    //         ...prev,
+    //         carreras_ids: prev.carreras_ids.includes(id)
+    //             ? prev.carreras_ids.filter(cId => cId !== id)
+    //             : [...prev.carreras_ids, id]
+    //     }));
+    // };
 
     const handleDelete = (uuid: string, name: string) => {
         const title = isAdmin ? 'Desactivar Grupo' : 'Eliminar Propuesta';
@@ -1499,6 +1532,7 @@ const GroupsPage = () => {
                                                                     if (formData.id_profesor_coordinador) {
                                                                         setFormData(prev => ({ ...prev, id_profesor_coordinador: '' }));
                                                                         setSelectedCoordName('');
+                                                                        setSelectedCoordCareer('');
                                                                     }
                                                                 }}
                                                                 placeholder="Filtrar docente por nombre o cédula..."
@@ -1535,7 +1569,7 @@ const GroupsPage = () => {
                                                                     >
                                                                         <div className="space-y-1 truncate pr-2">
                                                                             <p className="font-bold text-text-main text-xs uppercase truncate">{selectedUser.nombre}</p>
-                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {selectedUser.cedula} | {selectedUser.email} {selectedUser.carrera && `| ${selectedUser.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())}`}</p>
+                                                                            <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(selectedUser)}</p>
                                                                         </div>
                                                                         <span className="px-2 py-0.5 rounded text-[8px] shrink-0 font-extrabold tracking-wider uppercase border bg-text-main/10 border-text-main/20 text-text-main">
                                                                             Docente
@@ -1653,7 +1687,7 @@ const GroupsPage = () => {
                                                                                     >
                                                                                         <div className="space-y-0.5">
                                                                                             <p className="font-bold text-text-main text-xs uppercase">{teacher.nombre}</p>
-                                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {teacher.cedula} | {teacher.email || 'S/D'} {teacher.carrera && `| ${teacher.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())}`}</p>
+                                                                                            <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(teacher)}</p>
                                                                                         </div>
                                                                                         <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-emerald-500/15 border-emerald-500/25 text-emerald-400">
                                                                                             Docente
@@ -1814,7 +1848,7 @@ const GroupsPage = () => {
                                                                                     >
                                                                                         <div className="space-y-0.5">
                                                                                             <p className="font-bold text-text-main text-xs uppercase">{student.nombre}</p>
-                                                                                            <p className="text-text-dim font-mono text-[9px]">C.I. {student.cedula} | {student.email || 'S/D'}</p>
+                                                                                            <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(student)}</p>
                                                                                         </div>
                                                                                         <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-blue-500/15 border-blue-500/25 text-blue-400">
                                                                                             Estudiante
@@ -1906,6 +1940,65 @@ const GroupsPage = () => {
                                 );
                             })() : null}
 
+                            {/* Careers (Dynamic Auto-resolved) */}
+                            <section className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                        <GraduationCap size={12} /> Carreras / Programas Académicos (Automático)
+                                    </label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsCareerModalOpen(true)}
+                                        className="px-3 py-1.5 rounded-lg border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0"
+                                    >
+                                        <Eye size={12} /> Ver Detalle de Vinculación
+                                    </button>
+                                </div>
+                                
+                                {(() => {
+                                    const linkedCareers: string[] = [];
+                                    if (selectedCoordCareer) {
+                                        selectedCoordCareer.split(',').forEach(c => {
+                                            const trimmed = c.trim();
+                                            if (trimmed && !linkedCareers.includes(trimmed)) {
+                                                linkedCareers.push(trimmed);
+                                            }
+                                        });
+                                    }
+                                    groupMembers.forEach(m => {
+                                        if (m.carrera) {
+                                            m.carrera.split(',').forEach(c => {
+                                                const trimmed = c.trim();
+                                                if (trimmed && !linkedCareers.includes(trimmed)) {
+                                                    linkedCareers.push(trimmed);
+                                                }
+                                            });
+                                        }
+                                    });
+
+                                    if (linkedCareers.length === 0) {
+                                        return (
+                                            <div className="p-4 bg-bg-deep/40 rounded-xl border border-dashed border-border-thin text-center space-y-1">
+                                                <GraduationCap size={16} className="mx-auto text-text-dim/40" />
+                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-wider">
+                                                    Las carreras se vincularán automáticamente según el Coordinador y los Integrantes seleccionados.
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="flex flex-wrap gap-2 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                            {linkedCareers.map((cName, idx) => (
+                                                <span key={idx} className="badge-vercel badge-vercel-info text-[9px] py-1 px-2.5 font-bold uppercase">
+                                                    {formatCareerName(cName)}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
+                            </section>
+
                             {/* Identity Statements */}
                             <section className="space-y-6">
                                 <div className="space-y-2">
@@ -1939,37 +2032,6 @@ const GroupsPage = () => {
                                             className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all resize-none disabled:opacity-60 disabled:cursor-not-allowed"
                                         />
                                     </div>
-                                </div>
-                            </section>
-
-                            {/* Careers */}
-                            <section className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                        <Users size={12} /> Carreras / Programas Académicos
-                                    </label>
-                                    <span className="text-[9px] font-bold text-text-main bg-text-main/10 px-2 py-0.5 rounded-full uppercase tracking-tighter">
-                                        {formData.carreras_ids.length} seleccionadas
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {carreras.map(career => (
-                                        <div
-                                            key={career.id_carrera}
-                                            onClick={() => !isReadOnly && toggleCarrera(career.id_carrera)}
-                                            className={`p-3 rounded-xl border transition-all flex items-center gap-2 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'
-                                                } ${formData.carreras_ids.includes(career.id_carrera)
-                                                    ? 'bg-blue-500/10 border-blue-500 text-blue-500'
-                                                    : 'bg-bg-deep/50 border-border-thin text-text-dim hover:border-text-dim/50'
-                                                }`}
-                                        >
-                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center shrink-0 ${formData.carreras_ids.includes(career.id_carrera) ? 'border-blue-500 bg-blue-500' : 'border-border-thin'
-                                                }`}>
-                                                {formData.carreras_ids.includes(career.id_carrera) && <CheckCircle size={8} className="text-bg-deep" />}
-                                            </div>
-                                            <span className="text-[9px] font-bold uppercase truncate">{career.carrera1}</span>
-                                        </div>
-                                    ))}
                                 </div>
                             </section>
 
@@ -2054,6 +2116,120 @@ const GroupsPage = () => {
                                     {editingGroup ? 'Guardar Cambios' : 'Proponer Grupo'}
                                 </button>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Career Linkage Details Modal */}
+            {isCareerModalOpen && (
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-bg-deep/80 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        onClick={() => setIsCareerModalOpen(false)}
+                    />
+                    <div className="relative w-full max-w-2xl bg-surface border border-border-thin rounded-2xl shadow-2xl flex flex-col z-10 animate-fade-up overflow-hidden max-h-[85vh]">
+                        <div className="p-5 border-b border-border-thin flex justify-between items-center bg-bg-deep/25">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+                                    <GraduationCap size={18} />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-black text-text-main uppercase tracking-widest leading-none mb-1">
+                                        Detalle de Carreras por Integrante
+                                    </h3>
+                                    <p className="text-[10px] text-text-dim uppercase font-bold tracking-tight">
+                                        Distribución y mapeo automático de carreras del grupo
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setIsCareerModalOpen(false)}
+                                className="p-1.5 rounded-lg hover:bg-surface-hover text-text-dim hover:text-text-main transition-all"
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
+                            <div className="space-y-3">
+                                {/* Coordinator (If exists) */}
+                                {formData.id_profesor_coordinador ? (
+                                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                        <div className="space-y-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-xs font-black text-text-main uppercase truncate">
+                                                    {selectedCoordName || 'Coordinador Responsable'}
+                                                </h4>
+                                                <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter bg-emerald-500/15 border border-emerald-500/20 text-emerald-400">
+                                                    Coordinador
+                                                </span>
+                                            </div>
+                                            <p className="text-[9px] font-mono text-text-dim">C.I. {formData.id_profesor_coordinador}</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 shrink-0 max-w-[280px]">
+                                            {selectedCoordCareer ? (
+                                                selectedCoordCareer.split(',').map((c, i) => (
+                                                    <span key={i} className="badge-vercel badge-vercel-info text-[8px] py-0.5 px-2 font-bold uppercase truncate">
+                                                        {formatCareerName(c.trim())}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-[9px] font-bold text-text-dim uppercase italic">Sin carrera registrada</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : null}
+
+                                {/* Group Members */}
+                                {groupMembers.map((member) => (
+                                    <div
+                                        key={member.id_grupo_miembro}
+                                        className="p-4 bg-bg-deep/20 border border-border-thin rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 hover:border-border-thin/80 transition-all"
+                                    >
+                                        <div className="space-y-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-xs font-black text-text-main uppercase truncate">
+                                                    {member.nombre_completo}
+                                                </h4>
+                                                <span className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter bg-blue-500/15 border border-blue-500/20 text-blue-400">
+                                                    {member.rol}
+                                                </span>
+                                            </div>
+                                            <p className="text-[9px] font-mono text-text-dim">C.I. {member.cedula || 'S/D'}</p>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1.5 shrink-0 max-w-[280px]">
+                                            {member.carrera ? (
+                                                member.carrera.split(',').map((c, i) => (
+                                                    <span key={i} className="badge-vercel badge-vercel-info text-[8px] py-0.5 px-2 font-bold uppercase truncate">
+                                                        {formatCareerName(c.trim())}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-[9px] font-bold text-text-dim uppercase italic">Sin carrera registrada</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+
+                                {(!formData.id_profesor_coordinador && groupMembers.length === 0) && (
+                                    <div className="py-12 text-center space-y-2">
+                                        <Users size={24} className="mx-auto text-text-dim/30" />
+                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">
+                                            No hay integrantes en este grupo todavía
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-bg-deep/45 border-t border-border-thin flex justify-end">
+                            <button
+                                onClick={() => setIsCareerModalOpen(false)}
+                                className="px-4 py-2 rounded-xl bg-text-main text-bg-deep font-bold text-xs uppercase tracking-wider hover:opacity-90 transition-opacity"
+                            >
+                                Entendido
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2520,7 +2696,7 @@ const GroupsPage = () => {
                                             {detailGroup.carreras_ids.map(carrId => {
                                                 const career = carreras.find(c => c.id_carrera === carrId);
                                                 return career ? (
-                                                    <span key={carrId} className="badge-vercel badge-vercel-info">{career.carrera1}</span>
+                                                    <span key={carrId} className="badge-vercel badge-vercel-info">{formatCareerName(career.carrera1)}</span>
                                                 ) : null;
                                             })}
                                         </div>

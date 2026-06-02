@@ -407,29 +407,50 @@ namespace diitra_api.Controllers
                                         (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(query)));
                     }
 
-                    var alumnosSelect = alumnosQuery
-                        .Take(30) // Permitir hasta 30 estudiantes si están buscando
-                        .Select(a => new
-                        {
-                            cedula = a.IdAlumno.Trim(),
-                            nombre = ($"{a.PrimerNombre} {a.SegundoNombre} {a.ApellidoPaterno} {a.ApellidoMaterno}").Replace("  ", " ").Trim(),
-                            email = a.EmailInstitucional ?? a.Email ?? "",
-                            telefono = a.Celular ?? a.Telefono ?? "",
+                    var students = await alumnosQuery
+                        .OrderBy(a => a.ApellidoPaterno)
+                        .ThenBy(a => a.PrimerNombre)
+                        .Take(30)
+                        .ToListAsync();
+
+                    var alumIds = students.Select(s => s.IdAlumno.Trim()).ToList();
+
+                    // Obtener datos académicos extra (Matrícula actual para Nivel y Carrera)
+                    var currentMatriculas = await _context.Matriculas
+                        .Where(m => alumIds.Contains(m.IdAlumno) && m.IdPeriodo == periodId && m.Valida == 1)
+                        .ToListAsync();
+
+                    var careers = await _context.Carreras.ToListAsync();
+
+                    // Pre-cargar información de Cursos (Niveles/Carreras operativos)
+                    var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
+                        .Concat(students.Select(s => s.IdNivel))
+                        .Where(id => id.HasValue)
+                        .Select(id => id!.Value)
+                        .Distinct()
+                        .ToList();
+                    var relevantCursos = await _context.Cursos.Where(c => levelIds.Contains(c.IdNivel)).ToListAsync();
+
+                    alums = students.Select(s => {
+                        var sId = s.IdAlumno.Trim();
+                        var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
+
+                        // Lógica de descubrimiento de datos académicos vía tabla 'cursos'
+                        var idNivelTarget = matricula?.IdNivel ?? s.IdNivel;
+                        var cursoInfo = relevantCursos.FirstOrDefault(c => c.IdNivel == idNivelTarget);
+
+                        var carreraNom = careers.FirstOrDefault(c => c.IdCarrera == cursoInfo?.IdCarrera)?.Carrera1;
+
+                        return new {
+                            cedula = sId,
+                            nombre = ($"{s.PrimerNombre} {s.SegundoNombre} {s.ApellidoPaterno} {s.ApellidoMaterno}").Replace("  ", " ").Trim(),
+                            email = s.EmailInstitucional ?? s.Email ?? "",
+                            telefono = s.Celular ?? s.Telefono ?? "",
                             nivelAcademico = "Pregrado",
                             rol = "Co-Investigador (Estudiante)",
-                            tipo = "alumno"
-                        });
-
-                    var alumsList = await alumnosSelect.ToListAsync();
-                    alums = alumsList.Select(a => new {
-                        a.cedula,
-                        nombre = a.nombre.Replace("  ", " ").Trim(),
-                        a.email,
-                        a.telefono,
-                        a.nivelAcademico,
-                        a.rol,
-                        a.tipo,
-                        carrera = "Estudiante"
+                            tipo = "alumno",
+                            carrera = carreraNom ?? "Estudiante"
+                        };
                     }).Cast<object>().ToList();
                 }
             }

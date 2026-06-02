@@ -60,16 +60,98 @@ public class GroupsService : IGroupsService
         var dto = MapToDto(group);
         dto.LineasIds = group.IdLineas.Select(l => l.IdLinea).ToList();
         dto.CarrerasIds = group.IdCarreras.Select(c => c.IdCarrera).ToList();
-        dto.Miembros = group.InvGruposMiembros.Select(m => new GroupMemberDto
+
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var currentPeriod = await _context.Periodos
+            .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+            .ThenByDescending(p => p.Activo == true)
+            .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+            .ThenByDescending(p => p.FechaInicial)
+            .FirstOrDefaultAsync();
+        var periodId = currentPeriod?.IdPeriodo;
+
+        var memberCedulas = group.InvGruposMiembros
+            .Select(m => m.IdUsuarioNavigation?.IdSigafi?.Trim())
+            .Where(c => !string.IsNullOrEmpty(c))
+            .Cast<string>()
+            .ToList();
+
+        var teacherCareers = new List<ProfesoresCarrerasPeriodo>();
+        if (memberCedulas.Any() && !string.IsNullOrEmpty(periodId))
         {
-            IdGrupoMiembro = m.IdGrupoMiembro,
-            IdUsuario = m.IdUsuario,
-            NombreCompleto = m.IdUsuarioNavigation?.Nombre ?? "Desconocido",
-            Cedula = m.IdUsuarioNavigation?.IdSigafi,
-            Rol = m.Rol,
-            Activo = m.Activo ?? false,
-            FechaInicio = m.FechaInicio,
-            FechaFin = m.FechaFin
+            teacherCareers = await _context.ProfesoresCarrerasPeriodos
+                .Include(pc => pc.IdCarreraNavigation)
+                .Where(pc => memberCedulas.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
+                .ToListAsync();
+        }
+
+        var studentCareers = new List<AlumnosCarrera>();
+        if (memberCedulas.Any())
+        {
+            studentCareers = await _context.AlumnosCarreras
+                .Where(ac => memberCedulas.Contains(ac.IdAlumno.Trim()))
+                .ToListAsync();
+        }
+        var allCarreras = await _context.Carreras.ToListAsync();
+
+        if (group.IdCoordinadorNavigation != null && !string.IsNullOrEmpty(group.IdCoordinadorNavigation.IdSigafi) && !string.IsNullOrEmpty(periodId))
+        {
+            var coordCedula = group.IdCoordinadorNavigation.IdSigafi.Trim();
+            var coordCareers = await _context.ProfesoresCarrerasPeriodos
+                .Include(pc => pc.IdCarreraNavigation)
+                .Where(pc => pc.IdProfesor.Trim() == coordCedula && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
+                .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                .ToListAsync();
+            if (coordCareers.Any())
+            {
+                dto.CarreraCoordinador = string.Join(", ", coordCareers);
+            }
+        }
+
+        dto.Miembros = group.InvGruposMiembros.Select(m =>
+        {
+            var cedula = m.IdUsuarioNavigation?.IdSigafi?.Trim();
+            string? carreraNom = null;
+
+            if (!string.IsNullOrEmpty(cedula))
+            {
+                var tCareers = teacherCareers
+                    .Where(pc => pc.IdProfesor.Trim() == cedula && pc.IdCarreraNavigation != null)
+                    .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .ToList();
+                if (tCareers.Any())
+                {
+                    carreraNom = string.Join(", ", tCareers);
+                }
+                else
+                {
+                    var sCareerIds = studentCareers
+                        .Where(ac => ac.IdAlumno.Trim() == cedula)
+                        .Select(ac => ac.IdCarrera)
+                        .ToList();
+                    var sCareers = allCarreras
+                        .Where(c => sCareerIds.Contains(c.IdCarrera) && !string.IsNullOrEmpty(c.Carrera1))
+                        .Select(c => c.Carrera1!)
+                        .ToList();
+                    if (sCareers.Any())
+                    {
+                        carreraNom = string.Join(", ", sCareers);
+                    }
+                }
+            }
+
+            return new GroupMemberDto
+            {
+                IdGrupoMiembro = m.IdGrupoMiembro,
+                IdUsuario = m.IdUsuario,
+                NombreCompleto = m.IdUsuarioNavigation?.Nombre ?? "Desconocido",
+                Cedula = cedula,
+                Rol = m.Rol,
+                Activo = m.Activo ?? false,
+                FechaInicio = m.FechaInicio,
+                FechaFin = m.FechaFin,
+                Carrera = carreraNom
+            };
         }).ToList();
 
         return dto;
@@ -148,6 +230,15 @@ public class GroupsService : IGroupsService
                     .Select(pc => pc.IdCarrera!.Value)
                     .ToListAsync();
                 foreach (var idCarrera in profCareers)
+                {
+                    uniqueCarreraIds.Add(idCarrera);
+                }
+
+                var studentCareers = await _context.AlumnosCarreras
+                    .Where(ac => teacherCedulas.Contains(ac.IdAlumno.Trim()))
+                    .Select(ac => ac.IdCarrera)
+                    .ToListAsync();
+                foreach (var idCarrera in studentCareers)
                 {
                     uniqueCarreraIds.Add(idCarrera);
                 }
@@ -368,6 +459,15 @@ public class GroupsService : IGroupsService
                 {
                     uniqueCarreraIds.Add(idCarrera);
                 }
+
+                var studentCareers = await _context.AlumnosCarreras
+                    .Where(ac => teacherCedulas.Contains(ac.IdAlumno.Trim()))
+                    .Select(ac => ac.IdCarrera)
+                    .ToListAsync();
+                foreach (var idCarrera in studentCareers)
+                {
+                    uniqueCarreraIds.Add(idCarrera);
+                }
             }
         }
 
@@ -526,10 +626,17 @@ public class GroupsService : IGroupsService
                     .Select(pc => pc.IdCarrera!.Value)
                     .ToListAsync();
 
-                if (profCareers.Any())
+                var studentCareers = await _context.AlumnosCarreras
+                    .Where(ac => ac.IdAlumno.Trim() == memberDto.Cedula.Trim())
+                    .Select(ac => ac.IdCarrera)
+                    .ToListAsync();
+
+                var mergedCareers = profCareers.Concat(studentCareers).Distinct().ToList();
+
+                if (mergedCareers.Any())
                 {
                     var newCarreras = await _context.Carreras
-                        .Where(c => profCareers.Contains(c.IdCarrera) && !group.IdCarreras.Any(gc => gc.IdCarrera == c.IdCarrera))
+                        .Where(c => mergedCareers.Contains(c.IdCarrera) && !group.IdCarreras.Any(gc => gc.IdCarrera == c.IdCarrera))
                         .ToListAsync();
                     foreach (var carrera in newCarreras)
                     {

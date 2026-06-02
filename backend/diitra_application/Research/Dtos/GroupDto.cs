@@ -14,6 +14,7 @@ public class GroupDto
     public int? IdCoordinador { get; set; }
     public string? IdProfesorCoordinador { get; set; }
     public string? NombreCoordinador { get; set; }
+    public string? CarreraCoordinador { get; set; }
     public string? ObjetivoGeneral { get; set; }
     public string? Mision { get; set; }
     public string? Vision { get; set; }
@@ -38,6 +39,7 @@ public class GroupMemberDto
     public bool Activo { get; set; }
     public DateOnly? FechaInicio { get; set; }
     public DateOnly? FechaFin { get; set; }
+    public string? Carrera { get; set; }
 }
 
 public class CreateGroupDto
