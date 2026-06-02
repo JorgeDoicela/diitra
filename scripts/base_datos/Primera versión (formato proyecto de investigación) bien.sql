@@ -1187,8 +1187,7 @@ CREATE TABLE inv_cowork_documentos (
     creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizadoEn     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_entidad_campo (entidadUuid, campoNombre)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  COMMENT='DIITRA CoWork — Estado persistente de documentos colaborativos Yjs';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='DIITRA CoWork — Estado persistente de documentos colaborativos Yjs';
 
 -- Registro de sesiones: quién se conectó a qué documento y cuándo.
 -- Cumple con LOPDP: trazabilidad de acceso a documentos con propiedad intelectual.
@@ -1203,8 +1202,7 @@ CREATE TABLE inv_cowork_sesiones (
     desconectadoEn    TIMESTAMP     NULL            COMMENT 'NULL si la sesión sigue activa',
     INDEX idx_documento (documentoUuid),
     INDEX idx_usuario   (usuarioUuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  COMMENT='DIITRA CoWork — Auditoría LOPDP de acceso a documentos colaborativos';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='DIITRA CoWork — Auditoría LOPDP de acceso a documentos colaborativos';
 
 -- Registro de deltas binarios (Estrategia Append-Only para integridad)
 CREATE TABLE inv_cowork_updates (
@@ -1213,8 +1211,7 @@ CREATE TABLE inv_cowork_updates (
     updateData        LONGBLOB      NOT NULL COMMENT 'Delta binario generado por Yjs',
     creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_doc_upd (documentoUuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  COMMENT='DIITRA CoWork — Historial de cambios para sincronización en tiempo real';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='DIITRA CoWork — Historial de cambios para sincronización en tiempo real';
 -- =============================================================================
 -- SECCIÓN: DIITRA Workflow Engine — Configuración de Estados
 -- =============================================================================
@@ -1252,8 +1249,7 @@ CREATE TABLE IF NOT EXISTS inv_documentos_secciones_metadata (
     lastUserName        VARCHAR(255)  NULL,
     actualizadoEn       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE INDEX idx_instance_section (instanceUuid, sectionName)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  COMMENT='Gestión de estados por sección para coordinación Team Pulse';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Gestión de estados por sección para coordinación Team Pulse';
 
 -- Comentarios Colaborativos (Hilos de Discusión)
 CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
@@ -1266,8 +1262,7 @@ CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
     creadoEn            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_instance (instanceUuid),
     CONSTRAINT fk_comment_parent FOREIGN KEY (parentId) REFERENCES inv_collaboration_comments(idComment) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  COMMENT='Hilos de discusión real-time dentro de los documentos';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Hilos de discusión real-time dentro de los documentos';
 
 -- =============================================================================
 -- SEMILLAS: Documentos Base DIITRA Builder
