@@ -6,7 +6,7 @@ import {
     Scale, Loader2, Users, Building, GraduationCap
 } from 'lucide-react';
 import {
-    getArbitrajeByProject, cerrarArbitraje, revocarAsignacion,
+    getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
     ESTADO_REVISION_CONFIG, ESTADO_ARBITRAJE_CONFIG
 } from '../../../services/peerReviewService';
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
@@ -21,6 +21,7 @@ const ArbitrajeProyecto: React.FC = () => {
     const [arbitraje, setArbitraje] = useState<ArbitrajeProyectoDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [cerrando, setCerrando] = useState(false);
+    const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const [showAsignar, setShowAsignar] = useState(false);
     const [dictamen, setDictamen] = useState<DictamenDto | null>(null);
 
@@ -68,8 +69,23 @@ const ArbitrajeProyecto: React.FC = () => {
         }
     };
 
+    const handleIniciarEjecucion = async () => {
+        if (!projectUuid) return;
+        if (!window.confirm('¿Iniciar la fase de ejecución del proyecto? Se habilitarán los informes de avance.')) return;
+        setIniciandoEjecucion(true);
+        try {
+            await iniciarEjecucion(projectUuid);
+            loadData();
+        } catch (err: any) {
+            alert(err?.response?.data?.message ?? 'Error al iniciar ejecución.');
+        } finally {
+            setIniciandoEjecucion(false);
+        }
+    };
+
     const puedesCerrar = arbitraje && arbitraje.revisiones.length > 0
-        && arbitraje.revisiones.every(r => r.estado === 'Completada');
+        && arbitraje.revisiones.every(r => r.estado === 'Completada')
+        && !arbitraje.arbitraje_cerrado;
 
     if (loading) {
         return (
@@ -145,6 +161,16 @@ const ArbitrajeProyecto: React.FC = () => {
                             {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
                             Emitir Dictamen
                         </button>
+                        {arbitraje.estado_proyecto === 'Aprobado' && (
+                            <button
+                                onClick={handleIniciarEjecucion}
+                                disabled={iniciandoEjecucion}
+                                className="btn-vercel-secondary flex items-center gap-2 border-brand/40 text-brand"
+                            >
+                                {iniciandoEjecucion ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
+                                Iniciar Ejecución
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

@@ -24,6 +24,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
+import { iniciarEjecucion } from '../../../../services/peerReviewService';
 import DocumentEditor from '../Wizard/DocumentEditor';
 import WorkspaceActivityPanel from './WorkspaceActivityPanel';
 
@@ -98,6 +99,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [isTransferSearching, setIsTransferSearching] = useState(false);
     const [showTransferSearchResults, setShowTransferSearchResults] = useState(false);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+    const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
@@ -246,6 +248,26 @@ export const ProjectWorkspace: React.FC = () => {
         if (status === 'Aprobado') return 2;
         if (status === 'En Ejecución' || status === 'Finalizado') return 3;
         return -1;
+    };
+
+    const handleIniciarEjecucion = async () => {
+        const uuid = resolvedProjectUuid || currentProject?.uuid;
+        if (!uuid) return;
+        if (!window.confirm('¿Iniciar la fase de ejecución? Se habilitarán los informes de avance periódicos.')) return;
+        setIniciandoEjecucion(true);
+        try {
+            await iniciarEjecucion(uuid);
+            const res = await api.get(`/projects/${uuid}/detail`);
+            setCurrentProject({
+                ...currentProject,
+                status: res.data.estado || 'En Ejecución',
+                codigoInstitucional: res.data.codigo_institucional,
+            });
+        } catch (e: any) {
+            alert(e?.response?.data?.message ?? 'No se pudo iniciar la ejecución.');
+        } finally {
+            setIniciandoEjecucion(false);
+        }
     };
 
     useEffect(() => {
@@ -820,7 +842,27 @@ export const ProjectWorkspace: React.FC = () => {
                                                     </div>
                                                 )}
                                                 
-                                                {phase.id === 'En Ejecución' && (isCurrent || isPast) && (
+                                                {phase.id === 'Aprobado' && (isCurrent || isPast) && (
+                                                    <div className="mt-4 animate-fade-in flex flex-wrap gap-3">
+                                                        {currentProject.codigoInstitucional && (
+                                                            <span className="badge-vercel badge-vercel-success !text-[11px] !py-2 font-mono">
+                                                                {currentProject.codigoInstitucional}
+                                                            </span>
+                                                        )}
+                                                        {currentProject.status === 'Aprobado' && (isAdmin || roles?.includes('DIRECTOR_INV')) && (
+                                                            <button
+                                                                onClick={handleIniciarEjecucion}
+                                                                disabled={iniciandoEjecucion}
+                                                                className="btn-vercel-primary !py-2"
+                                                            >
+                                                                <Settings size={14} className={iniciandoEjecucion ? 'animate-spin' : ''} />
+                                                                <span>{iniciandoEjecucion ? 'Iniciando...' : 'Iniciar Ejecución'}</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {phase.id === 'En Ejecución' && (isCurrent || isPast) && currentProject.status === 'En Ejecución' && (
                                                     <div className="mt-4 animate-fade-in flex flex-wrap gap-3">
                                                         <button 
                                                             onClick={() => navigate(`/investigacion/informes-avance/${currentProject.id}`)}

@@ -366,12 +366,14 @@ public class PeerReviewService : IPeerReviewService
         foreach (var proyecto in proyectosEnRevision)
         {
             var revisiones = await _context.Set<InvRevisionesPares>()
+                .Include(r => r.Detalles)
                 .Where(r => r.IdProyecto == proyecto.IdProyecto)
                 .ToListAsync();
 
             var completadas = revisiones.Where(r => r.Estado == "Completada").ToList();
+            var criteriosProyecto = await ObtenerCriteriosRubricaAsync(proyecto.IdConvocatoria);
             decimal? promedio = completadas.Any()
-                ? completadas.Where(r => r.PuntajeTotal.HasValue).Average(r => r.PuntajeTotal)
+                ? CalcularPromedioPonderado(completadas, criteriosProyecto)
                 : null;
 
             decimal umbralProyecto = proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
@@ -415,6 +417,8 @@ public class PeerReviewService : IPeerReviewService
                 ArbitrosCompletados = completadas.Count,
                 PuntajePromedio = promedio,
                 EstadoArbitraje = estadoArbitraje,
+                ArbitrajeCerrado = proyecto.PuntajeEvaluacion.HasValue
+                    || proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado",
                 Revisiones = revDtos
             });
         }
@@ -477,12 +481,14 @@ public class PeerReviewService : IPeerReviewService
         if (proyecto == null) return null;
 
         var revisiones = await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Detalles)
             .Where(r => r.IdProyecto == proyecto.IdProyecto)
             .ToListAsync();
 
         var completadas = revisiones.Where(r => r.Estado == "Completada").ToList();
+        var criteriosProyecto = await ObtenerCriteriosRubricaAsync(proyecto.IdConvocatoria);
         decimal? promedio = completadas.Any()
-            ? completadas.Where(r => r.PuntajeTotal.HasValue).Average(r => r.PuntajeTotal)
+            ? CalcularPromedioPonderado(completadas, criteriosProyecto)
             : null;
 
         var revDtos = new List<PeerReviewDto>();
@@ -523,6 +529,8 @@ public class PeerReviewService : IPeerReviewService
             ArbitrosCompletados = completadas.Count,
             PuntajePromedio = promedio,
             EstadoArbitraje = DeterminarEstadoArbitraje(revisiones, proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m),
+            ArbitrajeCerrado = proyecto.PuntajeEvaluacion.HasValue
+                || proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado",
             Revisiones = revDtos
         };
     }
@@ -882,6 +890,7 @@ public class PeerReviewService : IPeerReviewService
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
 
         var revisiones = await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Detalles)
             .Where(r => r.IdProyecto == project.IdProyecto && r.Estado == "Completada")
             .ToListAsync();
 
@@ -889,9 +898,8 @@ public class PeerReviewService : IPeerReviewService
             throw new InvalidOperationException("No hay evaluaciones completadas para cerrar el arbitraje.");
 
         decimal puntajeMinimo = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
-        decimal promedio = revisiones
-            .Where(r => r.PuntajeTotal.HasValue)
-            .Average(r => r.PuntajeTotal!.Value);
+        var criteriosRubrica = await ObtenerCriteriosRubricaAsync(project.IdConvocatoria);
+        decimal promedio = CalcularPromedioPonderado(revisiones, criteriosRubrica);
 
         string estadoAnterior = project.Estado;
         string resultado;
@@ -905,15 +913,14 @@ public class PeerReviewService : IPeerReviewService
         {
             resultado = "Desempate";
             project.Estado = "En Revisión"; // Se mantiene en revisión hasta resolución
+            project.PuntajeEvaluacion = promedio;
             mensajeDesempate = $"Los {revisiones.Count} árbitros presentan dictámenes contradictorios (empate {aprobadosCount} vs {rechazadosCount}). " +
                                $"Se requiere la designación de un árbitro dirimente o decisión fundada del Director de Investigación.";
         }
         else if (aprobadosCount > rechazadosCount)
         {
             resultado = "Aprobado";
-            // El proyecto pasa directamente a ejecución: "Aprobado" es el resultado del dictamen,
-            // pero el ciclo de vida continúa en "En Ejecución" para habilitar informes de avance.
-            project.Estado = "En Ejecución";
+            project.Estado = "Aprobado";
             project.PuntajeEvaluacion = promedio;
             project.FechaModificacion = DateTime.Now;
 
@@ -989,6 +996,129 @@ public class PeerReviewService : IPeerReviewService
             FechaCierre = DateTime.Now,
             MensajeDesempate = mensajeDesempate
         };
+    }
+
+    /// <summary>
+    /// Inicia la fase de ejecución de un proyecto previamente aprobado en arbitraje.
+    /// Transición normativa: Aprobado → En Ejecución.
+    /// </summary>
+    public async Task<bool> IniciarEjecucionAsync(string projectUuid, int directorId)
+    {
+        var project = await _context.InvProyectos
+            .FirstOrDefaultAsync(p => p.Uuid == projectUuid)
+            ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
+
+        if (project.Estado != "Aprobado")
+            throw new InvalidOperationException(
+                $"Solo los proyectos en estado 'Aprobado' pueden iniciar ejecución. Estado actual: '{project.Estado}'.");
+
+        string estadoAnterior = project.Estado;
+        project.Estado = "En Ejecución";
+        project.FechaModificacion = DateTime.Now;
+
+        if (!project.FechaInicio.HasValue)
+            project.FechaInicio = DateOnly.FromDateTime(DateTime.Now);
+
+        await _context.SaveChangesAsync();
+
+        await _auditService.LogActionAsync(directorId, "INICIAR_EJECUCION",
+            $"Proyecto '{project.Titulo}' inició fase de ejecución. Código: {project.CodigoInstitucional ?? "N/A"}.",
+            "PEER_REVIEW",
+            System.Text.Json.JsonSerializer.Serialize(new { Estado = estadoAnterior }),
+            System.Text.Json.JsonSerializer.Serialize(new { Estado = project.Estado, project.CodigoInstitucional }));
+
+        _logger.LogInformation("[DIITRA] Proyecto {Uuid} transicionó Aprobado → En Ejecución.", projectUuid);
+        return true;
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  PROMEDIO PONDERADO POR CRITERIOS DE RÚBRICA
+    // ══════════════════════════════════════════════════════════════════
+
+    private async Task<List<(string Nombre, decimal Peso)>> ObtenerCriteriosRubricaAsync(int? idConvocatoria)
+    {
+        if (idConvocatoria.HasValue)
+        {
+            var conv = await _context.InvConvocatorias
+                .Include(c => c.IdRubricaNavigation)
+                    .ThenInclude(r => r!.InvRubricaCriterios)
+                .FirstOrDefaultAsync(c => c.IdConvocatoria == idConvocatoria);
+
+            if (conv?.IdRubricaNavigation?.InvRubricaCriterios.Any() == true)
+            {
+                return conv.IdRubricaNavigation.InvRubricaCriterios
+                    .OrderBy(c => c.Orden)
+                    .Select(c => (c.Nombre, c.PesoPorcentaje))
+                    .ToList();
+            }
+        }
+
+        return new List<(string, decimal)>
+        {
+            ("Pertinencia Científica y Social", 25m),
+            ("Metodología y Rigor Científico", 30m),
+            ("Impacto Social y Tecnológico", 25m),
+            ("Viabilidad y Presupuesto", 20m)
+        };
+    }
+
+    private static bool CriterioCoincide(string criterioDetalle, string nombreCriterio)
+    {
+        if (string.IsNullOrWhiteSpace(criterioDetalle) || string.IsNullOrWhiteSpace(nombreCriterio))
+            return false;
+
+        if (criterioDetalle.Contains(nombreCriterio, StringComparison.OrdinalIgnoreCase)
+            || nombreCriterio.Contains(criterioDetalle, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        string[] keywords = ["pertinencia", "metodolog", "viabilidad", "presupuesto", "impacto"];
+        foreach (var kw in keywords)
+        {
+            if (criterioDetalle.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                && nombreCriterio.Contains(kw, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Promedio ponderado CACES: por cada criterio de la rúbrica, promedia el puntaje
+    /// de todos los evaluadores y suma (cada criterio ya está en escala 0-peso%).
+    /// </summary>
+    private static decimal CalcularPromedioPonderado(
+        List<InvRevisionesPares> revisiones,
+        List<(string Nombre, decimal Peso)> criterios)
+    {
+        if (!revisiones.Any()) return 0;
+
+        decimal totalPonderado = 0;
+        int criteriosConDatos = 0;
+
+        foreach (var (nombre, _) in criterios)
+        {
+            var puntajesCriterio = revisiones
+                .SelectMany(r => r.Detalles
+                    .Where(d => CriterioCoincide(d.Criterio, nombre))
+                    .Select(d => d.Puntaje))
+                .ToList();
+
+            if (puntajesCriterio.Count > 0)
+            {
+                totalPonderado += puntajesCriterio.Average();
+                criteriosConDatos++;
+            }
+        }
+
+        if (criteriosConDatos == 0)
+        {
+            var conTotal = revisiones.Where(r => r.PuntajeTotal.HasValue).ToList();
+            return conTotal.Count > 0
+                ? Math.Round(conTotal.Average(r => r.PuntajeTotal!.Value), 2)
+                : 0;
+        }
+
+        return Math.Round(totalPonderado, 2);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -1239,45 +1369,25 @@ public class PeerReviewService : IPeerReviewService
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
 
         // ── GUARDIA: El PDF sólo está disponible después de cerrar el arbitraje ──────────────
-        // Se considera que el cierre fue ejecutado si el proyecto ya salió del estado pre-cierre:
-        //   • "En Ejecución" / "Rechazado" → cierre definitivo completado
-        //   • "En Revisión" con TODAS las revisiones completadas y empate → desempate post-cierre
-        // Cualquier otro caso significa que CerrarArbitrajeAsync aún no fue invocado.
-        var esCerradoDefinitivo = project.Estado is "En Ejecución" or "Rechazado" or "Aprobado";
-        if (!esCerradoDefinitivo)
-        {
-            var todasCompletadas = await _context.Set<InvRevisionesPares>()
-                .Where(r => r.IdProyecto == project.IdProyecto)
-                .AllAsync(r => r.Estado == "Completada");
+        var estadosPostCierre = new[] { "Aprobado", "En Ejecución", "Rechazado" };
+        var cierreEjecutado = estadosPostCierre.Contains(project.Estado)
+            || (project.Estado == "En Revisión" && project.PuntajeEvaluacion.HasValue);
 
-            var hayEmpate = false;
-            if (todasCompletadas)
-            {
-                decimal pm = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
-                var revisadas = await _context.Set<InvRevisionesPares>()
-                    .Where(r => r.IdProyecto == project.IdProyecto && r.PuntajeTotal.HasValue)
-                    .Select(r => r.PuntajeTotal!.Value)
-                    .ToListAsync();
-                int ap = revisadas.Count(s => s >= pm);
-                int re = revisadas.Count(s => s < pm);
-                hayEmpate = revisadas.Count > 0 && ap == re;
-            }
-
-            if (!hayEmpate)
-                throw new InvalidOperationException(
-                    "El Acta de Dictamen aún no está disponible. El Director de Investigación debe ejecutar el cierre formal del arbitraje antes de descargar este documento.");
-        }
+        if (!cierreEjecutado)
+            throw new InvalidOperationException(
+                "El Acta de Dictamen aún no está disponible. El Director de Investigación debe ejecutar el cierre formal del arbitraje antes de descargar este documento.");
         // ─────────────────────────────────────────────────────────────────────────────────────
 
         var revisiones = await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Detalles)
             .Where(r => r.IdProyecto == project.IdProyecto && r.Estado == "Completada")
             .ToListAsync();
 
         var director = await _context.Users.FindAsync(directorId);
 
-        decimal promedio = revisiones.Any(r => r.PuntajeTotal.HasValue)
-            ? revisiones.Where(r => r.PuntajeTotal.HasValue).Average(r => r.PuntajeTotal!.Value)
-            : 0;
+        // Usar la nota definitiva registrada en el cierre, o recalcular con promedio ponderado
+        decimal promedio = project.PuntajeEvaluacion
+            ?? CalcularPromedioPonderado(revisiones, await ObtenerCriteriosRubricaAsync(project.IdConvocatoria));
 
         decimal puntajeMinimo = project.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
         string resultado = promedio >= puntajeMinimo ? "Aprobado" : "Rechazado";

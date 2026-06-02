@@ -184,6 +184,29 @@ public class PeerReviewsController : ControllerBase
     }
 
     /// <summary>
+    /// Inicia la fase de ejecución de un proyecto aprobado (Aprobado → En Ejecución).
+    /// Habilita informes de avance y monitoreo operativo CACES.
+    /// </summary>
+    [HttpPost("project/{projectUuid}/iniciar-ejecucion")]
+    public async Task<IActionResult> IniciarEjecucion(string projectUuid)
+    {
+        var directorId = GetCurrentUserId();
+        try
+        {
+            await _peerReviewService.IniciarEjecucionAsync(projectUuid, directorId);
+            return Ok(new { message = "Proyecto en fase de ejecución.", estado = "En Ejecución" });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Descargar el Acta de Dictamen de Arbitraje en PDF (CACES).
     /// Genera un PDF con doble ciego y código de trazabilidad.
     /// Solo disponible después de ejecutar el cierre formal del arbitraje.
