@@ -49,6 +49,7 @@ interface Proyecto {
     codigo_institucional?: string;
     linea_investigacion?: string;
     descripcion?: string;
+    estado?: string;
 }
 
 interface Convocatoria {
@@ -57,6 +58,10 @@ interface Convocatoria {
     codigoConvocatoria: string;
     anio: number;
     presupuestoTotal?: number;
+    montoMaximoProyecto?: number;
+    fechaApertura?: string;
+    fechaCierre?: string;
+    urlBases?: string;
     estado: string;
 }
 
@@ -64,8 +69,14 @@ interface PeerReview {
     uuid: string;
     proyectoTitulo: string;
     revisorNombre: string;
+    revisorEmail?: string;
     estado: string;
     dictamenRevisor: string;
+    fechaLimite?: string;
+    puntajeTotal?: number;
+    observacionesGral?: string;
+    esExterno?: boolean;
+    esDobleCiego?: boolean;
 }
 
 interface AttachmentFile {
@@ -115,8 +126,12 @@ const mapConvocatoriaToCamelCase = (c: any): Convocatoria => {
         uuid: c.uuid,
         titulo: c.titulo,
         codigoConvocatoria: c.codigo_convocatoria !== undefined ? c.codigo_convocatoria : c.codigoConvocatoria,
-        anio: c.anio !== undefined ? c.anio : c.anio,
+        anio: c.anio,
         presupuestoTotal: c.presupuesto_total !== undefined ? c.presupuesto_total : c.presupuestoTotal,
+        montoMaximoProyecto: c.monto_maximo_proyecto !== undefined ? c.monto_maximo_proyecto : c.montoMaximoProyecto,
+        fechaApertura: c.fecha_apertura !== undefined ? c.fecha_apertura : c.fechaApertura,
+        fechaCierre: c.fecha_cierre !== undefined ? c.fecha_cierre : c.fechaCierre,
+        urlBases: c.url_bases !== undefined ? c.url_bases : c.urlBases,
         estado: c.estado
     };
 };
@@ -130,6 +145,118 @@ const mapCarreraToCamelCase = (c: any): Carrera => {
     };
 };
 
+const TOKEN_GROUPS = [
+    {
+        label: 'Globales (siempre disponibles)',
+        color: 'text-blue-500 dark:text-blue-400',
+        tokens: [
+            { tok: '[[destinatario_nombre]]', desc: 'Nombre del destinatario' },
+            { tok: '[[destinatario_email]]', desc: 'Email del destinatario' },
+            { tok: '[[anio_actual]]', desc: 'Año en curso' },
+            { tok: '[[institucion_nombre]]', desc: 'Nombre de la institución' },
+            { tok: '[[sistema_url]]', desc: 'URL base del sistema' }
+        ]
+    },
+    {
+        label: 'Proyecto de Investigación',
+        color: 'text-green-600 dark:text-green-400',
+        tokens: [
+            { tok: '[[proyecto_titulo]]', desc: 'Título del proyecto' },
+            { tok: '[[proyecto_codigo]]', desc: 'Código institucional' },
+            { tok: '[[proyecto_descripcion]]', desc: 'Descripción del proyecto' },
+            { tok: '[[proyecto_estado]]', desc: 'Estado actual' },
+            { tok: '[[proyecto_director]]', desc: 'Nombre del director' },
+            { tok: '[[proyecto_director_email]]', desc: 'Email del director' },
+            { tok: '[[linea_investigacion]]', desc: 'Línea de investigación' },
+            { tok: '[[proyecto_sublinea]]', desc: 'Sublínea de investigación' },
+            { tok: '[[proyecto_workspace_url]]', desc: 'URL del workspace del proyecto' }
+        ]
+    },
+    {
+        label: 'Convocatoria',
+        color: 'text-purple-600 dark:text-purple-400',
+        tokens: [
+            { tok: '[[convocatoria_titulo]]', desc: 'Título de la convocatoria' },
+            { tok: '[[convocatoria_codigo]]', desc: 'Código de convocatoria' },
+            { tok: '[[convocatoria_anio]]', desc: 'Año de la convocatoria' },
+            { tok: '[[convocatoria_apertura]]', desc: 'Fecha de apertura' },
+            { tok: '[[convocatoria_cierre]]', desc: 'Fecha de cierre' },
+            { tok: '[[convocatoria_presupuesto]]', desc: 'Presupuesto total' },
+            { tok: '[[convocatoria_monto_maximo]]', desc: 'Monto máximo por proyecto' },
+            { tok: '[[convocatoria_bases_url]]', desc: 'URL de las bases' },
+            { tok: '[[convocatoria_estado]]', desc: 'Estado de la convocatoria' }
+        ]
+    },
+    {
+        label: 'Evaluación de Pares (PeerReview)',
+        color: 'text-orange-600 dark:text-orange-400',
+        tokens: [
+            { tok: '[[revisor_nombre]]', desc: 'Nombre del revisor' },
+            { tok: '[[revisor_email]]', desc: 'Email del revisor' },
+            { tok: '[[peer_review_dictamen]]', desc: 'Dictamen emitido' },
+            { tok: '[[peer_review_estado]]', desc: 'Estado de la revisión' },
+            { tok: '[[peer_review_fecha_limite]]', desc: 'Fecha límite de revisión' },
+            { tok: '[[peer_review_puntaje]]', desc: 'Puntaje total asignado' },
+            { tok: '[[peer_review_observaciones]]', desc: 'Observaciones del revisor' },
+            { tok: '[[peer_review_tipo]]', desc: 'Tipo (Externo/Interno)' },
+            { tok: '[[peer_review_anonimo]]', desc: 'Modalidad (Doble Ciego/Abierto)' }
+        ]
+    }
+];
+
+const TokenReferencePanel: React.FC<{ contextType: string }> = ({ contextType }) => {
+    const [open, setOpen] = React.useState(false);
+    const filteredGroups = contextType
+        ? TOKEN_GROUPS.filter(g =>
+            g.label.toLowerCase().includes('global') ||
+            (contextType === 'Proyecto' && g.label.toLowerCase().includes('proyecto')) ||
+            (contextType === 'Convocatoria' && g.label.toLowerCase().includes('convocatoria')) ||
+            (contextType === 'PeerReview' && g.label.toLowerCase().includes('peer'))
+          )
+        : TOKEN_GROUPS.filter(g => g.label.toLowerCase().includes('global'));
+
+    return (
+        <div className="rounded-xl border border-border-thin bg-bg-deep/30 overflow-hidden">
+            <button
+                type="button"
+                onClick={() => setOpen(v => !v)}
+                className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-surface/30 transition-colors cursor-pointer"
+            >
+                <span className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                    <HelpCircle size={11} className="text-brand" />
+                    Referencia de Tokens de Automatización
+                    {contextType && (
+                        <span className="ml-1 text-[8px] font-mono normal-case text-brand font-semibold tracking-normal">
+                            — contexto: {contextType}
+                        </span>
+                    )}
+                </span>
+                <span className={`text-[9px] text-text-dim transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
+            </button>
+            {open && (
+                <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-thin">
+                    {filteredGroups.map(group => (
+                        <div key={group.label}>
+                            <div className={`text-[9px] font-black uppercase tracking-widest mb-1.5 ${group.color}`}>{group.label}</div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                                {group.tokens.map(({ tok, desc }) => (
+                                    <div key={tok} className="flex items-baseline gap-1.5 min-w-0">
+                                        <code className="text-[8.5px] font-mono text-brand shrink-0">{tok}</code>
+                                        <span className="text-[8px] text-text-dim truncate">{desc}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                    {!contextType && (
+                        <p className="text-[8px] text-text-dim italic">Selecciona un Tipo de Entidad en el contexto para ver los tokens adicionales disponibles.</p>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 const EmailEnginePage: React.FC = () => {
     // Tab State: 'send' | 'templates' | 'history'
     const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>('send');
@@ -137,6 +264,7 @@ const EmailEnginePage: React.FC = () => {
     // Data lists
     const [templates, setTemplates] = useState<EmailTemplate[]>([]);
     const [history, setHistory] = useState<EmailHistorial[]>([]);
+    const [historyLimit, setHistoryLimit] = useState<number>(100);
     const [carreras, setCarreras] = useState<Carrera[]>([]);
     const [projects, setProjects] = useState<Proyecto[]>([]);
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
@@ -210,8 +338,14 @@ const EmailEnginePage: React.FC = () => {
                                 uuid: r.uuid,
                                 proyectoTitulo: proyectoTitulo,
                                 revisorNombre: r.revisor_nombre || r.revisorNombre || 'Revisor Externo',
+                                revisorEmail: r.revisor_email || r.revisorEmail || '',
                                 estado: r.estado || 'Pendiente',
-                                dictamenRevisor: r.dictamen_revisor || r.dictamenRevisor || 'Pendiente'
+                                dictamenRevisor: r.dictamen_revisor || r.dictamenRevisor || 'Pendiente',
+                                fechaLimite: r.fecha_limite || r.fechaLimite,
+                                puntajeTotal: r.puntaje_total || r.puntajeTotal,
+                                observacionesGral: r.observaciones_gral || r.observacionesGral,
+                                esExterno: r.es_externo ?? r.esExterno,
+                                esDobleCiego: r.es_doble_ciego ?? r.esDobleCiego
                             });
                         });
                     }
@@ -236,10 +370,11 @@ const EmailEnginePage: React.FC = () => {
         }
     }, [activeTab]);
 
-    const fetchHistory = async () => {
+    const fetchHistory = async (limit?: number) => {
+        const effectiveLimit = limit ?? historyLimit;
         setRefreshing(true);
         try {
-            const res = await api.get<any[]>('/Admin/email-engine/history?limit=100');
+            const res = await api.get<any[]>(`/Admin/email-engine/history?limit=${effectiveLimit}`);
             setHistory(res.data.map(mapHistorialToCamelCase));
         } catch (e) {
             console.error('[DIITRA EMAIL ENGINE] Error loading email logs:', e);
@@ -301,6 +436,7 @@ const EmailEnginePage: React.FC = () => {
                     '[[proyecto_titulo]]': p.titulo || '',
                     '[[proyecto_codigo]]': p.codigo_institucional || 'N/A',
                     '[[proyecto_descripcion]]': p.descripcion || 'Sin descripción',
+                    '[[proyecto_estado]]': p.estado || 'En Ejecución',
                     '[[linea_investigacion]]': p.linea_investigacion || 'General',
                     '[[proyecto_workspace_url]]': `${window.location.origin}/investigacion/proyectos/workspace/${p.uuid}`
                 }));
@@ -313,7 +449,11 @@ const EmailEnginePage: React.FC = () => {
                     '[[convocatoria_titulo]]': c.titulo || '',
                     '[[convocatoria_codigo]]': c.codigoConvocatoria || 'N/A',
                     '[[convocatoria_anio]]': (c.anio || new Date().getFullYear()).toString(),
+                    '[[convocatoria_apertura]]': c.fechaApertura ? c.fechaApertura.split('T')[0] : '',
+                    '[[convocatoria_cierre]]': c.fechaCierre ? c.fechaCierre.split('T')[0] : '',
                     '[[convocatoria_presupuesto]]': c.presupuestoTotal ? `$${c.presupuestoTotal.toLocaleString()}` : '$0.00',
+                    '[[convocatoria_monto_maximo]]': c.montoMaximoProyecto ? `$${c.montoMaximoProyecto.toLocaleString()}` : '$0.00',
+                    '[[convocatoria_bases_url]]': c.urlBases || '',
                     '[[convocatoria_estado]]': c.estado || 'Borrador'
                 }));
             }
@@ -323,9 +463,15 @@ const EmailEnginePage: React.FC = () => {
                 setTokenValues(prev => ({
                     ...prev,
                     '[[revisor_nombre]]': r.revisorNombre || 'Revisor Externo',
+                    '[[revisor_email]]': r.revisorEmail || '',
                     '[[proyecto_titulo]]': r.proyectoTitulo || 'Sin título',
                     '[[peer_review_dictamen]]': r.dictamenRevisor || 'Pendiente',
-                    '[[peer_review_estado]]': r.estado || 'Pendiente'
+                    '[[peer_review_estado]]': r.estado || 'Pendiente',
+                    '[[peer_review_fecha_limite]]': r.fechaLimite ? r.fechaLimite.split('T')[0] : '',
+                    '[[peer_review_puntaje]]': r.puntajeTotal?.toString() || '0',
+                    '[[peer_review_observaciones]]': r.observacionesGral || '',
+                    '[[peer_review_tipo]]': r.esExterno ? 'Externo' : 'Interno',
+                    '[[peer_review_anonimo]]': r.esDobleCiego ? 'Doble Ciego' : 'Abierto'
                 }));
             }
         }
@@ -704,9 +850,11 @@ const EmailEnginePage: React.FC = () => {
                                                     >
                                                         <option value="">-- Todos los roles --</option>
                                                         <option value="DOCENTE_INV">Docente Investigador</option>
-                                                        <option value="DIITRA_ADMIN">Director de Investigación</option>
-                                                        <option value="DIITRA_REVISOR_EXTERNO">Arbitro Evaluador</option>
+                                                        <option value="DIITRA_ADMIN">Administrador DIITRA</option>
+                                                        <option value="DIR_INV">Director de Investigación</option>
+                                                        <option value="DIITRA_REVISOR_EXTERNO">Árbitro Evaluador Externo</option>
                                                         <option value="DIITRA_ESTUDIANTE">Co-Investigador (Estudiante)</option>
+                                                        <option value="ADMIN_SISTEMA">Administrador del Sistema</option>
                                                     </select>
                                                 </div>
 
@@ -796,6 +944,9 @@ const EmailEnginePage: React.FC = () => {
                                                  </div>
                                              </div>
                                          </div>
+
+                                        {/* Token Reference Panel */}
+                                        <TokenReferencePanel contextType={contextType} />
 
                                         {/* Subject Input */}
                                         <div className="space-y-2">
@@ -1164,18 +1315,36 @@ const EmailEnginePage: React.FC = () => {
                         {/* TAB 3: HISTORIAL DE ENVÍOS */}
                         {activeTab === 'history' && (
                             <div className="space-y-6">
-                                <div className="flex justify-between items-center">
+                                <div className="flex flex-wrap justify-between items-center gap-3">
                                     <h3 className="text-sm font-bold text-text-main uppercase tracking-widest flex items-center gap-2">
                                         Bitácora Auditoría Forense LOPDP
                                     </h3>
-                                    <button
-                                        onClick={fetchHistory}
-                                        disabled={refreshing}
-                                        className="btn-vercel-secondary text-xs !py-2 flex items-center gap-2 cursor-pointer disabled:opacity-50"
-                                    >
-                                        <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
-                                        Refrescar
-                                    </button>
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 border border-border-thin rounded-lg px-3 py-1.5 bg-surface/30">
+                                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Mostrar:</span>
+                                            {[50, 100, 250, 500].map(n => (
+                                                <button
+                                                    key={n}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setHistoryLimit(n);
+                                                        fetchHistory(n);
+                                                    }}
+                                                    className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded transition-all cursor-pointer ${historyLimit === n ? 'bg-brand text-white' : 'text-text-dim hover:text-text-main'}`}
+                                                >
+                                                    {n}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => fetchHistory()}
+                                            disabled={refreshing}
+                                            className="btn-vercel-secondary text-xs !py-2 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                                        >
+                                            <RefreshCw size={12} className={refreshing ? 'animate-spin' : ''} />
+                                            Refrescar
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="bento-card static overflow-hidden">
@@ -1359,19 +1528,30 @@ const EmailEnginePage: React.FC = () => {
                                         value={templateForm.cuerpoHtml}
                                         onChange={e => setTemplateForm(prev => ({ ...prev, cuerpoHtml: e.target.value }))}
                                     />
-                                    <div className="flex flex-wrap gap-1.5 mt-1 select-none">
-                                        <span className="text-[9px] text-text-dim font-bold mr-1">Tokens sugeridos:</span>
-                                        {['[[destinatario_nombre]]', '[[destinatario_email]]', '[[proyecto_titulo]]', '[[proyecto_codigo]]', '[[anio_actual]]', '[[institucion_nombre]]', '[[sistema_url]]'].map(tok => (
-                                            <button
-                                                key={tok}
-                                                type="button"
-                                                onClick={() => setTemplateForm(prev => ({ ...prev, cuerpoHtml: prev.cuerpoHtml + tok }))}
-                                                className="px-1.5 py-0.5 rounded border border-border-thin bg-surface text-[8.5px] font-mono text-text-dim hover:text-text-main transition-all cursor-pointer"
-                                            >
-                                                {tok}
-                                            </button>
-                                        ))}
-                                    </div>
+                                                    <div className="space-y-2 mt-2 select-none">
+                                                        {[
+                                                            { label: 'Globales', tokens: ['[[destinatario_nombre]]', '[[destinatario_email]]', '[[anio_actual]]', '[[institucion_nombre]]', '[[sistema_url]]'] },
+                                                            { label: 'Proyecto', tokens: ['[[proyecto_titulo]]', '[[proyecto_codigo]]', '[[proyecto_descripcion]]', '[[proyecto_estado]]', '[[proyecto_director]]', '[[proyecto_director_email]]', '[[linea_investigacion]]', '[[proyecto_sublinea]]', '[[proyecto_workspace_url]]'] },
+                                                            { label: 'Convocatoria', tokens: ['[[convocatoria_titulo]]', '[[convocatoria_codigo]]', '[[convocatoria_anio]]', '[[convocatoria_apertura]]', '[[convocatoria_cierre]]', '[[convocatoria_presupuesto]]', '[[convocatoria_monto_maximo]]', '[[convocatoria_bases_url]]', '[[convocatoria_estado]]'] },
+                                                            { label: 'PeerReview', tokens: ['[[revisor_nombre]]', '[[revisor_email]]', '[[peer_review_dictamen]]', '[[peer_review_estado]]', '[[peer_review_fecha_limite]]', '[[peer_review_puntaje]]', '[[peer_review_observaciones]]', '[[peer_review_tipo]]', '[[peer_review_anonimo]]'] }
+                                                        ].map(group => (
+                                                            <div key={group.label}>
+                                                                <span className="text-[8px] font-black text-text-dim uppercase tracking-widest block mb-1">{group.label}:</span>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {group.tokens.map(tok => (
+                                                                        <button
+                                                                            key={tok}
+                                                                            type="button"
+                                                                            onClick={() => setTemplateForm(prev => ({ ...prev, cuerpoHtml: prev.cuerpoHtml + tok }))}
+                                                                            className="px-1.5 py-0.5 rounded border border-border-thin bg-surface text-[8px] font-mono text-text-dim hover:text-brand hover:border-brand/40 transition-all cursor-pointer"
+                                                                        >
+                                                                            {tok}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
                                 </div>
 
                                 {/* Activo */}
