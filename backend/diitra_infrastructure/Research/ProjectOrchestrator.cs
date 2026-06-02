@@ -527,60 +527,76 @@ namespace diitra_infrastructure.Research
                 });
             }
 
-            return new ProyectoDto
+            ProyectoDto dto;
+            if (!string.IsNullOrEmpty(p.MetadataCacesJson))
             {
-                Uuid = p.Uuid,
-                CodigoInstitucional = p.CodigoInstitucional,
-                Estado = p.Estado,
-                IdConvocatoria = p.IdConvocatoria,
-                IdCarrera = p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera,
-                IdObjetivoPnd = p.IdObjetivoPnd,
-                Titulo = p.Titulo,
-                DescripcionProyecto = p.DescripcionProyecto,
-                Antecedentes = p.Antecedentes,
-                Justificacion = p.Justificacion,
-                MarcoTeorico = p.MarcoTeorico,
-                Metodologia = p.Metodologia,
-                TiempoEjecucion = p.TiempoEjecucion,
-                TieneGrupoInvestigacion = p.TieneGrupo,
-                TrlInicial = (int?)p.TrlInicial,
-                TrlActual = (int?)p.TrlActual,
-                TrlMeta = (int?)p.TrlMeta,
-                PuntajeEvaluacion = p.PuntajeEvaluacion,
-                LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null,
-                GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null,
-                CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad),
-                Investigadores = investigadoresList,
-                ObjetivosEspecificos = p.InvObjetivosProyecto
-                    .Where(o => !o.EsGeneral)
-                    .OrderBy(o => o.Orden)
-                    .Select(o => o.Descripcion)
-                    .ToList(),
-                RecursosNecesarios = p.InvPresupuestoItems.Select(i => new RecursoNecesarioDto
+                try
                 {
-                    Descripcion = i.Detalle,
-                    CostoUnitario = i.ValorUnitario,
-                    IdPartida = i.IdPartida,
-                    EsGastoCapital = i.EsGastoCapital
-                }).ToList(),
-                Cronograma = p.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new ActividadCronogramaDto
+                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(p.MetadataCacesJson) ?? new ProyectoDto();
+                }
+                catch
                 {
-                    Numero = c.NumeroActividad,
-                    Actividad = c.Descripcion,
-                    Ponderacion = c.Ponderacion,
-                    EsEntregableCaces = c.EsEntregableCaces,
-                    Semanas = c.InvCronogramaSemanas.OrderBy(s => s.IdSemana).Select(s => s.Semana).ToList()
-                }).ToList(),
-                Bibliografia = p.InvBibliografiasProyecto.Select(b => b.CitaApa).ToList(),
-                MatrizMarcoLogico = p.MatrizMarcoLogico.Select(m => new MmlRowDto
-                {
-                    Nivel = m.Nivel,
-                    Resumen = m.ResumenNarrativo,
-                    Indicadores = m.Indicadores,
-                    Medios = m.MediosVerificacion,
-                    Supuestos = m.Supuestos
-                }).ToList()
-            };
+                    dto = new ProyectoDto();
+                }
+            }
+            else
+            {
+                dto = new ProyectoDto();
+            }
+
+            dto.Uuid = p.Uuid;
+            dto.CodigoInstitucional = p.CodigoInstitucional;
+            dto.Estado = p.Estado;
+            dto.IdConvocatoria = p.IdConvocatoria;
+            dto.IdCarrera = p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
+            dto.IdObjetivoPnd = p.IdObjetivoPnd;
+            dto.Titulo = p.Titulo;
+            dto.DescripcionProyecto = p.DescripcionProyecto;
+            dto.Antecedentes = p.Antecedentes;
+            dto.Justificacion = p.Justificacion;
+            dto.MarcoTeorico = p.MarcoTeorico;
+            dto.Metodologia = p.Metodologia;
+            dto.TiempoEjecucion = p.TiempoEjecucion;
+            dto.TieneGrupoInvestigacion = p.TieneGrupo;
+            dto.TrlInicial = (int?)p.TrlInicial;
+            dto.TrlActual = (int?)p.TrlActual;
+            dto.TrlMeta = (int?)p.TrlMeta;
+            dto.PuntajeEvaluacion = p.PuntajeEvaluacion;
+            dto.LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null;
+            dto.GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null;
+            dto.CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad);
+            dto.Investigadores = investigadoresList;
+            dto.ObjetivosEspecificos = p.InvObjetivosProyecto
+                .Where(o => !o.EsGeneral)
+                .OrderBy(o => o.Orden)
+                .Select(o => o.Descripcion)
+                .ToList();
+            dto.RecursosNecesarios = p.InvPresupuestoItems.Select(i => new RecursoNecesarioDto
+            {
+                Descripcion = i.Detalle,
+                CostoUnitario = i.ValorUnitario,
+                IdPartida = i.IdPartida,
+                EsGastoCapital = i.EsGastoCapital
+            }).ToList();
+            dto.Cronograma = p.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new ActividadCronogramaDto
+            {
+                Numero = c.NumeroActividad,
+                Actividad = c.Descripcion,
+                Ponderacion = c.Ponderacion,
+                EsEntregableCaces = c.EsEntregableCaces,
+                Semanas = c.InvCronogramaSemanas.OrderBy(s => s.IdSemana).Select(s => s.Semana).ToList()
+            }).ToList();
+            dto.Bibliografia = p.InvBibliografiasProyecto.Select(b => b.CitaApa).ToList();
+            dto.MatrizMarcoLogico = p.MatrizMarcoLogico.Select(m => new MmlRowDto
+            {
+                Nivel = m.Nivel,
+                Resumen = m.ResumenNarrativo,
+                Indicadores = m.Indicadores,
+                Medios = m.MediosVerificacion,
+                Supuestos = m.Supuestos
+            }).ToList();
+
+            return dto;
         }
 
         public async Task<DashboardStatsDto> GetDashboardStatsAsync(string userIdReferencia, bool isAdmin)
