@@ -823,14 +823,6 @@ CREATE TRIGGER trg_proy_docadj_uuid BEFORE INSERT ON inv_proyectos_documentos_ad
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_trazabilidad_uuid BEFORE INSERT ON inv_trazabilidad_proyectos FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_doc_instancias_uuid BEFORE INSERT ON inv_documentos_instancias FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_cowork_doc_uuid BEFORE INSERT ON inv_cowork_documentos FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_email_temp_uuid BEFORE INSERT ON inv_email_templates FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_email_hist_uuid BEFORE INSERT ON inv_email_historial FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
 -- #############################################################################
@@ -874,7 +866,7 @@ CREATE INDEX idx_rev_pares_completado       ON inv_revisiones_pares(fechaComplet
 
 CREATE TABLE inv_notificaciones (
     idNotificacion   INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid             VARCHAR(36)     NOT NULL UNIQUE,
+    uuid             VARCHAR(36)     NOT NULL,
     idProyecto       INT          NULL,
     destinatario     INT(11)      NOT NULL,
     tipoDestinatario ENUM('Usuario','Profesor','Alumno') DEFAULT 'Usuario',
@@ -887,6 +879,7 @@ CREATE TABLE inv_notificaciones (
     fechaEnvio       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fechaLectura     TIMESTAMP    NULL,
     version          INT          DEFAULT 1,
+    UNIQUE KEY uq_notif_uuid (uuid),
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE SET NULL,
     FOREIGN KEY (destinatario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Notificaciones con prioridad y redirección (Deep Linking)';
@@ -899,7 +892,7 @@ DELIMITER ;
 
 CREATE TABLE inv_tokens_acceso (
     idToken         INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid            VARCHAR(36)     NOT NULL UNIQUE,
+    uuid            VARCHAR(36)     NOT NULL,
     idProyecto      INT          NULL,
     token           VARCHAR(255) NOT NULL UNIQUE,
     idReferencia    INT          NOT NULL,
@@ -912,6 +905,7 @@ CREATE TABLE inv_tokens_acceso (
     fechaRegistro   TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fechaExpiracion TIMESTAMP    NULL,
     version         INT          DEFAULT 1,
+    UNIQUE KEY uq_tokens_uuid (uuid),
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Seguridad para Pares Ciegos (Control de IPs y usos)';
 
@@ -923,7 +917,7 @@ DELIMITER ;
 
 CREATE TABLE inv_usuarios_metadata (
     idMetadata           INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid                 VARCHAR(36)     NOT NULL UNIQUE,
+    uuid                 VARCHAR(36)     NOT NULL,
     idUsuario            INT(11)      NOT NULL UNIQUE,
     orcidId              VARCHAR(20)  NULL,
     scopusId             VARCHAR(30)  NULL,
@@ -938,6 +932,7 @@ CREATE TABLE inv_usuarios_metadata (
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fechaUltimoAcceso    TIMESTAMP    NULL,
     version              INT          DEFAULT 1,
+    UNIQUE KEY uq_usermeta_uuid (uuid),
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Perfil CACES, SENESCYT y configuración de Firma Electrónica';
 
