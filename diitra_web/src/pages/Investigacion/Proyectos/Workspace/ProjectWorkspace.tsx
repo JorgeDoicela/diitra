@@ -719,7 +719,12 @@ export const ProjectWorkspace: React.FC = () => {
                                 {currentProject.status}
                             </span>
                             <span className="text-text-dim">·</span>
-                            <span className="text-text-dim font-mono">{currentProject.uuid.split('-')[0]}</span>
+                            <span
+                                className="text-text-dim font-mono"
+                                title={currentProject.uuid}
+                            >
+                                {currentProject.uuid.split('-')[0]}
+                            </span>
                             <span className="text-text-dim">·</span>
                             <span className="text-text-dim">{user?.role || 'Investigador'}</span>
                         </div>
@@ -865,7 +870,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'En Ejecución' && (isCurrent || isPast) && currentProject.status === 'En Ejecución' && (
                                                     <div className="mt-4 animate-fade-in flex flex-wrap gap-3">
                                                         <button 
-                                                            onClick={() => navigate(`/investigacion/informes-avance/${currentProject.id}`)}
+                                                            onClick={() => navigate(`/investigacion/informes-avance/${currentProject.uuid}`)}
                                                             className="btn-vercel-primary !py-2"
                                                         >
                                                             <BarChart size={14} />

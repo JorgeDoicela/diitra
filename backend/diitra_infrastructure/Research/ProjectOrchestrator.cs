@@ -410,8 +410,52 @@ namespace diitra_infrastructure.Research
                 .ToListAsync();
         }
 
+        public async Task<string?> ResolveCanonicalUuidAsync(string identifier)
+        {
+            if (string.IsNullOrWhiteSpace(identifier)) return null;
+
+            var trimmed = identifier.Trim();
+
+            var exact = await _context.InvProyectos
+                .Where(p => p.Uuid == trimmed)
+                .Select(p => p.Uuid)
+                .FirstOrDefaultAsync();
+            if (exact != null) return exact;
+
+            if (int.TryParse(trimmed, out int idProyecto))
+            {
+                var byId = await _context.InvProyectos
+                    .Where(p => p.IdProyecto == idProyecto)
+                    .Select(p => p.Uuid)
+                    .FirstOrDefaultAsync();
+                if (byId != null) return byId;
+            }
+
+            if (!trimmed.Contains('-') && trimmed.Length >= 4)
+            {
+                var prefix = trimmed.ToLowerInvariant();
+                var matches = await _context.InvProyectos
+                    .Where(p => p.Uuid.ToLower().StartsWith(prefix))
+                    .Select(p => p.Uuid)
+                    .ToListAsync();
+
+                if (matches.Count == 1) return matches[0];
+                if (matches.Count > 1)
+                {
+                    var segmentMatch = matches.FirstOrDefault(u =>
+                        u.Split('-')[0].Equals(trimmed, StringComparison.OrdinalIgnoreCase));
+                    return segmentMatch ?? matches[0];
+                }
+            }
+
+            return null;
+        }
+
         public async Task<ProyectoDto?> GetProjectDetailAsync(string uuid)
         {
+            var canonicalUuid = await ResolveCanonicalUuidAsync(uuid);
+            if (canonicalUuid == null) return null;
+
             var p = await _context.InvProyectos
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
@@ -427,7 +471,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.InvProductos)
                 .Include(p => p.MatrizMarcoLogico)
                 .Include(p => p.InvRecursosDisponibles)
-                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+                .FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
 
             if (p == null) return null;
 
@@ -1525,7 +1569,8 @@ namespace diitra_infrastructure.Research
             var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
             if (user == null) return false;
 
-            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
             if (project == null) return true;
 
             // Si el proyecto ya fue enviado o aprobado, está blindado para el usuario regular
@@ -1556,7 +1601,8 @@ namespace diitra_infrastructure.Research
             var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
             if (user == null) return false;
 
-            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
             if (project == null) return true;
 
             // 1. Verificar si es integrante directo del equipo del proyecto (Profesores o Alumnos)

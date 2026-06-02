@@ -40,6 +40,8 @@ public class EvidenciaDto
 public class CreateInformeAvanceDto
 {
     public int IdProyecto { get; set; }
+    /// <summary>UUID del proyecto. Si IdProyecto es 0, el controlador lo resolverá desde este campo.</summary>
+    public string? ProjectUuid { get; set; }
     public DateOnly FechaReporte { get; set; }
     public string ResumenActividades { get; set; } = null!;
 }
