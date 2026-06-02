@@ -26,6 +26,7 @@ export interface PeerReviewDto {
     puntaje_total?: number;
     observaciones_gral?: string;
     dictamen_revisor?: 'Pendiente' | 'Aprueba' | 'Rechaza';
+    revisor_carrera?: string;
 }
 
 export interface ArbitrajeProyectoDto {

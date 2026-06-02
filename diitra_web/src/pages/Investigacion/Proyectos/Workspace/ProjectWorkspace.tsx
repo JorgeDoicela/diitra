@@ -1021,7 +1021,15 @@ export const ProjectWorkspace: React.FC = () => {
                                                                         </div>
                                                                     )}
                                                                 </div>
-                                                                <div className="text-[10px] text-text-dim font-mono mt-0.5 flex items-center gap-x-2">
+                                                                <div className="text-[10px] text-text-dim font-mono mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                                    {member.carrera && (
+                                                                        <>
+                                                                            <span className="text-[9px] text-text-main font-bold uppercase tracking-wide bg-surface px-1.5 py-0.5 rounded border border-border-thin truncate max-w-[200px]" title={member.carrera}>
+                                                                                {member.carrera}
+                                                                            </span>
+                                                                            <span>·</span>
+                                                                        </>
+                                                                    )}
                                                                     <span>C.I. {member.cedula || 'N/A'}</span>
                                                                     <span>·</span>
                                                                     <div className="flex items-center gap-1">

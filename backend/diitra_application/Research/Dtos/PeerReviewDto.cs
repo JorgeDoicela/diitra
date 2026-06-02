@@ -24,6 +24,7 @@ public class PeerReviewDto
     public bool EsDobleCiego { get; set; } = true;
     public decimal? PuntajeTotal { get; set; }
     public string? ObservacionesGral { get; set; }
+    public string? RevisorCarrera { get; set; }
 }
 
 // ─────────────────────────────────────────────────────────────
