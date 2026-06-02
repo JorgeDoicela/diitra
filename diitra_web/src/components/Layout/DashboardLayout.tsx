@@ -117,7 +117,11 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 console.log('Suscripción Web Push sincronizada profesionalmente con el servidor.');
                 localStorage.setItem('web_push_active', 'true');
             } catch (error) {
-                console.error('Error al inicializar las notificaciones Web Push nativas:', error);
+                console.warn(
+                    'Aviso: No se pudieron activar las notificaciones Web Push nativas en segundo plano (esto es común en Brave, Safari o navegación privada si el servicio de push del navegador está deshabilitado). ' +
+                    'Las notificaciones en tiempo real dentro de la aplicación seguirán funcionando normalmente mediante WebSockets/SignalR.',
+                    error
+                );
                 localStorage.setItem('web_push_active', 'false');
             }
         };
