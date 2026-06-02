@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../../api/axios_config';
 import {
     Mail, Plus, Edit2, Trash2, Send, History, FileText, CheckCircle2,
     AlertTriangle, Eye, Loader2, ArrowRight,
-    Paperclip, X, RefreshCw, Layers, HelpCircle, Shield, Sparkles
+    Paperclip, X, RefreshCw, Layers, Shield, Sparkles,
+    Search, Users, UserCheck, ChevronDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -18,9 +19,17 @@ import {
     buildEmailSendPayload,
     buildTemplateDataForSend,
     getSubjectVariants,
+    getPreviewDefaults,
     getTokenLabel,
     mergeTokenReplacements
 } from './emailEngineConfig';
+import {
+    buildExtraDataForPreview,
+    clearContextTokenValues,
+    renderMasterLayoutPreview,
+    resolveActionUrlForPreview,
+    stripEmbeddedContextBlocks
+} from './emailPreviewLayout';
 
 const mapTemplateToCamelCase = (t: any): EmailTemplate => {
     if (!t) return t;
@@ -81,7 +90,415 @@ const mapCarreraToCamelCase = (c: any): Carrera => {
     };
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SELECTOR DE DESTINATARIOS
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface SelectedPerson {
+    idUsuario?: number;
+    nombre: string;
+    email: string;
+    tipo: string;
+    carrera?: string;
+}
+
+const USER_TYPES = [
+    { value: 'DOCENTE', label: 'Docente' },
+    { value: 'ESTUDIANTE', label: 'Estudiante' },
+    { value: 'EXTERNO', label: 'Árbitro Externo' }
+];
+
+const ROLE_OPTIONS = [
+    { value: 'DOCENTE_INV', label: 'Docentes Investigadores' },
+    { value: 'DIR_INV', label: 'Directores de Investigación' },
+    { value: 'DIITRA_ADMIN', label: 'Administradores DIITRA' },
+    { value: 'DIITRA_REVISOR_EXTERNO', label: 'Árbitros Externos' },
+    { value: 'DIITRA_ESTUDIANTE', label: 'Co-Investigadores (Estudiantes)' },
+    { value: 'ADMIN_SISTEMA', label: 'Administradores del Sistema' }
+];
+
+const TYPE_BADGE: Record<string, string> = {
+    DOCENTE: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    ESTUDIANTE: 'bg-green-500/10 text-green-600 dark:text-green-400',
+    EXTERNO: 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+};
+
+interface RecipientPickerProps {
+    carreras: Carrera[];
+    selected: SelectedPerson[];
+    onSelected: (people: SelectedPerson[]) => void;
+    broadcastRole: string;
+    onBroadcastRole: (role: string) => void;
+    broadcastCarreraId: string;
+    onBroadcastCarreraId: (id: string) => void;
+}
+
+const mapApiUserToPerson = (u: Record<string, unknown>): SelectedPerson => ({
+    idUsuario: (u.id_usuario ?? u.idUsuario) as number | undefined,
+    nombre: String(u.nombre_completo ?? u.nombreCompleto ?? u.nombre ?? 'Sin nombre').trim(),
+    email: String(u.email ?? u.email_institucional ?? '').trim(),
+    tipo: String(u.type ?? u.tipo ?? 'DOCENTE'),
+    carrera: String(u.carrera ?? '').trim()
+});
+
+const personKey = (p: SelectedPerson) =>
+    p.email ? p.email.toLowerCase() : `id-${p.idUsuario ?? p.nombre}`;
+
+/** Puede enviarse si tiene correo visible o cuenta DIITRA (idUsuario). */
+const canSelectPerson = (p: SelectedPerson) =>
+    Boolean(p.email?.includes('@')) || (p.idUsuario != null && p.idUsuario > 0);
+
+const RecipientPicker: React.FC<RecipientPickerProps> = ({
+    carreras, selected, onSelected,
+    broadcastRole, onBroadcastRole,
+    broadcastCarreraId, onBroadcastCarreraId
+}) => {
+    const [mode, setMode] = useState<'personas' | 'difusion'>('personas');
+    const [query, setQuery] = useState('');
+    const [filterType, setFilterType] = useState('DOCENTE');
+    const [filterCarreraId, setFilterCarreraId] = useState('');
+    const [results, setResults] = useState<SelectedPerson[]>([]);
+    const [searching, setSearching] = useState(false);
+    const [searchError, setSearchError] = useState<string | null>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const searchUsers = useCallback(async (q: string, type: string, carreraId: string) => {
+        setSearching(true);
+        setSearchError(null);
+        try {
+            const typesToFetch = type ? [type] : (['DOCENTE', 'ESTUDIANTE', 'EXTERNO'] as const);
+            const carreraLabel = carreraId
+                ? carreras.find(c => c.idCarrera.toString() === carreraId)?.carrera1?.toLowerCase()
+                : '';
+
+            const batches = await Promise.all(
+                typesToFetch.map(async t => {
+                    const params: Record<string, string> = { pageSize: '50', page: '1', type: t };
+                    if (q.trim()) params.search = q.trim();
+                    const res = await api.get('/Admin/users', { params });
+                    const raw = res.data?.items ?? res.data ?? [];
+                    return (Array.isArray(raw) ? raw : []).map((u: Record<string, unknown>) =>
+                        mapApiUserToPerson(u)
+                    );
+                })
+            );
+
+            const seen = new Set<string>();
+            let merged: SelectedPerson[] = [];
+            for (const batch of batches) {
+                for (const p of batch) {
+                    const key = personKey(p);
+                    if (seen.has(key)) continue;
+                    seen.add(key);
+                    merged.push(p);
+                }
+            }
+
+            if (carreraLabel) {
+                merged = merged.filter(
+                    p => !p.carrera || p.carrera.toLowerCase().includes(carreraLabel)
+                );
+            }
+
+            merged.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+            setResults(merged);
+        } catch {
+            setResults([]);
+            setSearchError('No se pudo cargar personas. Verifique su sesión de administrador.');
+        } finally {
+            setSearching(false);
+        }
+    }, [carreras]);
+
+    useEffect(() => {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(
+            () => searchUsers(query, filterType, filterCarreraId),
+            query.trim() ? 280 : 80
+        );
+        return () => clearTimeout(debounceRef.current);
+    }, [query, filterType, filterCarreraId, searchUsers]);
+
+    const add = (p: SelectedPerson) => {
+        if (!canSelectPerson(p)) return;
+        const key = personKey(p);
+        if (!selected.some(s => personKey(s) === key)) {
+            onSelected([...selected, p]);
+        }
+    };
+
+    const remove = (p: SelectedPerson) => {
+        const targetKey = personKey(p);
+        onSelected(selected.filter(s => personKey(s) !== targetKey));
+    };
+
+    const totalDestinatarios =
+        selected.length > 0
+            ? `${selected.length} persona${selected.length > 1 ? 's' : ''}`
+            : (broadcastRole || broadcastCarreraId)
+            ? 'difusión por filtro'
+            : 'ninguno';
+
+    return (
+        <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
+                    <Users size={12} className="text-brand" /> Destinatarios
+                </span>
+                <span className="text-[9px] text-text-dim">
+                    {totalDestinatarios}
+                </span>
+            </div>
+
+            {/* Mode tabs */}
+            <div className="flex border border-border-thin rounded-lg p-0.5 bg-surface/30 gap-0.5">
+                {(['personas', 'difusion'] as const).map(m => (
+                    <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMode(m)}
+                        className={`flex-1 text-[9px] font-bold uppercase tracking-wider py-1.5 rounded-md transition-all cursor-pointer ${
+                            mode === m
+                                ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
+                                : 'text-text-dim hover:text-text-main'
+                        }`}
+                    >
+                        {m === 'personas' ? 'Personas específicas' : 'Difusión por filtro'}
+                    </button>
+                ))}
+            </div>
+
+            {/* ── MODO PERSONAS ── */}
+            {mode === 'personas' && (
+                <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                            <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Tipo</label>
+                            <select
+                                className="input-vercel !py-1.5 text-xs w-full"
+                                value={filterType}
+                                onChange={e => {
+                                    setFilterType(e.target.value);
+                                    setIsOpen(true);
+                                }}
+                            >
+                                <option value="">Todos los tipos</option>
+                                {USER_TYPES.map(t => (
+                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Carrera</label>
+                            <select
+                                className="input-vercel !py-1.5 text-xs w-full"
+                                value={filterCarreraId}
+                                onChange={e => {
+                                    setFilterCarreraId(e.target.value);
+                                    setIsOpen(true);
+                                }}
+                            >
+                                <option value="">Todas</option>
+                                {carreras.map(c => (
+                                    <option key={c.idCarrera} value={c.idCarrera.toString()}>{c.carrera1}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Buscador y Selector 2-en-1 */}
+                    <div className="space-y-1 relative" ref={containerRef}>
+                        <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">
+                            Buscar y seleccionar persona
+                        </label>
+                        <div className="relative">
+                            <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-dim" />
+                            <input
+                                type="text"
+                                className="input-vercel !pl-7 !pr-8 !py-2 text-xs w-full cursor-text font-sans"
+                                placeholder={searching ? "Cargando..." : "Escriba nombre o correo para buscar..."}
+                                value={query}
+                                onFocus={() => setIsOpen(true)}
+                                onChange={e => {
+                                    setQuery(e.target.value);
+                                    setIsOpen(true);
+                                }}
+                            />
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                                {searching && (
+                                    <Loader2 size={11} className="text-text-dim animate-spin" />
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => setIsOpen(!isOpen)}
+                                    className="text-text-dim hover:text-text-main transition-colors cursor-pointer focus:outline-none"
+                                >
+                                    <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Dropdown flotante 2 en 1 */}
+                        {isOpen && (
+                            <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-xl shadow-xl max-h-60 overflow-y-auto z-50 divide-y divide-border-thin animate-fade-in">
+                                {searchError && (
+                                    <div className="p-3 text-[10px] text-error text-center">{searchError}</div>
+                                )}
+                                {!searchError && results.length === 0 ? (
+                                    <div className="p-3 text-[10px] text-text-dim text-center italic">
+                                        {searching ? "Buscando..." : "No se encontraron personas con esos filtros"}
+                                    </div>
+                                ) : (
+                                    results.map(p => {
+                                        const key = personKey(p);
+                                        const alreadyAdded = selected.some(s => personKey(s) === key);
+                                        const selectable = canSelectPerson(p);
+                                        return (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                disabled={alreadyAdded || !selectable}
+                                                onClick={() => {
+                                                    add(p);
+                                                    setIsOpen(false);
+                                                    setQuery(''); // Limpia el buscador para la siguiente selección
+                                                }}
+                                                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors cursor-pointer ${
+                                                    alreadyAdded || !selectable
+                                                        ? 'opacity-45 cursor-not-allowed'
+                                                        : 'hover:bg-brand/5'
+                                                }`}
+                                            >
+                                                <div className="w-6 h-6 rounded-full bg-brand/15 flex items-center justify-center text-[9px] font-bold text-brand shrink-0">
+                                                    {p.nombre.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-xs font-semibold text-text-main truncate">{p.nombre}</div>
+                                                    <div className="text-[9px] text-text-dim font-mono truncate">
+                                                        {p.email || (p.idUsuario ? 'Correo desde cuenta DIITRA' : 'Sin correo registrado')}
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${TYPE_BADGE[p.tipo] ?? 'bg-surface text-text-dim'}`}>
+                                                        {USER_TYPES.find(t => t.value === p.tipo)?.label ?? p.tipo}
+                                                    </span>
+                                                    {alreadyAdded && <CheckCircle2 size={12} className="text-success" />}
+                                                </div>
+                                            </button>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Chips de personas seleccionadas */}
+                    {selected.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                            {selected.map(p => (
+                                <div
+                                    key={personKey(p)}
+                                    className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border-thin bg-surface text-xs max-w-full"
+                                    title={p.email || 'Correo desde cuenta DIITRA'}
+                                >
+                                    <span className={`text-[8px] font-bold px-1 rounded-full ${TYPE_BADGE[p.tipo] ?? 'bg-surface text-text-dim'}`}>
+                                        {p.tipo.charAt(0)}
+                                    </span>
+                                    <span className="font-medium text-text-main truncate max-w-[130px]">{p.nombre}</span>
+                                    <span className="text-[8px] text-text-dim font-mono truncate hidden sm:block max-w-[120px]">
+                                        {p.email}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => remove(p)}
+                                        className="text-text-dim hover:text-error transition-colors ml-0.5 cursor-pointer shrink-0"
+                                    >
+                                        <X size={11} />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => onSelected([])}
+                                className="text-[8px] text-text-dim hover:text-error transition-colors px-1 cursor-pointer"
+                            >
+                                Limpiar todo
+                            </button>
+                        </div>
+                    )}
+
+                </div>
+            )}
+
+            {/* ── MODO DIFUSIÓN ── */}
+            {mode === 'difusion' && (
+                <div className="space-y-3">
+                    <p className="text-[9px] text-text-dim leading-relaxed">
+                        El correo llegará a <strong>todos los usuarios activos</strong> que cumplan los criterios seleccionados.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-1">
+                                <UserCheck size={10} /> Por rol
+                            </label>
+                            <select
+                                className="input-vercel !py-2 text-xs"
+                                value={broadcastRole}
+                                onChange={e => onBroadcastRole(e.target.value)}
+                            >
+                                <option value="">— Sin filtro de rol —</option>
+                                {ROLE_OPTIONS.map(r => (
+                                    <option key={r.value} value={r.value}>{r.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1.5">
+                            <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Por carrera</label>
+                            <select
+                                className="input-vercel !py-2 text-xs"
+                                value={broadcastCarreraId}
+                                onChange={e => onBroadcastCarreraId(e.target.value)}
+                            >
+                                <option value="">— Todas las carreras —</option>
+                                {carreras.map(c => (
+                                    <option key={c.idCarrera} value={c.idCarrera.toString()}>{c.carrera1}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                    {(broadcastRole || broadcastCarreraId) && (
+                        <div className="flex items-center gap-2 p-2.5 rounded-lg bg-brand/5 border border-brand/20 text-[9px] text-brand font-semibold">
+                            <Sparkles size={11} />
+                            Enviará a todos los usuarios activos
+                            {broadcastRole && ` con rol "${ROLE_OPTIONS.find(r => r.value === broadcastRole)?.label ?? broadcastRole}"`}
+                            {broadcastRole && broadcastCarreraId && ' y'}
+                            {broadcastCarreraId && ` de la carrera "${carreras.find(c => c.idCarrera.toString() === broadcastCarreraId)?.carrera1 ?? broadcastCarreraId}"`}
+                            .
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 const EmailEnginePage: React.FC = () => {
+    const hasAutoSelectedRef = useRef(false);
+
     // Tab State: 'send' | 'templates' | 'history'
     const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>('send');
 
@@ -104,9 +521,11 @@ const EmailEnginePage: React.FC = () => {
     const [subjectVariantId, setSubjectVariantId] = useState<string>('default');
     const [customSubject, setCustomSubject] = useState<string>('');
     const [additionalMessage, setAdditionalMessage] = useState<string>('');
+    // Destinatarios: modo personas específicas
+    const [selectedPeople, setSelectedPeople] = useState<SelectedPerson[]>([]);
+    // Destinatarios: modo difusión por rol/carrera
     const [selectedRole, setSelectedRole] = useState<string>('');
     const [selectedCarreraId, setSelectedCarreraId] = useState<string>('');
-    const [manualEmails, setManualEmails] = useState<string>('');
     const [contextType, setContextType] = useState<string>('');
     const [selectedEntityUuid, setSelectedEntityUuid] = useState<string>('');
     const [systemAttachments, setSystemAttachments] = useState<Record<string, boolean>>({
@@ -203,7 +622,16 @@ const EmailEnginePage: React.FC = () => {
 
     const applyTemplate = useCallback((templateId: string) => {
         const t = templates.find(temp => temp.idEmailTemplate.toString() === templateId);
-        if (!t) return;
+        if (!t) {
+            setSelectedTemplateId('');
+            setEmailBody('');
+            setSubjectVariantId('default');
+            setEmailSubject('');
+            setCustomSubject('');
+            setContextType('');
+            setSelectedEntityUuid('');
+            return;
+        }
 
         setSelectedTemplateId(templateId);
         setEmailBody(t.cuerpoHtml);
@@ -223,8 +651,9 @@ const EmailEnginePage: React.FC = () => {
 
     useEffect(() => {
         const active = templates.filter(t => t.activo);
-        if (active.length > 0 && !selectedTemplateId) {
+        if (active.length > 0 && !selectedTemplateId && !hasAutoSelectedRef.current) {
             applyTemplate(active[0].idEmailTemplate.toString());
+            hasAutoSelectedRef.current = true;
         }
     }, [templates, selectedTemplateId, applyTemplate]);
 
@@ -301,6 +730,13 @@ const EmailEnginePage: React.FC = () => {
         return detectedTokens.filter(tok => AUTO_TOKENS.has(tok));
     }, [detectedTokens]);
 
+    // Vaciar tokens de contexto cuando no hay instancia vinculada (ej. ningún proyecto)
+    useEffect(() => {
+        if (!contextType) return;
+        if (selectedEntityUuid) return;
+        setTokenValues(prev => clearContextTokenValues(prev, contextType));
+    }, [contextType, selectedEntityUuid]);
+
     // Auto-inject dynamic context values based on entity type and uuid
     useEffect(() => {
         if (!contextType || !selectedEntityUuid) return;
@@ -362,19 +798,56 @@ const EmailEnginePage: React.FC = () => {
         }));
     };
 
-    const previewReplacements = useMemo(
-        () => mergeTokenReplacements(tokenValues, window.location.origin),
-        [tokenValues]
-    );
+    const previewReplacements = useMemo(() => {
+        const base = mergeTokenReplacements(tokenValues, window.location.origin);
+        if (selectedPeople[0]) {
+            base['[[destinatario_nombre]]'] = selectedPeople[0].nombre;
+            if (selectedPeople[0].email?.includes('@')) {
+                base['[[destinatario_email]]'] = selectedPeople[0].email;
+            }
+        }
+        return base;
+    }, [tokenValues, selectedPeople]);
+
+    const hasLinkedContext = Boolean(contextType && selectedEntityUuid);
 
     const parsedPreview = useMemo(() => {
+        const origin = window.location.origin;
         const subjectTemplate = resolveFinalSubject();
         const bodyTemplate = buildFinalBody();
-        return {
-            subject: applyTokenReplacements(subjectTemplate, previewReplacements, 'text'),
-            body: applyTokenReplacements(bodyTemplate, previewReplacements, 'html')
-        };
-    }, [previewReplacements, resolveFinalSubject, buildFinalBody]);
+        const subject = applyTokenReplacements(subjectTemplate, previewReplacements, 'text');
+        let innerBody = applyTokenReplacements(bodyTemplate, previewReplacements, 'html');
+        if (!hasLinkedContext) {
+            innerBody = stripEmbeddedContextBlocks(innerBody);
+        }
+        const recipientName =
+            previewReplacements['[[destinatario_nombre]]'] ??
+            getPreviewDefaults(origin)['[[destinatario_nombre]]'];
+        const extraData = hasLinkedContext
+            ? buildExtraDataForPreview(previewReplacements)
+            : undefined;
+        const actionUrl = hasLinkedContext
+            ? resolveActionUrlForPreview(previewReplacements, innerBody, origin)
+            : resolveActionUrlForPreview(
+                  { '[[sistema_url]]': origin },
+                  innerBody,
+                  origin
+              );
+        const fullHtml = renderMasterLayoutPreview({
+            title: subject || 'Notificación DIITRA',
+            recipientName,
+            innerBodyHtml: innerBody,
+            origin,
+            actionUrl,
+            extraData
+        });
+        return { subject, body: innerBody, fullHtml, recipientName };
+    }, [
+        previewReplacements,
+        resolveFinalSubject,
+        buildFinalBody,
+        hasLinkedContext
+    ]);
 
     // File selection to Base64
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -412,11 +885,14 @@ const EmailEnginePage: React.FC = () => {
         setSending(true);
         setSendResult(null);
 
-        // Build list of manual emails
-        const emailsList = manualEmails
-            .split(/[\s,;\n]+/)
-            .map(em => em.trim())
-            .filter(em => em.length > 0 && em.includes('@'));
+        const emailsList = Array.from(new Set(
+            selectedPeople.map(p => p.email).filter(e => e.includes('@'))
+        ));
+        const userIdsList = Array.from(new Set(
+            selectedPeople
+                .filter(p => p.idUsuario != null && p.idUsuario > 0)
+                .map(p => p.idUsuario as number)
+        ));
 
         if (!selectedTemplateId || !selectedTemplate) {
             setSendResult({ success: false, message: 'Seleccione un tipo de comunicación (plantilla) para continuar.' });
@@ -424,8 +900,8 @@ const EmailEnginePage: React.FC = () => {
             return;
         }
 
-        if (emailsList.length === 0 && !selectedRole && !selectedCarreraId) {
-            setSendResult({ success: false, message: 'Debe ingresar al menos un destinatario o seleccionar un filtro de rol/carrera.' });
+        if (emailsList.length === 0 && userIdsList.length === 0 && !selectedRole && !selectedCarreraId) {
+            setSendResult({ success: false, message: 'Debe agregar al menos un destinatario o seleccionar un filtro de rol/carrera.' });
             setSending(false);
             return;
         }
@@ -458,6 +934,7 @@ const EmailEnginePage: React.FC = () => {
         const payload = buildEmailSendPayload({
             templateCodigo: selectedTemplate.codigo,
             destinatariosEmails: emailsList,
+            destinatariosUserIds: userIdsList,
             targetRole: selectedRole || null,
             targetCarreraId: selectedCarreraId ? parseInt(selectedCarreraId, 10) : null,
             customSubject: finalSubject,
@@ -488,7 +965,7 @@ const EmailEnginePage: React.FC = () => {
             setSendResult({ success: true, message: res.data.message || 'Correos enviados con éxito.' });
 
             // Clean fields upon success
-            setManualEmails('');
+            setSelectedPeople([]);
             setAttachments([]);
             setContextType('');
             setSelectedEntityUuid('');
@@ -696,9 +1173,8 @@ const EmailEnginePage: React.FC = () => {
                                                 className="input-vercel text-sm"
                                                 value={selectedTemplateId}
                                                 onChange={e => handleTemplateChange(e.target.value)}
-                                                required
                                             >
-                                                <option value="" disabled>— Seleccione qué desea notificar —</option>
+                                                <option value="">— Ninguno / Seleccione qué desea notificar —</option>
                                                 {templates.filter(t => t.activo).map(t => (
                                                     <option key={t.idEmailTemplate} value={t.idEmailTemplate.toString()}>
                                                         {t.nombre}
@@ -712,64 +1188,16 @@ const EmailEnginePage: React.FC = () => {
                                             )}
                                         </div>
 
-                                        {/* Recipients Filters */}
-                                        <div className="space-y-4 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[10px] font-black text-text-main uppercase tracking-widest">Filtros de Destinatarios</span>
-                                                <span title="Si selecciona un rol o carrera, el motor enviará el correo a todos los docentes/alumnos que cumplan con dicho filtro.">
-                                                    <HelpCircle size={12} className="text-text-dim hover:text-text-main transition-colors cursor-pointer" />
-                                                </span>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* Role filter */}
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Rol de Destino</label>
-                                                    <select
-                                                        className="input-vercel !py-2 text-xs"
-                                                        value={selectedRole}
-                                                        onChange={e => setSelectedRole(e.target.value)}
-                                                    >
-                                                        <option value="">-- Todos los roles --</option>
-                                                        <option value="DOCENTE_INV">Docente Investigador</option>
-                                                        <option value="DIITRA_ADMIN">Administrador DIITRA</option>
-                                                        <option value="DIR_INV">Director de Investigación</option>
-                                                        <option value="DIITRA_REVISOR_EXTERNO">Árbitro Evaluador Externo</option>
-                                                        <option value="DIITRA_ESTUDIANTE">Co-Investigador (Estudiante)</option>
-                                                        <option value="ADMIN_SISTEMA">Administrador del Sistema</option>
-                                                    </select>
-                                                </div>
-
-                                                {/* Carrera filter */}
-                                                <div className="space-y-1.5">
-                                                    <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Carrera Académica</label>
-                                                    <select
-                                                        className="input-vercel !py-2 text-xs"
-                                                        value={selectedCarreraId}
-                                                        onChange={e => setSelectedCarreraId(e.target.value)}
-                                                    >
-                                                        <option value="">-- Todas las carreras --</option>
-                                                        {carreras.map(c => (
-                                                            <option key={c.idCarrera} value={c.idCarrera.toString()}>
-                                                                {c.carrera1}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            {/* Manual email text input */}
-                                            <div className="space-y-1.5">
-                                                <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Destinatarios Individuales (Emails)</label>
-                                                <textarea
-                                                    rows={2}
-                                                    placeholder="ejemplo@traversari.edu.ec, docente.investiga@istpet.edu.ec"
-                                                    className="input-vercel text-xs font-mono"
-                                                    value={manualEmails}
-                                                    onChange={e => setManualEmails(e.target.value)}
-                                                />
-                                                <span className="text-[8px] text-text-dim block leading-relaxed">Separar emails por comas, espacios o saltos de línea.</span>
-                                            </div>
-                                        </div>
+                                        {/* Selector inteligente de destinatarios */}
+                                        <RecipientPicker
+                                            carreras={carreras}
+                                            selected={selectedPeople}
+                                            onSelected={setSelectedPeople}
+                                            broadcastRole={selectedRole}
+                                            onBroadcastRole={setSelectedRole}
+                                            broadcastCarreraId={selectedCarreraId}
+                                            onBroadcastCarreraId={setSelectedCarreraId}
+                                        />
 
                                         {/* Dual System Context Selection */}
                                         <div className="space-y-4 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
@@ -812,7 +1240,15 @@ const EmailEnginePage: React.FC = () => {
                                                         value={selectedEntityUuid}
                                                         onChange={e => setSelectedEntityUuid(e.target.value)}
                                                     >
-                                                        <option value="">-- Seleccionar Instancia --</option>
+                                                        <option value="">
+                                                            {contextType === 'Proyecto'
+                                                                ? '— Ningún proyecto (sin detalles) —'
+                                                                : contextType === 'Convocatoria'
+                                                                ? '— Ninguna convocatoria —'
+                                                                : contextType === 'PeerReview'
+                                                                ? '— Ninguna evaluación —'
+                                                                : '— Sin instancia —'}
+                                                        </option>
                                                         {contextType === 'Proyecto' && projects.map(p => (
                                                             <option key={p.uuid} value={p.uuid}>
                                                                 {p.codigo_institucional ? `[${p.codigo_institucional}] ` : ''}{p.titulo}
@@ -1114,50 +1550,59 @@ const EmailEnginePage: React.FC = () => {
                                     </form>
                                 </div>
 
-                                {/* Preview Panel */}
-                                <div className="space-y-4">
+                                {/* Preview Panel — simulación Outlook + plantilla maestra */}
+                                <div className="space-y-3">
                                     <h4 className="text-[11px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-2 ml-1">
-                                        <Eye size={13} /> Vista Previa del Destinatario (Tiempo Real)
+                                        <Eye size={13} /> Vista previa (como lo verá el destinatario)
                                     </h4>
-                                    <p className="text-[9px] text-text-dim ml-1 leading-relaxed">
-                                        Al enviar, el mensaje se envuelve en el diseño institucional SISTEMA DIITRA (logos ISTPET, pie LOPDP y botón de acción).
-                                    </p>
 
-                                    <div className="bento-card static p-0 border border-border-thin overflow-hidden bg-white text-black min-h-[500px] flex flex-col">
-                                        <div className="bg-[#f5f5f7] border-b border-border-thin p-4 font-sans text-xs space-y-2">
-                                            <div className="flex border-b border-black/5 pb-1">
-                                                <span className="w-16 font-bold text-gray-500">De:</span>
-                                                <span className="text-gray-800 font-semibold">DIITRA Notificaciones &lt;no-reply@diitra.istpet.edu.ec&gt;</span>
+                                    <div className="rounded-xl border border-[#d1d1d1] overflow-hidden shadow-md bg-white min-h-[520px] flex flex-col">
+                                        {/* Barra superior estilo Outlook */}
+                                        <div className="bg-[#f0f0f0] border-b border-[#d1d1d1] px-4 py-3 flex items-start justify-between gap-3">
+                                            <div className="flex items-start gap-3 min-w-0">
+                                                <div className="w-10 h-10 rounded-full bg-[#0078d4] text-white flex items-center justify-center text-sm font-bold shrink-0 shadow-sm">
+                                                    DI
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-sm font-semibold text-[#242424] truncate">
+                                                        DIITRA Investigación
+                                                    </div>
+                                                    <div className="text-xs text-[#616161] mt-0.5 truncate">
+                                                        Para: <span className="font-medium text-[#242424]">{parsedPreview.recipientName}</span>
+                                                        {previewReplacements['[[destinatario_email]]'] && (
+                                                            <span className="text-[#616161]"> &lt;{previewReplacements['[[destinatario_email]]']}&gt;</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-xs font-semibold text-[#242424] mt-1.5 truncate">
+                                                        {parsedPreview.subject || '(Sin asunto)'}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="flex border-b border-black/5 pb-1">
-                                                <span className="w-16 font-bold text-gray-500">Para:</span>
-                                                <span className="text-gray-800 font-mono">Juan Pérez (Ejemplo) &lt;juan.perez@traversari.edu.ec&gt;</span>
-                                            </div>
-                                            <div className="flex pb-1">
-                                                <span className="w-16 font-bold text-gray-500">Asunto:</span>
-                                                <span className="text-gray-900 font-bold">{parsedPreview.subject || '(Sin Asunto)'}</span>
-                                            </div>
+                                            <span className="text-[10px] text-[#616161] shrink-0 whitespace-nowrap">
+                                                {format(new Date(), "EEE dd/MM/yyyy HH:mm", { locale: es })}
+                                            </span>
                                         </div>
 
-                                        {/* HTML Preview Frame */}
-                                        <div className="flex-1 p-6 overflow-y-auto bg-white">
-                                            {parsedPreview.body ? (
-                                                <div
-                                                    dangerouslySetInnerHTML={{ __html: parsedPreview.body }}
-                                                    className="prose prose-sm max-w-none text-black"
+                                        {/* Cuerpo del correo con plantilla maestra */}
+                                        <div className="flex-1 bg-[#fafafa] min-h-[420px]">
+                                            {parsedPreview.fullHtml ? (
+                                                <iframe
+                                                    title="Vista previa del correo institucional"
+                                                    srcDoc={parsedPreview.fullHtml}
+                                                    className="w-full h-[min(72vh,640px)] border-0 bg-[#fafafa]"
+                                                    sandbox="allow-scripts"
                                                 />
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center h-64 text-gray-400">
                                                     <Mail size={32} className="stroke-1 opacity-40 mb-2" />
-                                                    <span className="text-xs">El cuerpo del correo está vacío</span>
+                                                    <span className="text-xs">Seleccione un tipo de comunicación</span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Simulation Footer Banner */}
-                                        <div className="bg-[#fff9e6] border-t border-amber-200/50 p-2 text-center text-[10px] text-amber-700 font-semibold select-none flex items-center justify-center gap-1.5">
-                                            <AlertTriangle size={11} />
-                                            Modo Simulación de Visualización de Cliente de Correo.
+                                        <div className="bg-[#fff9e6] border-t border-amber-200/60 px-3 py-2 text-center text-[10px] text-amber-800 font-medium flex items-center justify-center gap-1.5">
+                                            <AlertTriangle size={11} className="shrink-0" />
+                                            Simulación visual — el envío real usa la misma plantilla maestra del servidor.
                                         </div>
                                     </div>
                                 </div>

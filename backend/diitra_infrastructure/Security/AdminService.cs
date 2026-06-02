@@ -98,13 +98,18 @@ public class AdminService : IAdminService
                 .Where(ur => ur.Role.RoleModuleOperations.Any(rmo => rmo.ModuleOperation.Module.Sistema.Codigo == "DIITRA"))
                 .ToListAsync();
 
+            var linkedUsers = await _context.Users
+                .Where(u => ids.Contains(u.IdSigafi.Trim()))
+                .ToListAsync();
+
             var userIds = userRoles.Where(ur => ur.User != null).Select(ur => ur.User.IdUsuario).Distinct().ToList();
             var metadatas = await _context.InvUsuariosMetadata.Where(m => userIds.Contains(m.IdUsuario)).ToListAsync();
 
             result.Items = students.Select(s => {
                 var sId = s.IdAlumno.Trim();
                 var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == sId).ToList();
-                var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == sId);
+                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
                 var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno.Trim() == sId);
@@ -119,9 +124,10 @@ public class AdminService : IAdminService
 
                 return new UserManagementDto
                 {
+                    IdUsuario = firstUserId,
                     IdProfesor = sId,
                     NombreCompleto = $"{s.PrimerNombre} {s.SegundoNombre} {s.ApellidoPaterno} {s.ApellidoMaterno}".Replace("  ", " ").Trim(),
-                    Email = s.EmailInstitucional ?? s.Email ?? "",
+                    Email = ResolveContactEmail(s.EmailInstitucional, s.Email, linkedUser?.EmailInstitucional),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "ESTUDIANTE",
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
@@ -191,7 +197,7 @@ public class AdminService : IAdminService
                     IdUsuario = u.IdUsuario,
                     IdProfesor = sId,
                     NombreCompleto = nombreCompleto,
-                    Email = u.IdSigafi.Contains("@") ? u.IdSigafi : (u.EmailInstitucional ?? "externo@diitra.ist"),
+                    Email = ResolveContactEmail(u.EmailInstitucional, u.IdSigafi.Contains("@") ? u.IdSigafi : null),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "EXTERNO",
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
@@ -233,6 +239,10 @@ public class AdminService : IAdminService
 
             var ids = professors.Select(p => p.IdProfesor.Trim()).ToList();
 
+            var linkedUsers = await _context.Users
+                .Where(u => ids.Contains(u.IdSigafi.Trim()))
+                .ToListAsync();
+
             // Obtener horas de investigación (idSubcategoria = 7)
             var researchHours = await _context.ProfesoresActividades
                 .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
@@ -265,7 +275,8 @@ public class AdminService : IAdminService
                 var hours = researchHours.Where(h => h.IdProfesor.Trim() == pId).Sum(h => h.HorasSemana);
                 var contract = activeContracts.FirstOrDefault(c => c.IdProfesor.Trim() == pId);
                 var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == pId).ToList();
-                var firstUserId = roleInfo.FirstOrDefault()?.User?.IdUsuario;
+                var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == pId);
+                var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
                 // Buscar carrera vinculada al docente en este periodo usando la navegación precargada
@@ -280,7 +291,7 @@ public class AdminService : IAdminService
                     IdUsuario = firstUserId,
                     IdProfesor = pId,
                     NombreCompleto = $"{p.PrimerNombre} {p.SegundoNombre} {p.PrimerApellido} {p.SegundoApellido}".Replace("  ", " ").Trim(),
-                    Email = p.EmailInstitucional ?? p.Email ?? "",
+                    Email = ResolveContactEmail(p.EmailInstitucional, p.Email, linkedUser?.EmailInstitucional),
                     UserUuid = userMeta?.Uuid.ToString() ?? "",
                     Type = "DOCENTE",
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
@@ -655,6 +666,19 @@ public class AdminService : IAdminService
             .ToListAsync();
 
         return result;
+    }
+
+    /// <summary>Primer valor no vacío que parezca correo electrónico.</summary>
+    private static string ResolveContactEmail(params string?[] candidates)
+    {
+        foreach (var raw in candidates)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) continue;
+            var value = raw.Trim();
+            if (value.Contains('@', StringComparison.Ordinal))
+                return value;
+        }
+        return string.Empty;
     }
 
 }
