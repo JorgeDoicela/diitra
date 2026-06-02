@@ -66,6 +66,17 @@ namespace Diitra.Infrastructure.Common.Documents
                     i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION", ct);
             }
 
+            if (instance == null)
+            {
+                // Auto-creación resiliente si el UUID corresponde a un proyecto existente sin instancia
+                var projectExists = await _context.InvProyectos.AnyAsync(p => p.Uuid == uuid, ct);
+                if (projectExists)
+                {
+                    instance = await CreateAsync("PROTOCOLO_INVESTIGACION", uuid, "sistema", "Protocolo Oficial", "Proyecto", ct);
+                    await SyncFromProjectAsync(instance, ct);
+                }
+            }
+
             if (instance != null)
             {
                 await SyncFromProjectAsync(instance, ct);
