@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     Users, Plus, Search, CheckCircle, GraduationCap, User, UserMinus, Shield, Award, Calendar, FileText, ChevronRight, BookOpen, Eye
 } from 'lucide-react';
@@ -69,6 +69,7 @@ interface GroupFormDrawerProps {
     formatUserDetails: (u: any) => string;
     formatCareerName: (name: string) => string;
     setIsCareerModalOpen: (open: boolean) => void;
+    onDraftCleared?: () => void;
 }
 
 export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
@@ -84,7 +85,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     setConfirmDialog,
     formatUserDetails,
     formatCareerName,
-    setIsCareerModalOpen
+    setIsCareerModalOpen,
+    onDraftCleared
 }) => {
     // Form states
     const [formData, setFormData] = useState({
@@ -104,6 +106,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     });
 
     const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+    const [isDraftRestored, setIsDraftRestored] = useState(false);
+    const isInitializedRef = useRef(false);
 
     // Search and auto-completes
     const [coordSearchQuery, setCoordSearchQuery] = useState('');
@@ -129,7 +133,31 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
 
     // Populate data when editingGroup changes
     useEffect(() => {
+        if (!isOpen) {
+            isInitializedRef.current = false;
+            setIsDraftRestored(false);
+            return;
+        }
+
         if (editingGroup) {
+            const draftKey = `edit_group_form_draft_${editingGroup.uuid}`;
+            const draft = localStorage.getItem(draftKey);
+            if (draft && !isReadOnly) {
+                try {
+                    const parsed = JSON.parse(draft);
+                    setFormData(parsed.formData);
+                    setSelectedCoordName(parsed.selectedCoordName);
+                    setSelectedCoordCareer(parsed.selectedCoordCareer);
+                    setGroupMembers(parsed.groupMembers);
+                    setCoordSearchQuery('');
+                    setIsDraftRestored(true);
+                    isInitializedRef.current = true;
+                    return;
+                } catch (e) {
+                    console.error("Error parsing edit draft", e);
+                }
+            }
+
             setFormData({
                 nombre: editingGroup.nombre || '',
                 siglas: editingGroup.siglas || '',
@@ -156,6 +184,23 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 setGroupMembers([]);
             }
         } else {
+            const draft = localStorage.getItem('new_group_form_draft');
+            if (draft && !isReadOnly) {
+                try {
+                    const parsed = JSON.parse(draft);
+                    setFormData(parsed.formData);
+                    setSelectedCoordName(parsed.selectedCoordName);
+                    setSelectedCoordCareer(parsed.selectedCoordCareer);
+                    setGroupMembers(parsed.groupMembers);
+                    setCoordSearchQuery('');
+                    setIsDraftRestored(true);
+                    isInitializedRef.current = true;
+                    return;
+                } catch (e) {
+                    console.error("Error parsing new draft", e);
+                }
+            }
+
             setFormData({
                 nombre: '',
                 siglas: '',
@@ -176,7 +221,9 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             setCoordSearchQuery('');
             setGroupMembers([]);
         }
-    }, [editingGroup, isOpen]);
+        setIsDraftRestored(false);
+        isInitializedRef.current = true;
+    }, [editingGroup, isOpen, isReadOnly]);
 
     // debounces
     useEffect(() => {
@@ -418,6 +465,51 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
         }
     };
 
+    const clearDraft = () => {
+        localStorage.removeItem('new_group_form_draft');
+        localStorage.removeItem('groups_draft_metadata');
+        if (editingGroup) {
+            localStorage.removeItem(`edit_group_form_draft_${editingGroup.uuid}`);
+        }
+        if (onDraftCleared) {
+            onDraftCleared();
+        }
+    };
+
+    // Auto-save draft on state changes
+    useEffect(() => {
+        if (!isOpen || isReadOnly || !isInitializedRef.current) return;
+
+        const draftData = {
+            formData,
+            selectedCoordName,
+            selectedCoordCareer,
+            groupMembers
+        };
+
+        if (editingGroup) {
+            const draftKey = `edit_group_form_draft_${editingGroup.uuid}`;
+            localStorage.setItem(draftKey, JSON.stringify(draftData));
+            
+            const meta = {
+                type: 'edit',
+                uuid: editingGroup.uuid,
+                groupName: formData.nombre || editingGroup.nombre || 'Borrador sin nombre',
+                timestamp: Date.now()
+            };
+            localStorage.setItem('groups_draft_metadata', JSON.stringify(meta));
+        } else {
+            localStorage.setItem('new_group_form_draft', JSON.stringify(draftData));
+            
+            const meta = {
+                type: 'new',
+                groupName: formData.nombre || 'Borrador de Nueva Propuesta',
+                timestamp: Date.now()
+            };
+            localStorage.setItem('groups_draft_metadata', JSON.stringify(meta));
+        }
+    }, [formData, selectedCoordName, selectedCoordCareer, groupMembers, isOpen, isReadOnly, editingGroup]);
+
     const handleSubmitForm = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isReadOnly) {
@@ -443,6 +535,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
             } else {
                 await api.post('/Groups', payload);
             }
+            clearDraft();
             onClose();
             fetchData();
         } catch (error: any) {
@@ -497,11 +590,13 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 message: '¿Está seguro de salir? Perderá todos los datos que ha ingresado en este formulario.',
                 type: 'warning',
                 onConfirm: () => {
+                    clearDraft();
                     onClose();
                     setConfirmDialog((prev: any) => ({ ...prev, isOpen: false }));
                 }
             });
         } else {
+            clearDraft();
             onClose();
         }
     };
@@ -543,6 +638,77 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                 </div>
 
                 <form onSubmit={handleSubmitForm} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
+                    {isDraftRestored && (
+                        <div className="bg-brand-subtle border border-brand/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
+                            <div className="flex items-center gap-3">
+                                <FileText size={16} className="text-brand shrink-0" />
+                                <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
+                                    <span className="text-brand font-black">Borrador Restaurado:</span> Se han recuperado tus datos no guardados localmente.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (editingGroup) {
+                                        setFormData({
+                                            nombre: editingGroup.nombre || '',
+                                            siglas: editingGroup.siglas || '',
+                                            tipo_grupo: editingGroup.tipo_grupo || 'Investigación',
+                                            id_dominio: editingGroup.id_dominio ? editingGroup.id_dominio.toString() : '',
+                                            id_profesor_coordinador: editingGroup.id_profesor_coordinador || '',
+                                            objetivo_general: editingGroup.objetivo_general || '',
+                                            mision: editingGroup.mision || '',
+                                            vision: editingGroup.vision || '',
+                                            resolucion_aprobacion: editingGroup.resolucion_aprobacion || '',
+                                            fecha_creacion: editingGroup.fecha_creacion ? editingGroup.fecha_creacion.split('T')[0] : '',
+                                            categoria_consolidacion: editingGroup.categoria_consolidacion || 'En Formación',
+                                            lineas_ids: editingGroup.lineas_ids || [],
+                                            carreras_ids: editingGroup.carreras_ids || []
+                                        });
+                                        setSelectedCoordName(editingGroup.nombre_coordinador || '');
+                                        setSelectedCoordCareer(editingGroup.carrera_coordinador || '');
+                                        if (editingGroup.miembros) {
+                                            const activeMembers = editingGroup.miembros.filter((m: any) => m.activo);
+                                            setGroupMembers(activeMembers);
+                                        } else {
+                                            setGroupMembers([]);
+                                        }
+                                    } else {
+                                        setFormData({
+                                            nombre: '',
+                                            siglas: '',
+                                            tipo_grupo: 'Investigación',
+                                            id_dominio: '',
+                                            id_profesor_coordinador: '',
+                                            objetivo_general: '',
+                                            mision: '',
+                                            vision: '',
+                                            resolucion_aprobacion: '',
+                                            fecha_creacion: new Date().toISOString().split('T')[0],
+                                            categoria_consolidacion: 'En Formación',
+                                            lineas_ids: [],
+                                            carreras_ids: []
+                                        });
+                                        setSelectedCoordName('');
+                                        setSelectedCoordCareer('');
+                                        setGroupMembers([]);
+                                    }
+                                    localStorage.removeItem('new_group_form_draft');
+                                    localStorage.removeItem('groups_draft_metadata');
+                                    if (editingGroup) {
+                                        localStorage.removeItem(`edit_group_form_draft_${editingGroup.uuid}`);
+                                    }
+                                    setIsDraftRestored(false);
+                                    if (onDraftCleared) {
+                                        onDraftCleared();
+                                    }
+                                }}
+                                className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline cursor-pointer shrink-0"
+                            >
+                                Revertir al Original
+                            </button>
+                        </div>
+                    )}
                     {!isAdmin && !isReadOnly && (
                         <div className="space-y-3 animate-fade-up">
                             <div className="bg-text-main/5 border border-text-main/15 rounded-xl p-4 flex items-center gap-3">
