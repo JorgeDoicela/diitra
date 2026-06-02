@@ -21,6 +21,7 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
         public async Task<object> GetDocumentDataAsync(string entityUuid, CancellationToken ct = default)
         {
             var proyecto = await _db.InvProyectos
+                .AsSplitQuery()
                 .Include(p => p.IdConvocatoriaNavigation)
                 .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)

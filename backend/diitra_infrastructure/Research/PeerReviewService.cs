@@ -62,6 +62,7 @@ public class PeerReviewService : IPeerReviewService
     public async Task<RubricaDinamicaDto?> GetRubricaForRevisionAsync(string revisionUuid)
     {
         var revision = await _context.Set<InvRevisionesPares>()
+            .AsSplitQuery()
             .Include(r => r.Detalles)
             .Include(r => r.Proyecto)
                 .ThenInclude(p => p.IdConvocatoriaNavigation)
@@ -528,6 +529,7 @@ public class PeerReviewService : IPeerReviewService
         if (!string.IsNullOrEmpty(projectUuid))
         {
             var proyecto = await _context.InvProyectos
+                .AsSplitQuery()
                 .Include(p => p.InvProyectosProfesores)
                 .Include(p => p.InvProyectosAlumnos)
                 .FirstOrDefaultAsync(p => p.Uuid == projectUuid);

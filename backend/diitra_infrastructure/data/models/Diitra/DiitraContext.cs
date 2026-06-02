@@ -1588,7 +1588,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.TokenHash).HasColumnName("token_hash").HasMaxLength(64).IsRequired();
             entity.Property(e => e.FechaCreacion).HasColumnName("fecha_creacion").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaExpiracion).HasColumnName("fecha_expiracion");
-            entity.Property(e => e.Utilizado).HasColumnName("utilizado").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'");
+            entity.Property(e => e.Utilizado).HasColumnName("utilizado").HasColumnType("tinyint(1)");
             entity.Property(e => e.FechaUtilizado).HasColumnName("fecha_utilizado");
             entity.Property(e => e.IpCreacion).HasColumnName("ip_creacion").HasMaxLength(45);
             entity.Property(e => e.IpUtilizacion).HasColumnName("ip_utilizacion").HasMaxLength(45);
