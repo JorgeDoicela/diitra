@@ -131,11 +131,20 @@ namespace diitra_infrastructure.Common.Notifications
             // 1. Obtener destinatarios
             var recipientEmails = new List<(string Email, int? UserId, string Name)>();
 
-            // Destinatarios explícitos por correo
-            foreach (var email in request.DestinatariosEmails)
+            // Destinatarios explícitos por correo (externos o institucionales)
+            foreach (var rawEmail in request.DestinatariosEmails ?? Enumerable.Empty<string>())
             {
+                var email = rawEmail?.Trim();
+                if (string.IsNullOrEmpty(email) || !email.Contains('@')) continue;
+
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.EmailInstitucional == email);
-                recipientEmails.Add((email, user?.IdUsuario, user?.Nombre ?? "Investigador/a"));
+                var displayName = user?.Nombre;
+                if (string.IsNullOrWhiteSpace(displayName))
+                {
+                    var localPart = email.Split('@')[0];
+                    displayName = char.ToUpper(localPart[0]) + (localPart.Length > 1 ? localPart[1..] : "");
+                }
+                recipientEmails.Add((email, user?.IdUsuario, displayName));
             }
 
             // Destinatarios por IdUsuario

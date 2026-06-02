@@ -179,3 +179,46 @@ export function buildTemplateDataForSend(tokenValues: Record<string, string>): R
         Object.entries(tokenValues).filter(([, v]) => Boolean(v?.trim()))
     );
 }
+
+/** Payload en snake_case (convención del API .NET) */
+export function buildEmailSendPayload(input: {
+    templateCodigo: string;
+    destinatariosEmails: string[];
+    destinatariosUserIds?: number[];
+    targetRole: string | null;
+    targetCarreraId: number | null;
+    customSubject: string;
+    customBody: string;
+    templateData: Record<string, string>;
+    attachments: Array<{
+        nombreArchivo: string;
+        base64Content?: string;
+        rutaArchivo?: string;
+        contentType?: string;
+    }>;
+    entityUuid: string | null;
+    entityType: string | null;
+    certificateBase64: string | null;
+    signaturePassword: string | null;
+}) {
+    return {
+        template_codigo: input.templateCodigo,
+        destinatarios_emails: input.destinatariosEmails,
+        destinatarios_user_ids: input.destinatariosUserIds ?? [],
+        target_role: input.targetRole,
+        target_carrera_id: input.targetCarreraId,
+        custom_subject: input.customSubject,
+        custom_body: input.customBody,
+        template_data: input.templateData,
+        attachments: input.attachments.map(a => ({
+            nombre_archivo: a.nombreArchivo,
+            base64_content: a.base64Content ?? null,
+            ruta_archivo: a.rutaArchivo ?? null,
+            content_type: a.contentType ?? null
+        })),
+        entity_uuid: input.entityUuid,
+        entity_type: input.entityType,
+        certificate_base64: input.certificateBase64,
+        signature_password: input.signaturePassword
+    };
+}
