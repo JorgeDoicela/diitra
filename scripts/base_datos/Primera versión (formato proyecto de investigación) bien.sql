@@ -64,6 +64,7 @@ DROP TABLE IF EXISTS
     inv_proyectos_carreras,
     inv_proyectos_dominios,
     inv_trazabilidad_proyectos,
+    inv_proyecto_extensiones,
     inv_proyectos,
     inv_convocatorias_lineas,
     inv_convocatorias,
@@ -215,11 +216,7 @@ CREATE TABLE inv_pnd_objetivos (
     activo          TINYINT(1)   DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Catálogo del Plan Nacional de Desarrollo (SENESCYT)';
 
-INSERT INTO inv_pnd_objetivos (uuid, codigo, nombre, descripcion, activo) VALUES
-(UUID(), 'OBJ-1', 'Garantizar la seguridad ciudadana y el orden público', 'Alineado al eje de seguridad nacional', 1),
-(UUID(), 'OBJ-2', 'Fomentar el crecimiento económico y el empleo', 'Alineado al eje económico', 1),
-(UUID(), 'OBJ-3', 'Impulsar la innovación y la soberanía tecnológica', 'Objetivo principal para proyectos de I+D en ISTs', 1),
-(UUID(), 'OBJ-4', 'Fortalecer el sistema nacional de educación superior', 'Alineado al desarrollo del talento humano', 1);
+-- Los objetivos del Plan Nacional de Desarrollo se insertan en la sección de datos semilla al final.
 
 CREATE TABLE inv_grupos_lineas (
     idGrupo INT NOT NULL,
@@ -260,11 +257,7 @@ CREATE TABLE inv_tipos_convocatoria (
     descripcion        VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO inv_tipos_convocatoria (nombre, descripcion) VALUES
-('Investigación Aplicada', 'Desarrollo de prototipos y soluciones técnicas'),
-('Innovación', 'Proyectos con alto impacto en el mercado o sociedad'),
-('Semilleros', 'Iniciación a la investigación con estudiantes'),
-('Vinculación e Investigación', 'Proyectos integrados con la comunidad');
+-- Los tipos de convocatoria se insertan en la sección de datos semilla al final.
 
 CREATE TABLE inv_agendas_zonales (
     idAgendaZonal INT AUTO_INCREMENT PRIMARY KEY,
@@ -272,10 +265,7 @@ CREATE TABLE inv_agendas_zonales (
     descripcion   VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
-('Zona 9 - Software y TI', 'Agenda prioritaria para el Distrito Metropolitano de Quito'),
-('Zona 9 - Eficiencia Energética', 'Proyectos de energías renovables y ahorro'),
-('Zona 9 - Inclusión Social', 'Desarrollo social y educación');
+-- Las agendas zonales se insertan en la sección de datos semilla al final.
 
 CREATE TABLE inv_rubricas (
     idRubrica    INT          AUTO_INCREMENT PRIMARY KEY,
@@ -297,10 +287,7 @@ CREATE TABLE inv_rubrica_criterios (
     FOREIGN KEY (idRubrica) REFERENCES inv_rubricas(idRubrica) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-INSERT INTO inv_rubricas (nombre, descripcion) VALUES
-('Rúbrica Estándar I+D', 'Evaluación general para proyectos de investigación y desarrollo'),
-('Rúbrica de Innovación Tecnológica', 'Enfocada en prototipado y transferencia tecnológica'),
-('Rúbrica de Semilleros', 'Evaluación simplificada para proyectos estudiantiles');
+-- Las rúbricas se insertan en la sección de datos semilla al final.
 
 CREATE TABLE inv_convocatorias (
     idConvocatoria     INT           AUTO_INCREMENT PRIMARY KEY,
@@ -522,6 +509,18 @@ CREATE TABLE inv_proyectos_alumnos (
     motivo_cambio    VARCHAR(150)  NULL,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE inv_proyecto_extensiones (
+    idExtension      INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid             VARCHAR(36)   NOT NULL UNIQUE,
+    idProyecto       INT           NOT NULL,
+    fechaAnterior    DATE          NOT NULL,
+    fechaNueva       DATE          NOT NULL,
+    motivo           TEXT          NULL,
+    resolucion       TEXT          NULL,
+    fechaRegistro    TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################
@@ -865,13 +864,8 @@ INSERT INTO inv_cat_impactos (nombre) VALUES
 ('Social'), ('Científico'), ('Económico'), ('Político'), ('Ambiental'), ('Otro');
 
 -- Índices básicos del núcleo V3
+-- Índices básicos del núcleo V3 (Se omiten los índices sobre claves foráneas que InnoDB crea automáticamente)
 CREATE INDEX idx_proyectos_estado           ON inv_proyectos(estado);
-CREATE INDEX idx_proyectos_convocatoria     ON inv_proyectos(idConvocatoria);
-CREATE INDEX idx_objetivos_proyecto         ON inv_objetivos_proyecto(idProyecto);
-CREATE INDEX idx_cronograma_proyecto        ON inv_cronograma(idProyecto);
-CREATE INDEX idx_gastos_proyecto            ON inv_gastos(idProyecto);
-CREATE INDEX idx_informesav_proyecto        ON inv_informes_avance(idProyecto);
-CREATE INDEX idx_rev_pares_revisor          ON inv_revisiones_pares(idRevisor);
 CREATE INDEX idx_rev_pares_completado       ON inv_revisiones_pares(fechaCompletado);
 
 -- =============================================================================
@@ -951,6 +945,8 @@ DELIMITER $$
 CREATE TRIGGER trg_usermeta_uuid
 BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_proy_ext_uuid BEFORE INSERT ON inv_proyecto_extensiones FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
 CREATE TABLE inv_dispositivos_tokens (
@@ -999,20 +995,21 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- SECCIÓN: CATÁLOGOS INICIALES (SEED DATA)
 -- ============================================================
 
--- Limpieza de catálogos para evitar duplicados en re-ejecución
+-- Limpieza de catálogos para evitar duplicados en re-ejecución (excluyendo ODS y tipos de investigación para conservar sus semillas completas)
 SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_SAFE_UPDATES = 0;
 
 TRUNCATE TABLE inv_convocatorias_lineas;
-TRUNCATE TABLE inv_ods;
-TRUNCATE TABLE inv_ods_ejes;
-TRUNCATE TABLE inv_tipos_investigacion;
 TRUNCATE TABLE inv_rubricas;
 TRUNCATE TABLE inv_agendas_zonales;
 TRUNCATE TABLE inv_tipos_convocatoria;
 TRUNCATE TABLE inv_lineas_investigacion;
 TRUNCATE TABLE inv_programas;
 TRUNCATE TABLE inv_dominios;
+TRUNCATE TABLE inv_cat_tipo_producto;
+TRUNCATE TABLE inv_cat_tipo_evidencia;
+TRUNCATE TABLE inv_config_indicadores;
+TRUNCATE TABLE inv_pnd_objetivos;
 
 SET SQL_SAFE_UPDATES = 1;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -1074,22 +1071,8 @@ INSERT INTO inv_rubricas (nombre, descripcion, version, activo) VALUES
 ('Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1),
 ('Rúbrica para Proyectos de Vinculación', 'Enfoque en el impacto social y beneficiarios externos.', '1.0', 1);
 
--- 5. Tipos de Investigación (Estándar Frascati / CACES)
-INSERT INTO inv_tipos_investigacion (uuid, nombre, activo) VALUES
-(UUID(), 'Investigación Básica', 1),
-(UUID(), 'Investigación Aplicada', 1),
-(UUID(), 'Desarrollo Tecnológico', 1);
-
--- 6. ODS (Ejes y Objetivos)
-INSERT INTO inv_ods_ejes (nombre) VALUES ('Eje Social'), ('Eje Ambiental'), ('Eje Económico'), ('Eje Institucional');
-
-INSERT INTO inv_ods (idEje, numeroOds, titulo) VALUES
-(1, 4, 'Educación de Calidad'),
-(2, 7, 'Energía Asequible y No Contaminante'),
-(3, 8, 'Trabajo Decente y Crecimiento Económico'),
-(3, 9, 'Industria, Innovación e Infraestructura'),
-(2, 11, 'Ciudades y Comunidades Sostenibles'),
-(2, 13, 'Acción por el Clima');
+-- 5. Tipos de Investigación (Se conservan los definidos al inicio del script para alineación con el Frontend: Básica, Aplicada, Desarrollo Experimental)
+-- 6. ODS (Se conservan los 17 ODS de la ONU y sus 5 ejes definidos al inicio del script)
 
 -- 7. Programas de Investigación (Ejemplos Institucionales)
 INSERT INTO inv_programas (uuid, nombre, activo) VALUES
@@ -1133,7 +1116,7 @@ CREATE TABLE inv_document_templates (
     created_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at              TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     updated_by              VARCHAR(100)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_documentos_instancias (
     id                      INT           AUTO_INCREMENT PRIMARY KEY,
@@ -1153,7 +1136,7 @@ CREATE TABLE inv_documentos_instancias (
     data_snapshot_json      LONGTEXT      NULL            COMMENT 'Snapshot forense de los datos inyectados',
     INDEX idx_entity (entity_uuid),
     CONSTRAINT fk_instancia_template FOREIGN KEY (template_code) REFERENCES inv_document_templates(code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_documentos_firmas (
     idFirma                 INT           AUTO_INCREMENT PRIMARY KEY,
@@ -1166,7 +1149,7 @@ CREATE TABLE inv_documentos_firmas (
     es_valida               TINYINT(1)    NOT NULL DEFAULT 1,
     INDEX idx_doc_firma (documento_uuid),
     CONSTRAINT fk_firma_documento FOREIGN KEY (documento_uuid) REFERENCES inv_documentos_instancias(uuid) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_document_audit (
     id                      INT           AUTO_INCREMENT PRIMARY KEY,
@@ -1183,7 +1166,7 @@ CREATE TABLE inv_document_audit (
     data_snapshot_json      LONGTEXT      NULL COMMENT 'Snapshot forense de los datos inyectados (Resiliencia CACES 2026)',
     INDEX idx_entity (entity_uuid),
     INDEX idx_trace (traceability_code)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =============================================================================
 -- SECCIÓN: DIITRA CoWork — Persistencia de Colaboración en Tiempo Real
@@ -1209,7 +1192,7 @@ CREATE TABLE inv_cowork_documentos (
     creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     actualizadoEn     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uk_entidad_campo (entidadUuid, campoNombre)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   COMMENT='DIITRA CoWork — Estado persistente de documentos colaborativos Yjs';
 
 -- Registro de sesiones: quién se conectó a qué documento y cuándo.
@@ -1225,7 +1208,7 @@ CREATE TABLE inv_cowork_sesiones (
     desconectadoEn    TIMESTAMP     NULL            COMMENT 'NULL si la sesión sigue activa',
     INDEX idx_documento (documentoUuid),
     INDEX idx_usuario   (usuarioUuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   COMMENT='DIITRA CoWork — Auditoría LOPDP de acceso a documentos colaborativos';
 
 -- Registro de deltas binarios (Estrategia Append-Only para integridad)
@@ -1235,7 +1218,7 @@ CREATE TABLE inv_cowork_updates (
     updateData        LONGBLOB      NOT NULL COMMENT 'Delta binario generado por Yjs',
     creadoEn          TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_doc_upd (documentoUuid)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   COMMENT='DIITRA CoWork — Historial de cambios para sincronización en tiempo real';
 -- =============================================================================
 -- SECCIÓN: DIITRA Workflow Engine — Configuración de Estados
@@ -1250,7 +1233,7 @@ CREATE TABLE inv_config_workflow (
     requiereObservacion  TINYINT(1)    NOT NULL DEFAULT 1,
     activo               TINYINT(1)    NOT NULL DEFAULT 1,
     CONSTRAINT fk_workflow_tipo FOREIGN KEY (idTipoProyecto) REFERENCES inv_tipos_investigacion(idTipo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO inv_config_workflow (estadoOrigen, estadoDestino, requiereObservacion) VALUES
 ('Borrador',      'Enviado',      0),
@@ -1274,7 +1257,7 @@ CREATE TABLE IF NOT EXISTS inv_documentos_secciones_metadata (
     lastUserName        VARCHAR(255)  NULL,
     actualizadoEn       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE INDEX idx_instance_section (instanceUuid, sectionName)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   COMMENT='Gestión de estados por sección para coordinación Team Pulse';
 
 -- Comentarios Colaborativos (Hilos de Discusión)
@@ -1288,7 +1271,7 @@ CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
     creadoEn            TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_instance (instanceUuid),
     CONSTRAINT fk_comment_parent FOREIGN KEY (parentId) REFERENCES inv_collaboration_comments(idComment) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   COMMENT='Hilos de discusión real-time dentro de los documentos';
 
 -- =============================================================================
@@ -1377,7 +1360,7 @@ CREATE TABLE inv_email_templates (
     activo          TINYINT(1)    NOT NULL DEFAULT 1,
     fechaCreado     TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     fechaActualizado TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_email_historial (
     idEmailHistorial INT          AUTO_INCREMENT PRIMARY KEY,
@@ -1392,7 +1375,7 @@ CREATE TABLE inv_email_historial (
     adjuntosJson     JSON         NULL COMMENT 'JSON array con metadatos de archivos adjuntos',
     metadataJson     JSON         NULL COMMENT 'JSON con metadatos del sistema (proyecto_uuid, etc)',
     FOREIGN KEY (idUsuarioDestinatario) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =============================================================================
 -- SEMILLAS: MOTOR DE CORREOS PERSONALIZADO (DIITRA)
