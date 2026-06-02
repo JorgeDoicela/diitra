@@ -150,6 +150,7 @@ builder.Services.AddScoped<diitra_application.Security.IAdminService, diitra_inf
 builder.Services.AddScoped<IResearchService, ProjectService>();
 builder.Services.AddScoped<Diitra.Application.Research.IProjectOrchestrator, ProjectOrchestrator>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationService, diitra_infrastructure.Common.Notifications.NotificationService>();
+builder.Services.AddScoped<diitra_infrastructure.Common.Notifications.EmailMasterLayoutRenderer>();
 builder.Services.AddScoped<diitra_application.Common.Notifications.IEmailEngineService, diitra_infrastructure.Common.Notifications.EmailEngineService>();
 // Notificación Drivers
 builder.Services.AddScoped<diitra_application.Common.Notifications.INotificationDriver, diitra_infrastructure.Common.Notifications.SignalRDriver>();

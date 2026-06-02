@@ -2,13 +2,11 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Mail;
-using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using diitra_application.Common.Notifications;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using HandlebarsDotNet;
 
 namespace diitra_infrastructure.Common.Notifications
 {
@@ -44,13 +42,18 @@ namespace diitra_infrastructure.Common.Notifications
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<EmailDriver> _logger;
+        private readonly EmailMasterLayoutRenderer _layoutRenderer;
 
         public string Name => "Email";
 
-        public EmailDriver(IConfiguration configuration, ILogger<EmailDriver> logger)
+        public EmailDriver(
+            IConfiguration configuration,
+            ILogger<EmailDriver> logger,
+            EmailMasterLayoutRenderer layoutRenderer)
         {
             _configuration = configuration;
             _logger = logger;
+            _layoutRenderer = layoutRenderer;
         }
 
         public async Task SendAsync(string recipient, string title, string body, string? url = null, string? recipientName = null, Dictionary<string, string>? extraData = null)
@@ -59,61 +62,10 @@ namespace diitra_infrastructure.Common.Notifications
             var absoluteUrl = url != null ? (url.StartsWith("http") ? url : $"{frontendUrl}{url}") : null;
             var name = recipientName ?? "Investigador";
 
-            // Determine if SMTP is active
             var host = _configuration["Email:Host"];
             var isMock = string.IsNullOrEmpty(host);
 
-            // Configure logo values for template context
-            var logoIstpetVal = isMock ? $"{frontendUrl}/logo_istpet_negro.png" : "cid:logo_istpet";
-            var logoDiitraVal = isMock ? $"{frontendUrl}/logo_negro.png" : "cid:logo_diitra";
-
-            // 1. CARGA DINÁMICA DE LA PLANTILLA MAESTRA
-            // Obtenemos la ruta del MasterLayout.html en el directorio de ejecución bin/
-            var templatePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Templates", "Email", "MasterLayout.html");
-            string htmlBody;
-
-            if (File.Exists(templatePath))
-            {
-                try
-                {
-                    var templateHtml = await File.ReadAllTextAsync(templatePath);
-                    var handlebars = Handlebars.Create();
-                    var template = handlebars.Compile(templateHtml);
-
-                    // Mapear extraData a una lista compatible con Handlebars
-                    var formattedExtraData = extraData != null && extraData.Any()
-                        ? extraData.Select(item => new { key = item.Key, value = item.Value }).ToList()
-                        : null;
-
-                    var context = new
-                    {
-                        title = title,
-                        recipient_name = name,
-                        body_text = body,
-                        has_extra_data = formattedExtraData != null && formattedExtraData.Any(),
-                        extra_data = formattedExtraData,
-                        has_action = absoluteUrl != null,
-                        action_url = absoluteUrl,
-                        action_text = "VER DETALLES EN DIITRA",
-                        anio_actual = DateTime.UtcNow.Year,
-                        frontend_url = frontendUrl,
-                        logo_istpet = logoIstpetVal,
-                        logo_diitra = logoDiitraVal
-                    };
-
-                    htmlBody = template(context);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al procesar plantilla de correo en {TemplatePath}. Usando fallback.", templatePath);
-                    htmlBody = $"<h2>Hola {name},</h2><p>{body}</p>";
-                }
-            }
-            else
-            {
-                _logger.LogWarning("No se encontro la plantilla de correo en {TemplatePath}. Usando fallback basico.", templatePath);
-                htmlBody = $"<h2>Hola {name},</h2><p>{body}</p>";
-            }
+            var htmlBody = await _layoutRenderer.RenderAsync(title, name, body, absoluteUrl, extraData);
 
             if (isMock)
             {
@@ -139,43 +91,7 @@ namespace diitra_infrastructure.Common.Notifications
                 Subject = title
             };
             mailMessage.To.Add(recipient);
-
-            // Construct AlternateView to embed images inline with Content-IDs
-            var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, null, System.Net.Mime.MediaTypeNames.Text.Html);
-
-            var templateDir = Path.GetDirectoryName(templatePath);
-            if (templateDir != null)
-            {
-                var logoIstpetPath = Path.Combine(templateDir, "logo_istpet_negro.png");
-                if (File.Exists(logoIstpetPath))
-                {
-                    var logoIstpetRes = new LinkedResource(logoIstpetPath, "image/png")
-                    {
-                        ContentId = "logo_istpet"
-                    };
-                    htmlView.LinkedResources.Add(logoIstpetRes);
-                }
-                else
-                {
-                    _logger.LogWarning("No se encontro la imagen del logo ISTPET para incrustar en {Path}", logoIstpetPath);
-                }
-
-                var logoDiitraPath = Path.Combine(templateDir, "logo_negro.png");
-                if (File.Exists(logoDiitraPath))
-                {
-                    var logoDiitraRes = new LinkedResource(logoDiitraPath, "image/png")
-                    {
-                        ContentId = "logo_diitra"
-                    };
-                    htmlView.LinkedResources.Add(logoDiitraRes);
-                }
-                else
-                {
-                    _logger.LogWarning("No se encontro la imagen del logo DIITRA para incrustar en {Path}", logoDiitraPath);
-                }
-            }
-
-            mailMessage.AlternateViews.Add(htmlView);
+            _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, htmlBody);
 
             await client.SendMailAsync(mailMessage);
             _logger.LogInformation("Email enviado con exito a {Recipient}", recipient);
