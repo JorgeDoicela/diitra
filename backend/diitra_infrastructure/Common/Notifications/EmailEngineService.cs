@@ -26,6 +26,7 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly IDocumentEngine _documentEngine;
         private readonly IProjectOrchestrator _projectOrchestrator;
         private readonly diitra_infrastructure.Security.IFirmaElectronicaService _firmaElectronicaService;
+        private readonly EmailMasterLayoutRenderer _layoutRenderer;
 
         public EmailEngineService(
             DiitraContext context,
@@ -33,7 +34,8 @@ namespace diitra_infrastructure.Common.Notifications
             ILogger<EmailEngineService> logger,
             IDocumentEngine documentEngine,
             IProjectOrchestrator projectOrchestrator,
-            diitra_infrastructure.Security.IFirmaElectronicaService firmaElectronicaService)
+            diitra_infrastructure.Security.IFirmaElectronicaService firmaElectronicaService,
+            EmailMasterLayoutRenderer layoutRenderer)
         {
             _context = context;
             _configuration = configuration;
@@ -41,6 +43,7 @@ namespace diitra_infrastructure.Common.Notifications
             _documentEngine = documentEngine;
             _projectOrchestrator = projectOrchestrator;
             _firmaElectronicaService = firmaElectronicaService;
+            _layoutRenderer = layoutRenderer;
         }
 
         public async Task<IEnumerable<EmailTemplateDto>> GetTemplatesAsync()
@@ -325,7 +328,17 @@ namespace diitra_infrastructure.Common.Notifications
 
                 // Reemplazar tokens en asunto y cuerpo
                 var finalSubject = ReplaceTokens(subjectTemplate, replacements);
-                var finalBody = ReplaceTokens(bodyTemplate, replacements);
+                var tokenizedBody = ReplaceTokens(bodyTemplate, replacements);
+
+                var actionUrl = EmailMasterLayoutRenderer.ResolveActionUrl(replacements, tokenizedBody, frontendUrl);
+                var extraDataForLayout = BuildExtraDataForLayout(replacements);
+
+                var finalBody = await _layoutRenderer.RenderAsync(
+                    finalSubject,
+                    recipient.Name,
+                    tokenizedBody,
+                    actionUrl,
+                    extraDataForLayout);
 
                 var historyEntry = new InvEmailHistorial
                 {
@@ -524,11 +537,10 @@ namespace diitra_infrastructure.Common.Notifications
                     using var mailMessage = new MailMessage
                     {
                         From = new MailAddress(fromEmail, fromName),
-                        Subject = finalSubject,
-                        Body = finalBody,
-                        IsBodyHtml = true
+                        Subject = finalSubject
                     };
                     mailMessage.To.Add(recipient.Email);
+                    _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, finalBody);
 
                     foreach (var att in mailAttachments)
                     {
@@ -826,6 +838,32 @@ namespace diitra_infrastructure.Common.Notifications
                 result = result.Replace(kvp.Key, kvp.Value ?? "");
             }
             return result;
+        }
+
+        /// <summary>
+        /// Convierte tokens de contexto en filas para la tarjeta "Detalles de la Notificación" del layout maestro.
+        /// </summary>
+        private static Dictionary<string, string>? BuildExtraDataForLayout(Dictionary<string, string> replacements)
+        {
+            var skip = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "[[destinatario_nombre]]", "[[destinatario_email]]", "[[anio_actual]]",
+                "[[institucion_nombre]]", "[[sistema_url]]"
+            };
+
+            var rows = new Dictionary<string, string>();
+            foreach (var kvp in replacements)
+            {
+                if (skip.Contains(kvp.Key)) continue;
+                if (string.IsNullOrWhiteSpace(kvp.Value)) continue;
+                if (kvp.Key.Contains("url", StringComparison.OrdinalIgnoreCase) && kvp.Value.StartsWith("http")) continue;
+
+                var label = kvp.Key.Replace("[[", "").Replace("]]", "").Replace("_", " ");
+                label = char.ToUpper(label[0]) + label[1..];
+                rows[label] = kvp.Value;
+            }
+
+            return rows.Count > 0 ? rows : null;
         }
 
         private EmailTemplateDto MapToTemplateDto(InvEmailTemplate entity)

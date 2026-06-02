@@ -527,7 +527,7 @@ const EmailEnginePage: React.FC = () => {
             nombre: '',
             descripcion: '',
             asunto: '',
-            cuerpoHtml: '<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 8px;">\n  <h2 style="color: #000; font-weight: 700; margin-bottom: 20px;">DIITRA Traversari</h2>\n  <p>Hola [[destinatario_nombre]],</p>\n  <p>Mensaje principal de la plantilla...</p>\n  <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 20px 0;" />\n  <p style="font-size: 12px; color: #666;">DIITRA - Departamento de Investigación, Innovación y Transferencia Tecnológica Traversari.</p>\n</div>',
+            cuerpoHtml: '<p style="color:#444;font-size:14px;line-height:1.6;">Mensaje principal de la plantilla. El diseño institucional (logos y pie de página) se aplica automáticamente al enviar.</p>\n<p style="color:#444;font-size:14px;line-height:1.6;">Puede usar datos dinámicos como [[proyecto_titulo]] o [[convocatoria_titulo]].</p>',
             activo: true
         });
         setTemplateError('');
@@ -1119,6 +1119,9 @@ const EmailEnginePage: React.FC = () => {
                                     <h4 className="text-[11px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-2 ml-1">
                                         <Eye size={13} /> Vista Previa del Destinatario (Tiempo Real)
                                     </h4>
+                                    <p className="text-[9px] text-text-dim ml-1 leading-relaxed">
+                                        Al enviar, el mensaje se envuelve en el diseño institucional SISTEMA DIITRA (logos ISTPET, pie LOPDP y botón de acción).
+                                    </p>
 
                                     <div className="bento-card static p-0 border border-border-thin overflow-hidden bg-white text-black min-h-[500px] flex flex-col">
                                         <div className="bg-[#f5f5f7] border-b border-border-thin p-4 font-sans text-xs space-y-2">
@@ -1460,7 +1463,7 @@ const EmailEnginePage: React.FC = () => {
                                         </button>
                                     </div>
                                     <p className="text-[8px] text-text-dim leading-relaxed">
-                                        Los usuarios en Redactar no ven HTML: solo eligen el tipo de comunicación. Aquí se define la plantilla institucional.
+                                        Solo el contenido central (párrafos, tablas, botones). El encabezado SISTEMA DIITRA con logos y el pie LOPDP los agrega el sistema al enviar.
                                     </p>
                                     {showTemplateHtmlEditor && (
                                         <textarea
