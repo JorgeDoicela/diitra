@@ -1,90 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../../../api/axios_config';
 import {
     Mail, Plus, Edit2, Trash2, Send, History, FileText, CheckCircle2,
     AlertTriangle, Eye, Loader2, ArrowRight,
-    Paperclip, X, RefreshCw, Layers, HelpCircle, Shield
+    Paperclip, X, RefreshCw, Layers, HelpCircle, Shield, Sparkles
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-
-interface EmailTemplate {
-    idEmailTemplate: number;
-    uuid: string;
-    codigo: string;
-    nombre: string;
-    descripcion?: string;
-    asunto: string;
-    cuerpoHtml: string;
-    activo: boolean;
-    fechaCreado?: string;
-    fechaActualizado?: string;
-}
-
-interface EmailHistorial {
-    idEmailHistorial: number;
-    uuid: string;
-    destinatario: string;
-    idUsuarioDestinatario?: number;
-    nombreDestinatario?: string;
-    asunto: string;
-    cuerpo: string;
-    estado: string;
-    errorMensaje?: string;
-    fechaEnvio: string;
-    adjuntosJson?: string;
-    metadataJson?: string;
-}
-
-interface Carrera {
-    idCarrera: number;
-    carrera1: string;
-    aliasCarrera?: string;
-}
-
-interface Proyecto {
-    id_proyecto: number;
-    uuid: string;
-    titulo: string;
-    codigo_institucional?: string;
-    linea_investigacion?: string;
-    descripcion?: string;
-    estado?: string;
-}
-
-interface Convocatoria {
-    uuid: string;
-    titulo: string;
-    codigoConvocatoria: string;
-    anio: number;
-    presupuestoTotal?: number;
-    montoMaximoProyecto?: number;
-    fechaApertura?: string;
-    fechaCierre?: string;
-    urlBases?: string;
-    estado: string;
-}
-
-interface PeerReview {
-    uuid: string;
-    proyectoTitulo: string;
-    revisorNombre: string;
-    revisorEmail?: string;
-    estado: string;
-    dictamenRevisor: string;
-    fechaLimite?: string;
-    puntajeTotal?: number;
-    observacionesGral?: string;
-    esExterno?: boolean;
-    esDobleCiego?: boolean;
-}
-
-interface AttachmentFile {
-    name: string;
-    size: number;
-    type: string;
-    base64: string;
-}
+import type {
+    EmailTemplate, EmailHistorial, Carrera, Proyecto, Convocatoria, PeerReview, AttachmentFile
+} from './emailEngineTypes';
+import {
+    AUTO_TOKENS,
+    TEMPLATE_RECOMMENDED_CONTEXT,
+    applyTokenReplacements,
+    buildBodyWithAdditionalMessage,
+    buildTemplateDataForSend,
+    getSubjectVariants,
+    getTokenLabel,
+    mergeTokenReplacements
+} from './emailEngineConfig';
 
 const mapTemplateToCamelCase = (t: any): EmailTemplate => {
     if (!t) return t;
@@ -145,118 +80,6 @@ const mapCarreraToCamelCase = (c: any): Carrera => {
     };
 };
 
-const TOKEN_GROUPS = [
-    {
-        label: 'Globales (siempre disponibles)',
-        color: 'text-blue-500 dark:text-blue-400',
-        tokens: [
-            { tok: '[[destinatario_nombre]]', desc: 'Nombre del destinatario' },
-            { tok: '[[destinatario_email]]', desc: 'Email del destinatario' },
-            { tok: '[[anio_actual]]', desc: 'Año en curso' },
-            { tok: '[[institucion_nombre]]', desc: 'Nombre de la institución' },
-            { tok: '[[sistema_url]]', desc: 'URL base del sistema' }
-        ]
-    },
-    {
-        label: 'Proyecto de Investigación',
-        color: 'text-green-600 dark:text-green-400',
-        tokens: [
-            { tok: '[[proyecto_titulo]]', desc: 'Título del proyecto' },
-            { tok: '[[proyecto_codigo]]', desc: 'Código institucional' },
-            { tok: '[[proyecto_descripcion]]', desc: 'Descripción del proyecto' },
-            { tok: '[[proyecto_estado]]', desc: 'Estado actual' },
-            { tok: '[[proyecto_director]]', desc: 'Nombre del director' },
-            { tok: '[[proyecto_director_email]]', desc: 'Email del director' },
-            { tok: '[[linea_investigacion]]', desc: 'Línea de investigación' },
-            { tok: '[[proyecto_sublinea]]', desc: 'Sublínea de investigación' },
-            { tok: '[[proyecto_workspace_url]]', desc: 'URL del workspace del proyecto' }
-        ]
-    },
-    {
-        label: 'Convocatoria',
-        color: 'text-purple-600 dark:text-purple-400',
-        tokens: [
-            { tok: '[[convocatoria_titulo]]', desc: 'Título de la convocatoria' },
-            { tok: '[[convocatoria_codigo]]', desc: 'Código de convocatoria' },
-            { tok: '[[convocatoria_anio]]', desc: 'Año de la convocatoria' },
-            { tok: '[[convocatoria_apertura]]', desc: 'Fecha de apertura' },
-            { tok: '[[convocatoria_cierre]]', desc: 'Fecha de cierre' },
-            { tok: '[[convocatoria_presupuesto]]', desc: 'Presupuesto total' },
-            { tok: '[[convocatoria_monto_maximo]]', desc: 'Monto máximo por proyecto' },
-            { tok: '[[convocatoria_bases_url]]', desc: 'URL de las bases' },
-            { tok: '[[convocatoria_estado]]', desc: 'Estado de la convocatoria' }
-        ]
-    },
-    {
-        label: 'Evaluación de Pares (PeerReview)',
-        color: 'text-orange-600 dark:text-orange-400',
-        tokens: [
-            { tok: '[[revisor_nombre]]', desc: 'Nombre del revisor' },
-            { tok: '[[revisor_email]]', desc: 'Email del revisor' },
-            { tok: '[[peer_review_dictamen]]', desc: 'Dictamen emitido' },
-            { tok: '[[peer_review_estado]]', desc: 'Estado de la revisión' },
-            { tok: '[[peer_review_fecha_limite]]', desc: 'Fecha límite de revisión' },
-            { tok: '[[peer_review_puntaje]]', desc: 'Puntaje total asignado' },
-            { tok: '[[peer_review_observaciones]]', desc: 'Observaciones del revisor' },
-            { tok: '[[peer_review_tipo]]', desc: 'Tipo (Externo/Interno)' },
-            { tok: '[[peer_review_anonimo]]', desc: 'Modalidad (Doble Ciego/Abierto)' }
-        ]
-    }
-];
-
-const TokenReferencePanel: React.FC<{ contextType: string }> = ({ contextType }) => {
-    const [open, setOpen] = React.useState(false);
-    const filteredGroups = contextType
-        ? TOKEN_GROUPS.filter(g =>
-            g.label.toLowerCase().includes('global') ||
-            (contextType === 'Proyecto' && g.label.toLowerCase().includes('proyecto')) ||
-            (contextType === 'Convocatoria' && g.label.toLowerCase().includes('convocatoria')) ||
-            (contextType === 'PeerReview' && g.label.toLowerCase().includes('peer'))
-          )
-        : TOKEN_GROUPS.filter(g => g.label.toLowerCase().includes('global'));
-
-    return (
-        <div className="rounded-xl border border-border-thin bg-bg-deep/30 overflow-hidden">
-            <button
-                type="button"
-                onClick={() => setOpen(v => !v)}
-                className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-surface/30 transition-colors cursor-pointer"
-            >
-                <span className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                    <HelpCircle size={11} className="text-brand" />
-                    Referencia de Tokens de Automatización
-                    {contextType && (
-                        <span className="ml-1 text-[8px] font-mono normal-case text-brand font-semibold tracking-normal">
-                            — contexto: {contextType}
-                        </span>
-                    )}
-                </span>
-                <span className={`text-[9px] text-text-dim transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
-            </button>
-            {open && (
-                <div className="px-4 pb-4 pt-1 space-y-3 border-t border-border-thin">
-                    {filteredGroups.map(group => (
-                        <div key={group.label}>
-                            <div className={`text-[9px] font-black uppercase tracking-widest mb-1.5 ${group.color}`}>{group.label}</div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
-                                {group.tokens.map(({ tok, desc }) => (
-                                    <div key={tok} className="flex items-baseline gap-1.5 min-w-0">
-                                        <code className="text-[8.5px] font-mono text-brand shrink-0">{tok}</code>
-                                        <span className="text-[8px] text-text-dim truncate">{desc}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                    {!contextType && (
-                        <p className="text-[8px] text-text-dim italic">Selecciona un Tipo de Entidad en el contexto para ver los tokens adicionales disponibles.</p>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
 const EmailEnginePage: React.FC = () => {
     // Tab State: 'send' | 'templates' | 'history'
     const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>('send');
@@ -275,12 +98,15 @@ const EmailEnginePage: React.FC = () => {
     const [sending, setSending] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
 
-    // Form: Write Email
-    const [selectedTemplateId, setSelectedTemplateId] = useState<string>('custom');
+    // Form: Write Email (sin HTML manual — solo plantillas del sistema)
+    const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
+    const [subjectVariantId, setSubjectVariantId] = useState<string>('default');
+    const [customSubject, setCustomSubject] = useState<string>('');
+    const [additionalMessage, setAdditionalMessage] = useState<string>('');
     const [selectedRole, setSelectedRole] = useState<string>('');
     const [selectedCarreraId, setSelectedCarreraId] = useState<string>('');
     const [manualEmails, setManualEmails] = useState<string>('');
-    const [contextType, setContextType] = useState<string>(''); // '', 'Proyecto', 'Convocatoria', 'PeerReview'
+    const [contextType, setContextType] = useState<string>('');
     const [selectedEntityUuid, setSelectedEntityUuid] = useState<string>('');
     const [systemAttachments, setSystemAttachments] = useState<Record<string, boolean>>({
         'PROTOCOLO_INVESTIGACION': false,
@@ -307,6 +133,7 @@ const EmailEnginePage: React.FC = () => {
         activo: true
     });
     const [templateError, setTemplateError] = useState('');
+    const [showTemplateHtmlEditor, setShowTemplateHtmlEditor] = useState(false);
 
     // History log inspection Drawer
     const [selectedHistoryLog, setSelectedHistoryLog] = useState<EmailHistorial | null>(null);
@@ -363,6 +190,43 @@ const EmailEnginePage: React.FC = () => {
         loadInitialData();
     }, []);
 
+    const selectedTemplate = useMemo(
+        () => templates.find(t => t.idEmailTemplate.toString() === selectedTemplateId),
+        [templates, selectedTemplateId]
+    );
+
+    const subjectVariants = useMemo(
+        () => (selectedTemplate ? getSubjectVariants(selectedTemplate) : []),
+        [selectedTemplate]
+    );
+
+    const applyTemplate = useCallback((templateId: string) => {
+        const t = templates.find(temp => temp.idEmailTemplate.toString() === templateId);
+        if (!t) return;
+
+        setSelectedTemplateId(templateId);
+        setEmailBody(t.cuerpoHtml);
+
+        const variants = getSubjectVariants(t);
+        const defaultVariant = variants[0];
+        setSubjectVariantId(defaultVariant?.id ?? 'default');
+        setEmailSubject(defaultVariant?.asunto ?? t.asunto);
+        setCustomSubject('');
+
+        const recommended = TEMPLATE_RECOMMENDED_CONTEXT[t.codigo];
+        if (recommended) {
+            setContextType(recommended.entityType);
+            setSelectedEntityUuid('');
+        }
+    }, [templates]);
+
+    useEffect(() => {
+        const active = templates.filter(t => t.activo);
+        if (active.length > 0 && !selectedTemplateId) {
+            applyTemplate(active[0].idEmailTemplate.toString());
+        }
+    }, [templates, selectedTemplateId, applyTemplate]);
+
     // Load history when active
     useEffect(() => {
         if (activeTab === 'history') {
@@ -407,22 +271,34 @@ const EmailEnginePage: React.FC = () => {
         });
     }, [emailSubject, emailBody]);
 
-    // Handle template selection change
     const handleTemplateChange = (templateId: string) => {
-        setSelectedTemplateId(templateId);
-        if (templateId === 'custom') {
-            setEmailSubject('');
-            setEmailBody('<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #111;">\n  <h2>Hola, [[destinatario_nombre]]</h2>\n  <p>Escribe aquí tu mensaje...</p>\n</div>');
-            setContextType('');
-            setSelectedEntityUuid('');
-        } else {
-            const t = templates.find(temp => temp.idEmailTemplate.toString() === templateId);
-            if (t) {
-                setEmailSubject(t.asunto);
-                setEmailBody(t.cuerpoHtml);
-            }
-        }
+        applyTemplate(templateId);
     };
+
+    const handleSubjectVariantChange = (variantId: string) => {
+        setSubjectVariantId(variantId);
+        if (variantId === 'personalizado') return;
+        const variant = subjectVariants.find(v => v.id === variantId);
+        if (variant) setEmailSubject(variant.asunto);
+    };
+
+    const buildFinalBody = useCallback(
+        () => buildBodyWithAdditionalMessage(emailBody, additionalMessage),
+        [emailBody, additionalMessage]
+    );
+
+    const resolveFinalSubject = useCallback(() => {
+        if (subjectVariantId === 'personalizado') return customSubject.trim() || emailSubject;
+        return emailSubject;
+    }, [subjectVariantId, customSubject, emailSubject]);
+
+    const userFacingTokens = useMemo(() => {
+        return detectedTokens.filter(tok => !AUTO_TOKENS.has(tok) && tok !== '[[mensaje_adicional]]');
+    }, [detectedTokens]);
+
+    const autoFilledTokens = useMemo(() => {
+        return detectedTokens.filter(tok => AUTO_TOKENS.has(tok));
+    }, [detectedTokens]);
 
     // Auto-inject dynamic context values based on entity type and uuid
     useEffect(() => {
@@ -485,34 +361,19 @@ const EmailEnginePage: React.FC = () => {
         }));
     };
 
-    // Render Preview
-    const getRenderedPreview = () => {
-        let renderedSubject = emailSubject;
-        let renderedBody = emailBody;
+    const previewReplacements = useMemo(
+        () => mergeTokenReplacements(tokenValues, window.location.origin),
+        [tokenValues]
+    );
 
-        // Default replacements
-        const defaults: Record<string, string> = {
-            '[[destinatario_nombre]]': 'Juan Pérez (Ejemplo)',
-            '[[destinatario_email]]': 'juan.perez@traversari.edu.ec',
-            '[[anio_actual]]': new Date().getFullYear().toString(),
-            '[[institucion_nombre]]': 'Instituto Superior Tecnológico Traversari',
-            '[[sistema_url]]': window.location.origin
+    const parsedPreview = useMemo(() => {
+        const subjectTemplate = resolveFinalSubject();
+        const bodyTemplate = buildFinalBody();
+        return {
+            subject: applyTokenReplacements(subjectTemplate, previewReplacements, 'text'),
+            body: applyTokenReplacements(bodyTemplate, previewReplacements, 'html')
         };
-
-        // Combine default with user token values
-        const combined = { ...defaults, ...tokenValues };
-
-        Object.entries(combined).forEach(([tok, val]) => {
-            renderedSubject = renderedSubject.replace(new RegExp(escapeRegExp(tok), 'g'), val || `<span style="background-color: rgba(245, 166, 35, 0.2); border: 1.5px dashed #f5a623; padding: 0 4px; border-radius: 4px; color: #f5a623; font-size: 11px;">${tok}</span>`);
-            renderedBody = renderedBody.replace(new RegExp(escapeRegExp(tok), 'g'), val || `<span style="background-color: rgba(245, 166, 35, 0.2); border: 1.5px dashed #f5a623; padding: 0 4px; border-radius: 4px; color: #f5a623; font-size: 11px; font-weight: bold;">${tok}</span>`);
-        });
-
-        return { subject: renderedSubject, body: renderedBody };
-    };
-
-    const escapeRegExp = (string: string) => {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    };
+    }, [previewReplacements, resolveFinalSubject, buildFinalBody]);
 
     // File selection to Base64
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -556,8 +417,22 @@ const EmailEnginePage: React.FC = () => {
             .map(em => em.trim())
             .filter(em => em.length > 0 && em.includes('@'));
 
+        if (!selectedTemplateId || !selectedTemplate) {
+            setSendResult({ success: false, message: 'Seleccione un tipo de comunicación (plantilla) para continuar.' });
+            setSending(false);
+            return;
+        }
+
         if (emailsList.length === 0 && !selectedRole && !selectedCarreraId) {
             setSendResult({ success: false, message: 'Debe ingresar al menos un destinatario o seleccionar un filtro de rol/carrera.' });
+            setSending(false);
+            return;
+        }
+
+        const finalSubject = resolveFinalSubject();
+        const finalBody = buildFinalBody();
+        if (!finalSubject.trim()) {
+            setSendResult({ success: false, message: 'El asunto del correo no puede estar vacío.' });
             setSending(false);
             return;
         }
@@ -579,17 +454,15 @@ const EmailEnginePage: React.FC = () => {
             });
         }
 
-        const template = templates.find(t => t.idEmailTemplate.toString() === selectedTemplateId);
-
         const payload = {
-            templateCodigo: template ? template.codigo : null,
+            templateCodigo: selectedTemplate.codigo,
             destinatariosEmails: emailsList,
             destinatariosUserIds: [],
             targetRole: selectedRole || null,
             targetCarreraId: selectedCarreraId ? parseInt(selectedCarreraId) : null,
-            customSubject: emailSubject,
-            customBody: emailBody,
-            templateData: tokenValues,
+            customSubject: finalSubject,
+            customBody: finalBody,
+            templateData: buildTemplateDataForSend(tokenValues),
             attachments: [
                 ...attachments.map(a => ({
                     nombreArchivo: a.name,
@@ -627,8 +500,10 @@ const EmailEnginePage: React.FC = () => {
             setSelectedRole('');
             setSelectedCarreraId('');
             setTokenValues({});
+            setAdditionalMessage('');
             setSignatureFile(null);
             setSignaturePassword('');
+            if (selectedTemplateId) applyTemplate(selectedTemplateId);
         } catch (err: any) {
             console.error('[DIITRA EMAIL ENGINE] Error sending templated email:', err);
             setSendResult({
@@ -652,6 +527,7 @@ const EmailEnginePage: React.FC = () => {
             activo: true
         });
         setTemplateError('');
+        setShowTemplateHtmlEditor(false);
         setIsTemplateModalOpen(true);
     };
 
@@ -666,6 +542,7 @@ const EmailEnginePage: React.FC = () => {
             activo: t.activo
         });
         setTemplateError('');
+        setShowTemplateHtmlEditor(false);
         setIsTemplateModalOpen(true);
     };
 
@@ -734,8 +611,6 @@ const EmailEnginePage: React.FC = () => {
         }
     };
 
-    const parsedPreview = getRenderedPreview();
-
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
             <div className="max-w-[1600px] mx-auto">
@@ -750,7 +625,7 @@ const EmailEnginePage: React.FC = () => {
                             Motor de Emails DIITRA
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                            Motor centralizado de comunicaciones institucionales bajo normativas LOPDP, con inyección dinámica de variables y soporte de adjuntos.
+                            Comunicaciones guiadas por plantillas del sistema: el contenido se arma automáticamente según el contexto que seleccione. No requiere escribir HTML.
                         </p>
                     </div>
 
@@ -807,28 +682,33 @@ const EmailEnginePage: React.FC = () => {
                                 {/* Form Panel */}
                                 <div className="bento-card static p-6 space-y-6">
                                     <h3 className="text-base font-bold text-text-main uppercase tracking-tight pb-3 border-b border-border-thin flex items-center gap-2">
-                                        <Send size={16} className="text-brand" /> Configurar Mensaje
+                                        <Send size={16} className="text-brand" /> Asistente de Envío
                                     </h3>
 
                                     <form onSubmit={handleSendEmail} className="space-y-6">
-                                        {/* Selection of Template */}
+                                        {/* Tipo de comunicación */}
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider flex items-center justify-between">
-                                                <span>Plantilla de Origen</span>
-                                                <span className="text-[9px] font-mono lowercase tracking-normal text-text-dim/60">Semillas o CRUD</span>
+                                            <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">
+                                                Tipo de comunicación *
                                             </label>
                                             <select
                                                 className="input-vercel text-sm"
                                                 value={selectedTemplateId}
                                                 onChange={e => handleTemplateChange(e.target.value)}
+                                                required
                                             >
-                                                <option value="custom">-- Correo Vacío (Mensaje Personalizado) --</option>
+                                                <option value="" disabled>— Seleccione qué desea notificar —</option>
                                                 {templates.filter(t => t.activo).map(t => (
                                                     <option key={t.idEmailTemplate} value={t.idEmailTemplate.toString()}>
-                                                        {t.nombre} ({t.codigo})
+                                                        {t.nombre}
                                                     </option>
                                                 ))}
                                             </select>
+                                            {selectedTemplate?.descripcion && (
+                                                <p className="text-[10px] text-text-dim leading-relaxed p-3 bg-brand/5 border border-brand/20 rounded-lg">
+                                                    {selectedTemplate.descripcion}
+                                                </p>
+                                            )}
                                         </div>
 
                                         {/* Recipients Filters */}
@@ -893,9 +773,16 @@ const EmailEnginePage: React.FC = () => {
                                         {/* Dual System Context Selection */}
                                          <div className="space-y-4 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
                                              <div className="flex items-center justify-between">
-                                                 <span className="text-[10px] font-black text-text-main uppercase tracking-widest">Contexto del Sistema (Opcional)</span>
-                                                 <span className="text-[9px] font-mono text-brand font-semibold">Auto-inyección Multientidad</span>
+                                                 <span className="text-[10px] font-black text-text-main uppercase tracking-widest">Vincular al sistema</span>
+                                                 <span className="text-[9px] font-mono text-brand font-semibold flex items-center gap-1">
+                                                     <Sparkles size={10} /> Datos automáticos
+                                                 </span>
                                              </div>
+                                             {selectedTemplate && TEMPLATE_RECOMMENDED_CONTEXT[selectedTemplate.codigo] && (
+                                                 <p className="text-[9px] text-text-dim leading-relaxed -mt-2">
+                                                     {TEMPLATE_RECOMMENDED_CONTEXT[selectedTemplate.codigo].hint}
+                                                 </p>
+                                             )}
                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                  {/* Entity Type Select */}
                                                  <div className="space-y-1.5">
@@ -945,61 +832,101 @@ const EmailEnginePage: React.FC = () => {
                                              </div>
                                          </div>
 
-                                        {/* Token Reference Panel */}
-                                        <TokenReferencePanel contextType={contextType} />
-
-                                        {/* Subject Input */}
-                                        <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Asunto del Correo</label>
-                                            <input
-                                                type="text"
-                                                className="input-vercel text-sm font-semibold"
-                                                value={emailSubject}
-                                                onChange={e => setEmailSubject(e.target.value)}
-                                                placeholder="Ej: Notificación de Entrega Pendiente"
-                                            />
+                                        {/* Asunto — variantes predefinidas */}
+                                        <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                            <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">
+                                                Título del correo (asunto)
+                                            </label>
+                                            <select
+                                                className="input-vercel text-sm"
+                                                value={subjectVariantId}
+                                                onChange={e => handleSubjectVariantChange(e.target.value)}
+                                                disabled={!selectedTemplate}
+                                            >
+                                                {subjectVariants.map(v => (
+                                                    <option key={v.id} value={v.id}>{v.label}</option>
+                                                ))}
+                                                <option value="personalizado">Escribir asunto personalizado…</option>
+                                            </select>
+                                            {subjectVariantId === 'personalizado' ? (
+                                                <input
+                                                    type="text"
+                                                    className="input-vercel text-sm"
+                                                    value={customSubject}
+                                                    onChange={e => setCustomSubject(e.target.value)}
+                                                    placeholder="Ej: DIITRA — Comunicado institucional"
+                                                />
+                                            ) : (
+                                                <p className="text-[10px] text-text-main bg-surface/50 p-2 rounded-lg border border-border-thin leading-relaxed">
+                                                    {parsedPreview.subject || '—'}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        {/* Rich content text-area editor */}
+                                        {/* Nota adicional en texto plano */}
                                         <div className="space-y-2">
-                                            <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider flex items-center justify-between">
-                                                <span>Cuerpo del Mensaje (HTML)</span>
-                                                <span className="text-[9px] text-text-dim/60 font-mono">Soporta etiquetas HTML</span>
+                                            <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">
+                                                Nota adicional (opcional)
                                             </label>
                                             <textarea
-                                                rows={10}
-                                                className="input-vercel font-mono text-xs leading-relaxed"
-                                                value={emailBody}
-                                                onChange={e => setEmailBody(e.target.value)}
-                                                placeholder="<div style='font-family: sans-serif;'>...</div>"
+                                                rows={3}
+                                                className="input-vercel text-sm leading-relaxed"
+                                                value={additionalMessage}
+                                                onChange={e => setAdditionalMessage(e.target.value)}
+                                                placeholder="Texto breve que se agregará al mensaje institucional. No necesita formato especial."
                                             />
                                         </div>
 
-                                        {/* Token Dynamic Fields Form */}
-                                        {detectedTokens.length > 0 && (
+                                        {/* Datos automáticos del sistema */}
+                                        {autoFilledTokens.length > 0 && (
+                                            <div className="space-y-2 p-3 rounded-xl border border-border-thin bg-success-subtle/30">
+                                                <span className="text-[9px] font-black text-success uppercase tracking-widest flex items-center gap-1">
+                                                    <CheckCircle2 size={11} /> Se completan solos al enviar
+                                                </span>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {autoFilledTokens.map(tok => (
+                                                        <span key={tok} className="text-[8px] px-2 py-0.5 rounded-full bg-surface border border-border-thin text-text-dim">
+                                                            {getTokenLabel(tok)}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Campos editables con etiquetas en español */}
+                                        {userFacingTokens.length > 0 && (
                                             <div className="space-y-4 p-4 bg-[#fcf8f2] dark:bg-[#221c10] border border-[#f5a623]/30 rounded-xl">
                                                 <div className="flex items-center gap-2">
                                                     <Layers size={14} className="text-[#f5a623]" />
                                                     <h5 className="text-[10px] font-black text-[#b87200] dark:text-[#f5a623] uppercase tracking-widest">
-                                                        Variables Dinámicas Detectadas ({detectedTokens.length})
+                                                        Datos del mensaje ({userFacingTokens.length})
                                                     </h5>
                                                 </div>
                                                 <p className="text-[9px] text-text-dim leading-relaxed">
-                                                    Complete el valor de cada variable. Se reemplazarán automáticamente en el asunto y cuerpo antes del envío.
+                                                    Revise o complete estos campos. Si eligió un proyecto, convocatoria o revisión arriba, muchos se llenan automáticamente.
                                                 </p>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {detectedTokens.map(tok => (
-                                                        <div key={tok} className="space-y-1">
-                                                            <span className="text-[9.5px] font-bold font-mono text-text-main truncate block">{tok}</span>
-                                                            <input
-                                                                type="text"
-                                                                className="input-vercel !py-1 text-xs bg-bg-deep border-border-thin focus:border-[#f5a623] font-sans"
-                                                                value={tokenValues[tok] || ''}
-                                                                onChange={e => handleTokenValChange(tok, e.target.value)}
-                                                                placeholder={`Valor para ${tok}`}
-                                                            />
-                                                        </div>
-                                                    ))}
+                                                    {userFacingTokens.map(tok => {
+                                                        const meta = { label: getTokenLabel(tok) };
+                                                        const filled = Boolean(tokenValues[tok]?.trim());
+                                                        return (
+                                                            <div key={tok} className="space-y-1">
+                                                                <span className="text-[10px] font-bold text-text-main flex items-center gap-1">
+                                                                    {meta.label}
+                                                                    {filled && contextType && (
+                                                                        <span className="text-[8px] text-success font-normal">✓ auto</span>
+                                                                    )}
+                                                                </span>
+                                                                <input
+                                                                    type="text"
+                                                                    className="input-vercel !py-1.5 text-xs bg-bg-deep border-border-thin focus:border-[#f5a623] font-sans"
+                                                                    value={tokenValues[tok] || ''}
+                                                                    onChange={e => handleTokenValChange(tok, e.target.value)}
+                                                                    placeholder={`Ingrese ${meta.label.toLowerCase()}`}
+                                                                />
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
                                         )}
@@ -1518,9 +1445,24 @@ const EmailEnginePage: React.FC = () => {
                                     <span className="text-[8px] text-text-dim block">Puede usar tokens de inyección como [[proyecto_titulo]]</span>
                                 </div>
 
-                                {/* Cuerpo Html */}
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Cuerpo del Correo (Formato HTML) *</label>
+                                {/* Cuerpo Html — solo administradores técnicos */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider">
+                                            Diseño del correo (HTML interno) *
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowTemplateHtmlEditor(v => !v)}
+                                            className="text-[9px] font-bold text-brand uppercase tracking-wider hover:underline cursor-pointer"
+                                        >
+                                            {showTemplateHtmlEditor ? 'Ocultar editor' : 'Mostrar editor avanzado'}
+                                        </button>
+                                    </div>
+                                    <p className="text-[8px] text-text-dim leading-relaxed">
+                                        Los usuarios en Redactar no ven HTML: solo eligen el tipo de comunicación. Aquí se define la plantilla institucional.
+                                    </p>
+                                    {showTemplateHtmlEditor && (
                                     <textarea
                                         rows={12}
                                         className="input-vercel font-mono text-xs leading-relaxed"
@@ -1528,6 +1470,12 @@ const EmailEnginePage: React.FC = () => {
                                         value={templateForm.cuerpoHtml}
                                         onChange={e => setTemplateForm(prev => ({ ...prev, cuerpoHtml: e.target.value }))}
                                     />
+                                    )}
+                                    {!showTemplateHtmlEditor && templateForm.cuerpoHtml && (
+                                        <p className="text-[9px] text-text-dim italic p-2 border border-dashed border-border-thin rounded-lg">
+                                            Plantilla HTML configurada ({templateForm.cuerpoHtml.length} caracteres). Use el editor avanzado para modificarla.
+                                        </p>
+                                    )}
                                                     <div className="space-y-2 mt-2 select-none">
                                                         {[
                                                             { label: 'Globales', tokens: ['[[destinatario_nombre]]', '[[destinatario_email]]', '[[anio_actual]]', '[[institucion_nombre]]', '[[sistema_url]]'] },
