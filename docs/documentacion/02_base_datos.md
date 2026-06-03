@@ -32,3 +32,7 @@ Tablas destinadas a la persistencia del estado binario de documentos colaborativ
 ## Gestión de Snapshots Forenses
 
 En el marco de la acreditación 2026, la columna `data_snapshot_json` dentro de la tabla de auditoría permite capturar el estado exacto de la información en el momento de la generación de un documento. Esto asegura la capacidad de reconstrucción histórica independientemente de ediciones posteriores en los registros maestros del proyecto.
+
+## Consejo para json
+
+Consejo Técnico: En MySQL, si en el futuro necesitas realizar filtros rápidos o reportes consolidados basados en propiedades internas del JSON (por ejemplo, buscar proyectos por un indicador específico dentro de metadataCacesJson), puedes crear columnas virtuales generadas indexadas en lugar de hacer escaneos de texto completos, lo que optimiza el rendimiento.
