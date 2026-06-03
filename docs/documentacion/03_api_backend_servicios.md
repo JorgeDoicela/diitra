@@ -30,3 +30,8 @@ La trazabilidad de los proyectos se asegura mediante el registro sistemático de
 ## Comunicación en Tiempo Real
 
 Mediante el uso de SignalR y WebSockets, el sistema mantiene una conexión persistente con los clientes para la gestión de la edición colaborativa y la actualización de indicadores de progreso sin requerir recargas de página, optimizando la experiencia de usuario y la eficiencia del servidor.
+
+## Recomendaciones de seguridad a vigilar
+
+- **Firma Electrónica (rutaFirmaP12)**: Asegúrate de que el archivo .p12 o las llaves privadas nunca se almacenen directamente de forma expuesta en directorios públicos. La columna rutaFirmaP12 debe apuntar a una ruta segura fuera del directorio web, y el backend debería encriptar este archivo o su contraseña en reposo.
+- **Integridad al Eliminar (ON DELETE RESTRICT)**: La clave foránea en inv_usuarios_metadata tiene ON DELETE RESTRICT hacia usuarios. Esto es excelente para proteger la integridad. Asegúrate de que tu backend maneje la excepción de base de datos de manera amigable si un administrador intenta dar de baja a un usuario del sistema principal que ya posee registros de metadatos de investigación.
