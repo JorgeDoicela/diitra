@@ -166,6 +166,10 @@ public class AuthController : ControllerBase
 
             return Ok(response);
         }
+        catch (IpLockoutException ex)
+        {
+            return StatusCode(429, new { message = ex.Message, segundosRestantes = ex.SegundosRestantes });
+        }
         catch (InvalidOperationException ex)
         {
             return StatusCode(429, new { message = ex.Message });
