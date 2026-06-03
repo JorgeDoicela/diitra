@@ -732,6 +732,7 @@ public class AuthService : IAuthService
         // ingresar a completar evaluaciones retrasadas.
         var pendingReview = await _context.Set<InvRevisionesPares>()
             .Include(r => r.Revisor)
+            .Include(r => r.Proyecto)
             .Where(r => r.Estado == "Pendiente" && 
                         r.Revisor != null && 
                         r.Revisor.Activo &&
@@ -745,14 +746,10 @@ public class AuthService : IAuthService
         // Validar si el plazo de la revisión ya venció
         if (pendingReview.FechaLimite < DateTime.Now)
         {
-            var autoExtendSetting = await _context.Set<InvConfigGeneral>()
-                .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDeadlines");
-            var autoExtend = autoExtendSetting != null && bool.Parse(autoExtendSetting.Valor);
+            var autoExtend = pendingReview.Proyecto != null && pendingReview.Proyecto.AutoExtendDeadlines;
             if (autoExtend)
             {
-                var autoExtendDaysSetting = await _context.Set<InvConfigGeneral>()
-                    .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDays");
-                var extensionDays = autoExtendDaysSetting != null ? int.Parse(autoExtendDaysSetting.Valor) : 7;
+                var extensionDays = pendingReview.Proyecto != null ? pendingReview.Proyecto.AutoExtendDays : 7;
                 if (extensionDays <= 0) extensionDays = 7;
 
                 pendingReview.FechaLimite = DateTime.Now.AddDays(extensionDays);

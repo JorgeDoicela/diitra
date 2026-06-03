@@ -29,7 +29,9 @@ public class UnitTest1
             "ALTER TABLE inv_proyectos_alumnos ADD COLUMN fecha_inicio DATETIME NULL;",
             "ALTER TABLE inv_proyectos_alumnos ADD COLUMN motivo_cambio VARCHAR(150) NULL;",
 
-            "ALTER TABLE inv_grupos_investigacion ADD COLUMN estado VARCHAR(20) DEFAULT 'Aprobado';"
+            "ALTER TABLE inv_grupos_investigacion ADD COLUMN estado VARCHAR(20) DEFAULT 'Aprobado';",
+            "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDeadlines TINYINT(1) DEFAULT 0;",
+            "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDays INT DEFAULT 7;"
         };
 
         foreach (var sql in statements)

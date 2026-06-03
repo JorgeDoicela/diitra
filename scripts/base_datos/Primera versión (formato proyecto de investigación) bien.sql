@@ -386,6 +386,9 @@ CREATE TABLE inv_proyectos (
     trlInicial           TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Inicial (1-9)',
     trlActual            TINYINT       DEFAULT 1 COMMENT 'Technology Readiness Level Actual (1-9)',
     trlMeta              TINYINT       NULL COMMENT 'Technology Readiness Level esperado al finalizar',
+    autoExtendDeadlines  TINYINT(1)    DEFAULT 0,
+    autoExtendDays       INT           DEFAULT 7,
+
 
     FOREIGN KEY (idConvocatoria) REFERENCES inv_convocatorias(idConvocatoria),
     FOREIGN KEY (idSublinea)     REFERENCES inv_sublineas(idSublinea),

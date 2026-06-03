@@ -325,26 +325,16 @@ public class PeerReviewsController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene las configuraciones globales de plazos de arbitraje.
+    /// Actualiza las configuraciones de prórrogas de arbitraje de un proyecto.
     /// </summary>
-    [HttpGet("settings")]
-    public async Task<IActionResult> GetSettings()
-    {
-        var settings = await _peerReviewService.GetSettingsAsync();
-        return Ok(settings);
-    }
-
-    /// <summary>
-    /// Actualiza las configuraciones globales de plazos de arbitraje.
-    /// </summary>
-    [HttpPut("settings")]
-    public async Task<IActionResult> UpdateSettings([FromBody] PeerReviewSettingsDto dto)
+    [HttpPut("project/{projectUuid}/settings")]
+    public async Task<IActionResult> UpdateProjectSettings(string projectUuid, [FromBody] PeerReviewSettingsDto dto)
     {
         try
         {
-            var result = await _peerReviewService.UpdateSettingsAsync(dto);
-            if (!result) return BadRequest(new { message = "No se pudo actualizar la configuración." });
-            return Ok(new { message = "Configuración actualizada correctamente." });
+            var result = await _peerReviewService.UpdateProjectSettingsAsync(projectUuid, dto);
+            if (!result) return NotFound(new { message = "Proyecto no encontrado o no se pudo actualizar." });
+            return Ok(new { message = "Configuración del proyecto actualizada correctamente." });
         }
         catch (Exception ex)
         {

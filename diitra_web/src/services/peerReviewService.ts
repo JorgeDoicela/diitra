@@ -43,6 +43,8 @@ export interface ArbitrajeProyectoDto {
     estado_arbitraje: 'Pendiente' | 'EnProceso' | 'Completado' | 'Desempate' | 'SinArbitros';
     /** True si el cierre formal del arbitraje ya fue ejecutado */
     arbitraje_cerrado?: boolean;
+    auto_extend_deadlines?: boolean;
+    auto_extend_days?: number;
     revisiones: PeerReviewDto[];
 }
 
@@ -116,6 +118,8 @@ export interface AsignarArbitroPayload {
     es_externo: boolean;
     es_doble_ciego: boolean;
     observaciones?: string;
+    auto_extend_deadlines?: boolean;
+    auto_extend_days?: number;
 }
 
 export interface EvaluationDetailPayload {
@@ -198,11 +202,11 @@ export interface PeerReviewSettingsDto {
     autoExtendDays: number;
 }
 
-export const getPeerReviewSettings = (): Promise<PeerReviewSettingsDto> =>
-    api.get('/PeerReviews/settings').then(r => r.data);
-
-export const updatePeerReviewSettings = (settings: PeerReviewSettingsDto): Promise<{ message: string }> =>
-    api.put('/PeerReviews/settings', settings).then(r => r.data);
+export const updateProjectPeerReviewSettings = (
+    projectUuid: string,
+    settings: PeerReviewSettingsDto
+): Promise<{ message: string }> =>
+    api.put(`/PeerReviews/project/${projectUuid}/settings`, settings).then(r => r.data);
 
 // ─────────────────────────────────────────────────────────────
 //  API Calls — Cierre de Arbitraje

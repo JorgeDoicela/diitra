@@ -19,8 +19,7 @@ public interface IPeerReviewService
     Task<string> AsignarArbitroAsync(AsignarArbitroDto dto, int directorId);
     Task<bool> RevocarAsignacionAsync(string revisionUuid, int directorId);
     Task<bool> ExtenderFechaLimiteAsync(string revisionUuid, DateTime nuevaFecha, int directorId);
-    Task<PeerReviewSettingsDto> GetSettingsAsync();
-    Task<bool> UpdateSettingsAsync(PeerReviewSettingsDto dto);
+    Task<bool> UpdateProjectSettingsAsync(string projectUuid, PeerReviewSettingsDto dto);
 
     // ── Revisores Externos (sin cuenta institucional) ──────────
     Task<string> RegisterRevisorExternoAsync(RegistrarRevisorExternoDto dto, int directorId);

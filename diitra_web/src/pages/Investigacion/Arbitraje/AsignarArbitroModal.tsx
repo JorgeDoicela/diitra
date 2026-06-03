@@ -24,6 +24,8 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
     const [esDobleCiego, setEsDobleCiego] = useState(true);
     const [enviando, setEnviando] = useState(false);
     const [error, setError] = useState('');
+    const [autoExtendDeadlines, setAutoExtendDeadlines] = useState(proyecto.auto_extend_deadlines ?? false);
+    const [autoExtendDays, setAutoExtendDays] = useState(proyecto.auto_extend_days ?? 7);
 
     const buscar = useCallback(async () => {
         setBuscando(true);
@@ -80,6 +82,8 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                     fecha_limite: new Date(fechaLimite + 'T23:59:59').toISOString(),
                     es_externo: rev.es_externo,
                     es_doble_ciego: esDobleCiego,
+                    auto_extend_deadlines: autoExtendDeadlines,
+                    auto_extend_days: autoExtendDays,
                 });
             }
             onSuccess();
@@ -311,6 +315,34 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                             </p>
                                         </div>
                                     )}
+
+                                    <div className="space-y-3 pt-2 border-t border-border-thin/40">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs font-bold text-text-main">Auto-extender plazos</p>
+                                                <p className="text-[10px] text-text-dim">Prórroga automática al expirar</p>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                className="accent-text-main"
+                                                checked={autoExtendDeadlines}
+                                                onChange={(e) => setAutoExtendDeadlines(e.target.checked)}
+                                            />
+                                        </div>
+                                        {autoExtendDeadlines && (
+                                            <div className="flex items-center justify-between animate-fade-in">
+                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Días de prórroga</span>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    max={30}
+                                                    className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1 text-xs text-text-main text-center font-mono"
+                                                    value={autoExtendDays}
+                                                    onChange={(e) => setAutoExtendDays(parseInt(e.target.value) || 7)}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ) : (

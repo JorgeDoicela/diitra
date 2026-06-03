@@ -575,6 +575,8 @@ public class PeerReviewService : IPeerReviewService
             EstadoArbitraje = DeterminarEstadoArbitraje(revisiones, proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m),
             ArbitrajeCerrado = proyecto.PuntajeEvaluacion.HasValue
                 || proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado",
+            AutoExtendDeadlines = proyecto.AutoExtendDeadlines,
+            AutoExtendDays = proyecto.AutoExtendDays,
             Revisiones = revDtos
         };
     }
@@ -783,6 +785,9 @@ public class PeerReviewService : IPeerReviewService
 
         if (project == null)
             throw new ArgumentException($"Proyecto con UUID '{dto.ProjectUuid}' no encontrado.");
+
+        project.AutoExtendDeadlines = dto.AutoExtendDeadlines;
+        project.AutoExtendDays = dto.AutoExtendDays;
 
         var revision = new InvRevisionesPares
         {
@@ -1561,43 +1566,15 @@ public class PeerReviewService : IPeerReviewService
         return true;
     }
 
-    public async Task<PeerReviewSettingsDto> GetSettingsAsync()
+    public async Task<bool> UpdateProjectSettingsAsync(string projectUuid, PeerReviewSettingsDto dto)
     {
-        var autoExtendSetting = await _context.InvConfigsGenerales
-            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDeadlines");
-        var autoExtendDaysSetting = await _context.InvConfigsGenerales
-            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDays");
+        var project = await _context.InvProyectos
+            .FirstOrDefaultAsync(p => p.Uuid == projectUuid);
 
-        bool autoExtend = autoExtendSetting != null && bool.Parse(autoExtendSetting.Valor);
-        int autoExtendDays = autoExtendDaysSetting != null ? int.Parse(autoExtendDaysSetting.Valor) : 7;
+        if (project == null) return false;
 
-        return new PeerReviewSettingsDto
-        {
-            AutoExtendDeadlines = autoExtend,
-            AutoExtendDays = autoExtendDays
-        };
-    }
-
-    public async Task<bool> UpdateSettingsAsync(PeerReviewSettingsDto dto)
-    {
-        var autoExtendSetting = await _context.InvConfigsGenerales
-            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDeadlines");
-        var autoExtendDaysSetting = await _context.InvConfigsGenerales
-            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDays");
-
-        if (autoExtendSetting == null)
-        {
-            autoExtendSetting = new InvConfigGeneral { Clave = "PeerReview.AutoExtendDeadlines", Valor = "false" };
-            _context.InvConfigsGenerales.Add(autoExtendSetting);
-        }
-        autoExtendSetting.Valor = dto.AutoExtendDeadlines.ToString().ToLower();
-
-        if (autoExtendDaysSetting == null)
-        {
-            autoExtendDaysSetting = new InvConfigGeneral { Clave = "PeerReview.AutoExtendDays", Valor = "7" };
-            _context.InvConfigsGenerales.Add(autoExtendDaysSetting);
-        }
-        autoExtendDaysSetting.Valor = dto.AutoExtendDays.ToString();
+        project.AutoExtendDeadlines = dto.AutoExtendDeadlines;
+        project.AutoExtendDays = dto.AutoExtendDays;
 
         await _context.SaveChangesAsync();
         return true;

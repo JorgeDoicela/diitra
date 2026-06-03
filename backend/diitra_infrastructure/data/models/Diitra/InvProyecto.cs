@@ -41,6 +41,9 @@ public partial class InvProyecto
     public sbyte? TrlInicial { get; set; }
     public sbyte? TrlActual { get; set; }
     public sbyte? TrlMeta { get; set; }
+    public bool AutoExtendDeadlines { get; set; } = false;
+    public int AutoExtendDays { get; set; } = 7;
+
 
     public virtual InvConvocatoria? IdConvocatoriaNavigation { get; set; }
     public virtual InvSublinea? IdSublineaNavigation { get; set; }
