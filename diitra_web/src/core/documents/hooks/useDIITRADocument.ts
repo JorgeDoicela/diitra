@@ -2,6 +2,41 @@ import { useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
 
 /**
+ * Helper to deduplicate a Y.Array by item `id` / `uuid` / `Uuid`
+ */
+function deduplicateYArray(yarray: Y.Array<any>, ydoc: Y.Doc, listName: string) {
+    const arr = yarray.toArray();
+    const seenIds = new Set<string>();
+    const indicesToDelete: number[] = [];
+    
+    for (let i = 0; i < arr.length; i++) {
+        const item = arr[i];
+        if (item && typeof item === 'object') {
+            const itemId = item.id || item.uuid || item.Uuid;
+            if (itemId) {
+                if (seenIds.has(itemId)) {
+                    indicesToDelete.push(i);
+                } else {
+                    seenIds.add(itemId);
+                }
+            }
+        }
+    }
+    
+    if (indicesToDelete.length > 0) {
+        console.warn(`[DIITRA] Encontrados ${indicesToDelete.length} duplicados en Y.Array para '${listName}'.`, 
+            "Duplicados:", indicesToDelete.map(idx => arr[idx]), 
+            "Array completo:", arr);
+        ydoc.transact(() => {
+            // Delete from highest index to lowest to avoid index shifting
+            for (let i = indicesToDelete.length - 1; i >= 0; i--) {
+                yarray.delete(indicesToDelete[i], 1);
+            }
+        }, 'deduplication-cleanup');
+    }
+}
+
+/**
  * useDIITRADocument V1.0 (Reactive ydoc — Arquitectura Correcta)
  * ---------------------------------------------------------------
  * Hook maestro para la gestión de documentos colaborativos DIITRA.
@@ -34,16 +69,26 @@ export function useDIITRADocument<T extends Record<string, any>>(
         lists?: string[];
         richTexts?: string[];
         nonCollaborative?: string[]; // ← Campos excluidos de CoWork por privacidad (cierre, doble ciego, etc.)
+        isHistoryLoaded?: boolean;   // ← Indica si SignalR cargó la historia inicial de Yjs
     } = {}
 ) {
+    const [localChangeCount, setLocalChangeCount] = useState(0);
+
     // Inicializar el estado enriqueciendo los arrays con IDs únicos estables si no existen
     const [formData, setFormData] = useState<T>(() => {
         const enriched: any = { ...initialData };
         options.lists?.forEach(listName => {
             if (Array.isArray(enriched[listName])) {
                 enriched[listName] = enriched[listName].map((item: any, idx: number) => {
-                    if (item && typeof item === 'object' && !item.id) {
-                        return { ...item, id: `db_${idx}` };
+                    if (item && typeof item === 'object') {
+                        const newItem = { ...item };
+                        if (!newItem.id) {
+                            newItem.id = `db_${idx}`;
+                        }
+                        if (listName === 'Cronograma' && !newItem.Semanas) {
+                            newItem.Semanas = Array(12).fill(false);
+                        }
+                        return newItem;
                     }
                     return item;
                 });
@@ -73,6 +118,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             if (JSON.stringify(prev[name]) === JSON.stringify(value)) return prev;
             return { ...prev, [name]: value };
         });
+        setLocalChangeCount(c => c + 1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ydoc, options.lists, options.richTexts, options.nonCollaborative]);
 
@@ -80,7 +126,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
     const addItem = useCallback((listName: string, template: any) => {
         const enrichedTemplate = {
             ...template,
-            id: template.id || `rand_${Math.random().toString(36).substring(2, 9)}`
+            id: template.id || `rand_${crypto.randomUUID().replace(/-/g, '').substring(0, 10)}`
         };
         if (ydoc) {
             const yarray = ydoc.getArray(listName);
@@ -92,6 +138,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             ...prev,
             [listName]: [...(prev as any)[listName], enrichedTemplate]
         }));
+        setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
     const removeItem = useCallback((listName: string, index: number) => {
@@ -107,6 +154,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             ...prev,
             [listName]: (prev as any)[listName].filter((_: any, i: number) => i !== index)
         }));
+        setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
     const updateItem = useCallback((listName: string, index: number, field: string, value: any) => {
@@ -115,6 +163,9 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const currentItem = yarray.get(index) as any;
             if (currentItem) {
                 const updatedItem = { ...currentItem, [field]: value };
+                if (JSON.stringify(currentItem) === JSON.stringify(updatedItem)) {
+                    return; // Sin cambios, no mutamos Yjs
+                }
                 ydoc.transact(() => {
                     yarray.delete(index, 1);
                     yarray.insert(index, [updatedItem]);
@@ -126,6 +177,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             newList[index] = { ...newList[index], [field]: value };
             return { ...prev, [listName]: newList };
         });
+        setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
     // ─── MOTOR DE SINCRONIZACIÓN OMNISCIENTE (Re-ejecuta cuando ydoc cambia) ───
@@ -195,9 +247,21 @@ export function useDIITRADocument<T extends Record<string, any>>(
                         }
                         return item;
                     });
+                    
+                    // Deduplicar del lado del cliente (React state) para evitar warning de keys
+                    const seen = new Set();
+                    const uniqueEnriched = enriched.filter((item: any) => {
+                        const id = item?.id || item?.uuid || item?.Uuid;
+                        if (id) {
+                            if (seen.has(id)) return false;
+                            seen.add(id);
+                        }
+                        return true;
+                    });
+
                     setFormData(prev => {
-                        if (JSON.stringify(prev[listName]) === JSON.stringify(enriched)) return prev;
-                        return { ...prev, [listName]: enriched };
+                        if (JSON.stringify(prev[listName]) === JSON.stringify(uniqueEnriched)) return prev;
+                        return { ...prev, [listName]: uniqueEnriched };
                     });
                 }
             };
@@ -205,6 +269,9 @@ export function useDIITRADocument<T extends Record<string, any>>(
             cleanups.push(() => yarray.unobserve(observer));
 
             // Sincronización Inicial de listas
+            // Deduplicar en Yjs una única vez al iniciar/conectar
+            deduplicateYArray(yarray, ydoc, listName);
+
             const currentArray = yarray.toArray();
             if (currentArray.length > 0) {
                 const enriched = currentArray.map((item: any, idx) => {
@@ -213,21 +280,52 @@ export function useDIITRADocument<T extends Record<string, any>>(
                     }
                     return item;
                 });
-                setFormData(prev => {
-                    if (JSON.stringify(prev[listName]) === JSON.stringify(enriched)) return prev;
-                    return { ...prev, [listName]: enriched };
+                
+                // Deduplicar del lado del cliente (React state)
+                const seen = new Set();
+                const uniqueEnriched = enriched.filter((item: any) => {
+                    const id = item?.id || item?.uuid || item?.Uuid;
+                    if (id) {
+                        if (seen.has(id)) return false;
+                        seen.add(id);
+                    }
+                    return true;
                 });
+
+                setFormData(prev => {
+                    if (JSON.stringify(prev[listName]) === JSON.stringify(uniqueEnriched)) return prev;
+                    return { ...prev, [listName]: uniqueEnriched };
+                });
+            } else if (options.isHistoryLoaded && Array.isArray(initialData[listName]) && initialData[listName].length > 0) {
+                const enriched = initialData[listName].map((item: any, idx: number) => {
+                    if (item && typeof item === 'object') {
+                        const newItem = { ...item };
+                        if (!newItem.id) {
+                            newItem.id = `db_${idx}`;
+                        }
+                        if (listName === 'Cronograma' && !newItem.Semanas) {
+                            newItem.Semanas = Array(12).fill(false);
+                        }
+                        return newItem;
+                    }
+                    return item;
+                });
+                console.log(`[DIITRA] Inicializando lista Yjs '${listName}' con datos de base de datos enriquecidos:`, enriched);
+                ydoc.transact(() => {
+                    yarray.push(enriched);
+                }, 'local-hook');
             }
         });
 
         return () => cleanups.forEach(c => c());
         // options.lists se puede serializar de forma estable; initialData es estable por useMemo en el padre
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ydoc]);
+    }, [ydoc, options.isHistoryLoaded]);
 
     return {
         formData,
         setFormData,
+        localChangeCount,
         addItem,
         removeItem,
         updateItem,

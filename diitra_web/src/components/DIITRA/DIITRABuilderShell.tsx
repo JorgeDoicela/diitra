@@ -42,6 +42,7 @@ interface DIITRABuilderShellProps {
     sections: BuilderSection[];
     formData: any;
     setFormData: React.Dispatch<React.SetStateAction<any>>;
+    localChangeCount?: number;                            // ← Agregado para controlar el auto-guardado
     cowork: CoWorkHandle;                                // ← Inyectado desde el padre (v2.0)
     onSave?: (data: any) => Promise<void>;
     onClose: () => void;
@@ -58,6 +59,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     templateCode,
     sections,
     formData,
+    localChangeCount = 0,                                // ← Valor por defecto
     onSave,
     onClose,
     cowork,      // ← Recibido como prop
@@ -173,12 +175,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     useEffect(() => {
         if (readOnly) return;
-        const currentSnap = snapshotForm(formData);
+        const currentSnap = snapshotForm(formDataRef.current);
         if (currentSnap === lastSavedSnapshotRef.current) {
             console.log("[DIITRA] useEffect AutoSave: Formulario sin cambios.");
             return;
         }
-        if (!formData.Uuid && !formData.Titulo && !formData.Nombre) {
+        if (!formDataRef.current.Uuid && !formDataRef.current.Titulo && !formDataRef.current.Nombre) {
             console.log("[DIITRA] useEffect AutoSave: Formulario vacío.");
             return;
         }
@@ -199,7 +201,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 clearTimeout(saveTimeoutRef.current);
             }
         };
-    }, [formData, handleSave, readOnly]);
+    }, [localChangeCount, handleSave, readOnly]);
 
     // Guardado al desmontar el componente (cambio de página o transición de React Router)
     const saveDirtyDataRef = useRef(saveDirtyData);

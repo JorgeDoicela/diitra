@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Moq;
@@ -13,6 +14,12 @@ using diitra_application.Security;
 using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
 using diitra_infrastructure.Research;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using Diitra.Infrastructure.Common.Documents;
+using diitra_api.Controllers;
+using Diitra.Infrastructure.Common.Storage;
 
 namespace diitra_tests;
 
@@ -58,8 +65,6 @@ public class UnitTest1
         optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
-        
-        // Ejecutar corrección de columnas antes de la prueba
         await EnsureDatabaseColumnsExistAsync(context);
         
         var mockAuth = new Mock<IAuthService>();
@@ -67,7 +72,6 @@ public class UnitTest1
         var mockNotification = new Mock<INotificationService>();
         var mockLogger = new Mock<ILogger<ProjectOrchestrator>>();
         
-        // Mock user provisioning to return a dummy user if needed, or null
         mockAuth.Setup(a => a.GetOrProvisionUserByCedulaAsync(It.IsAny<string>()))
             .ReturnsAsync((diitra_domain.Identity.Entities.User?)null);
             
@@ -79,21 +83,30 @@ public class UnitTest1
             mockLogger.Object
         );
         
-        var dto = new ProyectoDto
+        string json = "{\"Titulo\":\"\",\"IdCarrera\":0,\"IdConvocatoria\":0,\"Periodo\":\"\",\"TiempoEjecucion\":\"\",\"Programa\":\"\",\"GrupoInvestigacionTipo\":\"NO\",\"GrupoInvestigacionNombre\":\"\",\"Dominio\":\"\",\"LineaInvestigacion\":\"\",\"SublineaInvestigacion\":\"\",\"TipoInvestigacion\":\"APLICADA\",\"CampoAmplio\":\"\",\"CampoEspecifico\":\"\",\"CampoDetallado\":\"\",\"DirectorProyecto\":\"\",\"FechaPresentacion\":\"\",\"FechaInicio\":\"\",\"FechaFin\":\"\",\"Investigadores\":[],\"Antecedentes\":\"\",\"DescripcionProyecto\":\"\",\"Justificacion\":\"\",\"ObjetivoGeneral\":\"\",\"ObjetivosEspecificos\":\"\",\"ObjetivosDesarrolloSostenible\":\"\",\"MarcoTeorico\":\"\",\"Metodologia\":\"\",\"Evaluacion\":\"\",\"RecursosDisponibles\":[],\"RecursosNecesarios\":[],\"CostoTotal\":0,\"FinanciamientoIstpet\":false,\"FinanciamientoOtrasFuentes\":false,\"NombresOtrasFuentes\":\"\",\"ProductosEsperados\":[],\"Impacto\":{\"social\":\"\",\"cientifico\":\"\",\"economico\":\"\",\"politico\":\"\",\"ambiental\":\"\",\"otro\":\"\"},\"Cronograma\":[{\"Actividad\":\"Actividad\",\"Numero\":0,\"RecursosNecesarios\":\"Actividad\",\"id\":\"rand_j5nicbi\"},{\"Actividad\":\"\",\"Numero\":1,\"RecursosNecesarios\":\"\",\"id\":\"rand_q2gywrb\"}],\"Bibliografia\":\"\",\"FirmasResponsabilidad\":{\"DirectorNombre\":\"\",\"DirectorCargo\":\"Director del Proyecto\",\"CoordinadorNombre\":\"\",\"CoordinadorCargo\":\"Coordinador de Carrera\"},\"Uuid\":\"7921b3de-9682-4595-81ff-b974bcb0149c\",\"EntityUuid\":\"c4515615-d3a5-44e0-998a-14111b2c8ebf\",\"entityUuid\":\"c4515615-d3a5-44e0-998a-14111b2c8ebf\"}";
+        
+        var options = new System.Text.Json.JsonSerializerOptions
         {
-            Uuid = Guid.NewGuid().ToString(),
-            Titulo = "TEST PROYECTO INTEGRATION",
-            IdCarrera = 9, // Carrera válida: DESARROLLO DE SOFTWARE
-            IdConvocatoria = 1,
-            TieneGrupoInvestigacion = false,
-            TrlInicial = 1,
-            TrlActual = 1,
-            TrlMeta = 1
+            PropertyNameCaseInsensitive = true
         };
+        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(json, options);
+        dto.Uuid = "c4515615-d3a5-44e0-998a-14111b2c8ebf"; // Simulating the real EntityUuid mapping
         
-        var result = await orchestrator.SyncProjectWizardDataAsync(dto, "0302144159");
-        
-        Assert.True(result.Success, $"Sync failed: {result.Message}");
+        var result1 = await orchestrator.SyncProjectWizardDataAsync(dto, "0302144159");
+        if (!result1.Success)
+        {
+            Console.WriteLine($"FIRST SYNC FAILURE: {result1.Message}");
+        }
+        Assert.True(result1.Success, $"First sync failed: {result1.Message}");
+
+        // Modify a field and sync again
+        dto.Titulo = "UPDATED TITLE FOR INTEGRATION TEST";
+        var result2 = await orchestrator.SyncProjectWizardDataAsync(dto, "0302144159");
+        if (!result2.Success)
+        {
+            Console.WriteLine($"SECOND SYNC FAILURE: {result2.Message}");
+        }
+        Assert.True(result2.Success, $"Second sync failed: {result2.Message}");
     }
 
     [Fact]
@@ -177,6 +190,130 @@ public class UnitTest1
         context.InvProyectos.Remove(project);
         context.Users.Remove(user);
         await context.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task TestFetchSnapshot()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        var instance = await context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == "7921b3de-9682-4595-81ff-b974bcb0149c");
+        if (instance != null)
+        {
+            Console.WriteLine("SNAPSHOT JSON FOR 7921b3de-9682-4595-81ff-b974bcb0149c:");
+            Console.WriteLine(instance.DataSnapshotJson);
+        }
+        else
+        {
+            Console.WriteLine("INSTANCE NOT FOUND");
+        }
+    }
+
+    [Fact]
+    public async Task TestCheckProjectState()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        var project = await context.InvProyectos
+            .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
+            .FirstOrDefaultAsync(p => p.Uuid == "c4515615-d3a5-44e0-998a-14111b2c8ebf");
+            
+        if (project != null)
+        {
+            Console.WriteLine($"PROJECT c4515615-d3a5-44e0-998a-14111b2c8ebf: Titulo='{project.Titulo}', Estado='{project.Estado}'");
+            Console.WriteLine($"Activities count: {project.InvCronogramas.Count}");
+            foreach (var act in project.InvCronogramas)
+            {
+                Console.WriteLine($"- Activity: Id={act.IdActividad}, Uuid={act.Uuid}, Desc='{act.Descripcion}', Orden={act.NumeroActividad}");
+                Console.WriteLine($"  Weeks count: {act.InvCronogramaSemanas.Count}");
+                foreach (var sem in act.InvCronogramaSemanas)
+                {
+                    Console.WriteLine($"    * Week: Id={sem.IdSemana}, Mes='{sem.Mes}', Semana={sem.Semana}");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("PROJECT NOT FOUND");
+        }
+    }
+
+    [Fact]
+    public async Task TestUpdateMetadataController()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        await EnsureDatabaseColumnsExistAsync(context);
+        
+        var mockAuth = new Mock<IAuthService>();
+        var mockAudit = new Mock<IAuditService>();
+        var mockNotification = new Mock<INotificationService>();
+        var mockLoggerOrch = new Mock<ILogger<ProjectOrchestrator>>();
+        
+        mockAuth.Setup(a => a.GetOrProvisionUserByCedulaAsync(It.IsAny<string>()))
+            .ReturnsAsync((diitra_domain.Identity.Entities.User?)null);
+            
+        var orchestrator = new ProjectOrchestrator(
+            context,
+            mockAuth.Object,
+            mockAudit.Object,
+            mockNotification.Object,
+            mockLoggerOrch.Object
+        );
+        
+        var mockStorage = new Mock<IFileStorageService>();
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        mockServiceProvider.Setup(x => x.GetService(typeof(Diitra.Application.Research.IProjectOrchestrator)))
+            .Returns(orchestrator);
+            
+        var instanceService = new DocumentInstanceService(context, mockStorage.Object, mockServiceProvider.Object);
+        
+        var mockEngine = new Mock<IDocumentEngine>();
+        var mockDocOrch = new Mock<IDocumentDataOrchestrator>();
+        var controller = new DocumentInstancesController(instanceService, mockEngine.Object, mockDocOrch.Object);
+        
+        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "0302144159") };
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+        };
+        
+        string json = "{\"Titulo\":\"\",\"IdCarrera\":0,\"IdConvocatoria\":0,\"Periodo\":\"\",\"TiempoEjecucion\":\"\",\"Programa\":\"\",\"GrupoInvestigacionTipo\":\"NO\",\"GrupoInvestigacionNombre\":\"\",\"Dominio\":\"\",\"LineaInvestigacion\":\"\",\"SublineaInvestigacion\":\"\",\"TipoInvestigacion\":\"APLICADA\",\"CampoAmplio\":\"\",\"CampoEspecifico\":\"\",\"CampoDetallado\":\"\",\"DirectorProyecto\":\"\",\"FechaPresentacion\":\"\",\"FechaInicio\":\"\",\"FechaFin\":\"\",\"Investigadores\":[],\"Antecedentes\":\"\",\"DescripcionProyecto\":\"\",\"Justificacion\":\"\",\"ObjetivoGeneral\":\"\",\"ObjetivosEspecificos\":\"\",\"ObjetivosDesarrolloSostenible\":\"\",\"MarcoTeorico\":\"\",\"Metodologia\":\"\",\"Evaluacion\":\"\",\"RecursosDisponibles\":[],\"RecursosNecesarios\":[],\"CostoTotal\":0,\"FinanciamientoIstpet\":false,\"FinanciamientoOtrasFuentes\":false,\"NombresOtrasFuentes\":\"\",\"ProductosEsperados\":[],\"Impacto\":{\"social\":\"\",\"cientifico\":\"\",\"economico\":\"\",\"politico\":\"\",\"ambiental\":\"\",\"otro\":\"\"},\"Cronograma\":[{\"Actividad\":\"Actividad\",\"Numero\":0,\"RecursosNecesarios\":\"Actividad\",\"id\":\"rand_j5nicbi\",\"Semanas\":[true,false,true,false,false,false,false,false,false,false,false,false]},{\"Actividad\":\"\",\"Numero\":1,\"RecursosNecesarios\":\"\",\"id\":\"rand_q2gywrb\",\"Semanas\":[false,false,false,false,false,false,false,false,false,false,false,false]}],\"Bibliografia\":\"\",\"FirmasResponsabilidad\":{\"DirectorNombre\":\"\",\"DirectorCargo\":\"Director del Proyecto\",\"CoordinadorNombre\":\"\",\"CoordinadorCargo\":\"Coordinador de Carrera\"},\"Uuid\":\"7921b3de-9682-4595-81ff-b974bcb0149c\",\"EntityUuid\":\"c4515615-d3a5-44e0-998a-14111b2c8ebf\",\"entityUuid\":\"c4515615-d3a5-44e0-998a-14111b2c8ebf\"}";
+        var jsonElement = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
+        
+        var result1 = await controller.UpdateMetadata("7921b3de-9682-4595-81ff-b974bcb0149c", jsonElement, orchestrator, CancellationToken.None);
+        var badRequest1 = result1 as BadRequestObjectResult;
+        if (badRequest1 != null)
+        {
+            Console.WriteLine($"FIRST CONTROLLER CALL FAILED: {System.Text.Json.JsonSerializer.Serialize(badRequest1.Value)}");
+        }
+        else
+        {
+            Console.WriteLine("FIRST CONTROLLER CALL SUCCEEDED");
+        }
+        Assert.Null(badRequest1);
+        
+        var result2 = await controller.UpdateMetadata("7921b3de-9682-4595-81ff-b974bcb0149c", jsonElement, orchestrator, CancellationToken.None);
+        var badRequest2 = result2 as BadRequestObjectResult;
+        if (badRequest2 != null)
+        {
+            Console.WriteLine($"SECOND CONTROLLER CALL FAILED: {System.Text.Json.JsonSerializer.Serialize(badRequest2.Value)}");
+        }
+        else
+        {
+            Console.WriteLine("SECOND CONTROLLER CALL SUCCEEDED");
+        }
+        Assert.Null(badRequest2);
     }
 }
 
