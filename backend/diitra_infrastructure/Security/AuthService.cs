@@ -40,9 +40,9 @@ public class AuthService : IAuthService
         if (user != null)
         {
             // ── Verificar bloqueo activo ─────────────────────────────────────────
-            if (user.BloqueadoHasta.HasValue && user.BloqueadoHasta.Value > DateTime.UtcNow)
+            if (user.BloqueadoHasta.HasValue && user.BloqueadoHasta.Value > DateTime.Now)
             {
-                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.UtcNow).TotalSeconds;
+                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.Now).TotalSeconds;
                 return (null, new LoginBlockedResponse
                 {
                     Message = $"Cuenta bloqueada temporalmente por exceso de intentos fallidos. Intenta de nuevo en {remaining} segundos.",
@@ -67,10 +67,10 @@ public class AuthService : IAuthService
             user.IntentosFallidos++;
             user.BloqueadoHasta = user.IntentosFallidos switch
             {
-                >= 12 => DateTime.UtcNow.AddMinutes(60),
-                >= 9  => DateTime.UtcNow.AddMinutes(30),
-                >= 6  => DateTime.UtcNow.AddMinutes(15),
-                >= 3  => DateTime.UtcNow.AddMinutes(5),
+                >= 12 => DateTime.Now.AddMinutes(60),
+                >= 9  => DateTime.Now.AddMinutes(30),
+                >= 6  => DateTime.Now.AddMinutes(15),
+                >= 3  => DateTime.Now.AddMinutes(5),
                 _     => null  // < 3 intentos: aún no se bloquea
             };
             await _context.SaveChangesAsync();
@@ -80,7 +80,7 @@ public class AuthService : IAuthService
             // Si acaba de superar un umbral, devolver bloqueo
             if (user.BloqueadoHasta.HasValue)
             {
-                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.UtcNow).TotalSeconds;
+                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.Now).TotalSeconds;
                 return (null, new LoginBlockedResponse
                 {
                     Message = $"Demasiados intentos fallidos. Cuenta bloqueada por {GetLockoutMinutes(user.IntentosFallidos)} minutos.",
@@ -255,7 +255,7 @@ public class AuthService : IAuthService
         var metadata = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == user.IdUsuario);
         if (metadata != null)
         {
-            metadata.FechaUltimoAcceso = DateTime.UtcNow;
+            metadata.FechaUltimoAcceso = DateTime.Now;
             await _context.SaveChangesAsync();
         }
 
@@ -341,7 +341,7 @@ public class AuthService : IAuthService
                 IdUsuario = user.IdUsuario,
                 IdRol = role.IdRol,
                 EsActivo = true,
-                FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow)
+                FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
             });
             await _context.SaveChangesAsync();
         }
@@ -502,7 +502,7 @@ public class AuthService : IAuthService
                     IdModulos = module.IdModulos, 
                     IdOperaciones = operation.IdOperaciones, 
                     EsActivo = true,
-                    FechaCreacion = DateOnly.FromDateTime(DateTime.UtcNow)
+                    FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
                 });
                 changesMade = true;
                 relationSet.Add(relKey);
@@ -562,7 +562,7 @@ public class AuthService : IAuthService
                     IdRol = role.IdRol,
                     IdModulosOperaciones = op.IdModulosOperaciones,
                     EsActivo = true,
-                    FechaAsignacion = DateOnly.FromDateTime(DateTime.UtcNow),
+                    FechaAsignacion = DateOnly.FromDateTime(DateTime.Now),
                     UsuarioAsigno = "SISTEMA_DIITRA_JIT"
                 });
             }
@@ -591,12 +591,12 @@ public class AuthService : IAuthService
         // administrativamente (Utilizado = true) o cuando vence la fecha del arbitraje.
         // Esto permite al revisor volver al enlace del correo en cualquier momento durante el período.
         var magicLink = await _context.Set<InvMagicLink>()
-            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash && !l.Utilizado && l.FechaExpiracion > DateTime.UtcNow);
+            .FirstOrDefaultAsync(l => l.TokenHash == tokenHash && !l.Utilizado && l.FechaExpiracion > DateTime.Now);
 
         if (magicLink == null) return null;
 
         // Auditoría del último acceso (sin marcar como utilizado definitivamente)
-        magicLink.FechaUtilizado = DateTime.UtcNow;
+        magicLink.FechaUtilizado = DateTime.Now;
         magicLink.IpUtilizacion = ipAddress;
         magicLink.UserAgent = userAgent;
 
@@ -607,7 +607,7 @@ public class AuthService : IAuthService
         rng.GetBytes(bytes);
         var pin = new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
         magicLink.CodigoPinHandoff = pin;
-        magicLink.FechaExpiracionPin = DateTime.UtcNow.AddMinutes(30);
+        magicLink.FechaExpiracionPin = DateTime.Now.AddMinutes(30);
 
         await _context.SaveChangesAsync();
 
@@ -628,16 +628,16 @@ public class AuthService : IAuthService
         {
             if (_ipLockouts.TryGetValue(ipAddress, out var lockout))
             {
-                if (lockout.LockedUntil > DateTime.UtcNow)
+                if (lockout.LockedUntil > DateTime.Now)
                 {
-                    var secondsLeft = (int)(lockout.LockedUntil - DateTime.UtcNow).TotalSeconds;
+                    var secondsLeft = (int)(lockout.LockedUntil - DateTime.Now).TotalSeconds;
                     throw new InvalidOperationException($"Demasiados intentos fallidos. Esta dirección IP está bloqueada por {secondsLeft} segundos.");
                 }
             }
         }
 
         var magicLink = await _context.Set<InvMagicLink>()
-            .FirstOrDefaultAsync(l => l.CodigoPinHandoff == pin && l.FechaExpiracionPin > DateTime.UtcNow);
+            .FirstOrDefaultAsync(l => l.CodigoPinHandoff == pin && l.FechaExpiracionPin > DateTime.Now);
 
         if (magicLink == null)
         {
@@ -649,11 +649,11 @@ public class AuthService : IAuthService
                     (key, old) =>
                     {
                         var newAttempts = old.Attempts + 1;
-                        var lockedUntil = newAttempts >= 5 ? DateTime.UtcNow.AddMinutes(5) : DateTime.MinValue;
+                        var lockedUntil = newAttempts >= 5 ? DateTime.Now.AddMinutes(5) : DateTime.MinValue;
                         return (newAttempts, lockedUntil);
                     });
 
-                if (_ipLockouts.TryGetValue(ipAddress, out var updatedLockout) && updatedLockout.LockedUntil > DateTime.UtcNow)
+                if (_ipLockouts.TryGetValue(ipAddress, out var updatedLockout) && updatedLockout.LockedUntil > DateTime.Now)
                 {
                     throw new InvalidOperationException("Demasiados intentos fallidos de PIN. Esta dirección IP ha sido bloqueada por 5 minutos.");
                 }
@@ -698,7 +698,7 @@ public class AuthService : IAuthService
         {
             IdUsuario = idUsuario,
             TokenHash = tokenHash,
-            FechaCreacion = DateTime.UtcNow,
+            FechaCreacion = DateTime.Now,
             FechaExpiracion = expirationDate,
             Utilizado = false
         };
@@ -719,7 +719,7 @@ public class AuthService : IAuthService
 
         // 2. Buscar si tiene un enlace mágico activo
         var activeLink = await _context.Set<InvMagicLink>()
-            .Where(l => l.IdUsuario == user.IdUsuario && !l.Utilizado && l.FechaExpiracion > DateTime.UtcNow)
+            .Where(l => l.IdUsuario == user.IdUsuario && !l.Utilizado && l.FechaExpiracion > DateTime.Now)
             .OrderByDescending(l => l.FechaExpiracion)
             .FirstOrDefaultAsync();
 
