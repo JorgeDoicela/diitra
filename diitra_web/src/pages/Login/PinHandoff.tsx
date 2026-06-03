@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2, Laptop, ArrowRight, AlertTriangle, Sun, Moon } from 'lucide-react';
+import { Loader2, Laptop, ArrowRight, AlertTriangle, Sun, Moon, Lock } from 'lucide-react';
 
 const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'dark' | 'light'; toggleTheme?: () => void }) => {
     const { handoffLogin } = useAuth();
@@ -11,8 +11,37 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Lockout state
+    const [lockoutSeconds, setLockoutSeconds] = useState(0);
+    const lockoutRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+    const startLockoutCountdown = (seconds: number) => {
+        setLockoutSeconds(seconds);
+        if (lockoutRef.current) clearInterval(lockoutRef.current);
+        lockoutRef.current = setInterval(() => {
+            setLockoutSeconds(prev => {
+                if (prev <= 1) {
+                    clearInterval(lockoutRef.current!);
+                    setError(null);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+    };
+
+    // Cleanup on unmount
+    useEffect(() => () => { if (lockoutRef.current) clearInterval(lockoutRef.current); }, []);
+
+    const formatLockoutTime = (secs: number) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return m > 0 ? `${m}m ${s.toString().padStart(2, '0')}s` : `${s}s`;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (lockoutSeconds > 0) return;
         if (pin.length !== 5) {
             setError('El código PIN debe tener 5 caracteres.');
             return;
@@ -25,7 +54,15 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
             await handoffLogin(pin);
             navigate('/revisiones', { replace: true });
         } catch (err: any) {
-            setError(err.response?.data?.message || 'El código PIN es inválido, ya fue utilizado o ha expirado.');
+            const status = err.response?.status;
+            if (status === 429) {
+                const secs = err.response?.data?.segundosRestantes ?? err.response?.data?.segundos_restantes ?? 300;
+                const msg = err.response?.data?.message || 'Esta dirección IP está bloqueada temporalmente.';
+                setError(msg);
+                startLockoutCountdown(secs);
+            } else {
+                setError(err.response?.data?.message || 'El código PIN es inválido, ya fue utilizado o ha expirado.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -101,25 +138,48 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 className="input-vercel h-14 text-center text-xl font-mono font-bold tracking-[0.3em] uppercase"
                                 maxLength={5}
                                 autoComplete="off"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || lockoutSeconds > 0}
                                 spellCheck={false}
                             />
                         </div>
 
-                        {error && (
-                            <div className="p-3 rounded-md bg-error/5 border border-error/20 text-error text-[10px] font-mono leading-relaxed flex gap-2 items-start">
+                        {/* Error / Lockout display */}
+                        {lockoutSeconds > 0 ? (
+                            <div className="p-4 rounded-lg bg-error/5 border border-error/30 space-y-2 animate-in fade-in">
+                                <div className="flex items-center gap-2 text-error">
+                                    <Lock size={14} className="shrink-0" />
+                                    <span className="text-[10px] font-bold uppercase tracking-wider">IP bloqueada temporalmente</span>
+                                </div>
+                                <p className="text-[9px] text-text-dim leading-relaxed">{error}</p>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[9px] text-text-dim uppercase tracking-widest">Tiempo restante:</span>
+                                    <span className="font-mono text-sm font-black text-error tabular-nums">
+                                        {formatLockoutTime(lockoutSeconds)}
+                                    </span>
+                                </div>
+                                <div className="w-full bg-border-thin rounded-full h-1 overflow-hidden">
+                                    <div
+                                        className="h-full bg-error transition-all duration-1000"
+                                        style={{ width: `${Math.min(100, (lockoutSeconds / 300) * 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+                        ) : error ? (
+                            <div className="p-3 rounded-md bg-error/5 border border-error/20 text-error text-[10px] font-mono leading-relaxed flex gap-2 items-start animate-in fade-in slide-in-from-top-1">
                                 <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                                 <span>{error}</span>
                             </div>
-                        )}
+                        ) : null}
 
                         <button
                             type="submit"
-                            disabled={isSubmitting || pin.length !== 5}
-                            className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 group"
+                            disabled={isSubmitting || pin.length !== 5 || lockoutSeconds > 0}
+                            className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : lockoutSeconds > 0 ? (
+                                <span className="font-mono">{formatLockoutTime(lockoutSeconds)}</span>
                             ) : (
                                 <>
                                     <span>Vincular Dispositivo</span>

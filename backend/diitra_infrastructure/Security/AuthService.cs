@@ -133,6 +133,14 @@ public class AuthService : IAuthService
         _     => 5
     };
 
+    private static int GetIpLockoutMinutes(int attempts) => attempts switch
+    {
+        >= 12 => 60,
+        >= 9  => 30,
+        >= 6  => 15,
+        _     => 5
+    };
+
     public async Task<User?> GetOrProvisionUserByCedulaAsync(string cedula)
     {
         // 1. Buscar en DIITRA
@@ -631,7 +639,7 @@ public class AuthService : IAuthService
                 if (lockout.LockedUntil > DateTime.Now)
                 {
                     var secondsLeft = (int)(lockout.LockedUntil - DateTime.Now).TotalSeconds;
-                    throw new InvalidOperationException($"Demasiados intentos fallidos. Esta dirección IP está bloqueada por {secondsLeft} segundos.");
+                    throw new IpLockoutException($"Demasiados intentos fallidos. Esta dirección IP está bloqueada por {GetIpLockoutMinutes(lockout.Attempts)} minutos.", secondsLeft);
                 }
             }
         }
@@ -649,13 +657,19 @@ public class AuthService : IAuthService
                     (key, old) =>
                     {
                         var newAttempts = old.Attempts + 1;
-                        var lockedUntil = newAttempts >= 5 ? DateTime.Now.AddMinutes(5) : DateTime.MinValue;
+                        DateTime lockedUntil = DateTime.MinValue;
+                        if (newAttempts >= 3)
+                        {
+                            int minutes = GetIpLockoutMinutes(newAttempts);
+                            lockedUntil = DateTime.Now.AddMinutes(minutes);
+                        }
                         return (newAttempts, lockedUntil);
                     });
 
                 if (_ipLockouts.TryGetValue(ipAddress, out var updatedLockout) && updatedLockout.LockedUntil > DateTime.Now)
                 {
-                    throw new InvalidOperationException("Demasiados intentos fallidos de PIN. Esta dirección IP ha sido bloqueada por 5 minutos.");
+                    var secondsLeft = (int)(updatedLockout.LockedUntil - DateTime.Now).TotalSeconds;
+                    throw new IpLockoutException($"Demasiados intentos fallidos de PIN. Esta dirección IP ha sido bloqueada por {GetIpLockoutMinutes(updatedLockout.Attempts)} minutos.", secondsLeft);
                 }
             }
             return null;
