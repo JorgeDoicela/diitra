@@ -18,7 +18,6 @@ public class UserManagementDto
     public string? OrcidId { get; set; }
     public bool FirmaHabilitada { get; set; }
     public decimal? HorasInvestigacion { get; set; }
-    public string? TipoDedicacion { get; set; }
     
     // Contexto Académico (Profesionalización)
     public string? Carrera { get; set; }

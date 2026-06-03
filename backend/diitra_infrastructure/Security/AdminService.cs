@@ -248,11 +248,7 @@ public class AdminService : IAdminService
                 .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
                 .ToListAsync();
 
-            // Obtener dedicación desde la tabla de contratos activos
-            var activeContracts = await _context.Contratos
-                .Include(c => c.TipoContratoNavigation)
-                .Where(c => ids.Contains(c.IdProfesor) && c.EsActivo == 1)
-                .ToListAsync();
+
 
             // Obtener carreras vinculadas a los docentes en este periodo cargando su navegación
             var profCareers = await _context.ProfesoresCarrerasPeriodos
@@ -273,7 +269,6 @@ public class AdminService : IAdminService
             result.Items = professors.Select(p => {
                 var pId = p.IdProfesor.Trim();
                 var hours = researchHours.Where(h => h.IdProfesor.Trim() == pId).Sum(h => h.HorasSemana);
-                var contract = activeContracts.FirstOrDefault(c => c.IdProfesor.Trim() == pId);
                 var roleInfo = userRoles.Where(ur => ur.User != null && ur.User.IdSigafi.Trim() == pId).ToList();
                 var linkedUser = linkedUsers.FirstOrDefault(u => u.IdSigafi.Trim() == pId);
                 var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
@@ -300,8 +295,7 @@ public class AdminService : IAdminService
                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
                     Carrera = carreraNom,
                     Nivel = "N/A",
-                    HorasInvestigacion = hours,
-                    TipoDedicacion = contract?.TipoContratoNavigation?.Nombre ?? "Sin Contrato"
+                    HorasInvestigacion = hours
                 };
             }).ToList();
         }
