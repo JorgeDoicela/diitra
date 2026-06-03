@@ -105,6 +105,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const formDataRef = useRef(formData);
     const onSaveRef = useRef(onSave);
+    const isSavingRef = useRef(false);
 
     useEffect(() => { formDataRef.current = formData; }, [formData]);
     useEffect(() => { onSaveRef.current = onSave; }, [onSave]);
@@ -112,6 +113,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const saveDirtyData = useCallback(async (isUnmounting = false) => {
         if (readOnly) {
             console.log("[DIITRA] saveDirtyData: Documento es sólo lectura, omitiendo guardado.");
+            return;
+        }
+        if (isSavingRef.current) {
+            console.log("[DIITRA] saveDirtyData: Guardado ya en curso, omitiendo.");
             return;
         }
         const data = formDataRef.current;
@@ -131,6 +136,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             return;
         }
 
+        isSavingRef.current = true;
         if (!isUnmounting) {
             setIsSaving(true);
         }
@@ -149,6 +155,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 addAudit('Fallo de persistencia en el núcleo', 'error');
             }
         } finally {
+            isSavingRef.current = false;
             if (!isUnmounting) {
                 setIsSaving(false);
             }
@@ -156,6 +163,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     }, [addAudit, readOnly]);
 
     const handleSave = useCallback(async () => {
+        if (saveTimeoutRef.current) {
+            console.log("[DIITRA] handleSave: Cancelando autoguardado programado por guardado manual inmediato.");
+            clearTimeout(saveTimeoutRef.current);
+            saveTimeoutRef.current = null;
+        }
         await saveDirtyData(false);
     }, [saveDirtyData]);
 
