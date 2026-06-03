@@ -162,12 +162,17 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         title: "Informe de Avance de Proyecto",
         subtitle: "Ejecución y Monitoreo (Fase 3)",
         schema: {
+            // Sección 1: Bitácora Científica (rich-text colaborativo)
+            ConclusionesParciales: '',
+            // Sección 2: Actividades del Cronograma (hitos CACES con % avance)
             HitosCompletados: [],
+            // Sección 3: Evidencias Físicas (bitácoras de campo y laboratorio)
             Evidencias: [],
+            // Sección 4: Ejecución Presupuestaria (libro contable por partidas)
             PresupuestoEjecutado: [],
-            ConclusionesParciales: ''
         },
         lists: ['HitosCompletados', 'Evidencias', 'PresupuestoEjecutado'],
+        // Una sola sección que renderiza ProgressReportSection con las 4 sub-secciones CACES
         sections: [
             {
                 id: 'ejecucion',
@@ -175,7 +180,13 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
                 iconName: 'BarChart',
                 config: {
                     fields: [
-                        { name: 'ConclusionesParciales', label: 'Conclusiones Parciales', type: 'rich-text', collaborative: true }
+                        {
+                            name: 'ConclusionesParciales',
+                            label: 'Bitácora Científica & Conclusiones Parciales',
+                            type: 'rich-text',
+                            collaborative: true,
+                            placeholder: 'Documenta el progreso experimental, hallazgos y avances teórico-prácticos del período...'
+                        }
                     ]
                 }
             }
