@@ -329,80 +329,7 @@ const ArbitrajePage: React.FC = () => {
                 </div>
             </header>
 
-            {/* ── KPIs Avanzados (Paso 2) ─────────────────── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-up">
-                {/* Tasa de Aprobación */}
-                <div className="bento-card relative overflow-hidden p-6 bg-surface/40 backdrop-blur border border-border-thin hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <ShieldCheck size={48} className="text-success" />
-                    </div>
-                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block mb-1">
-                        Tasa de Aprobación
-                    </span>
-                    <h3 className="text-3xl font-bold text-text-main font-mono tracking-tight flex items-baseline gap-1 mt-1 group-hover:text-success transition-colors">
-                        {tasaAprobacion}%
-                    </h3>
-                    <p className="text-xs text-text-dim mt-2 leading-relaxed font-medium">
-                        Porcentaje de proyectos que han obtenido dictamen favorable.
-                    </p>
-                    <div className="w-full bg-border-thin h-1 rounded-full mt-4 overflow-hidden">
-                        <div 
-                            className="h-full rounded-full bg-success transition-all duration-500" 
-                            style={{ width: `${tasaAprobacion}%` }}
-                        />
-                    </div>
-                </div>
 
-                {/* Promedio Evaluación */}
-                <div className="bento-card relative overflow-hidden p-6 bg-surface/40 backdrop-blur border border-border-thin hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <TrendingUp size={48} className="text-brand" />
-                    </div>
-                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block mb-1">
-                        Promedio Evaluación
-                    </span>
-                    <h3 className="text-3xl font-bold text-text-main font-mono tracking-tight flex items-baseline gap-1 mt-1 group-hover:text-brand transition-colors">
-                        {promedioEvaluacionText}
-                    </h3>
-                    <p className="text-xs text-text-dim mt-2 leading-relaxed font-medium">
-                        Mide el tiempo de respuesta promedio de los docentes investigadores.
-                    </p>
-                    <div className="w-full bg-border-thin h-1 rounded-full mt-4 overflow-hidden">
-                        <div 
-                            className="h-full rounded-full bg-brand transition-all duration-500" 
-                            style={{ width: `${Math.min(100, Math.max(10, (promedioEvaluacionDays || 0) * 5))}%` }}
-                        />
-                    </div>
-                </div>
-
-                {/* Distribución de Árbitros */}
-                <div className="bento-card relative overflow-hidden p-6 bg-surface/40 backdrop-blur border border-border-thin hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Users size={48} className="text-warning" />
-                    </div>
-                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block mb-1">
-                        Distribución de Árbitros
-                    </span>
-                    <h3 className="text-3xl font-bold text-text-main font-mono tracking-tight flex items-baseline gap-1 mt-1 group-hover:text-warning transition-colors">
-                        {pctExternos}% <span className="text-xs font-sans text-text-dim font-medium">Ext</span>
-                        <span className="text-lg text-text-dim/50 font-light font-sans px-1">/</span>
-                        {100 - pctExternos}% <span className="text-xs font-sans text-text-dim font-medium">Int</span>
-                    </h3>
-                    <p className="text-xs text-text-dim mt-2 leading-relaxed font-medium">
-                        Proporción de Árbitros Externos vs. Internos (normativa CACES Indicador I5).
-                    </p>
-                    <div className="w-full bg-border-thin h-1 rounded-full mt-4 overflow-hidden flex">
-                        <div 
-                            className="h-full bg-warning transition-all duration-500" 
-                            style={{ width: `${pctExternos}%` }}
-                        />
-                        <div 
-                            className="h-full bg-warning/30 transition-all duration-500" 
-                            style={{ width: `${100 - pctExternos}%` }}
-                        />
-                    </div>
-                </div>
-            </div>
 
             {/* ── Filtros ───────────────────────────────── */}
             <div className="flex flex-wrap gap-2 mb-6 animate-fade-up [animation-delay:150ms]">
@@ -749,35 +676,64 @@ const ArbitrajePage: React.FC = () => {
                                 value: stats.proyectos_en_revision,
                                 displayValue: `${stats.proyectos_en_revision} proy.`,
                                 max: 10,
-                                color: 'var(--color-text-main)'
+                                color: 'var(--color-text-main)',
+                                tooltip: 'Proyectos que se encuentran actualmente en proceso de evaluación por pares.'
                             },
                             {
                                 label: 'Árbitros Asignados',
                                 value: stats.total_arbitros_asignados,
                                 displayValue: `${stats.total_arbitros_asignados} asignados`,
                                 max: 15,
-                                color: '#3b82f6'
+                                color: '#3b82f6',
+                                tooltip: 'Total de docentes y expertos externos asignados como revisores.'
                             },
                             {
                                 label: 'Completadas',
                                 value: stats.evaluaciones_completadas,
                                 displayValue: `${stats.evaluaciones_completadas} listos`,
                                 max: stats.total_arbitros_asignados || 1,
-                                color: '#22c55e'
+                                color: '#22c55e',
+                                tooltip: 'Evaluaciones completadas y firmadas por los revisores.'
                             },
                             {
                                 label: 'Pendientes',
                                 value: stats.evaluaciones_pendientes,
                                 displayValue: `${stats.evaluaciones_pendientes} en curso`,
                                 max: stats.total_arbitros_asignados || 1,
-                                color: '#f0a500'
+                                color: '#f0a500',
+                                tooltip: 'Evaluaciones asignadas que aún se encuentran pendientes de entrega.'
                             },
                             {
                                 label: 'Desempates',
                                 value: stats.casos_desempate,
                                 displayValue: `${stats.casos_desempate} casos`,
                                 max: stats.proyectos_en_revision || 1,
-                                color: '#ef4444'
+                                color: '#ef4444',
+                                tooltip: 'Casos donde existe empate en los dictámenes y se requiere un tercer árbitro.'
+                            },
+                            {
+                                label: 'Tasa Aprobación',
+                                value: tasaAprobacion,
+                                displayValue: `${tasaAprobacion}%`,
+                                max: 100,
+                                color: '#10b981',
+                                tooltip: 'Porcentaje de proyectos que han obtenido dictamen favorable.'
+                            },
+                            {
+                                label: 'Promedio Evaluación',
+                                value: promedioEvaluacionDays,
+                                displayValue: promedioEvaluacionText,
+                                max: 30,
+                                color: '#0070f3',
+                                tooltip: 'Mide el tiempo de respuesta promedio de los docentes investigadores.'
+                            },
+                            {
+                                label: 'Distribución Árbitros',
+                                value: pctExternos,
+                                displayValue: `${pctExternos}% Ext / ${100 - pctExternos}% Int`,
+                                max: 100,
+                                color: '#f5a623',
+                                tooltip: 'Proporción de Árbitros Externos vs. Internos (normativa CACES Indicador I5).'
                             }
                         ]}
                     />
@@ -1025,6 +981,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                     viewBox="0 0 24 24" 
                                     stroke="currentColor" 
                                     strokeWidth="2.5"
+                                    title={item.tooltip}
                                 >
                                     <circle cx="12" cy="12" r="10" />
                                     <line x1="12" y1="16" x2="12" y2="12" />
