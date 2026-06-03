@@ -786,6 +786,157 @@ public class PeerReviewService : IPeerReviewService
         if (project == null)
             throw new ArgumentException($"Proyecto con UUID '{dto.ProjectUuid}' no encontrado.");
 
+        // 1. Validar el estado del proyecto y que esté activo
+        if (project.Activo == false)
+        {
+            throw new InvalidOperationException("No se pueden asignar árbitros a un proyecto inactivo.");
+        }
+
+        if (project.Estado != "Enviado" && project.Estado != "En Revisión")
+        {
+            throw new InvalidOperationException($"No se pueden asignar árbitros a un proyecto en estado '{project.Estado}'.");
+        }
+
+        // 2. Validar que el revisor exista y esté activo
+        var revisorUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == dto.IdRevisor);
+        if (revisorUser == null || !revisorUser.Activo)
+        {
+            throw new InvalidOperationException("El revisor seleccionado no existe o no está activo en el sistema.");
+        }
+
+        // 3. Validar rol del evaluador (No estudiantes)
+        if (revisorUser.TablaSigafi == "alumno")
+        {
+            throw new InvalidOperationException("Un estudiante no puede ser asignado como árbitro/evaluador de un proyecto de investigación.");
+        }
+
+        // 4. Validar tipo de revisor según la asignación (Interno vs Externo)
+        if (dto.EsExterno)
+        {
+            if (revisorUser.TablaSigafi != "otros")
+            {
+                throw new InvalidOperationException("El revisor seleccionado no es un evaluador externo registrado.");
+            }
+        }
+        else
+        {
+            if (revisorUser.TablaSigafi != "profesor")
+            {
+                throw new InvalidOperationException("El revisor seleccionado es un evaluador externo, pero se ha indicado que es una asignación interna.");
+            }
+        }
+
+        // 5. Validar autoevaluación (Director/Coordinador no puede asignarse a sí mismo)
+        if (dto.IdRevisor == directorId)
+        {
+            throw new InvalidOperationException("Conflicto de interés: El director o coordinador que realiza la asignación no puede asignarse a sí mismo como árbitro.");
+        }
+
+        // 6. Validar asignación duplicada
+        var alreadyAssigned = await _context.Set<InvRevisionesPares>()
+            .AnyAsync(r => r.IdProyecto == project.IdProyecto && r.IdRevisor == dto.IdRevisor);
+        if (alreadyAssigned)
+        {
+            throw new InvalidOperationException($"El revisor '{revisorUser.Nombre}' ya ha sido asignado a este proyecto.");
+        }
+
+        // 7. Validar conflicto de interés directo (miembro del proyecto)
+        var isMember = await _context.Set<InvProyectoProfesor>()
+            .AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == dto.IdRevisor)
+            || await _context.Set<InvProyectoAlumno>()
+            .AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == dto.IdRevisor);
+        if (isMember)
+        {
+            throw new InvalidOperationException("Conflicto de interés: El revisor seleccionado es miembro (director o docente/alumno investigador) de este proyecto.");
+        }
+
+        // 8. Validar conflicto de interés por grupo de investigación
+        if (project.IdGrupo.HasValue)
+        {
+            var isGroupMember = await _context.Set<InvGrupoMiembro>()
+                .AnyAsync(gm => gm.IdGrupo == project.IdGrupo.Value && gm.IdUsuario == dto.IdRevisor && gm.Activo == true);
+            if (isGroupMember)
+            {
+                throw new InvalidOperationException("Conflicto de interés: El revisor seleccionado pertenece al mismo grupo de investigación del proyecto.");
+            }
+        }
+
+        // 9. Validar conflicto de interés por evaluación cruzada (recíproca)
+        var reviewerProjects = await _context.Set<InvProyectoProfesor>()
+            .Where(pp => pp.IdUsuario == dto.IdRevisor)
+            .Select(pp => pp.IdProyecto)
+            .Union(_context.Set<InvProyectoAlumno>()
+                .Where(pa => pa.IdUsuario == dto.IdRevisor)
+                .Select(pa => pa.IdProyecto))
+            .ToListAsync();
+
+        if (reviewerProjects.Any())
+        {
+            var currentProjectMembers = await _context.Set<InvProyectoProfesor>()
+                .Where(pp => pp.IdProyecto == project.IdProyecto)
+                .Select(pp => pp.IdUsuario)
+                .Union(_context.Set<InvProyectoAlumno>()
+                    .Where(pa => pa.IdProyecto == project.IdProyecto)
+                    .Select(pa => pa.IdUsuario))
+                .ToListAsync();
+
+            var hasCrossReview = await _context.Set<InvRevisionesPares>()
+                .AnyAsync(r => reviewerProjects.Contains(r.IdProyecto) && r.IdRevisor.HasValue && currentProjectMembers.Contains(r.IdRevisor.Value));
+
+            if (hasCrossReview)
+            {
+                throw new InvalidOperationException("Conflicto de interés (Evaluación cruzada): Un miembro de este proyecto ya está asignado para evaluar un proyecto del revisor seleccionado.");
+            }
+
+            // 10. Validar conflicto de interés por colaboración activa (coautoría vigente)
+            var activeStates = new[] { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
+            var reviewerActiveProjects = await _context.InvProyectos
+                .Where(p => reviewerProjects.Contains(p.IdProyecto) && activeStates.Contains(p.Estado) && p.Activo != false)
+                .Select(p => p.IdProyecto)
+                .ToListAsync();
+
+            if (reviewerActiveProjects.Any())
+            {
+                var hasRecentCollaboration = await _context.Set<InvProyectoProfesor>()
+                    .Where(pp => pp.IdProyecto != project.IdProyecto && reviewerActiveProjects.Contains(pp.IdProyecto) && pp.Activo == true)
+                    .AnyAsync(pp => currentProjectMembers.Contains(pp.IdUsuario))
+                    || await _context.Set<InvProyectoAlumno>()
+                    .Where(pa => pa.IdProyecto != project.IdProyecto && reviewerActiveProjects.Contains(pa.IdProyecto) && pa.Activo == true)
+                    .AnyAsync(pa => currentProjectMembers.Contains(pa.IdUsuario));
+
+                if (hasRecentCollaboration)
+                {
+                    throw new InvalidOperationException("Conflicto de interés (Colaboración activa): El revisor seleccionado tiene colaboraciones activas en otros proyectos vigentes con miembros de este proyecto.");
+                }
+            }
+        }
+
+        // 11. Validar límite máximo de evaluadores por proyecto (máximo 3)
+        var currentReviewsCount = await _context.Set<InvRevisionesPares>()
+            .CountAsync(r => r.IdProyecto == project.IdProyecto);
+        if (currentReviewsCount >= 3)
+        {
+            throw new InvalidOperationException($"El proyecto ya cuenta con el límite máximo de evaluaciones permitidas ({currentReviewsCount} asignadas).");
+        }
+
+        // 12. Validar límite de carga de trabajo del revisor (máximo 3 revisiones pendientes concurrentes)
+        var activeReviewsCount = await _context.Set<InvRevisionesPares>()
+            .CountAsync(r => r.IdRevisor == dto.IdRevisor && r.Estado == "Pendiente");
+        if (activeReviewsCount >= 3)
+        {
+            throw new InvalidOperationException($"El revisor seleccionado tiene demasiadas evaluaciones pendientes activas (límite de 3 simultáneas, actualmente tiene {activeReviewsCount}).");
+        }
+
+        // 13. Validar plazo de entrega
+        if (dto.FechaLimite <= DateTime.Now.AddHours(23))
+        {
+            throw new InvalidOperationException("La fecha límite de evaluación debe ser al menos 24 horas en el futuro.");
+        }
+        if (dto.FechaLimite > DateTime.Now.AddDays(90))
+        {
+            throw new InvalidOperationException("La fecha límite de evaluación no puede ser mayor a 90 días en el futuro.");
+        }
+
         project.AutoExtendDeadlines = dto.AutoExtendDeadlines;
         project.AutoExtendDays = dto.AutoExtendDays;
 
@@ -811,7 +962,6 @@ public class PeerReviewService : IPeerReviewService
         // 🔗 ENLACES MÁGICOS: Generación automática si es evaluador externo
         if (dto.EsExterno)
         {
-            var revisorUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == dto.IdRevisor);
             if (revisorUser != null && !string.IsNullOrEmpty(revisorUser.EmailInstitucional))
             {
                 // Crear el enlace mágico centralizadamente a través del servicio de autenticación
@@ -854,7 +1004,6 @@ public class PeerReviewService : IPeerReviewService
         }
         else
         {
-            var revisorUser = await _context.Users.FirstOrDefaultAsync(u => u.IdUsuario == dto.IdRevisor);
             if (revisorUser != null)
             {
                 var emailTitle = $"Nueva Asignación de Arbitraje Científico - DIITRA";
