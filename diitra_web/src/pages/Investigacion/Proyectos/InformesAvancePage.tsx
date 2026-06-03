@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Plus, CheckCircle, AlertCircle, FileText,
     RefreshCw, ChevronDown, ChevronUp, X, FileSignature, Activity,
-    ExternalLink, Upload, Shield
+    Upload, Shield, ExternalLink
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
@@ -20,9 +20,12 @@ import {
     ESTADO_INFORME_CONFIG,
 } from '../../../services/informesAvanceService';
 
-// ─────────────────────────────────────────────────────────────
+// ── DocumentEditor (Builder Core con 4 secciones CACES) ──────────────────────
+import DocumentEditor from './Wizard/DocumentEditor';
+
+// ─────────────────────────────────────────────────────────────────
 //  Página principal
-// ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────
 
 const InformesAvancePage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
@@ -35,6 +38,12 @@ const InformesAvancePage: React.FC = () => {
     const [projectNotFound, setProjectNotFound] = useState(false);
     const [projectTitle, setProjectTitle] = useState('');
     const [expandedId, setExpandedId] = useState<number | null>(null);
+
+    // ── Estado del DocumentEditor (Builder Core CACES) ────────────
+    const [editorInstanceUuid, setEditorInstanceUuid] = useState<string | null>(null);
+    const [openingEditor, setOpeningEditor] = useState(false);
+    const [activeInformeId, setActiveInformeId] = useState<number | null>(null);
+    const [activeInformeUuid, setActiveInformeUuid] = useState<string | null>(null);
 
     // Modal: nuevo informe
     const [showCreate, setShowCreate] = useState(false);
@@ -51,7 +60,6 @@ const InformesAvancePage: React.FC = () => {
     const [observarTarget, setObservarTarget] = useState<InformeAvanceDto | null>(null);
     const [observacion, setObservacion] = useState('');
     const [actioning, setActioning] = useState<number | null>(null);
-    const [openingEditor, setOpeningEditor] = useState(false);
     const [firmarTarget, setFirmarTarget] = useState<InformeAvanceDto | null>(null);
     const [certFile, setCertFile] = useState<File | null>(null);
     const [certPassword, setCertPassword] = useState('');
@@ -83,7 +91,36 @@ const InformesAvancePage: React.FC = () => {
 
     useEffect(() => { load(); }, [load]);
 
-    // ── Crear informe ──────────────────────────────────────────
+    // ── Abrir Builder Core (CACES) para un informe específico ─────
+    const openBuilderForInforme = async (informe: InformeAvanceDto) => {
+        if (!projectId) return;
+        setOpeningEditor(true);
+        setActiveInformeId(informe.id_informe);
+        setActiveInformeUuid(informe.uuid);
+        try {
+            // Resolvemos/creamos la instancia de documento para este informe
+            const res = await api.get('/documents/instances/resolve', {
+                params: {
+                    templateCode: 'INFORME_AVANCE',
+                    // Vinculamos por UUID del informe para que cada informe tenga su propio documento
+                    entityUuid: informe.uuid,
+                    title: `Informe de Avance #${informe.numero_informe} — ${projectTitle || 'Proyecto'}`,
+                },
+            });
+            const instanceUuid = res.data?.uuid || res.data?.Uuid;
+            if (instanceUuid) {
+                setEditorInstanceUuid(instanceUuid);
+            } else {
+                alert('No se pudo abrir el editor del informe.');
+            }
+        } catch {
+            alert('No se pudo abrir el editor CACES (hitos, evidencias y presupuesto).');
+        } finally {
+            setOpeningEditor(false);
+        }
+    };
+
+    // ── Crear nuevo informe + abrir Builder inmediatamente ────────
     const handleCreate = async () => {
         if (!formData.resumen_actividades.trim()) {
             setCreateError('El resumen de actividades es obligatorio.');
@@ -92,10 +129,15 @@ const InformesAvancePage: React.FC = () => {
         setCreating(true);
         setCreateError('');
         try {
-            await createInforme(formData);
+            const nuevoInforme: InformeAvanceDto = await createInforme(formData);
             setShowCreate(false);
             setFormData(f => ({ ...f, resumen_actividades: '', fecha_reporte: new Date().toISOString().slice(0, 10) }));
             await load();
+            // Abrir automáticamente el Builder Core para el informe recién creado
+            // nuevoInforme viene con id_informe y numero_informe desde el backend
+            if (nuevoInforme?.id_informe) {
+                await openBuilderForInforme(nuevoInforme);
+            }
         } catch (e: any) {
             setCreateError(e?.response?.data?.message ?? 'Error al crear el informe.');
         } finally {
@@ -103,7 +145,7 @@ const InformesAvancePage: React.FC = () => {
         }
     };
 
-    // ── Aprobar ────────────────────────────────────────────────
+    // ── Aprobar ───────────────────────────────────────────────────
     const handleAprobar = async (id: number) => {
         if (!window.confirm('¿Aprobar este informe de avance?')) return;
         setActioning(id);
@@ -115,30 +157,7 @@ const InformesAvancePage: React.FC = () => {
         }
     };
 
-    const openEditorCaces = async () => {
-        if (!projectId) return;
-        setOpeningEditor(true);
-        try {
-            const res = await api.get('/documents/instances/resolve', {
-                params: {
-                    templateCode: 'INFORME_AVANCE',
-                    entityUuid: projectId,
-                    title: `Informe de Avance — ${projectTitle || 'Proyecto'}`,
-                },
-            });
-            const instanceUuid = res.data?.uuid || res.data?.Uuid;
-            if (instanceUuid) {
-                navigate(`/investigacion/workspace/INFORME_AVANCE/${instanceUuid}`);
-            } else {
-                alert('No se pudo abrir el editor colaborativo del informe.');
-            }
-        } catch {
-            alert('No se pudo abrir el editor CACES (hitos, evidencias y presupuesto).');
-        } finally {
-            setOpeningEditor(false);
-        }
-    };
-
+    // ── Firma PAdES ───────────────────────────────────────────────
     const handleFirmar = async () => {
         if (!firmarTarget || !certFile || !certPassword.trim()) {
             setFirmarError('Seleccione el certificado .p12/.pfx e ingrese su contraseña.');
@@ -169,7 +188,7 @@ const InformesAvancePage: React.FC = () => {
         }
     };
 
-    // ── Observar ───────────────────────────────────────────────
+    // ── Observar ──────────────────────────────────────────────────
     const handleObservar = async () => {
         if (!observarTarget || !observacion.trim()) return;
         setActioning(observarTarget.id_informe);
@@ -183,9 +202,34 @@ const InformesAvancePage: React.FC = () => {
         }
     };
 
-    // ─────────────────────────────────────────────────────────────
-    //  Render
-    // ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────
+    //  Si hay un editor abierto → renderizar el Builder Core CACES
+    // ─────────────────────────────────────────────────────────────────
+    if (editorInstanceUuid) {
+        const informe = informes.find(i => i.id_informe === activeInformeId);
+        const isReadOnly = informe?.estado === 'Aprobado';
+
+        return (
+            <DocumentEditor
+                templateCode="INFORME_AVANCE"
+                initialData={{ Uuid: editorInstanceUuid }}
+                entityUuid={activeInformeUuid || ''}
+                onClose={() => {
+                    setEditorInstanceUuid(null);
+                    setActiveInformeId(null);
+                    setActiveInformeUuid(null);
+                    load();
+                }}
+                readOnly={isReadOnly}
+                readOnlyReason="state"
+                projectStatus="En Ejecución"
+            />
+        );
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    //  Render: lista de informes
+    // ─────────────────────────────────────────────────────────────────
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
 
@@ -210,6 +254,9 @@ const InformesAvancePage: React.FC = () => {
                         {projectTitle && (
                             <p className="text-sm text-text-dim font-medium">{projectTitle}</p>
                         )}
+                        <p className="text-[10px] text-text-dim mt-1 max-w-lg leading-relaxed">
+                            Cada informe contiene bitácora científica, avance de actividades del cronograma, evidencias físicas y ejecución presupuestaria — conforme al modelo CACES.
+                        </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
                         <button
@@ -217,17 +264,7 @@ const InformesAvancePage: React.FC = () => {
                             className="btn-vercel-secondary flex items-center gap-2"
                         >
                             <Activity size={13} />
-                            Monitoreo
-                        </button>
-                        <button
-                            onClick={openEditorCaces}
-                            disabled={openingEditor || !projectId}
-                            className="btn-vercel-secondary flex items-center gap-2"
-                        >
-                            {openingEditor
-                                ? <RefreshCw size={13} className="animate-spin" />
-                                : <ExternalLink size={13} />}
-                            Editor CACES
+                            Monitoreo Gantt
                         </button>
                         <button
                             onClick={load}
@@ -248,6 +285,23 @@ const InformesAvancePage: React.FC = () => {
                 </div>
             </header>
 
+            {/* Guía CACES */}
+            <div className="mb-6 p-4 rounded-2xl bg-surface border border-border-thin flex flex-col sm:flex-row items-start gap-3">
+                <div className="shrink-0 w-8 h-8 rounded-xl bg-brand/10 flex items-center justify-center">
+                    <Shield size={14} className="text-brand" />
+                </div>
+                <div>
+                    <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-1">Flujo de Acreditación CACES</p>
+                    <p className="text-[11px] text-text-dim leading-relaxed">
+                        Haz clic en <span className="font-bold text-text-main">«Abrir Builder»</span> para completar las 4 secciones requeridas:
+                        <span className="text-brand font-bold"> Bitácora Científica</span> ·
+                        <span className="text-blue-400 font-bold"> Actividades del Cronograma</span> ·
+                        <span className="text-emerald-400 font-bold"> Evidencias Físicas</span> ·
+                        <span className="text-yellow-400 font-bold"> Ejecución Presupuestaria</span>
+                    </p>
+                </div>
+            </div>
+
             {/* Lista de informes */}
             {loading ? (
                 <div className="flex justify-center items-center py-20">
@@ -261,7 +315,7 @@ const InformesAvancePage: React.FC = () => {
                     </p>
                     <p className="text-xs text-text-dim mt-2 max-w-md mx-auto">
                         El identificador <span className="font-mono text-text-main">{projectId}</span> no coincide con ningún proyecto.
-                        Abre esta página desde el workspace del proyecto (botón &quot;Informes de Avance&quot;) para usar el UUID completo.
+                        Abre esta página desde el workspace del proyecto.
                     </p>
                 </div>
             ) : informes.length === 0 ? (
@@ -279,12 +333,14 @@ const InformesAvancePage: React.FC = () => {
                     {informes.map(inf => {
                         const cfg = ESTADO_INFORME_CONFIG[inf.estado] ?? ESTADO_INFORME_CONFIG['Pendiente'];
                         const isExpanded = expandedId === inf.id_informe;
+                        const isLoadingThisEditor = openingEditor && activeInformeId === inf.id_informe;
+
                         return (
                             <div
                                 key={inf.id_informe}
                                 className="bg-surface border border-border-thin rounded-2xl overflow-hidden"
                             >
-                                {/* Row */}
+                                {/* Row principal */}
                                 <div
                                     className="flex items-center justify-between p-5 cursor-pointer hover:bg-surface/60 transition-colors"
                                     onClick={() => setExpandedId(isExpanded ? null : inf.id_informe)}
@@ -321,18 +377,21 @@ const InformesAvancePage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Expandido */}
+                                {/* Panel expandido */}
                                 {isExpanded && (
                                     <div className="border-t border-border-thin p-5 space-y-4 animate-fade-in">
+
+                                        {/* Resumen rápido */}
                                         <div>
                                             <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
-                                                Resumen de Actividades
+                                                Resumen de Actividades (Registro inicial)
                                             </p>
                                             <p className="text-sm text-text-main whitespace-pre-wrap leading-relaxed">
                                                 {inf.resumen_actividades}
                                             </p>
                                         </div>
 
+                                        {/* Evidencias adjuntas */}
                                         {inf.evidencias && inf.evidencias.length > 0 && (
                                             <div>
                                                 <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-2">
@@ -370,6 +429,7 @@ const InformesAvancePage: React.FC = () => {
                                             </div>
                                         )}
 
+                                        {/* Hash de firma */}
                                         {inf.hash_firma && (
                                             <div>
                                                 <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
@@ -386,14 +446,28 @@ const InformesAvancePage: React.FC = () => {
                                             </div>
                                         )}
 
-                                        <div className="flex flex-wrap gap-2 pt-2">
+                                        {/* ── Botones de acción ── */}
+                                        <div className="flex flex-wrap gap-2 pt-2 border-t border-border-thin">
+
+                                            {/* ★ BOTÓN PRINCIPAL: Abrir Builder CACES con las 4 secciones */}
+                                            <button
+                                                onClick={e => { e.stopPropagation(); openBuilderForInforme(inf); }}
+                                                disabled={isLoadingThisEditor}
+                                                className="btn-vercel-primary !py-2 !px-4 !text-xs flex items-center gap-1.5"
+                                            >
+                                                {isLoadingThisEditor
+                                                    ? <RefreshCw size={12} className="animate-spin" />
+                                                    : <Activity size={12} />}
+                                                {inf.estado === 'Aprobado' ? 'Ver Informe Completo' : 'Abrir Builder CACES'}
+                                            </button>
+
                                             {/* Director de Investigación: validar */}
                                             {canReview && inf.estado !== 'Aprobado' && (
                                                 <>
                                                     <button
                                                         onClick={e => { e.stopPropagation(); handleAprobar(inf.id_informe); }}
                                                         disabled={actioning === inf.id_informe}
-                                                        className="btn-vercel-primary !py-1.5 !px-3 !text-xs flex items-center gap-1.5"
+                                                        className="btn-vercel-secondary !py-2 !px-3 !text-xs flex items-center gap-1.5"
                                                     >
                                                         <CheckCircle size={12} />
                                                         Aprobar
@@ -402,7 +476,7 @@ const InformesAvancePage: React.FC = () => {
                                                         <button
                                                             onClick={e => { e.stopPropagation(); setObservarTarget(inf); setObservacion(''); }}
                                                             disabled={actioning === inf.id_informe}
-                                                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs flex items-center gap-1.5"
+                                                            className="btn-vercel-secondary !py-2 !px-3 !text-xs flex items-center gap-1.5"
                                                         >
                                                             <AlertCircle size={12} />
                                                             Observar
@@ -416,7 +490,7 @@ const InformesAvancePage: React.FC = () => {
                                                 <button
                                                     onClick={e => { e.stopPropagation(); setFirmarTarget(inf); setFirmarError(''); }}
                                                     disabled={actioning === inf.id_informe}
-                                                    className="btn-vercel-secondary !py-1.5 !px-3 !text-xs flex items-center gap-1.5"
+                                                    className="btn-vercel-secondary !py-2 !px-3 !text-xs flex items-center gap-1.5"
                                                 >
                                                     <FileSignature size={12} />
                                                     Firmar digitalmente
@@ -435,7 +509,7 @@ const InformesAvancePage: React.FC = () => {
                                             <div className="flex items-start gap-2 bg-error/5 border border-error/20 rounded-xl p-3">
                                                 <AlertCircle size={14} className="text-error shrink-0 mt-0.5" />
                                                 <p className="text-xs text-text-dim leading-relaxed">
-                                                    Este informe ha sido observado. Revisa el contenido, corrígelo y vuelve a enviarlo.
+                                                    Este informe ha sido observado. Revisa el contenido, corrígelo en el Builder y vuelve a enviarlo.
                                                 </p>
                                             </div>
                                         )}
@@ -447,14 +521,19 @@ const InformesAvancePage: React.FC = () => {
                 </div>
             )}
 
-            {/* ── Modal: Crear informe ──────────────────────────────── */}
+            {/* ── Modal: Crear informe ─────────────────────────────────── */}
             {showCreate && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-lg p-6 space-y-5 animate-fade-in">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-text-main">
-                                Nuevo Informe de Avance
-                            </h3>
+                            <div>
+                                <h3 className="text-sm font-black uppercase tracking-widest text-text-main">
+                                    Nuevo Informe de Avance
+                                </h3>
+                                <p className="text-[10px] text-text-dim mt-1">
+                                    Registra el período y un resumen inicial. Luego completa las 4 secciones CACES en el Builder.
+                                </p>
+                            </div>
                             <button onClick={() => setShowCreate(false)} className="text-text-dim hover:text-text-main">
                                 <X size={16} />
                             </button>
@@ -474,11 +553,11 @@ const InformesAvancePage: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
-                                    Resumen de Actividades Realizadas
+                                    Resumen Inicial de Actividades
                                 </label>
                                 <textarea
-                                    rows={5}
-                                    placeholder="Describa las actividades completadas, avances y evidencias del período..."
+                                    rows={4}
+                                    placeholder="Describa brevemente el período. Podrá ampliar con bitácora, cronograma, evidencias y presupuesto en el Builder CACES..."
                                     value={formData.resumen_actividades}
                                     onChange={e => setFormData(f => ({ ...f, resumen_actividades: e.target.value }))}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40"
@@ -506,7 +585,7 @@ const InformesAvancePage: React.FC = () => {
                                 className="btn-vercel-primary !py-2 !px-4 !text-xs flex items-center gap-1.5"
                             >
                                 {creating ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
-                                Registrar Informe
+                                Crear y Abrir Builder
                             </button>
                         </div>
                     </div>
@@ -599,7 +678,7 @@ const InformesAvancePage: React.FC = () => {
                             </label>
                             <textarea
                                 rows={4}
-                                placeholder="Indique qué correcciones debe realizar el Director de Proyecto..."
+                                placeholder="Indique qué correcciones debe realizar el Director de Proyecto en el Builder CACES..."
                                 value={observacion}
                                 onChange={e => setObservacion(e.target.value)}
                                 className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40"
