@@ -6,6 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Diitra.Application.Research;
 using Diitra.Application.Research.Dtos;
+using diitra_application.Research.Dtos;
+using Diitra.Application.Common.Documents;
+using Microsoft.Extensions.Configuration;
 using diitra_application.Security;
 using diitra_application.Common.Notifications;
 using diitra_infrastructure.data.models;
@@ -91,6 +94,89 @@ public class UnitTest1
         var result = await orchestrator.SyncProjectWizardDataAsync(dto, "0302144159");
         
         Assert.True(result.Success, $"Sync failed: {result.Message}");
+    }
+
+    [Fact]
+    public async Task TestAssignArbitroConflictOfInterest()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        await EnsureDatabaseColumnsExistAsync(context);
+
+        var mockAudit = new Mock<IAuditService>();
+        var mockDocEngine = new Mock<IDocumentEngine>();
+        var mockNotification = new Mock<INotificationService>();
+        var mockConfig = new Mock<IConfiguration>();
+        var mockAuth = new Mock<IAuthService>();
+        var mockLogger = new Mock<ILogger<PeerReviewService>>();
+
+        var service = new PeerReviewService(
+            context,
+            mockAudit.Object,
+            mockDocEngine.Object,
+            mockNotification.Object,
+            mockConfig.Object,
+            mockAuth.Object,
+            mockLogger.Object
+        );
+
+        var uniqueProjUuid = Guid.NewGuid().ToString();
+        var uniqueUserUuid = Guid.NewGuid().ToString();
+
+        var user = new diitra_domain.Identity.Entities.User
+        {
+            IdSigafi = "TEST_PROF_" + uniqueUserUuid.Substring(0, 8),
+            Nombre = "PROF TEST CONFLICT",
+            Contrasenia = "hashed",
+            Activo = true,
+            TablaSigafi = "profesor"
+        };
+        context.Users.Add(user);
+        await context.SaveChangesAsync();
+
+        var project = new InvProyecto
+        {
+            Uuid = uniqueProjUuid,
+            Titulo = "PROYECTO TEST CONFLICT",
+            Estado = "Enviado",
+            Activo = true
+        };
+        context.InvProyectos.Add(project);
+        await context.SaveChangesAsync();
+
+        var projProf = new InvProyectoProfesor
+        {
+            IdProyecto = project.IdProyecto,
+            IdUsuario = user.IdUsuario,
+            EsDirector = true,
+            Rol = "Director de Proyecto",
+            Activo = true
+        };
+        context.Set<InvProyectoProfesor>().Add(projProf);
+        await context.SaveChangesAsync();
+
+        var assignDto = new AsignarArbitroDto
+        {
+            ProjectUuid = uniqueProjUuid,
+            IdRevisor = user.IdUsuario,
+            FechaLimite = DateTime.Now.AddDays(15),
+            EsExterno = false,
+            EsDobleCiego = true
+        };
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            service.AsignarArbitroAsync(assignDto, 999)
+        );
+
+        Assert.Contains("Conflicto de interés", exception.Message);
+
+        context.Set<InvProyectoProfesor>().Remove(projProf);
+        context.InvProyectos.Remove(project);
+        context.Users.Remove(user);
+        await context.SaveChangesAsync();
     }
 }
 
