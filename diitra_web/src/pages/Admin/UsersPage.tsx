@@ -19,7 +19,6 @@ interface ManagedUser {
     orcid_id?: string;
     firma_habilitada: boolean;
     horas_investigacion?: number;
-    tipo_dedicacion?: string;
     carrera?: string;
     nivel?: string;
 }
@@ -605,9 +604,6 @@ const UsersPage = () => {
                                                          {u.horas_investigacion || 0}h Investigación
                                                      </span>
                                                  </div>
-                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
-                                                     {u.tipo_dedicacion || 'Sin contrato activo'}
-                                                 </p>
                                                  <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
                                                      <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
                                                      <span className="truncate max-w-[190px]" title={u.carrera}>
@@ -941,10 +937,6 @@ const UsersPage = () => {
                                                 <Activity size={10} />
                                                 {detailUser.horas_investigacion || 0}h
                                             </div>
-                                        </div>
-                                        <div>
-                                            <p className="section-label text-text-dim mb-1">Dedicación</p>
-                                            <p className="text-sm font-bold text-text-main">{detailUser.tipo_dedicacion || 'Sin contrato'}</p>
                                         </div>
                                         <div className="col-span-2">
                                             <p className="section-label text-text-dim mb-1">Carrera / Tecnología</p>
