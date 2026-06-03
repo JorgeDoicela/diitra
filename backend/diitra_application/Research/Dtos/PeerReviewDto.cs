@@ -19,6 +19,7 @@ public class PeerReviewDto
     public string? RevisorGrado { get; set; }
     public DateTime FechaAsignacion { get; set; }
     public DateTime FechaLimite { get; set; }
+    public DateTime? FechaCompletado { get; set; }
     public string Estado { get; set; } = "Pendiente";
     public bool EsExterno { get; set; }
     public bool EsDobleCiego { get; set; } = true;

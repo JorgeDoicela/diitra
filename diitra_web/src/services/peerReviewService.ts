@@ -20,6 +20,7 @@ export interface PeerReviewDto {
     revisor_grado?: string;
     fecha_asignacion: string;
     fecha_limite: string;
+    fecha_completado?: string;
     estado: 'Pendiente' | 'Completada' | 'Rechazada' | 'Expirada';
     es_externo: boolean;
     es_doble_ciego: boolean;
