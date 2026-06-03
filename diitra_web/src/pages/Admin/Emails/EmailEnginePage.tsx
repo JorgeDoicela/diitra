@@ -30,6 +30,10 @@ import {
     resolveActionUrlForPreview,
     stripEmbeddedContextBlocks
 } from './emailPreviewLayout';
+import DOMPurify from 'dompurify';
+
+const sanitize = (html: string): string =>
+    DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 
 const mapTemplateToCamelCase = (t: any): EmailTemplate => {
     if (!t) return t;
@@ -2084,7 +2088,7 @@ const EmailEnginePage: React.FC = () => {
                                 <label className="section-label text-text-dim">Contenido HTML Enviado</label>
                                 <div className="bento-card static p-4 bg-white text-black rounded-xl max-h-96 overflow-y-auto border border-border-thin">
                                     <div
-                                        dangerouslySetInnerHTML={{ __html: selectedHistoryLog.cuerpo }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(selectedHistoryLog.cuerpo) }}
                                         className="prose prose-sm text-black max-w-none font-sans"
                                     />
                                 </div>
