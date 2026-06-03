@@ -12,6 +12,11 @@ import {
 } from '../../../services/peerReviewService';
 import type { RubricaDinamicaDto, CriterioRubricaDto } from '../../../services/peerReviewService';
 import api from '../../../api/axios_config';
+import DOMPurify from 'dompurify';
+
+const sanitize = (html: string): string =>
+    DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
+
 
 // ─────────────────────────────────────────────────────────────
 //  Tipos internos del formulario
@@ -472,7 +477,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.descripcion_proyecto }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.descripcion_proyecto) }}
                                     />
                                 </div>
                             )}
@@ -484,7 +489,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.antecedentes }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.antecedentes) }}
                                     />
                                 </div>
                             )}
@@ -499,7 +504,7 @@ const EvaluacionPage: React.FC = () => {
                                             <p className="text-[9px] font-extrabold text-text-dim uppercase tracking-widest">Objetivo General</p>
                                             <div
                                                 className="text-sm text-text-dim leading-relaxed font-normal"
-                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivo_general }}
+                                                dangerouslySetInnerHTML={{ __html: sanitize(rubrica.objetivo_general) }}
                                             />
                                         </div>
                                     )}
@@ -508,7 +513,7 @@ const EvaluacionPage: React.FC = () => {
                                             <p className="text-[9px] font-extrabold text-text-dim uppercase tracking-widest">Objetivos Específicos</p>
                                             <div
                                                 className="text-sm text-text-dim leading-relaxed font-normal"
-                                                dangerouslySetInnerHTML={{ __html: rubrica.objetivos_especificos }}
+                                                dangerouslySetInnerHTML={{ __html: sanitize(rubrica.objetivos_especificos) }}
                                             />
                                         </div>
                                     )}
@@ -522,7 +527,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.justificacion }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.justificacion) }}
                                     />
                                 </div>
                             )}
@@ -534,7 +539,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.marco_teorico }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.marco_teorico) }}
                                     />
                                 </div>
                             )}
@@ -546,7 +551,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.metodologia }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.metodologia) }}
                                     />
                                 </div>
                             )}
@@ -558,7 +563,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.evaluacion }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.evaluacion) }}
                                     />
                                 </div>
                             )}
@@ -570,7 +575,7 @@ const EvaluacionPage: React.FC = () => {
                                     </h3>
                                     <div
                                         className="text-sm text-text-dim leading-relaxed font-normal ProseMirror-rendered"
-                                        dangerouslySetInnerHTML={{ __html: rubrica.bibliografia }}
+                                        dangerouslySetInnerHTML={{ __html: sanitize(rubrica.bibliografia) }}
                                     />
                                 </div>
                             )}
