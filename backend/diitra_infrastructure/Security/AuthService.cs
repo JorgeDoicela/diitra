@@ -727,23 +727,42 @@ public class AuthService : IAuthService
     {
         email = email.Trim().ToLower();
 
-        // 1. Buscar usuario activo que tenga el email (insensible a mayúsculas y buscando también en IdSigafi)
-        var user = await _context.Users.FirstOrDefaultAsync(u => 
-            u.Activo && 
-            ((u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == email) || 
-             (u.IdSigafi != null && u.IdSigafi.ToLower() == email)));
-
-        if (user == null) return false;
-
-        // 2. Verificar si tiene alguna revisión/arbitraje pendiente activa
+        // 1. Buscar alguna revisión/arbitraje pendiente activa cuyo revisor coincida con el email.
+        // Se permite incluso si la fecha límite ya pasó, de modo que el revisor pueda
+        // ingresar a completar evaluaciones retrasadas.
         var pendingReview = await _context.Set<InvRevisionesPares>()
-            .Where(r => r.IdRevisor == user.IdUsuario && r.Estado == "Pendiente" && r.FechaLimite > DateTime.Now)
+            .Include(r => r.Revisor)
+            .Where(r => r.Estado == "Pendiente" && 
+                        r.Revisor != null && 
+                        r.Revisor.Activo &&
+                        ((r.Revisor.EmailInstitucional != null && r.Revisor.EmailInstitucional.ToLower() == email) || 
+                         (r.Revisor.IdSigafi != null && r.Revisor.IdSigafi.ToLower() == email)))
             .OrderByDescending(r => r.FechaLimite)
             .FirstOrDefaultAsync();
 
         if (pendingReview == null) return false;
 
-        // 3. Buscar si tiene un enlace mágico activo. Si lo tiene, lo invalidamos para generar uno nuevo.
+        // Validar si el plazo de la revisión ya venció
+        if (pendingReview.FechaLimite < DateTime.Now)
+        {
+            var autoExtend = _configuration.GetValue<bool>("PeerReview:AutoExtendDeadlines");
+            if (autoExtend)
+            {
+                var extensionDays = _configuration.GetValue<int>("PeerReview:AutoExtendDays");
+                if (extensionDays <= 0) extensionDays = 7;
+
+                pendingReview.FechaLimite = DateTime.Now.AddDays(extensionDays);
+                await _context.SaveChangesAsync();
+            }
+            else
+            {
+                throw new InvalidOperationException("El plazo de evaluación para este arbitraje ha vencido. Póngase en contacto con el administrador para solicitar una prórroga.");
+            }
+        }
+
+        var user = pendingReview.Revisor!;
+
+        // 2. Buscar si tiene un enlace mágico activo. Si lo tiene, lo invalidamos para generar uno nuevo.
         var activeLink = await _context.Set<InvMagicLink>()
             .Where(l => l.IdUsuario == user.IdUsuario && !l.Utilizado && l.FechaExpiracion > DateTime.Now)
             .OrderByDescending(l => l.FechaExpiracion)
@@ -756,10 +775,17 @@ public class AuthService : IAuthService
             expirationDate = activeLink.FechaExpiracion;
         }
 
-        // 4. Crear un enlace nuevo con la fecha de expiración correspondiente
+        // Si la fecha del enlace activo es menor a la fecha límite del arbitraje (por ejemplo, después de extender),
+        // usamos el plazo extendido como expiración.
+        if (expirationDate < pendingReview.FechaLimite)
+        {
+            expirationDate = pendingReview.FechaLimite;
+        }
+
+        // 3. Crear un enlace nuevo con la fecha de expiración correspondiente
         var plainToken = await CreateMagicLinkAsync(user.IdUsuario, expirationDate);
 
-        // 5. Enviar por correo
+        // 4. Enviar por correo
         var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
         var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
 

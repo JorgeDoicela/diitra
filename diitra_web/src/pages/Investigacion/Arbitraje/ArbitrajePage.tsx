@@ -10,7 +10,9 @@ import {
     getArbitrajesActivos, getArbitrajeStats,
     ESTADO_ARBITRAJE_CONFIG,
     downloadDictamenPdf, registerRevisorExterno,
-    type RegistrarRevisorExternoPayload
+    getPeerReviewSettings, updatePeerReviewSettings,
+    type RegistrarRevisorExternoPayload,
+    type PeerReviewSettingsDto
 } from '../../../services/peerReviewService';
 import type { ArbitrajeProyectoDto, ArbitrajeStatsDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal.tsx';
@@ -258,20 +260,39 @@ const ArbitrajePage: React.FC = () => {
     const [alertas, setAlertas] = useState<CacesAlert[]>([]);
     const [alertasDismissed, setAlertasDismissed] = useState<Set<string>>(new Set());
     const [proyectoExpandido, setProyectoExpandido] = useState<string | null>(null);
+    const [settings, setSettings] = useState<PeerReviewSettingsDto | null>(null);
+    const [savingSettings, setSavingSettings] = useState(false);
 
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [proy, st] = await Promise.all([getArbitrajesActivos(), getArbitrajeStats()]);
+            const [proy, st, sett] = await Promise.all([
+                getArbitrajesActivos(),
+                getArbitrajeStats(),
+                getPeerReviewSettings().catch(() => null)
+            ]);
             setProyectos(proy);
             setStats(st);
             setAlertas(generarAlertas(proy));
+            if (sett) setSettings(sett);
         } catch (err) {
             console.error('[DIITRA] Error cargando datos de arbitraje:', err);
         } finally {
             setLoading(false);
         }
     }, []);
+
+    const handleSaveSettings = async (autoExtend: boolean, days: number) => {
+        setSavingSettings(true);
+        try {
+            await updatePeerReviewSettings({ autoExtendDeadlines: autoExtend, autoExtendDays: days });
+            setSettings({ autoExtendDeadlines: autoExtend, autoExtendDays: days });
+        } catch (err: any) {
+            alert(err?.response?.data?.message ?? 'Error al guardar la configuración de prórrogas.');
+        } finally {
+            setSavingSettings(false);
+        }
+    };
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -930,6 +951,66 @@ const ArbitrajePage: React.FC = () => {
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Configuración de Prórrogas Automáticas ──── */}
+                {settings && (
+                    <div className="bento-card static p-5 relative overflow-hidden bg-surface w-full space-y-4 animate-fade-up">
+                        <div className="flex items-center justify-between pb-2 border-b border-border-thin">
+                            <div className="section-label">
+                                <ShieldCheck size={12} className="text-brand" />
+                                <span className="text-[13px] font-bold text-text-main uppercase tracking-tight">Prórrogas Automáticas</span>
+                            </div>
+                            {savingSettings && <Loader2 size={12} className="animate-spin text-text-dim" />}
+                        </div>
+                        
+                        <div className="space-y-4">
+                            {/* Toggle switch */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
+                                    <p className="text-[10px] text-text-dim mt-0.5 leading-relaxed">Amplía el plazo automáticamente al expirar.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                    <input 
+                                        type="checkbox" 
+                                        className="sr-only peer" 
+                                        checked={settings.autoExtendDeadlines}
+                                        onChange={(e) => handleSaveSettings(e.target.checked, settings.autoExtendDays)}
+                                        disabled={savingSettings}
+                                    />
+                                    <div className="w-9 h-5 bg-border-thin rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+                                </label>
+                            </div>
+
+                            {/* Input number */}
+                            <div className="space-y-2 pt-1">
+                                <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                    Días de prórroga
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1.5 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
+                                        disabled={!settings.autoExtendDeadlines || savingSettings}
+                                        value={settings.autoExtendDays}
+                                        onChange={(e) => setSettings({ ...settings, autoExtendDays: parseInt(e.target.value) || 7 })}
+                                    />
+                                    {settings.autoExtendDeadlines && (
+                                        <button
+                                            onClick={() => handleSaveSettings(settings.autoExtendDeadlines, settings.autoExtendDays)}
+                                            className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-bold"
+                                            disabled={savingSettings}
+                                        >
+                                            Guardar
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

@@ -202,3 +202,14 @@ public class RegistrarRevisorExternoDto
     public string? OrcidId { get; set; }
     public string? Especialidad { get; set; }
 }
+
+public class ExtenderPlazoDto
+{
+    public DateTime NuevaFecha { get; set; }
+}
+
+public class PeerReviewSettingsDto
+{
+    public bool AutoExtendDeadlines { get; set; }
+    public int AutoExtendDays { get; set; }
+}

@@ -18,6 +18,7 @@ public interface IPeerReviewService
     Task<IEnumerable<RevisorDisponibleDto>> SearchRevisoresAsync(string query, bool soloExternos, string? projectUuid);
     Task<string> AsignarArbitroAsync(AsignarArbitroDto dto, int directorId);
     Task<bool> RevocarAsignacionAsync(string revisionUuid, int directorId);
+    Task<bool> ExtenderFechaLimiteAsync(string revisionUuid, DateTime nuevaFecha, int directorId);
 
     // ── Revisores Externos (sin cuenta institucional) ──────────
     Task<string> RegisterRevisorExternoAsync(RegistrarRevisorExternoDto dto, int directorId);

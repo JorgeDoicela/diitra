@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Gavel, UserCheck, AlertTriangle,
     CheckCircle2, Clock, PlusCircle, Trash2, Award,
-    Scale, Loader2, Users, Building, GraduationCap, FileDown
+    Scale, Loader2, Users, Building, GraduationCap, FileDown,
+    CalendarDays
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
-    ESTADO_REVISION_CONFIG, ESTADO_ARBITRAJE_CONFIG, downloadDictamenPdf
+    ESTADO_REVISION_CONFIG, ESTADO_ARBITRAJE_CONFIG, downloadDictamenPdf,
+    extenderPlazo
 } from '../../../services/peerReviewService';
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
@@ -24,6 +26,7 @@ const ArbitrajeProyecto: React.FC = () => {
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const [showAsignar, setShowAsignar] = useState(false);
     const [dictamen, setDictamen] = useState<DictamenDto | null>(null);
+    const [revisionParaExtender, setRevisionParaExtender] = useState<PeerReviewDto | null>(null);
 
     const internos = arbitraje ? arbitraje.revisiones.filter(r => !r.es_externo) : [];
     const externos = arbitraje ? arbitraje.revisiones.filter(r => r.es_externo) : [];
@@ -266,6 +269,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                         key={rev.uuid}
                                         review={rev}
                                         onRevocar={() => handleRevocar(rev)}
+                                        onExtender={() => setRevisionParaExtender(rev)}
                                     />
                                 ))}
                             </div>
@@ -305,6 +309,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                         key={rev.uuid}
                                         review={rev}
                                         onRevocar={() => handleRevocar(rev)}
+                                        onExtender={() => setRevisionParaExtender(rev)}
                                     />
                                 ))}
                             </div>
@@ -403,6 +408,13 @@ const ArbitrajeProyecto: React.FC = () => {
                     onClose={() => setDictamen(null)}
                 />
             )}
+            {revisionParaExtender && (
+                <ExtenderPlazoModal
+                    review={revisionParaExtender}
+                    onClose={() => setRevisionParaExtender(null)}
+                    onSuccess={() => { setRevisionParaExtender(null); loadData(); }}
+                />
+            )}
         </main>
     );
 };
@@ -410,7 +422,7 @@ const ArbitrajeProyecto: React.FC = () => {
 // ─────────────────────────────────────────────────────────────
 //  Sub-componente: Tarjeta de un árbitro asignado
 // ─────────────────────────────────────────────────────────────
-const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = ({ review, onRevocar }) => {
+const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void; onExtender: () => void }> = ({ review, onRevocar, onExtender }) => {
     const cfg = ESTADO_REVISION_CONFIG[review.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];
     const diasRestantes = Math.ceil(
         (new Date(review.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -466,14 +478,131 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void }> = 
                     </div>
                 )}
                 {review.estado === 'Pendiente' && (
-                    <button
-                        onClick={onRevocar}
-                        className="p-2 text-text-dim hover:text-error transition-colors rounded-md hover:bg-error/10"
-                        title="Revocar asignación"
-                    >
-                        <Trash2 size={14} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={onExtender}
+                            className="p-2 text-text-dim hover:text-brand transition-colors rounded-md hover:bg-brand/10"
+                            title="Extender fecha límite"
+                        >
+                            <CalendarDays size={14} />
+                        </button>
+                        <button
+                            onClick={onRevocar}
+                            className="p-2 text-text-dim hover:text-error transition-colors rounded-md hover:bg-error/10"
+                            title="Revocar asignación"
+                        >
+                            <Trash2 size={14} />
+                        </button>
+                    </div>
                 )}
+            </div>
+        </div>
+    );
+};
+
+// ─────────────────────────────────────────────────────────────
+//  Sub-componente: Modal para extender el plazo del evaluador
+// ─────────────────────────────────────────────────────────────
+interface ExtenderPlazoModalProps {
+    review: PeerReviewDto;
+    onClose: () => void;
+    onSuccess: () => void;
+}
+
+const ExtenderPlazoModal: React.FC<ExtenderPlazoModalProps> = ({ review, onClose, onSuccess }) => {
+    const [nuevaFecha, setNuevaFecha] = useState(() => {
+        const currentLimit = new Date(review.fecha_limite);
+        currentLimit.setDate(currentLimit.getDate() + 7);
+        return currentLimit.toISOString().slice(0, 10);
+    });
+    const [enviando, setEnviando] = useState(false);
+    const [error, setError] = useState('');
+
+    const handleExtender = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setEnviando(true);
+        setError('');
+        try {
+            const datePayload = new Date(nuevaFecha + 'T23:59:59').toISOString();
+            await extenderPlazo(review.uuid, datePayload);
+            onSuccess();
+        } catch (err: any) {
+            setError(err?.response?.data?.message ?? 'Error al extender el plazo de evaluación.');
+        } finally {
+            setEnviando(false);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+            <div className="modal-card !max-w-md animate-fade-up">
+                <div className="modal-header border-b border-border-thin pb-3">
+                    <div className="flex items-center gap-2">
+                        <CalendarDays size={18} className="text-brand" />
+                        <h3 className="text-base font-bold tracking-tight text-text-main uppercase">
+                            Extender Plazo de Evaluación
+                        </h3>
+                    </div>
+                    <button onClick={onClose} className="p-1 text-text-dim hover:text-text-main transition-colors">
+                        <X size={18} />
+                    </button>
+                </div>
+
+                <form onSubmit={handleExtender} className="modal-body space-y-4 pt-4">
+                    {error && (
+                        <div className="p-3 rounded-md bg-error/10 border border-error/30 text-error text-xs flex items-center gap-2">
+                            <AlertTriangle size={13} /> {error}
+                        </div>
+                    )}
+
+                    <div className="space-y-1">
+                        <p className="text-xs text-text-dim">Evaluador:</p>
+                        <p className="text-sm font-semibold text-text-main">{formatNombre(review.revisor_nombre)}</p>
+                        <p className="text-[10px] text-text-dim font-mono">{review.es_externo ? 'Par Externo (CACES)' : 'Docente Interno'}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                        <p className="text-xs text-text-dim">Fecha límite actual:</p>
+                        <p className="text-sm font-medium text-text-main">
+                            {new Date(review.fecha_limite).toLocaleDateString('es-EC', {
+                                day: '2-digit', month: 'long', year: 'numeric'
+                            })}
+                        </p>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">
+                            Nueva fecha límite *
+                        </label>
+                        <input
+                            type="date"
+                            required
+                            min={new Date().toISOString().slice(0, 10)}
+                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-sm text-text-main focus:outline-none focus:border-text-dim transition-colors"
+                            value={nuevaFecha}
+                            onChange={(e) => setNuevaFecha(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="modal-footer border-t border-border-thin pt-3 flex justify-end gap-2 bg-transparent !p-0">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="btn-vercel-secondary !py-1.5 !px-3"
+                            disabled={enviando}
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn-vercel flex items-center gap-2 !py-1.5 !px-4"
+                            disabled={enviando}
+                        >
+                            {enviando ? <Loader2 size={13} className="animate-spin" /> : <CalendarDays size={13} />}
+                            {enviando ? 'Guardando...' : 'Confirmar Extensión'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
