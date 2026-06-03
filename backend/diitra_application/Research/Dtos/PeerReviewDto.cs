@@ -50,6 +50,8 @@ public class ArbitrajeProyectoDto
     /// <summary>True si CerrarArbitrajeAsync ya fue ejecutado (nota definitiva registrada o estado post-cierre).</summary>
     public bool ArbitrajeCerrado { get; set; }
     public List<PeerReviewDto> Revisiones { get; set; } = new();
+    public bool AutoExtendDeadlines { get; set; }
+    public int AutoExtendDays { get; set; }
 }
 
 /// <summary>
@@ -128,6 +130,8 @@ public class AsignarArbitroDto
     public bool EsExterno { get; set; }
     public bool EsDobleCiego { get; set; } = true;
     public string? Observaciones { get; set; }
+    public bool AutoExtendDeadlines { get; set; }
+    public int AutoExtendDays { get; set; }
 }
 
 /// <summary>

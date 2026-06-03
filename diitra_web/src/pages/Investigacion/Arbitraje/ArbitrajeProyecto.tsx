@@ -9,7 +9,7 @@ import {
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
     ESTADO_REVISION_CONFIG, ESTADO_ARBITRAJE_CONFIG, downloadDictamenPdf,
-    extenderPlazo
+    extenderPlazo, updateProjectPeerReviewSettings
 } from '../../../services/peerReviewService';
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
@@ -27,6 +27,9 @@ const ArbitrajeProyecto: React.FC = () => {
     const [showAsignar, setShowAsignar] = useState(false);
     const [dictamen, setDictamen] = useState<DictamenDto | null>(null);
     const [revisionParaExtender, setRevisionParaExtender] = useState<PeerReviewDto | null>(null);
+    const [projectAutoExtendDeadlines, setProjectAutoExtendDeadlines] = useState(false);
+    const [projectAutoExtendDays, setProjectAutoExtendDays] = useState(7);
+    const [savingSettings, setSavingSettings] = useState(false);
 
     const internos = arbitraje ? arbitraje.revisiones.filter(r => !r.es_externo) : [];
     const externos = arbitraje ? arbitraje.revisiones.filter(r => r.es_externo) : [];
@@ -37,12 +40,31 @@ const ArbitrajeProyecto: React.FC = () => {
         try {
             const data = await getArbitrajeByProject(projectUuid);
             setArbitraje(data);
+            setProjectAutoExtendDeadlines(data.auto_extend_deadlines ?? false);
+            setProjectAutoExtendDays(data.auto_extend_days ?? 7);
         } catch (err) {
             console.error('[DIITRA] Error cargando arbitraje:', err);
         } finally {
             setLoading(false);
         }
     }, [projectUuid]);
+
+    const handleSaveProjectSettings = async (autoExtend: boolean, days: number) => {
+        if (!projectUuid) return;
+        setSavingSettings(true);
+        try {
+            await updateProjectPeerReviewSettings(projectUuid, {
+                autoExtendDeadlines: autoExtend,
+                autoExtendDays: days
+            });
+            setProjectAutoExtendDeadlines(autoExtend);
+            setProjectAutoExtendDays(days);
+        } catch (err: any) {
+            alert(err?.response?.data?.message ?? 'Error al guardar la configuración de prórrogas.');
+        } finally {
+            setSavingSettings(false);
+        }
+    };
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -391,6 +413,64 @@ const ArbitrajeProyecto: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* ── Configuración de Prórrogas Automáticas del Proyecto ──── */}
+                <div className="bento-card static p-5 relative overflow-hidden bg-surface w-full space-y-4 animate-fade-up">
+                    <div className="flex items-center justify-between pb-2 border-b border-border-thin">
+                        <div className="section-label">
+                            <Scale size={12} className="text-brand" />
+                            <span className="text-[13px] font-bold text-text-main uppercase tracking-tight">Prórrogas del Proyecto</span>
+                        </div>
+                        {savingSettings && <Loader2 size={12} className="animate-spin text-text-dim" />}
+                    </div>
+                    
+                    <div className="space-y-4">
+                        {/* Toggle switch */}
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
+                                <p className="text-[10px] text-text-dim mt-0.5 leading-relaxed">Amplía el plazo automáticamente al expirar.</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                                <input 
+                                    type="checkbox" 
+                                    className="sr-only peer" 
+                                    checked={projectAutoExtendDeadlines}
+                                    onChange={(e) => handleSaveProjectSettings(e.target.checked, projectAutoExtendDays)}
+                                    disabled={savingSettings || arbitraje.arbitraje_cerrado}
+                                />
+                                <div className="w-9 h-5 bg-border-thin rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+                            </label>
+                        </div>
+
+                        {/* Input number */}
+                        <div className="space-y-2 pt-1">
+                            <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                                Días de prórroga
+                            </label>
+                            <div className="flex gap-2 items-center">
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={30}
+                                    className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1.5 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
+                                    disabled={!projectAutoExtendDeadlines || savingSettings || arbitraje.arbitraje_cerrado}
+                                    value={projectAutoExtendDays}
+                                    onChange={(e) => setProjectAutoExtendDays(parseInt(e.target.value) || 7)}
+                                />
+                                {projectAutoExtendDeadlines && !arbitraje.arbitraje_cerrado && (
+                                    <button
+                                        onClick={() => handleSaveProjectSettings(projectAutoExtendDeadlines, projectAutoExtendDays)}
+                                        className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-bold"
+                                        disabled={savingSettings}
+                                    >
+                                        Guardar
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
