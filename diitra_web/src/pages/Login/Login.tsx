@@ -82,7 +82,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
             const status = err.response?.status;
             if (status === 429) {
                 // Cuenta bloqueada — mostrar countdown
-                const secs: number = err.response?.data?.segundosRestantes ?? 300;
+                const secs: number = err.response?.data?.segundos_restantes ?? err.response?.data?.segundosRestantes ?? 300;
                 const msg: string = err.response?.data?.message ?? 'Cuenta bloqueada temporalmente.';
                 setError(msg);
                 startLockoutCountdown(secs);
