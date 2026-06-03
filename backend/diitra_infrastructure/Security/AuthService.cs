@@ -727,23 +727,37 @@ public class AuthService : IAuthService
     {
         email = email.Trim().ToLower();
 
-        // 1. Buscar usuario activo que tenga el email
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.EmailInstitucional == email && u.Activo);
+        // 1. Buscar usuario activo que tenga el email (insensible a mayúsculas y buscando también en IdSigafi)
+        var user = await _context.Users.FirstOrDefaultAsync(u => 
+            u.Activo && 
+            ((u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == email) || 
+             (u.IdSigafi != null && u.IdSigafi.ToLower() == email)));
+
         if (user == null) return false;
 
-        // 2. Buscar si tiene un enlace mágico activo
+        // 2. Verificar si tiene alguna revisión/arbitraje pendiente activa
+        var pendingReview = await _context.Set<InvRevisionesPares>()
+            .Where(r => r.IdRevisor == user.IdUsuario && r.Estado == "Pendiente" && r.FechaLimite > DateTime.Now)
+            .OrderByDescending(r => r.FechaLimite)
+            .FirstOrDefaultAsync();
+
+        if (pendingReview == null) return false;
+
+        // 3. Buscar si tiene un enlace mágico activo. Si lo tiene, lo invalidamos para generar uno nuevo.
         var activeLink = await _context.Set<InvMagicLink>()
             .Where(l => l.IdUsuario == user.IdUsuario && !l.Utilizado && l.FechaExpiracion > DateTime.Now)
             .OrderByDescending(l => l.FechaExpiracion)
             .FirstOrDefaultAsync();
 
-        if (activeLink == null) return false;
+        DateTime expirationDate = pendingReview.FechaLimite;
+        if (activeLink != null)
+        {
+            activeLink.Utilizado = true;
+            expirationDate = activeLink.FechaExpiracion;
+        }
 
-        // 3. Invalidar el enlace anterior
-        activeLink.Utilizado = true;
-
-        // 4. Crear un enlace nuevo con la misma fecha de expiración
-        var plainToken = await CreateMagicLinkAsync(user.IdUsuario, activeLink.FechaExpiracion);
+        // 4. Crear un enlace nuevo con la fecha de expiración correspondiente
+        var plainToken = await CreateMagicLinkAsync(user.IdUsuario, expirationDate);
 
         // 5. Enviar por correo
         var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
@@ -759,14 +773,14 @@ public class AuthService : IAuthService
             var template = HandlebarsDotNet.Handlebars.Compile(templateHtml);
             emailBody = template(new
             {
-                fecha_limite = activeLink.FechaExpiracion.ToString("dd/MM/yyyy"),
+                fecha_limite = expirationDate.ToString("dd/MM/yyyy"),
                 username = user.IdSigafi
             });
         }
         else
         {
             emailBody = $"<p>Usted ha solicitado el reenvío de su enlace de acceso para el módulo de arbitraje científico.</p>" +
-                        $"<p>Acceso válido hasta: {activeLink.FechaExpiracion:dd/MM/yyyy}</p>";
+                        $"<p>Acceso válido hasta: {expirationDate:dd/MM/yyyy}</p>";
         }
 
         await _notificationService.NotifyUserAsync(
