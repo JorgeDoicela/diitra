@@ -87,6 +87,7 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [registeredUser, setRegisteredUser] = useState<{ nombre: string; cedula: string } | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -94,7 +95,10 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
         setError(null);
         try {
             await registerRevisorExterno(form);
-            onSuccess();
+            setRegisteredUser({
+                nombre: `${form.nombres} ${form.apellidos}`.toUpperCase().trim(),
+                cedula: form.cedula || form.email
+            });
         } catch (err: unknown) {
             const axiosErr = err as { response?: { data?: { message?: string } } };
             setError(axiosErr?.response?.data?.message ?? 'Error al registrar el revisor externo.');
@@ -104,6 +108,40 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
     };
 
     const inputClass = "w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-sm text-text-main placeholder:text-text-dim focus:outline-none focus:border-text-dim transition-colors";
+
+    if (registeredUser) {
+        return (
+            <div className="modal-overlay">
+                <div className="modal-card animate-scale-up max-w-md w-full">
+                    <div className="modal-header !py-4 border-b border-border-thin flex items-center gap-3">
+                        <div className="icon-circle icon-circle-success text-success bg-success/15 rounded-full p-2 flex items-center justify-center w-10 h-10">
+                            <Check size={20} />
+                        </div>
+                        <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                            Evaluador Registrado con Éxito
+                        </h3>
+                    </div>
+                    <div className="modal-body py-6">
+                        <div className="text-xs text-text-dim leading-relaxed font-medium whitespace-pre-wrap">
+                            {`El evaluador externo "${registeredUser.nombre}" ha sido registrado en el sistema.\n\n` +
+                             `Credenciales de acceso convencional por defecto:\n` +
+                             `• Usuario: ${registeredUser.cedula}\n` +
+                             `• Contraseña temporal: Diitra2026*\n\n` +
+                             `Nota: Por favor comparta estas credenciales con el evaluador por si prefiere acceder utilizando el inicio de sesión convencional con contraseña.`}
+                        </div>
+                    </div>
+                    <div className="modal-footer bg-surface/50 !py-3 flex justify-end">
+                        <button
+                            onClick={onSuccess}
+                            className="btn-vercel-primary !py-2 px-6"
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
@@ -141,12 +179,12 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Nombres *</label>
-                            <input required className={inputClass} placeholder="Ej: Juan Carlos" value={form.nombres}
+                            <input required className={`${inputClass} !uppercase`} placeholder="Ej: JUAN CARLOS" value={form.nombres}
                                 onChange={e => setForm(f => ({ ...f, nombres: e.target.value }))} />
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Apellidos *</label>
-                            <input required className={inputClass} placeholder="Ej: Pérez Mora" value={form.apellidos}
+                            <input required className={`${inputClass} !uppercase`} placeholder="Ej: PÉREZ MORA" value={form.apellidos}
                                 onChange={e => setForm(f => ({ ...f, apellidos: e.target.value }))} />
                         </div>
                     </div>
@@ -166,11 +204,10 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
                             <select className={inputClass} value={form.grado_academico}
                                 onChange={e => setForm(f => ({ ...f, grado_academico: e.target.value }))}>
                                 <option value="">Seleccionar...</option>
-                                <option value="PhD">PhD / Doctorado</option>
-                                <option value="MSc">Maestría / MSc</option>
-                                <option value="MBA">MBA</option>
-                                <option value="Especialista">Especialista</option>
-                                <option value="Licenciatura">Licenciatura / Ingeniería</option>
+                                <option value="PHD">Doctorado / PhD</option>
+                                <option value="MAESTRIA">Maestría / Magíster</option>
+                                <option value="ESPECIALIDAD">Especialidad Médica</option>
+                                <option value="TERCER_NIVEL">Tercer Nivel</option>
                             </select>
                         </div>
                         <div>
@@ -185,12 +222,18 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
                             onChange={e => setForm(f => ({ ...f, especialidad: e.target.value }))} />
                     </div>
 
-                    <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" onClick={onClose} className="btn-vercel-secondary">Cancelar</button>
-                        <button type="submit" className="btn-vercel flex items-center gap-2" disabled={loading}>
-                            {loading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
-                            {loading ? 'Registrando...' : 'Registrar Árbitro'}
-                        </button>
+                    <div className="flex justify-between items-center pt-2">
+                        <div className="flex items-center gap-2 text-text-dim text-[9px] uppercase tracking-wider font-mono">
+                            <ShieldCheck size={11} className="text-text-dim" />
+                            <span>Revisor Externo DIITRA</span>
+                        </div>
+                        <div className="flex gap-2">
+                            <button type="button" onClick={onClose} className="btn-vercel-secondary">Cancelar</button>
+                            <button type="submit" className="btn-vercel flex items-center gap-2" disabled={loading}>
+                                {loading ? <Loader2 size={13} className="animate-spin" /> : <UserPlus size={13} />}
+                                {loading ? 'Registrando...' : 'Registrar Árbitro'}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
