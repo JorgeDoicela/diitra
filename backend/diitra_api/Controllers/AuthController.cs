@@ -131,10 +131,14 @@ public class AuthController : ControllerBase
         if (string.IsNullOrEmpty(request.Email))
             return BadRequest(new { message = "El correo electrónico es obligatorio." });
 
-        // Por seguridad frente a enumeración de usuarios, siempre retornamos Ok (200)
-        await _authService.ResendMagicLinkAsync(request.Email);
+        var sent = await _authService.ResendMagicLinkAsync(request.Email);
 
-        return Ok(new { message = "Si existe un arbitraje activo asignado a este correo, se le enviará un nuevo enlace de acceso." });
+        if (!sent)
+        {
+            return BadRequest(new { message = "No se encontró ningún arbitraje activo asignado a este correo electrónico." });
+        }
+
+        return Ok(new { message = "Se ha enviado un nuevo enlace de acceso a su correo electrónico." });
     }
 
     /// <summary>
