@@ -77,6 +77,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
     public virtual DbSet<InvDispositivoToken> InvDispositivosTokens   { get; set; }
     public virtual DbSet<InvMagicLink>        InvMagicLinks          { get; set; }
+    public virtual DbSet<InvConfigGeneral>    InvConfigsGenerales    { get; set; }
 
     // --- Catálogos Nucleares y Configuración ---
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }

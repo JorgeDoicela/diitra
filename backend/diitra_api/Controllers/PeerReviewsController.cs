@@ -328,13 +328,10 @@ public class PeerReviewsController : ControllerBase
     /// Obtiene las configuraciones globales de plazos de arbitraje.
     /// </summary>
     [HttpGet("settings")]
-    public IActionResult GetSettings()
+    public async Task<IActionResult> GetSettings()
     {
-        var autoExtend = _configuration.GetValue<bool>("PeerReview:AutoExtendDeadlines");
-        var autoExtendDays = _configuration.GetValue<int>("PeerReview:AutoExtendDays");
-        if (autoExtendDays <= 0) autoExtendDays = 7;
-
-        return Ok(new { AutoExtendDeadlines = autoExtend, AutoExtendDays = autoExtendDays });
+        var settings = await _peerReviewService.GetSettingsAsync();
+        return Ok(settings);
     }
 
     /// <summary>
@@ -345,50 +342,8 @@ public class PeerReviewsController : ControllerBase
     {
         try
         {
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
-            if (!System.IO.File.Exists(filePath))
-            {
-                // Fallback a BaseDirectory en caso de que cambie el CWD
-                filePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
-            }
-
-            if (!System.IO.File.Exists(filePath))
-            {
-                // Fallback a buscar un nivel arriba si el CWD es el binario (como durante IISExpress/dotnet run)
-                var parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
-                if (parentDir != null)
-                {
-                    var testPath = Path.Combine(parentDir, "appsettings.json");
-                    if (System.IO.File.Exists(testPath)) filePath = testPath;
-                    else
-                    {
-                        var apiPath = Path.Combine(parentDir, "diitra_api", "appsettings.json");
-                        if (System.IO.File.Exists(apiPath)) filePath = apiPath;
-                    }
-                }
-            }
-
-            if (!System.IO.File.Exists(filePath))
-            {
-                return NotFound(new { message = $"Archivo appsettings.json no encontrado en la ruta de ejecución: {filePath}" });
-            }
-
-            var jsonString = await System.IO.File.ReadAllTextAsync(filePath);
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(jsonString);
-            if (jsonNode != null)
-            {
-                var peerReviewNode = jsonNode["PeerReview"];
-                if (peerReviewNode == null)
-                {
-                    jsonNode["PeerReview"] = new System.Text.Json.Nodes.JsonObject();
-                    peerReviewNode = jsonNode["PeerReview"];
-                }
-                peerReviewNode!["AutoExtendDeadlines"] = dto.AutoExtendDeadlines;
-                peerReviewNode!["AutoExtendDays"] = dto.AutoExtendDays;
-
-                await System.IO.File.WriteAllTextAsync(filePath, jsonNode.ToString());
-            }
-
+            var result = await _peerReviewService.UpdateSettingsAsync(dto);
+            if (!result) return BadRequest(new { message = "No se pudo actualizar la configuración." });
             return Ok(new { message = "Configuración actualizada correctamente." });
         }
         catch (Exception ex)

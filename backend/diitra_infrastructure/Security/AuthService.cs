@@ -745,10 +745,14 @@ public class AuthService : IAuthService
         // Validar si el plazo de la revisión ya venció
         if (pendingReview.FechaLimite < DateTime.Now)
         {
-            var autoExtend = _configuration.GetValue<bool>("PeerReview:AutoExtendDeadlines");
+            var autoExtendSetting = await _context.Set<InvConfigGeneral>()
+                .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDeadlines");
+            var autoExtend = autoExtendSetting != null && bool.Parse(autoExtendSetting.Valor);
             if (autoExtend)
             {
-                var extensionDays = _configuration.GetValue<int>("PeerReview:AutoExtendDays");
+                var autoExtendDaysSetting = await _context.Set<InvConfigGeneral>()
+                    .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDays");
+                var extensionDays = autoExtendDaysSetting != null ? int.Parse(autoExtendDaysSetting.Valor) : 7;
                 if (extensionDays <= 0) extensionDays = 7;
 
                 pendingReview.FechaLimite = DateTime.Now.AddDays(extensionDays);
