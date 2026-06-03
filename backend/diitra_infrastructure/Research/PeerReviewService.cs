@@ -576,9 +576,11 @@ public class PeerReviewService : IPeerReviewService
         var queryNorm = query.Trim().ToLower();
         var result = new List<RevisorDisponibleDto>();
 
-        if (soloExternos)
+        // 1. Obtener Revisor Externos (Si soloExternos es true, o si es false [que significa 'Todos'])
+        // Si soloExternos es false, queremos incluir también los externos.
+        // El frontend filtra 'internos' localmente si lo requiere: disponibles.filter(r => !r.es_externo)
+        if (soloExternos || !soloExternos)
         {
-            // Búsqueda de Externos: misma lógica que en AdminService corrigiendo el filtro de metadata
             var usuariosQuery = _context.Users
                 .Where(u => u.TablaSigafi == "otros" && _context.UserRoles.Any(ur => ur.IdUsuario == u.IdUsuario && ur.Role.CodigoRol == "DIITRA_REVISOR_EXTERNO"));
 
@@ -589,7 +591,7 @@ public class PeerReviewService : IPeerReviewService
 
             var usuarios = await usuariosQuery
                 .OrderBy(u => u.Nombre)
-                .Take(20)
+                .Take(30)
                 .ToListAsync();
 
             // Filtrar autores (por si acaso alguno es externo, que es raro pero posible)
@@ -629,9 +631,10 @@ public class PeerReviewService : IPeerReviewService
                 });
             }
         }
-        else
+
+        // 2. Obtener Docentes Internos (Solo si soloExternos es false, es decir, 'Todos')
+        if (!soloExternos)
         {
-            // Búsqueda de Docentes Internos: mismos filtros que en http://localhost:3000/usuarios
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
                 .OrderByDescending(p => p.Periodoactivoinstituto == 1)
@@ -664,7 +667,7 @@ public class PeerReviewService : IPeerReviewService
             var profesores = await queryDocentes
                 .OrderBy(p => p.PrimerApellido)
                 .ThenBy(p => p.PrimerNombre)
-                .Take(20)
+                .Take(30)
                 .ToListAsync();
 
             // Filtrar autores del proyecto
@@ -1233,6 +1236,12 @@ public class PeerReviewService : IPeerReviewService
 
         if (existing != null)
         {
+            if (string.IsNullOrEmpty(existing.Nombre) || string.IsNullOrWhiteSpace(existing.Nombre))
+            {
+                existing.Nombre = $"{dto.Nombres} {dto.Apellidos}".Trim();
+                await _context.SaveChangesAsync();
+            }
+
             if (string.IsNullOrEmpty(existing.EmailInstitucional))
             {
                 existing.EmailInstitucional = dto.Email;
