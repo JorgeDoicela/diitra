@@ -23,6 +23,7 @@ DROP TABLE IF EXISTS
     inv_usuarios_metadata,
     inv_dispositivos_tokens,
     inv_config_indicadores,
+    inv_config_general,
     inv_audit_admin,
     inv_email_templates,
     inv_email_historial,
@@ -970,6 +971,14 @@ CREATE TABLE inv_magic_links (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Enlaces mágicos para autenticación passwordless y handoff';
 
 
+-- CONFIGURACIÓN GENERAL (Llave-Valor)
+CREATE TABLE inv_config_general (
+    Clave       VARCHAR(100) NOT NULL PRIMARY KEY,
+    Valor       LONGTEXT NOT NULL,
+    Descripcion VARCHAR(255) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Configuración general llave-valor';
+
+
 -- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
 CREATE TABLE inv_config_indicadores (
     idConfig         INT           AUTO_INCREMENT PRIMARY KEY,
@@ -1004,6 +1013,7 @@ TRUNCATE TABLE inv_dominios;
 TRUNCATE TABLE inv_cat_tipo_producto;
 TRUNCATE TABLE inv_cat_tipo_evidencia;
 TRUNCATE TABLE inv_config_indicadores;
+TRUNCATE TABLE inv_config_general;
 TRUNCATE TABLE inv_pnd_objetivos;
 
 SET SQL_SAFE_UPDATES = 1;
@@ -1032,6 +1042,11 @@ INSERT INTO inv_cat_tipo_evidencia (uuid, nombre, descripcion) VALUES
 (UUID(), 'Certificado SENADI', 'Registro de propiedad intelectual'),
 (UUID(), 'Lista de Asistencia', 'Evidencia de eventos o validación de campo'),
 (UUID(), 'Factura / Comprobante', 'Evidencia de ejecución presupuestaria');
+
+-- Configuración General Semilla
+INSERT INTO inv_config_general (Clave, Valor, Descripcion) VALUES
+('PeerReview.AutoExtendDeadlines', 'false', 'Indica si se deben extender los plazos de manera automática'),
+('PeerReview.AutoExtendDays', '7', 'Días de prórroga automática al expirar plazo');
 
 -- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
 INSERT INTO inv_config_indicadores (codigoIndicador, nombreIndicador, tipoDato, añoNormativa) VALUES

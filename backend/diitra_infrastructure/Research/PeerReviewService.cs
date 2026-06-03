@@ -22,6 +22,9 @@ public class PeerReviewService : IPeerReviewService
     private readonly IAuthService _authService;
     private readonly ILogger<PeerReviewService> _logger;
 
+    private static bool _tableChecked = false;
+    private static readonly object _lock = new object();
+
     public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration, IAuthService authService, ILogger<PeerReviewService> logger)
     {
         _context = context;
@@ -31,6 +34,37 @@ public class PeerReviewService : IPeerReviewService
         _configuration = configuration;
         _authService = authService;
         _logger = logger;
+
+        if (!_tableChecked)
+        {
+            lock (_lock)
+            {
+                if (!_tableChecked)
+                {
+                    try
+                    {
+                        _context.Database.ExecuteSqlRaw(@"
+                            CREATE TABLE IF NOT EXISTS `inv_config_general` (
+                                `Clave` VARCHAR(100) NOT NULL,
+                                `Valor` LONGTEXT NOT NULL,
+                                `Descripcion` VARCHAR(255) NULL,
+                                PRIMARY KEY (`Clave`)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                        ");
+                        _context.Database.ExecuteSqlRaw(@"
+                            INSERT IGNORE INTO `inv_config_general` (`Clave`, `Valor`, `Descripcion`) VALUES 
+                            ('PeerReview.AutoExtendDeadlines', 'false', 'Indica si se deben extender los plazos de manera automática'),
+                            ('PeerReview.AutoExtendDays', '7', 'Días de prórroga automática al expirar plazo');
+                        ");
+                        _tableChecked = true;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al inicializar la tabla de configuración inv_config_general");
+                    }
+                }
+            }
+        }
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -1524,6 +1558,48 @@ public class PeerReviewService : IPeerReviewService
         await _auditService.LogActionAsync(directorId, "EXTENDER_PLAZO_ARBITRAJE",
             $"Plazo de arbitraje extendido para evaluador en proyecto '{proyectoTitulo}'", "PEER_REVIEW", beforeState, afterState);
 
+        return true;
+    }
+
+    public async Task<PeerReviewSettingsDto> GetSettingsAsync()
+    {
+        var autoExtendSetting = await _context.InvConfigsGenerales
+            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDeadlines");
+        var autoExtendDaysSetting = await _context.InvConfigsGenerales
+            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDays");
+
+        bool autoExtend = autoExtendSetting != null && bool.Parse(autoExtendSetting.Valor);
+        int autoExtendDays = autoExtendDaysSetting != null ? int.Parse(autoExtendDaysSetting.Valor) : 7;
+
+        return new PeerReviewSettingsDto
+        {
+            AutoExtendDeadlines = autoExtend,
+            AutoExtendDays = autoExtendDays
+        };
+    }
+
+    public async Task<bool> UpdateSettingsAsync(PeerReviewSettingsDto dto)
+    {
+        var autoExtendSetting = await _context.InvConfigsGenerales
+            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDeadlines");
+        var autoExtendDaysSetting = await _context.InvConfigsGenerales
+            .FirstOrDefaultAsync(c => c.Clave == "PeerReview.AutoExtendDays");
+
+        if (autoExtendSetting == null)
+        {
+            autoExtendSetting = new InvConfigGeneral { Clave = "PeerReview.AutoExtendDeadlines", Valor = "false" };
+            _context.InvConfigsGenerales.Add(autoExtendSetting);
+        }
+        autoExtendSetting.Valor = dto.AutoExtendDeadlines.ToString().ToLower();
+
+        if (autoExtendDaysSetting == null)
+        {
+            autoExtendDaysSetting = new InvConfigGeneral { Clave = "PeerReview.AutoExtendDays", Valor = "7" };
+            _context.InvConfigsGenerales.Add(autoExtendDaysSetting);
+        }
+        autoExtendDaysSetting.Valor = dto.AutoExtendDays.ToString();
+
+        await _context.SaveChangesAsync();
         return true;
     }
 }

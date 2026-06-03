@@ -1209,7 +1209,7 @@ namespace diitra_infrastructure.Migrations
 
                     b.HasIndex("IdTiposContratos");
 
-                    b.ToTable("contratos");
+                    b.ToTable("contratos", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.Cowork.InvCollaborationComment", b =>
@@ -4064,7 +4064,7 @@ namespace diitra_infrastructure.Migrations
 
                     b.HasIndex("IdProyecto");
 
-                    b.ToTable("inv_proyecto_extensiones");
+                    b.ToTable("inv_proyecto_extensiones", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.InvProyectoMml", b =>
@@ -5302,7 +5302,7 @@ namespace diitra_infrastructure.Migrations
 
                     b.HasKey("IdTiposContratos");
 
-                    b.ToTable("tipos_contratos");
+                    b.ToTable("tipos_contratos", (string)null);
                 });
 
             modelBuilder.Entity("diitra_infrastructure.data.models.TitulosProfesore", b =>
