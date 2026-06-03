@@ -124,7 +124,7 @@ namespace diitra_infrastructure.Research
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
 
-                await _context.SaveChangesAsync(); // Aseguramos ID del proyecto
+                await SaveChangesWithConcurrencyResolutionAsync(); // Aseguramos ID del proyecto
 
                 // Sincronización de Carreras
                 if (dto.IdCarrera.HasValue && dto.IdCarrera.Value > 0)
@@ -245,7 +245,7 @@ namespace diitra_infrastructure.Research
                 // 11. Sincronización de Recursos Disponibles
                 await SyncRecursosDisponiblesAsync(project.IdProyecto, dto.RecursosDisponibles);
 
-                await _context.SaveChangesAsync();
+                await SaveChangesWithConcurrencyResolutionAsync();
                 await transaction.CommitAsync();
 
                 var afterState = new
@@ -1110,14 +1110,16 @@ namespace diitra_infrastructure.Research
         {
             if (cronograma == null) return;
             
-            // 1. Limpieza profunda
-            var oldActivities = await _context.InvCronogramas.Where(c => c.IdProyecto == projectId).ToListAsync();
+            // 1. Limpieza profunda (Carga Eager para evitar N+1 queries)
+            var oldActivities = await _context.InvCronogramas
+                .Include(c => c.InvCronogramaSemanas)
+                .Where(c => c.IdProyecto == projectId)
+                .ToListAsync();
+
             foreach(var old in oldActivities) {
-                var weeks = _context.InvCronogramaSemanas.Where(s => s.IdActividad == old.IdActividad);
-                _context.InvCronogramaSemanas.RemoveRange(weeks);
+                _context.InvCronogramaSemanas.RemoveRange(old.InvCronogramaSemanas);
             }
             _context.InvCronogramas.RemoveRange(oldActivities);
-            await _context.SaveChangesAsync();
 
             // 2. Inserción
             foreach (var act in cronograma)
@@ -1134,24 +1136,18 @@ namespace diitra_infrastructure.Research
                     Ponderacion = act.Ponderacion,
                     EsEntregableCaces = act.EsEntregableCaces ?? false
                 };
-                _context.InvCronogramas.Add(nuevaAct);
-                await _context.SaveChangesAsync(); // Para obtener IdActividad
 
-                if (act.Semanas != null)
+                var semanasList = act.Semanas ?? new System.Collections.Generic.List<bool>();
+                for (int i = 0; i < 12; i++)
                 {
-                    for (int i = 0; i < act.Semanas.Count; i++)
+                    bool isMarked = i < semanasList.Count && semanasList[i];
+                    nuevaAct.InvCronogramaSemanas.Add(new InvCronogramaSemana
                     {
-                        if (act.Semanas[i])
-                        {
-                            _context.InvCronogramaSemanas.Add(new InvCronogramaSemana
-                            {
-                                IdActividad = nuevaAct.IdActividad,
-                                Mes = $"Mes {(i / 4) + 1}",
-                                Semana = true // Indica que esta semana está marcada
-                            });
-                        }
-                    }
+                        Mes = $"Mes {(i / 4) + 1}",
+                        Semana = isMarked
+                    });
                 }
+                _context.InvCronogramas.Add(nuevaAct);
             }
         }
 
@@ -1742,6 +1738,42 @@ namespace diitra_infrastructure.Research
                 .OrderByDescending(a => a.Fecha)
                 .Take(maxItems)
                 .ToList();
+        }
+
+        private async Task SaveChangesWithConcurrencyResolutionAsync()
+        {
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException ex)
+            {
+                _logger.LogWarning("Conflicto de concurrencia detectado durante SaveChanges. Resolviendo...");
+                foreach (var entry in ex.Entries)
+                {
+                    if (entry.State == EntityState.Deleted)
+                    {
+                        // Si ya fue eliminado en la base de datos por otra transacción,
+                        // simplemente lo desvinculamos de nuestro tracker para que no falle.
+                        entry.State = EntityState.Detached;
+                    }
+                    else
+                    {
+                        // Para inserciones o modificaciones, intentamos recargar de la base de datos.
+                        // Si falla (ej: el elemento fue eliminado), lo desvinculamos.
+                        try
+                        {
+                            await entry.ReloadAsync();
+                        }
+                        catch
+                        {
+                            entry.State = EntityState.Detached;
+                        }
+                    }
+                }
+                // Reintentar guardar
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

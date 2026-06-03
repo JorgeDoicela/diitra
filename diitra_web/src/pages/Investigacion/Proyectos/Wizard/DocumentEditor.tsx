@@ -322,6 +322,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     const {
         formData,
         setFormData,
+        localChangeCount,
         addItem,
         removeItem,
         updateItem,
@@ -332,7 +333,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         {
             lists: templateConfig?.lists || [],
             richTexts,
-            nonCollaborative
+            nonCollaborative,
+            isHistoryLoaded: cowork.session.lastSyncedAt !== null
         }
     );
 
@@ -405,6 +407,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             sections={mappedSections}
             formData={formData}
             setFormData={setFormData}
+            localChangeCount={localChangeCount}
             cowork={cowork}      // ← Inyectado al Shell (no lo crea él)
             onSave={handleSave}
             onClose={onClose}
@@ -429,7 +432,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     };
                 } else if (activeTab === 'cronograma') {
                     listProps = {
-                        onAdd: () => addItem('Cronograma', { Actividad: '', Numero: 1, RecursosNecesarios: '' }),
+                        onAdd: () => addItem('Cronograma', { Actividad: '', Numero: 1, RecursosNecesarios: '', Semanas: Array(12).fill(false) }),
                         onRemove: (i: number) => removeItem('Cronograma', i),
                         onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v)
                     };

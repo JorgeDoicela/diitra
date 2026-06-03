@@ -316,6 +316,7 @@ namespace diitra_api.Controllers
                             
                             if (!result.Success)
                             {
+                                Console.WriteLine($"[DIITRA ERROR] Sync failed: {result.Message}");
                                 return BadRequest(new { success = false, message = $"Error de sincronización relacional: {result.Message}" });
                             }
 
@@ -332,11 +333,13 @@ namespace diitra_api.Controllers
                         }
                         else
                         {
+                            Console.WriteLine("[DIITRA ERROR] Deserialization returned null for ProyectoDto");
                             return BadRequest(new { success = false, message = "La metadata enviada no pudo ser deserializada correctamente como Proyecto." });
                         }
                     }
                     catch (Exception ex)
                     {
+                        Console.WriteLine($"[DIITRA ERROR] Exception in metadata sync: {ex.ToString()}");
                         return BadRequest(new { success = false, message = $"Fallo crítico en la sincronización de base de datos: {ex.Message}" });
                     }
                 }
