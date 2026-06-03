@@ -57,9 +57,16 @@ public class PeerReviewsController : ControllerBase
     [HttpGet("{revisionUuid}/rubrica")]
     public async Task<IActionResult> GetRubrica(string revisionUuid)
     {
-        var rubrica = await _peerReviewService.GetRubricaForRevisionAsync(revisionUuid);
-        if (rubrica == null) return NotFound(new { message = "Revisión no encontrada o sin rúbrica configurada." });
-        return Ok(rubrica);
+        try
+        {
+            var rubrica = await _peerReviewService.GetRubricaForRevisionAsync(revisionUuid);
+            if (rubrica == null) return NotFound(new { message = "Revisión no encontrada o sin rúbrica configurada." });
+            return Ok(rubrica);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     /// <summary>
@@ -68,9 +75,16 @@ public class PeerReviewsController : ControllerBase
     [HttpPost("evaluate")]
     public async Task<IActionResult> Evaluate([FromBody] EvaluationDto dto)
     {
-        var result = await _peerReviewService.SubmitEvaluationAsync(dto);
-        if (!result) return NotFound(new { message = "Revisión no encontrada." });
-        return Ok(new { message = "Evaluación enviada con éxito." });
+        try
+        {
+            var result = await _peerReviewService.SubmitEvaluationAsync(dto);
+            if (!result) return NotFound(new { message = "Revisión no encontrada." });
+            return Ok(new { message = "Evaluación enviada con éxito." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -293,5 +307,93 @@ public class PeerReviewsController : ControllerBase
     {
         var result = await _peerReviewService.GetRevisoresExternosAsync();
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Extender la fecha límite de una revisión manual.
+    /// </summary>
+    [HttpPut("{revisionUuid}/extender")]
+    public async Task<IActionResult> ExtenderFechaLimite(string revisionUuid, [FromBody] ExtenderPlazoDto dto)
+    {
+        var directorId = GetCurrentUserId();
+        if (dto.NuevaFecha <= DateTime.Now)
+            return BadRequest(new { message = "La nueva fecha límite debe ser en el futuro." });
+
+        var result = await _peerReviewService.ExtenderFechaLimiteAsync(revisionUuid, dto.NuevaFecha, directorId);
+        if (!result) return NotFound(new { message = "Revisión no encontrada o ya completada." });
+        return Ok(new { message = "Plazo de evaluación extendido correctamente." });
+    }
+
+    /// <summary>
+    /// Obtiene las configuraciones globales de plazos de arbitraje.
+    /// </summary>
+    [HttpGet("settings")]
+    public IActionResult GetSettings()
+    {
+        var autoExtend = _configuration.GetValue<bool>("PeerReview:AutoExtendDeadlines");
+        var autoExtendDays = _configuration.GetValue<int>("PeerReview:AutoExtendDays");
+        if (autoExtendDays <= 0) autoExtendDays = 7;
+
+        return Ok(new { AutoExtendDeadlines = autoExtend, AutoExtendDays = autoExtendDays });
+    }
+
+    /// <summary>
+    /// Actualiza las configuraciones globales de plazos de arbitraje.
+    /// </summary>
+    [HttpPut("settings")]
+    public async Task<IActionResult> UpdateSettings([FromBody] PeerReviewSettingsDto dto)
+    {
+        try
+        {
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+            if (!System.IO.File.Exists(filePath))
+            {
+                // Fallback a BaseDirectory en caso de que cambie el CWD
+                filePath = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
+            }
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                // Fallback a buscar un nivel arriba si el CWD es el binario (como durante IISExpress/dotnet run)
+                var parentDir = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
+                if (parentDir != null)
+                {
+                    var testPath = Path.Combine(parentDir, "appsettings.json");
+                    if (System.IO.File.Exists(testPath)) filePath = testPath;
+                    else
+                    {
+                        var apiPath = Path.Combine(parentDir, "diitra_api", "appsettings.json");
+                        if (System.IO.File.Exists(apiPath)) filePath = apiPath;
+                    }
+                }
+            }
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                return NotFound(new { message = $"Archivo appsettings.json no encontrado en la ruta de ejecución: {filePath}" });
+            }
+
+            var jsonString = await System.IO.File.ReadAllTextAsync(filePath);
+            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(jsonString);
+            if (jsonNode != null)
+            {
+                var peerReviewNode = jsonNode["PeerReview"];
+                if (peerReviewNode == null)
+                {
+                    jsonNode["PeerReview"] = new System.Text.Json.Nodes.JsonObject();
+                    peerReviewNode = jsonNode["PeerReview"];
+                }
+                peerReviewNode!["AutoExtendDeadlines"] = dto.AutoExtendDeadlines;
+                peerReviewNode!["AutoExtendDays"] = dto.AutoExtendDays;
+
+                await System.IO.File.WriteAllTextAsync(filePath, jsonNode.ToString());
+            }
+
+            return Ok(new { message = "Configuración actualizada correctamente." });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error al actualizar la configuración: {ex.Message}" });
+        }
     }
 }

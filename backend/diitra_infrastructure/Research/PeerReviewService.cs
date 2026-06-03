@@ -74,6 +74,11 @@ public class PeerReviewService : IPeerReviewService
 
         if (revision == null) return null;
 
+        if (revision.Estado == "Pendiente" && revision.FechaLimite < DateTime.Now)
+        {
+            throw new InvalidOperationException("El plazo de evaluación para esta revisión ha vencido. Solicite una prórroga al administrador.");
+        }
+
         var proyecto = revision.Proyecto;
         var conv = proyecto.IdConvocatoriaNavigation;
         var rubrica = conv?.IdRubricaNavigation;
@@ -219,6 +224,11 @@ public class PeerReviewService : IPeerReviewService
             .FirstOrDefaultAsync(r => r.Uuid == dto.RevisionUuid);
 
         if (revision == null) return false;
+
+        if (revision.Estado == "Pendiente" && revision.FechaLimite < DateTime.Now)
+        {
+            throw new InvalidOperationException("El plazo de evaluación para esta revisión ha vencido. Solicite una prórroga al administrador.");
+        }
 
         // Cargar el proyecto con su convocatoria para obtener el umbral de aprobación real
         var project = await _context.InvProyectos
@@ -1467,5 +1477,53 @@ public class PeerReviewService : IPeerReviewService
 
         var result = await _documentEngine.GenerateAsync(request);
         return result.PdfBytes;
+    }
+
+    public async Task<bool> ExtenderFechaLimiteAsync(string revisionUuid, DateTime nuevaFecha, int directorId)
+    {
+        var revision = await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Proyecto)
+            .FirstOrDefaultAsync(r => r.Uuid == revisionUuid);
+
+        if (revision == null || revision.Estado == "Completada") return false;
+
+        var beforeState = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            RevisionUuid = revisionUuid,
+            FechaLimiteAnterior = revision.FechaLimite.ToString("dd/MM/yyyy"),
+            Estado = revision.Estado
+        });
+
+        // 1. Actualizar fecha límite de la revisión
+        revision.FechaLimite = nuevaFecha;
+
+        // 2. Si el revisor es externo y tiene enlaces mágicos activos, actualizar su expiración
+        if (revision.EsExterno)
+        {
+            var magicLinks = await _context.Set<InvMagicLink>()
+                .Where(l => l.IdUsuario == revision.IdRevisor && !l.Utilizado)
+                .ToListAsync();
+
+            foreach (var link in magicLinks)
+            {
+                link.FechaExpiracion = nuevaFecha;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        // 3. Registrar auditoría
+        var afterState = System.Text.Json.JsonSerializer.Serialize(new
+        {
+            RevisionUuid = revisionUuid,
+            FechaLimiteNueva = nuevaFecha.ToString("dd/MM/yyyy"),
+            Estado = revision.Estado
+        });
+
+        var proyectoTitulo = revision.Proyecto?.Titulo ?? "N/A";
+        await _auditService.LogActionAsync(directorId, "EXTENDER_PLAZO_ARBITRAJE",
+            $"Plazo de arbitraje extendido para evaluador en proyecto '{proyectoTitulo}'", "PEER_REVIEW", beforeState, afterState);
+
+        return true;
     }
 }

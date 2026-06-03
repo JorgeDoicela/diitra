@@ -190,6 +190,20 @@ export const asignarArbitro = (payload: AsignarArbitroPayload): Promise<{ uuid: 
 export const revocarAsignacion = (revisionUuid: string): Promise<{ message: string }> =>
     api.delete(`/PeerReviews/${revisionUuid}/revocar`).then(r => r.data);
 
+export const extenderPlazo = (revisionUuid: string, nuevaFecha: string): Promise<{ message: string }> =>
+    api.put(`/PeerReviews/${revisionUuid}/extender`, { nuevaFecha }).then(r => r.data);
+
+export interface PeerReviewSettingsDto {
+    autoExtendDeadlines: boolean;
+    autoExtendDays: number;
+}
+
+export const getPeerReviewSettings = (): Promise<PeerReviewSettingsDto> =>
+    api.get('/PeerReviews/settings').then(r => r.data);
+
+export const updatePeerReviewSettings = (settings: PeerReviewSettingsDto): Promise<{ message: string }> =>
+    api.put('/PeerReviews/settings', settings).then(r => r.data);
+
 // ─────────────────────────────────────────────────────────────
 //  API Calls — Cierre de Arbitraje
 // ─────────────────────────────────────────────────────────────
