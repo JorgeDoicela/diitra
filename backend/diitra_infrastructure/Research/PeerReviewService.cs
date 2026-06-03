@@ -1194,6 +1194,7 @@ public class PeerReviewService : IPeerReviewService
             RevisorGrado = meta?.GradoAcademicoMaximo,
             FechaAsignacion = r.FechaAsignacion,
             FechaLimite = r.FechaLimite,
+            FechaCompletado = r.FechaCompletado,
             Estado = r.Estado,
             EsExterno = r.EsExterno,
             EsDobleCiego = r.EsDobleCiego,

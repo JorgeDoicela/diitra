@@ -3,11 +3,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, Gavel, UserCheck, AlertTriangle,
     CheckCircle2, Clock, PlusCircle, Trash2, Award,
-    Scale, Loader2, Users, Building, GraduationCap
+    Scale, Loader2, Users, Building, GraduationCap, FileDown
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
-    ESTADO_REVISION_CONFIG, ESTADO_ARBITRAJE_CONFIG
+    ESTADO_REVISION_CONFIG, ESTADO_ARBITRAJE_CONFIG, downloadDictamenPdf
 } from '../../../services/peerReviewService';
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
@@ -56,6 +56,29 @@ const ArbitrajeProyecto: React.FC = () => {
             alert(err?.response?.data?.message ?? 'Error al cerrar el arbitraje.');
         } finally {
             setCerrando(false);
+        }
+    };
+
+    const [descargandoPdf, setDescargandoPdf] = useState(false);
+
+    const handleDescargarPdf = async () => {
+        if (!projectUuid || !arbitraje) return;
+        setDescargandoPdf(true);
+        try {
+            const blob = await downloadDictamenPdf(projectUuid);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            // Clean title for standard safe filename
+            const cleanTitle = arbitraje.proyecto_titulo.replace(/[\/\\?%*:|"<>\.]/g, '').replace(/\s+/g, '_');
+            a.download = `Acta_Dictamen_${cleanTitle}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err: any) {
+            console.error('[DIITRA] Error descargando dictamen PDF:', err);
+            alert(err?.response?.data?.message ?? 'No se pudo descargar el Acta de Dictamen.');
+        } finally {
+            setDescargandoPdf(false);
         }
     };
 
@@ -146,21 +169,34 @@ const ArbitrajeProyecto: React.FC = () => {
                     </div>
 
                     <div className="flex gap-3 shrink-0">
-                        <button
-                            onClick={() => setShowAsignar(true)}
-                            className="btn-vercel-secondary flex items-center gap-2"
-                        >
-                            <PlusCircle size={14} />
-                            Agregar Árbitro
-                        </button>
-                        <button
-                            onClick={handleCerrar}
-                            disabled={!puedesCerrar || cerrando}
-                            className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                            {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
-                            Emitir Dictamen
-                        </button>
+                        {!arbitraje.arbitraje_cerrado && (
+                            <button
+                                onClick={() => setShowAsignar(true)}
+                                className="btn-vercel-secondary flex items-center gap-2"
+                            >
+                                <PlusCircle size={14} />
+                                Agregar Árbitro
+                            </button>
+                        )}
+                        {arbitraje.arbitraje_cerrado ? (
+                            <button
+                                onClick={handleDescargarPdf}
+                                disabled={descargandoPdf}
+                                className="btn-brand flex items-center gap-2 transition-all duration-300"
+                            >
+                                {descargandoPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
+                                Descargar Acta PDF
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleCerrar}
+                                disabled={!puedesCerrar || cerrando}
+                                className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
+                                Cerrar Arbitraje
+                            </button>
+                        )}
                         {arbitraje.estado_proyecto === 'Aprobado' && (
                             <button
                                 onClick={handleIniciarEjecucion}

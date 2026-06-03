@@ -37,8 +37,8 @@ function generarAlertas(proyectos: ArbitrajeProyectoDto[]): CacesAlert[] {
             alerts.push({
                 id: `ext-${p.proyecto_uuid}`,
                 tipo: 'advertencia',
-                titulo: 'Sin árbitro externo',
-                descripcion: `«${p.proyecto_titulo.slice(0, 50)}...» no tiene árbitros externos. CACES exige al menos un revisor externo a la institución (Indicador I5).`,
+                titulo: 'Sin Árbitro Externo',
+                descripcion: `El proyecto "${p.proyecto_titulo}" no tiene árbitros externos. CACES exige al menos un revisor externo a la institución (Indicador I5).`,
                 proyectoUuid: p.proyecto_uuid,
                 proyectoTitulo: p.proyecto_titulo,
             });
@@ -49,8 +49,8 @@ function generarAlertas(proyectos: ArbitrajeProyectoDto[]): CacesAlert[] {
             alerts.push({
                 id: `des-${p.proyecto_uuid}`,
                 tipo: 'critico',
-                titulo: 'Desempate — Acción requerida',
-                descripcion: `«${p.proyecto_titulo.slice(0, 50)}...» está en desempate. Se requiere un tercer árbitro dirimente.`,
+                titulo: 'Dirimente Necesario',
+                descripcion: `El proyecto "${p.proyecto_titulo}" presenta alta discrepancia entre evaluadores (empate en dictamen). Se requiere asignar un tercer árbitro dirimente.`,
                 proyectoUuid: p.proyecto_uuid,
                 proyectoTitulo: p.proyecto_titulo,
             });
@@ -61,8 +61,8 @@ function generarAlertas(proyectos: ArbitrajeProyectoDto[]): CacesAlert[] {
             alerts.push({
                 id: `min-${p.proyecto_uuid}`,
                 tipo: 'advertencia',
-                titulo: 'Panel incompleto',
-                descripcion: `«${p.proyecto_titulo.slice(0, 50)}...» tiene sólo ${p.total_arbitros} árbitro(s). CACES requiere un mínimo de 2.`,
+                titulo: 'Mínimo de Árbitros Requerido',
+                descripcion: `El proyecto "${p.proyecto_titulo}" cuenta con menos de 2 árbitros asignados. Se requiere completar el panel para cumplir con la normativa CACES.`,
                 proyectoUuid: p.proyecto_uuid,
                 proyectoTitulo: p.proyecto_titulo,
             });
@@ -261,6 +261,35 @@ const ArbitrajePage: React.FC = () => {
         setProyectoExpandido(prev => prev === uuid ? null : uuid);
     };
 
+    // ── KPIs Avanzados CACES ──────────────────────────────────
+    // 1. Tasa de Aprobación (dictámenes favorables de los evaluados/cerrados)
+    const proyectosEvaluados = proyectos.filter(p => p.estado_proyecto === 'Aprobado' || p.estado_proyecto === 'En Ejecución' || p.estado_proyecto === 'Rechazado');
+    const tasaAprobacion = proyectosEvaluados.length > 0
+        ? Math.round((proyectosEvaluados.filter(p => p.estado_proyecto === 'Aprobado' || p.estado_proyecto === 'En Ejecución').length / proyectosEvaluados.length) * 100)
+        : 0;
+
+    // 2. Promedio Evaluación (Tiempo de respuesta de revisores completados)
+    const revisionesCompletadas = proyectos.flatMap(p => p.revisiones).filter(r => r.estado === 'Completada' && r.fecha_completado);
+    let promedioEvaluacionDays = 0;
+    let promedioEvaluacionText = 'Sin datos';
+    if (revisionesCompletadas.length > 0) {
+        const totalMs = revisionesCompletadas.reduce((sum, r) => {
+            const inicio = new Date(r.fecha_asignacion).getTime();
+            const fin = new Date(r.fecha_completado!).getTime();
+            return sum + Math.max(0, fin - inicio);
+        }, 0);
+        const averageMs = totalMs / revisionesCompletadas.length;
+        promedioEvaluacionDays = averageMs / (1000 * 60 * 60 * 24);
+        promedioEvaluacionText = `${promedioEvaluacionDays.toFixed(1)} días`;
+    }
+
+    // 3. Distribución de Árbitros (Proporción Externos vs Internos)
+    const totalArbitrosAsignados = proyectos.flatMap(p => p.revisiones).length;
+    const totalExternos = proyectos.flatMap(p => p.revisiones).filter(r => r.es_externo).length;
+    const pctExternos = totalArbitrosAsignados > 0 ? Math.round((totalExternos / totalArbitrosAsignados) * 100) : 0;
+
+    const alertasBanners = alertas.filter(a => !alertasDismissed.has(a.id));
+
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* ── Header ─────────────────────────────────── */}
@@ -299,6 +328,82 @@ const ArbitrajePage: React.FC = () => {
                     </div>
                 </div>
             </header>
+
+            {/* ── KPIs Avanzados (Paso 2) ─────────────────── */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-fade-up">
+                {/* Tasa de Aprobación */}
+                <div className="bento-card relative overflow-hidden p-6 bg-surface/40 backdrop-blur border border-border-thin hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <ShieldCheck size={48} className="text-success" />
+                    </div>
+                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block mb-1">
+                        Tasa de Aprobación
+                    </span>
+                    <h3 className="text-3xl font-bold text-text-main font-mono tracking-tight flex items-baseline gap-1 mt-1 group-hover:text-success transition-colors">
+                        {tasaAprobacion}%
+                    </h3>
+                    <p className="text-xs text-text-dim mt-2 leading-relaxed font-medium">
+                        Porcentaje de proyectos que han obtenido dictamen favorable.
+                    </p>
+                    <div className="w-full bg-border-thin h-1 rounded-full mt-4 overflow-hidden">
+                        <div 
+                            className="h-full rounded-full bg-success transition-all duration-500" 
+                            style={{ width: `${tasaAprobacion}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Promedio Evaluación */}
+                <div className="bento-card relative overflow-hidden p-6 bg-surface/40 backdrop-blur border border-border-thin hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <TrendingUp size={48} className="text-brand" />
+                    </div>
+                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block mb-1">
+                        Promedio Evaluación
+                    </span>
+                    <h3 className="text-3xl font-bold text-text-main font-mono tracking-tight flex items-baseline gap-1 mt-1 group-hover:text-brand transition-colors">
+                        {promedioEvaluacionText}
+                    </h3>
+                    <p className="text-xs text-text-dim mt-2 leading-relaxed font-medium">
+                        Mide el tiempo de respuesta promedio de los docentes investigadores.
+                    </p>
+                    <div className="w-full bg-border-thin h-1 rounded-full mt-4 overflow-hidden">
+                        <div 
+                            className="h-full rounded-full bg-brand transition-all duration-500" 
+                            style={{ width: `${Math.min(100, Math.max(10, (promedioEvaluacionDays || 0) * 5))}%` }}
+                        />
+                    </div>
+                </div>
+
+                {/* Distribución de Árbitros */}
+                <div className="bento-card relative overflow-hidden p-6 bg-surface/40 backdrop-blur border border-border-thin hover:border-brand/30 hover:shadow-lg hover:shadow-brand/5 transition-all duration-300 group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Users size={48} className="text-warning" />
+                    </div>
+                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest block mb-1">
+                        Distribución de Árbitros
+                    </span>
+                    <h3 className="text-3xl font-bold text-text-main font-mono tracking-tight flex items-baseline gap-1 mt-1 group-hover:text-warning transition-colors">
+                        {pctExternos}% <span className="text-xs font-sans text-text-dim font-medium">Ext</span>
+                        <span className="text-lg text-text-dim/50 font-light font-sans px-1">/</span>
+                        {100 - pctExternos}% <span className="text-xs font-sans text-text-dim font-medium">Int</span>
+                    </h3>
+                    <p className="text-xs text-text-dim mt-2 leading-relaxed font-medium">
+                        Proporción de Árbitros Externos vs. Internos (normativa CACES Indicador I5).
+                    </p>
+                    <div className="w-full bg-border-thin h-1 rounded-full mt-4 overflow-hidden flex">
+                        <div 
+                            className="h-full bg-warning transition-all duration-500" 
+                            style={{ width: `${pctExternos}%` }}
+                        />
+                        <div 
+                            className="h-full bg-warning/30 transition-all duration-500" 
+                            style={{ width: `${100 - pctExternos}%` }}
+                        />
+                    </div>
+                </div>
+            </div>
+
             {/* ── Filtros ───────────────────────────────── */}
             <div className="flex flex-wrap gap-2 mb-6 animate-fade-up [animation-delay:150ms]">
                 {[
