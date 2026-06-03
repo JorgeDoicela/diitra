@@ -33,6 +33,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
     options: {
         lists?: string[];
         richTexts?: string[];
+        nonCollaborative?: string[]; // ← Campos excluidos de CoWork por privacidad (cierre, doble ciego, etc.)
     } = {}
 ) {
     // Inicializar el estado enriqueciendo los arrays con IDs únicos estables si no existen
@@ -54,9 +55,9 @@ export function useDIITRADocument<T extends Record<string, any>>(
     // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
     const updateField = useCallback((name: string, value: any) => {
         console.log(`[DIITRA] useDIITRADocument: updateField llamado para '${name}' con valor:`, value);
-        // Sincronizar en Yjs si existe ydoc y no es una lista trackeada ni un rich-text
+        // Sincronizar en Yjs si existe ydoc y no es una lista trackeada, ni un rich-text, ni un campo no colaborativo
         // Excluimos 'Uuid'/'uuid' y 'EntityUuid'/'entityuuid' de Yjs para proteger los identificadores estáticos de persistencia relacional
-        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && name.toLowerCase() !== 'uuid' && name.toLowerCase() !== 'entityuuid') {
+        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && !options.nonCollaborative?.includes(name) && name.toLowerCase() !== 'uuid' && name.toLowerCase() !== 'entityuuid') {
             const ytext = ydoc.getText(name);
             const stringVal = String(value);
             if (ytext.toString() !== stringVal) {
@@ -73,7 +74,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             return { ...prev, [name]: value };
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ydoc, options.lists, options.richTexts]);
+    }, [ydoc, options.lists, options.richTexts, options.nonCollaborative]);
 
     // --- LÓGICA DE LISTAS (Y.Array) ---
     const addItem = useCallback((listName: string, template: any) => {
@@ -143,6 +144,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
         Object.keys(initialData).forEach(key => {
             if (options.lists?.includes(key)) return; // Se maneja como array
             if (options.richTexts?.includes(key)) return; // Se maneja como XMLFragment en Tiptap
+            if (options.nonCollaborative?.includes(key)) return; // Se maneja de forma local/privada (no colaborativo)
             if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return; // El UUID y EntityUuid son inmutables y no se sincronizan via Yjs
 
             const ytext = ydoc.getText(key);
