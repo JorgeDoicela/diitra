@@ -977,8 +977,8 @@ const ArbitrajePage: React.FC = () => {
                                     <input 
                                         type="checkbox" 
                                         className="sr-only peer" 
-                                        checked={settings.autoExtendDeadlines}
-                                        onChange={(e) => handleSaveSettings(e.target.checked, settings.autoExtendDays)}
+                                        checked={settings.autoExtendDeadlines ?? false}
+                                        onChange={(e) => handleSaveSettings(e.target.checked, settings.autoExtendDays ?? 7)}
                                         disabled={savingSettings}
                                     />
                                     <div className="w-9 h-5 bg-border-thin rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
@@ -996,13 +996,13 @@ const ArbitrajePage: React.FC = () => {
                                         min={1}
                                         max={30}
                                         className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1.5 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
-                                        disabled={!settings.autoExtendDeadlines || savingSettings}
-                                        value={settings.autoExtendDays}
+                                        disabled={!(settings.autoExtendDeadlines ?? false) || savingSettings}
+                                        value={settings.autoExtendDays ?? 7}
                                         onChange={(e) => setSettings({ ...settings, autoExtendDays: parseInt(e.target.value) || 7 })}
                                     />
-                                    {settings.autoExtendDeadlines && (
+                                    {(settings.autoExtendDeadlines ?? false) && (
                                         <button
-                                            onClick={() => handleSaveSettings(settings.autoExtendDeadlines, settings.autoExtendDays)}
+                                            onClick={() => handleSaveSettings(settings.autoExtendDeadlines ?? false, settings.autoExtendDays ?? 7)}
                                             className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-bold"
                                             disabled={savingSettings}
                                         >
