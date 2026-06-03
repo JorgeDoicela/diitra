@@ -84,7 +84,7 @@ public class InformesAvanceController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] CreateInformeAvanceDto dto)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirstValue("id_usuario");
         if (!int.TryParse(userIdClaim, out int userId))
             return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
 
@@ -131,7 +131,7 @@ public class InformesAvanceController : ControllerBase
     [HttpPost("{id:int}/aprobar")]
     public async Task<IActionResult> Aprobar(int id)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirstValue("id_usuario");
         if (!int.TryParse(userIdClaim, out int userId))
             return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
 
@@ -155,7 +155,7 @@ public class InformesAvanceController : ControllerBase
     [HttpPost("{id:int}/observar")]
     public async Task<IActionResult> Observar(int id, [FromBody] ObservarInformeAvanceDto dto)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirstValue("id_usuario");
         if (!int.TryParse(userIdClaim, out int userId))
             return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
 
