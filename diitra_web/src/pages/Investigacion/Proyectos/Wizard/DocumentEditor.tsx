@@ -300,6 +300,24 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         return list;
     }, [templateConfig, templateCode]);
 
+    // Resolver campos confidenciales/privados para excluirlos de la sincronización de red CoWork (fugas ciego)
+    const nonCollaborative = React.useMemo(() => {
+        const list: string[] = [];
+        if (templateConfig?.sections) {
+            templateConfig.sections.forEach((sec: any) => {
+                const fields = sec.config?.fields || sec.fields;
+                if (Array.isArray(fields)) {
+                    fields.forEach((f: any) => {
+                        if (f.collaborative === false) {
+                            list.push(f.name);
+                        }
+                    });
+                }
+            });
+        }
+        return list;
+    }, [templateConfig]);
+
     // ── 5. Hook Maestro con ydoc REACTIVO (V1.0 — corrección bug reconexión) ──
     const {
         formData,
@@ -313,7 +331,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         cowork.ydoc,        // ← parámetro reactivo: React detecta cambios si SignalR reconecta
         {
             lists: templateConfig?.lists || [],
-            richTexts
+            richTexts,
+            nonCollaborative
         }
     );
 
