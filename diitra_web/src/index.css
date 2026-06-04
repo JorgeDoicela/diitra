@@ -860,7 +860,7 @@ select:focus-visible {
  *   </div>
  */
 
-/* Fondo oscuro translúcido con desenfoque de fondo */
+/* Fondo oscuro translúcido sutil (estilo Vercel) */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -869,9 +869,12 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background-color: color-mix(in srgb, var(--bg) 90%, transparent);
-  backdrop-filter: blur(12px);
+  background-color: rgba(0, 0, 0, 0.7);
   animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-theme="light"] .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.4);
 }
 
 /* Cuerpo de la tarjeta modal con bordes definidos y sombra volumétrica */
@@ -901,7 +904,7 @@ select:focus-visible {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: color-mix(in srgb, var(--surface) 30%, transparent);
+  background-color: var(--surface);
 }
 
 .modal-body {
@@ -916,7 +919,7 @@ select:focus-visible {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  background-color: color-mix(in srgb, var(--surface) 20%, transparent);
+  background-color: var(--surface);
 }
 
 /* Dropdown de formulario con icono SVG de flecha integrado */
