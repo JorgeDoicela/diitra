@@ -326,7 +326,7 @@ public class AuthService : IAuthService
         if (requiredRoleCode != null && !currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
         {
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == requiredRoleCode);
-            
+
             // Si el ROL no existe en la base de datos (tabla rbac_rol), lo CREAMOS automáticamente
             if (role == null)
             {
@@ -335,13 +335,13 @@ public class AuthService : IAuthService
                     CodigoRol = requiredRoleCode,
                     Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
                              requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
-                             requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" : 
+                             requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" :
                              requiredRoleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : requiredRoleCode,
                     EsActivo = true
                 };
                 _context.Roles.Add(role);
                 await _context.SaveChangesAsync();
-                
+
                 // Asignar permisos por defecto al nuevo rol (AISLAMIENTO DE SISTEMA)
                 await AssignDefaultPermissionsToRoleAsync(role);
             }
@@ -508,10 +508,10 @@ public class AuthService : IAuthService
             var relKey = (module.IdModulos, operation.IdOperaciones);
             if (!relationSet.Contains(relKey))
             {
-                _context.ModuleOperations.Add(new ModuleOperation 
-                { 
-                    IdModulos = module.IdModulos, 
-                    IdOperaciones = operation.IdOperaciones, 
+                _context.ModuleOperations.Add(new ModuleOperation
+                {
+                    IdModulos = module.IdModulos,
+                    IdOperaciones = operation.IdOperaciones,
                     EsActivo = true,
                     FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
                 });
@@ -687,7 +687,7 @@ public class AuthService : IAuthService
         // Clear pin to make it one-time use
         magicLink.CodigoPinHandoff = null;
         magicLink.FechaExpiracionPin = null;
-        
+
         // Audit/log IP
         magicLink.IpUtilizacion = ipAddress;
 
@@ -719,7 +719,7 @@ public class AuthService : IAuthService
             FechaExpiracion = expirationDate,
             Utilizado = false
         };
-        
+
         _context.Set<InvMagicLink>().Add(magicLink);
         await _context.SaveChangesAsync();
 
@@ -736,10 +736,10 @@ public class AuthService : IAuthService
         var pendingReview = await _context.Set<InvRevisionesPares>()
             .Include(r => r.Revisor)
             .Include(r => r.Proyecto)
-            .Where(r => r.Estado == "Pendiente" && 
-                        r.Revisor != null && 
+            .Where(r => r.Estado == "Pendiente" &&
+                        r.Revisor != null &&
                         r.Revisor.Activo &&
-                        ((r.Revisor.EmailInstitucional != null && r.Revisor.EmailInstitucional.ToLower() == email) || 
+                        ((r.Revisor.EmailInstitucional != null && r.Revisor.EmailInstitucional.ToLower() == email) ||
                          (r.Revisor.IdSigafi != null && r.Revisor.IdSigafi.ToLower() == email)))
             .OrderByDescending(r => r.FechaLimite)
             .FirstOrDefaultAsync();
@@ -864,36 +864,36 @@ public class AuthService : IAuthService
         var emailPrefix = email.Contains('@') ? email.Split('@')[0] : email;
 
         // 1. Buscar en usuarios de DIITRA
-        var user = await _context.Users.FirstOrDefaultAsync(u => 
-            u.Activo && 
-            ((u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == email) || 
-             u.IdSigafi.ToLower() == email || 
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Activo &&
+            ((u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == email) ||
+             u.IdSigafi.ToLower() == email ||
              u.IdSigafi.ToLower() == emailPrefix));
 
         if (user == null)
         {
             // 2. Intentar buscar en Profesores para JIT Provisioning
-            var profesor = await _context.Profesores.FirstOrDefaultAsync(p => 
-                (p.Activo == 1 || p.Activo == null) && 
-                ((p.EmailInstitucional != null && p.EmailInstitucional.ToLower() == email) || 
-                 (p.Email != null && p.Email.ToLower() == email) || 
+            var profesor = await _context.Profesores.FirstOrDefaultAsync(p =>
+                (p.Activo == 1 || p.Activo == null) &&
+                ((p.EmailInstitucional != null && p.EmailInstitucional.ToLower() == email) ||
+                 (p.Email != null && p.Email.ToLower() == email) ||
                  p.IdProfesor.Trim() == emailPrefix));
 
             if (profesor != null)
             {
                 string name = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
                 if (string.IsNullOrEmpty(name)) name = fullName;
-                
+
                 user = await ProvisionUserAsync(emailPrefix, name, Guid.NewGuid().ToString("N"), "profesor", profesor.IdProfesor.Trim());
                 await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Profesor vía Microsoft SSO)", "SEGURIDAD");
             }
             else
             {
                 // 3. Intentar buscar en Alumnos para JIT Provisioning
-                var alumno = await _context.Alumnos.FirstOrDefaultAsync(a => 
-                    ((a.EmailInstitucional != null && a.EmailInstitucional.ToLower() == email) || 
-                     (a.Email != null && a.Email.ToLower() == email) || 
-                     a.IdAlumno.Trim() == emailPrefix || 
+                var alumno = await _context.Alumnos.FirstOrDefaultAsync(a =>
+                    ((a.EmailInstitucional != null && a.EmailInstitucional.ToLower() == email) ||
+                     (a.Email != null && a.Email.ToLower() == email) ||
+                     a.IdAlumno.Trim() == emailPrefix ||
                      (a.UserAlumno != null && a.UserAlumno.Trim() == emailPrefix)));
 
                 if (alumno != null)
@@ -932,7 +932,7 @@ public class AuthService : IAuthService
         }
 
         var stsDiscoveryEndpoint = $"https://login.microsoftonline.com/{tenantId}/v2.0/.well-known/openid-configuration";
-        
+
         var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
             stsDiscoveryEndpoint,
             new OpenIdConnectConfigurationRetriever(),
@@ -940,14 +940,14 @@ public class AuthService : IAuthService
         );
 
         var config = await configurationManager.GetConfigurationAsync(CancellationToken.None);
-        
+
         var validationParameters = new TokenValidationParameters
         {
             ValidateAudience = true,
             ValidAudience = clientId,
             ValidateIssuer = !tenantId.Equals("common", StringComparison.OrdinalIgnoreCase),
-            ValidIssuers = new[] 
-            { 
+            ValidIssuers = new[]
+            {
                 $"https://login.microsoftonline.com/{tenantId}/v2.0",
                 $"https://sts.windows.net/{tenantId}/"
             },
@@ -960,12 +960,12 @@ public class AuthService : IAuthService
         try
         {
             var principal = tokenHandler.ValidateToken(idToken, validationParameters, out SecurityToken validatedToken);
-            
-            var email = principal.FindFirst("preferred_username")?.Value 
-                     ?? principal.FindFirst(ClaimTypes.Email)?.Value 
+
+            var email = principal.FindFirst("preferred_username")?.Value
+                     ?? principal.FindFirst(ClaimTypes.Email)?.Value
                      ?? principal.FindFirst(ClaimTypes.Name)?.Value;
-                     
-            var name = principal.FindFirst("name")?.Value 
+
+            var name = principal.FindFirst("name")?.Value
                     ?? $"{principal.FindFirst(ClaimTypes.GivenName)?.Value} {principal.FindFirst(ClaimTypes.Surname)?.Value}";
 
             if (string.IsNullOrEmpty(email))
