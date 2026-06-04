@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 interface Convocatoria {
     uuid: string;
@@ -49,6 +50,7 @@ interface Catalogo {
 
 const ConvocatoriasPage = () => {
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [periodos, setPeriodos] = useState<Periodo[]>([]);
     const [tiposConv, setTiposConv] = useState<Catalogo[]>([]);
@@ -317,8 +319,14 @@ const ConvocatoriasPage = () => {
         }
     };
 
-    const handleDiscardDraft = () => {
-        if (window.confirm('¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.')) {
+    const handleDiscardDraft = async () => {
+        if (await confirm({
+            title: "Descartar Borrador",
+            message: "¿Está seguro de descartar el borrador guardado? Esta acción no se puede deshacer.",
+            confirmText: "Descartar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) {
             localStorage.removeItem('convocatoria_draft_metadata');
             localStorage.removeItem('new_convocatoria_form_draft');
             if (pendingDraft?.type === 'edit' && pendingDraft.uuid) {
@@ -375,7 +383,8 @@ const ConvocatoriasPage = () => {
         setShowModal(true);
     };
 
-    const handleCloseModal = () => {
+    const handleCloseModal = async () => {
+        // Check if metadata has changes from officialMetadata
         let hasChanges = false;
         if (isEditing && selectedUuid) {
             const conv = convocatorias.find(c => c.uuid === selectedUuid);
@@ -405,7 +414,13 @@ const ConvocatoriasPage = () => {
         }
 
         if (hasChanges) {
-            if (window.confirm('¿Está seguro de salir? Perderá todos los cambios no guardados en este formulario.')) {
+            if (await confirm({
+                title: "Salir del Formulario",
+                message: "¿Está seguro de salir? Perderá todos los cambios no guardados en este formulario.",
+                confirmText: "Salir",
+                cancelText: "Cancelar",
+                variant: "warning"
+            })) {
                 clearDraft();
                 setShowModal(false);
                 resetForm();
@@ -507,7 +522,13 @@ const ConvocatoriasPage = () => {
     };
 
     const handleDelete = async (uuid: string) => {
-        if (!window.confirm('¿Estás seguro de eliminar esta convocatoria?')) return;
+        if (!await confirm({
+            title: "Eliminar Convocatoria",
+            message: "¿Estás seguro de eliminar esta convocatoria?",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
         try {
             await api.delete(`/Convocatorias/${uuid}`);
             fetchConvocatorias();

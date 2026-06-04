@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Award, Link, BookOpen, Fingerprint, Save, RefreshCw, ChevronRight, FileText } from 'lucide-react';
 import api from '../../../api/axios_config';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 interface UserProfileModalProps {
     user: {
@@ -13,6 +14,7 @@ interface UserProfileModalProps {
 }
 
 const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalProps) => {
+    const confirm = useConfirm();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [metadata, setMetadata] = useState({
@@ -106,11 +108,17 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
         localStorage.setItem('user_metadata_draft_metadata', JSON.stringify(meta));
     }, [metadata, loading, user.user_uuid, user.nombre_completo]);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = async () => {
         // Check if metadata has changes from officialMetadata
         const hasChanges = officialMetadata && JSON.stringify(metadata) !== JSON.stringify(officialMetadata);
         if (hasChanges) {
-            if (window.confirm('¿Está seguro de salir? Perderá todos los cambios no guardados en este formulario.')) {
+            if (await confirm({
+                title: "Salir del Formulario",
+                message: "¿Está seguro de salir? Perderá todos los cambios no guardados en este formulario.",
+                confirmText: "Salir",
+                cancelText: "Cancelar",
+                variant: "warning"
+            })) {
                 clearDraft();
                 onClose();
             }

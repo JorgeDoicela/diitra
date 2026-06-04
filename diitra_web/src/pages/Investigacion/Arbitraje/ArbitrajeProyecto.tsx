@@ -16,11 +16,13 @@ import AsignarArbitroModal from './AsignarArbitroModal';
 import DictamenModal from './DictamenModal';
 import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
 import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 const ArbitrajeProyecto: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
 
     const [arbitraje, setArbitraje] = useState<ArbitrajeProyectoDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -73,7 +75,13 @@ const ArbitrajeProyecto: React.FC = () => {
 
     const handleCerrar = async () => {
         if (!projectUuid || !arbitraje) return;
-        if (!window.confirm('¿Cerrar el arbitraje y emitir el dictamen final? Esta acción cambiará el estado del proyecto.')) return;
+        if (!await confirm({
+            title: "Cerrar Arbitraje",
+            message: "¿Cerrar el arbitraje y emitir el dictamen final? Esta acción cambiará el estado del proyecto.",
+            confirmText: "Cerrar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
 
         setCerrando(true);
         try {
@@ -112,7 +120,13 @@ const ArbitrajeProyecto: React.FC = () => {
     };
 
     const handleRevocar = async (rev: PeerReviewDto) => {
-        if (!window.confirm(`¿Revocar la asignación de ${rev.revisor_nombre}? Esta acción no se puede deshacer.`)) return;
+        if (!await confirm({
+            title: "Revocar Asignación",
+            message: `¿Revocar la asignación de ${rev.revisor_nombre}? Esta acción no se puede deshacer.`,
+            confirmText: "Revocar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
         try {
             await revocarAsignacion(rev.uuid);
             loadData();
@@ -124,7 +138,13 @@ const ArbitrajeProyecto: React.FC = () => {
 
     const handleIniciarEjecucion = async () => {
         if (!projectUuid) return;
-        if (!window.confirm('¿Iniciar la fase de ejecución del proyecto? Se habilitarán los informes de avance.')) return;
+        if (!await confirm({
+            title: "Iniciar Ejecución",
+            message: "¿Iniciar la fase de ejecución del proyecto? Se habilitarán los informes de avance.",
+            confirmText: "Iniciar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         setIniciandoEjecucion(true);
         try {
             await iniciarEjecucion(projectUuid);

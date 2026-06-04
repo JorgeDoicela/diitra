@@ -10,6 +10,7 @@ import PinHandoff from './pages/Login/PinHandoff';
 import MagicResend from './pages/Login/MagicResend';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
+import { ConfirmProvider } from './api/ConfirmContext';
 import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
 import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
 import MyProjectsPage from './pages/Investigacion/Proyectos/MyProjectsPage';
@@ -139,7 +140,8 @@ function App() {
     return (
         <AuthProvider>
             <BrowserRouter>
-                <NotificationsProvider>
+                <ConfirmProvider>
+                    <NotificationsProvider>
                     <Routes>
                         {/* Public Landing Page */}
                         <Route path="/" element={
@@ -210,6 +212,7 @@ function App() {
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
                 </NotificationsProvider>
+               </ConfirmProvider>
             </BrowserRouter>
         </AuthProvider>
     );

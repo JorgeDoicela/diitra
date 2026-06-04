@@ -14,6 +14,7 @@ import {
 import { useCoWork, CoWorkEditor } from '../../../core/cowork';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 import CollaborationSidebar from './components/CollaborationSidebar';
 
 interface TemplateMetadata {
@@ -26,6 +27,7 @@ interface TemplateMetadata {
 const DocumentWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
     const { user } = useAuth();
+    const confirm = useConfirm();
     const navigate = useNavigate();
 
     const [template, setTemplate] = useState<TemplateMetadata | null>(null);
@@ -96,7 +98,13 @@ const DocumentWorkspace: React.FC = () => {
     }, [activeSection, documentUuid, cowork.session.isConnected]);
 
     const handleGeneratePdf = async () => {
-        if (!window.confirm("¿Está seguro de finalizar este documento? Una vez generado el PDF oficial, no se podrá editar el contenido.")) return;
+        if (!await confirm({
+            title: "Finalizar Documento",
+            message: "¿Está seguro de finalizar este documento? Una vez generado el PDF oficial, no se podrá editar el contenido.",
+            confirmText: "Finalizar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
 
         try {
             setIsLoading(true);

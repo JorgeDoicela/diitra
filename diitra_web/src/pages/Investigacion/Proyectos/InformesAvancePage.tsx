@@ -8,6 +8,7 @@ import {
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
 import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 import type {
     InformeAvanceDto,
     CreateInformeAvanceDto,
@@ -33,6 +34,7 @@ const InformesAvancePage: React.FC = () => {
     const navigate = useNavigate();
     const { isAdmin, roles } = useAuth();
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
     const canReview = isAdmin || roles?.includes('DIRECTOR_INV');
 
     const [informes, setInformes] = useState<InformeAvanceDto[]>([]);
@@ -149,7 +151,13 @@ const InformesAvancePage: React.FC = () => {
 
     // ── Aprobar ───────────────────────────────────────────────────
     const handleAprobar = async (id: number) => {
-        if (!window.confirm('¿Aprobar este informe de avance?')) return;
+        if (!await confirm({
+            title: "Aprobar Informe",
+            message: "¿Aprobar este informe de avance?",
+            confirmText: "Aprobar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         setActioning(id);
         try {
             await aprobarInforme(id);
