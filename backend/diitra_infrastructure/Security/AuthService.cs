@@ -4,6 +4,8 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using diitra_domain.Identity.Entities;
 using diitra_infrastructure.data.models;
 using diitra_application.Security;
@@ -841,24 +843,17 @@ public class AuthService : IAuthService
         {
             try
             {
-                var handler = new JwtSecurityTokenHandler();
-                if (!handler.CanReadToken(request.IdToken))
+                var validated = await ValidateMicrosoftTokenAsync(request.IdToken);
+                if (validated == null)
                 {
                     return null;
                 }
-
-                var jwtToken = handler.ReadJwtToken(request.IdToken);
-                
-                // Extraer claims
-                email = jwtToken.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value 
-                             ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value 
-                             ?? "";
-                email = email.Trim().ToLower();
-
-                fullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
+                email = validated.Value.Email;
+                fullName = validated.Value.Name;
             }
-            catch
+            catch (Exception ex)
             {
+                await _auditService.LogActionAsync(0, "LOGIN_FAILED", $"Fallo en validación de token Microsoft: {ex.Message}", "SEGURIDAD");
                 return null;
             }
         }
@@ -924,5 +919,65 @@ public class AuthService : IAuthService
         }
 
         return await GetAuthResponseAsync(user);
+    }
+
+    private async Task<(string Email, string Name)?> ValidateMicrosoftTokenAsync(string idToken)
+    {
+        var clientId = _configuration["Authentication:Microsoft:ClientId"];
+        var tenantId = _configuration["Authentication:Microsoft:TenantId"] ?? "common";
+
+        if (string.IsNullOrEmpty(clientId))
+        {
+            throw new InvalidOperationException("La autenticación con Microsoft no está configurada en el servidor (falta ClientId).");
+        }
+
+        var stsDiscoveryEndpoint = $"https://login.microsoftonline.com/{tenantId}/v2.0/.well-known/openid-configuration";
+        
+        var configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+            stsDiscoveryEndpoint,
+            new OpenIdConnectConfigurationRetriever(),
+            new HttpDocumentRetriever { RequireHttps = true }
+        );
+
+        var config = await configurationManager.GetConfigurationAsync(CancellationToken.None);
+        
+        var validationParameters = new TokenValidationParameters
+        {
+            ValidateAudience = true,
+            ValidAudience = clientId,
+            ValidateIssuer = !tenantId.Equals("common", StringComparison.OrdinalIgnoreCase),
+            ValidIssuers = new[] 
+            { 
+                $"https://login.microsoftonline.com/{tenantId}/v2.0",
+                $"https://sts.windows.net/{tenantId}/"
+            },
+            IssuerSigningKeys = config.SigningKeys,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(5)
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        try
+        {
+            var principal = tokenHandler.ValidateToken(idToken, validationParameters, out SecurityToken validatedToken);
+            
+            var email = principal.FindFirst("preferred_username")?.Value 
+                     ?? principal.FindFirst(ClaimTypes.Email)?.Value 
+                     ?? principal.FindFirst(ClaimTypes.Name)?.Value;
+                     
+            var name = principal.FindFirst("name")?.Value 
+                    ?? $"{principal.FindFirst(ClaimTypes.GivenName)?.Value} {principal.FindFirst(ClaimTypes.Surname)?.Value}";
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return null;
+            }
+
+            return (email.Trim().ToLower(), name ?? "");
+        }
+        catch (Exception ex)
+        {
+            throw new SecurityTokenException("El token de Microsoft no es válido o ha expirado.", ex);
+        }
     }
 }
