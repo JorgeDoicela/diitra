@@ -37,7 +37,7 @@ const VerifyDocument = () => {
                         <ShieldCheck size={10} />
                         <span>Verificador Documental</span>
                     </div>
-                    <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Verificación Forense</h2>
+                    <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">Verificación Forense</h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Ingrese el código de trazabilidad impreso en el documento o escaneado vía QR para validar su autenticidad y estado legal ante el CACES.
                     </p>
@@ -50,7 +50,7 @@ const VerifyDocument = () => {
                         <div className="flex justify-center mb-6 text-brand">
                             <ShieldCheck size={32} strokeWidth={1.5} />
                         </div>
-                        <h3 className="text-xl font-bold text-text-main tracking-tighter mb-2">Consultar Autenticidad</h3>
+                        <h3 className="text-xl font-semibold text-text-main tracking-tighter mb-2">Consultar Autenticidad</h3>
                         <p className="text-sm text-text-dim mb-8">Ingrese el código de verificación impreso en el documento oficial</p>
                         <input
                             type="text"
@@ -79,7 +79,7 @@ const VerifyDocument = () => {
                 {error && (
                     <div className="lg:col-span-5 bento-card static !bg-error-subtle !border-error/30 p-8 md:p-10 text-center animate-fade-in">
                         <ShieldAlert size={32} className="text-error mx-auto mb-6" />
-                        <h3 className="text-xl font-bold text-text-main mb-2">Validación Fallida</h3>
+                        <h3 className="text-xl font-semibold text-text-main mb-2">Validación Fallida</h3>
                         <p className="text-sm text-text-dim mb-8">{error}</p>
                         <button
                             onClick={() => { setResult(null); setError(null); }}
@@ -95,7 +95,7 @@ const VerifyDocument = () => {
                         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-thin">
                             <ShieldCheck size={32} className="text-success shrink-0" />
                             <div>
-                                <h3 className="text-xl font-bold tracking-tighter text-text-main">Documento Auténtico</h3>
+                                <h3 className="text-xl font-semibold tracking-tighter text-text-main">Documento Auténtico</h3>
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     <div className="badge-vercel badge-vercel-success">
                                         <span className="dot dot-success" />
@@ -114,19 +114,19 @@ const VerifyDocument = () => {
                                 <label className="section-label text-text-dim mb-1">
                                     <FileText size={12}/> Tipo de Documento
                                 </label>
-                                <p className="text-sm font-bold text-text-main">{result.template_name || result.templateName || 'Protocolo de Investigación'}</p>
+                                <p className="text-sm font-semibold text-text-main">{result.template_name || result.templateName || 'Protocolo de Investigación'}</p>
                             </div>
                             <div>
                                 <label className="section-label text-text-dim mb-1">
                                     <User size={12}/> Emitido por
                                 </label>
-                                <p className="text-sm font-bold text-text-main">{result.generated_by || result.generatedBy || 'Sistema DIITRA'}</p>
+                                <p className="text-sm font-semibold text-text-main">{result.generated_by || result.generatedBy || 'Sistema DIITRA'}</p>
                             </div>
                             <div>
                                 <label className="section-label text-text-dim mb-1">
                                     <Calendar size={12}/> Fecha de Emisión
                                 </label>
-                                <p className="text-sm font-bold text-text-main">
+                                <p className="text-sm font-semibold text-text-main">
                                     {new Date(result.generated_at || result.generatedAt).toLocaleDateString()} - {new Date(result.generated_at || result.generatedAt).toLocaleTimeString()}
                                 </p>
                             </div>

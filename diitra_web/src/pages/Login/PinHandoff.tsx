@@ -94,7 +94,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">
                             Ingresar con PIN
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium tracking-tight uppercase tracking-wider">
@@ -105,7 +105,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
 
                 {/* Contexto de uso */}
                 <div className="p-3 rounded-xl border border-border-thin bg-surface/50 text-[10px] text-text-dim leading-relaxed space-y-1">
-                    <p className="font-bold uppercase tracking-wider text-text-main">¿Cómo funciona?</p>
+                    <p className="font-semibold uppercase tracking-wider text-text-main">¿Cómo funciona?</p>
                     <p>
                         Abriste el enlace mágico de tu correo en tu <strong>teléfono</strong>. 
                         Allí encontrarás un código PIN de 5 caracteres. Ingrésalo aquí para iniciar sesión 
@@ -126,7 +126,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim ml-1" htmlFor="pin">
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1" htmlFor="pin">
                                 Código PIN de Handoff
                             </label>
                             <input
@@ -135,7 +135,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 value={pin}
                                 onChange={handlePinChange}
                                 placeholder="XXXXX"
-                                className="input-vercel h-14 text-center text-xl font-mono font-bold tracking-[0.3em] uppercase"
+                                className="input-vercel h-14 text-center text-xl font-mono font-semibold tracking-[0.3em] uppercase"
                                 maxLength={5}
                                 autoComplete="off"
                                 disabled={isSubmitting || lockoutSeconds > 0}
@@ -148,12 +148,12 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <div className="p-4 rounded-lg bg-error/5 border border-error/30 space-y-2 animate-in fade-in">
                                 <div className="flex items-center gap-2 text-error">
                                     <Lock size={14} className="shrink-0" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">IP bloqueada temporalmente</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider">IP bloqueada temporalmente</span>
                                 </div>
                                 <p className="text-[9px] text-text-dim leading-relaxed">{error}</p>
                                 <div className="flex items-center justify-between">
                                     <span className="text-[9px] text-text-dim uppercase tracking-widest">Tiempo restante:</span>
-                                    <span className="font-mono text-sm font-black text-error tabular-nums">
+                                    <span className="font-mono text-sm font-semibold text-error tabular-nums">
                                         {formatLockoutTime(lockoutSeconds)}
                                     </span>
                                 </div>
@@ -192,7 +192,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                     <div className="flex flex-col gap-3 text-center pt-2">
                         <Link
                             to="/auth/magic-resend"
-                            className="w-full h-11 flex items-center justify-center gap-1.5 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
+                            className="w-full h-11 flex items-center justify-center gap-1.5 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
                             title="Solicitar reenvío de enlace de acceso"
                         >
                             <span>Perdí mi Enlace</span>

@@ -611,7 +611,7 @@ const ConvocatoriasPage = () => {
                         <Activity size={10} strokeWidth={2} />
                         <span>Gestión de Investigación - Convocatorias</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Ciclos de Investigación</h2>
+                    <h2 className="text-3xl lg:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">Ciclos de Investigación</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Administración de convocatorias anuales para proyectos de I+D+i. 
                         Alineado con estándares CACES y SENESCYT.
@@ -697,7 +697,7 @@ const ConvocatoriasPage = () => {
                                         </span>
                                         <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{conv.codigo_convocatoria}</span>
                                     </div>
-                                    <h4 className="text-base md:text-lg font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform truncate">{conv.titulo}</h4>
+                                    <h4 className="text-base md:text-lg font-semibold tracking-tight text-text-main group-hover:translate-x-1 transition-transform truncate">{conv.titulo}</h4>
                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-text-dim font-medium uppercase tracking-tight">
                                         <span className="flex items-center gap-1"><Calendar size={12} /> {conv.anio}</span>
                                         <span className="flex items-center gap-1"><ShieldCheck size={12} /> {conv.periodo_nombre || conv.id_periodo}</span>
@@ -709,7 +709,7 @@ const ConvocatoriasPage = () => {
 
                             <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-border-thin pt-4 md:pt-0">
                                 <div className="text-left md:text-right md:mr-4">
-                                    <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Cierre</p>
+                                    <p className="text-[10px] text-text-dim uppercase font-semibold tracking-widest">Cierre</p>
                                     <p className="text-xs font-mono text-text-main">{conv.fecha_cierre}</p>
                                 </div>
                                 
@@ -759,7 +759,7 @@ const ConvocatoriasPage = () => {
                                 <AlertCircle size={24} />
                             </div>
                             <div className="space-y-1">
-                                <p className="text-sm text-text-main font-bold uppercase tracking-widest">No hay convocatorias activas</p>
+                                <p className="text-sm text-text-main font-semibold uppercase tracking-widest">No hay convocatorias activas</p>
                                 <p className="text-xs text-text-dim">Empieza creando una nueva convocatoria para este periodo.</p>
                             </div>
                         </div>
@@ -812,7 +812,7 @@ const ConvocatoriasPage = () => {
                     <div className="modal-card modal-card--lg flex flex-col h-full md:max-h-[90vh]">
                         <div className="modal-header">
                             <div>
-                                <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
+                                <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">
                                     {isEditing ? 'Editar Convocatoria' : 'Nueva Convocatoria'}
                                 </h3>
                                 <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest">Registro de Ciclo de Investigación</p>
@@ -900,7 +900,7 @@ const ConvocatoriasPage = () => {
                             )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
                                     <input 
                                         required
                                         className="input-vercel"
@@ -910,7 +910,7 @@ const ConvocatoriasPage = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Año Calendario</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Año Calendario</label>
                                     <input 
                                         type="number"
                                         required
@@ -925,7 +925,7 @@ const ConvocatoriasPage = () => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Título de la Convocatoria</label>
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Título de la Convocatoria</label>
                                 <input 
                                     required
                                     className="input-vercel"
@@ -937,7 +937,7 @@ const ConvocatoriasPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
                                     <select 
                                         className="input-vercel"
                                         value={formData.id_periodo}
@@ -949,7 +949,7 @@ const ConvocatoriasPage = () => {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Presupuesto Total (Fondo)</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Presupuesto Total (Fondo)</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={14} />
                                         <input 
@@ -967,7 +967,7 @@ const ConvocatoriasPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Apertura</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Fecha Apertura</label>
                                     <input 
                                         type="date"
                                         required
@@ -977,7 +977,7 @@ const ConvocatoriasPage = () => {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Cierre</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Fecha Cierre</label>
                                     <input 
                                         type="date"
                                         required
@@ -990,7 +990,7 @@ const ConvocatoriasPage = () => {
 
                             {/* Section: Líneas de Investigación */}
                             <div className="space-y-3">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
                                     <BookOpen size={12} /> Líneas de Investigación Habilitadas
                                 </label>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -1001,7 +1001,7 @@ const ConvocatoriasPage = () => {
                                             onClick={() => toggleLinea(l.id)}
                                             className={`text-left px-3 py-2 rounded border text-[11px] transition-all ${
                                                 formData.lineas_ids.includes(l.id)
-                                                    ? 'bg-text-main/10 border-text-main text-text-main font-bold'
+                                                    ? 'bg-text-main/10 border-text-main text-text-main font-semibold'
                                                     : 'bg-surface border-border-thin text-text-dim hover:border-text-main'
                                             }`}
                                         >
@@ -1016,7 +1016,7 @@ const ConvocatoriasPage = () => {
                                 <button 
                                     type="button"
                                     onClick={() => setShowAdvanced(!showAdvanced)}
-                                    className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-widest hover:text-text-main transition-colors"
+                                    className="flex items-center gap-2 text-[10px] font-semibold text-text-dim uppercase tracking-widest hover:text-text-main transition-colors"
                                 >
                                     <ChevronRight size={14} className={`transition-transform ${showAdvanced ? 'rotate-90' : ''}`} />
                                     Configuración Avanzada (Excelencia 2026)
@@ -1027,7 +1027,7 @@ const ConvocatoriasPage = () => {
                                 <div className="space-y-6 animate-fade-up">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Rúbrica de Evaluación</label>
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Rúbrica de Evaluación</label>
                                             <select 
                                                 className="input-vercel"
                                                 value={formData.id_rubrica || ''}
@@ -1040,7 +1040,7 @@ const ConvocatoriasPage = () => {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Puntaje Mínimo (Aprobación)</label>
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Puntaje Mínimo (Aprobación)</label>
                                             <input 
                                                 type="number"
                                                 className="input-vercel"
@@ -1055,7 +1055,7 @@ const ConvocatoriasPage = () => {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
                                             <select 
                                                 className="input-vercel"
                                                 value={formData.id_tipo_convocatoria || ''}
@@ -1068,7 +1068,7 @@ const ConvocatoriasPage = () => {
                                             </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Agenda Zonal Prioritaria</label>
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Agenda Zonal Prioritaria</label>
                                             <select 
                                                 className="input-vercel"
                                                 value={formData.id_agenda_zonal || ''}
@@ -1083,7 +1083,7 @@ const ConvocatoriasPage = () => {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Meta de Producción Esperada</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1">Meta de Producción Esperada</label>
                                         <input 
                                             className="input-vercel"
                                             placeholder="EJ: Artículo Scopus / Patente SENADI"
@@ -1108,7 +1108,7 @@ const ConvocatoriasPage = () => {
                                     {/* Nueva Sección: Calendario del Proceso (Hitos) */}
                                     <div className="space-y-4 pt-4 border-t border-border-thin">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
                                                 <CalendarDays size={12} /> Calendario del Proceso (Hitos)
                                             </label>
                                             <button 
@@ -1163,7 +1163,7 @@ const ConvocatoriasPage = () => {
                                     {/* Nueva Sección: Documentación Requerida */}
                                     <div className="space-y-4 pt-4 border-t border-border-thin">
                                         <div className="flex justify-between items-center">
-                                            <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
                                                 <FileText size={12} /> Documentación Obligatoria (Checklist)
                                             </label>
                                             <button 
@@ -1197,7 +1197,7 @@ const ConvocatoriasPage = () => {
                                                                 setFormData({...formData, documentos_req: newDocs});
                                                             }}
                                                         />
-                                                        <span className="text-[9px] font-bold text-text-dim uppercase">Obligatorio</span>
+                                                        <span className="text-[9px] font-semibold text-text-dim uppercase">Obligatorio</span>
                                                     </div>
                                                     <button 
                                                         type="button"
@@ -1248,7 +1248,7 @@ const ConvocatoriasPage = () => {
                                 <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
                                     {selectedConvocatoria.codigo_convocatoria}
                                 </span>
-                                <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
+                                <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider">
                                     <span className={`dot dot-pulse ${selectedConvocatoria.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
                                     <span className={selectedConvocatoria.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
                                         {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
@@ -1265,7 +1265,7 @@ const ConvocatoriasPage = () => {
                         
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
                             <div className="space-y-4">
-                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                <h2 className="text-3xl font-semibold tracking-tight text-text-main leading-tight font-sans">
                                     {selectedConvocatoria.titulo}
                                 </h2>
                                 <p className="text-sm text-text-dim leading-relaxed font-medium">
@@ -1275,41 +1275,41 @@ const ConvocatoriasPage = () => {
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Calendar size={12} /> Fecha de Apertura
                                     </div>
-                                    <div className="text-sm font-bold text-text-main font-mono">
+                                    <div className="text-sm font-semibold text-text-main font-mono">
                                         {selectedConvocatoria.fecha_apertura}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Calendar size={12} className="text-error" /> Fecha de Cierre (Límite)
                                     </div>
-                                    <div className="text-sm font-bold text-error font-mono">
+                                    <div className="text-sm font-semibold text-error font-mono">
                                         {selectedConvocatoria.fecha_cierre}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <DollarSign size={12} className="text-success" /> Financiamiento Máximo
                                     </div>
-                                    <div className="text-sm font-bold text-success font-mono">
+                                    <div className="text-sm font-semibold text-success font-mono">
                                         ${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Layers size={12} /> Rúbrica Evaluativa
                                     </div>
-                                    <div className="text-sm font-bold text-text-main truncate">
+                                    <div className="text-sm font-semibold text-text-main truncate">
                                         {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
                                     </div>
                                 </div>
                             </div>
                             
                             <div className="bento-card p-6 space-y-4">
-                                <div className="flex items-center gap-2 text-xs font-bold text-text-main uppercase tracking-wider">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-text-main uppercase tracking-wider">
                                     <BookOpen size={14} /> Configuración Académica & Auditoría
                                 </div>
                                 <p className="text-xs text-text-dim leading-relaxed font-medium">
@@ -1318,13 +1318,13 @@ const ConvocatoriasPage = () => {
                             </div>
                             
                             <div className="space-y-4">
-                                <h4 className="text-xs font-bold text-text-main uppercase tracking-widest">Requisitos & Documentos Exigidos</h4>
+                                <h4 className="text-xs font-semibold text-text-main uppercase tracking-widest">Requisitos & Documentos Exigidos</h4>
                                 <div className="space-y-2">
                                     {selectedConvocatoria.documentos_req && selectedConvocatoria.documentos_req.length > 0 ? (
                                         selectedConvocatoria.documentos_req.map((doc, idx) => (
                                             <div key={idx} className="flex items-center justify-between p-3 bento-card text-xs">
                                                 <div className="flex flex-col">
-                                                    <span className="font-bold text-text-main">{doc.nombre_documento}</span>
+                                                    <span className="font-semibold text-text-main">{doc.nombre_documento}</span>
                                                     {doc.descripcion && <span className="text-[10px] text-text-dim">{doc.descripcion}</span>}
                                                 </div>
                                                 <span className={doc.es_obligatorio ? 'badge-vercel-error' : 'badge-vercel-neutral'}>

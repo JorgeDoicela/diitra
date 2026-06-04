@@ -196,7 +196,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                             <span className="section-label !text-text-main">Tecnológico Traversari</span>
                         </div>
                         
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-text-main pointer-events-none select-none">
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-widest text-text-main pointer-events-none select-none">
                             {getPageTitle(location.pathname)}
                         </div>
 

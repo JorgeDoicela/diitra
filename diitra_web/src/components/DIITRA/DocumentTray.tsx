@@ -74,10 +74,10 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
 
     return (
         <div className="bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden animate-fade-up">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin bg-surface/30">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-thin">
                 <div className="flex items-center gap-2">
                     <FileText size={14} className="text-text-dim" />
-                    <span className="text-xs font-bold text-text-dim uppercase tracking-wider">{title}</span>
+                    <span className="text-sm font-medium text-text-dim">{title}</span>
                 </div>
                 
                 {entityUuid !== 'GLOBAL' && (
@@ -135,7 +135,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                             >
                                 {/* Col 1: Documento / Actividad */}
                                 <div className="flex-1 min-w-0 md:max-w-xs lg:max-w-md xl:max-w-2xl">
-                                    <h4 className="text-xs font-bold text-text-main truncate group-hover:text-brand transition-colors" title={docTitle}>
+                                    <h4 className="text-xs font-medium text-text-main truncate group-hover:text-brand transition-colors" title={docTitle}>
                                         {docTitle}
                                     </h4>
                                 </div>
@@ -196,9 +196,9 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                 )}
             </div>
 
-            <div className="flex items-center justify-center gap-2 py-3 bg-surface/30 border-t border-border-thin">
+            <div className="flex items-center justify-center gap-2 py-3 border-t border-border-thin">
                 <Shield size={11} className="text-text-dim" />
-                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Protocolo de Inmutabilidad DIITRA Activado</span>
+                <span className="text-[9px] font-medium text-text-dim uppercase tracking-widest">Protocolo de Inmutabilidad DIITRA Activado</span>
             </div>
         </div>
     );

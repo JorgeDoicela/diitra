@@ -69,7 +69,7 @@ const MicrosoftCallback = () => {
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">
                             Autenticación Microsoft
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium uppercase tracking-wider">
@@ -84,7 +84,7 @@ const MicrosoftCallback = () => {
                             <div className="mx-auto w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
                                 <AlertTriangle size={24} />
                             </div>
-                            <h3 className="text-sm font-bold text-text-main uppercase">Error de Acceso</h3>
+                            <h3 className="text-sm font-semibold text-text-main uppercase">Error de Acceso</h3>
                             <p className="text-xs text-text-dim leading-relaxed">
                                 {error}
                             </p>
@@ -100,7 +100,7 @@ const MicrosoftCallback = () => {
                     ) : (
                         <div className="py-12 flex flex-col items-center justify-center space-y-4">
                             <Loader2 className="animate-spin text-text-main" size={40} />
-                            <p className="text-xs text-text-dim font-bold uppercase tracking-wider">
+                            <p className="text-xs text-text-dim font-semibold uppercase tracking-wider">
                                 Validando sesión institucional...
                             </p>
                         </div>

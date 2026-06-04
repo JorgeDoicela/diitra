@@ -157,7 +157,7 @@ const NotificationsPage = () => {
                         <Bell size={10} />
                         <span>Centro de Notificaciones</span>
                     </div>
-                    <h1 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                    <h1 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
                         Historial Completo
                     </h1>
                     <p className="text-xs text-text-dim max-w-lg font-medium leading-relaxed">
@@ -199,7 +199,7 @@ const NotificationsPage = () => {
                         <button
                             key={f.key}
                             onClick={() => setFilter(f.key)}
-                            className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-sm whitespace-nowrap transition-colors ${
+                            className={`text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-sm whitespace-nowrap transition-colors ${
                                 filter === f.key
                                     ? 'bg-text-main text-bg-deep'
                                     : 'bg-surface border border-border-thin text-text-dim hover:text-text-main'
@@ -207,7 +207,7 @@ const NotificationsPage = () => {
                         >
                             {f.label}
                             {f.count !== undefined && f.count > 0 && (
-                                <span className="ml-1.5 text-[8px] font-black">({f.count})</span>
+                                <span className="ml-1.5 text-[8px] font-semibold">({f.count})</span>
                             )}
                         </button>
                     ))}
@@ -230,12 +230,12 @@ const NotificationsPage = () => {
                 {loadingAll && allNotifications.length === 0 ? (
                     <div className="bento-card static p-16 text-center">
                         <div className="animate-spin w-6 h-6 border-2 border-text-dim border-t-transparent rounded-full mx-auto mb-4" />
-                        <p className="text-xs text-text-dim uppercase tracking-widest font-bold">Cargando notificaciones...</p>
+                        <p className="text-xs text-text-dim uppercase tracking-widest font-semibold">Cargando notificaciones...</p>
                     </div>
                 ) : filtered.length === 0 ? (
                     <div className="bento-card static p-16 text-center">
                         <Inbox size={40} className="mx-auto text-text-dim opacity-20 mb-4" />
-                        <p className="text-sm text-text-dim font-bold uppercase tracking-widest">
+                        <p className="text-sm text-text-dim font-semibold uppercase tracking-widest">
                             {search || filter !== 'all' ? 'Sin resultados para este filtro' : 'Todo en orden'}
                         </p>
                         <p className="text-[10px] text-text-dim mt-2 uppercase tracking-wider">
@@ -246,7 +246,7 @@ const NotificationsPage = () => {
                     Object.entries(groupedByDate).map(([groupLabel, items]) => (
                         <div key={groupLabel} className="mb-8">
                             <div className="flex items-center gap-3 mb-3 px-2">
-                                <h3 className="text-[10px] font-black text-text-dim uppercase tracking-widest">{groupLabel}</h3>
+                                <h3 className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">{groupLabel}</h3>
                                 <div className="flex-1 border-t border-border-thin" />
                                 <span className="text-[9px] font-mono text-text-dim">{items.length}</span>
                             </div>
@@ -270,7 +270,7 @@ const NotificationsPage = () => {
                                                 </div>
                                                 <div className="flex-1 min-w-0 space-y-1">
                                                     <div className="flex justify-between items-start gap-2">
-                                                        <h5 className={`text-xs font-bold text-text-main leading-tight truncate ${!n.leido ? '' : 'font-medium'}`}>
+                                                        <h5 className={`text-xs font-semibold text-text-main leading-tight truncate ${!n.leido ? '' : 'font-medium'}`}>
                                                             {n.titulo}
                                                         </h5>
                                                         <div className="flex items-center gap-2 shrink-0">
@@ -290,7 +290,7 @@ const NotificationsPage = () => {
                                                             {config.label}
                                                         </span>
                                                         {n.url_accion && (
-                                                            <span className="text-[9px] font-bold text-text-main uppercase hover:underline flex items-center gap-1">
+                                                            <span className="text-[9px] font-semibold text-text-main uppercase hover:underline flex items-center gap-1">
                                                                 Ir al detalle <ExternalLink size={8} />
                                                             </span>
                                                         )}

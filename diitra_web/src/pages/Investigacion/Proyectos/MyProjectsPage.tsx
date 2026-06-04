@@ -123,7 +123,7 @@ const MyProjectsPage: React.FC = () => {
                         <ClipboardList size={10} />
                         <span>Mis Investigaciones</span>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                    <h2 className="text-3xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
                         Mis Proyectos de I+D+i
                     </h2>
                     <p className="text-xs text-text-dim max-w-lg font-medium">
@@ -178,7 +178,7 @@ const MyProjectsPage: React.FC = () => {
                     <div className="icon-circle !p-4 bg-surface mb-6">
                         <Target size={28} className="text-text-dim" />
                     </div>
-                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight mb-2">
+                    <h3 className="text-lg font-semibold text-text-main uppercase tracking-tight mb-2">
                         {search || filterEstado !== 'todos' ? 'Sin resultados' : 'Aún no tienes proyectos'}
                     </h3>
                     <p className="text-sm text-text-dim max-w-xs mb-6">
@@ -215,11 +215,11 @@ const MyProjectsPage: React.FC = () => {
                             <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1 min-w-0">
                                     {p.codigo_institucional && (
-                                        <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em] mb-1 font-mono">
+                                        <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.2em] mb-1 font-mono">
                                             {p.codigo_institucional}
                                         </p>
                                     )}
-                                    <h3 className="font-bold text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
+                                    <h3 className="font-medium text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
                                         {p.titulo}
                                     </h3>
                                 </div>

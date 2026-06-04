@@ -24,7 +24,7 @@ const ResearchProjectsPage = () => {
                         <ClipboardList size={10} />
                         <span>Mis Investigaciones</span>
                     </div>
-                    <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Proyectos de I+D+i</h2>
+                    <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">Proyectos de I+D+i</h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Gestione sus protocolos, informes de avance y productos de investigación.
                     </p>
@@ -52,16 +52,16 @@ const ResearchProjectsPage = () => {
                         className="bento-card p-6 cursor-pointer group"
                     >
                         <ListChecks className="text-brand mb-4 group-hover:scale-110 transition-transform" size={24} />
-                        <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Mis Proyectos</h4>
-                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Expediente Personal</p>
+                        <h4 className="text-sm font-semibold text-text-main uppercase tracking-tight mb-1">Mis Proyectos</h4>
+                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-medium">Expediente Personal</p>
                     </div>
                     <div
                         onClick={() => setShowReportLauncher(true)}
                         className="bento-card p-6 cursor-pointer group"
                     >
                         <FileCheck className="text-brand mb-4 group-hover:scale-110 transition-transform" size={24} />
-                        <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Informe Final</h4>
-                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Consolidación de Resultados</p>
+                        <h4 className="text-sm font-semibold text-text-main uppercase tracking-tight mb-1">Informe Final</h4>
+                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-medium">Consolidación de Resultados</p>
                     </div>
                 </div>
             </section>
@@ -69,10 +69,10 @@ const ResearchProjectsPage = () => {
             {/* ── HISTORIAL DE DOCUMENTOS ── */}
             <section className="space-y-6 animate-fade-up [animation-delay:200ms]">
                 <div>
-                    <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-3">
+                    <h3 className="text-sm font-semibold text-text-main uppercase tracking-widest flex items-center gap-3">
                         Documentos Generados
                     </h3>
-                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">Auditoría LOPDP y Trazabilidad en tiempo real</p>
+                    <p className="text-[10px] text-text-dim font-medium uppercase tracking-widest mt-1 ml-7">Auditoría LOPDP y Trazabilidad en tiempo real</p>
                 </div>
 
                 <DocumentTray

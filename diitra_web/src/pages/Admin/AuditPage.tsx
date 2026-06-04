@@ -102,11 +102,11 @@ const renderValue = (value: unknown) => {
     
     if (typeof value === 'boolean') {
         return value ? (
-            <span className="badge-vercel badge-vercel-success py-0 px-2 text-[9px] font-bold">
+            <span className="badge-vercel badge-vercel-success py-0 px-2 text-[9px] font-semibold">
                 SÍ
             </span>
         ) : (
-            <span className="badge-vercel badge-vercel-error py-0 px-2 text-[9px] font-bold">
+            <span className="badge-vercel badge-vercel-error py-0 px-2 text-[9px] font-semibold">
                 NO
             </span>
         );
@@ -167,7 +167,7 @@ const CopyButton: React.FC<CopyButtonProps> = ({ text }) => {
     return (
         <button 
             onClick={handleCopy}
-            className="absolute top-2 right-2 p-1.5 rounded border border-border-thin bg-surface text-text-dim hover:text-text-main hover:border-border-hover transition-all text-[9px] font-bold flex items-center gap-1 cursor-pointer z-20"
+            className="absolute top-2 right-2 p-1.5 rounded border border-border-thin bg-surface text-text-dim hover:text-text-main hover:border-border-hover transition-all text-[9px] font-semibold flex items-center gap-1 cursor-pointer z-20"
         >
             {copied ? <Check size={10} className="text-success" /> : <Copy size={10} />}
             {copied ? '¡Copiado!' : 'Copiar'}
@@ -359,7 +359,7 @@ const AuditPage: React.FC = () => {
         if (snapshotView === 'before' && hasBefore) {
             return (
                 <div className="space-y-4 animate-fade-in">
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-error uppercase ml-1">
+                    <div className="flex items-center gap-2 text-[9px] font-semibold text-error uppercase ml-1">
                         <span className="dot dot-error" />
                         Estado Anterior
                     </div>
@@ -376,7 +376,7 @@ const AuditPage: React.FC = () => {
         if (snapshotView === 'after' && hasAfter) {
             return (
                 <div className="space-y-4 animate-fade-in">
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-success uppercase ml-1">
+                    <div className="flex items-center gap-2 text-[9px] font-semibold text-success uppercase ml-1">
                         <span className="dot dot-success" />
                         Estado Nuevo
                     </div>
@@ -393,7 +393,7 @@ const AuditPage: React.FC = () => {
         if (actionType === 'create' && !hasBefore && hasAfter) {
             return (
                 <div className="space-y-4 animate-fade-in">
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-success uppercase ml-1">
+                    <div className="flex items-center gap-2 text-[9px] font-semibold text-success uppercase ml-1">
                         <Plus size={10} />
                         Registro Creado
                     </div>
@@ -408,7 +408,7 @@ const AuditPage: React.FC = () => {
                             <tbody className="divide-y divide-border-thin">
                                 {Object.entries(after || {}).map(([key, val]) => (
                                     <tr key={key} className="hover:bg-bg-deep/50 transition-colors">
-                                        <td className="p-2 font-mono font-bold text-text-main border-r border-border-thin">{formatKeyName(key)}</td>
+                                        <td className="p-2 font-mono font-semibold text-text-main border-r border-border-thin">{formatKeyName(key)}</td>
                                         <td className="p-2 font-mono">{renderValue(val)}</td>
                                     </tr>
                                 ))}
@@ -422,7 +422,7 @@ const AuditPage: React.FC = () => {
         if (actionType === 'delete' && hasBefore && !hasAfter) {
             return (
                 <div className="space-y-4 animate-fade-in">
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-error uppercase ml-1">
+                    <div className="flex items-center gap-2 text-[9px] font-semibold text-error uppercase ml-1">
                         <Minus size={10} />
                         Registro Eliminado
                     </div>
@@ -437,7 +437,7 @@ const AuditPage: React.FC = () => {
                             <tbody className="divide-y divide-border-thin">
                                 {Object.entries(before || {}).map(([key, val]) => (
                                     <tr key={key} className="hover:bg-bg-deep/50 transition-colors">
-                                        <td className="p-2 font-mono font-bold text-text-dim border-r border-border-thin line-through">{formatKeyName(key)}</td>
+                                        <td className="p-2 font-mono font-semibold text-text-dim border-r border-border-thin line-through">{formatKeyName(key)}</td>
                                         <td className="p-2 font-mono text-text-dim line-through">{renderValue(val)}</td>
                                     </tr>
                                 ))}
@@ -457,7 +457,7 @@ const AuditPage: React.FC = () => {
                 <div className="space-y-4 animate-fade-in">
                     {changedKeys.length > 0 ? (
                         <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-[9px] font-bold uppercase ml-1">
+                            <div className="flex items-center gap-2 text-[9px] font-semibold uppercase ml-1">
                                 <ArrowDown size={10} className="text-text-dim" />
                                 <span className="text-text-main">Campos Modificados</span>
                                 <span className="text-text-dim">({changedKeys.length})</span>
@@ -474,7 +474,7 @@ const AuditPage: React.FC = () => {
                                     <tbody className="divide-y divide-border-thin">
                                         {changedKeys.map(entry => (
                                             <tr key={entry.key} className="hover:bg-bg-deep/50 transition-colors">
-                                                <td className="p-2 font-mono font-bold text-text-main border-r border-border-thin">{formatKeyName(entry.key)}</td>
+                                                <td className="p-2 font-mono font-semibold text-text-main border-r border-border-thin">{formatKeyName(entry.key)}</td>
                                                 <td className={`p-2 font-mono ${entry.status === 'removed' ? 'text-error line-through' : entry.status === 'changed' ? 'text-error' : 'text-text-dim'}`}>
                                                     {renderValue(entry.before)}
                                                 </td>
@@ -494,7 +494,7 @@ const AuditPage: React.FC = () => {
                     )}
                     {unchangedKeys.length > 0 && (
                         <details className="group">
-                            <summary className="text-[9px] font-bold text-text-dim uppercase tracking-widest cursor-pointer hover:text-text-main transition-colors ml-1 select-none">
+                            <summary className="text-[9px] font-semibold text-text-dim uppercase tracking-widest cursor-pointer hover:text-text-main transition-colors ml-1 select-none">
                                 <span className="group-open:rotate-90 inline-block transition-transform">&#x25B6;</span> Campos sin cambios ({unchangedKeys.length})
                             </summary>
                             <div className="mt-2 rounded border border-border-thin overflow-hidden bg-bg-deep/30">
@@ -527,7 +527,7 @@ const AuditPage: React.FC = () => {
                             <Shield size={10} strokeWidth={2} />
                             <span>Seguridad Institucional</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                        <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
                             Auditoría Forense
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
@@ -643,12 +643,12 @@ const AuditPage: React.FC = () => {
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
                                 <tr className="bg-surface/50 border-b border-border-thin">
-                                    <th className="p-4 font-bold tracking-widest text-[10px] font-mono text-text-dim uppercase">Fecha y Hora</th>
-                                    <th className="p-4 font-bold tracking-widest text-[10px] font-mono text-text-dim uppercase">Administrador</th>
-                                    <th className="p-4 font-bold tracking-widest text-[10px] font-mono text-text-dim uppercase">Acción</th>
-                                    <th className="p-4 font-bold tracking-widest text-[10px] font-mono text-text-dim uppercase">Módulo</th>
-                                    <th className="p-4 font-bold tracking-widest text-[10px] font-mono text-text-dim uppercase">Afectado / Detalle</th>
-                                    <th className="p-4 font-bold tracking-widest text-[10px] font-mono text-text-dim uppercase text-right">Gestión</th>
+                                    <th className="p-4 font-semibold tracking-widest text-[10px] font-mono text-text-dim uppercase">Fecha y Hora</th>
+                                    <th className="p-4 font-semibold tracking-widest text-[10px] font-mono text-text-dim uppercase">Administrador</th>
+                                    <th className="p-4 font-semibold tracking-widest text-[10px] font-mono text-text-dim uppercase">Acción</th>
+                                    <th className="p-4 font-semibold tracking-widest text-[10px] font-mono text-text-dim uppercase">Módulo</th>
+                                    <th className="p-4 font-semibold tracking-widest text-[10px] font-mono text-text-dim uppercase">Afectado / Detalle</th>
+                                    <th className="p-4 font-semibold tracking-widest text-[10px] font-mono text-text-dim uppercase text-right">Gestión</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-thin">
@@ -665,7 +665,7 @@ const AuditPage: React.FC = () => {
                                                 <div className="icon-circle icon-circle-info mx-auto mb-4">
                                                     <Info size={24} />
                                                 </div>
-                                                <p className="text-text-dim font-bold uppercase tracking-widest">No se encontraron registros</p>
+                                                <p className="text-text-dim font-semibold uppercase tracking-widest">No se encontraron registros</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -686,10 +686,10 @@ const AuditPage: React.FC = () => {
                                             </td>
                                             <td className="p-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-dim uppercase shrink-0">
+                                                    <div className="w-6 h-6 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-semibold text-text-dim uppercase shrink-0">
                                                         {log.admin_name?.charAt(0) || 'A'}
                                                     </div>
-                                                    <span className="text-xs font-bold text-text-main">{log.admin_name}</span>
+                                                    <span className="text-xs font-semibold text-text-main">{log.admin_name}</span>
                                                 </div>
                                             </td>
                                             <td className="p-4 whitespace-nowrap">
@@ -704,7 +704,7 @@ const AuditPage: React.FC = () => {
                                             </td>
                                             <td className="p-4">
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className="text-xs font-bold text-text-main">{log.target_name || 'Global'}</span>
+                                                    <span className="text-xs font-semibold text-text-main">{log.target_name || 'Global'}</span>
                                                     <span className="text-[10px] text-text-dim truncate max-w-[250px]">{log.details}</span>
                                                 </div>
                                             </td>
@@ -721,7 +721,7 @@ const AuditPage: React.FC = () => {
                     </div>
 
                     <div className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                        <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">
                             Mostrando {logs.length} de {totalCount} registros históricos
                         </div>
                         <div className="flex items-center gap-2">
@@ -732,7 +732,7 @@ const AuditPage: React.FC = () => {
                             >
                                 <ChevronLeft size={14} />
                             </button>
-                            <span className="text-xs font-bold text-text-main px-4">
+                            <span className="text-xs font-semibold text-text-main px-4">
                                 Página {page} de {totalPages}
                             </span>
                             <button 
@@ -755,7 +755,7 @@ const AuditPage: React.FC = () => {
                         <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                             <div className="modal-header">
                                 <div className="space-y-1">
-                                    <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">Inspección Forense</h3>
+                                    <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">Inspección Forense</h3>
                                     <p className="section-label text-text-dim">Hash de Integridad Verificado</p>
                                 </div>
                                 <button onClick={() => setIsDrawerOpen(false)} className="text-text-dim hover:text-text-main transition-colors cursor-pointer">
@@ -769,7 +769,7 @@ const AuditPage: React.FC = () => {
                                         <label className="section-label text-text-dim mb-2">
                                             <Calendar size={12} /> Fecha y Registro
                                         </label>
-                                        <div className="text-sm font-bold text-text-main">
+                                        <div className="text-sm font-semibold text-text-main">
                                             {formatDateSafe(selectedLog.date, "dd/MM/yyyy")}
                                         </div>
                                         <div className="text-xs text-text-dim mt-1 font-mono">
@@ -795,7 +795,7 @@ const AuditPage: React.FC = () => {
                                     </label>
                                     <div className="grid grid-cols-1 gap-3">
                                         <div className="bento-card static p-4 flex items-center justify-between">
-                                            <span className="text-xs font-bold text-text-dim uppercase tracking-tighter">Dirección IP de Red</span>
+                                            <span className="text-xs font-semibold text-text-dim uppercase tracking-tighter">Dirección IP de Red</span>
                                             <span className="text-xs font-mono text-text-main bg-bg-deep px-3 py-1 rounded border border-border-thin">{selectedLog.ip_address || '127.0.0.1'}</span>
                                         </div>
                                         <div className="bento-card static p-4">
@@ -818,14 +818,14 @@ const AuditPage: React.FC = () => {
                                         <div className="flex gap-1 p-1 bg-bg-deep rounded border border-border-thin select-none animate-fade-in">
                                             <button 
                                                 onClick={() => setSnapshotView('diff')}
-                                                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'diff' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
+                                                className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'diff' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                             >
                                                 Diferencias
                                             </button>
                                             {parseJson(selectedLog.values_before) !== null && (
                                                 <button 
                                                     onClick={() => setSnapshotView('before')}
-                                                    className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'before' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
+                                                    className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'before' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                                 >
                                                     JSON Antes
                                                 </button>
@@ -833,7 +833,7 @@ const AuditPage: React.FC = () => {
                                             {parseJson(selectedLog.values_after) !== null && (
                                                 <button 
                                                     onClick={() => setSnapshotView('after')}
-                                                    className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'after' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
+                                                    className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'after' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                                 >
                                                     JSON Después
                                                 </button>

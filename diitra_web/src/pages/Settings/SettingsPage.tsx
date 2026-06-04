@@ -280,11 +280,11 @@ const SettingsPage: React.FC = () => {
     return (
         <div className="p-4 md:p-10 space-y-8 animate-fade-up">
             <header className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">
+                <div className="flex items-center gap-2 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
                     <ShieldCheck size={12} className="text-brand" />
                     <span>LOPDP · Ecuador</span>
                 </div>
-                <h1 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter">Mi Cuenta y Privacidad</h1>
+                <h1 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter">Mi Cuenta y Privacidad</h1>
                 <p className="text-xs md:text-sm text-text-dim max-w-xl leading-relaxed">
                     Administre sus credenciales, perfil de investigación, términos de firma digital y ejerza sus derechos de protección de datos (ARCO) según la normativa ecuatoriana.
                 </p>
@@ -294,20 +294,20 @@ const SettingsPage: React.FC = () => {
             <div className="flex border-b border-border-thin gap-1">
                 <button
                     onClick={() => setActiveTab('profile')}
-                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'profile' ? 'border-brand text-text-main' : 'border-transparent text-text-dim hover:text-text-main'}`}
+                    className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'profile' ? 'border-brand text-text-main' : 'border-transparent text-text-dim hover:text-text-main'}`}
                 >
                     Perfil y Firma
                 </button>
                 <button
                     onClick={() => setActiveTab('arco')}
-                    className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'arco' ? 'border-brand text-text-main' : 'border-transparent text-text-dim hover:text-text-main'}`}
+                    className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'arco' ? 'border-brand text-text-main' : 'border-transparent text-text-dim hover:text-text-main'}`}
                 >
                     Derechos ARCO
                 </button>
                 {isAdmin && (
                     <button
                         onClick={() => setActiveTab('admin_arco')}
-                        className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'admin_arco' ? 'border-brand text-text-main' : 'border-transparent text-text-dim hover:text-text-main'}`}
+                        className={`px-4 py-2 text-xs font-semibold uppercase tracking-wider border-b-2 transition-colors ${activeTab === 'admin_arco' ? 'border-brand text-text-main' : 'border-transparent text-text-dim hover:text-text-main'}`}
                     >
                         Panel LOPDP (Admin)
                     </button>
@@ -320,7 +320,7 @@ const SettingsPage: React.FC = () => {
                     {/* Left: Metadata form */}
                     <div className="lg:col-span-2 space-y-6">
                         <form onSubmit={handleSaveProfile} className="bento-card p-6 space-y-6">
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                                 <User size={16} />
                                 Perfil Científico
                             </h2>
@@ -333,7 +333,7 @@ const SettingsPage: React.FC = () => {
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Especialidad Científica</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Especialidad Científica</label>
                                             <input
                                                 type="text"
                                                 className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
@@ -344,7 +344,7 @@ const SettingsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Máximo Grado Académico</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Máximo Grado Académico</label>
                                             <input
                                                 type="text"
                                                 className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
@@ -355,7 +355,7 @@ const SettingsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">ORCID ID</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ORCID ID</label>
                                             <input
                                                 type="text"
                                                 className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
@@ -366,7 +366,7 @@ const SettingsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Scopus Author ID</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Scopus Author ID</label>
                                             <input
                                                 type="text"
                                                 className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand font-mono"
@@ -377,7 +377,7 @@ const SettingsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Google Scholar URL</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Google Scholar URL</label>
                                             <input
                                                 type="url"
                                                 className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
@@ -388,7 +388,7 @@ const SettingsPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">ResearchGate URL</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">ResearchGate URL</label>
                                             <input
                                                 type="url"
                                                 className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
@@ -417,7 +417,7 @@ const SettingsPage: React.FC = () => {
                     {/* Right: Signature settings & Consent */}
                     <div className="space-y-6">
                         <div className="bento-card p-6 space-y-6">
-                            <h2 className="text-sm font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                            <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                                 <Key size={16} />
                                 Firma Electrónica
                             </h2>
@@ -450,7 +450,7 @@ const SettingsPage: React.FC = () => {
                                     <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3">
                                         <FileSignature className="text-emerald-500" size={24} />
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-xs font-bold text-text-main">Certificado Guardado</h3>
+                                            <h3 className="text-xs font-semibold text-text-main">Certificado Guardado</h3>
                                             <p className="text-[10px] text-text-dim mt-0.5">La contraseña se encuentra cifrada bajo AES-256 en BD.</p>
                                         </div>
                                         <CheckCircle2 className="text-emerald-500" size={16} />
@@ -459,7 +459,7 @@ const SettingsPage: React.FC = () => {
                                     <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
                                         <AlertCircle className="text-amber-500" size={24} />
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="text-xs font-bold text-text-main">Sin Firma Registrada</h3>
+                                            <h3 className="text-xs font-semibold text-text-main">Sin Firma Registrada</h3>
                                             <p className="text-[10px] text-text-dim mt-0.5">Deberá cargar su certificado .p12 cada vez que desee firmar.</p>
                                         </div>
                                     </div>
@@ -468,7 +468,7 @@ const SettingsPage: React.FC = () => {
                                 {profile.acepto_terminos_firma && (
                                     <form onSubmit={handleFirmaSubmit} className="space-y-4 pt-2">
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Subir Certificado (.p12 / .pfx)</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Subir Certificado (.p12 / .pfx)</label>
                                             <div className="flex items-center justify-center border border-dashed border-border-thin rounded-lg p-4 bg-surface hover:border-brand/40 transition-colors cursor-pointer relative">
                                                 <input
                                                     type="file"
@@ -478,14 +478,14 @@ const SettingsPage: React.FC = () => {
                                                 />
                                                 <div className="text-center space-y-1">
                                                     <UploadCloud className="mx-auto text-text-dim" size={20} />
-                                                    <p className="text-xs font-bold text-text-main">{p12File ? p12File.name : 'Seleccionar Archivo'}</p>
+                                                    <p className="text-xs font-semibold text-text-main">{p12File ? p12File.name : 'Seleccionar Archivo'}</p>
                                                     <p className="text-[10px] text-text-dim">Formatos válidos: PKCS#12 (.p12, .pfx)</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Contraseña del Certificado</label>
+                                            <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Contraseña del Certificado</label>
                                             <div className="relative">
                                                 <input
                                                     type="password"
@@ -519,14 +519,14 @@ const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Form to submit ARCO */}
                     <div className="bento-card p-6 space-y-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <ShieldCheck size={16} />
                             Nueva Solicitud ARCO
                         </h2>
 
                         <form onSubmit={handleCreateArco} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Tipo de Derecho</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Tipo de Derecho</label>
                                 <select
                                     className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
                                     value={newArcoType}
@@ -542,7 +542,7 @@ const SettingsPage: React.FC = () => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Detalle y Justificación de la Solicitud</label>
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Detalle y Justificación de la Solicitud</label>
                                 <textarea
                                     rows={5}
                                     required
@@ -573,7 +573,7 @@ const SettingsPage: React.FC = () => {
 
                     {/* List of requests */}
                     <div className="lg:col-span-2 bento-card p-6 space-y-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <FileText size={16} />
                             Historial de Solicitudes ARCO
                         </h2>
@@ -585,7 +585,7 @@ const SettingsPage: React.FC = () => {
                         ) : arcoRequests.length === 0 ? (
                             <div className="py-16 text-center text-text-dim space-y-2">
                                 <ShieldCheck className="mx-auto opacity-20" size={32} />
-                                <p className="text-xs uppercase font-bold tracking-widest">No ha presentado solicitudes</p>
+                                <p className="text-xs uppercase font-semibold tracking-widest">No ha presentado solicitudes</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
@@ -593,10 +593,10 @@ const SettingsPage: React.FC = () => {
                                     <div key={req.id_solicitud_arco} className="p-4 bg-surface border border-border-thin rounded-xl space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold text-text-main">Derecho de {req.tipo_solicitud}</span>
+                                                <span className="text-xs font-semibold text-text-main">Derecho de {req.tipo_solicitud}</span>
                                                 <span className="text-[10px] font-mono text-text-dim">· {req.uuid.substring(0, 8)}</span>
                                             </div>
-                                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${getStatusStyle(req.estado)}`}>
+                                            <span className={`px-2 py-0.5 rounded text-[9px] font-semibold border ${getStatusStyle(req.estado)}`}>
                                                 {req.estado.replace('_', ' ')}
                                             </span>
                                         </div>
@@ -616,7 +616,7 @@ const SettingsPage: React.FC = () => {
 
                                         {req.resolucion_detalle && (
                                             <div className="p-3 bg-surface-hover/50 border border-border-thin rounded-lg space-y-1">
-                                                <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider flex items-center gap-1">
+                                                <h4 className="text-[10px] font-semibold text-text-main uppercase tracking-wider flex items-center gap-1">
                                                     <CheckCircle2 size={12} className="text-emerald-500" />
                                                     Resolución Institucional
                                                 </h4>
@@ -640,7 +640,7 @@ const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Request selector & list */}
                     <div className="lg:col-span-2 bento-card p-6 space-y-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <FileText size={16} />
                             Peticiones ARCO Pendientes del Instituto
                         </h2>
@@ -652,7 +652,7 @@ const SettingsPage: React.FC = () => {
                         ) : allArcoRequests.length === 0 ? (
                             <div className="py-16 text-center text-text-dim space-y-2">
                                 <CheckCircle2 className="mx-auto opacity-20 text-emerald-500" size={32} />
-                                <p className="text-xs uppercase font-bold tracking-widest">Sin solicitudes pendientes</p>
+                                <p className="text-xs uppercase font-semibold tracking-widest">Sin solicitudes pendientes</p>
                             </div>
                         ) : (
                             <div className="space-y-3">
@@ -665,11 +665,11 @@ const SettingsPage: React.FC = () => {
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-text-main">{req.nombre_usuario}</span>
+                                                    <span className="text-xs font-semibold text-text-main">{req.nombre_usuario}</span>
                                                     <span className="text-[10px] text-text-dim">({req.tipo_solicitud})</span>
                                                 </div>
                                             </div>
-                                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${getStatusStyle(req.estado)}`}>
+                                            <span className={`px-2 py-0.5 rounded text-[9px] font-semibold border ${getStatusStyle(req.estado)}`}>
                                                 {req.estado.replace('_', ' ')}
                                             </span>
                                         </div>
@@ -685,7 +685,7 @@ const SettingsPage: React.FC = () => {
 
                     {/* Resolution Form */}
                     <div className="bento-card p-6 space-y-6">
-                        <h2 className="text-sm font-bold uppercase tracking-widest text-text-main flex items-center gap-2">
+                        <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <Lock size={16} />
                             Resolución LOPDP
                         </h2>
@@ -693,14 +693,14 @@ const SettingsPage: React.FC = () => {
                         {selectedArco ? (
                             <form onSubmit={handleResolveArco} className="space-y-4">
                                 <div className="p-3 bg-surface border border-border-thin rounded-lg space-y-2">
-                                    <div className="text-[10px] text-text-dim uppercase font-bold tracking-wider">Solicitud Seleccionada</div>
-                                    <div className="text-xs font-bold text-text-main">{selectedArco.nombre_usuario}</div>
+                                    <div className="text-[10px] text-text-dim uppercase font-semibold tracking-wider">Solicitud Seleccionada</div>
+                                    <div className="text-xs font-semibold text-text-main">{selectedArco.nombre_usuario}</div>
                                     <div className="text-xs text-text-dim font-semibold">Derecho de {selectedArco.tipo_solicitud}</div>
                                     <p className="text-xs text-text-dim italic leading-normal">"{selectedArco.detalle_solicitud}"</p>
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Dictamen Legal / Respuesta</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Dictamen Legal / Respuesta</label>
                                     <textarea
                                         rows={4}
                                         required
@@ -712,7 +712,7 @@ const SettingsPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Resolución</label>
+                                    <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Resolución</label>
                                     <select
                                         className="w-full bg-surface border border-border-thin rounded-lg px-3 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
                                         value={resolutionStatus}

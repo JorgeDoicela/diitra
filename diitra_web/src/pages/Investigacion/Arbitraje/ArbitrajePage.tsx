@@ -118,7 +118,7 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
                         <div className="icon-circle icon-circle-success text-success bg-success/15 rounded-full p-2 flex items-center justify-center w-10 h-10">
                             <Check size={20} />
                         </div>
-                        <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                        <h3 className="text-sm font-semibold text-text-main uppercase tracking-tight">
                             Evaluador Registrado con Éxito
                         </h3>
                     </div>
@@ -153,7 +153,7 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
                             <UserPlus size={11} />
                             <span>Árbitro Externo</span>
                         </div>
-                        <h3 className="text-xl font-bold text-text-main tracking-tight">
+                        <h3 className="text-xl font-semibold text-text-main tracking-tight">
                             Registrar Revisor Externo
                         </h3>
                         <p className="text-xs text-text-dim mt-0.5">
@@ -173,35 +173,35 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
 
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
-                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Cédula / Pasaporte *</label>
+                        <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Cédula / Pasaporte *</label>
                         <input required className={inputClass} placeholder="Ej: 1712345678 o PAS12345" value={form.cedula}
                             onChange={e => setForm(f => ({ ...f, cedula: e.target.value }))} />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Nombres *</label>
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Nombres *</label>
                             <input required className={`${inputClass} !uppercase`} placeholder="Ej: JUAN CARLOS" value={form.nombres}
                                 onChange={e => setForm(f => ({ ...f, nombres: e.target.value }))} />
                         </div>
                         <div>
-                            <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Apellidos *</label>
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Apellidos *</label>
                             <input required className={`${inputClass} !uppercase`} placeholder="Ej: PÉREZ MORA" value={form.apellidos}
                                 onChange={e => setForm(f => ({ ...f, apellidos: e.target.value }))} />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Email *</label>
+                        <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Email *</label>
                         <input required type="email" className={inputClass} placeholder="revisor@universidad.edu" value={form.email}
                             onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Institución de Origen *</label>
+                        <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Institución de Origen *</label>
                         <input required className={inputClass} placeholder="Ej: Universidad Central del Ecuador" value={form.institucion}
                             onChange={e => setForm(f => ({ ...f, institucion: e.target.value }))} />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Grado Académico</label>
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Grado Académico</label>
                             <select className={inputClass} value={form.grado_academico}
                                 onChange={e => setForm(f => ({ ...f, grado_academico: e.target.value }))}>
                                 <option value="">Seleccionar...</option>
@@ -212,13 +212,13 @@ const ModalRevisorExterno: React.FC<ModalRevisorExternoProps> = ({ onClose, onSu
                             </select>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">ORCID iD</label>
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">ORCID iD</label>
                             <input className={inputClass} placeholder="0000-0000-0000-0000" value={form.orcid_id}
                                 onChange={e => setForm(f => ({ ...f, orcid_id: e.target.value }))} />
                         </div>
                     </div>
                     <div>
-                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Área de Especialidad</label>
+                        <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Área de Especialidad</label>
                         <input className={inputClass} placeholder="Ej: Inteligencia Artificial, Biotecnología..." value={form.especialidad}
                             onChange={e => setForm(f => ({ ...f, especialidad: e.target.value }))} />
                     </div>
@@ -346,7 +346,7 @@ const ArbitrajePage: React.FC = () => {
                 </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h2 className="text-4xl font-bold text-text-main tracking-tighter uppercase leading-none mb-3">
+                        <h2 className="text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none mb-3">
                             Gestión de Arbitraje
                         </h2>
                         <p className="text-sm text-text-dim max-w-2xl font-medium leading-relaxed">
@@ -391,9 +391,9 @@ const ArbitrajePage: React.FC = () => {
                         key={f.key}
                         type="button"
                         onClick={() => setFiltroEstado(f.key)}
-                        className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider border transition-all duration-150 cursor-pointer ${
+                        className={`px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider border transition-all duration-150 cursor-pointer ${
                             filtroEstado === f.key
-                                ? 'bg-text-main text-bg-deep border-text-main font-extrabold shadow-sm'
+                                ? 'bg-text-main text-bg-deep border-text-main font-semibold shadow-sm'
                                 : 'bg-transparent text-text-dim border-border-thin hover:text-text-main hover:border-text-dim/50'
                         }`}
                     >
@@ -415,14 +415,14 @@ const ArbitrajePage: React.FC = () => {
                 {loading ? (
                     <div className="flex items-center justify-center py-20 gap-3 text-text-dim">
                         <Loader2 size={20} className="animate-spin" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Cargando arbitrajes...</span>
+                        <span className="text-xs font-semibold uppercase tracking-widest">Cargando arbitrajes...</span>
                     </div>
                 ) : proyectosFiltrados.length === 0 ? (
                     <div className="empty-state py-16">
                         <div className="icon-circle icon-circle-neutral !p-4 mb-4">
                             <Gavel size={28} />
                         </div>
-                        <p className="text-text-dim font-bold uppercase tracking-widest text-sm">
+                        <p className="text-text-dim font-semibold uppercase tracking-widest text-sm">
                             No hay proyectos en esta categoría
                         </p>
                     </div>
@@ -431,11 +431,11 @@ const ArbitrajePage: React.FC = () => {
                         <table className="w-full text-xs">
                             <thead>
                                 <tr className="border-b border-border-thin">
-                                    <th className="text-left px-5 py-3.5 text-text-dim font-bold uppercase tracking-widest">Proyecto</th>
-                                    <th className="text-center px-4 py-3.5 text-text-dim font-bold uppercase tracking-widest hidden md:table-cell">Convocatoria</th>
-                                    <th className="text-center px-4 py-3.5 text-text-dim font-bold uppercase tracking-widest">Árbitros</th>
-                                    <th className="text-center px-4 py-3.5 text-text-dim font-bold uppercase tracking-widest hidden lg:table-cell">Puntaje</th>
-                                    <th className="text-center px-4 py-3.5 text-text-dim font-bold uppercase tracking-widest">Estado</th>
+                                    <th className="text-left px-5 py-3.5 text-text-dim font-semibold uppercase tracking-widest">Proyecto</th>
+                                    <th className="text-center px-4 py-3.5 text-text-dim font-semibold uppercase tracking-widest hidden md:table-cell">Convocatoria</th>
+                                    <th className="text-center px-4 py-3.5 text-text-dim font-semibold uppercase tracking-widest">Árbitros</th>
+                                    <th className="text-center px-4 py-3.5 text-text-dim font-semibold uppercase tracking-widest hidden lg:table-cell">Puntaje</th>
+                                    <th className="text-center px-4 py-3.5 text-text-dim font-semibold uppercase tracking-widest">Estado</th>
                                     <th className="px-4 py-3.5" />
                                 </tr>
                             </thead>
@@ -492,7 +492,7 @@ const ArbitrajePage: React.FC = () => {
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
                                                     <div className="flex flex-col items-center gap-1.5">
-                                                        <span className="font-bold text-text-main">
+                                                        <span className="font-semibold text-text-main">
                                                             {p.arbitros_completados}/{p.total_arbitros}
                                                         </span>
                                                         {p.total_arbitros > 0 && (
@@ -507,7 +507,7 @@ const ArbitrajePage: React.FC = () => {
                                                 </td>
                                                 <td className="px-4 py-4 text-center hidden lg:table-cell">
                                                     {p.puntaje_promedio != null ? (
-                                                        <span className={`font-bold text-base ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
+                                                        <span className={`font-semibold text-base ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
                                                             {p.puntaje_promedio.toFixed(1)}
                                                         </span>
                                                     ) : (
@@ -561,7 +561,7 @@ const ArbitrajePage: React.FC = () => {
                                                         <div className="bg-surface/40 rounded-xl p-4 border border-border-thin/50 space-y-4 animate-fade-in">
                                                             {/* Cabecera de Fila Expandida */}
                                                             <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
-                                                                <span className="text-[11px] font-bold text-text-main tracking-wide">
+                                                                <span className="text-[11px] font-semibold text-text-main tracking-wide">
                                                                     Resumen de evaluadores asignados
                                                                 </span>
                                                                 <button
@@ -603,7 +603,7 @@ const ArbitrajePage: React.FC = () => {
                                                                                         className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between transition-all duration-200"
                                                                                     >
                                                                                         <div className="flex items-center gap-2.5 min-w-0">
-                                                                                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
+                                                                                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-semibold flex items-center justify-center shrink-0`}>
                                                                                                 {r.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                                                             </div>
                                                                                             <div className="truncate">
@@ -617,7 +617,7 @@ const ArbitrajePage: React.FC = () => {
                                                                                         </div>
                                                                                         <div className="flex items-center gap-2 shrink-0">
                                                                                             {r.puntaje_total != null && (
-                                                                                                <span className={`text-[11px] font-bold font-mono ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                                                                                                <span className={`text-[11px] font-semibold font-mono ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
                                                                                                     {r.puntaje_total.toFixed(1)}/100
                                                                                                 </span>
                                                                                             )}
@@ -636,7 +636,7 @@ const ArbitrajePage: React.FC = () => {
                                                                 {/* Columna 2: Árbitros Externos */}
                                                                 <div className="p-3 bg-surface/50 rounded-lg border border-border-thin space-y-3">
                                                                     <div className="flex items-center justify-between pb-1.5 border-b border-border-thin/50">
-                                                                        <span className="text-xs font-bold text-text-main flex items-center gap-1.5">
+                                                                        <span className="text-xs font-semibold text-text-main flex items-center gap-1.5">
                                                                             <Building size={12} className="text-text-dim" /> Árbitros Externos
                                                                         </span>
                                                                         <span className="text-[9px] font-mono bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim">
@@ -665,7 +665,7 @@ const ArbitrajePage: React.FC = () => {
                                                                                         className="flex items-center gap-3 p-2.5 rounded-lg bg-bg-deep border border-border-thin/40 justify-between transition-all duration-200"
                                                                                     >
                                                                                         <div className="flex items-center gap-2.5 min-w-0">
-                                                                                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
+                                                                                            <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-semibold flex items-center justify-center shrink-0`}>
                                                                                                 {r.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                                                             </div>
                                                                                             <div className="truncate">
@@ -679,7 +679,7 @@ const ArbitrajePage: React.FC = () => {
                                                                                         </div>
                                                                                         <div className="flex items-center gap-2 shrink-0">
                                                                                             {r.puntaje_total != null && (
-                                                                                                <span className={`text-[11px] font-bold font-mono ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                                                                                                <span className={`text-[11px] font-semibold font-mono ${r.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
                                                                                                     {r.puntaje_total.toFixed(1)}/100
                                                                                                 </span>
                                                                                             )}
@@ -804,7 +804,7 @@ const ArbitrajePage: React.FC = () => {
                             />
                         </div>
                         {alertasVisibles.length > 0 && (
-                            <p className="text-[10px] text-error mt-2 font-bold flex items-center gap-1">
+                            <p className="text-[10px] text-error mt-2 font-semibold flex items-center gap-1">
                                 <AlertTriangle size={10} />
                                 {alertasVisibles.length} alerta(s) de cumplimiento CACES
                             </p>
@@ -819,11 +819,11 @@ const ArbitrajePage: React.FC = () => {
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-2">
                                 <ShieldCheck className="text-brand w-4 h-4" />
-                                <span className="text-[13px] font-bold text-text-main tracking-tight uppercase">
+                                <span className="text-[13px] font-semibold text-text-main tracking-tight uppercase">
                                     Cumplimiento CACES
                                 </span>
                                 <span 
-                                    className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold text-brand"
+                                    className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold text-brand"
                                     style={{ backgroundColor: 'var(--brand-subtle)', border: '1px solid rgba(0, 112, 243, 0.2)' }}
                                 >
                                     {alertas.length - alertasVisibles.length}/{alertas.length}
@@ -882,7 +882,7 @@ const ArbitrajePage: React.FC = () => {
                                                         ? 'line-through text-brand opacity-80 font-semibold' 
                                                         : 'text-text-main'
                                                 }`}>
-                                                    <span className="font-bold mr-1">{a.titulo}:</span>
+                                                    <span className="font-semibold mr-1">{a.titulo}:</span>
                                                     {a.descripcion}
                                                 </p>
                                             </div>
@@ -893,7 +893,7 @@ const ArbitrajePage: React.FC = () => {
                                             {/* Link to project */}
                                             {a.proyectoUuid && !isDismissed && (
                                                 <button
-                                                    className="text-[10px] font-bold text-brand hover:text-brand-light hover:underline flex items-center gap-0.5 transition-colors cursor-pointer"
+                                                    className="text-[10px] font-semibold text-brand hover:text-brand-light hover:underline flex items-center gap-0.5 transition-colors cursor-pointer"
                                                     onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
                                                 >
                                                     Ver →
@@ -902,7 +902,7 @@ const ArbitrajePage: React.FC = () => {
 
                                             {/* Checkmark indicator */}
                                             {isDismissed && (
-                                                <span className="text-brand shrink-0 flex items-center justify-center font-bold">
+                                                <span className="text-brand shrink-0 flex items-center justify-center font-semibold">
                                                     <Check size={12} strokeWidth={3} />
                                                 </span>
                                             )}

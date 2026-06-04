@@ -46,9 +46,9 @@ const NotificationBell = () => {
                     <div className="absolute right-0 mt-4 w-80 md:w-96 bg-bg-deep border border-border-thin rounded-2xl shadow-2xl z-50 overflow-hidden animate-in slide-in-from-top-2 duration-200">
                         <header className="p-4 border-b border-border-thin bg-surface/30 flex justify-between items-center">
                             <div className="flex items-center gap-2">
-                                <h4 className="text-[10px] font-bold text-text-main uppercase tracking-widest">Notificaciones</h4>
+                                <h4 className="text-[10px] font-semibold text-text-main uppercase tracking-widest">Notificaciones</h4>
                                 {unreadCount > 0 && (
-                                    <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter">
+                                    <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-tighter">
                                         {unreadCount} Nuevas
                                     </span>
                                 )}
@@ -56,7 +56,7 @@ const NotificationBell = () => {
                             {unreadCount > 0 && (
                                 <button 
                                     onClick={markAllAsRead}
-                                    className="text-[9px] font-bold text-brand hover:underline uppercase tracking-wider"
+                                    className="text-[9px] font-semibold text-brand hover:underline uppercase tracking-wider"
                                 >
                                     Marcar todo leído
                                 </button>
@@ -67,7 +67,7 @@ const NotificationBell = () => {
                             {notifications.length === 0 ? (
                                 <div className="p-10 text-center space-y-2">
                                     <Bell size={24} className="mx-auto text-text-dim opacity-20" />
-                                    <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Todo en orden</p>
+                                    <p className="text-[10px] text-text-dim uppercase font-semibold tracking-widest">Todo en orden</p>
                                 </div>
                             ) : (
                                 notifications.map((n) => (
@@ -82,13 +82,13 @@ const NotificationBell = () => {
                                             </div>
                                             <div className="space-y-1 flex-1">
                                                 <div className="flex justify-between items-start">
-                                                    <h5 className="text-[11px] font-bold text-text-main leading-tight">{n.titulo}</h5>
+                                                    <h5 className="text-[11px] font-semibold text-text-main leading-tight">{n.titulo}</h5>
                                                     <span className="text-[8px] font-mono text-text-dim">{new Date(n.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                                 </div>
                                                 <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2">{n.mensaje}</p>
                                                 {n.url_accion && (
                                                     <span 
-                                                        className="inline-flex items-center gap-1 text-[9px] font-bold text-text-main uppercase mt-2 hover:underline cursor-pointer"
+                                                        className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-2 hover:underline cursor-pointer"
                                                     >
                                                         Ir al detalle <ExternalLink size={10} />
                                                     </span>
@@ -106,7 +106,7 @@ const NotificationBell = () => {
                         <footer className="p-3 border-t border-border-thin bg-surface/30 text-center">
                             <button 
                                 onClick={() => { setIsOpen(false); navigate('/notificaciones'); }}
-                                className="text-[9px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors"
+                                className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors"
                             >
                                 Ver todo el historial
                             </button>

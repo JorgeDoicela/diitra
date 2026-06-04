@@ -166,7 +166,7 @@ const ArbitrajeProyecto: React.FC = () => {
             <main className="flex-1 bg-bg-deep flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-text-dim">
                     <Loader2 size={24} className="animate-spin" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Cargando arbitraje...</span>
+                    <span className="text-xs font-semibold uppercase tracking-widest">Cargando arbitraje...</span>
                 </div>
             </main>
         );
@@ -179,7 +179,7 @@ const ArbitrajeProyecto: React.FC = () => {
                     <ArrowLeft size={14} /> Volver
                 </button>
                 <div className="empty-state py-20">
-                    <p className="text-text-dim font-bold">Proyecto no encontrado.</p>
+                    <p className="text-text-dim font-semibold">Proyecto no encontrado.</p>
                 </div>
             </main>
         );
@@ -193,7 +193,7 @@ const ArbitrajeProyecto: React.FC = () => {
             <div className="mb-8 animate-fade-up">
                 <button
                     onClick={() => navigate('/arbitraje')}
-                    className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest transition-colors mb-6"
+                    className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-semibold uppercase tracking-widest transition-colors mb-6"
                 >
                     <ArrowLeft size={14} /> Volver al Panel de Arbitraje
                 </button>
@@ -204,7 +204,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             <Gavel size={12} />
                             <span>Arbitraje · {arbitraje.convocatoria ?? 'Sin convocatoria'}</span>
                         </div>
-                        <h2 className="text-3xl font-bold text-text-main tracking-tighter leading-tight mb-2 max-w-2xl">
+                        <h2 className="text-3xl font-semibold text-text-main tracking-tighter leading-tight mb-2 max-w-2xl">
                             {arbitraje.proyecto_titulo}
                         </h2>
                         <div className="flex flex-wrap items-center gap-3">
@@ -272,7 +272,7 @@ const ArbitrajeProyecto: React.FC = () => {
                         <div className="bento-card static p-4 border-error/40 flex items-start gap-4 animate-fade-up">
                             <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
                             <div>
-                                <p className="text-sm font-bold text-text-main">Caso de Desempate Detectado</p>
+                                <p className="text-sm font-semibold text-text-main">Caso de Desempate Detectado</p>
                                 <p className="text-xs text-text-dim mt-1">
                                     Los árbitros presentan dictámenes contradictorios. Puede asignar un árbitro dirimente adicional
                                     o emitir una resolución fundada del Director de Investigación.
@@ -292,7 +292,7 @@ const ArbitrajeProyecto: React.FC = () => {
                     {/* Columna 1: Árbitros Internos */}
                     <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
-                            <span className="text-xs font-bold text-text-main flex items-center gap-2">
+                            <span className="text-xs font-semibold text-text-main flex items-center gap-2">
                                 <Users size={14} className="text-text-dim" /> Árbitros Internos
                             </span>
                             <span className="text-[10px] font-mono bg-bg-deep px-2 py-0.5 rounded-md border border-border-thin text-text-dim">
@@ -327,7 +327,7 @@ const ArbitrajeProyecto: React.FC = () => {
                     {/* Columna 2: Árbitros Externos */}
                     <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
-                            <span className="text-xs font-bold text-text-main flex items-center gap-2">
+                            <span className="text-xs font-semibold text-text-main flex items-center gap-2">
                                 <Building size={14} className="text-text-dim" /> Árbitros Externos (CACES)
                             </span>
                             <span className="text-[10px] font-mono bg-bg-deep px-2 py-0.5 rounded-md border border-border-thin text-text-dim">
@@ -370,7 +370,7 @@ const ArbitrajeProyecto: React.FC = () => {
                     <div className="p-4 rounded-xl border border-warning/30 bg-warning/5 flex items-start gap-3 animate-fade-in">
                         <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-text-main">Cumplimiento Normativo CACES (Indicador I5)</p>
+                            <p className="text-xs font-semibold text-text-main">Cumplimiento Normativo CACES (Indicador I5)</p>
                             <p className="text-[11px] text-text-dim">
                                 {arbitraje.total_arbitros < 2 && "• Se recomienda un mínimo de 2 árbitros evaluadores por propuesta académica para un panel completo. "}
                                 {externos.length === 0 && "• Es obligatorio contar con al menos 1 árbitro externo a la institución para la evaluación de proyectos."}
@@ -427,7 +427,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                 <CheckCircle2 size={12} className="text-brand" />
                                 <span className="text-[13px] font-semibold text-text-main">Progreso Evaluaciones</span>
                             </div>
-                            <span className="font-mono text-[13px] font-bold text-brand">
+                            <span className="font-mono text-[13px] font-semibold text-brand">
                                 {Math.round((arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100)}%
                             </span>
                         </div>
@@ -445,7 +445,7 @@ const ArbitrajeProyecto: React.FC = () => {
                     <div className="flex items-center justify-between pb-2 border-b border-border-thin">
                         <div className="section-label">
                             <Scale size={12} className="text-brand" />
-                            <span className="text-[13px] font-bold text-text-main uppercase tracking-tight">Prórrogas del Proyecto</span>
+                            <span className="text-[13px] font-semibold text-text-main uppercase tracking-tight">Prórrogas del Proyecto</span>
                         </div>
                         {savingSettings && <Loader2 size={12} className="animate-spin text-text-dim" />}
                     </div>
@@ -471,7 +471,7 @@ const ArbitrajeProyecto: React.FC = () => {
 
                         {/* Input number */}
                         <div className="space-y-2 pt-1">
-                            <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest">
                                 Días de prórroga
                             </label>
                             <div className="flex gap-2 items-center">
@@ -487,7 +487,7 @@ const ArbitrajeProyecto: React.FC = () => {
                                 {projectAutoExtendDeadlines && !arbitraje.arbitraje_cerrado && (
                                     <button
                                         onClick={() => handleSaveProjectSettings(projectAutoExtendDeadlines, projectAutoExtendDays)}
-                                        className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-bold"
+                                        className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-semibold"
                                         disabled={savingSettings}
                                     >
                                         Guardar
@@ -538,12 +538,12 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void; onEx
     return (
         <div className="bento-card static p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200">
             <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avStyle.bg} border text-xs font-bold flex items-center justify-center shrink-0`}>
+                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avStyle.bg} border text-xs font-semibold flex items-center justify-center shrink-0`}>
                     {review.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-bold text-sm text-text-main">{formatNombre(review.revisor_nombre)}</span>
+                        <span className="font-semibold text-sm text-text-main">{formatNombre(review.revisor_nombre)}</span>
                         {review.es_externo && (
                             <span className="badge-vercel badge-vercel-info text-[9px]">PAR EXTERNO</span>
                         )}
@@ -557,7 +557,7 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void; onEx
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-[10px] text-text-dim font-medium">
                         {!review.es_externo && review.revisor_carrera && (
-                            <span className="flex items-center gap-1 bg-surface border border-border-thin px-1 py-0.5 rounded text-text-main font-bold">
+                            <span className="flex items-center gap-1 bg-surface border border-border-thin px-1 py-0.5 rounded text-text-main font-semibold">
                                 <GraduationCap size={10} /> {formatNombre(review.revisor_carrera)}
                             </span>
                         )}
@@ -577,10 +577,10 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void; onEx
             <div className="flex items-center gap-3 shrink-0">
                 {review.puntaje_total != null && (
                     <div className="text-center">
-                        <p className={`text-xl font-bold leading-none ${review.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                        <p className={`text-xl font-semibold leading-none ${review.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
                             {review.puntaje_total.toFixed(1)}
                         </p>
-                        <p className="text-[9px] text-text-dim uppercase tracking-widest font-bold">/100</p>
+                        <p className="text-[9px] text-text-dim uppercase tracking-widest font-semibold">/100</p>
                     </div>
                 )}
                 {review.estado === 'Pendiente' && (
@@ -645,7 +645,7 @@ const ExtenderPlazoModal: React.FC<ExtenderPlazoModalProps> = ({ review, onClose
                 <div className="modal-header border-b border-border-thin pb-3">
                     <div className="flex items-center gap-2">
                         <CalendarDays size={18} className="text-brand" />
-                        <h3 className="text-base font-bold tracking-tight text-text-main uppercase">
+                        <h3 className="text-base font-semibold tracking-tight text-text-main uppercase">
                             Extender Plazo de Evaluación
                         </h3>
                     </div>
@@ -677,7 +677,7 @@ const ExtenderPlazoModal: React.FC<ExtenderPlazoModalProps> = ({ review, onClose
                     </div>
 
                     <div className="space-y-1">
-                        <label className="block text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">
+                        <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                             Nueva fecha límite *
                         </label>
                         <input

@@ -260,7 +260,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
         <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <span className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
+                <span className="text-[10px] font-semibold text-text-main uppercase tracking-widest flex items-center gap-1.5">
                     <Users size={12} className="text-brand" /> Destinatarios
                 </span>
                 <span className="text-[9px] text-text-dim">
@@ -275,7 +275,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                         key={m}
                         type="button"
                         onClick={() => setMode(m)}
-                        className={`flex-1 text-[9px] font-bold uppercase tracking-wider py-1.5 rounded-md transition-all cursor-pointer ${
+                        className={`flex-1 text-[9px] font-semibold uppercase tracking-wider py-1.5 rounded-md transition-all cursor-pointer ${
                             mode === m
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
@@ -291,7 +291,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                 <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div className="space-y-1">
-                            <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Tipo</label>
+                            <label className="text-[8px] font-semibold text-text-dim uppercase tracking-wider">Tipo</label>
                             <select
                                 className="input-vercel !py-1.5 text-xs w-full"
                                 value={filterType}
@@ -307,7 +307,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                             </select>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">Carrera</label>
+                            <label className="text-[8px] font-semibold text-text-dim uppercase tracking-wider">Carrera</label>
                             <select
                                 className="input-vercel !py-1.5 text-xs w-full"
                                 value={filterCarreraId}
@@ -326,7 +326,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
 
                     {/* Buscador y Selector 2-en-1 */}
                     <div className="space-y-1 relative" ref={containerRef}>
-                        <label className="text-[8px] font-bold text-text-dim uppercase tracking-wider">
+                        <label className="text-[8px] font-semibold text-text-dim uppercase tracking-wider">
                             Buscar y seleccionar persona
                         </label>
                         <div className="relative">
@@ -387,7 +387,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                                                         : 'hover:bg-brand/5'
                                                 }`}
                                             >
-                                                <div className="w-6 h-6 rounded-full bg-brand/15 flex items-center justify-center text-[9px] font-bold text-brand shrink-0">
+                                                <div className="w-6 h-6 rounded-full bg-brand/15 flex items-center justify-center text-[9px] font-semibold text-brand shrink-0">
                                                     {p.nombre.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="min-w-0 flex-1">
@@ -397,7 +397,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${TYPE_BADGE[p.tipo] ?? 'bg-surface text-text-dim'}`}>
+                                                    <span className={`text-[8px] font-semibold px-1.5 py-0.5 rounded-full ${TYPE_BADGE[p.tipo] ?? 'bg-surface text-text-dim'}`}>
                                                         {USER_TYPES.find(t => t.value === p.tipo)?.label ?? p.tipo}
                                                     </span>
                                                     {alreadyAdded && <CheckCircle2 size={12} className="text-success" />}
@@ -419,7 +419,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                                     className="flex items-center gap-1.5 px-2 py-1 rounded-lg border border-border-thin bg-surface text-xs max-w-full"
                                     title={p.email || 'Correo desde cuenta DIITRA'}
                                 >
-                                    <span className={`text-[8px] font-bold px-1 rounded-full ${TYPE_BADGE[p.tipo] ?? 'bg-surface text-text-dim'}`}>
+                                    <span className={`text-[8px] font-semibold px-1 rounded-full ${TYPE_BADGE[p.tipo] ?? 'bg-surface text-text-dim'}`}>
                                         {p.tipo.charAt(0)}
                                     </span>
                                     <span className="font-medium text-text-main truncate max-w-[130px]">{p.nombre}</span>
@@ -456,7 +456,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider flex items-center gap-1">
+                            <label className="text-[9px] font-semibold text-text-dim uppercase tracking-wider flex items-center gap-1">
                                 <UserCheck size={10} /> Por rol
                             </label>
                             <select
@@ -471,7 +471,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                             </select>
                         </div>
                         <div className="space-y-1.5">
-                            <label className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Por carrera</label>
+                            <label className="text-[9px] font-semibold text-text-dim uppercase tracking-wider">Por carrera</label>
                             <select
                                 className="input-vercel !py-2 text-xs"
                                 value={broadcastCarreraId}
@@ -1114,7 +1114,7 @@ const EmailEnginePage: React.FC = () => {
                             <Mail size={10} strokeWidth={2} />
                             <span>Comunicaciones de Investigación</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                        <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
                             Correos DIITRA
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
@@ -1126,7 +1126,7 @@ const EmailEnginePage: React.FC = () => {
                     <div className="flex border border-border-thin bg-surface rounded-lg p-1 select-none">
                         <button
                             onClick={() => setActiveTab('send')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'send'
+                            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'send'
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
                                 }`}
@@ -1136,7 +1136,7 @@ const EmailEnginePage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('templates')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'templates'
+                            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'templates'
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
                                 }`}
@@ -1146,7 +1146,7 @@ const EmailEnginePage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveTab('history')}
-                            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'history'
+                            className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-wider rounded-md transition-all cursor-pointer ${activeTab === 'history'
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
                                 }`}
@@ -1171,7 +1171,7 @@ const EmailEnginePage: React.FC = () => {
                             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                                 {/* Form Panel */}
                                 <div className="bento-card static p-6 space-y-6">
-                                    <h3 className="text-base font-bold text-text-main uppercase tracking-tight pb-3 border-b border-border-thin flex items-center gap-2">
+                                    <h3 className="text-base font-semibold text-text-main uppercase tracking-tight pb-3 border-b border-border-thin flex items-center gap-2">
                                         <Send size={16} className="text-brand" /> Asistente de Envío
                                     </h3>
 

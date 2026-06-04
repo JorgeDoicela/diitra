@@ -290,7 +290,7 @@ const EvaluacionPage: React.FC = () => {
                         }
                     </div>
 
-                    <h2 className="text-3xl font-black tracking-tighter text-text-main uppercase mb-2">
+                    <h2 className="text-3xl font-semibold tracking-tighter text-text-main uppercase mb-2">
                         Evaluación Registrada
                     </h2>
                     <p className="text-text-dim text-sm mb-4">
@@ -300,13 +300,13 @@ const EvaluacionPage: React.FC = () => {
                     <div className="my-6 p-4 bg-bg-deep rounded-xl border border-border-thin space-y-3">
                         <div className="flex justify-between items-center border-b border-border-thin pb-2">
                             <span className="text-xs text-text-dim">Dictamen Emitido:</span>
-                            <span className="text-sm font-bold uppercase tracking-wider font-mono" style={{ color: cfg.color }}>
+                            <span className="text-sm font-semibold uppercase tracking-wider font-mono" style={{ color: cfg.color }}>
                                 {cfg.label}
                             </span>
                         </div>
                         <div className="flex justify-between items-center border-b border-border-thin pb-2">
                             <span className="text-xs text-text-dim">Puntaje Final:</span>
-                            <span className="text-sm font-bold text-text-main font-mono">
+                            <span className="text-sm font-semibold text-text-main font-mono">
                                 {puntajeTotal.toFixed(1)} / 100
                             </span>
                         </div>
@@ -319,12 +319,12 @@ const EvaluacionPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-2.5 mb-8">
-                        <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider text-left">Resumen de Calificaciones</p>
+                        <p className="text-[10px] font-semibold text-text-dim uppercase tracking-wider text-left">Resumen de Calificaciones</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-40 overflow-y-auto custom-scrollbar p-1">
                             {detalles.map(d => (
                                 <div key={d.idCriterio} className="flex justify-between items-center p-2.5 bg-surface-hover/30 border border-border-thin rounded-lg text-left">
                                     <span className="text-[11px] text-text-dim truncate pr-2 max-w-[125px]">{d.criterio}</span>
-                                    <span className="text-[11px] font-bold text-text-main font-mono">{d.puntaje} pts</span>
+                                    <span className="text-[11px] font-semibold text-text-main font-mono">{d.puntaje} pts</span>
                                 </div>
                             ))}
                         </div>
@@ -347,7 +347,7 @@ const EvaluacionPage: React.FC = () => {
             <main className="flex-1 bg-bg-deep flex items-center justify-center">
                 <div className="flex flex-col items-center gap-3 text-text-dim">
                     <Loader2 size={24} className="animate-spin text-brand" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Cargando rúbrica...</span>
+                    <span className="text-xs font-semibold uppercase tracking-widest">Cargando rúbrica...</span>
                 </div>
             </main>
         );
@@ -361,7 +361,7 @@ const EvaluacionPage: React.FC = () => {
                 </button>
                 <div className="empty-state py-20">
                     <AlertCircle size={32} className="text-error mb-4" />
-                    <p className="text-error font-bold uppercase tracking-widest text-sm">
+                    <p className="text-error font-semibold uppercase tracking-widest text-sm">
                         {error || 'Rúbrica no disponible'}
                     </p>
                 </div>
@@ -379,7 +379,7 @@ const EvaluacionPage: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setActiveTab('document')}
-                    className={`flex-1 py-3.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 transition-all ${activeTab === 'document'
+                    className={`flex-1 py-3.5 text-xs font-semibold uppercase tracking-wider text-center border-b-2 transition-all ${activeTab === 'document'
                         ? 'border-brand text-brand bg-brand/5'
                         : 'border-transparent text-text-dim'
                         }`}
@@ -389,7 +389,7 @@ const EvaluacionPage: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setActiveTab('rubric')}
-                    className={`flex-1 py-3.5 text-xs font-extrabold uppercase tracking-wider text-center border-b-2 transition-all ${activeTab === 'rubric'
+                    className={`flex-1 py-3.5 text-xs font-semibold uppercase tracking-wider text-center border-b-2 transition-all ${activeTab === 'rubric'
                         ? 'border-brand text-brand bg-brand/5'
                         : 'border-transparent text-text-dim'
                         }`}
@@ -415,7 +415,7 @@ const EvaluacionPage: React.FC = () => {
                                 <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest block">
                                     Mis Revisiones / #{rubrica.id_rubrica}
                                 </span>
-                                <span className="text-sm font-black text-text-main uppercase tracking-tighter">Protocolo de Investigación Original</span>
+                                <span className="text-sm font-semibold text-text-main uppercase tracking-tighter">Protocolo de Investigación Original</span>
                             </div>
                         </div>
 
@@ -442,14 +442,14 @@ const EvaluacionPage: React.FC = () => {
                     <div className="flex-1 p-6 bg-bg-deep overflow-y-auto flex justify-center">
                         <article className="w-full bg-surface border border-border-thin rounded-2xl shadow-sm p-8 md:p-10 space-y-8 min-h-[90vh] text-text-main overflow-y-auto">
                             <div className="border-b border-border-thin pb-5 text-center space-y-1">
-                                <p className="text-[10px] font-extrabold uppercase tracking-widest text-text-dim">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">
                                     Instituto Superior Tecnológico Traversari
                                 </p>
                                 <p className="text-[11px] font-semibold text-text-dim">
                                     Dirección de Investigación y Desarrollo Tecnológico (DIITRA)
                                 </p>
                                 <div className="mt-2 flex flex-col items-center justify-center gap-1.5">
-                                    <div className="badge-vercel badge-vercel-info text-[10px] font-extrabold uppercase tracking-wider">
+                                    <div className="badge-vercel badge-vercel-info text-[10px] font-semibold uppercase tracking-wider">
                                         {rubrica.es_doble_ciego ? 'Arbitraje Doble Ciego' : 'Arbitraje Estándar'}
                                     </div>
                                     {rubrica.es_doble_ciego && (
@@ -593,13 +593,13 @@ const EvaluacionPage: React.FC = () => {
                                 <span className="text-[9px] font-mono text-text-dim uppercase tracking-wider block">
                                     {rubrica.nombre_rubrica}
                                 </span>
-                                <h3 className="text-base font-extrabold tracking-tight text-text-main uppercase">
+                                <h3 className="text-base font-semibold tracking-tight text-text-main uppercase">
                                     Evaluación Técnica
                                 </h3>
                             </div>
 
                             <div className="text-right flex items-center gap-3">
-                                <div className={`badge-vercel ${dictamenPreview === 'Aprobado' ? 'badge-vercel-success' : 'badge-vercel-error'} !px-3 !py-1.5 text-[10px] font-bold uppercase tracking-wider`}>
+                                <div className={`badge-vercel ${dictamenPreview === 'Aprobado' ? 'badge-vercel-success' : 'badge-vercel-error'} !px-3 !py-1.5 text-[10px] font-semibold uppercase tracking-wider`}>
                                     {dictamenPreview === 'Aprobado'
                                         ? <CheckCircle2 size={13} />
                                         : <XCircle size={13} />
@@ -607,8 +607,8 @@ const EvaluacionPage: React.FC = () => {
                                     {dictamenCfg.label}
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-[9px] text-text-dim font-bold">
-                                        <span className="text-text-main text-2xl font-mono font-black">{animatedTotalScore.toFixed(1)}</span>/100
+                                    <p className="text-[9px] text-text-dim font-semibold">
+                                        <span className="text-text-main text-2xl font-mono font-semibold">{animatedTotalScore.toFixed(1)}</span>/100
                                     </p>
                                     <p className="text-[8px] text-text-dim">Mín: {minimo}</p>
                                 </div>
@@ -624,7 +624,7 @@ const EvaluacionPage: React.FC = () => {
                                 }}
                             />
                         </div>
-                        <div className="mt-2.5 flex items-center justify-between text-[10px] text-text-dim font-bold uppercase tracking-wider">
+                        <div className="mt-2.5 flex items-center justify-between text-[10px] text-text-dim font-semibold uppercase tracking-wider">
                             <span className="flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-brand" />
                                 Criterios Evaluados: {criteriosEvaluadosCount} / {detalles.length}
@@ -640,7 +640,7 @@ const EvaluacionPage: React.FC = () => {
 
                             {/* Banner de Modo Lectura */}
                             {isReadOnly && (
-                                <div className="bg-info/5 border border-info/20 text-info rounded-lg p-3 text-[10px] font-bold tracking-wider uppercase flex items-center gap-2 mb-6 animate-fade-in">
+                                <div className="bg-info/5 border border-info/20 text-info rounded-lg p-3 text-[10px] font-semibold tracking-wider uppercase flex items-center gap-2 mb-6 animate-fade-in">
                                     <Lock size={14} className="shrink-0" />
                                     <span>EVALUACIÓN REGISTRADA — MODO SÓLO LECTURA</span>
                                 </div>
@@ -667,7 +667,7 @@ const EvaluacionPage: React.FC = () => {
                             <div className="divider-vercel" />
 
                             <div className="space-y-2.5">
-                                <label className="section-label text-text-dim text-[10px] uppercase font-bold tracking-wider flex items-center gap-1.5">
+                                <label className="section-label text-text-dim text-[10px] uppercase font-semibold tracking-wider flex items-center gap-1.5">
                                     <MessageSquare size={11} /> Conclusión General del Árbitro *
                                 </label>
                                 <textarea
@@ -694,8 +694,8 @@ const EvaluacionPage: React.FC = () => {
                         <div className="sticky bottom-0 bg-bg-deep border-t border-border-thin px-6 py-4 flex items-center justify-between z-20">
                             <div className="flex items-center gap-3">
                                 <div>
-                                    <span className="text-[8px] text-text-dim uppercase tracking-widest font-bold block">Puntaje Total</span>
-                                    <span className="text-xl font-mono font-black text-text-main">{animatedTotalScore.toFixed(1)}</span>
+                                    <span className="text-[8px] text-text-dim uppercase tracking-widest font-semibold block">Puntaje Total</span>
+                                    <span className="text-xl font-mono font-semibold text-text-main">{animatedTotalScore.toFixed(1)}</span>
                                     <span className="text-text-dim text-xs">/100</span>
                                 </div>
                                 <div
@@ -703,21 +703,21 @@ const EvaluacionPage: React.FC = () => {
                                     style={{ background: 'var(--color-border-thin)' }}
                                 />
                                 <div>
-                                    <span className="text-[8px] text-text-dim uppercase tracking-widest font-bold block">Dictamen</span>
-                                    <span className="text-xs font-black" style={{ color: dictamenCfg.color }}>
+                                    <span className="text-[8px] text-text-dim uppercase tracking-widest font-semibold block">Dictamen</span>
+                                    <span className="text-xs font-semibold" style={{ color: dictamenCfg.color }}>
                                         {dictamenCfg.label}
                                     </span>
                                 </div>
                             </div>
 
                             {isReadOnly ? (
-                                <div className="badge-vercel badge-vercel-success !text-[10px] !py-2 flex items-center gap-1 animate-fade-in font-bold">
+                                <div className="badge-vercel badge-vercel-success !text-[10px] !py-2 flex items-center gap-1 animate-fade-in font-semibold">
                                     <ShieldCheck size={12} className="text-success" />
                                     <span>Registrada</span>
                                 </div>
                             ) : (
                                 <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1.5 text-success font-black text-[10px] uppercase tracking-wide bg-success/5 border border-success/15 px-2.5 py-1.5 rounded-lg select-none">
+                                    <div className="flex items-center gap-1.5 text-success font-semibold text-[10px] uppercase tracking-wide bg-success/5 border border-success/15 px-2.5 py-1.5 rounded-lg select-none">
                                         <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                                         Borrador Guardado
                                     </div>
@@ -744,7 +744,7 @@ const EvaluacionPage: React.FC = () => {
                 <button
                     type="button"
                     onClick={() => setActiveTab(activeTab === 'document' ? 'rubric' : 'document')}
-                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-brand text-white shadow-2xl hover:scale-105 active:scale-95 transition-all font-bold uppercase tracking-wider text-xs border border-white/10"
+                    className="flex items-center gap-2 px-5 py-3 rounded-full bg-brand text-white shadow-2xl hover:scale-105 active:scale-95 transition-all font-semibold uppercase tracking-wider text-xs border border-white/10"
                 >
                     {activeTab === 'document' ? (
                         <>
@@ -807,11 +807,11 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
         <div className="bento-card static p-5 space-y-4 hover:border-border-hover transition-colors">
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                    <span className="w-7 h-7 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-black text-text-dim shrink-0">
+                    <span className="w-7 h-7 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-semibold text-text-dim shrink-0">
                         {numero}
                     </span>
                     <div>
-                        <h4 className="text-sm font-bold text-text-main leading-tight">{detalle.criterio}</h4>
+                        <h4 className="text-sm font-semibold text-text-main leading-tight">{detalle.criterio}</h4>
                         {criterioInfo?.descripcion && (
                             <p className="text-[10px] text-text-dim mt-1 leading-relaxed">{criterioInfo.descripcion}</p>
                         )}
@@ -870,8 +870,8 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
 
             <div className="flex flex-wrap gap-2 items-center justify-between mt-1">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-[9px] text-text-dim font-bold uppercase tracking-wider">Nivel CACES:</span>
-                    <span className={`badge-vercel text-[9px] font-bold px-1.5 py-0.5 rounded transition-all duration-300 ${cacesInfo.badgeClass}`}>
+                    <span className="text-[9px] text-text-dim font-semibold uppercase tracking-wider">Nivel CACES:</span>
+                    <span className={`badge-vercel text-[9px] font-semibold px-1.5 py-0.5 rounded transition-all duration-300 ${cacesInfo.badgeClass}`}>
                         {cacesInfo.label}
                     </span>
                 </div>
@@ -886,7 +886,7 @@ const CriterioCard: React.FC<CriterioCardProps> = ({
                                 type="button"
                                 disabled={disabled}
                                 onClick={() => onPuntajeChange(targetScore)}
-                                className={`bg-surface border border-border-thin text-text-dim font-sans text-[10px] font-bold uppercase tracking-wider py-1 px-2.5 rounded transition-all cursor-pointer inline-flex items-center gap-1 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-text-main hover:enabled:bg-surface-hover hover:enabled:text-text-main ${isSelected ? 'bg-text-main text-bg-deep border-text-main' : ''}`}
+                                className={`bg-surface border border-border-thin text-text-dim font-sans text-[10px] font-semibold uppercase tracking-wider py-1 px-2.5 rounded transition-all cursor-pointer inline-flex items-center gap-1 whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-text-main hover:enabled:bg-surface-hover hover:enabled:text-text-main ${isSelected ? 'bg-text-main text-bg-deep border-text-main' : ''}`}
                             >
                                 {isSelected && <span className="mr-0.5 font-bold">✓</span>}
                                 {p.label.split(' ')[0]}

@@ -54,7 +54,7 @@ const MagicResend = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'd
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">
                             Recuperar Acceso
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium uppercase tracking-wider">
@@ -65,7 +65,7 @@ const MagicResend = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'd
 
                 {/* Contexto de uso */}
                 <div className="p-3 rounded-xl border border-border-thin bg-surface/50 text-[10px] text-text-dim leading-relaxed space-y-1">
-                    <p className="font-bold uppercase tracking-wider text-text-main">¿Cómo funciona?</p>
+                    <p className="font-semibold uppercase tracking-wider text-text-main">¿Cómo funciona?</p>
                     <p>
                         Si no recibiste tu enlace de acceso para evaluador externo, o si tu enlace original 
                         se perdió, ingresa tu correo registrado a continuación. Si tienes un arbitraje 
@@ -86,7 +86,7 @@ const MagicResend = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'd
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim ml-1" htmlFor="email">
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1" htmlFor="email">
                                 Correo Electrónico
                             </label>
                             <input

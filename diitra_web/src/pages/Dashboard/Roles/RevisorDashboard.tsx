@@ -43,7 +43,7 @@ export const RevisorDashboard: React.FC = () => {
                             className="p-3 rounded-md border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-border-hover transition-all"
                         >
                             <div>
-                                <p className="text-[10px] font-bold text-text-main uppercase tracking-tighter">Propuesta #2024-0012</p>
+                                <p className="text-[10px] font-semibold text-text-main uppercase tracking-tighter">Propuesta #2024-0012</p>
                                 <p className="text-[9px] text-text-dim mt-1">Límite: 24 May 2024</p>
                             </div>
                             <ExternalLink size={12} className="text-text-dim group-hover:text-text-main transition-colors" />
@@ -87,7 +87,7 @@ export const RevisorDashboard: React.FC = () => {
                              <Shield size={24} />
                          </div>
                         <div>
-                            <p className="text-[11px] font-bold text-text-main uppercase tracking-widest">Protocolo Doble Ciego Activo</p>
+                            <p className="text-[11px] font-semibold text-text-main uppercase tracking-widest">Protocolo Doble Ciego Activo</p>
                             <p className="text-[10px] text-text-dim mt-1 max-w-xl">
                                 Su identidad y la de los autores se mantiene encriptada. Todas las comunicaciones se realizan a través de la plataforma DIITRA.
                             </p>

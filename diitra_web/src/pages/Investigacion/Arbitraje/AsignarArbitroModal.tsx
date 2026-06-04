@@ -100,7 +100,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                 {/* Header */}
                 <div className="modal-header border-b border-border-thin pb-3">
                     <div>
-                        <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
+                        <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">
                             Asignar Árbitro
                         </h3>
                         <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest mt-0.5 line-clamp-1">
@@ -138,7 +138,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                             onClick={() => setFiltroTipo(tab.id as any)}
                                             className={`flex-1 text-center py-1.5 text-xs font-semibold rounded-md transition-all ${
                                                 active
-                                                    ? 'bg-surface text-text-main border border-border-thin shadow-sm font-bold'
+                                                    ? 'bg-surface text-text-main border border-border-thin shadow-sm font-semibold'
                                                     : 'text-text-dim border border-transparent hover:text-text-main'
                                             }`}
                                         >
@@ -170,7 +170,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                         <Loader2 size={14} className="animate-spin text-text-main" /> Buscando...
                                     </div>
                                 ) : revisores.length === 0 ? (
-                                    <div className="text-center py-12 text-text-dim text-xs font-bold uppercase tracking-widest">
+                                    <div className="text-center py-12 text-text-dim text-xs font-semibold uppercase tracking-widest">
                                         Sin resultados
                                     </div>
                                 ) : (
@@ -193,9 +193,9 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                     <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
                                                         isSelected ? 'border-text-main bg-text-main text-bg-deep' : 'border-border-thin'
                                                     }`}>
-                                                        {isSelected && <span className="text-[10px] font-bold">✓</span>}
+                                                        {isSelected && <span className="text-[10px] font-semibold">✓</span>}
                                                     </div>
-                                                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-bold flex items-center justify-center shrink-0`}>
+                                                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${avStyle.bg} border text-[10px] font-semibold flex items-center justify-center shrink-0`}>
                                                         {rev.nombre_completo.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                     </div>
                                                     <div className="truncate">
@@ -208,12 +208,12 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                 </div>
                                                 <div className="text-right shrink-0 flex items-center gap-1.5">
                                                     {rev.es_externo && (
-                                                        <span className="text-[8px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-1 py-0.5 rounded font-bold uppercase tracking-wider">
+                                                        <span className="text-[8px] bg-blue-500/10 text-blue-500 border border-blue-500/20 px-1 py-0.5 rounded font-semibold uppercase tracking-wider">
                                                             Ext
                                                         </span>
                                                     )}
                                                     {rev.revisiones_activas > 0 && (
-                                                        <span className="text-[8px] text-warning font-bold bg-warning-subtle border border-warning/20 px-1 py-0.5 rounded">
+                                                        <span className="text-[8px] text-warning font-semibold bg-warning-subtle border border-warning/20 px-1 py-0.5 rounded">
                                                             {rev.revisiones_activas} act.
                                                         </span>
                                                     )}
@@ -234,7 +234,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                 <div className="space-y-2.5 p-3.5 bg-surface rounded-lg border border-border-thin shadow-sm">
                                     <div className="flex items-center gap-2 text-text-main border-b border-border-thin/50 pb-2 mb-1">
                                         <UserCheck size={13} />
-                                        <span className="text-xs font-bold uppercase tracking-wider">Árbitros Seleccionados ({revisoresSeleccionados.length})</span>
+                                        <span className="text-xs font-semibold uppercase tracking-wider">Árbitros Seleccionados ({revisoresSeleccionados.length})</span>
                                     </div>
                                     <div className="space-y-2 max-h-[170px] overflow-y-auto custom-scrollbar pr-1">
                                         {revisoresSeleccionados.map((rev) => (
@@ -249,7 +249,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                 <div className="min-w-0 pr-2 flex-1">
                                                     <div className="flex items-center gap-2 mb-0.5">
                                                         <span className="font-semibold text-text-main truncate leading-tight">{formatNombre(rev.nombre_completo)}</span>
-                                                        <span className={`text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 border ${
+                                                        <span className={`text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded shrink-0 border ${
                                                             rev.es_externo
                                                                 ? 'bg-blue-500/10 text-blue-500 border-blue-500/20'
                                                                 : 'bg-purple-500/10 text-purple-500 border-purple-500/20'
@@ -301,7 +301,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                 onChange={(e) => setEsDobleCiego(e.target.checked)}
                                             />
                                             <div>
-                                                <p className="text-xs font-bold text-text-main">Doble Ciego</p>
+                                                <p className="text-xs font-semibold text-text-main">Doble Ciego</p>
                                                 <p className="text-[10px] text-text-dim">Identidades ocultadas (recomendado CACES)</p>
                                             </div>
                                         </label>
@@ -311,7 +311,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                         <div className="flex items-start gap-2 p-2.5 rounded-lg border border-warning/30 bg-warning/5 animate-fade-in">
                                             <AlertCircle size={14} className="text-warning shrink-0 mt-0.5" />
                                             <p className="text-[9px] text-text-dim leading-relaxed">
-                                                <span className="font-bold text-text-main">Advertencia:</span> La modalidad sin ciego no satisface los indicadores CACES.
+                                                <span className="font-semibold text-text-main">Advertencia:</span> La modalidad sin ciego no satisface los indicadores CACES.
                                             </p>
                                         </div>
                                     )}
@@ -319,7 +319,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                     <div className="space-y-3 pt-2 border-t border-border-thin/40">
                                         <div className="flex items-center justify-between">
                                             <div>
-                                                <p className="text-xs font-bold text-text-main">Auto-extender plazos</p>
+                                                <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
                                                 <p className="text-[10px] text-text-dim">Prórroga automática al expirar</p>
                                             </div>
                                             <input
@@ -331,7 +331,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                         </div>
                                         {autoExtendDeadlines && (
                                             <div className="flex items-center justify-between animate-fade-in">
-                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Días de prórroga</span>
+                                                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">Días de prórroga</span>
                                                 <input
                                                     type="number"
                                                     min={1}
@@ -348,7 +348,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                         ) : (
                             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-text-dim bg-surface/20 border border-dashed border-border-thin rounded-xl my-auto">
                                 <UserCheck size={32} className="opacity-30 mb-2.5" />
-                                <p className="text-xs font-bold uppercase tracking-wider text-text-main">Configuración de Evaluación</p>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-text-main">Configuración de Evaluación</p>
                                 <p className="text-[10px] mt-1 max-w-[200px] leading-relaxed">
                                     Selecciona uno o más evaluadores disponibles del listado de la izquierda para comenzar a configurar su fecha límite y modalidad.
                                 </p>
@@ -363,7 +363,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                     <button
                         onClick={handleAsignar}
                         disabled={revisoresSeleccionados.length === 0 || enviando}
-                        className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed font-bold font-sans"
+                        className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed font-semibold font-sans"
                     >
                         {enviando ? <Loader2 size={13} className="animate-spin" /> : <UserCheck size={13} />}
                         {revisoresSeleccionados.length > 1 ? `Asignar ${revisoresSeleccionados.length} Árbitros` : 'Asignar Árbitro'}
