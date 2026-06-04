@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle, ArrowLeft, Sun, Moon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5175';
 
-const RecuperarContrasenia = () => {
-    const theme = localStorage.getItem('theme') ?? 'dark';
+interface RecuperarContraseniaProps {
+    currentTheme?: 'dark' | 'light';
+    toggleTheme?: () => void;
+}
+
+const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarContraseniaProps) => {
+    const theme = currentTheme;
     const [identificador, setIdentificador] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [enviado, setEnviado] = useState(false);
@@ -32,6 +37,17 @@ const RecuperarContrasenia = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+            {/* Theme Toggle Button */}
+            {toggleTheme && (
+                <button
+                    onClick={toggleTheme}
+                    className="absolute top-6 right-6 text-text-dim hover:text-text-main transition-all duration-300 z-30 cursor-pointer"
+                    title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                >
+                    {currentTheme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
+                </button>
+            )}
+
             <div className="w-full max-w-[350px] space-y-7 relative z-20 animate-fade-up">
 
                 {/* Brand — igual que Login */}
@@ -71,7 +87,7 @@ const RecuperarContrasenia = () => {
                                     value={identificador}
                                     onChange={(e) => setIdentificador(e.target.value)}
                                     className="input-vercel h-11"
-                                    placeholder="1777---- o nombre@istpet.edu.ec"
+                                    placeholder="1777**** o nombre@istpet.edu.ec"
                                     autoComplete="username"
                                     autoFocus
                                 />
