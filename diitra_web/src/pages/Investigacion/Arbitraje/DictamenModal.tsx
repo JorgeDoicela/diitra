@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Scale, CheckCircle2, XCircle, AlertTriangle, Award, Download, FileText } from 'lucide-react';
 import { DICTAMEN_CONFIG, downloadDictamenPdf } from '../../../services/peerReviewService';
 import type { DictamenDto } from '../../../services/peerReviewService';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 interface Props {
     dictamen: DictamenDto;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
+    const { addToast } = useNotifications();
     const cfg = DICTAMEN_CONFIG[dictamen.resultado] ?? DICTAMEN_CONFIG['Rechazado'];
 
     const ResultIcon = dictamen.resultado === 'Aprobado'
@@ -30,7 +32,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
             window.URL.revokeObjectURL(url);
         } catch (err) {
             console.error('[DIITRA] Error al descargar acta:', err);
-            alert('No se pudo descargar el dictamen en PDF.');
+            addToast('Error', 'No se pudo descargar el dictamen en PDF.', 'error');
         }
     };
 

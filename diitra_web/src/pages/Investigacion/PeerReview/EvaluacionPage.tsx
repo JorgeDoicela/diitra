@@ -13,6 +13,7 @@ import {
 import type { RubricaDinamicaDto, CriterioRubricaDto } from '../../../services/peerReviewService';
 import api from '../../../api/axios_config';
 import DOMPurify from 'dompurify';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 const sanitize = (html: string): string =>
     DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
@@ -81,6 +82,7 @@ const useAnimatedScore = (targetValue: number, duration: number = 500): number =
 const EvaluacionPage: React.FC = () => {
     const { revisionUuid } = useParams<{ revisionUuid: string }>();
     const navigate = useNavigate();
+    const { addToast } = useNotifications();
 
     const [rubrica, setRubrica] = useState<RubricaDinamicaDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -232,7 +234,7 @@ const EvaluacionPage: React.FC = () => {
             a.click();
             a.remove();
         } catch {
-            alert('No se pudo descargar el protocolo.');
+            addToast('Error de Descarga', 'No se pudo descargar el protocolo.', 'error');
         }
     };
 
@@ -270,7 +272,7 @@ const EvaluacionPage: React.FC = () => {
             a.remove();
         } catch (err) {
             console.error('[DIITRA] Error al descargar la rúbrica calificada:', err);
-            alert('No se pudo generar ni descargar la rúbrica de evaluación.');
+            addToast('Error', 'No se pudo generar ni descargar la rúbrica de evaluación.', 'error');
         }
     };
 
