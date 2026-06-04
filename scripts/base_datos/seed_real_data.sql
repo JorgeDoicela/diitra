@@ -39,17 +39,17 @@ INSERT INTO inv_entidades_externas (idEntidad, uuid, ruc, razonSocial, tipo, sec
 
 -- 4. Poblar Grupos de Investigación
 INSERT INTO inv_grupos_investigacion (idGrupo, uuid, nombre, siglas, tipoGrupo, idDominio, idCoordinador, objetivoGeneral, mision, vision, resolucionAprobacion, fechaCreacion, categoriaConsolidacion, estado, activo) VALUES
-(1, 'a241b625-56b8-4160-a4ba-1f67865dded0', 'Grupo de Investigación en Ingeniería de Software y TI', 'GIIST', 'Investigación', 1, 16, 
+(1, 'a241b625-56b8-4160-a4ba-1f67865dded0', 'Grupo de Investigación en Ingeniería de Software y TI', 'GIIST', 'Investigación', 1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 
  'Fomentar el desarrollo tecnológico y la innovación en software en la región', 
  'Desarrollar soluciones de software con alto estándar de calidad', 
  'Ser referentes nacionales en desarrollo de software aplicado', 
  'RES-GIIST-2025-01', '2025-01-10', 'Consolidado', 'Aprobado', 1),
-(2, UUID(), 'Grupo de Energías Renovables y Sostenibilidad Ambiental', 'GERSA', 'Investigación', 2, 14, 
+(2, UUID(), 'Grupo de Energías Renovables y Sostenibilidad Ambiental', 'GERSA', 'Investigación', 2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 
  'Desarrollar prototipos y soluciones tecnológicas en el ámbito energético', 
  'Investigar y aplicar fuentes de energía limpia en beneficio social', 
  'Liderar la transición energética desde la academia', 
  'RES-GERSA-2025-02', '2025-01-12', 'Consolidado', 'Aprobado', 1),
-(3, UUID(), 'Semillero de Investigación en Innovación y Gestión Empresarial', 'SIGE', 'Semillero', 3, 13, 
+(3, UUID(), 'Semillero de Investigación en Innovación y Gestión Empresarial', 'SIGE', 'Semillero', 3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 
  'Capacitar a estudiantes en metodologías de investigación en el ámbito de negocios', 
  'Formar semilleristas con visión crítica y emprendedora', 
  'Ser el principal semillero de ideas de negocio tecnológicas del IST', 
@@ -63,21 +63,21 @@ INSERT INTO inv_grupos_lineas (idGrupo, idLinea) VALUES
 
 -- Relaciones de Grupos con Carreras
 INSERT INTO inv_grupos_carreras (idGrupo, idCarrera) VALUES
-(1, 9), (1, 20), -- GIIST con Desarrollo de Software y Redes
-(2, 21),         -- GERSA con Electrónica
-(3, 3), (3, 13); -- SIGE con Gestión y Talento Humano
+(1, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'SOF' LIMIT 1)), (1, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'RDT' LIMIT 1)), -- GIIST con Desarrollo de Software y Redes
+(2, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ELT' LIMIT 1)),         -- GERSA con Electrónica
+(3, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'EMP' LIMIT 1)), (3, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ATH' LIMIT 1)); -- SIGE con Gestión y Talento Humano
 
 -- Miembros de Grupos
 INSERT INTO inv_grupos_miembros (idGrupo, idUsuario, rol, activo, fechaInicio) VALUES
-(1, 16, 'Coordinador', 1, '2025-01-10'),
-(1, 6, 'Investigador', 1, '2025-01-15'),
-(1, 31, 'Estudiante', 1, '2025-01-20'),
-(2, 14, 'Coordinador', 1, '2025-01-12'),
-(2, 15, 'Investigador', 1, '2025-01-15'),
-(2, 32, 'Estudiante', 1, '2025-01-22'),
-(3, 13, 'Coordinador', 1, '2025-02-15'),
-(3, 2, 'Investigador', 1, '2025-02-18'),
-(3, 50, 'Estudiante', 1, '2025-02-20');
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Coordinador', 1, '2025-01-10'),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 'Investigador', 1, '2025-01-15'),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1725555377' LIMIT 1), 'Estudiante', 1, '2025-01-20'),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 'Coordinador', 1, '2025-01-12'),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), 'Investigador', 1, '2025-01-15'),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0102598570' LIMIT 1), 'Estudiante', 1, '2025-01-22'),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 'Coordinador', 1, '2025-02-15'),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 'Investigador', 1, '2025-02-18'),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1751325000' LIMIT 1), 'Estudiante', 1, '2025-02-20');
 
 -- 5. Poblar Convocatorias
 INSERT INTO inv_convocatorias (idConvocatoria, uuid, codigoConvocatoria, titulo, idPeriodo, fechaApertura, fechaCierre, anio, descripcion, presupuestoTotal, montoMaximoProyecto, urlBases, requisitosMinimos, idTipoConvocatoria, idAgendaZonal, idRubrica, puntajeMinimoAprobacion, estado) VALUES
@@ -118,32 +118,32 @@ INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional
 
 -- Relaciones de Proyectos con Carreras
 INSERT INTO inv_proyectos_carreras (idProyecto, idCarrera, modalidad) VALUES
-(1, 9, 'Presencial'),
-(2, 21, 'Dual'),
-(3, 3, 'Presencial'),
-(4, 9, 'Virtual'),
-(5, 21, 'Presencial');
+(1, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'SOF' LIMIT 1), 'Presencial'),
+(2, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ELT' LIMIT 1), 'Dual'),
+(3, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'EMP' LIMIT 1), 'Presencial'),
+(4, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'SOF' LIMIT 1), 'Virtual'),
+(5, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ELT' LIMIT 1), 'Presencial');
 
 -- Profesores participantes
 INSERT INTO inv_proyectos_profesores (idProyecto, idUsuario, esDirector, rol, nivelAcademico, telefono, horasSemanales, activo) VALUES
-(1, 16, 1, 'Director de Proyecto', 'Magíster en Software', '0999999991', 12.0, 1),
-(1, 13, 0, 'Investigador Principal', 'Magíster en TI', '0999999992', 8.0, 1),
-(2, 14, 1, 'Director de Proyecto', 'Magíster en Electrónica', '0999999993', 15.0, 1),
-(2, 15, 0, 'Investigador Principal', 'Magíster en Energías', '0999999994', 10.0, 1),
-(3, 13, 1, 'Director de Proyecto', 'Magíster en Talento Humano', '0999999992', 10.0, 1),
-(3, 2, 0, 'Investigador Principal', 'Magíster en Administración', '0999999995', 8.0, 1),
-(4, 16, 1, 'Director de Proyecto', 'Magíster en Software', '0999999991', 10.0, 1),
-(4, 6, 0, 'Investigador de Apoyo', 'Magíster en TI', '0999999996', 6.0, 1),
-(5, 14, 1, 'Director de Proyecto', 'Magíster en Electrónica', '0999999993', 12.0, 1),
-(5, 16, 0, 'Investigador Principal', 'Magíster en Software', '0999999991', 8.0, 1);
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Software', '0999999991', 12.0, 1),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 0, 'Investigador Principal', 'Magíster en TI', '0999999992', 8.0, 1),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Electrónica', '0999999993', 15.0, 1),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), 0, 'Investigador Principal', 'Magíster en Energías', '0999999994', 10.0, 1),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Talento Humano', '0999999992', 10.0, 1),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 0, 'Investigador Principal', 'Magíster en Administración', '0999999995', 8.0, 1),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Software', '0999999991', 10.0, 1),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 0, 'Investigador de Apoyo', 'Magíster en TI', '0999999996', 6.0, 1),
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Electrónica', '0999999993', 12.0, 1),
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 0, 'Investigador Principal', 'Magíster en Software', '0999999991', 8.0, 1);
 
 -- Alumnos participantes
 INSERT INTO inv_proyectos_alumnos (idProyecto, idUsuario, rol, nivelAcademico, telefono, activo) VALUES
-(1, 31, 'Semillerista', 'Estudiante de Desarrollo de Software', '0988888881', 1),
-(2, 32, 'Semillerista', 'Estudiante de Electrónica', '0988888882', 1),
-(3, 50, 'Semillerista', 'Estudiante de Gestión Empresarial', '0988888883', 1),
-(4, 34, 'Semillerista', 'Estudiante de Desarrollo de Software', '0988888884', 1),
-(5, 33, 'Semillerista', 'Estudiante de Electrónica', '0988888885', 1);
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1725555377' LIMIT 1), 'Semillerista', 'Estudiante de Desarrollo de Software', '0988888881', 1),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0102598570' LIMIT 1), 'Semillerista', 'Estudiante de Electrónica', '0988888882', 1),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1751325000' LIMIT 1), 'Semillerista', 'Estudiante de Gestión Empresarial', '0988888883', 1),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0105057335' LIMIT 1), 'Semillerista', 'Estudiante de Desarrollo de Software', '0988888884', 1),
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0103057584' LIMIT 1), 'Semillerista', 'Estudiante de Electrónica', '0988888885', 1);
 
 -- 7. Poblar Productos Científicos
 INSERT INTO inv_productos (idProducto, idProyecto, idTipoProducto, titulo, cantidad, urlProducto, esPropiedadIntelectual, numeroRegistro, fechaRegistroSenadi) VALUES
@@ -175,9 +175,9 @@ INSERT INTO inv_presupuesto_items (idItem, idProyecto, categoria, idPartida, det
 
 -- 9. Poblar Historial de Informes de Avance (Bitácora)
 INSERT INTO inv_informes_avance (idInforme, uuid, idProyecto, numeroInforme, fechaReporte, resumenActividades, esFirmadoDigital, hashFirma, fechaFirma, validadoPor, estado) VALUES
-(1, UUID(), 1, 1, '2025-08-01', 'Diseño inicial de la arquitectura IoT y compra de sensores.', 1, 'd3f82163b86029d5b78ec90141f22e84c1fbc0d16f8ef190a421b8ff120f269a', '2025-08-05 10:00:00', 16, 'Aprobado'),
-(2, UUID(), 1, 2, '2025-09-01', 'Construcción y calibración de prototipos de sensado.', 1, 'e1189ac9cfc8b1836109dfbc18c0df1b89efbc1a78eeffb18928f921f92e8412', '2025-09-06 11:30:00', 16, 'Aprobado'),
-(3, UUID(), 2, 1, '2025-08-05', 'Cálculo de la radiación solar y diseño del soporte metálico.', 1, 'f82bbcbff18acb9eef89283f12e840afbc89e81bfafeff093b128afc298ec289', '2025-08-10 14:00:00', 14, 'Aprobado');
+(1, UUID(), 1, 1, '2025-08-01', 'Diseño inicial de la arquitectura IoT y compra de sensores.', 1, 'd3f82163b86029d5b78ec90141f22e84c1fbc0d16f8ef190a421b8ff120f269a', '2025-08-05 10:00:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Aprobado'),
+(2, UUID(), 1, 2, '2025-09-01', 'Construcción y calibración de prototipos de sensado.', 1, 'e1189ac9cfc8b1836109dfbc18c0df1b89efbc1a78eeffb18928f921f92e8412', '2025-09-06 11:30:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Aprobado'),
+(3, UUID(), 2, 1, '2025-08-05', 'Cálculo de la radiación solar y diseño del soporte metálico.', 1, 'f82bbcbff18acb9eef89283f12e840afbc89e81bfafeff093b128afc298ec289', '2025-08-10 14:00:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 'Aprobado');
 
 -- 10. Re-activar verificación de llaves foráneas
 SET FOREIGN_KEY_CHECKS = 1;

@@ -132,7 +132,7 @@ CREATE TABLE inv_dominios_carrera (
     idDominio        INT      NOT NULL,
     idCarrera        INT(11)  NOT NULL,
     FOREIGN KEY (idDominio) REFERENCES inv_dominios(idDominio) ON DELETE RESTRICT,
-    FOREIGN KEY (idCarrera) REFERENCES carreras(idCarrera)     ON DELETE RESTRICT
+    FOREIGN KEY (idCarrera) REFERENCES carreras(idCarrera)     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_sublineas (
@@ -404,7 +404,7 @@ CREATE TABLE inv_proyectos (
     firmadoPor           INT(11) NULL,
     idDspaceHandle       VARCHAR(255)  NULL COMMENT 'Handle del Repositorio Digital DSpace',
     metadataCacesJson    JSON          NULL COMMENT 'Snapshot de indicadores para acreditación',
-    FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario)
+    FOREIGN KEY (firmadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Matriz de Marco Lógico (MML) - Requisito SENESCYT
@@ -437,7 +437,7 @@ CREATE TABLE inv_trazabilidad_proyectos (
     idTrazabilidad  INT AUTO_INCREMENT PRIMARY KEY,
     uuid            VARCHAR(36) NOT NULL UNIQUE,
     idProyecto      INT NOT NULL,
-    idUsuario       INT(11) NOT NULL,
+    idUsuario       INT(11) NULL,
     estadoAnterior  VARCHAR(50) NOT NULL,
     estadoNuevo     VARCHAR(50) NOT NULL,
     observacion     TEXT,
@@ -446,14 +446,14 @@ CREATE TABLE inv_trazabilidad_proyectos (
     hashAnterior    VARCHAR(100) NULL COMMENT 'Hash de la transición previa',
     hashActual      VARCHAR(100) NULL COMMENT 'Hash SHA-256 de esta transición (Integridad)',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario)
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Auditoría Administrativa Forense (CACES/SENESCYT)
 CREATE TABLE inv_audit_admin (
     idAudit            INT AUTO_INCREMENT PRIMARY KEY,
-    idUsuarioAdmin     INT NOT NULL,
-    idUsuarioAfectado  INT NOT NULL,
+    idUsuarioAdmin     INT NULL,
+    idUsuarioAfectado  INT NULL,
     accion             VARCHAR(100) NOT NULL,
     modulo             VARCHAR(100),
     detalle            TEXT,
@@ -462,8 +462,8 @@ CREATE TABLE inv_audit_admin (
     valoresAnteriores  TEXT, -- Snapshot JSON del estado previo
     valoresNuevos      TEXT, -- Snapshot JSON del estado posterior
     fecha              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (idUsuarioAdmin) REFERENCES usuarios(idUsuario),
-    FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario)
+    FOREIGN KEY (idUsuarioAdmin) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
+    FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyectos_carreras (
@@ -472,7 +472,7 @@ CREATE TABLE inv_proyectos_carreras (
     idCarrera         INT(11)      NOT NULL,
     modalidad         VARCHAR(100),
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idCarrera)  REFERENCES carreras(idCarrera)       ON DELETE RESTRICT
+    FOREIGN KEY (idCarrera)  REFERENCES carreras(idCarrera)       ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyectos_dominios (
@@ -497,7 +497,7 @@ CREATE TABLE inv_proyectos_profesores (
     fecha_fin          DATETIME      NULL,
     motivo_cambio      VARCHAR(150)  NULL,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
+    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyectos_alumnos (
@@ -512,7 +512,7 @@ CREATE TABLE inv_proyectos_alumnos (
     fecha_fin        DATETIME      NULL,
     motivo_cambio    VARCHAR(150)  NULL,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE RESTRICT
+    FOREIGN KEY (idUsuario)  REFERENCES usuarios(idUsuario)       ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_proyecto_extensiones (
@@ -764,7 +764,7 @@ CREATE TABLE inv_revisiones_pares (
     puntajeTotal      DECIMAL(5,2)  NULL,
     observacionesGral TEXT,
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
-    FOREIGN KEY (idRevisor)  REFERENCES usuarios(idUsuario)      ON DELETE RESTRICT
+    FOREIGN KEY (idRevisor)  REFERENCES usuarios(idUsuario)      ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE inv_evaluaciones_detalle (
@@ -937,7 +937,7 @@ CREATE TABLE inv_usuarios_metadata (
     fechaUltimoAcceso    TIMESTAMP    NULL,
     version              INT          DEFAULT 1,
     UNIQUE KEY uq_usermeta_uuid (uuid),
-    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE RESTRICT
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Perfil CACES, SENESCYT y configuración de Firma Electrónica';
 
 DELIMITER $$
