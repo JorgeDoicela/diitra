@@ -470,40 +470,37 @@ const UsersPage = () => {
 
             {/* Banner de Recuperación de Borrador de Perfil de Investigador */}
             {pendingUserDraft && (
-                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
-
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
-                            <FileText size={18} />
+                <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
+                            <FileText size={16} />
                         </div>
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Perfil en Borrador</h4>
-                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
-                                    No Guardado
+                                <h4 className="text-sm font-semibold text-text-main">Perfil en borrador</h4>
+                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
+                                    No guardado
                                 </span>
                             </div>
-                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
-                                Tienes cambios sin guardar en el perfil de: <span className="text-text-main font-black">"{pendingUserDraft.userName}"</span>
+                            <p className="text-xs text-text-dim">
+                                Tienes cambios sin guardar en el perfil de <span className="text-text-main font-medium">"{pendingUserDraft.userName}"</span>.
                             </p>
-                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                            <p className="text-[10px] text-text-dim/60 font-mono">
                                 Guardado automáticamente el {new Date(pendingUserDraft.timestamp).toLocaleDateString()} a las {new Date(pendingUserDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                    <div className="flex gap-2 w-full md:w-auto shrink-0">
                         <button
                             onClick={handleRestoreUserDraft}
-                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                            className="btn-vercel-primary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
                         >
-                            Restaurar Perfil
+                            Restaurar perfil
                         </button>
                         <button
                             onClick={handleDiscardUserDraft}
-                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
                         >
                             Descartar
                         </button>
@@ -513,40 +510,37 @@ const UsersPage = () => {
 
             {/* Banner de Recuperación de Borrador de Evaluador Externo */}
             {pendingExternalDraft && (
-                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
-
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
-                            <FileText size={18} />
+                <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
+                            <FileText size={16} />
                         </div>
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Borrador de Evaluador</h4>
-                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
-                                    No Guardado
+                                <h4 className="text-sm font-semibold text-text-main">Borrador de evaluador</h4>
+                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
+                                    No guardado
                                 </span>
                             </div>
-                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
-                                Tienes un borrador de nuevo evaluador externo: <span className="text-text-main font-black">"{pendingExternalDraft.name}"</span>
+                            <p className="text-xs text-text-dim">
+                                Tienes un borrador de nuevo evaluador externo: <span className="text-text-main font-medium">"{pendingExternalDraft.name}"</span>.
                             </p>
-                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                            <p className="text-[10px] text-text-dim/60 font-mono">
                                 Guardado automáticamente el {new Date(pendingExternalDraft.timestamp).toLocaleDateString()} a las {new Date(pendingExternalDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                    <div className="flex gap-2 w-full md:w-auto shrink-0">
                         <button
                             onClick={handleRestoreExternalDraft}
-                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                            className="btn-vercel-primary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
                         >
-                            Restaurar Evaluador
+                            Restaurar evaluador
                         </button>
                         <button
                             onClick={handleDiscardExternalDraft}
-                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
                         >
                             Descartar
                         </button>
@@ -778,11 +772,11 @@ const UsersPage = () => {
                         
                         <form id="external-register-form" onSubmit={handleRegisterExternal} className="modal-body">
                             {isExternalDraftRestored && (
-                                <div className="col-span-2 bg-brand-subtle border border-brand/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
+                                <div className="col-span-2 border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
                                     <div className="flex items-center gap-3">
-                                        <FileText size={16} className="text-brand shrink-0" />
-                                        <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
-                                            <span className="text-brand font-black">Borrador Restaurado:</span> Se han recuperado los datos del evaluador no guardados.
+                                        <FileText size={16} className="text-text-main shrink-0" />
+                                        <p className="text-xs text-text-dim">
+                                            <span className="text-text-main font-semibold">Borrador restaurado:</span> Se han recuperado los datos del evaluador no guardados.
                                         </p>
                                     </div>
                                     <button
@@ -803,9 +797,9 @@ const UsersPage = () => {
                                             setIsExternalDraftRestored(false);
                                             setPendingExternalDraft(null);
                                         }}
-                                        className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline cursor-pointer shrink-0"
+                                        className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
                                     >
-                                        Revertir al Original
+                                        Revertir al original
                                     </button>
                                 </div>
                             )}

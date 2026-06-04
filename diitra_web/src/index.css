@@ -317,7 +317,7 @@ body {
  *    al puntero del ratón levantando el elemento 1px, ampliando la sombra y aclarando el fondo.
  * 2. .bento-card-static o .bento-card.static (Estática):
  *    Recomendada para contenedores amplios, tablas, listados, formularios y bloques de lectura.
- *    Conserva la estética pulida, glassmorphism y bordes finos pero elimina el hover interactivo.
+ *    Conserva la estética pulida de Vercel y bordes finos pero elimina el hover interactivo.
  *
  * Ejemplo en React (Interactiva):
  *   <div className="bento-card p-6 cursor-pointer">
@@ -334,8 +334,6 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01);
 }
 
 .bento-card:hover {
@@ -642,7 +640,7 @@ select:focus-visible {
 /**
  * 10. COMPONENTE: NOTIFICACIONES EMERGENTES (TOASTS) DE VERCEL
  * -----------------------------------------------------------------------------
- * Alertas flotantes en la esquina inferior derecha con diseño de cristal translúcido.
+ * Alertas flotantes en la esquina superior derecha con diseño minimalista oficial de Vercel.com.
  *
  * Ejemplo en React:
  *   <div className="toast-container-vercel">
