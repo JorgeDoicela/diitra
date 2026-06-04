@@ -645,9 +645,9 @@ export const ProjectWorkspace: React.FC = () => {
     }
 
     return (
-        <div className="flex-1 bg-bg-deep overflow-y-auto selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
+        <div className="h-screen w-full flex flex-col bg-bg-deep overflow-hidden selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
             {/* ── Header Único Responsivo ── */}
-            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin sticky top-0 z-50 gap-4 sm:gap-0">
+            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
                 <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
                     <div className="flex items-center gap-4">
                         <button onClick={() => navigate('/investigacion')} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
@@ -737,7 +737,8 @@ export const ProjectWorkspace: React.FC = () => {
             </header>
 
             {/* ── Main Content ── */}
-            <main className="max-w-[1600px] mx-auto p-4 md:p-10 animate-fade-up">
+            <div className="flex-1 overflow-y-auto">
+                <main className="max-w-[1600px] mx-auto p-4 md:p-10 animate-fade-up">
                 {/* ── Page Title (DashboardHeader pattern) ── */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6 md:gap-0">
                     <div className="space-y-2">
@@ -1404,6 +1405,7 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                 </div>
             </main>
+            </div>
 
             {/* ══ Modal: Registrar Producto ══ */}
             {showProductModal && (
