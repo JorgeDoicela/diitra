@@ -537,7 +537,7 @@ const InformesAvancePage: React.FC = () => {
                     <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-lg p-6 space-y-5 animate-fade-in">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h3 className="text-sm font-black uppercase tracking-widest text-text-main">
+                                <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
                                     Nuevo Informe de Avance
                                 </h3>
                                 <p className="text-[10px] text-text-dim mt-1">
@@ -551,7 +551,7 @@ const InformesAvancePage: React.FC = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
+                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                                     Período del Informe
                                 </label>
                                 <input
@@ -562,7 +562,7 @@ const InformesAvancePage: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
+                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                                     Resumen Inicial de Actividades
                                 </label>
                                 <textarea
@@ -607,7 +607,7 @@ const InformesAvancePage: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-md p-6 space-y-5 animate-fade-in">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-text-main">
+                            <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
                                 Firma PAdES · Informe #{firmarTarget.numero_informe}
                             </h3>
                             <button onClick={() => setFirmarTarget(null)} className="text-text-dim hover:text-text-main">
@@ -618,7 +618,7 @@ const InformesAvancePage: React.FC = () => {
                             Cargue su certificado digital (.p12 o .pfx) para sellar el informe aprobado conforme CACES.
                         </p>
                         <div>
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                                 Certificado digital
                             </label>
                             <label className="flex items-center gap-2 w-full bg-bg-deep border border-dashed border-border-thin rounded-xl px-4 py-3 cursor-pointer hover:border-text-main/30 transition-colors">
@@ -635,7 +635,7 @@ const InformesAvancePage: React.FC = () => {
                             </label>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                                 Contraseña del certificado
                             </label>
                             <input
@@ -675,7 +675,7 @@ const InformesAvancePage: React.FC = () => {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-md p-6 space-y-5 animate-fade-in">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-black uppercase tracking-widest text-text-main">
+                            <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
                                 Observar Informe #{observarTarget.numero_informe}
                             </h3>
                             <button onClick={() => setObservarTarget(null)} className="text-text-dim hover:text-text-main">
@@ -683,7 +683,7 @@ const InformesAvancePage: React.FC = () => {
                             </button>
                         </div>
                         <div>
-                            <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
+                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">
                                 Motivo / Correcciones Solicitadas
                             </label>
                             <textarea

@@ -116,7 +116,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-thin">
                 <div className="flex items-center gap-2">
                     <Activity size={12} className="text-brand" />
-                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">
+                    <span className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
                         Actividad Reciente
                     </span>
                 </div>
@@ -170,7 +170,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                                         <span className="text-[11px] font-semibold text-text-main truncate">
                                             {item.nombreUsuario}
                                         </span>
-                                        <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded border ${getBadgeStyle(item.tipo)}`}>
+                                        <span className={`text-[8px] font-semibold uppercase px-1.5 py-0.5 rounded border ${getBadgeStyle(item.tipo)}`}>
                                             {getTypoLabel(item.tipo)}
                                         </span>
                                     </div>

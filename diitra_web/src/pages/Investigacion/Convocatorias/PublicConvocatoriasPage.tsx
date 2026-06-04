@@ -60,7 +60,7 @@ const PublicConvocatoriasPage = () => {
                     <div className="icon-circle-brand">
                         <PenTool size={20} strokeWidth={2.5} />
                     </div>
-                    <h1 className="text-3xl font-bold text-text-main tracking-tighter uppercase">Oportunidades de Investigación</h1>
+                    <h1 className="text-3xl font-semibold text-text-main tracking-tighter uppercase">Oportunidades de Investigación</h1>
                 </div>
                 <p className="text-text-dim text-base leading-relaxed max-w-2xl font-medium">
                     Explora las convocatorias vigentes y postula tus proyectos de investigación e innovación institucional.
@@ -99,7 +99,7 @@ const PublicConvocatoriasPage = () => {
                         <PenTool size={32} />
                     </div>
                     <div className="space-y-2">
-                        <h3 className="text-sm font-bold text-text-main uppercase tracking-widest">No hay convocatorias activas</h3>
+                        <h3 className="text-sm font-semibold text-text-main uppercase tracking-widest">No hay convocatorias activas</h3>
                         <p className="text-xs text-text-dim">Vuelve pronto para ver nuevas oportunidades</p>
                     </div>
                 </div>
@@ -116,7 +116,7 @@ const PublicConvocatoriasPage = () => {
                                     <span className="badge-vercel">
                                         {c.codigo_convocatoria}
                                     </span>
-                                    <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest">
+                                    <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest">
                                         <span className={`dot dot-pulse ${c.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
                                         <span className={c.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
                                             {c.estado}
@@ -125,7 +125,7 @@ const PublicConvocatoriasPage = () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <h3 className="text-lg font-bold text-text-main leading-tight group-hover:text-text-main transition-colors">
+                                    <h3 className="text-lg font-semibold text-text-main leading-tight group-hover:text-text-main transition-colors">
                                         {c.titulo}
                                     </h3>
                                     <p className="text-xs text-text-dim leading-relaxed font-medium">
@@ -139,7 +139,7 @@ const PublicConvocatoriasPage = () => {
                                             <Calendar size={10} />
                                             <span>Cierre</span>
                                         </div>
-                                        <p className="text-xs font-bold text-text-main font-mono">
+                                        <p className="text-xs font-semibold text-text-main font-mono">
                                             {c.fecha_cierre ? format(new Date(c.fecha_cierre), 'dd MMM, yyyy', { locale: es }) : 'Por definir'}
                                         </p>
                                     </div>
@@ -148,7 +148,7 @@ const PublicConvocatoriasPage = () => {
                                             <DollarSign size={10} />
                                             <span>Max. Proyecto</span>
                                         </div>
-                                        <p className="text-xs font-bold text-text-main font-mono">
+                                        <p className="text-xs font-semibold text-text-main font-mono">
                                             ${c.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
                                         </p>
                                     </div>
@@ -187,14 +187,14 @@ const PublicConvocatoriasPage = () => {
                         <Award size={28} />
                     </div>
                     <div className="space-y-1">
-                        <h4 className="text-xs font-bold text-text-main uppercase tracking-widest">Calidad CACES 2026</h4>
+                        <h4 className="text-xs font-semibold text-text-main uppercase tracking-widest">Calidad CACES 2026</h4>
                         <p className="text-[10px] text-text-dim font-medium uppercase tracking-widest max-w-sm">
                             Todas las propuestas deben alinearse a las Líneas de Investigación institucionales vigentes.
                         </p>
                     </div>
                 </div>
                 <div className="flex gap-4">
-                    <div className="flex items-center gap-2 px-6 py-3 rounded-lg bg-bg-deep border border-border-thin text-[10px] font-bold text-text-dim uppercase tracking-widest">
+                    <div className="flex items-center gap-2 px-6 py-3 rounded-lg bg-bg-deep border border-border-thin text-[10px] font-semibold text-text-dim uppercase tracking-widest">
                         <Clock size={12} /> Próximo Corte: 15 Dic
                     </div>
                 </div>
@@ -225,7 +225,7 @@ const PublicConvocatoriasPage = () => {
                                 <span className="px-2.5 py-1 bg-bg-deep text-text-dim border border-border-thin text-[10px] font-mono uppercase rounded-md">
                                     {selectedConvocatoria.codigo_convocatoria}
                                 </span>
-                                <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider">
+                                <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider">
                                     <span className={`dot dot-pulse ${selectedConvocatoria.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
                                     <span className={selectedConvocatoria.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
                                         {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
@@ -242,7 +242,7 @@ const PublicConvocatoriasPage = () => {
                         
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
                             <div className="space-y-4">
-                                <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
+                                <h2 className="text-3xl font-semibold tracking-tight text-text-main leading-tight font-sans">
                                     {selectedConvocatoria.titulo}
                                 </h2>
                                 <p className="text-sm text-text-dim leading-relaxed font-medium">
@@ -252,41 +252,41 @@ const PublicConvocatoriasPage = () => {
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Calendar size={12} /> Fecha de Apertura
                                     </div>
-                                    <div className="text-sm font-bold text-text-main font-mono">
+                                    <div className="text-sm font-semibold text-text-main font-mono">
                                         {selectedConvocatoria.fecha_apertura ? format(new Date(selectedConvocatoria.fecha_apertura), 'dd MMM, yyyy', { locale: es }) : 'N/A'}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Calendar size={12} className="text-error" /> Fecha de Cierre (Límite)
                                     </div>
-                                    <div className="text-sm font-bold text-error font-mono">
+                                    <div className="text-sm font-semibold text-error font-mono">
                                         {selectedConvocatoria.fecha_cierre ? format(new Date(selectedConvocatoria.fecha_cierre), 'dd MMM, yyyy', { locale: es }) : 'N/A'}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <DollarSign size={12} className="text-success" /> Financiamiento Máximo
                                     </div>
-                                    <div className="text-sm font-bold text-success font-mono">
+                                    <div className="text-sm font-semibold text-success font-mono">
                                         ${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Award size={12} /> Rúbrica Evaluativa
                                     </div>
-                                    <div className="text-sm font-bold text-text-main truncate">
+                                    <div className="text-sm font-semibold text-text-main truncate">
                                         {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
                                     </div>
                                 </div>
                             </div>
                             
                             <div className="bento-card p-6 space-y-4">
-                                <div className="flex items-center gap-2 text-xs font-bold text-text-main uppercase tracking-wider">
+                                <div className="flex items-center gap-2 text-xs font-semibold text-text-main uppercase tracking-wider">
                                     <BookOpen size={14} /> Alineación Académica CACES
                                 </div>
                                 <p className="text-xs text-text-dim leading-relaxed font-medium">
@@ -295,7 +295,7 @@ const PublicConvocatoriasPage = () => {
                             </div>
                             
                             <div className="space-y-4">
-                                <h4 className="text-xs font-bold text-text-main uppercase tracking-widest">Requisitos Clave para Postulación</h4>
+                                <h4 className="text-xs font-semibold text-text-main uppercase tracking-widest">Requisitos Clave para Postulación</h4>
                                 <ul className="space-y-2.5 text-xs text-text-dim">
                                     <li className="flex items-start gap-2.5">
                                         <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />

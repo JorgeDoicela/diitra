@@ -242,7 +242,7 @@ export const MonitoringPage: React.FC = () => {
                                             <tr key={idx} className="hover:bg-surface/20 transition-colors">
                                                 <td className="p-4 text-center font-mono font-bold text-text-dim text-xs">{act.numero}</td>
                                                 <td className="p-4">
-                                                    <p className="text-xs font-bold text-text-main">{act.actividad}</p>
+                                                    <p className="text-xs font-medium text-text-main">{act.actividad}</p>
                                                     {act.recursosNecesarios && <span className="text-[10px] text-text-dim block mt-0.5 font-medium">Recurso: {act.recursosNecesarios}</span>}
                                                 </td>
                                                 <td className="p-4 text-center">
@@ -351,7 +351,7 @@ export const MonitoringPage: React.FC = () => {
                                             <tr key={g.id} className="hover:bg-surface/20 transition-colors">
                                                 <td className="p-4 font-mono text-text-dim">{new Date(g.fecha).toLocaleDateString()}</td>
                                                 <td className="p-4">
-                                                    <p className="font-bold text-text-main">{g.descripcion}</p>
+                                                    <p className="font-medium text-text-main">{g.descripcion}</p>
                                                 </td>
                                                 <td className="p-4 text-center font-mono font-medium text-text-dim">{g.partida}</td>
                                                 <td className="p-4">

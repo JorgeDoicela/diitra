@@ -468,7 +468,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                         {/* Projects active button & Search */}
                         <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                             <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
-                            <div className="w-1/3 h-5 bg-brand/85 rounded-md flex items-center justify-center text-[7px] font-black text-white">Nuevo Proyecto</div>
+                            <div className="w-1/4 h-5 bg-brand/85 rounded-md flex items-center justify-center text-[7px] font-semibold text-white">Nuevo Proyecto</div>
                         </div>
                         {/* Projects list table and detail panel split */}
                         <div className="flex-1 flex gap-1.5 min-h-0">
@@ -505,7 +505,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                         {/* Filters & creation button */}
                         <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                             <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
-                            <div className="w-1/4 h-5 bg-brand/85 rounded-md flex items-center justify-center text-[7px] font-black text-white">Nuevo Externo</div>
+                            <div className="w-1/4 h-5 bg-brand/85 rounded-md flex items-center justify-center text-[7px] font-semibold text-white">Nuevo Externo</div>
                         </div>
                         {/* Users Table */}
                         <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
@@ -563,7 +563,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                         {/* Settings sub-tabs */}
                         <div className="flex gap-1 shrink-0">
                             {['Líneas', 'Períodos', 'Metas'].map((tab, idx) => (
-                                <div key={idx} className="w-12 h-4 rounded-t bg-text-dim/10 border border-b-0 border-border-thin flex items-center justify-center text-[6px] text-text-dim font-bold">{tab}</div>
+                                <div key={idx} className="w-12 h-4 rounded-t bg-text-dim/10 border border-b-0 border-border-thin flex items-center justify-center text-[6px] text-text-dim font-semibold">{tab}</div>
                             ))}
                         </div>
                         {/* Config elements */}
@@ -589,7 +589,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                         {/* Top controls */}
                         <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                             <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
-                            <div className="w-1/5 h-5 bg-brand/10 border border-brand/20 rounded flex items-center justify-center text-[6px] text-brand font-bold">PDF</div>
+                            <div className="w-1/5 h-5 bg-brand/10 border border-brand/20 rounded flex items-center justify-center text-[6px] text-brand font-semibold">PDF</div>
                         </div>
                         {/* Charts panel */}
                         <div className={`flex-1 rounded-lg border p-2 flex gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
@@ -613,7 +613,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                     <>
                         {/* Top Category tabs */}
                         <div className={`h-7 rounded-lg border px-1.5 flex items-center gap-1 transition-all duration-300 shrink-0 ${highlightTopClass}`}>
-                            <div className="w-8 h-3.5 rounded bg-brand/10 border border-brand/20 text-[6px] text-brand flex items-center justify-center font-bold">Inbox</div>
+                            <div className="w-8 h-3.5 rounded bg-brand/10 border border-brand/20 text-[6px] text-brand flex items-center justify-center font-semibold">Inbox</div>
                             <div className="w-8 h-3.5 rounded bg-text-dim/5 text-[6px] text-text-dim flex items-center justify-center">Leídas</div>
                         </div>
                         {/* List */}
@@ -636,7 +636,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                         {/* Big Search Input */}
                         <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                             <div className="w-2/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
-                            <div className="w-1/5 h-5 bg-brand text-white rounded flex items-center justify-center text-[7px] font-black">Validar</div>
+                            <div className="w-1/5 h-5 bg-brand text-white rounded flex items-center justify-center text-[7px] font-semibold">Validar</div>
                         </div>
                         {/* Scanner / Result card */}
                         <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-2 justify-center items-center transition-all duration-300 ${highlightBottomClass}`}>
@@ -691,7 +691,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                                         <div className="w-4/5 h-2 bg-text-main/20 rounded" />
                                         <div className="w-full h-1 bg-text-dim/10 rounded" />
                                     </div>
-                                    <div className="w-full h-3.5 bg-brand text-white rounded flex items-center justify-center text-[5px] font-black mt-2">Postular</div>
+                                    <div className="w-full h-3.5 bg-brand text-white rounded flex items-center justify-center text-[5px] font-semibold mt-2">Postular</div>
                                 </div>
                             ))}
                         </div>
@@ -794,7 +794,7 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                     </div>
 
                     {/* Floating Info Tag under the pointer */}
-                    <div className="mt-1 bg-brand text-[8px] font-black uppercase tracking-wider text-white px-1.5 py-0.5 rounded shadow-lg border border-brand-light whitespace-nowrap animate-fade-in">
+                    <div className="mt-1 bg-brand text-[8px] font-semibold uppercase tracking-wider text-white px-1.5 py-0.5 rounded shadow-lg border border-brand-light whitespace-nowrap animate-fade-in">
                         {stepTitle}
                     </div>
 
@@ -878,10 +878,10 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                             {config.icon}
                         </div>
                         <div>
-                            <h3 className="text-xs font-black uppercase tracking-widest text-text-main">
+                            <h3 className="text-xs font-semibold uppercase tracking-widest text-text-main">
                                 Guía Interactiva
                             </h3>
-                            <p className="text-[9px] text-text-dim uppercase tracking-wider font-bold">
+                            <p className="text-[9px] text-text-dim uppercase tracking-wider font-semibold">
                                 {config.title}
                             </p>
                         </div>
@@ -913,14 +913,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                         {config.icon}
                                     </div>
                                     <div className="space-y-1">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-brand">
+                                        <span className="text-[9px] font-semibold uppercase tracking-widest text-brand">
                                             Introducción
                                         </span>
-                                        <h4 className="text-sm font-black uppercase tracking-wider text-text-main">
+                                        <h4 className="text-sm font-semibold uppercase tracking-wider text-text-main">
                                             {config.title}
                                         </h4>
                                     </div>
-                                    <p className="text-[11.5px] font-bold text-text-main leading-snug">
+                                    <p className="text-[11.5px] font-semibold text-text-main leading-snug">
                                         {config.summary}
                                     </p>
                                     <p className="text-[11px] text-text-dim leading-relaxed font-medium">
@@ -935,14 +935,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                 return (
                                     /* Step 1 to N: Sequential Instructions */
                                     <div className="space-y-4 py-2">
-                                        <div className="w-9 h-9 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-xs font-mono font-black text-brand">
+                                        <div className="w-9 h-9 rounded-full bg-brand/10 border border-brand/20 flex items-center justify-center text-xs font-mono font-semibold text-brand">
                                             {currentStep}
                                         </div>
                                         <div className="space-y-1">
-                                            <span className="text-[9px] font-black uppercase tracking-widest text-brand">
+                                            <span className="text-[9px] font-semibold uppercase tracking-widest text-brand">
                                                 Paso {currentStep} de {config.steps.length}
                                             </span>
-                                            <h4 className="text-xs font-black uppercase tracking-wider text-text-main">
+                                            <h4 className="text-xs font-semibold uppercase tracking-wider text-text-main">
                                                 {step.title}
                                             </h4>
                                         </div>
@@ -962,7 +962,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                                             <Award size={16} />
                                         </div>
                                         <div className="space-y-0.5">
-                                            <h5 className="text-[9px] font-black uppercase tracking-widest text-text-main">
+                                            <h5 className="text-[9px] font-semibold uppercase tracking-widest text-text-main">
                                                 Cumplimiento CACES
                                             </h5>
                                             <p className="text-[10px] text-text-dim leading-relaxed font-medium">
@@ -973,7 +973,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
 
                                     {/* Tips list */}
                                     <div className="space-y-2">
-                                        <h5 className="text-[8px] font-black uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
+                                        <h5 className="text-[8px] font-semibold uppercase tracking-widest text-text-dim border-b border-border-thin pb-1">
                                             Accesibilidad y Consejos
                                         </h5>
                                         <ul className="space-y-2">
@@ -1006,7 +1006,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     <button
                         onClick={handlePrev}
                         disabled={currentStep === 0}
-                        className={`flex items-center gap-1 text-[10px] font-black uppercase tracking-widest transition-all duration-200 cursor-pointer ${
+                        className={`flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest transition-all duration-200 cursor-pointer ${
                             currentStep === 0 
                                 ? 'opacity-30 pointer-events-none text-text-dim' 
                                 : 'text-text-dim hover:text-text-main hover:translate-x-[-2px]'
@@ -1037,7 +1037,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     {currentStep === totalSteps - 1 ? (
                         <button
                             onClick={onClose}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-brand text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-brand-dark transition-all duration-200 cursor-pointer hover:scale-[1.03] shadow-md shadow-brand/10"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-brand text-white rounded-lg text-[10px] font-semibold uppercase tracking-widest hover:bg-brand-dark transition-all duration-200 cursor-pointer hover:scale-[1.03] shadow-md shadow-brand/10"
                             title="Finalizar"
                         >
                             <span>Entendido</span>
@@ -1046,7 +1046,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                     ) : (
                         <button
                             onClick={handleNext}
-                            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-brand hover:text-brand-light transition-all duration-200 cursor-pointer hover:translate-x-[2px]"
+                            className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-brand hover:text-brand-light transition-all duration-200 cursor-pointer hover:translate-x-[2px]"
                             title="Siguiente"
                         >
                             <span>Siguiente</span>

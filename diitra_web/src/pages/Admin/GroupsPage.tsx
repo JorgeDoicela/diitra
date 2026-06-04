@@ -391,7 +391,7 @@ const GroupsPage = () => {
                         <Users size={10} strokeWidth={2} />
                         <span>Investigación y Desarrollo</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Grupos de Investigación</h2>
+                    <h2 className="text-3xl lg:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">Grupos de Investigación</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Administración centralizada de grupos institucionales, semilleros y líneas de vinculación tecnológica.
                     </p>
@@ -410,7 +410,7 @@ const GroupsPage = () => {
                     </div>
                     <button
                         onClick={() => handleOpenModal(undefined, false)}
-                        className="btn-brand flex items-center justify-center gap-2 text-xs font-bold"
+                        className="btn-brand flex items-center justify-center gap-2 text-xs font-semibold"
                     >
                         <Plus size={14} strokeWidth={3} />
                         Proponer Grupo
@@ -463,11 +463,11 @@ const GroupsPage = () => {
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
                                 <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                    <th className="p-4 font-bold tracking-widest">Grupo</th>
-                                    <th className="p-4 font-bold tracking-widest">Coordinador</th>
-                                    <th className="p-4 font-bold tracking-widest">Vinculación</th>
-                                    <th className="p-4 font-bold tracking-widest">Estado</th>
-                                    <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                                    <th className="p-4 font-semibold tracking-widest">Grupo</th>
+                                    <th className="p-4 font-semibold tracking-widest">Coordinador</th>
+                                    <th className="p-4 font-semibold tracking-widest">Vinculación</th>
+                                    <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                    <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border-thin">
@@ -476,7 +476,7 @@ const GroupsPage = () => {
                                         <td colSpan={5} className="p-8 text-center">
                                             <div className="flex flex-col items-center justify-center gap-2 py-4">
                                                 <Loader2 className="animate-spin text-text-main h-6 w-6" />
-                                                <span className="text-[10px] font-bold text-text-dim uppercase tracking-widest">Cargando grupos...</span>
+                                                <span className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">Cargando grupos...</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -485,7 +485,7 @@ const GroupsPage = () => {
                                         <td colSpan={5}>
                                             <div className="empty-state py-20 text-center space-y-3">
                                                 <Users size={32} className="mx-auto text-text-dim/30" />
-                                                <p className="text-text-dim font-bold uppercase tracking-widest text-xs">No se encontraron grupos registrados</p>
+                                                <p className="text-text-dim font-semibold uppercase tracking-widest text-xs">No se encontraron grupos registrados</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -497,21 +497,21 @@ const GroupsPage = () => {
                                     >
                                         <td className="p-4">
                                             <div className="space-y-1">
-                                                <h4 className="text-sm font-black text-text-main tracking-tight uppercase group-hover:text-brand transition-colors">
+                                                <h4 className="text-sm font-semibold text-text-main tracking-tight uppercase group-hover:text-brand transition-colors">
                                                     {g.nombre}
                                                 </h4>
                                                 <div className="flex gap-2">
-                                                    <span className="text-[9px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                    <span className="text-[9px] font-mono text-text-dim font-medium uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
                                                         {g.siglas || 'SIN SIGLAS'}
                                                     </span>
-                                                    <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim/80">
+                                                    <span className="text-[9px] font-medium uppercase tracking-wider text-text-dim/80">
                                                         {g.tipo_grupo}
                                                     </span>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <p className="text-xs font-bold text-text-main uppercase">{g.nombre_coordinador || 'No asignado'}</p>
+                                            <p className="text-xs font-medium text-text-main uppercase">{g.nombre_coordinador || 'No asignado'}</p>
                                             {g.carrera_coordinador && (
                                                 <p className="text-[9px] text-text-dim uppercase font-semibold mt-0.5">{formatCareerName(g.carrera_coordinador)}</p>
                                             )}
@@ -599,7 +599,7 @@ const GroupsPage = () => {
                                     {isReviewRejecting ? <XCircle size={20} /> : <CheckCircle size={20} />}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
+                                    <h3 className="text-lg font-semibold text-text-main uppercase tracking-tight">
                                         Evaluar Propuesta de Grupo
                                     </h3>
                                     <p className="section-label text-text-dim">Revisión y Aprobación Normativa Institucional</p>
@@ -614,7 +614,7 @@ const GroupsPage = () => {
                         <div className="flex border-b border-border-thin bg-surface-hover/20 shrink-0">
                             <button
                                 onClick={() => setIsReviewRejecting(false)}
-                                className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${
+                                className={`flex-1 py-3.5 text-[10px] font-semibold uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${
                                     !isReviewRejecting
                                         ? 'border-emerald-500 text-emerald-400 bg-emerald-500/5'
                                         : 'border-transparent text-text-dim hover:text-text-main'
@@ -625,7 +625,7 @@ const GroupsPage = () => {
                             </button>
                             <button
                                 onClick={() => setIsReviewRejecting(true)}
-                                className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${
+                                className={`flex-1 py-3.5 text-[10px] font-semibold uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 ${
                                     isReviewRejecting
                                         ? 'border-red-500 text-red-400 bg-red-500/5'
                                         : 'border-transparent text-text-dim hover:text-text-main'
@@ -638,9 +638,9 @@ const GroupsPage = () => {
 
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             <div className="bg-bg-deep/30 border border-border-thin rounded-2xl p-4 space-y-2">
-                                <span className="text-[8px] font-black uppercase text-text-dim tracking-widest block">Propuesta Bajo Revisión</span>
-                                <h4 className="text-sm font-bold text-text-main uppercase">{reviewingGroup.nombre}</h4>
-                                <div className="flex gap-2 text-[9px] font-mono text-text-dim font-bold uppercase">
+                                <span className="text-[8px] font-semibold uppercase text-text-dim tracking-widest block">Propuesta Bajo Revisión</span>
+                                <h4 className="text-sm font-semibold text-text-main uppercase">{reviewingGroup.nombre}</h4>
+                                <div className="flex gap-2 text-[9px] font-mono text-text-dim font-medium uppercase">
                                     <span>Siglas: {reviewingGroup.siglas || 'S/S'}</span>
                                     <span>|</span>
                                     <span>Coordinador: {reviewingGroup.nombre_coordinador}</span>
@@ -652,7 +652,7 @@ const GroupsPage = () => {
                                 <div className="space-y-6 animate-fade-up">
                                     <div className="space-y-2 text-xs text-text-dim leading-relaxed">
                                         <p>
-                                            Confirmar la aprobación activará el estado del grupo de investigación a <span className="text-emerald-400 font-extrabold">APROBADO</span>, habilitándolo para vincular proyectos y convocatorias institucionales.
+                                            Confirmar la aprobación activará el estado del grupo de investigación a <span className="text-emerald-400 font-semibold">APROBADO</span>, habilitándolo para vincular proyectos y convocatorias institucionales.
                                         </p>
                                         <p>
                                             Defina el identificador de la Resolución de Aprobación del Consejo de Investigación o Dirección:
@@ -660,7 +660,7 @@ const GroupsPage = () => {
                                     </div>
 
                                     <div className="bento-card static p-5 space-y-3">
-                                        <label className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-2">
+                                        <label className="text-[10px] font-semibold text-text-main uppercase tracking-widest flex items-center gap-2">
                                             <FileText size={12} className="text-emerald-400" /> Resolución de Aprobación Oficial
                                         </label>
                                         <div className="divider-vercel !my-0" />
@@ -679,7 +679,7 @@ const GroupsPage = () => {
                                 <div className="space-y-6 animate-fade-up">
                                     <div className="space-y-2 text-xs text-text-dim leading-relaxed">
                                         <p>
-                                            Rechazar la propuesta devolverá el grupo al estado <span className="text-red-400 font-extrabold">RECHAZADO</span>. 
+                                            Rechazar la propuesta devolverá el grupo al estado <span className="text-red-400 font-semibold">RECHAZADO</span>. 
                                             El equipo proponente recibirá una notificación y podrá editar la propuesta para adaptarla a sus observaciones.
                                         </p>
                                         <p>
@@ -689,7 +689,7 @@ const GroupsPage = () => {
 
                                     {/* Text Observations */}
                                     <div className="bento-card static p-5 space-y-3">
-                                        <label className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-2">
+                                        <label className="text-[10px] font-semibold text-text-main uppercase tracking-widest flex items-center gap-2">
                                             <FileText size={12} className="text-red-400" /> Observaciones Escritas
                                         </label>
                                         <div className="divider-vercel !my-0" />
@@ -704,7 +704,7 @@ const GroupsPage = () => {
 
                                     {/* Professional Audio Rejection Recorder */}
                                     <div className="bento-card static p-5 space-y-4">
-                                        <label className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-2">
+                                        <label className="text-[10px] font-semibold text-text-main uppercase tracking-widest flex items-center gap-2">
                                             <Mic size={12} className="text-red-400" /> Retroalimentación de Audio (Voz)
                                         </label>
                                         <div className="divider-vercel !my-0" />
@@ -716,7 +716,7 @@ const GroupsPage = () => {
                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                                         <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
                                                     </span>
-                                                    <span className="text-xs font-black uppercase text-red-400 tracking-wider font-mono">
+                                                    <span className="text-xs font-semibold uppercase text-red-400 tracking-wider font-mono">
                                                         GRABANDO RETROALIMENTACIÓN DE VOZ ({Math.floor(recordingTime / 60)}:{(recordingTime % 60) < 10 ? '0' : ''}{recordingTime % 60})
                                                     </span>
                                                 </div>
@@ -739,7 +739,7 @@ const GroupsPage = () => {
                                                 <button
                                                     type="button"
                                                     onClick={stopRecording}
-                                                    className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] uppercase tracking-widest rounded-lg transition-all shadow-lg active:scale-95"
+                                                    className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold text-[10px] uppercase tracking-widest rounded-lg transition-all shadow-lg active:scale-95"
                                                 >
                                                     Detener Grabación
                                                 </button>
@@ -748,13 +748,13 @@ const GroupsPage = () => {
                                             <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-3 items-center justify-center animate-fade-in">
                                                 <div className="flex items-center gap-2">
                                                     <CheckCircle size={14} className="text-emerald-400" />
-                                                    <span className="text-[10px] font-black uppercase text-emerald-400 tracking-wider font-mono">GRABACIÓN LISTA PARA SER ENVIADA</span>
+                                                    <span className="text-[10px] font-semibold uppercase text-emerald-400 tracking-wider font-mono">GRABACIÓN LISTA PARA SER ENVIADA</span>
                                                 </div>
                                                 <AudioBubblePlayer src={audioUrl} />
                                                 <button
                                                     type="button"
                                                     onClick={() => { setAudioBlob(null); setAudioUrl(''); }}
-                                                    className="px-4 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/40 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all"
+                                                    className="px-4 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 hover:border-red-500/40 rounded-lg text-[9px] font-semibold uppercase tracking-widest transition-all"
                                                 >
                                                     Descartar y Grabar de Nuevo
                                                 </button>
@@ -763,13 +763,13 @@ const GroupsPage = () => {
                                             <div className="py-6 border border-dashed border-border-thin rounded-xl bg-bg-deep/20 flex flex-col items-center justify-center gap-3">
                                                 <Mic size={24} className="text-text-dim/40" />
                                                 <div className="text-center space-y-1">
-                                                    <p className="text-[9px] font-black text-text-dim uppercase tracking-wider">¿Desea agregar comentarios de voz?</p>
+                                                    <p className="text-[9px] font-semibold text-text-dim uppercase tracking-wider">¿Desea agregar comentarios de voz?</p>
                                                     <p className="text-[8px] text-text-dim max-w-[280px] uppercase font-mono">El equipo docente apreciará una explicación verbal detallada sobre el rechazo.</p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={startRecording}
-                                                    className="px-5 py-2.5 bg-text-main text-bg-deep font-bold text-[9px] uppercase tracking-widest rounded-lg hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
+                                                    className="px-5 py-2.5 bg-text-main text-bg-deep font-semibold text-[9px] uppercase tracking-widest rounded-lg hover:opacity-90 transition-all flex items-center gap-1.5 shadow-md"
                                                 >
                                                     <Mic size={12} strokeWidth={2.5} /> Grabar Comentarios de Voz
                                                 </button>
@@ -799,7 +799,7 @@ const GroupsPage = () => {
                                 <button
                                     disabled={sendingFeedback || (!rejectObservations.trim() && !audioBlob)}
                                     onClick={handleRejectReview}
-                                    className="px-6 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-[10px] uppercase tracking-widest rounded-md transition-all flex items-center gap-2 shadow-lg shadow-red-500/10"
+                                    className="px-6 py-3 bg-red-500 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-[10px] uppercase tracking-widest rounded-md transition-all flex items-center gap-2 shadow-lg shadow-red-500/10"
                                 >
                                     {sendingFeedback ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                                     Confirmar y Rechazar
@@ -827,7 +827,7 @@ const GroupsPage = () => {
                                     {confirmDialog.type === 'success' && <CheckCircle size={18} />}
                                     {confirmDialog.type === 'info' && <Shield size={18} />}
                                 </div>
-                                <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                                <h3 className="text-sm font-semibold text-text-main uppercase tracking-tight">
                                     {confirmDialog.title}
                                 </h3>
                             </div>
@@ -850,8 +850,8 @@ const GroupsPage = () => {
                                     await confirmDialog.onConfirm();
                                 }}
                                 className={`!py-2 ${
-                                    confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                    confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                    confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-semibold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                    confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-semibold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                     'btn-vercel-primary'
                                 }`}
                             >

@@ -1038,7 +1038,7 @@ const AnalyticsPage = () => {
                                 
                                 {/* Menú Lateral Izquierdo: Lista de Estándares (Filtros del Mockup) */}
                                 <div className="space-y-2 lg:col-span-1">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-text-dim block mb-3 pl-1 font-mono">
+                                    <span className="text-[9px] font-medium uppercase tracking-widest text-text-dim block mb-3 pl-1 font-mono">
                                         Estándares de Evaluación
                                     </span>
                                     {cacesIndicators.map((ind) => {
@@ -1069,15 +1069,15 @@ const AnalyticsPage = () => {
                                                     <span className="absolute left-0 top-0 bottom-0 w-1 bg-brand" />
                                                 )}
                                                 <div className="flex items-center justify-between gap-2 w-full">
-                                                    <span className="text-[10px] font-black font-mono text-text-dim">
+                                                    <span className="text-[10px] font-medium font-mono text-text-dim">
                                                         {ind.code}
                                                     </span>
-                                                    <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}`}>
+                                                    <span className={`text-[8.5px] font-medium px-1.5 py-0.5 rounded border ${badgeColor}`}>
                                                         {ind.progress}%
                                                     </span>
                                                 </div>
                                                 <div className="space-y-1.5">
-                                                    <h5 className="text-[11px] font-bold text-text-main group-hover:text-brand transition-colors line-clamp-1">
+                                                    <h5 className="text-[11px] font-medium text-text-main group-hover:text-brand transition-colors line-clamp-1">
                                                         {ind.name}
                                                     </h5>
                                                     <div className="w-full bg-border-thin/35 h-1 rounded-full overflow-hidden">
@@ -1124,20 +1124,20 @@ const AnalyticsPage = () => {
                                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-thin/50 pb-4">
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] font-black font-mono text-brand uppercase tracking-wider">
+                                                            <span className="text-[10px] font-medium font-mono text-brand uppercase tracking-wider">
                                                                 Estándar {selectedInd.code}
                                                             </span>
                                                             <span className={`badge-vercel ${statusBadge}`}>
                                                                 {selectedInd.status}
                                                             </span>
                                                         </div>
-                                                        <h3 className="text-lg font-black text-text-main leading-snug">
+                                                        <h3 className="text-lg font-medium text-text-main leading-snug">
                                                             {selectedInd.name}
                                                         </h3>
                                                     </div>
                                                     <div className="text-left sm:text-right shrink-0 bg-bg-deep/50 border border-border-thin px-4 py-2 rounded-xl">
-                                                        <span className="text-[8px] font-black uppercase text-text-dim block tracking-wider">Cumplimiento Global</span>
-                                                        <span className={`text-2xl font-black font-mono ${progressColor}`}>{selectedInd.progress}%</span>
+                                                        <span className="text-[8px] font-medium uppercase text-text-dim block tracking-wider">Cumplimiento Global</span>
+                                                        <span className={`text-2xl font-medium font-mono ${progressColor}`}>{selectedInd.progress}%</span>
                                                     </div>
                                                 </div>
 
@@ -1172,10 +1172,10 @@ const AnalyticsPage = () => {
                                                             />
                                                         </svg>
                                                         <div className="absolute flex flex-col items-center justify-center text-center">
-                                                            <span className="text-[26px] font-black text-text-main font-mono leading-none">
+                                                            <span className="text-[26px] font-medium text-text-main font-mono leading-none">
                                                                 {selectedInd.progress}%
                                                             </span>
-                                                            <span className="text-[8px] font-black text-text-dim uppercase tracking-wider mt-1.5">
+                                                            <span className="text-[8px] font-medium text-text-dim uppercase tracking-wider mt-1.5">
                                                                 META INSTITUCIONAL
                                                             </span>
                                                         </div>
@@ -1184,18 +1184,18 @@ const AnalyticsPage = () => {
                                                     {/* Resumen de Métrica */}
                                                     <div className="space-y-4 max-w-sm w-full font-sans">
                                                         <div className="space-y-1">
-                                                            <span className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Estado de Auditoría</span>
-                                                            <p className="text-xs text-text-main font-semibold leading-normal">
+                                                            <span className="text-[9px] font-medium text-text-dim uppercase tracking-wider block">Estado de Auditoría</span>
+                                                            <p className="text-xs text-text-main font-medium leading-normal">
                                                                 {selectedInd.metaLabel}
                                                             </p>
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <span className="text-[9px] font-black text-text-dim uppercase tracking-wider block">Estadística de Respaldo</span>
-                                                            <p className="text-xs text-text-main font-semibold leading-normal">
+                                                            <span className="text-[9px] font-medium text-text-dim uppercase tracking-wider block">Estadística de Respaldo</span>
+                                                            <p className="text-xs text-text-main font-medium leading-normal">
                                                                 {selectedInd.currentLabel}
                                                             </p>
                                                         </div>
-                                                        <div className="pt-2 border-t border-border-thin flex justify-between items-center text-[10px] font-mono font-bold text-text-dim">
+                                                        <div className="pt-2 border-t border-border-thin flex justify-between items-center text-[10px] font-mono font-medium text-text-dim">
                                                             <span>Total Proyectos Evaluados</span>
                                                             <span className="text-text-main">{totalCount}</span>
                                                         </div>
@@ -1215,7 +1215,7 @@ const AnalyticsPage = () => {
                                 
                                 return (
                                     <div className="space-y-3 mt-6 select-none animate-fade-up [animation-delay:150ms]">
-                                        <span className="text-[9px] font-black uppercase tracking-widest text-text-dim pl-1 font-mono block">
+                                        <span className="text-[9px] font-medium uppercase tracking-widest text-text-dim pl-1 font-mono block">
                                             Clasificación y Distribución del Portafolio de Proyectos
                                         </span>
                                         
@@ -1226,9 +1226,9 @@ const AnalyticsPage = () => {
                                                 <div className="flex items-center justify-between px-5 py-4 border-b border-border-thin bg-error/5 select-none">
                                                     <div className="flex items-center gap-2">
                                                         <span className="w-2 h-2 rounded-full bg-error" />
-                                                        <span className="text-[10px] font-black text-error uppercase tracking-wider">Crítico / Alerta</span>
+                                                        <span className="text-[10px] font-medium text-error uppercase tracking-wider">Crítico / Alerta</span>
                                                     </div>
-                                                    <span className="text-[9.5px] font-mono font-bold text-text-dim">
+                                                    <span className="text-[9.5px] font-mono font-medium text-text-dim">
                                                         {poor.length}
                                                     </span>
                                                 </div>
@@ -1240,13 +1240,13 @@ const AnalyticsPage = () => {
                                                     ) : (
                                                         poor.map(p => (
                                                             <div key={p.uuid} className="p-3 bg-bg-deep/30 hover:bg-bg-deep/60 border border-border-thin rounded-xl transition-all flex flex-col gap-1.5">
-                                                                <span className="text-[9px] font-black text-brand uppercase tracking-wider font-mono">
+                                                                <span className="text-[9px] font-medium text-brand uppercase tracking-wider font-mono">
                                                                     {p.codigoInstitucional || `PROY-${p.uuid.substring(0, 5).toUpperCase()}`}
                                                                 </span>
-                                                                <p className="text-[11px] font-semibold text-text-main leading-normal line-clamp-2" title={p.titulo}>
+                                                                <p className="text-[11px] font-medium text-text-main leading-normal line-clamp-2" title={p.titulo}>
                                                                     {p.titulo}
                                                                 </p>
-                                                                <div className="flex items-center justify-between text-[8px] font-bold text-text-dim uppercase font-mono mt-1 pt-1.5 border-t border-border-thin/40">
+                                                                <div className="flex items-center justify-between text-[8px] font-medium text-text-dim uppercase font-mono mt-1 pt-1.5 border-t border-border-thin/40">
                                                                     <span>{p.carrera || 'Tecnología'}</span>
                                                                     <span className="text-error">{p.estado}</span>
                                                                 </div>
@@ -1261,9 +1261,9 @@ const AnalyticsPage = () => {
                                                 <div className="flex items-center justify-between px-5 py-4 border-b border-border-thin bg-warning/5 select-none">
                                                     <div className="flex items-center gap-2">
                                                         <span className="w-2 h-2 rounded-full bg-warning" />
-                                                        <span className="text-[10px] font-black text-warning uppercase tracking-wider">En Progreso</span>
+                                                        <span className="text-[10px] font-medium text-warning uppercase tracking-wider">En Progreso</span>
                                                     </div>
-                                                    <span className="text-[9.5px] font-mono font-bold text-text-dim">
+                                                    <span className="text-[9.5px] font-mono font-medium text-text-dim">
                                                         {warning.length}
                                                     </span>
                                                 </div>
@@ -1275,13 +1275,13 @@ const AnalyticsPage = () => {
                                                     ) : (
                                                         warning.map(p => (
                                                             <div key={p.uuid} className="p-3 bg-bg-deep/30 hover:bg-bg-deep/60 border border-border-thin rounded-xl transition-all flex flex-col gap-1.5">
-                                                                <span className="text-[9px] font-black text-brand uppercase tracking-wider font-mono">
+                                                                <span className="text-[9px] font-medium text-brand uppercase tracking-wider font-mono">
                                                                     {p.codigoInstitucional || `PROY-${p.uuid.substring(0, 5).toUpperCase()}`}
                                                                 </span>
-                                                                <p className="text-[11px] font-semibold text-text-main leading-normal line-clamp-2" title={p.titulo}>
+                                                                <p className="text-[11px] font-medium text-text-main leading-normal line-clamp-2" title={p.titulo}>
                                                                     {p.titulo}
                                                                 </p>
-                                                                <div className="flex items-center justify-between text-[8px] font-bold text-text-dim uppercase font-mono mt-1 pt-1.5 border-t border-border-thin/40">
+                                                                <div className="flex items-center justify-between text-[8px] font-medium text-text-dim uppercase font-mono mt-1 pt-1.5 border-t border-border-thin/40">
                                                                     <span>{p.carrera || 'Tecnología'}</span>
                                                                     <span className="text-warning">{p.estado}</span>
                                                                 </div>
@@ -1296,9 +1296,9 @@ const AnalyticsPage = () => {
                                                 <div className="flex items-center justify-between px-5 py-4 border-b border-border-thin bg-success/5 select-none">
                                                     <div className="flex items-center gap-2">
                                                         <span className="w-2 h-2 rounded-full bg-success" />
-                                                        <span className="text-[10px] font-black text-success uppercase tracking-wider">Excelente</span>
+                                                        <span className="text-[10px] font-medium text-success uppercase tracking-wider">Excelente</span>
                                                     </div>
-                                                    <span className="text-[9.5px] font-mono font-bold text-text-dim">
+                                                    <span className="text-[9.5px] font-mono font-medium text-text-dim">
                                                         {great.length}
                                                     </span>
                                                 </div>
@@ -1310,13 +1310,13 @@ const AnalyticsPage = () => {
                                                     ) : (
                                                         great.map(p => (
                                                             <div key={p.uuid} className="p-3 bg-bg-deep/30 hover:bg-bg-deep/60 border border-border-thin rounded-xl transition-all flex flex-col gap-1.5">
-                                                                <span className="text-[9px] font-black text-brand uppercase tracking-wider font-mono">
+                                                                <span className="text-[9px] font-medium text-brand uppercase tracking-wider font-mono">
                                                                     {p.codigoInstitucional || `PROY-${p.uuid.substring(0, 5).toUpperCase()}`}
                                                                 </span>
-                                                                <p className="text-[11px] font-semibold text-text-main leading-normal line-clamp-2" title={p.titulo}>
+                                                                <p className="text-[11px] font-medium text-text-main leading-normal line-clamp-2" title={p.titulo}>
                                                                     {p.titulo}
                                                                 </p>
-                                                                <div className="flex items-center justify-between text-[8px] font-bold text-text-dim uppercase font-mono mt-1 pt-1.5 border-t border-border-thin/40">
+                                                                <div className="flex items-center justify-between text-[8px] font-medium text-text-dim uppercase font-mono mt-1 pt-1.5 border-t border-border-thin/40">
                                                                     <span>{p.carrera || 'Tecnología'}</span>
                                                                     <span className="text-success">{p.estado}</span>
                                                                 </div>
@@ -1340,7 +1340,7 @@ const AnalyticsPage = () => {
                                 
                                 {/* Menú Lateral Izquierdo: Selector de Proyectos */}
                                 <div className="space-y-2 lg:col-span-1 max-h-[500px] overflow-y-auto pr-1 custom-scrollbar">
-                                    <span className="text-[9px] font-black uppercase tracking-widest text-text-dim block mb-3 pl-1 font-mono">
+                                    <span className="text-[9px] font-medium uppercase tracking-widest text-text-dim block mb-3 pl-1 font-mono">
                                         Proyectos en Portafolio
                                     </span>
                                     {filteredProjects.map((p) => {
@@ -1362,7 +1362,7 @@ const AnalyticsPage = () => {
                                                 {isActive && (
                                                     <span className="absolute left-0 top-0 bottom-0 w-1 bg-brand" />
                                                 )}
-                                                <div className="flex items-center justify-between gap-1 w-full text-[9px] font-bold">
+                                                <div className="flex items-center justify-between gap-1 w-full text-[9px] font-medium">
                                                     <span className="font-mono text-brand truncate">
                                                         {p.codigoInstitucional || `PROY-${p.uuid.substring(0, 5).toUpperCase()}`}
                                                     </span>
@@ -1370,7 +1370,7 @@ const AnalyticsPage = () => {
                                                         Gasto: {pctGasto}%
                                                     </span>
                                                 </div>
-                                                <h5 className="text-[10.5px] font-bold text-text-main line-clamp-2 leading-snug group-hover:text-brand transition-colors" title={p.titulo}>
+                                                <h5 className="text-[10.5px] font-medium text-text-main line-clamp-2 leading-snug group-hover:text-brand transition-colors" title={p.titulo}>
                                                     {p.titulo}
                                                 </h5>
                                                 <div className="w-full bg-border-thin/35 h-0.5 rounded-full overflow-hidden mt-1">
@@ -1399,7 +1399,7 @@ const AnalyticsPage = () => {
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-thin/50 pb-4">
                                                 <div className="space-y-1.5">
                                                     <div className="flex flex-wrap items-center gap-1.5">
-                                                        <span className="text-[10px] font-black font-mono text-brand uppercase tracking-wider">
+                                                        <span className="text-[10px] font-semibold font-mono text-brand uppercase tracking-wider">
                                                             {selectedProj.codigoInstitucional || `PROY-${selectedProj.uuid.substring(0, 5).toUpperCase()}`}
                                                         </span>
                                                         <span className={`px-2 py-0.5 rounded-full text-[8.5px] font-bold ${
@@ -1415,13 +1415,13 @@ const AnalyticsPage = () => {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <h3 className="text-base font-black text-text-main leading-snug">
+                                                    <h3 className="text-base font-semibold text-text-main leading-snug">
                                                         {selectedProj.titulo}
                                                     </h3>
                                                 </div>
                                                 <div className="text-left sm:text-right shrink-0 bg-bg-deep/50 border border-border-thin px-4 py-2.5 rounded-xl">
-                                                    <span className="text-[8px] font-black uppercase text-text-dim block tracking-wider">Presupuesto Asignado</span>
-                                                    <span className="text-xl font-black font-mono text-text-main">{formatCurrency(selectedProj.presupuestoTotal || 0)}</span>
+                                                    <span className="text-[8px] font-medium uppercase text-text-dim block tracking-wider">Presupuesto Asignado</span>
+                                                    <span className="text-xl font-semibold font-mono text-text-main">{formatCurrency(selectedProj.presupuestoTotal || 0)}</span>
                                                 </div>
                                             </div>
 

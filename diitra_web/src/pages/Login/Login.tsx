@@ -187,7 +187,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">Entrar a DIITRA</h1>
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">Entrar a DIITRA</h1>
                         <p className="text-[11px] text-text-dim font-medium tracking-tight">Departamento de Investigación e Innovación Traversari</p>
                     </div>
                 </div>
@@ -196,7 +196,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                 <div className="space-y-6">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim ml-1" htmlFor="username">
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1" htmlFor="username">
                                 Usuario
                             </label>
                             <input
@@ -210,7 +210,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
                         <div className="space-y-2">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim" htmlFor="password">
+                                <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim" htmlFor="password">
                                     Contraseña
                                 </label>
                                 <button
@@ -245,12 +245,12 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             <div className="p-4 rounded-lg bg-error/5 border border-error/30 space-y-2 animate-in fade-in">
                                 <div className="flex items-center gap-2 text-error">
                                     <Lock size={14} className="shrink-0" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Cuenta bloqueada temporalmente</span>
+                                    <span className="text-[10px] font-semibold uppercase tracking-wider">Cuenta bloqueada temporalmente</span>
                                 </div>
                                 <p className="text-[9px] text-text-dim leading-relaxed">{error}</p>
                                 <div className="flex items-center justify-between">
                                     <span className="text-[9px] text-text-dim uppercase tracking-widest">Tiempo restante:</span>
-                                    <span className="font-mono text-sm font-black text-error tabular-nums">
+                                    <span className="font-mono text-sm font-semibold text-error tabular-nums">
                                         {formatLockoutTime(lockoutSeconds)}
                                     </span>
                                 </div>
@@ -293,7 +293,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 <button
                                     type="button"
                                     onClick={handleMicrosoftLogin}
-                                    className="w-full h-11 flex items-center justify-center gap-2 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
+                                    className="w-full h-11 flex items-center justify-center gap-2 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-semibold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
                                 >
                                     <svg className="w-4 h-4 shrink-0" viewBox="0 0 21 21">
                                         <rect x="1" y="1" width="9" height="9" fill="#F25022" />
@@ -307,7 +307,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 {/* Acceso con PIN */}
                                 <Link
                                     to="/auth/pin"
-                                    className="w-full h-11 flex items-center justify-center gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
+                                    className="w-full h-11 flex items-center justify-center gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
                                     title="Ingresar con código PIN de handoff"
                                 >
                                     <Key size={13} className="shrink-0 text-text-dim" />
@@ -346,7 +346,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                     <rect x="1" y="11" width="9" height="9" fill="#00A1F1" />
                                     <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
                                 </svg>
-                                <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Microsoft SSO Simulator</h3>
+                                <h3 className="text-sm font-semibold text-text-main uppercase tracking-wider">Microsoft SSO Simulator</h3>
                             </div>
                             <p className="text-[10px] text-text-dim leading-relaxed">
                                 Entorno de Desarrollo: Simula la autenticación OAuth2 de Microsoft utilizando una cuenta del dominio @istpet.edu.ec.
@@ -355,7 +355,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
                         <form onSubmit={handleMockSubmit} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                                <label className="text-[9px] font-semibold uppercase tracking-wider text-text-dim">
                                     Nombre a Simular
                                 </label>
                                 <input
@@ -369,7 +369,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                                <label className="text-[9px] font-semibold uppercase tracking-wider text-text-dim">
                                     Correo Institucional
                                 </label>
                                 <input
@@ -384,7 +384,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
                             {/* Predefined Quick Selects */}
                             <div className="space-y-1.5 pt-1">
-                                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim block">
+                                <span className="text-[9px] font-semibold uppercase tracking-wider text-text-dim block">
                                     Selección Rápida
                                 </span>
                                 <div className="grid grid-cols-2 gap-2">

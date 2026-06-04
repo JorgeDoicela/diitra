@@ -99,7 +99,7 @@ export const AdminDashboard: React.FC = () => {
                     <div className="w-12 h-12 rounded-full bg-error/10 border border-error/20 flex items-center justify-center mb-4 text-error animate-pulse">
                         <Activity size={22} />
                     </div>
-                    <h3 className="text-base font-bold text-text-main mb-2">Error de Sincronización</h3>
+                    <h3 className="text-base font-semibold text-text-main mb-2">Error de Sincronización</h3>
                     <p className="text-xs text-text-dim leading-relaxed max-w-sm mb-6">
                         {error}
                     </p>
@@ -166,7 +166,7 @@ export const AdminDashboard: React.FC = () => {
 
                                     <div className="space-y-4">
                                         <div className="flex items-baseline gap-1.5">
-                                            <span className="text-4xl font-bold tracking-tight text-text-main font-sans">
+                                            <span className="text-4xl font-semibold tracking-tight text-text-main font-sans">
                                                 {ejecucionPorc.toFixed(1)}%
                                             </span>
                                             <span className="text-[10px] text-text-dim uppercase tracking-wider font-semibold">ejecutado</span>
@@ -272,7 +272,7 @@ export const AdminDashboard: React.FC = () => {
 
                                                     {/* Col 3: Type Pill */}
                                                     <div className="shrink-0 min-w-[100px]">
-                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${
                                                             isInforme 
                                                                 ? 'bg-info/10 text-info border border-info/20' 
                                                                 : 'bg-brand/10 text-brand border border-brand/20'
@@ -355,15 +355,15 @@ export const AdminDashboard: React.FC = () => {
                                 <div className="space-y-3">
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Artículos Indexados</span>
-                                        <span className="font-bold text-text-main font-mono">{stats.articulos_indexados ?? 0}</span>
+                                        <span className="font-semibold text-text-main font-mono">{stats.articulos_indexados ?? 0}</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Prototipos e Innovación</span>
-                                        <span className="font-bold text-text-main font-mono">{stats.prototipos ?? 0}</span>
+                                        <span className="font-semibold text-text-main font-mono">{stats.prototipos ?? 0}</span>
                                     </div>
                                     <div className="flex justify-between text-[11px] font-medium">
                                         <span className="text-text-dim">Ponencias y Difusión</span>
-                                        <span className="font-bold text-text-main font-mono">{stats.ponencias ?? 0}</span>
+                                        <span className="font-semibold text-text-main font-mono">{stats.ponencias ?? 0}</span>
                                     </div>
                                 </div>
                             </div>

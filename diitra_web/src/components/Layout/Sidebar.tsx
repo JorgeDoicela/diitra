@@ -631,7 +631,7 @@ const Sidebar = ({
                         alt="DIITRA Logo"
                         className="h-6 w-auto object-contain"
                     />
-                    <span className="text-[14px] font-black text-text-main tracking-[0.2em] font-sans uppercase">
+                    <span className="text-[14px] font-semibold text-text-main tracking-[0.2em] font-sans uppercase">
                         DIITRA
                     </span>
                 </Link>
@@ -644,7 +644,7 @@ const Sidebar = ({
                     >
                         <Search size={13} className="text-text-dim group-hover:text-text-main transition-colors" />
                         <span className="text-xs text-text-dim flex-1 font-medium group-hover:text-text-main transition-colors">Buscar</span>
-                        <kbd className="text-[10px] font-sans font-bold bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim shadow-sm">{searchShortcut}</kbd>
+                        <kbd className="text-[10px] font-sans font-semibold bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim shadow-sm">{searchShortcut}</kbd>
                     </div>
                 </div>
 
@@ -716,9 +716,9 @@ const Sidebar = ({
                             <div className="absolute bottom-14 left-3 w-80 sm:w-90 bg-bg-deep border border-border-thin rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in duration-200 slide-in-from-bottom-2">
                                 <header className="p-3 border-b border-border-thin bg-surface/30 flex justify-between items-center">
                                     <div className="flex items-center gap-1.5">
-                                        <h4 className="text-[10px] font-bold text-text-main uppercase tracking-widest">Notificaciones</h4>
+                                        <h4 className="text-[10px] font-semibold text-text-main uppercase tracking-widest">Notificaciones</h4>
                                         {unreadCount > 0 && (
-                                            <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter">
+                                            <span className="bg-text-main text-bg-deep px-1.5 py-0.5 rounded text-[8px] font-semibold uppercase tracking-tighter">
                                                 {unreadCount} Nuevas
                                             </span>
                                         )}
@@ -726,7 +726,7 @@ const Sidebar = ({
                                     {unreadCount > 0 && (
                                         <button
                                             onClick={markAllAsRead}
-                                            className="text-[9px] font-bold text-brand hover:underline uppercase tracking-wider bg-transparent border-0 cursor-pointer"
+                                            className="text-[9px] font-semibold text-brand hover:underline uppercase tracking-wider bg-transparent border-0 cursor-pointer"
                                         >
                                             Marcar todo leído
                                         </button>
@@ -737,7 +737,7 @@ const Sidebar = ({
                                     {notifications.length === 0 ? (
                                         <div className="p-8 text-center space-y-2">
                                             <Bell size={20} className="mx-auto text-text-dim opacity-20" />
-                                            <p className="text-[9px] text-text-dim uppercase font-bold tracking-widest">Todo en orden</p>
+                                            <p className="text-[9px] text-text-dim uppercase font-semibold tracking-widest">Todo en orden</p>
                                         </div>
                                     ) : (
                                         notifications.map((n: any) => (
@@ -752,13 +752,13 @@ const Sidebar = ({
                                                     </div>
                                                     <div className="space-y-0.5 flex-1 min-w-0">
                                                         <div className="flex justify-between items-start gap-1">
-                                                            <h5 className="text-[11px] font-bold text-text-main leading-tight truncate">{n.titulo}</h5>
+                                                            <h5 className="text-[11px] font-semibold text-text-main leading-tight truncate">{n.titulo}</h5>
                                                             <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                                         </div>
                                                         <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2">{n.mensaje}</p>
                                                         {n.url_accion && (
                                                             <span
-                                                                className="inline-flex items-center gap-1 text-[9px] font-bold text-text-main uppercase mt-1 hover:underline cursor-pointer"
+                                                                className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-1 hover:underline cursor-pointer"
                                                             >
                                                                 Ir al detalle
                                                             </span>
@@ -776,7 +776,7 @@ const Sidebar = ({
                                 <footer className="p-2 border-t border-border-thin bg-surface/30 text-center">
                                     <button
                                         onClick={() => { setIsNotificationsOpen(false); navigate('/notificaciones'); }}
-                                        className="text-[9px] font-bold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors bg-transparent border-0 cursor-pointer"
+                                        className="text-[9px] font-semibold text-text-dim hover:text-text-main uppercase tracking-widest transition-colors bg-transparent border-0 cursor-pointer"
                                     >
                                         Ver todo el historial
                                     </button>
@@ -792,7 +792,7 @@ const Sidebar = ({
                         >
                             {/* User Avatar with circular hover shade wrapper */}
                             <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 transition-colors shrink-0">
-                                <div className="w-5.5 h-5.5 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                                <div className="w-5.5 h-5.5 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-semibold text-white uppercase">
                                     {userInitials}
                                 </div>
                             </div>
@@ -801,7 +801,7 @@ const Sidebar = ({
                                 <span className="text-[12px] font-semibold text-text-main truncate w-full group-hover:text-text-main transition-colors">
                                     {user?.nombre_completo || username}
                                 </span>
-                                <span className="text-[9px] font-bold text-text-dim truncate w-full uppercase tracking-wider mt-0.5">
+                                <span className="text-[9px] font-semibold text-text-dim truncate w-full uppercase tracking-wider mt-0.5">
                                     {roleDisplayName}
                                 </span>
                             </div>

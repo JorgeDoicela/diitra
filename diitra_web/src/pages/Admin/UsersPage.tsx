@@ -420,7 +420,7 @@ const UsersPage = () => {
                         <Shield size={10} strokeWidth={2} />
                         <span>Administración Central - DIITRA</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Gestión Institucional</h2>
+                    <h2 className="text-3xl lg:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">Gestión Institucional</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Control de acceso institucional y gestión de evaluadores pares externos.
                     </p>
@@ -430,7 +430,7 @@ const UsersPage = () => {
                     <div className="flex gap-2">
                         <button
                             onClick={() => setShowAudit(!showAudit)}
-                            className={`flex-1 md:flex-none p-2.5 border rounded-md transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'btn-vercel-primary' : 'btn-vercel-secondary'}`}
+                            className={`flex-1 md:flex-none p-2.5 border rounded-md transition-all flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-widest ${showAudit ? 'btn-vercel-primary' : 'btn-vercel-secondary'}`}
                         >
                             <History size={14} /> Auditoría
                         </button>
@@ -448,19 +448,19 @@ const UsersPage = () => {
                     <div className="bg-surface border border-border-thin p-1 rounded-lg flex overflow-x-auto custom-scrollbar">
                         <button
                             onClick={() => setUserType('DOCENTE')}
-                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-all ${userType === 'DOCENTE' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
                         >
                             Docentes
                         </button>
                         <button
                             onClick={() => setUserType('ESTUDIANTE')}
-                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-all ${userType === 'ESTUDIANTE' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
                         >
                             Alumnos
                         </button>
                         <button
                             onClick={() => setUserType('EXTERNO')}
-                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
+                            className={`flex-1 whitespace-nowrap flex items-center justify-center gap-2 px-4 py-1.5 rounded-md text-[10px] font-semibold uppercase tracking-widest transition-all ${userType === 'EXTERNO' ? 'bg-surface-hover text-text-main shadow-sm' : 'text-text-dim hover:text-text-main'}`}
                         >
                             <Globe size={12} /> Externos
                         </button>
@@ -565,10 +565,10 @@ const UsersPage = () => {
                         <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                <th className="p-4 font-bold tracking-widest">Actor</th>
-                                <th className="p-4 font-bold tracking-widest">Capacidad (SIGAFI)</th>
-                                <th className="p-4 font-bold tracking-widest">Permisos / Roles</th>
-                                <th className="p-4 font-bold tracking-widest text-right">Gestión</th>
+                                <th className="p-4 font-semibold tracking-widest">Actor</th>
+                                <th className="p-4 font-semibold tracking-widest">Capacidad (SIGAFI)</th>
+                                <th className="p-4 font-semibold tracking-widest">Permisos / Roles</th>
+                                <th className="p-4 font-semibold tracking-widest text-right">Gestión</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border-thin">
@@ -582,7 +582,7 @@ const UsersPage = () => {
                                 <tr>
                                     <td colSpan={4}>
                                         <div className="empty-state py-20">
-                                            <p className="text-text-dim font-bold uppercase tracking-widest">No se encontraron registros</p>
+                                            <p className="text-text-dim font-semibold uppercase tracking-widest">No se encontraron registros</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -596,7 +596,7 @@ const UsersPage = () => {
                                                 <UserIcon size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-text-main tracking-tight uppercase">{u.nombre_completo}</p>
+                                                <p className="text-sm font-semibold text-text-main tracking-tight uppercase">{u.nombre_completo}</p>
                                                 <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">{u.id_profesor} &bull; {u.email}</p>
                                             </div>
                                         </div>
@@ -630,7 +630,7 @@ const UsersPage = () => {
                                                          {formatCarrera(u.carrera)}
                                                      </span>
                                                  </div>
-                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                 <p className="text-[9px] text-text-dim font-semibold uppercase tracking-widest opacity-70">
                                                      {u.nivel || 'Nivel no definido'}
                                                  </p>
                                              </div>
@@ -681,7 +681,7 @@ const UsersPage = () => {
                 </div>
 
                     <footer className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
-                        <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest text-center md:text-left">
+                        <div className="text-[10px] text-text-dim font-semibold uppercase tracking-widest text-center md:text-left">
                             Mostrando <span className="text-text-main">{(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)}</span> de <span className="text-text-main">{totalCount}</span> {userType.toLowerCase()}s
                         </div>
                         
@@ -703,7 +703,7 @@ const UsersPage = () => {
                                         <button
                                             key={p}
                                             onClick={() => setPage(p)}
-                                            className={`w-8 h-8 rounded-md text-[10px] font-bold transition-all flex items-center justify-center ${
+                                            className={`w-8 h-8 rounded-md text-[10px] font-semibold transition-all flex items-center justify-center ${
                                                 page === p ? 'btn-vercel-primary' : 'text-text-dim hover:text-text-main hover:bg-surface'
                                             }`}
                                         >
@@ -767,7 +767,7 @@ const UsersPage = () => {
                             <div className="flex items-center gap-3">
                                 <div className="icon-circle icon-circle-info !p-2"><Globe size={20} /></div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">Registro de Evaluador Académico</h3>
+                                    <h3 className="text-sm font-semibold text-text-main uppercase tracking-tight">Registro de Evaluador Académico</h3>
                                     <p className="section-label text-text-dim">Personal Externo DIITRA - IST Quito</p>
                                 </div>
                             </div>
@@ -908,7 +908,7 @@ const UsersPage = () => {
                                     <UserIcon size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">{detailUser.nombre_completo}</h3>
+                                    <h3 className="text-lg font-semibold text-text-main uppercase tracking-tight">{detailUser.nombre_completo}</h3>
                                     <p className="section-label text-text-dim">
                                         {detailUser.type === 'DOCENTE' ? 'Docente Investigador' : detailUser.type === 'ESTUDIANTE' ? 'Estudiante' : 'Evaluador Externo'} — DIITRA
                                     </p>
@@ -925,13 +925,13 @@ const UsersPage = () => {
                                     <label className="section-label text-text-dim mb-2">
                                         <Mail size={12} /> Correo Electrónico
                                     </label>
-                                    <p className="text-sm font-bold text-text-main break-all">{detailUser.email}</p>
+                                    <p className="text-sm font-semibold text-text-main break-all">{detailUser.email}</p>
                                 </div>
                                 <div className="bento-card static p-4">
                                     <label className="section-label text-text-dim mb-2">
                                         <Hash size={12} /> Cédula / ID
                                     </label>
-                                    <p className="text-sm font-bold text-text-main font-mono">{detailUser.id_profesor}</p>
+                                    <p className="text-sm font-semibold text-text-main font-mono">{detailUser.id_profesor}</p>
                                 </div>
                             </div>
 
@@ -965,7 +965,7 @@ const UsersPage = () => {
                                         </div>
                                         <div className="col-span-2">
                                             <p className="section-label text-text-dim mb-1">Carrera / Tecnología</p>
-                                            <p className="text-sm font-bold text-text-main flex items-center gap-1.5">
+                                            <p className="text-sm font-semibold text-text-main flex items-center gap-1.5">
                                                 <GraduationCap size={14} className="text-text-dim" />
                                                 {formatCarrera(detailUser.carrera)}
                                             </p>
@@ -983,11 +983,11 @@ const UsersPage = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Carrera</p>
-                                            <p className="text-sm font-bold text-text-main">{formatCarrera(detailUser.carrera)}</p>
+                                            <p className="text-sm font-semibold text-text-main">{formatCarrera(detailUser.carrera)}</p>
                                         </div>
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Nivel</p>
-                                            <p className="text-sm font-bold text-text-main">{detailUser.nivel || 'Sin nivel'}</p>
+                                            <p className="text-sm font-semibold text-text-main">{detailUser.nivel || 'Sin nivel'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1075,7 +1075,7 @@ const UsersPage = () => {
                                     {confirmDialog.type === 'success' && <CheckCircle size={18} />}
                                     {confirmDialog.type === 'info' && <Shield size={18} />}
                                 </div>
-                                <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                                <h3 className="text-sm font-semibold text-text-main uppercase tracking-tight">
                                     {confirmDialog.title}
                                 </h3>
                             </div>
@@ -1107,8 +1107,8 @@ const UsersPage = () => {
                                             await confirmDialog.onConfirm();
                                         }}
                                         className={`!py-2 ${
-                                            confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                            confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                            confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-semibold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                            confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-semibold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                             'btn-vercel-primary'
                                         }`}
                                     >

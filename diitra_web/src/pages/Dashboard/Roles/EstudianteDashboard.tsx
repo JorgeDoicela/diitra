@@ -26,7 +26,7 @@ export const EstudianteDashboard: React.FC = () => {
                 >
                     <div className="mt-4 empty-state">
                         <Star size={24} className="text-text-main/20 mb-2" />
-                        <p className="text-[10px] text-text-dim uppercase font-bold">No tienes participaciones activas</p>
+                        <p className="text-[10px] text-text-dim uppercase font-semibold">No tienes participaciones activas</p>
                         <p className="text-[11px] text-text-dim mt-2 max-w-xs text-center">
                             Contacta con un docente investigador para unirte a un proyecto de investigación.
                         </p>

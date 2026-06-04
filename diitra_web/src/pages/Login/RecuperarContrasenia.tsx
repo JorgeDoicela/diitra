@@ -58,7 +58,7 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">
                             Recuperar contraseña
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium tracking-tight">
@@ -77,7 +77,7 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
                             <div className="space-y-2">
                                 <label
                                     htmlFor="identificador"
-                                    className="text-[10px] font-bold uppercase tracking-widest text-text-dim ml-1"
+                                    className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1"
                                 >
                                     Cédula o correo institucional
                                 </label>
@@ -141,7 +141,7 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
                         </div>
 
                         <div className="p-4 rounded-lg border border-border-thin bg-surface/40 space-y-1 text-left">
-                            <p className="text-[9px] font-bold uppercase tracking-widest text-text-dim">Importante</p>
+                            <p className="text-[9px] font-semibold uppercase tracking-widest text-text-dim">Importante</p>
                             <ul className="text-[11px] text-text-dim space-y-1 mt-1.5 leading-relaxed list-none p-0">
                                 <li>· El enlace expira en <strong className="text-text-main">30 minutos</strong></li>
                                 <li>· Es de <strong className="text-text-main">un solo uso</strong></li>

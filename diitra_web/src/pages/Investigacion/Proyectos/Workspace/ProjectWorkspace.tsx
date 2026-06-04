@@ -454,7 +454,7 @@ export const ProjectWorkspace: React.FC = () => {
             <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
-                    <p className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">Cargando Workspace...</p>
+                    <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">Cargando Workspace...</p>
                 </div>
             </div>
         );
@@ -465,7 +465,7 @@ export const ProjectWorkspace: React.FC = () => {
             <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh] p-6 text-center">
                 <div className="bento-card static p-8 max-w-md w-full flex flex-col items-center gap-4">
                     <Shield size={48} className="text-error" />
-                    <h3 className="text-sm font-bold text-text-main uppercase tracking-widest">Acceso Restringido</h3>
+                    <h3 className="text-sm font-semibold text-text-main uppercase tracking-widest">Acceso Restringido</h3>
                     <p className="text-xs text-text-dim leading-relaxed">
                         No tienes permisos para visualizar ni participar en este proyecto de investigación colaborativo.
                     </p>
@@ -603,7 +603,7 @@ export const ProjectWorkspace: React.FC = () => {
                 <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                     <div className="flex flex-col items-center gap-4">
                         <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
-                        <p className="text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">Resolviendo documento...</p>
+                        <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">Resolviendo documento...</p>
                     </div>
                 </div>
             );
@@ -655,11 +655,11 @@ export const ProjectWorkspace: React.FC = () => {
                         </button>
                         <div className="h-4 w-[1px] bg-border-thin" />
                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-bold text-text-main uppercase">
+                            <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-semibold text-text-main uppercase">
                                 DI
                             </div>
                             <div>
-                                <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-dim uppercase tracking-[0.3em]">
+                                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
                                     <Activity size={10} strokeWidth={2} className="text-brand" />
                                     <span>Workspace · ISTPET</span>
                                 </div>
@@ -673,7 +673,7 @@ export const ProjectWorkspace: React.FC = () => {
                     </div>
                     {/* Badge de estado en dispositivos móviles */}
                     <div className="sm:hidden">
-                        <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-bold`}>
+                        <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-semibold`}>
                             <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
                             {currentProject.status}
                         </span>
@@ -683,7 +683,7 @@ export const ProjectWorkspace: React.FC = () => {
                 <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto justify-end">
                     {/* Badge de estado en pantallas medianas y grandes */}
                     <div className="hidden sm:block mr-1">
-                        <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-bold`}>
+                        <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-semibold`}>
                             <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
                             {currentProject.status}
                         </span>
@@ -742,7 +742,7 @@ export const ProjectWorkspace: React.FC = () => {
                 {/* ── Page Title (DashboardHeader pattern) ── */}
                 <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 md:mb-16 gap-6 md:gap-0">
                     <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold text-text-main uppercase tracking-[0.3em]">
+                        <div className="flex flex-wrap items-center gap-2 text-[10px] font-semibold text-text-main uppercase tracking-[0.3em]">
                             <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px]`}>
                                 <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
                                 {currentProject.status}
@@ -757,7 +757,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <span className="text-text-dim">·</span>
                             <span className="text-text-dim">{user?.role || 'Investigador'}</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter">{currentProject.title}</h2>
+                        <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter">{currentProject.title}</h2>
                         <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
                     </div>
                 </header>
@@ -770,7 +770,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 <FileSignature size={18} className="text-brand" />
                             </div>
                             <div>
-                                <h3 className="text-xs font-bold text-text-main uppercase tracking-widest">
+                                <h3 className="text-xs font-semibold text-text-main uppercase tracking-widest">
                                     {templateCode === 'INFORME_FINAL_INVESTIGACION' ? 'Informe Final en Proceso' : 'Documento en Edición'}
                                 </h3>
                                 <p className="text-xs text-text-dim mt-1.5 leading-relaxed max-w-xl">
@@ -794,7 +794,7 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="bento-card static p-6 flex flex-col justify-between group">
                             <div className="flex items-center gap-2.5 mb-1.5">
                                 <Settings size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                                <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Flujo Institucional CACES</h3>
+                                <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Flujo Institucional CACES</h3>
                             </div>
                             <div className="mt-4 space-y-0">
                                 {WorkflowPhases.map((phase, idx) => {
@@ -808,7 +808,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {(isPast || (phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 className={`text-xs font-bold tracking-wider uppercase ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
+                                                <h3 className={`text-xs font-semibold tracking-wider uppercase ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
                                                 <p className="text-[11px] text-text-dim mt-1 leading-relaxed">
                                                     {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
                                                     {phase.id === 'En Revisión' && 'Revisión técnica doble ciego por pares evaluadores asignados por el Director.'}
@@ -866,7 +866,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             )}
 
                                                             {currentProject.puntajeEvaluacion !== null && (
-                                                                <div className="badge-vercel badge-vercel-success !text-[11px] !py-2 flex items-center gap-1.5 font-bold animate-fade-in">
+                                                                <div className="badge-vercel badge-vercel-success !text-[11px] !py-2 flex items-center gap-1.5 font-semibold animate-fade-in">
                                                                     <span>Puntaje: {currentProject.puntajeEvaluacion}/100</span>
                                                                     <span className="text-text-dim">|</span>
                                                                     <span className="text-[10px] uppercase font-mono">{currentProject.puntajeEvaluacion >= 70 ? 'Aprobado' : 'Rechazado'}</span>
@@ -940,7 +940,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <Users size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Equipo de Trabajo</h3>
+                                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Equipo de Trabajo</h3>
                                 </div>
                                 <p className="text-xs text-text-dim font-normal leading-relaxed">Gestión dinámica del talento humano del proyecto</p>
                             </div>
@@ -952,7 +952,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         type="button"
                                         disabled={currentProject.puedeEditar === false}
                                         onClick={() => handleToggleTieneGrupo(false)}
-                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
+                                        className={`flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
                                         Individual
                                     </button>
@@ -960,7 +960,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         type="button"
                                         disabled={currentProject.puedeEditar === false}
                                         onClick={() => handleToggleTieneGrupo(true)}
-                                        className={`flex-1 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
+                                        className={`flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
                                         Grupo
                                     </button>
@@ -970,19 +970,19 @@ export const ProjectWorkspace: React.FC = () => {
                                 {!tieneGrupo ? (
                                     <div className="badge-vercel badge-vercel-warning !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                                        <span><span className="font-bold">Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Grupo para agregar colaboradores.</span>
+                                        <span><span className="font-semibold">Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Grupo para agregar colaboradores.</span>
                                     </div>
                                 ) : (
                                     <div className="badge-vercel badge-vercel-info !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <Sparkles size={14} className="shrink-0 mt-0.5" />
-                                        <span><span className="font-bold">Grupo:</span> Usa el buscador para invitar docentes y estudiantes al equipo.</span>
+                                        <span><span className="font-semibold">Grupo:</span> Usa el buscador para invitar docentes y estudiantes al equipo.</span>
                                     </div>
                                 )}
 
                                 {/* Buscador */}
                                 {tieneGrupo && currentProject.puedeEditar !== false && (
                                     <div className="relative space-y-1.5">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Agregar Miembros</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Agregar Miembros</label>
                                         <div className="relative">
                                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
                                             <input 
@@ -1014,10 +1014,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
                                                             >
                                                                 <div>
-                                                                    <p className="font-bold text-text-main text-xs flex items-center gap-2">
+                                                                    <p className="font-semibold text-text-main text-xs flex items-center gap-2">
                                                                         <span>{su.nombre}</span>
                                                                         {su.tipo === 'profesor' && su.horas_disponibles !== undefined && (
-                                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                                                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${
                                                                                 (su.horas_disponibles - (su.horas_asignadas || 0)) > 0 
                                                                                     ? 'bg-success/15 text-success border border-success/30' 
                                                                                     : 'bg-error/15 text-error border border-error/30'
@@ -1030,7 +1030,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                         C.I. {su.cedula} {su.email && su.email !== 'S/D' && `| ${su.email}`} {su.carrera && `| ${su.carrera.toLowerCase().replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase())}`}
                                                                     </p>
                                                                 </div>
-                                                                <span className={`badge-vercel text-[8px] font-bold ${
+                                                                <span className={`badge-vercel text-[8px] font-semibold ${
                                                                     su.tipo === 'profesor' ? 'badge-vercel-info' : 'badge-vercel-success'
                                                                 }`}>
                                                                     {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
@@ -1049,7 +1049,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     <div className="badge-vercel badge-vercel-warning !rounded-xl !p-4 !text-[11px] !font-normal flex gap-2.5 leading-relaxed animate-fade-in mb-4 w-full items-start">
                                         <Shield size={14} className="shrink-0 mt-0.5" />
                                         <div>
-                                            <span className="font-bold uppercase tracking-wider text-[10px] block">Modo Sólo Lectura</span>
+                                            <span className="font-semibold uppercase tracking-wider text-[10px] block">Modo Sólo Lectura</span>
                                             <span className="text-text-dim">No tienes permisos para modificar el equipo de investigadores o transferir la dirección del proyecto.</span>
                                         </div>
                                     </div>
@@ -1057,7 +1057,7 @@ export const ProjectWorkspace: React.FC = () => {
 
                                 {/* Lista de Integrantes */}
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
                                         Activos ({investigadores.filter((m: any) => m.activo !== false).length})
                                     </label>
                                     
@@ -1077,7 +1077,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                         className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all flex flex-col md:flex-row md:items-center justify-between gap-3"
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[10px] font-bold border uppercase ${
+                                                            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold border uppercase ${
                                                                 isDirector 
                                                                     ? 'icon-circle-brand !p-0 !w-8 !h-8 border border-brand/30' 
                                                                     : isEstudiante 
@@ -1088,17 +1088,17 @@ export const ProjectWorkspace: React.FC = () => {
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="text-xs font-bold text-text-main">{member.nombre}</span>
+                                                                    <span className="text-xs font-medium text-text-main">{member.nombre}</span>
                                                                     {isDirector && (
                                                                         <div className="flex items-center gap-1.5">
-                                                                            <span className="badge-vercel badge-vercel-info text-[8px] font-bold">
+                                                                            <span className="badge-vercel badge-vercel-info text-[8px] font-semibold">
                                                                                 Director
                                                                             </span>
                                                                             {currentProject.puedeEditar !== false && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleOpenTransferModal(member)}
-                                                                                    className="badge-vercel badge-vercel-violet text-[8px] font-bold hover:opacity-80 transition-all cursor-pointer"
+                                                                                    className="badge-vercel badge-vercel-violet text-[8px] font-semibold hover:opacity-80 transition-all cursor-pointer"
                                                                                     title="Transferir Dirección"
                                                                                 >
                                                                                     <RefreshCw size={9} className="inline" /> Relevo
@@ -1110,7 +1110,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <div className="text-[10px] text-text-dim font-mono mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                                                                     {member.carrera && (
                                                                         <>
-                                                                            <span className="text-[9px] text-text-main font-bold uppercase tracking-wide bg-surface px-1.5 py-0.5 rounded border border-border-thin truncate max-w-[200px]" title={member.carrera}>
+                                                                            <span className="text-[9px] text-text-main font-semibold uppercase tracking-wide bg-surface px-1.5 py-0.5 rounded border border-border-thin truncate max-w-[200px]" title={member.carrera}>
                                                                                 {member.carrera}
                                                                             </span>
                                                                             <span>·</span>
@@ -1132,9 +1132,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
                                                                         <>
                                                                             <span>·</span>
-                                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition-all ${
+                                                                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded transition-all ${
                                                                                 (member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
-                                                                                    ? 'bg-error/15 text-error border border-error/30 animate-pulse font-black'
+                                                                                    ? 'bg-error/15 text-error border border-error/30 animate-pulse font-semibold'
                                                                                     : 'bg-info/10 text-info border border-info/20'
                                                                             }`}>
                                                                                 {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
@@ -1150,7 +1150,7 @@ export const ProjectWorkspace: React.FC = () => {
 
                                                         <div className="flex flex-wrap sm:flex-nowrap items-end sm:items-center gap-3 w-full sm:w-auto">
                                                             <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Rol</span>
+                                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Rol</span>
                                                                 <select
                                                                     value={member.rol}
                                                                     disabled={currentProject.puedeEditar === false}
@@ -1164,7 +1164,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 </select>
                                                             </div>
                                                             <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Nivel</span>
+                                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Nivel</span>
                                                                 <select
                                                                     value={member.nivelAcademico}
                                                                     disabled={currentProject.puedeEditar === false}
@@ -1178,7 +1178,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 </select>
                                                             </div>
                                                             <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Horas</span>
+                                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Horas</span>
                                                                 <input 
                                                                     type="number"
                                                                     value={member.horasSemanales ?? ''}
@@ -1214,7 +1214,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-                                            className="w-full flex items-center justify-between text-[10px] font-bold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-1 outline-none"
+                                            className="w-full flex items-center justify-between text-[10px] font-semibold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-1 outline-none"
                                         >
                                             <div className="flex items-center gap-2">
                                                 <History size={12} className="text-brand-light" />
@@ -1229,15 +1229,15 @@ export const ProjectWorkspace: React.FC = () => {
                                                     return (
                                                         <div key={member.cedula || idx} className="p-3 rounded-md bg-bg-deep border border-border-thin/50 flex items-center justify-between gap-3">
                                                             <div className="flex items-center gap-2">
-                                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-bold border uppercase ${isExDirector ? 'icon-circle-brand !p-0 !w-7 !h-7' : 'bg-surface border-border-thin text-text-dim'}`}>
+                                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-semibold border uppercase ${isExDirector ? 'icon-circle-brand !p-0 !w-7 !h-7' : 'bg-surface border-border-thin text-text-dim'}`}>
                                                                     {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-[11px] font-bold text-text-main">{member.nombre}</span>
+                                                                    <span className="text-[11px] font-semibold text-text-main">{member.nombre}</span>
                                                                     <span className="text-[9px] text-text-dim font-mono ml-1.5">C.I. {member.cedula || 'N/A'}</span>
                                                                 </div>
                                                             </div>
-                                                            <span className="badge-vercel badge-vercel-error text-[9px] font-bold">
+                                                            <span className="badge-vercel badge-vercel-error text-[9px] font-semibold">
                                                                 Baja
                                                             </span>
                                                         </div>
@@ -1291,7 +1291,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <BookOpen size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Productos de Investigación</h3>
+                                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Productos de Investigación</h3>
                                 </div>
                             </div>
                             <div className="mt-4 flex-1">
@@ -1316,7 +1316,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         {products.map((prod: any) => (
                                             <div key={prod.id_producto} className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all group">
                                                 <div className="flex justify-between items-start mb-2">
-                                                    <span className="badge-vercel badge-vercel-info text-[8px] font-bold">
+                                                    <span className="badge-vercel badge-vercel-info text-[8px] font-semibold">
                                                         {prod.tipo_producto_nombre}
                                                     </span>
                                                     {currentProject.puedeEditar !== false && (
@@ -1328,7 +1328,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                         </button>
                                                     )}
                                                 </div>
-                                                <p className="text-xs font-bold text-text-main line-clamp-1">{prod.titulo}</p>
+                                                <p className="text-xs font-medium text-text-main line-clamp-1">{prod.titulo}</p>
                                                 <div className="text-[10px] text-text-dim font-mono mt-1">
                                                     {prod.url_producto && (
                                                         <a href={prod.url_producto} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand-light hover:underline">
@@ -1355,14 +1355,14 @@ export const ProjectWorkspace: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <FileSignature size={16} className="text-brand group-hover:text-text-main transition-colors" />
-                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Bóveda de Firmas</h3>
+                                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Bóveda de Firmas</h3>
                                 </div>
                                 <p className="text-[10px] text-text-dim leading-relaxed mt-1">Sube tu archivo PAdES · Firma auditada permanentemente por DocumentEngine.</p>
                             </div>
                             <div className="mt-4">
                                 <div className="p-3 rounded-md bg-bg-deep border border-border-thin flex items-center justify-between hover:border-text-dim transition-colors">
                                     <div>
-                                        <p className="text-xs font-bold text-text-main">Director</p>
+                                        <p className="text-xs font-semibold text-text-main">Director</p>
                                         <p className="text-[10px] text-warning mt-0.5 flex items-center gap-1">
                                             <span className="dot dot-warning dot-pulse"></span> Pendiente
                                         </p>
@@ -1379,7 +1379,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                                    <h3 className="text-xs font-bold tracking-widest text-text-main uppercase opacity-90">Metadata Normativa</h3>
+                                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Metadata Normativa</h3>
                                 </div>
                             </div>
                             <div className="mt-4 space-y-2 text-[11px] font-mono">
@@ -1389,7 +1389,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 </div>
                                 <div className="flex justify-between p-2 rounded-md bg-bg-deep border border-border-thin">
                                     <span className="text-text-dim uppercase tracking-wider text-[10px]">Presupuesto</span>
-                                    <span className="text-brand-light font-bold">${currentProject.presupuesto || '0.00'}</span>
+                                    <span className="text-brand-light font-semibold">${currentProject.presupuesto || '0.00'}</span>
                                 </div>
                             </div>
                         </div>
@@ -1414,14 +1414,14 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="modal-header">
                             <div className="flex items-center gap-2">
                                 <BookOpen size={16} className="text-brand" />
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest">Registrar Producto</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest">Registrar Producto</h3>
                             </div>
                             <button onClick={() => setShowProductModal(false)} className="text-text-dim hover:text-text-main transition-colors text-sm">✕</button>
                         </div>
                         
                         <form onSubmit={handleCreateProduct} className="modal-body space-y-4">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Tipo de Producto</label>
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Tipo de Producto</label>
                                 <select 
                                     value={newProduct.id_tipo_producto}
                                     onChange={(e) => setNewProduct({ ...newProduct, id_tipo_producto: Number(e.target.value) })}
@@ -1436,7 +1436,7 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
                             
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Título del Producto</label>
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Título del Producto</label>
                                 <input 
                                     type="text"
                                     required
@@ -1449,7 +1449,7 @@ export const ProjectWorkspace: React.FC = () => {
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Cantidad</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Cantidad</label>
                                     <input 
                                         type="number"
                                         min="1"
@@ -1460,7 +1460,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">URL / DOI</label>
+                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">URL / DOI</label>
                                     <input 
                                         type="text"
                                         placeholder="https://doi.org/..."
@@ -1485,7 +1485,7 @@ export const ProjectWorkspace: React.FC = () => {
                             {newProduct.es_propiedad_intelectual && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-border-thin animate-fade-in">
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">N. Registro</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">N. Registro</label>
                                         <input 
                                             type="text"
                                             placeholder="SENADI-2026-0045"
@@ -1495,7 +1495,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         />
                                     </div>
                                     <div className="space-y-1">
-                                        <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Fecha de Registro</label>
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Fecha de Registro</label>
                                         <input 
                                             type="date"
                                             value={newProduct.fecha_registro_senadi}
@@ -1532,7 +1532,7 @@ export const ProjectWorkspace: React.FC = () => {
                         <div className="modal-header">
                             <div className="flex items-center gap-2">
                                 <RefreshCw size={16} className="text-brand-light" />
-                                <h3 className="text-[10px] font-bold uppercase tracking-widest">Transferencia de Dirección</h3>
+                                <h3 className="text-[10px] font-semibold uppercase tracking-widest">Transferencia de Dirección</h3>
                             </div>
                             <button onClick={() => setShowTransferModal(false)} className="text-text-dim hover:text-text-main transition-colors text-sm">✕</button>
                         </div>
@@ -1540,14 +1540,14 @@ export const ProjectWorkspace: React.FC = () => {
                         {transferDirector && (
                             <div className="mx-6 mt-4 badge-vercel badge-vercel-violet !rounded-md !p-3 !text-[11px] space-y-1">
                                 <span className="font-semibold block uppercase tracking-wider text-[10px]">Director a Relevar:</span>
-                                <p className="font-bold text-text-main text-xs">{transferDirector.nombre}</p>
+                                <p className="font-semibold text-text-main text-xs">{transferDirector.nombre}</p>
                                 <p className="text-text-dim font-mono text-[10px]">C.I. {transferDirector.cedula} | {transferDirector.rol}</p>
                             </div>
                         )}
 
                         <form onSubmit={handleConfirmTransfer} className="modal-body space-y-4">
                             <div className="relative space-y-1">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Buscar Nuevo Director</label>
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Buscar Nuevo Director</label>
                                 <div className="relative">
                                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
                                     <input 
@@ -1584,10 +1584,10 @@ export const ProjectWorkspace: React.FC = () => {
                                                         className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
                                                     >
                                                         <div>
-                                                            <p className="font-bold text-text-main">{su.nombre}</p>
+                                                            <p className="font-semibold text-text-main">{su.nombre}</p>
                                                             <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
                                                         </div>
-                                                        <span className={`badge-vercel text-[8px] font-bold ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
+                                                        <span className={`badge-vercel text-[8px] font-semibold ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
                                                             {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
                                                         </span>
                                                     </button>
@@ -1602,13 +1602,13 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="badge-vercel badge-vercel-success !rounded-md !p-3 !text-[11px] flex justify-between items-center animate-fade-in w-full">
                                     <div>
                                         <span className="font-semibold block uppercase tracking-wider text-[10px]">Nuevo Director:</span>
-                                        <p className="font-bold text-text-main text-xs">{transferSearchQuery}</p>
+                                        <p className="font-semibold text-text-main text-xs">{transferSearchQuery}</p>
                                         <p className="text-text-dim font-mono text-[10px]">C.I. {newDirectorCedula}</p>
                                     </div>
                                     <button 
                                         type="button" 
                                         onClick={() => { setNewDirectorCedula(''); setTransferSearchQuery(''); }}
-                                        className="text-[10px] text-error hover:opacity-80 font-bold uppercase tracking-wider"
+                                        className="text-[10px] text-error hover:opacity-80 font-semibold uppercase tracking-wider"
                                     >
                                         Quitar
                                     </button>
@@ -1616,7 +1616,7 @@ export const ProjectWorkspace: React.FC = () => {
                             )}
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Motivo</label>
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Motivo</label>
                                 <select 
                                     value={transferMotivo}
                                     onChange={(e) => setTransferMotivo(e.target.value)}
@@ -1630,7 +1630,7 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block">Justificación</label>
+                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Justificación</label>
                                 <textarea 
                                     rows={3}
                                     required

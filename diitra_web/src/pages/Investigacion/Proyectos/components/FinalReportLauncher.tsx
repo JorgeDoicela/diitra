@@ -105,7 +105,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                             <Activity size={12} className="animate-pulse" />
                             <span>DIITRA Launcher</span>
                         </div>
-                        <h2 className="text-2xl md:text-3xl font-black text-text-main tracking-tighter uppercase leading-tight">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tighter uppercase leading-tight">
                             Informe Final
                         </h2>
                         <p className="text-text-dim text-[11px] md:text-sm font-medium">
@@ -141,7 +141,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                     ) : filteredProjects.length === 0 ? (
                         <div className="empty-state !border-solid my-0">
                             <Clipboard size={48} className="mb-4 text-text-dim" />
-                            <p className="text-sm font-bold text-text-dim uppercase">No se encontraron proyectos</p>
+                            <p className="text-sm font-semibold text-text-dim uppercase">No se encontraron proyectos</p>
                         </div>
                     ) : (
                         <div className="space-y-2">
@@ -156,11 +156,11 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                                             <Target size={18} />
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <div className="text-[9px] md:text-[10px] font-black text-brand uppercase tracking-widest mb-0.5 md:mb-1 truncate">{p.codigoInstitucional}</div>
-                                            <h4 className="text-xs md:text-sm font-bold text-text-main group-hover:translate-x-1 transition-transform truncate">{p.titulo || 'PROYECTO SIN TÍTULO'}</h4>
+                                            <div className="text-[9px] md:text-[10px] font-semibold text-brand uppercase tracking-widest mb-0.5 md:mb-1 truncate">{p.codigoInstitucional}</div>
+                                            <h4 className="text-xs md:text-sm font-semibold text-text-main group-hover:translate-x-1 transition-transform truncate">{p.titulo || 'PROYECTO SIN TÍTULO'}</h4>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className={`dot ${getEstadoDotClass(p.estado)}`} />
-                                                <span className="text-[9px] md:text-[10px] text-text-dim font-bold uppercase">{p.estado || 'BORRADOR'}</span>
+                                                <span className="text-[9px] md:text-[10px] text-text-dim font-medium uppercase">{p.estado || 'BORRADOR'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -174,7 +174,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                 </div>
 
                 <div className="modal-footer !justify-between">
-                    <span className="text-[9px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest">
+                    <span className="text-[9px] md:text-[10px] text-text-dim font-medium uppercase tracking-widest">
                         Trazabilidad Habilitada
                     </span>
                     <button 

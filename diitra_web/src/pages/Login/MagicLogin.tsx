@@ -84,7 +84,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">
                             Acceso Seguro para Revisores
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium uppercase tracking-wider">
@@ -102,7 +102,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <div className="mx-auto flex items-center justify-center text-error">
                                 <AlertTriangle size={24} />
                             </div>
-                            <h3 className="text-sm font-bold text-text-main uppercase">Falta el Token de Acceso</h3>
+                            <h3 className="text-sm font-semibold text-text-main uppercase">Falta el Token de Acceso</h3>
                             <p className="text-xs text-text-dim">
                                 Este enlace no contiene un token válido. Verifica el correo recibido o contacta al administrador de DIITRA.
                             </p>
@@ -118,7 +118,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 <Key size={24} />
                             </div>
                             <div className="space-y-2">
-                                <h3 className="text-sm font-bold text-text-main uppercase">Verificación de Enlace</h3>
+                                <h3 className="text-sm font-semibold text-text-main uppercase">Verificación de Enlace</h3>
                                 <p className="text-xs text-text-dim leading-relaxed">
                                     Para evitar que los filtros automáticos de seguridad de tu correo consuman tu enlace de acceso único, presiona el botón a continuación para ingresar al sistema.
                                 </p>
@@ -136,7 +136,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                     ) : status === 'loading' ? (
                         <div className="py-12 flex flex-col items-center justify-center space-y-4">
                             <Loader2 className="animate-spin text-text-main" size={40} />
-                            <p className="text-xs text-text-dim font-bold uppercase tracking-wider">
+                            <p className="text-xs text-text-dim font-semibold uppercase tracking-wider">
                                 Verificando token de acceso...
                             </p>
                         </div>
@@ -150,7 +150,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                     <ShieldCheck size={28} />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-bold text-text-main uppercase">Acceso Autorizado</h3>
+                                    <h3 className="text-sm font-semibold text-text-main uppercase">Acceso Autorizado</h3>
                                     <p className="text-xs text-text-dim mt-1">
                                         Tu identidad ha sido verificada. ¿Cómo quieres continuar?
                                     </p>
@@ -163,7 +163,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <div className="p-4 rounded-xl border border-border-thin bg-bg-deep/50 space-y-3">
                                 <div className="flex items-center gap-2 text-text-main">
                                     <Smartphone size={15} className="text-brand" />
-                                    <span className="text-[11px] font-bold uppercase tracking-wider">
+                                    <span className="text-[11px] font-semibold uppercase tracking-wider">
                                         Opción A — Revisar en este dispositivo
                                     </span>
                                 </div>
@@ -191,7 +191,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                                 <div className="p-4 rounded-xl border border-border-thin bg-bg-deep/50 space-y-3">
                                     <div className="flex items-center gap-2 text-text-main">
                                         <Laptop size={15} className="text-text-dim" />
-                                        <span className="text-[11px] font-bold uppercase tracking-wider">
+                                        <span className="text-[11px] font-semibold uppercase tracking-wider">
                                             Opción B — Transferir a PC u otro dispositivo
                                         </span>
                                     </div>
@@ -216,10 +216,10 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
 
                                     {/* Código PIN grande */}
                                     <div className="space-y-1">
-                                        <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest text-center">
+                                        <p className="text-[9px] text-text-dim font-semibold uppercase tracking-widest text-center">
                                             Tu Código PIN
                                         </p>
-                                        <div className="text-3xl font-mono font-black tracking-[0.35em] text-center text-text-main py-3 bg-surface rounded-lg border border-border-thin">
+                                        <div className="text-3xl font-mono font-semibold tracking-[0.35em] text-center text-text-main py-3 bg-surface rounded-lg border border-border-thin">
                                             {pin}
                                         </div>
                                         <p className="text-[9px] text-text-dim font-medium text-center">
@@ -241,7 +241,7 @@ const MagicLogin = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                             <div className="mx-auto w-12 h-12 rounded-full bg-error/10 flex items-center justify-center text-error">
                                 <AlertTriangle size={24} />
                             </div>
-                            <h3 className="text-sm font-bold text-text-main uppercase">Enlace Inválido o Expirado</h3>
+                            <h3 className="text-sm font-semibold text-text-main uppercase">Enlace Inválido o Expirado</h3>
                             <p className="text-xs text-text-dim leading-relaxed">
                                 {error}
                             </p>

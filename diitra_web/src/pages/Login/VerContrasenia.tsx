@@ -91,7 +91,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         className="h-16 w-auto object-contain"
                     />
                     <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-bold tracking-tighter text-text-main">
+                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">
                             Recuperación de contraseña
                         </h1>
                         <p className="text-[11px] text-text-dim font-medium tracking-tight">
@@ -114,7 +114,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         <div className="flex items-center gap-3 p-4 rounded-lg border border-border-thin bg-surface/40">
                             <ShieldCheck size={18} className="text-text-main shrink-0" strokeWidth={1.5} />
                             <div>
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-text-dim">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">
                                     Identidad verificada
                                 </p>
                                 <p className="text-[12px] text-text-main font-medium mt-0.5">
@@ -124,7 +124,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-text-dim ml-1">
+                            <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1">
                                 Tu contraseña de acceso
                             </label>
                             <div className="relative">
@@ -165,7 +165,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         </div>
 
                         <div className="p-4 rounded-lg border border-border-thin bg-surface/40 space-y-1">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-text-dim">
+                            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">
                                 Este enlace ya fue utilizado
                             </p>
                             <p className="text-[11px] text-text-dim leading-relaxed mt-1">
@@ -176,7 +176,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
 
                         <Link
                             to="/auth/login"
-                            className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 no-underline text-[11px] uppercase tracking-widest font-bold"
+                            className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 no-underline text-[11px] uppercase tracking-widest font-semibold"
                         >
                             Ir al inicio de sesión
                         </Link>
@@ -189,7 +189,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         <div className="flex items-start gap-3 p-4 rounded-lg border border-border-thin bg-surface/40">
                             <AlertTriangle size={18} className="text-text-dim shrink-0 mt-0.5" strokeWidth={1.5} />
                             <div className="space-y-1">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-text-dim">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">
                                     Contraseña encriptada
                                 </p>
                                 <p className="text-[12px] text-text-dim leading-relaxed">
@@ -200,7 +200,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         </div>
 
                         <div className="p-4 rounded-lg border border-border-thin bg-surface/20 space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-text-dim">
+                            <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim">
                                 ¿Qué puedo hacer?
                             </p>
                             <ul className="text-[11px] text-text-dim space-y-1.5 leading-relaxed list-none p-0">
@@ -226,7 +226,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         <div className="flex items-start gap-3 p-4 rounded-lg border border-error/30 bg-error/5">
                             <AlertTriangle size={18} className="text-error shrink-0 mt-0.5" strokeWidth={1.5} />
                             <div className="space-y-1">
-                                <p className="text-[10px] font-bold uppercase tracking-widest text-error">
+                                <p className="text-[10px] font-semibold uppercase tracking-widest text-error">
                                     Enlace inválido o expirado
                                 </p>
                                 <p className="text-[12px] text-text-dim leading-relaxed">
@@ -238,7 +238,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                         <div className="space-y-3">
                             <Link
                                 to="/auth/recuperar-contrasenia"
-                                className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 no-underline text-[11px] uppercase tracking-widest font-bold"
+                                className="btn-vercel-primary w-full h-11 flex items-center justify-center gap-2 no-underline text-[11px] uppercase tracking-widest font-semibold"
                             >
                                 Solicitar nuevo enlace
                             </Link>

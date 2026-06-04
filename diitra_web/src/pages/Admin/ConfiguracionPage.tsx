@@ -533,7 +533,7 @@ const ConfiguracionPage = () => {
                         <Settings2 size={10} className="text-text-main animate-spin-slow" />
                         <span>Configuración del Sistema</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                    <h2 className="text-3xl lg:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
                         Parámetros Normativos
                     </h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
@@ -603,7 +603,7 @@ const ConfiguracionPage = () => {
             <div className="tabs-vercel">
                 <button
                     onClick={() => { setActiveTab('lineas'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
                         activeTab === 'lineas' ? 'active' : ''
                     }`}
                 >
@@ -612,7 +612,7 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('periodos'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
                         activeTab === 'periodos' ? 'active' : ''
                     }`}
                 >
@@ -621,7 +621,7 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('productos'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
                         activeTab === 'productos' ? 'active' : ''
                     }`}
                 >
@@ -630,7 +630,7 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('dominios'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
                         activeTab === 'dominios' ? 'active' : ''
                     }`}
                 >
@@ -639,7 +639,7 @@ const ConfiguracionPage = () => {
                 </button>
                 <button
                     onClick={() => { setActiveTab('indicadores'); setSearch(''); }}
-                    className={`tab-vercel-item flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                    className={`tab-vercel-item flex items-center gap-2 text-xs font-semibold uppercase tracking-wider ${
                         activeTab === 'indicadores' ? 'active' : ''
                     }`}
                 >
@@ -659,20 +659,20 @@ const ConfiguracionPage = () => {
                             <table className="w-full text-left border-collapse min-w-[700px]">
                                 <thead>
                                     <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                        <th className="p-4 font-bold tracking-widest">Código</th>
-                                        <th className="p-4 font-bold tracking-widest">Línea de Investigación</th>
-                                        <th className="p-4 font-bold tracking-widest">Descripción</th>
-                                        <th className="p-4 font-bold tracking-widest">Estado</th>
-                                        <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                                        <th className="p-4 font-semibold tracking-widest">Código</th>
+                                        <th className="p-4 font-semibold tracking-widest">Línea de Investigación</th>
+                                        <th className="p-4 font-semibold tracking-widest">Descripción</th>
+                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-thin">
                                     {filteredLineas.map((l) => (
                                         <tr key={l.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'linea', data: l })}>
-                                            <td className="p-4 text-xs font-mono font-bold text-text-dim">
+                                            <td className="p-4 text-xs font-mono font-medium text-text-dim">
                                                 {l.codigoLinea}
                                             </td>
-                                            <td className="p-4 text-sm font-bold text-text-main uppercase tracking-tight">
+                                            <td className="p-4 text-sm font-medium text-text-main uppercase tracking-tight">
                                                 {l.nombreLinea}
                                             </td>
                                             <td className="p-4 text-xs text-text-dim max-w-xs truncate">
@@ -724,21 +724,21 @@ const ConfiguracionPage = () => {
                             <table className="w-full text-left border-collapse min-w-[700px]">
                                 <thead>
                                     <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                        <th className="p-4 font-bold tracking-widest">ID Período</th>
-                                        <th className="p-4 font-bold tracking-widest">Detalle / Nombre</th>
-                                        <th className="p-4 font-bold tracking-widest">Fecha Inicial</th>
-                                        <th className="p-4 font-bold tracking-widest">Fecha Final</th>
-                                        <th className="p-4 font-bold tracking-widest">Estado</th>
-                                        <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                                        <th className="p-4 font-semibold tracking-widest">ID Período</th>
+                                        <th className="p-4 font-semibold tracking-widest">Detalle / Nombre</th>
+                                        <th className="p-4 font-semibold tracking-widest">Fecha Inicial</th>
+                                        <th className="p-4 font-semibold tracking-widest">Fecha Final</th>
+                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-thin">
                                     {filteredPeriodos.map((p) => (
                                         <tr key={p.idPeriodo} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'periodo', data: p })}>
-                                            <td className="p-4 text-xs font-mono font-bold text-text-main">
+                                            <td className="p-4 text-xs font-mono font-medium text-text-main">
                                                 {p.idPeriodo}
                                             </td>
-                                            <td className="p-4 text-sm font-bold text-text-main uppercase tracking-tight">
+                                            <td className="p-4 text-sm font-medium text-text-main uppercase tracking-tight">
                                                 {p.detalle || 'N/A'}
                                             </td>
                                             <td className="p-4 text-xs text-text-dim font-mono">
@@ -793,20 +793,20 @@ const ConfiguracionPage = () => {
                             <table className="w-full text-left border-collapse min-w-[700px]">
                                 <thead>
                                     <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                        <th className="p-4 font-bold tracking-widest">Nombre del Producto</th>
-                                        <th className="p-4 font-bold tracking-widest">Categoría</th>
-                                        <th className="p-4 font-bold tracking-widest">Requiere PI/Indexación</th>
-                                        <th className="p-4 font-bold tracking-widest">Estado</th>
-                                        <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                                        <th className="p-4 font-semibold tracking-widest">Nombre del Producto</th>
+                                        <th className="p-4 font-semibold tracking-widest">Categoría</th>
+                                        <th className="p-4 font-semibold tracking-widest">Requiere PI/Indexación</th>
+                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-thin">
                                     {filteredProductos.map((t) => (
                                         <tr key={t.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'producto', data: t })}>
-                                            <td className="p-4 text-sm font-bold text-text-main uppercase tracking-tight">
+                                            <td className="p-4 text-sm font-medium text-text-main uppercase tracking-tight">
                                                 {t.nombre}
                                             </td>
-                                            <td className="p-4 text-xs font-mono font-bold text-text-dim uppercase">
+                                            <td className="p-4 text-xs font-mono font-medium text-text-dim uppercase">
                                                 {t.categoria}
                                             </td>
                                             <td className="p-4 text-xs text-text-dim">
@@ -858,16 +858,16 @@ const ConfiguracionPage = () => {
                             <table className="w-full text-left border-collapse min-w-[500px]">
                                 <thead>
                                     <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                        <th className="p-4 font-bold tracking-widest">Nombre del Dominio</th>
-                                        <th className="p-4 font-bold tracking-widest">Fecha de Registro</th>
-                                        <th className="p-4 font-bold tracking-widest">Estado</th>
-                                        <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                                        <th className="p-4 font-semibold tracking-widest">Nombre del Dominio</th>
+                                        <th className="p-4 font-semibold tracking-widest">Fecha de Registro</th>
+                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-thin">
                                     {filteredDominios.map((d) => (
                                         <tr key={d.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'dominio', data: d })}>
-                                            <td className="p-4 text-sm font-bold text-text-main uppercase tracking-tight">
+                                            <td className="p-4 text-sm font-medium text-text-main uppercase tracking-tight">
                                                 {d.nombre}
                                             </td>
                                             <td className="p-4 text-xs text-text-dim font-mono">
@@ -919,28 +919,28 @@ const ConfiguracionPage = () => {
                             <table className="w-full text-left border-collapse min-w-[800px]">
                                 <thead>
                                     <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
-                                        <th className="p-4 font-bold tracking-widest">Código</th>
-                                        <th className="p-4 font-bold tracking-widest">Nombre del Indicador</th>
-                                        <th className="p-4 font-bold tracking-widest">Descripción</th>
-                                        <th className="p-4 font-bold tracking-widest">Valor Referencia</th>
-                                        <th className="p-4 font-bold tracking-widest">Año Normativa</th>
-                                        <th className="p-4 font-bold tracking-widest">Estado</th>
-                                        <th className="p-4 font-bold tracking-widest text-right">Acciones</th>
+                                        <th className="p-4 font-semibold tracking-widest">Código</th>
+                                        <th className="p-4 font-semibold tracking-widest">Nombre del Indicador</th>
+                                        <th className="p-4 font-semibold tracking-widest">Descripción</th>
+                                        <th className="p-4 font-semibold tracking-widest">Valor Referencia</th>
+                                        <th className="p-4 font-semibold tracking-widest">Año Normativa</th>
+                                        <th className="p-4 font-semibold tracking-widest">Estado</th>
+                                        <th className="p-4 font-semibold tracking-widest text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border-thin">
                                     {filteredIndicadores.map((i) => (
                                         <tr key={i.idConfig} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'indicador', data: i })}>
-                                            <td className="p-4 text-xs font-mono font-bold text-text-dim">
+                                            <td className="p-4 text-xs font-mono font-medium text-text-dim">
                                                 {i.codigoIndicador}
                                             </td>
-                                            <td className="p-4 text-sm font-bold text-text-main uppercase tracking-tight">
+                                            <td className="p-4 text-sm font-medium text-text-main uppercase tracking-tight">
                                                 {i.nombreIndicador}
                                             </td>
                                             <td className="p-4 text-xs text-text-dim max-w-xs truncate" title={i.descripcion}>
                                                 {i.descripcion || 'Sin descripción'}
                                             </td>
-                                            <td className="p-4 text-xs font-mono font-bold text-text-main">
+                                            <td className="p-4 text-xs font-mono font-medium text-text-main">
                                                 {i.valorReferencia} {i.tipoDato === 'Porcentaje' ? '%' : i.tipoDato === 'Monto' ? '$' : ''}
                                             </td>
                                             <td className="p-4 text-xs font-mono text-text-dim">
@@ -1243,7 +1243,7 @@ const ConfiguracionPage = () => {
                                         onChange={(e) => setProductoForm({...productoForm, requiereRegistro: e.target.checked})}
                                         className="accent-text-main w-4 h-4 rounded"
                                     />
-                                    <label htmlFor="requiereRegistro" className="text-xs text-text-main font-bold uppercase tracking-wide cursor-pointer select-none">
+                                    <label htmlFor="requiereRegistro" className="text-xs text-text-main font-semibold uppercase tracking-wide cursor-pointer select-none">
                                         Requiere Registro de Propiedad Intelectual o Indexación (SENADI/ISSN)
                                     </label>
                                 </div>
@@ -1512,7 +1512,7 @@ const ConfiguracionPage = () => {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="bento-card static p-4">
                                                 <label className="section-label text-text-dim mb-2">Código</label>
-                                                <p className="text-sm font-bold text-text-main font-mono">{l.codigoLinea || 'Sin código'}</p>
+                                                <p className="text-sm font-semibold text-text-main font-mono">{l.codigoLinea || 'Sin código'}</p>
                                             </div>
                                             <div className="bento-card static p-4">
                                                 <label className="section-label text-text-dim mb-2">Estado</label>
@@ -1540,16 +1540,16 @@ const ConfiguracionPage = () => {
                                     <>
                                         <div className="bento-card static p-4">
                                             <label className="section-label text-text-dim mb-2">Identificador</label>
-                                            <p className="text-sm font-bold text-text-main font-mono">{p.idPeriodo}</p>
+                                            <p className="text-sm font-semibold text-text-main font-mono">{p.idPeriodo}</p>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="bento-card static p-4">
                                                 <label className="section-label text-text-dim mb-2">Fecha de Inicio</label>
-                                                <p className="text-sm font-bold text-text-main font-mono">{p.fechaInicial ? p.fechaInicial.split('T')[0] : 'N/A'}</p>
+                                                <p className="text-sm font-semibold text-text-main font-mono">{p.fechaInicial ? p.fechaInicial.split('T')[0] : 'N/A'}</p>
                                             </div>
                                             <div className="bento-card static p-4">
                                                 <label className="section-label text-text-dim mb-2">Fecha de Fin</label>
-                                                <p className="text-sm font-bold text-text-main font-mono">{p.fechaFinal ? p.fechaFinal.split('T')[0] : 'N/A'}</p>
+                                                <p className="text-sm font-semibold text-text-main font-mono">{p.fechaFinal ? p.fechaFinal.split('T')[0] : 'N/A'}</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">

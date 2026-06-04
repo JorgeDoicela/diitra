@@ -82,9 +82,9 @@ export const DocenteDashboard: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-2 mb-3">
                                     <Briefcase size={14} className="text-text-dim" />
-                                    <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Mis Proyectos de Investigación</span>
+                                    <span className="text-xs font-semibold text-text-dim uppercase tracking-wider">Mis Proyectos de Investigación</span>
                                 </div>
-                                <h3 className="text-xl font-bold tracking-tight text-text-main mb-2">
+                                <h3 className="text-xl font-semibold tracking-tight text-text-main mb-2">
                                     Resumen de Propuestas Académicas
                                 </h3>
                                 <p className="text-xs text-text-dim max-w-xl font-medium leading-relaxed mb-6">
@@ -93,18 +93,18 @@ export const DocenteDashboard: React.FC = () => {
 
                                 <div className="grid grid-cols-3 gap-4 mb-6">
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-black text-text-main font-mono">{stats?.mis_proyectos_activos ?? 0}</p>
-                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-wider mt-1">Activos</p>
+                                        <p className="text-2xl font-semibold text-text-main font-mono">{stats?.mis_proyectos_activos ?? 0}</p>
+                                        <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Activos</p>
                                     </div>
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-black text-text-dim font-mono">{stats?.mis_proyectos_borrador ?? 0}</p>
-                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-wider mt-1">Borradores</p>
+                                        <p className="text-2xl font-semibold text-text-dim font-mono">{stats?.mis_proyectos_borrador ?? 0}</p>
+                                        <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Borradores</p>
                                     </div>
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
-                                        <p className="text-2xl font-black text-text-main font-mono">
+                                        <p className="text-2xl font-semibold text-text-main font-mono">
                                             {(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0)}
                                         </p>
-                                        <p className="text-[10px] text-text-dim uppercase font-bold tracking-wider mt-1">Total</p>
+                                        <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Total</p>
                                     </div>
                                 </div>
                             </div>
@@ -195,7 +195,7 @@ export const DocenteDashboard: React.FC = () => {
 
                                                     {/* Col 3: Type Pill */}
                                                     <div className="shrink-0 min-w-[100px]">
-                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider ${
                                                             isInforme 
                                                                 ? 'bg-info/10 text-info border border-info/20' 
                                                                 : 'bg-brand/10 text-brand border border-brand/20'
@@ -279,7 +279,7 @@ export const DocenteDashboard: React.FC = () => {
                                             <ClipboardList size={12} className="text-info" />
                                             <span className="text-[13px] font-semibold text-text-main">Carga Horaria Semanal</span>
                                         </div>
-                                        <span className="font-mono text-[13px] font-bold text-info">
+                                        <span className="font-mono text-[13px] font-semibold text-info">
                                             {stats.mis_horas_investigacion} / {maxHours} hrs
                                         </span>
                                     </div>

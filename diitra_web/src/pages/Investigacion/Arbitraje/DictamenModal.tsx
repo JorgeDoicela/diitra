@@ -49,7 +49,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                             <Scale size={20} />
                         </div>
                         <div>
-                            <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
+                            <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">
                                 Dictamen Final Emitido
                             </h3>
                             <p className="text-[10px] text-text-dim font-mono uppercase tracking-widest mt-0.5">
@@ -71,12 +71,12 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                         style={{ background: cfg.bg, borderColor: cfg.color + '40', border: '1px solid' }}
                     >
                         <ResultIcon size={36} className="mx-auto mb-3" style={{ color: cfg.color }} />
-                        <p className="text-2xl font-black tracking-tighter uppercase" style={{ color: cfg.color }}>
+                        <p className="text-2xl font-semibold tracking-tighter uppercase" style={{ color: cfg.color }}>
                             {cfg.label}
                         </p>
                         <p className="text-xs text-text-dim mt-2 font-medium">
-                            Promedio: <span className="font-bold text-text-main">{dictamen.puntaje_promedio.toFixed(2)}/100</span>
-                            {' '}· Mínimo: <span className="font-bold text-text-main">{dictamen.puntaje_minimo_aprobacion}/100</span>
+                            Promedio: <span className="font-semibold text-text-main">{dictamen.puntaje_promedio.toFixed(2)}/100</span>
+                            {' '}· Mínimo: <span className="font-semibold text-text-main">{dictamen.puntaje_minimo_aprobacion}/100</span>
                         </p>
                     </div>
 
@@ -84,7 +84,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                     <div className="space-y-3">
                         <div className="flex items-start justify-between">
                             <div>
-                                <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Proyecto</p>
+                                <p className="text-[10px] font-semibold text-text-dim uppercase tracking-widest mb-1">Proyecto</p>
                                 <p className="text-sm font-semibold text-text-main">{dictamen.proyecto_titulo}</p>
                             </div>
                             {dictamen.codigo_institucional && (
@@ -105,7 +105,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                         <div className="p-4 rounded-lg border border-warning/30 bg-warning/5 space-y-2">
                             <div className="flex items-center gap-2">
                                 <AlertTriangle size={14} className="text-warning" />
-                                <p className="text-xs font-bold text-text-main">Acción Requerida</p>
+                                <p className="text-xs font-semibold text-text-main">Acción Requerida</p>
                             </div>
                             <p className="text-xs text-text-dim leading-relaxed">{dictamen.mensaje_desempate}</p>
                         </div>
@@ -136,7 +136,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                                         </div>
                                     </div>
                                     {ev.puntaje_total != null && (
-                                        <span className={`text-lg font-black ${ev.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                                        <span className={`text-lg font-semibold ${ev.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
                                             {ev.puntaje_total.toFixed(1)}
                                         </span>
                                     )}
