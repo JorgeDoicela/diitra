@@ -757,7 +757,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <span className="text-text-dim">·</span>
                             <span className="text-text-dim">{user?.role || 'Investigador'}</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter">{currentProject.title}</h2>
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title}</h2>
                         <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
                     </div>
                 </header>

@@ -420,7 +420,7 @@ const UsersPage = () => {
                         <Shield size={10} strokeWidth={2} />
                         <span>Administración Central - DIITRA</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Gestión Institucional</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Gestión Institucional</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Control de acceso institucional y gestión de evaluadores pares externos.
                     </p>

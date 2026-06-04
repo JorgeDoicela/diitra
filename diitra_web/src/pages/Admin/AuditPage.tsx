@@ -527,7 +527,7 @@ const AuditPage: React.FC = () => {
                             <Shield size={10} strokeWidth={2} />
                             <span>Seguridad Institucional</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                             Auditoría Forense
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">

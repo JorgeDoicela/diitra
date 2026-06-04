@@ -123,7 +123,7 @@ const MyProjectsPage: React.FC = () => {
                         <ClipboardList size={10} />
                         <span>Mis Investigaciones</span>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                         Mis Proyectos de I+D+i
                     </h2>
                     <p className="text-xs text-text-dim max-w-lg font-medium">
@@ -178,7 +178,7 @@ const MyProjectsPage: React.FC = () => {
                     <div className="icon-circle !p-4 bg-surface mb-6">
                         <Target size={28} className="text-text-dim" />
                     </div>
-                    <h3 className="text-lg font-semibold text-text-main uppercase tracking-tight mb-2">
+                    <h3 className="text-lg font-semibold text-text-main tracking-tight mb-2">
                         {search || filterEstado !== 'todos' ? 'Sin resultados' : 'Aún no tienes proyectos'}
                     </h3>
                     <p className="text-sm text-text-dim max-w-xs mb-6">

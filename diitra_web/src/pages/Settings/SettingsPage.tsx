@@ -284,7 +284,7 @@ const SettingsPage: React.FC = () => {
                     <ShieldCheck size={12} className="text-brand" />
                     <span>LOPDP · Ecuador</span>
                 </div>
-                <h1 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter">Mi Cuenta y Privacidad</h1>
+                <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">Mi Cuenta y Privacidad</h1>
                 <p className="text-xs md:text-sm text-text-dim max-w-xl leading-relaxed">
                     Administre sus credenciales, perfil de investigación, términos de firma digital y ejerza sus derechos de protección de datos (ARCO) según la normativa ecuatoriana.
                 </p>

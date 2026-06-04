@@ -60,7 +60,7 @@ const PublicConvocatoriasPage = () => {
                     <div className="icon-circle-brand">
                         <PenTool size={20} strokeWidth={2.5} />
                     </div>
-                    <h1 className="text-3xl font-semibold text-text-main tracking-tighter uppercase">Oportunidades de Investigación</h1>
+                    <h1 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">Oportunidades de Investigación</h1>
                 </div>
                 <p className="text-text-dim text-base leading-relaxed max-w-2xl font-medium">
                     Explora las convocatorias vigentes y postula tus proyectos de investigación e innovación institucional.

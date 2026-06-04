@@ -290,7 +290,7 @@ const EvaluacionPage: React.FC = () => {
                         }
                     </div>
 
-                    <h2 className="text-3xl font-semibold tracking-tighter text-text-main uppercase mb-2">
+                    <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-text-main mb-2">
                         Evaluación Registrada
                     </h2>
                     <p className="text-text-dim text-sm mb-4">
@@ -462,7 +462,7 @@ const EvaluacionPage: React.FC = () => {
 
                             <div className="space-y-2">
                                 <span className="text-[9px] font-extrabold uppercase tracking-widest text-text-dim">Referencia del Proyecto</span>
-                                <h1 className="text-2xl font-extrabold tracking-tight text-text-main leading-tight">
+                                <h1 className="text-2xl font-semibold tracking-tight text-text-main leading-tight">
                                     {rubrica.proyecto_titulo}
                                 </h1>
                                 {rubrica.linea_investigacion && (

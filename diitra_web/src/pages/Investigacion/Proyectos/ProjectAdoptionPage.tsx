@@ -204,7 +204,7 @@ const ProjectAdoptionPage: React.FC = () => {
                             <Award size={10} strokeWidth={2} />
                             <span>Centro de Adopciones DIITRA</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                             Bandeja de Adopción de Proyectos
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
