@@ -18,6 +18,9 @@ SET SQL_SAFE_UPDATES = 0;
 
 DROP TABLE IF EXISTS
     -- Grupo K (Seguridad y Notificaciones)
+    inv_lopdp_consentimientos,
+    inv_lopdp_derechos_arco,
+    inv_lopdp_auditoria_datos,
     inv_notificaciones,
     inv_tokens_acceso,
     inv_usuarios_metadata,
@@ -932,6 +935,9 @@ CREATE TABLE inv_usuarios_metadata (
     rutaFirmaP12         VARCHAR(255) NULL,
     rutaFirmaImagen      VARCHAR(255) NULL,
     firmaHabilitada      TINYINT(1)   DEFAULT 0,
+    aceptoTerminosFirma  TINYINT(1)   DEFAULT 0 COMMENT 'Consentimiento explícito para el almacenamiento de la firma (.p12 o imagen)',
+    fechaConsentimientoFirma TIMESTAMP NULL,
+    p12PasswordEncrypted VARCHAR(512) NULL COMMENT 'Contraseña cifrada para firma en lote si aplica',
     configuracion        JSON         NULL,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fechaUltimoAcceso    TIMESTAMP    NULL,
@@ -940,11 +946,63 @@ CREATE TABLE inv_usuarios_metadata (
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Perfil CACES, SENESCYT y configuración de Firma Electrónica';
 
+CREATE TABLE inv_lopdp_consentimientos (
+    idConsentimiento     INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid                 VARCHAR(36)  NOT NULL UNIQUE,
+    idUsuario            INT(11)      NOT NULL,
+    versionPolitica      VARCHAR(20)  NOT NULL COMMENT 'Versión del documento de política de privacidad aceptado',
+    canal                ENUM('Web', 'Movil', 'Presencial') DEFAULT 'Web',
+    fechaConsentimiento  TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    ipDireccion          VARCHAR(45)  NULL,
+    userAgent            VARCHAR(255) NULL,
+    firmaHash            TEXT         NULL COMMENT 'Hash SHA-256 de los términos aceptados + identificación del usuario',
+    estado               ENUM('Otorgado', 'Revocado') DEFAULT 'Otorgado',
+    fechaRevocacion      TIMESTAMP    NULL,
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Registro histórico e irrevocable del consentimiento del titular';
+
+CREATE TABLE inv_lopdp_derechos_arco (
+    idSolicitudArco      INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid                 VARCHAR(36)  NOT NULL UNIQUE,
+    idUsuario            INT(11)      NOT NULL,
+    tipoSolicitud        ENUM('Acceso', 'Rectificacion', 'Eliminacion', 'Oposicion', 'Portabilidad', 'Limitacion') NOT NULL,
+    detalleSolicitud     TEXT         NOT NULL COMMENT 'Descripción detallada de la solicitud de datos',
+    fechaSolicitud       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    fechaLimiteResolucion DATE         NOT NULL COMMENT 'Fecha máxima de resolución legal (15 días)',
+    estado               ENUM('Recibido', 'En_Analisis', 'Aprobado', 'Rechazado') DEFAULT 'Recibido',
+    resolucionDetalle    TEXT         NULL COMMENT 'Justificación técnica/legal de la respuesta',
+    fechaResolucion      TIMESTAMP    NULL,
+    documentoResolucionPath VARCHAR(512) NULL COMMENT 'Ruta física de la respuesta formal firmada electrónicamente',
+    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Seguimiento de solicitudes de derechos ARCO del titular';
+
+CREATE TABLE inv_lopdp_auditoria_datos (
+    idAuditoriaDatos     INT          AUTO_INCREMENT PRIMARY KEY,
+    uuid                 VARCHAR(36)  NOT NULL UNIQUE,
+    idUsuarioActor       INT(11)      NULL COMMENT 'Usuario que accede al dato (ej. Administrador o Director)',
+    idUsuarioAfectado    INT(11)      NOT NULL COMMENT 'El titular de los datos personales expuestos',
+    tablaAfectada        VARCHAR(100) NOT NULL,
+    columnaAfectada      VARCHAR(100) NULL COMMENT 'Columna sensible (ej: rutaFirmaP12, orcidId, telefono)',
+    operacion            ENUM('LECTURA', 'ESCRITURA', 'ELIMINACION', 'DESCARGA') NOT NULL,
+    motivo               VARCHAR(255) NULL COMMENT 'Propósito legal o administrativo (ej: Validacion de Carga Horaria CACES)',
+    ipDireccion          VARCHAR(45)  NULL,
+    userAgent            VARCHAR(255) NULL,
+    fechaAcceso          TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idUsuarioActor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL,
+    FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Registro inalterable de acceso a datos sensibles (Auditoría CACES)';
+
 DELIMITER $$
 CREATE TRIGGER trg_usermeta_uuid
 BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_proy_ext_uuid BEFORE INSERT ON inv_proyecto_extensiones FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_lopdp_consentimientos_uuid BEFORE INSERT ON inv_lopdp_consentimientos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_lopdp_arco_uuid BEFORE INSERT ON inv_lopdp_derechos_arco FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_lopdp_auditoria_uuid BEFORE INSERT ON inv_lopdp_auditoria_datos FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
