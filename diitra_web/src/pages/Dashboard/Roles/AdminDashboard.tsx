@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users, Activity, BarChart3,
-    ClipboardList, Loader2, Megaphone, TrendingUp,
+    Loader2, Megaphone,
     Fingerprint, FileText, Layers, ExternalLink
 } from 'lucide-react';
 import { DashboardHeader } from '../Components/DashboardHeader';
@@ -123,24 +123,17 @@ export const AdminDashboard: React.FC = () => {
                             {/* Embudo de proyectos */}
                             <div className="bento-card static flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden">
                                 <div className="p-6">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <ClipboardList size={14} className="text-text-dim" />
-                                        <span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Proyectos Institucionales</span>
+                                    <div className="flex items-center justify-between mb-5">
+                                        <span className="text-sm font-medium text-text-dim">Pipeline de proyectos</span>
                                     </div>
-                                    <h3 className="text-base font-bold tracking-tight text-text-main mb-1">
-                                        Estado del Pipeline
-                                    </h3>
-                                    <p className="text-xs text-text-dim font-normal leading-relaxed mb-6">
-                                        Flujo de proyectos en el ciclo de vida institucional.
-                                    </p>
                                     
                                     <div className="space-y-4">
                                         {stats?.proyectos_por_estado.map((est) => (
                                             <div key={est.estado} className="flex items-center gap-3">
-                                                <span className="text-[10px] text-text-dim uppercase tracking-wider w-20 shrink-0 font-semibold">
-                                                    {est.estado}
+                                                <span className="text-[11px] text-text-dim w-24 shrink-0 font-medium capitalize">
+                                                    {est.estado.toLowerCase()}
                                                 </span>
-                                                <div className="flex-1 h-1.5 bg-border-thin rounded-full overflow-hidden">
+                                                <div className="flex-1 h-1 bg-border-thin rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full rounded-full transition-all duration-700"
                                                         style={{
@@ -151,42 +144,35 @@ export const AdminDashboard: React.FC = () => {
                                                         }}
                                                     />
                                                 </div>
-                                                <span className="text-xs font-mono font-bold text-text-main w-6 text-right">
+                                                <span className="text-xs font-mono font-medium text-text-main w-6 text-right">
                                                     {est.cantidad}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
-                                <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3.5 flex justify-between items-center text-xs font-medium">
-                                    <span className="text-text-dim">Total Proyectos</span>
-                                    <span className="font-mono font-bold text-text-main">{stats?.total_proyectos ?? 0}</span>
+                                <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3 flex justify-between items-center text-xs font-medium">
+                                    <span className="text-text-dim">Total proyectos</span>
+                                    <span className="font-mono font-medium text-text-main">{stats?.total_proyectos ?? 0}</span>
                                 </div>
                             </div>
 
                             {/* Ejecución presupuestaria global */}
                             <div className="bento-card static flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden">
                                 <div className="p-6">
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <TrendingUp size={14} className="text-text-dim" />
-                                        <span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Ejecución Presupuestaria</span>
+                                    <div className="flex items-center justify-between mb-5">
+                                        <span className="text-sm font-medium text-text-dim">Ejecución presupuestaria</span>
                                     </div>
-                                    <h3 className="text-base font-bold tracking-tight text-text-main mb-1">
-                                        Presupuesto de Investigación
-                                    </h3>
-                                    <p className="text-xs text-text-dim font-normal leading-relaxed mb-6">
-                                        Porcentaje de ejecución de fondos asignados en el periodo.
-                                    </p>
 
                                     <div className="space-y-4">
-                                        <div className="flex items-baseline gap-2">
+                                        <div className="flex items-baseline gap-1.5">
                                             <span className="text-4xl font-bold tracking-tight text-text-main font-sans">
                                                 {ejecucionPorc.toFixed(1)}%
                                             </span>
                                             <span className="text-[10px] text-text-dim uppercase tracking-wider font-semibold">ejecutado</span>
                                         </div>
 
-                                        <div className="w-full h-1.5 bg-border-thin rounded-full overflow-hidden">
+                                        <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
                                             <div
                                                 className="h-full rounded-full bg-success transition-all duration-700"
                                                 style={{ width: `${ejecucionPorc}%` }}
@@ -195,16 +181,16 @@ export const AdminDashboard: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3.5 grid grid-cols-2 divide-x divide-border-thin/60">
+                                <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3 grid grid-cols-2 divide-x divide-border-thin/60">
                                     <div className="pr-4">
-                                        <span className="text-[9px] text-text-dim uppercase tracking-wider font-bold">Ejecutado</span>
-                                        <p className="font-mono text-xs font-bold text-text-main mt-0.5">
+                                        <span className="text-[9px] text-text-dim uppercase tracking-wider font-medium">Ejecutado</span>
+                                        <p className="font-mono text-xs font-medium text-text-main mt-0.5">
                                             ${(stats?.presupuesto_total_ejecutado ?? 0).toLocaleString('es-EC')}
                                         </p>
                                     </div>
                                     <div className="pl-4">
-                                        <span className="text-[9px] text-text-dim uppercase tracking-wider font-bold">Asignado</span>
-                                        <p className="font-mono text-xs font-bold text-text-main mt-0.5">
+                                        <span className="text-[9px] text-text-dim uppercase tracking-wider font-medium">Asignado</span>
+                                        <p className="font-mono text-xs font-medium text-text-main mt-0.5">
                                             ${(stats?.presupuesto_total_asignado ?? 0).toLocaleString('es-EC')}
                                         </p>
                                     </div>
