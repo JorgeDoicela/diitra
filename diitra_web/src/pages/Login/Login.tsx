@@ -228,6 +228,15 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 placeholder="Contraseña de SIGAFI"
                                 autoComplete="current-password"
                             />
+                            <div className="flex justify-end px-1">
+                                <Link
+                                    to="/auth/recuperar-contrasenia"
+                                    className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium no-underline"
+                                    tabIndex={-1}
+                                >
+                                    ¿Olvidaste tu contraseña?
+                                </Link>
+                            </div>
                             {errors.password && <p className="text-[10px] text-error font-mono mt-1 ml-1">{(errors.password as any).message}</p>}
                         </div>
 
@@ -258,7 +267,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             </div>
                         ) : null}
 
-                        <div className="pt-4 space-y-5">
+                        <div className="pt-3 space-y-5">
                             <button
                                 type="submit"
                                 disabled={isSubmitting || lockoutSeconds > 0}
@@ -313,8 +322,6 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             <Link to="/" className="hover:text-text-main transition-colors no-underline">Inicio</Link>
                             <span>/</span>
                             <a href="#" className="hover:text-text-main transition-colors no-underline">Ayuda</a>
-                            <span>/</span>
-                            <Link to="/auth/recuperar-contrasenia" className="hover:text-text-main transition-colors no-underline">Olvidé mi contraseña</Link>
                         </div>
                     </div>
                 </div>
