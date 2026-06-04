@@ -35,8 +35,8 @@ public class AuthService : IAuthService
         var username = request.Username.Trim();
         var password = request.Password.Trim();
 
-        // ── 1. Buscar usuario en DIITRA ──────────────────────────────────────────
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == username && u.Activo);
+        // ── 1. Buscar usuario en DIITRA (por cédula/IdSigafi o por Email) ─────────
+        var user = await _context.Users.FirstOrDefaultAsync(u => (u.IdSigafi == username || u.EmailInstitucional == username) && u.Activo);
 
         if (user != null)
         {
@@ -94,30 +94,30 @@ public class AuthService : IAuthService
             return (null, null);
         }
 
-        // ── 2. JIT Provisioning: Docentes ────────────────────────────────────────
+        // ── 2. JIT Provisioning: Docentes (por cédula/IdProfesor o por Email) ────
         var profesor = await _context.Profesores
-            .FirstOrDefaultAsync(p => p.IdProfesor.Trim() == username && (p.Activo == 1 || p.Activo == null));
+            .FirstOrDefaultAsync(p => (p.IdProfesor.Trim() == username || p.EmailInstitucional == username || p.Email == username) && (p.Activo == 1 || p.Activo == null));
 
         if (profesor != null)
         {
             if (profesor.Clave == password || (profesor.Clave != null && BCrypt.Net.BCrypt.Verify(password, profesor.Clave)))
             {
                 string fullNombre = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
-                user = await ProvisionUserAsync(username, fullNombre, password, "profesor", username);
+                user = await ProvisionUserAsync(profesor.IdProfesor, fullNombre, password, "profesor", profesor.IdProfesor);
                 var response = await GetAuthResponseAsync(user);
                 await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Profesor)", "SEGURIDAD");
                 return (response, null);
             }
         }
 
-        // ── 3. JIT Provisioning: Alumnos ─────────────────────────────────────────
+        // ── 3. JIT Provisioning: Alumnos (por UserAlumno o por Email) ───────────
         var alumno = await _context.Alumnos
-            .FirstOrDefaultAsync(a => a.UserAlumno == username && a.Password == password);
+            .FirstOrDefaultAsync(a => (a.UserAlumno == username || a.EmailInstitucional == username || a.Email == username) && a.Password == password);
 
         if (alumno != null)
         {
             string fullNombre = $"{alumno.PrimerNombre} {alumno.SegundoNombre} {alumno.ApellidoPaterno} {alumno.ApellidoMaterno}".Replace("  ", " ").Trim();
-            user = await ProvisionUserAsync(username, fullNombre, password, "alumno", alumno.IdAlumno);
+            user = await ProvisionUserAsync(alumno.IdAlumno, fullNombre, password, "alumno", alumno.IdAlumno);
             var response = await GetAuthResponseAsync(user);
             await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Alumno)", "SEGURIDAD");
             return (response, null);
@@ -830,27 +830,37 @@ public class AuthService : IAuthService
         string email;
         string fullName;
 
-        try
+        // ── DESARROLLO: Simulación de Microsoft SSO para pruebas sin Azure AD ──
+        if (request.IdToken.StartsWith("mock-email:", StringComparison.OrdinalIgnoreCase))
         {
-            var handler = new JwtSecurityTokenHandler();
-            if (!handler.CanReadToken(request.IdToken))
+            var parts = request.IdToken.Split(':');
+            email = parts.Length > 1 ? parts[1] : "docente.test@istpet.edu.ec";
+            fullName = parts.Length > 2 ? parts[2] : "Docente Pruebas Microsoft";
+        }
+        else
+        {
+            try
+            {
+                var handler = new JwtSecurityTokenHandler();
+                if (!handler.CanReadToken(request.IdToken))
+                {
+                    return null;
+                }
+
+                var jwtToken = handler.ReadJwtToken(request.IdToken);
+                
+                // Extraer claims
+                email = jwtToken.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value 
+                             ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value 
+                             ?? "";
+                email = email.Trim().ToLower();
+
+                fullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
+            }
+            catch
             {
                 return null;
             }
-
-            var jwtToken = handler.ReadJwtToken(request.IdToken);
-            
-            // Extraer claims
-            email = jwtToken.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value 
-                         ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value 
-                         ?? "";
-            email = email.Trim().ToLower();
-
-            fullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
-        }
-        catch
-        {
-            return null;
         }
 
         if (string.IsNullOrEmpty(email))
