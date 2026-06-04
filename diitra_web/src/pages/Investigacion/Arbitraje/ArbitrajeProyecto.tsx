@@ -4,7 +4,7 @@ import {
     ArrowLeft, Gavel, UserCheck, AlertTriangle,
     CheckCircle2, Clock, PlusCircle, Trash2, Award,
     Scale, Loader2, Users, Building, GraduationCap, FileDown,
-    CalendarDays
+    CalendarDays, X
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
