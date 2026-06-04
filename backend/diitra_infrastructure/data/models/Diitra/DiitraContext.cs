@@ -1671,6 +1671,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(255);
             entity.Property(e => e.CodigoPinHandoff).HasColumnName("codigo_pin_handoff").HasMaxLength(12);
             entity.Property(e => e.FechaExpiracionPin).HasColumnName("fecha_expiracion_pin");
+            entity.Property(e => e.Proposito).HasColumnName("proposito").HasMaxLength(30).HasDefaultValue("MAGIC_LINK");
 
             entity.HasIndex(e => e.TokenHash).IsUnique();
             entity.HasIndex(e => e.CodigoPinHandoff);

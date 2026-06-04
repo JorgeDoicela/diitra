@@ -9,6 +9,8 @@ import MagicLogin from './pages/Login/MagicLogin';
 import PinHandoff from './pages/Login/PinHandoff';
 import MagicResend from './pages/Login/MagicResend';
 import MicrosoftCallback from './pages/Login/MicrosoftCallback';
+import RecuperarContrasenia from './pages/Login/RecuperarContrasenia';
+import VerContrasenia from './pages/Login/VerContrasenia';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
 import { ConfirmProvider } from './api/ConfirmContext';
@@ -166,6 +168,12 @@ function App() {
                         } />
                         <Route path="/auth/microsoft-callback" element={
                             <MicrosoftCallback />
+                        } />
+                        <Route path="/auth/recuperar-contrasenia" element={
+                            <RecuperarContrasenia />
+                        } />
+                        <Route path="/auth/ver-contrasenia" element={
+                            <VerContrasenia />
                         } />
 
                         {/* Internal Pages with Layout (Stable) */}

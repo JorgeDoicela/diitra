@@ -313,6 +313,8 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             <Link to="/" className="hover:text-text-main transition-colors no-underline">Inicio</Link>
                             <span>/</span>
                             <a href="#" className="hover:text-text-main transition-colors no-underline">Ayuda</a>
+                            <span>/</span>
+                            <Link to="/auth/recuperar-contrasenia" className="hover:text-text-main transition-colors no-underline">Olvidé mi contraseña</Link>
                         </div>
                     </div>
                 </div>

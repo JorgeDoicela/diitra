@@ -362,4 +362,67 @@ public class AuthController : ControllerBase
         }
         return null;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  RECUPERACIÓN DE CONTRASEÑA
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Solicita un enlace de recuperación de contraseña. El enlace se envía al correo
+    /// institucional del usuario y expira en 30 minutos (un solo uso).
+    /// SIEMPRE retorna 200 para evitar enumeración de usuarios.
+    /// </summary>
+    [HttpPost("recuperar-contrasenia")]
+    [AllowAnonymous]
+    [ProducesResponseType(200)]
+    public async Task<IActionResult> SolicitarRecuperacion([FromBody] PasswordRecoveryRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request?.Identificador))
+            return Ok(new { message = "Si el correo está registrado, recibirás un enlace en los próximos minutos." });
+
+        var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+        await _authService.RequestPasswordRecoveryAsync(request.Identificador.Trim(), ip);
+
+        // Siempre la misma respuesta, sin revelar si el usuario existe
+        return Ok(new { message = "Si el correo está registrado, recibirás un enlace en los próximos minutos." });
+    }
+
+    /// <summary>
+    /// Valida el token de recuperación de contraseña y retorna la contraseña original de SIGAFI.
+    /// El token se consume en esta llamada (un solo uso).
+    /// </summary>
+    [HttpPost("ver-contrasenia")]
+    [AllowAnonymous]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
+    public async Task<IActionResult> VerContrasenia([FromBody] JsonElement body)
+    {
+        var token = body.TryGetProperty("token", out var t) ? t.GetString() : null;
+
+        if (string.IsNullOrWhiteSpace(token))
+            return BadRequest(new { message = "Token requerido." });
+
+        var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+        var resultado = await _authService.ValidatePasswordRecoveryTokenAsync(token, ip);
+
+        if (!resultado.Valido)
+            return BadRequest(new { message = "El enlace ha expirado o ya fue utilizado. Solicita uno nuevo." });
+
+        if (resultado.EsHashInaccesible)
+            return Ok(new
+            {
+                valido = true,
+                esHashInaccesible = true,
+                nombre = resultado.NombreUsuario,
+                message = "Tu contraseña está almacenada de forma encriptada en el sistema institucional y no puede ser recuperada. Contacta al administrador para restablecerla."
+            });
+
+        return Ok(new
+        {
+            valido = true,
+            esHashInaccesible = false,
+            nombre = resultado.NombreUsuario,
+            password = resultado.Password
+        });
+    }
 }
