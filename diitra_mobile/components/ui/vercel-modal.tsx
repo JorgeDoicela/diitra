@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, View, type ViewStyle } from 'react-native';
 import Animated, { FadeIn, FadeInUp, FadeOut, SlideOutDown } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 
 import { useThemeContext } from '@/contexts/theme-context';
 import { Shadows } from '@/constants/theme';
@@ -37,13 +36,12 @@ export function VercelModal({ visible, onClose, children, style, size = 'md' }: 
         padding: 24,
       }}
     >
-      {/* Overlay con blur nativo */}
-      <BlurView
-        intensity={scheme === 'dark' ? 40 : 20}
-        tint={scheme === 'dark' ? 'dark' : 'light'}
+      {/* Overlay translúcido sin blur */}
+      <View
         style={{
           position: 'absolute',
           inset: 0,
+          backgroundColor: scheme === 'dark' ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.4)',
         }}
       />
       <Pressable style={{ flex: 1, width: '100%', height: '100%' }} onPress={onClose}>
@@ -88,7 +86,7 @@ export function ModalHeader({ children, style }: { children: React.ReactNode; st
           flexDirection: 'row',
           justifyContent: 'space-between',
           alignItems: 'center',
-          backgroundColor: theme.surface + '4D',
+          backgroundColor: theme.surface,
         },
         style,
       ]}
@@ -118,7 +116,7 @@ export function ModalFooter({ children, style }: { children: React.ReactNode; st
           flexDirection: 'row',
           justifyContent: 'flex-end',
           gap: 12,
-          backgroundColor: theme.surface + '33',
+          backgroundColor: theme.surface,
         },
         style,
       ]}
