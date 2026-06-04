@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { reportService } from '../../api/reportService';
+import { useSearchParams } from 'react-router-dom';
 
 // ============================================================================
 // 1. DATA TYPES & INTERFACES (CONTRACTS)
@@ -560,7 +561,17 @@ const getProjectClassification = (projects: ProyectoResumen[], code: string) => 
 const AnalyticsPage = () => {
     const [period, setPeriod] = useState('TODOS');
     const [carrera, setCarrera] = useState('TODAS');
-    const [activeTab, setActiveTab] = useState<'general' | 'caces' | 'productos'>('general');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const activeTab = (tabParam === 'general' || tabParam === 'caces' || tabParam === 'productos') ? tabParam : 'general';
+    
+    const setActiveTab = (tab: 'general' | 'caces' | 'productos') => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.set('tab', tab);
+            return next;
+        });
+    };
     const [selectedChartSegment, setSelectedChartSegment] = useState<string | null>(null);
     const [exporting, setExporting] = useState(false);
     const [exportError, setExportError] = useState<string | null>(null);
