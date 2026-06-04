@@ -110,6 +110,42 @@ public class UnitTest1
     }
 
     [Fact]
+    public async Task TestPrintUserHours()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        
+        // Print all projects
+        var projects = await context.InvProyectos.ToListAsync();
+        foreach (var p in projects)
+        {
+            Console.WriteLine($"[ALL_PROJECTS] Id: {p.IdProyecto}, Title: {p.Titulo}, State: {p.Estado}, Uuid: {p.Uuid}");
+        }
+
+        // Print Erika's assignments
+        var erikaUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == "1722528286");
+        if (erikaUser != null)
+        {
+            Console.WriteLine($"[ERIKA_USER] Id: {erikaUser.IdUsuario}, Name: {erikaUser.Nombre}, Sigafi: {erikaUser.IdSigafi}");
+            var assignments = await context.InvProyectosProfesores
+                .Include(pp => pp.IdProyectoNavigation)
+                .Where(pp => pp.IdUsuario == erikaUser.IdUsuario)
+                .ToListAsync();
+            foreach (var a in assignments)
+            {
+                Console.WriteLine($"[ERIKA_ASSIGN] ProjId: {a.IdProyecto}, ProjTitle: {a.IdProyectoNavigation?.Titulo}, Horas: {a.HorasSemanales}, Activo: {a.Activo}, EsDirector: {a.EsDirector}");
+            }
+        }
+        else
+        {
+            Console.WriteLine("[ERIKA_USER] Not found in users table!");
+        }
+    }
+
+    [Fact]
     public async Task TestAssignArbitroConflictOfInterest()
     {
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();

@@ -498,6 +498,7 @@ export const ProjectWorkspace: React.FC = () => {
                 rol: inv.rol,
                 nivelAcademico: inv.nivelAcademico,
                 telefono: inv.telefono || "",
+                activo: inv.activo !== false,
                 horasSemanales: inv.horasSemanales !== undefined && inv.horasSemanales !== null && inv.horasSemanales !== '' ? parseFloat(inv.horasSemanales) : null
             }));
             const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload);

@@ -859,9 +859,9 @@ namespace diitra_infrastructure.Research
                 .Where(p => p.IdProyecto == projectId)
                 .ToListAsync();
 
-            // Guardar cédulas activas recibidas
+            // Guardar cédulas activas recibidas (filtrar las que explícitamente vienen inactivas)
             var activeCedulas = investigadores
-                .Where(i => !string.IsNullOrEmpty(i.Cedula))
+                .Where(i => !string.IsNullOrEmpty(i.Cedula) && i.Activo != false)
                 .Select(i => i.Cedula!.Trim())
                 .ToHashSet();
 
@@ -890,7 +890,7 @@ namespace diitra_infrastructure.Research
                 }
             }
 
-            // 4. Procesar la lista entrante (Agregar nuevos o Reactivar/Actualizar existentes)
+            // 4. Procesar la lista entrante (Agregar nuevos o Reactivar/Actualizar/Desactivar existentes)
             foreach (var inv in investigadores)
             {
                 if (string.IsNullOrEmpty(inv.Cedula)) continue;
@@ -910,12 +910,24 @@ namespace diitra_infrastructure.Research
                         existingAlum.Rol = inv.Rol;
                         existingAlum.NivelAcademico = inv.NivelAcademico;
                         existingAlum.Telefono = inv.Telefono;
-                        if (existingAlum.Activo == false)
+                        if (inv.Activo == false)
                         {
-                            existingAlum.Activo = true;
-                            existingAlum.FechaInicio = DateTime.Now;
-                            existingAlum.FechaFin = null;
-                            existingAlum.MotivoCambio = null;
+                            if (existingAlum.Activo != false)
+                            {
+                                existingAlum.Activo = false;
+                                existingAlum.FechaFin = DateTime.Now;
+                                existingAlum.MotivoCambio = "Retirado del equipo";
+                            }
+                        }
+                        else
+                        {
+                            if (existingAlum.Activo == false)
+                            {
+                                existingAlum.Activo = true;
+                                existingAlum.FechaInicio = DateTime.Now;
+                                existingAlum.FechaFin = null;
+                                existingAlum.MotivoCambio = null;
+                            }
                         }
                     }
                     else
@@ -928,8 +940,10 @@ namespace diitra_infrastructure.Research
                             Rol = inv.Rol,
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = inv.Telefono,
-                            Activo = true,
-                            FechaInicio = DateTime.Now
+                            Activo = inv.Activo ?? true,
+                            FechaInicio = DateTime.Now,
+                            FechaFin = inv.Activo == false ? DateTime.Now : null,
+                            MotivoCambio = inv.Activo == false ? "Retirado del equipo" : null
                         });
                     }
                 }
@@ -944,12 +958,25 @@ namespace diitra_infrastructure.Research
                         existingProf.Telefono = inv.Telefono;
                         existingProf.EsDirector = esDirector;
                         existingProf.HorasSemanales = inv.HorasSemanales;
-                        if (existingProf.Activo == false)
+                        if (inv.Activo == false)
                         {
-                            existingProf.Activo = true;
-                            existingProf.FechaInicio = DateTime.Now;
-                            existingProf.FechaFin = null;
-                            existingProf.MotivoCambio = null;
+                            if (existingProf.Activo != false)
+                            {
+                                existingProf.Activo = false;
+                                existingProf.FechaFin = DateTime.Now;
+                                existingProf.MotivoCambio = "Retirado del equipo";
+                                existingProf.EsDirector = false; // Al desactivarlo deja de ser director activo
+                            }
+                        }
+                        else
+                        {
+                            if (existingProf.Activo == false)
+                            {
+                                existingProf.Activo = true;
+                                existingProf.FechaInicio = DateTime.Now;
+                                existingProf.FechaFin = null;
+                                existingProf.MotivoCambio = null;
+                            }
                         }
                     }
                     else
@@ -964,8 +991,10 @@ namespace diitra_infrastructure.Research
                             Telefono = inv.Telefono,
                             EsDirector = esDirector,
                             HorasSemanales = inv.HorasSemanales,
-                            Activo = true,
-                            FechaInicio = DateTime.Now
+                            Activo = inv.Activo ?? true,
+                            FechaInicio = DateTime.Now,
+                            FechaFin = inv.Activo == false ? DateTime.Now : null,
+                            MotivoCambio = inv.Activo == false ? "Retirado del equipo" : null
                         });
                     }
                 }
@@ -1343,6 +1372,7 @@ namespace diitra_infrastructure.Research
                 var cedulaTrim = inv.Cedula.Trim();
                 var persona = await _authService.GetOrProvisionUserByCedulaAsync(cedulaTrim);
                 if (persona == null || persona.TablaSigafi == "alumno") continue;
+                if (inv.Activo == false) continue;
 
                 decimal proposedHours = inv.HorasSemanales ?? 0;
 
