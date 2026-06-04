@@ -682,11 +682,11 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
 
                 <form onSubmit={handleSubmitForm} className="flex-1 overflow-y-auto p-4 md:p-8 space-y-8">
                     {isDraftRestored && (
-                        <div className="bg-brand-subtle border border-brand/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
+                        <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in">
                             <div className="flex items-center gap-3">
-                                <FileText size={16} className="text-brand shrink-0" />
-                                <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
-                                    <span className="text-brand font-black">Borrador Restaurado:</span> Se han recuperado tus datos no guardados localmente.
+                                <FileText size={16} className="text-text-main shrink-0" />
+                                <p className="text-xs text-text-dim">
+                                    <span className="text-text-main font-semibold">Borrador restaurado:</span> Se han recuperado tus datos no guardados localmente.
                                 </p>
                             </div>
                             <button
@@ -746,25 +746,25 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                         onDraftCleared();
                                     }
                                 }}
-                                className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline cursor-pointer shrink-0"
+                                className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
                             >
-                                Revertir al Original
+                                Revertir al original
                             </button>
                         </div>
                     )}
                     {!isAdmin && !isReadOnly && (
                         <div className="space-y-3 animate-fade-up">
-                            <div className="bg-text-main/5 border border-text-main/15 rounded-xl p-4 flex items-center gap-3">
+                            <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex items-center gap-3">
                                 <Shield size={16} className="text-text-main shrink-0" />
-                                <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
-                                    Las propuestas se envían en estado <span className="text-text-main">PENDIENTE</span> para su revisión y requieren aprobación formal del administrador antes de su activación.
+                                <p className="text-xs text-text-dim">
+                                    Las propuestas se envían en estado <span className="text-text-main font-semibold">Pendiente</span> para su revisión y requieren aprobación formal del administrador antes de su activación.
                                 </p>
                             </div>
                             {editingGroup && editingGroup.estado === 'Aprobado' && (
-                                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
-                                    <Calendar size={16} className="text-amber-400 shrink-0" />
-                                    <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
-                                        Este grupo ya está <span className="text-amber-400">APROBADO</span>. Cualquier modificación sustancial revertirá el estado a PENDIENTE y requerirá una nueva evaluación.
+                                <div className="border border-warning/20 bg-warning-subtle rounded-lg p-3 flex items-center gap-3">
+                                    <Calendar size={16} className="text-warning shrink-0" />
+                                    <p className="text-xs text-text-dim">
+                                        Este grupo ya está <span className="text-warning font-semibold">Aprobado</span>. Cualquier modificación sustancial revertirá el estado a Pendiente y requerirá una nueva evaluación.
                                     </p>
                                 </div>
                             )}

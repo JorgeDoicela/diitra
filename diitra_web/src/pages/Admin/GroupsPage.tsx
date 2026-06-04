@@ -419,40 +419,37 @@ const GroupsPage = () => {
             </header>
 
             {pendingDraft && (
-                <div className="bento-card static p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8 relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-brand/5 via-transparent to-transparent pointer-events-none" />
-                    <div className="absolute top-0 left-0 h-[2px] w-full bg-gradient-to-r from-brand via-brand/40 to-transparent" />
-                    
-                    <div className="flex items-center gap-4 relative z-10">
-                        <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center text-brand shrink-0">
-                            <FileText size={18} />
+                <div className="bento-card static p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-up mb-8">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface-hover border border-border-thin flex items-center justify-center text-text-main shrink-0">
+                            <FileText size={16} />
                         </div>
                         <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <h4 className="text-xs font-black text-text-main uppercase tracking-wider">Borrador Detectado</h4>
-                                <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase py-0 px-2 leading-none shrink-0 font-mono">
-                                    No Guardado
+                                <h4 className="text-sm font-semibold text-text-main">Borrador detectado</h4>
+                                <span className="badge-vercel badge-vercel-neutral text-[9px] font-mono py-0.5 px-2 leading-none shrink-0">
+                                    No guardado
                                 </span>
                             </div>
-                            <p className="text-[10px] text-text-dim uppercase font-bold leading-none">
-                                Tienes un borrador sin guardar de: <span className="text-text-main font-black">"{pendingDraft.groupName}"</span>
+                            <p className="text-xs text-text-dim">
+                                Tienes un borrador sin guardar del grupo <span className="text-text-main font-medium">"{pendingDraft.groupName}"</span>.
                             </p>
-                            <p className="text-[8px] text-text-dim/60 font-semibold uppercase tracking-wider font-mono">
+                            <p className="text-[10px] text-text-dim/60 font-mono">
                                 Guardado automáticamente el {new Date(pendingDraft.timestamp).toLocaleDateString()} a las {new Date(pendingDraft.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                         </div>
                     </div>
 
-                    <div className="flex gap-2.5 w-full md:w-auto relative z-10 shrink-0">
+                    <div className="flex gap-2 w-full md:w-auto shrink-0">
                         <button
                             onClick={handleRestoreDraft}
-                            className="btn-brand flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                            className="btn-vercel-primary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
                         >
-                            Restaurar Borrador
+                            Restaurar borrador
                         </button>
                         <button
                             onClick={handleDiscardDraft}
-                            className="btn-vercel-secondary flex-1 md:flex-none !py-2.5 flex items-center justify-center gap-1.5"
+                            className="btn-vercel-secondary !py-1.5 !px-3 !text-xs !normal-case !tracking-normal font-medium flex items-center justify-center gap-1.5"
                         >
                             Descartar
                         </button>

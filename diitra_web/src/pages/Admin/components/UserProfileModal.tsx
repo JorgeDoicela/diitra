@@ -165,11 +165,11 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
                     {isDraftRestored && (
-                        <div className="bg-brand-subtle border border-brand/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
+                        <div className="border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
                             <div className="flex items-center gap-3">
-                                <FileText size={16} className="text-brand shrink-0" />
-                                <p className="text-[11px] text-text-dim uppercase tracking-wider font-bold">
-                                    <span className="text-brand font-black">Borrador Restaurado:</span> Se han recuperado tus datos no guardados localmente.
+                                <FileText size={16} className="text-text-main shrink-0" />
+                                <p className="text-xs text-text-dim">
+                                    <span className="text-text-main font-semibold">Borrador restaurado:</span> Se han recuperado tus datos no guardados localmente.
                                 </p>
                             </div>
                             <button
@@ -185,9 +185,9 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                                         onDraftCleared();
                                     }
                                 }}
-                                className="text-[10px] font-black text-brand uppercase tracking-widest hover:underline cursor-pointer shrink-0"
+                                className="text-xs font-medium text-brand hover:underline cursor-pointer shrink-0"
                             >
-                                Revertir al Original
+                                Revertir al original
                             </button>
                         </div>
                     )}
