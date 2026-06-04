@@ -188,7 +188,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                     />
                     <div className="text-center space-y-1">
                         <h1 className="text-2xl font-bold tracking-tighter text-text-main">Entrar a DIITRA</h1>
-                        <p className="text-[11px] text-text-dim font-medium tracking-tight">Investigación e Innovación ISTPET</p>
+                        <p className="text-[11px] text-text-dim font-medium tracking-tight">Departamento de Investigación e Innovación Traversari</p>
                     </div>
                 </div>
 
@@ -286,10 +286,10 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 className="w-full h-11 flex items-center justify-center gap-3 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
                             >
                                 <svg className="w-4 h-4 shrink-0" viewBox="0 0 21 21">
-                                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-                                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-                                    <rect x="1" y="11" width="9" height="9" fill="#00A1F1"/>
-                                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                                    <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+                                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+                                    <rect x="1" y="11" width="9" height="9" fill="#00A1F1" />
+                                    <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
                                 </svg>
                                 <span>Ingresar con Microsoft</span>
                             </button>
@@ -297,26 +297,14 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                     </form>
 
                     <div className="text-center pt-4 space-y-4">
-                        <p className="text-[10px] text-text-dim font-medium tracking-tight">
-                            ¿No tienes acceso? Contacta a la Dirección de Investigación.
-                        </p>
-
                         {/* Acceso para revisores externos */}
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="flex flex-col">
                             <Link
                                 to="/auth/pin"
                                 className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5 no-underline"
                                 title="Ingresar con código PIN de handoff"
                             >
                                 <span className="uppercase tracking-widest">Tengo un PIN</span>
-                            </Link>
-
-                            <Link
-                                to="/auth/magic-resend"
-                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5 no-underline"
-                                title="Solicitar reenvío de enlace de acceso"
-                            >
-                                <span className="uppercase tracking-widest">Perdí mi Enlace</span>
                             </Link>
                         </div>
 
@@ -339,14 +327,14 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                         >
                             ✕
                         </button>
-                        
+
                         <div className="space-y-2">
                             <div className="flex items-center gap-2">
                                 <svg className="w-5 h-5 shrink-0" viewBox="0 0 21 21">
-                                    <rect x="1" y="1" width="9" height="9" fill="#F25022"/>
-                                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00"/>
-                                    <rect x="1" y="11" width="9" height="9" fill="#00A1F1"/>
-                                    <rect x="11" y="11" width="9" height="9" fill="#FFB900"/>
+                                    <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+                                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+                                    <rect x="1" y="11" width="9" height="9" fill="#00A1F1" />
+                                    <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
                                 </svg>
                                 <h3 className="text-sm font-bold text-text-main uppercase tracking-wider">Microsoft SSO Simulator</h3>
                             </div>
