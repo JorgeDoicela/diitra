@@ -37,11 +37,11 @@ SELECT
     @periodoActivoId AS idPeriodo,
     p.idProfesor,
     CASE (ASCII(RIGHT(p.idProfesor, 1)) % 5)
-        WHEN 0 THEN 9   -- Software (ID: 9)
-        WHEN 1 THEN 21  -- Electrónica (ID: 21)
-        WHEN 2 THEN 3   -- Gestión de Procesos (ID: 3)
-        WHEN 3 THEN 20  -- Redes y Ciberseguridad (ID: 20)
-        ELSE 13         -- Gestión del Talento Humano (ID: 13)
+        WHEN 0 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'SOF' LIMIT 1)   -- Software (alias: SOF)
+        WHEN 1 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ELT' LIMIT 1)  -- Electrónica (alias: ELT)
+        WHEN 2 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'EMP' LIMIT 1)   -- Gestión de Procesos (alias: EMP)
+        WHEN 3 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'RDT' LIMIT 1)  -- Redes y Ciberseguridad (alias: RDT)
+        ELSE (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ATH' LIMIT 1)         -- Gestión del Talento Humano (alias: ATH)
     END AS idCarrera,
     1 AS esActivo,
     0 AS sonTodas
@@ -63,11 +63,11 @@ SELECT
     pa.idPeriodo,
     p.idProfesor,
     CASE (ASCII(RIGHT(p.idProfesor, 1)) % 5)
-        WHEN 0 THEN 9
-        WHEN 1 THEN 21
-        WHEN 2 THEN 3
-        WHEN 3 THEN 20
-        ELSE 13
+        WHEN 0 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'SOF' LIMIT 1)
+        WHEN 1 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ELT' LIMIT 1)
+        WHEN 2 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'EMP' LIMIT 1)
+        WHEN 3 THEN (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'RDT' LIMIT 1)
+        ELSE (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'ATH' LIMIT 1)
     END AS idCarrera,
     1 AS esActivo,
     0 AS sonTodas

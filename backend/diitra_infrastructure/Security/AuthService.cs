@@ -17,7 +17,7 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IAuditService _auditService;
     private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
-    private const string MASTER_ADMIN_ID = "0302144159";
+    private readonly string _masterAdminId;
     private static bool _rbacSeeded = false;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime LockedUntil)> _ipLockouts = new();
 
@@ -27,6 +27,7 @@ public class AuthService : IAuthService
         _configuration = configuration;
         _auditService = auditService;
         _notificationService = notificationService;
+        _masterAdminId = configuration["Security:MasterAdminId"] ?? "0302144159";
     }
 
     public async Task<(AuthResponse? Auth, LoginBlockedResponse? Blocked)> LoginAsync(LoginRequest request)
@@ -215,7 +216,7 @@ public class AuthService : IAuthService
             Nombre = name.Trim(),
             Contrasenia = contraseniaHash,
             Activo = true,
-            Administrador = (username == MASTER_ADMIN_ID),
+            Administrador = (username == _masterAdminId),
             TablaSigafi = table,
             EmailInstitucional = email
         };
@@ -295,7 +296,7 @@ public class AuthService : IAuthService
             RoleCodes = roleCodes,
             TipoUsuario = user.TablaSigafi,
             Permissions = permissions,
-            Administrador = (user.IdSigafi == MASTER_ADMIN_ID) || user.Administrador,
+            Administrador = (user.IdSigafi == _masterAdminId) || user.Administrador,
             Email = user.EmailInstitucional ?? "",
             Sistemas = systemsClaim
         };
@@ -315,7 +316,7 @@ public class AuthService : IAuthService
         string? requiredRoleCode = null;
 
         // Reglas de negocio para roles automáticos
-        if (user.IdSigafi == MASTER_ADMIN_ID) requiredRoleCode = "DIITRA_ADMIN";
+        if (user.IdSigafi == _masterAdminId) requiredRoleCode = "DIITRA_ADMIN";
         else if (user.TablaSigafi == "profesor") requiredRoleCode = "DIITRA_DOCENTE";
         else if (user.TablaSigafi == "alumno") requiredRoleCode = "DIITRA_ESTUDIANTE";
         else if (user.TablaSigafi == "otros") requiredRoleCode = "DIITRA_REVISOR_EXTERNO";
