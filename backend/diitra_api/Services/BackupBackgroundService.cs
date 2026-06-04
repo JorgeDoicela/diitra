@@ -208,9 +208,11 @@ public class BackupBackgroundService : BackgroundService
                                 else
                                 {
                                     var val = reader.GetValue(i);
-                                    if (val is string || val is Guid || val is DateTime || val is DateOnly || val is TimeOnly)
+                                    if (val is string || val is Guid || val is DateTime || val is DateOnly || val is TimeOnly || val is TimeSpan)
                                     {
-                                        var escapedVal = val.ToString()!.Replace("'", "''");
+                                        var escapedVal = val.ToString()!
+                                            .Replace("\\", "\\\\")
+                                            .Replace("'", "''");
                                         values.Add($"'{escapedVal}'");
                                     }
                                     else if (val is bool b)
