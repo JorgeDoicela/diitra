@@ -381,7 +381,7 @@ body {
   color: var(--bg);
   border: 1px solid var(--fg);
   border-radius: var(--radius);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -408,7 +408,7 @@ body {
   color: var(--fg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -437,7 +437,7 @@ body {
   color: #ffffff;
   border: 1px solid var(--brand);
   border-radius: var(--radius);
-  font-weight: 700;
+  font-weight: 500;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -955,7 +955,7 @@ select.input-vercel {
   align-items: center;
   gap: 0.5rem;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.3em;
   color: var(--text-dim);
@@ -964,7 +964,7 @@ select.input-vercel {
 /* Números y métricas en formato Geist Mono */
 .stat-number {
   font-size: 3rem;
-  font-weight: 700;
+  font-weight: 600;
   font-family: var(--font-mono);
   letter-spacing: -0.04em;
   line-height: 1;
@@ -986,7 +986,7 @@ select.input-vercel {
   padding: 0.125rem 0.5rem;
   border-radius: 9999px;
   font-size: 8px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   border: 1px solid;
