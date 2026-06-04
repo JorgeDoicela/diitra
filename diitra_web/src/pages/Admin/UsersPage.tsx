@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import UserProfileModal from './components/UserProfileModal';
+import { useSearchParams } from 'react-router-dom';
 
 interface ManagedUser {
     id_profesor: string;
@@ -52,7 +53,17 @@ const UsersPage = () => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [search, setSearch] = useState('');
-    const [userType, setUserType] = useState<'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO'>('DOCENTE');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const typeParam = searchParams.get('type');
+    const userType = (typeParam === 'DOCENTE' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
+    
+    const setUserType = (type: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO') => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.set('type', type);
+            return next;
+        });
+    };
     
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);

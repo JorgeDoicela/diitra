@@ -1,8 +1,8 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle, TrendingUp, GraduationCap, Globe, Calendar, Tag, BookOpen } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SidebarProps {
     currentTheme: 'dark' | 'light';
@@ -73,6 +73,27 @@ const Sidebar = ({
     const [isResizing, setIsResizing] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(
+        location.pathname.startsWith('/analiticas')
+    );
+    const [isUsersOpen, setIsUsersOpen] = useState(
+        location.pathname.startsWith('/usuarios')
+    );
+    const [isConfigOpen, setIsConfigOpen] = useState(
+        location.pathname.startsWith('/configuracion')
+    );
+
+    useEffect(() => {
+        if (location.pathname.startsWith('/analiticas')) {
+            setIsAnalyticsOpen(true);
+        }
+        if (location.pathname.startsWith('/usuarios')) {
+            setIsUsersOpen(true);
+        }
+        if (location.pathname.startsWith('/configuracion')) {
+            setIsConfigOpen(true);
+        }
+    }, [location.pathname]);
 
     let notifications: any[] = [];
     let unreadCount = 0;
@@ -207,6 +228,270 @@ const Sidebar = ({
 
     const renderMenuItem = (item: typeof allMenuItems[0]) => {
         const isActive = item === activeItem;
+
+        if (item.name === 'Analíticas') {
+            const isMenuOpen = isAnalyticsOpen;
+            return (
+                <div key={item.name} className="flex flex-col gap-0.5">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsAnalyticsOpen(!isAnalyticsOpen);
+                            if (!location.pathname.startsWith('/analiticas')) {
+                                navigate('/analiticas');
+                            }
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group border-0 w-full text-left ${
+                            isActive
+                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                                isActive
+                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                            }`}>
+                                <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+                            </div>
+                            <span className={`text-[13px] tracking-tight truncate ${
+                                isActive ? 'font-semibold text-text-main' : 'font-medium'
+                            }`}>
+                                {item.name}
+                            </span>
+                        </div>
+                        <ChevronRightIcon className={`shrink-0 ml-1.5 transition-all duration-200 ${
+                            isMenuOpen ? 'rotate-90' : ''
+                        } ${
+                            isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                        }`} />
+                    </button>
+                    
+                    {isMenuOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
+                            {[
+                                { name: 'Métricas de I+D', path: '/analiticas?tab=general', icon: TrendingUp },
+                                { name: 'Cumplimiento CACES', path: '/analiticas?tab=caces', icon: ShieldCheck },
+                                { name: 'Proyectos y Producción', path: '/analiticas?tab=productos', icon: ClipboardList }
+                            ].map((subItem) => {
+                                const isSubActive = location.pathname === '/analiticas' && (
+                                    (subItem.path.includes('tab=general') && (!location.search || location.search.includes('tab=general'))) ||
+                                    location.search.includes(subItem.path.split('?')[1])
+                                );
+                                
+                                return (
+                                    <Link
+                                        key={subItem.name}
+                                        to={subItem.path}
+                                        onClick={() => {
+                                            if (onClose) onClose();
+                                        }}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-3 pl-4 ${
+                                            isSubActive
+                                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                                                isSubActive
+                                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                            }`}>
+                                                <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
+                                            </div>
+                                            <span className={`text-[12px] tracking-tight truncate ${
+                                                isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                            }`}>
+                                                {subItem.name}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (item.name === 'Usuarios') {
+            const isMenuOpen = isUsersOpen;
+            return (
+                <div key={item.name} className="flex flex-col gap-0.5">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsUsersOpen(!isUsersOpen);
+                            if (!location.pathname.startsWith('/usuarios')) {
+                                navigate('/usuarios');
+                            }
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group border-0 w-full text-left ${
+                            isActive
+                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                                isActive
+                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                            }`}>
+                                <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+                            </div>
+                            <span className={`text-[13px] tracking-tight truncate ${
+                                isActive ? 'font-semibold text-text-main' : 'font-medium'
+                            }`}>
+                                {item.name}
+                            </span>
+                        </div>
+                        <ChevronRightIcon className={`shrink-0 ml-1.5 transition-all duration-200 ${
+                            isMenuOpen ? 'rotate-90' : ''
+                        } ${
+                            isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                        }`} />
+                    </button>
+                    
+                    {isMenuOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
+                            {[
+                                { name: 'Docentes', path: '/usuarios?type=DOCENTE', icon: GraduationCap },
+                                { name: 'Alumnos', path: '/usuarios?type=ESTUDIANTE', icon: Users },
+                                { name: 'Externos', path: '/usuarios?type=EXTERNO', icon: Globe }
+                            ].map((subItem) => {
+                                const isSubActive = location.pathname === '/usuarios' && (
+                                    (subItem.path.includes('type=DOCENTE') && (!location.search || location.search.includes('type=DOCENTE'))) ||
+                                    location.search.includes(subItem.path.split('?')[1])
+                                );
+                                
+                                return (
+                                    <Link
+                                        key={subItem.name}
+                                        to={subItem.path}
+                                        onClick={() => {
+                                            if (onClose) onClose();
+                                        }}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-3 pl-4 ${
+                                            isSubActive
+                                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                                                isSubActive
+                                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                            }`}>
+                                                <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
+                                            </div>
+                                            <span className={`text-[12px] tracking-tight truncate ${
+                                                isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                            }`}>
+                                                {subItem.name}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        if (item.name === 'Configuración') {
+            const isMenuOpen = isConfigOpen;
+            return (
+                <div key={item.name} className="flex flex-col gap-0.5">
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setIsConfigOpen(!isConfigOpen);
+                            if (!location.pathname.startsWith('/configuracion')) {
+                                navigate('/configuracion');
+                            }
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group border-0 w-full text-left ${
+                            isActive
+                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                        }`}
+                    >
+                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                                isActive
+                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                            }`}>
+                                <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+                            </div>
+                            <span className={`text-[13px] tracking-tight truncate ${
+                                isActive ? 'font-semibold text-text-main' : 'font-medium'
+                            }`}>
+                                {item.name}
+                            </span>
+                        </div>
+                        <ChevronRightIcon className={`shrink-0 ml-1.5 transition-all duration-200 ${
+                            isMenuOpen ? 'rotate-90' : ''
+                        } ${
+                            isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                        }`} />
+                    </button>
+                    
+                    {isMenuOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
+                            {[
+                                { name: 'Líneas de Investigación', path: '/configuracion?tab=lineas', icon: BookOpen },
+                                { name: 'Períodos Académicos', path: '/configuracion?tab=periodos', icon: Calendar },
+                                { name: 'Tipos de Producto', path: '/configuracion?tab=productos', icon: Tag },
+                                { name: 'Dominios Académicos', path: '/configuracion?tab=dominios', icon: Globe },
+                                { name: 'Indicadores CACES', path: '/configuracion?tab=indicadores', icon: Activity }
+                            ].map((subItem) => {
+                                const isSubActive = location.pathname === '/configuracion' && (
+                                    (subItem.path.includes('tab=lineas') && (!location.search || location.search.includes('tab=lineas'))) ||
+                                    location.search.includes(subItem.path.split('?')[1])
+                                );
+                                
+                                return (
+                                    <Link
+                                        key={subItem.name}
+                                        to={subItem.path}
+                                        onClick={() => {
+                                            if (onClose) onClose();
+                                        }}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-3 pl-4 ${
+                                            isSubActive
+                                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                                                isSubActive
+                                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                            }`}>
+                                                <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
+                                            </div>
+                                            <span className={`text-[12px] tracking-tight truncate ${
+                                                isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                            }`}>
+                                                {subItem.name}
+                                            </span>
+                                        </div>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         return (
             <Link
                 key={item.name}
@@ -214,44 +499,34 @@ const Sidebar = ({
                 onClick={() => {
                     if (onClose) onClose();
                 }}
-                className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ${item.indent ? 'ml-3 pl-4' : ''
-                    } ${isActive
-                        ? item.indent
-                            ? 'border border-border-thin bg-transparent text-[#b87200] dark:text-[#f5a623]'
-                            : 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ${
+                    item.indent ? 'ml-3 pl-4' : ''
+                } ${
+                    isActive
+                        ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                         : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                    } ${item.indent && !isActive ? 'border-l border-border-thin' : ''
-                    }`}
+                }`}
             >
                 <div className="flex items-center gap-2.5 min-w-0 py-0.5">
-                    <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
-                            ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10'
+                    <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
+                        isActive
+                            ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
                             : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                        } ${isActive && item.indent
-                            ? 'text-[#b87200] dark:text-[#f5a623]'
-                            : isActive
-                                ? 'text-text-main'
-                                : ''
-                        }`}>
+                    }`}>
                         <item.icon size={item.indent ? 13 : 15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                     </div>
-                    <span className={`text-[13px] tracking-tight truncate ${item.indent ? 'text-[12px]' : ''
-                        } ${isActive
-                            ? item.indent
-                                ? 'font-semibold text-[#b87200] dark:text-[#f5a623]'
-                                : 'font-semibold text-text-main'
-                            : 'font-medium'
-                        }`}>
+                    <span className={`text-[13px] tracking-tight truncate ${
+                        item.indent ? 'text-[12px]' : ''
+                    } ${
+                        isActive ? 'font-semibold text-text-main' : 'font-medium'
+                    }`}>
                         {item.name}
                     </span>
                 </div>
                 {item.hasChevron && (
-                    <ChevronRightIcon className={`shrink-0 ml-1.5 transition-colors ${isActive
-                            ? item.indent
-                                ? 'text-[#b87200]/60 dark:text-[#f5a623]/60'
-                                : 'text-text-main/50'
-                            : 'text-text-dim/30 group-hover:text-text-dim/70'
-                        }`} />
+                    <ChevronRightIcon className={`shrink-0 ml-1.5 transition-colors ${
+                        isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                    }`} />
                 )}
             </Link>
         );

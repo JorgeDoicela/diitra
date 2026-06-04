@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useConfirm } from '../../api/ConfirmContext';
+import { useSearchParams } from 'react-router-dom';
 
 interface LineaInvestigacion {
     idLinea?: number;
@@ -55,7 +56,17 @@ interface ConfigIndicador {
 }
 
 const ConfiguracionPage = () => {
-    const [activeTab, setActiveTab] = useState<'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores'>('lineas');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get('tab');
+    const activeTab = (tabParam === 'lineas' || tabParam === 'periodos' || tabParam === 'productos' || tabParam === 'dominios' || tabParam === 'indicadores') ? tabParam : 'lineas';
+    
+    const setActiveTab = (tab: 'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores') => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.set('tab', tab);
+            return next;
+        });
+    };
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
     const confirm = useConfirm();
