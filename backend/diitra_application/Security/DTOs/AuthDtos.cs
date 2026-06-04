@@ -60,3 +60,8 @@ public class MagicConfirmRequest
 {
     public string Token { get; set; } = null!;
 }
+
+public class MicrosoftLoginRequest
+{
+    public string IdToken { get; set; } = null!;
+}
