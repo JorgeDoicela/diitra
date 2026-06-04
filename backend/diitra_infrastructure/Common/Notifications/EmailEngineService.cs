@@ -619,7 +619,7 @@ namespace diitra_infrastructure.Common.Notifications
             {
                 Uuid = Guid.NewGuid().ToString(),
                 IdProyecto = project.IdProyecto,
-                IdUsuario = 1,
+                IdUsuario = null,
                 EstadoAnterior = beforeJson,
                 EstadoNuevo = "Inconcluso",
                 Observacion = $"Proyecto marcado como Inconcluso y Disponible para Adopción. Motivo: {reason}",

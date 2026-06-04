@@ -10,8 +10,8 @@ public class InvAuditAdmin
 {
     [Key]
     public int IdAudit { get; set; }
-    public int IdUsuarioAdmin { get; set; }
-    public int IdUsuarioAfectado { get; set; }
+    public int? IdUsuarioAdmin { get; set; }
+    public int? IdUsuarioAfectado { get; set; }
     public string Accion { get; set; } = null!;
     public string? Modulo { get; set; }
     public string? Detalle { get; set; }
@@ -22,8 +22,8 @@ public class InvAuditAdmin
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
 
     [ForeignKey("IdUsuarioAdmin")]
-    public virtual User UserAdmin { get; set; } = null!;
+    public virtual User? UserAdmin { get; set; }
 
     [ForeignKey("IdUsuarioAfectado")]
-    public virtual User UserAfectado { get; set; } = null!;
+    public virtual User? UserAfectado { get; set; }
 }
