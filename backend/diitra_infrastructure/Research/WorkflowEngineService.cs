@@ -98,6 +98,12 @@ namespace Diitra.Infrastructure.Research
                     throw new InvalidOperationException("No se ha configurado un período académico activo en el sistema.");
                 }
 
+                var researchSubcatId = await _context.SubcategoriasActividades
+                    .Where(s => s.Subcategoria == "INVESTIGACION")
+                    .Select(s => s.IdSubcategoria)
+                    .FirstOrDefaultAsync();
+                if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
                 var activeProfs = await _context.InvProyectosProfesores
                     .Include(pp => pp.IdUsuarioNavigation)
                     .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
@@ -111,7 +117,7 @@ namespace Diitra.Infrastructure.Research
                     decimal proposedHours = prof.HorasSemanales ?? 0;
                     
                     var availableHours = await _context.ProfesoresActividades
-                        .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == 7 && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                         .Select(pa => pa.HorasSemana)
                         .FirstOrDefaultAsync() ?? 0;
 

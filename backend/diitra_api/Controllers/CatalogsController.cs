@@ -310,6 +310,12 @@ namespace diitra_api.Controllers
 
             var periodId = currentPeriod?.IdPeriodo;
 
+            var researchSubcatId = await _context.SubcategoriasActividades
+                .Where(s => s.Subcategoria == "INVESTIGACION")
+                .Select(s => s.IdSubcategoria)
+                .FirstOrDefaultAsync();
+            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
             var profs = new List<object>();
             var alums = new List<object>();
 
@@ -319,12 +325,12 @@ namespace diitra_api.Controllers
                 var profesoresQuery = _context.Profesores.AsQueryable();
                 profesoresQuery = profesoresQuery.Where(p => p.Activo == 1);
 
-                // Filtrar estrictamente por docentes que tengan actividades de investigación (idSubcategoria = 7)
+                // Filtrar estrictamente por docentes que tengan actividades de investigación (idSubcategoria = researchSubcatId)
                 if (!string.IsNullOrEmpty(periodId))
                 {
                     profesoresQuery = profesoresQuery.Where(p => _context.ProfesoresActividades.Any(pa =>
                         pa.IdProfesor == p.IdProfesor &&
-                        pa.IdSubcategoria == 7 &&
+                        pa.IdSubcategoria == researchSubcatId &&
                         pa.IdPeriodo == periodId));
                 }
                 else
@@ -332,7 +338,7 @@ namespace diitra_api.Controllers
                     // Resiliente: si no hay periodo activo configurado, filtramos por docentes que tengan horas de investigación asignadas
                     profesoresQuery = profesoresQuery.Where(p => _context.ProfesoresActividades.Any(pa =>
                         pa.IdProfesor == p.IdProfesor &&
-                        pa.IdSubcategoria == 7));
+                        pa.IdSubcategoria == researchSubcatId));
                 }
 
                 if (!string.IsNullOrEmpty(query))
@@ -369,7 +375,7 @@ namespace diitra_api.Controllers
                 if (ids.Any() && !string.IsNullOrEmpty(periodId))
                 {
                     researchHours = await _context.ProfesoresActividades
-                        .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                        .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == periodId)
                         .ToListAsync();
 
                     linkedUsersList = await _context.Users

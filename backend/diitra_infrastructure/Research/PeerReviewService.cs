@@ -691,14 +691,20 @@ public class PeerReviewService : IPeerReviewService
 
             var periodId = currentPeriod?.IdPeriodo;
 
+            var researchSubcatId = await _context.SubcategoriasActividades
+                .Where(s => s.Subcategoria == "INVESTIGACION")
+                .Select(s => s.IdSubcategoria)
+                .FirstOrDefaultAsync();
+            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
             var queryDocentes = _context.Profesores.Where(p => p.Activo == 1);
 
-            // Solo docentes que tengan actividades de investigación (idSubcategoria = 7) en el periodo actual
+            // Solo docentes que tengan actividades de investigación (idSubcategoria = researchSubcatId) en el periodo actual
             if (!string.IsNullOrEmpty(periodId))
             {
                 queryDocentes = queryDocentes.Where(p => _context.ProfesoresActividades.Any(pa =>
                     pa.IdProfesor == p.IdProfesor &&
-                    pa.IdSubcategoria == 7 &&
+                    pa.IdSubcategoria == researchSubcatId &&
                     pa.IdPeriodo == periodId));
             }
 

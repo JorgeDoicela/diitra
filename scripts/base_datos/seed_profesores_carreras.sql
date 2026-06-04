@@ -50,7 +50,7 @@ WHERE p.activo = 1
   AND EXISTS (
       SELECT 1 FROM profesores_actividades pa 
       WHERE pa.idProfesor = p.idProfesor 
-        AND pa.idSubcategoria = 7 
+        AND pa.idSubcategoria = (SELECT idSubcategoria FROM subcategorias_actividades WHERE Subcategoria = 'INVESTIGACION' LIMIT 1) 
         AND pa.idPeriodo = @periodoActivoId
   )
 ON DUPLICATE KEY UPDATE 
@@ -74,7 +74,7 @@ SELECT
 FROM profesores p
 JOIN profesores_actividades pa ON pa.idProfesor = p.idProfesor
 WHERE p.activo = 1
-  AND pa.idSubcategoria = 7
+  AND pa.idSubcategoria = (SELECT idSubcategoria FROM subcategorias_actividades WHERE Subcategoria = 'INVESTIGACION' LIMIT 1)
   AND pa.idPeriodo <> @periodoActivoId
 ON DUPLICATE KEY UPDATE 
     esActivo = 1;
