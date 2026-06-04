@@ -117,76 +117,100 @@ export const AdminDashboard: React.FC = () => {
                     {/* Main Content: Left Column */}
                     <div className="lg:col-span-3 space-y-6">
                         
-                        {/* Embudo de proyectos */}
-                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl">
-                            <div className="flex items-center gap-2 mb-3">
-                                <ClipboardList size={14} className="text-text-dim" />
-                                <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Proyectos Institucionales</span>
-                            </div>
-                            <h3 className="text-xl font-bold tracking-tight text-text-main mb-2">
-                                Estado del Pipeline de Investigación
-                            </h3>
-                            <p className="text-xs text-text-dim max-w-xl font-medium leading-relaxed mb-6">
-                                Resumen del flujo de proyectos en el ciclo de vida institucional para garantizar el cumplimiento normativo.
-                            </p>
+                        {/* Status Grid: Pipeline & Budget */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             
-                            <div className="space-y-3">
-                                {stats?.proyectos_por_estado.map((est) => (
-                                    <div key={est.estado} className="flex items-center gap-3">
-                                        <span className="text-[10px] text-text-dim uppercase tracking-wide w-24 shrink-0 font-bold">
-                                            {est.estado}
-                                        </span>
-                                        <div className="flex-1 h-2 bg-border-thin rounded-full overflow-hidden">
+                            {/* Embudo de proyectos */}
+                            <div className="bento-card static flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden">
+                                <div className="p-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <ClipboardList size={14} className="text-text-dim" />
+                                        <span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Proyectos Institucionales</span>
+                                    </div>
+                                    <h3 className="text-base font-bold tracking-tight text-text-main mb-1">
+                                        Estado del Pipeline
+                                    </h3>
+                                    <p className="text-xs text-text-dim font-normal leading-relaxed mb-6">
+                                        Flujo de proyectos en el ciclo de vida institucional.
+                                    </p>
+                                    
+                                    <div className="space-y-4">
+                                        {stats?.proyectos_por_estado.map((est) => (
+                                            <div key={est.estado} className="flex items-center gap-3">
+                                                <span className="text-[10px] text-text-dim uppercase tracking-wider w-20 shrink-0 font-semibold">
+                                                    {est.estado}
+                                                </span>
+                                                <div className="flex-1 h-1.5 bg-border-thin rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-700"
+                                                        style={{
+                                                            width: stats.total_proyectos
+                                                                ? `${(est.cantidad / stats.total_proyectos) * 100}%`
+                                                                : '0%',
+                                                            backgroundColor: est.color
+                                                        }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-mono font-bold text-text-main w-6 text-right">
+                                                    {est.cantidad}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3.5 flex justify-between items-center text-xs font-medium">
+                                    <span className="text-text-dim">Total Proyectos</span>
+                                    <span className="font-mono font-bold text-text-main">{stats?.total_proyectos ?? 0}</span>
+                                </div>
+                            </div>
+
+                            {/* Ejecución presupuestaria global */}
+                            <div className="bento-card static flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden">
+                                <div className="p-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <TrendingUp size={14} className="text-text-dim" />
+                                        <span className="text-[11px] font-bold text-text-dim uppercase tracking-wider">Ejecución Presupuestaria</span>
+                                    </div>
+                                    <h3 className="text-base font-bold tracking-tight text-text-main mb-1">
+                                        Presupuesto de Investigación
+                                    </h3>
+                                    <p className="text-xs text-text-dim font-normal leading-relaxed mb-6">
+                                        Porcentaje de ejecución de fondos asignados en el periodo.
+                                    </p>
+
+                                    <div className="space-y-4">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-bold tracking-tight text-text-main font-sans">
+                                                {ejecucionPorc.toFixed(1)}%
+                                            </span>
+                                            <span className="text-[10px] text-text-dim uppercase tracking-wider font-semibold">ejecutado</span>
+                                        </div>
+
+                                        <div className="w-full h-1.5 bg-border-thin rounded-full overflow-hidden">
                                             <div
-                                                className="h-full rounded-full transition-all duration-700"
-                                                style={{
-                                                    width: stats.total_proyectos
-                                                        ? `${(est.cantidad / stats.total_proyectos) * 100}%`
-                                                        : '0%',
-                                                    backgroundColor: est.color
-                                                }}
+                                                className="h-full rounded-full bg-success transition-all duration-700"
+                                                style={{ width: `${ejecucionPorc}%` }}
                                             />
                                         </div>
-                                        <span className="text-xs font-mono font-bold text-text-main w-6 text-right">
-                                            {est.cantidad}
-                                        </span>
                                     </div>
-                                ))}
-                                <div className="divider-vercel my-4" />
-                                <div className="flex justify-between text-[11px] font-mono font-bold">
-                                    <span className="text-text-dim">Total Proyectos</span>
-                                    <span className="text-text-main">{stats?.total_proyectos ?? 0}</span>
                                 </div>
-                            </div>
-                        </div>
 
-                        {/* Ejecución presupuestaria global */}
-                        <div className="bento-card static p-6 bg-surface border border-border-thin shadow-sm rounded-xl">
-                            <div className="flex items-center gap-2 mb-3">
-                                <TrendingUp size={14} className="text-text-dim" />
-                                <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Ejecución Presupuestaria</span>
-                            </div>
-                            
-                            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-4">
-                                <div>
-                                    <p className="text-3xl font-black text-text-main leading-none">
-                                        {ejecucionPorc.toFixed(1)}%
-                                    </p>
-                                    <p className="text-[11px] text-text-dim mt-1.5 font-medium">
-                                        De los fondos totales asignados a investigación para este periodo fiscal
-                                    </p>
-                                </div>
-                                <div className="text-left sm:text-right text-xs font-mono text-text-dim shrink-0 bg-bg-deep px-3 py-2 rounded-lg border border-border-thin/40">
-                                    <p className="font-bold text-text-main">Ejecutado: ${(stats?.presupuesto_total_ejecutado ?? 0).toLocaleString('es-EC')}</p>
-                                    <p className="text-text-dim opacity-70 mt-0.5">Asignado: ${(stats?.presupuesto_total_asignado ?? 0).toLocaleString('es-EC')}</p>
+                                <div className="border-t border-border-thin bg-bg-deep/40 px-6 py-3.5 grid grid-cols-2 divide-x divide-border-thin/60">
+                                    <div className="pr-4">
+                                        <span className="text-[9px] text-text-dim uppercase tracking-wider font-bold">Ejecutado</span>
+                                        <p className="font-mono text-xs font-bold text-text-main mt-0.5">
+                                            ${(stats?.presupuesto_total_ejecutado ?? 0).toLocaleString('es-EC')}
+                                        </p>
+                                    </div>
+                                    <div className="pl-4">
+                                        <span className="text-[9px] text-text-dim uppercase tracking-wider font-bold">Asignado</span>
+                                        <p className="font-mono text-xs font-bold text-text-main mt-0.5">
+                                            ${(stats?.presupuesto_total_asignado ?? 0).toLocaleString('es-EC')}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="w-full h-2 bg-border-thin rounded-full overflow-hidden">
-                                <div
-                                    className="h-full rounded-full bg-success transition-all duration-700"
-                                    style={{ width: `${ejecucionPorc}%` }}
-                                />
-                            </div>
+
                         </div>
 
                         {/* Actividad reciente */}

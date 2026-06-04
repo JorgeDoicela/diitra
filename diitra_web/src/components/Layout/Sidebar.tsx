@@ -130,7 +130,18 @@ const Sidebar = ({
         }
     };
 
-    const allMenuItems = [
+    interface MenuItem {
+        name: string;
+        icon: any;
+        path: string;
+        roles?: string[];
+        permission?: string;
+        group: number;
+        hasChevron?: boolean;
+        indent?: boolean;
+    }
+
+    const allMenuItems: MenuItem[] = [
         // Grupo 1: Principal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
