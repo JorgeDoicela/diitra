@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2, Lock, Sun, Moon } from 'lucide-react';
+import { Loader2, Lock, Sun, Moon, Key } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -178,7 +178,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                 </button>
             )}
 
-            <div className="w-full max-w-[350px] space-y-10 relative z-20 animate-fade-up">
+            <div className="w-full max-w-[350px] space-y-7 relative z-20 animate-fade-up">
                 {/* Brand Logo & Header */}
                 <div className="flex flex-col items-center space-y-6">
                     <img
@@ -258,7 +258,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             </div>
                         ) : null}
 
-                        <div className="pt-2 space-y-4">
+                        <div className="pt-4 space-y-5">
                             <button
                                 type="submit"
                                 disabled={isSubmitting || lockoutSeconds > 0}
@@ -279,35 +279,36 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 <div className="flex-1 border-t border-border-thin"></div>
                             </div>
 
-                            {/* Microsoft Login Button */}
-                            <button
-                                type="button"
-                                onClick={handleMicrosoftLogin}
-                                className="w-full h-11 flex items-center justify-center gap-3 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
-                            >
-                                <svg className="w-4 h-4 shrink-0" viewBox="0 0 21 21">
-                                    <rect x="1" y="1" width="9" height="9" fill="#F25022" />
-                                    <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
-                                    <rect x="1" y="11" width="9" height="9" fill="#00A1F1" />
-                                    <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
-                                </svg>
-                                <span>Ingresar con Microsoft</span>
-                            </button>
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* Microsoft Login Button */}
+                                <button
+                                    type="button"
+                                    onClick={handleMicrosoftLogin}
+                                    className="w-full h-11 flex items-center justify-center gap-2 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
+                                >
+                                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 21 21">
+                                        <rect x="1" y="1" width="9" height="9" fill="#F25022" />
+                                        <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
+                                        <rect x="1" y="11" width="9" height="9" fill="#00A1F1" />
+                                        <rect x="11" y="11" width="9" height="9" fill="#FFB900" />
+                                    </svg>
+                                    <span>Microsoft</span>
+                                </button>
+
+                                {/* Acceso con PIN */}
+                                <Link
+                                    to="/auth/pin"
+                                    className="w-full h-11 flex items-center justify-center gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
+                                    title="Ingresar con código PIN de handoff"
+                                >
+                                    <Key size={13} className="shrink-0 text-text-dim" />
+                                    <span>Tengo un PIN</span>
+                                </Link>
+                            </div>
                         </div>
                     </form>
 
-                    <div className="text-center pt-4 space-y-4">
-                        {/* Acceso para revisores externos */}
-                        <div className="flex flex-col">
-                            <Link
-                                to="/auth/pin"
-                                className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5 no-underline"
-                                title="Ingresar con código PIN de handoff"
-                            >
-                                <span className="uppercase tracking-widest">Tengo un PIN</span>
-                            </Link>
-                        </div>
-
+                    <div className="text-center pt-2">
                         <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
                             <Link to="/" className="hover:text-text-main transition-colors no-underline">Inicio</Link>
                             <span>/</span>
