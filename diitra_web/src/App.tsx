@@ -31,6 +31,7 @@ import NotificationsPage from './pages/Notificaciones/NotificationsPage';
 import EmailEnginePage from './pages/Admin/Emails/EmailEnginePage';
 import ProjectAdoptionPage from './pages/Investigacion/Proyectos/ProjectAdoptionPage';
 import InformesAvancePage from './pages/Investigacion/Proyectos/InformesAvancePage';
+import SettingsPage from './pages/Settings/SettingsPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -173,7 +174,7 @@ function App() {
                             </ProtectedRoute>
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/settings" element={<UnderDevelopment title="Módulo en Desarrollo" description="La configuración de cuenta y preferencias institucionales estará disponible en la próxima actualización." />} />
+                            <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />

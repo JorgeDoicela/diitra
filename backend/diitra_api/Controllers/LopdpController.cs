@@ -138,4 +138,107 @@ public class LopdpController : ControllerBase
         var solicitudes = await _lopdpService.GetAllSolicitudesArcoAsync();
         return Ok(solicitudes);
     }
+
+    /// <summary>
+    /// Devuelve el perfil LOPDP del usuario autenticado (incluyendo metadatos científicos e información de consentimiento).
+    /// </summary>
+    [HttpGet("perfil")]
+    public async Task<IActionResult> GetPerfil()
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var perfil = await _lopdpService.GetPerfilAsync(dbUser.IdUsuario);
+        return Ok(perfil);
+    }
+
+    /// <summary>
+    /// Actualiza la información de perfil científico LOPDP del usuario autenticado.
+    /// </summary>
+    [HttpPut("perfil")]
+    public async Task<IActionResult> UpdatePerfil([FromBody] ActualizarPerfilRequest request)
+    {
+        if (request == null) return BadRequest("Datos nulos");
+
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        await _lopdpService.UpdatePerfilAsync(dbUser.IdUsuario, request);
+        return Ok(new { message = "Perfil actualizado exitosamente." });
+    }
+
+    /// <summary>
+    /// Sube y configura el certificado de firma electrónica (.p12) del usuario con su contraseña cifrada.
+    /// </summary>
+    [HttpPost("perfil/firma")]
+    public async Task<IActionResult> ConfigurarFirma(
+        [FromForm] Microsoft.AspNetCore.Http.IFormFile file,
+        [FromForm] string password,
+        [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
+        [FromServices] Microsoft.Extensions.Configuration.IConfiguration configuration)
+    {
+        if (file == null || file.Length == 0 || string.IsNullOrEmpty(password))
+        {
+            return BadRequest(new { error = "El archivo de firma (.p12) y la contraseña son requeridos." });
+        }
+
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        // 1. Validar el certificado
+        byte[] certificateBytes;
+        using (var ms = new System.IO.MemoryStream())
+        {
+            await file.CopyToAsync(ms);
+            certificateBytes = ms.ToArray();
+        }
+
+        if (!firmaService.ValidateCertificate(certificateBytes, password))
+        {
+            return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
+        }
+
+        // 2. Guardar el archivo en el servidor
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "signatures");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        var fileName = $"user_sig_{dbUser.IdUsuario}.p12";
+        var filePath = Path.Combine(uploadsFolder, fileName);
+        await System.IO.File.WriteAllBytesAsync(filePath, certificateBytes);
+
+        // 3. Cifrar la contraseña
+        var encryptionKey = configuration["JWTSettings:Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+        var encryptedPassword = diitra_infrastructure.Security.CryptoHelper.Encrypt(password, encryptionKey);
+
+        // 4. Guardar en base de datos
+        await _lopdpService.GuardarFirmaElectronicaAsync(dbUser.IdUsuario, filePath, encryptedPassword);
+
+        // 5. Auditoría de datos sensibles
+        var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+        var userAgent = Request.Headers["User-Agent"].ToString();
+        await _lopdpService.AuditoriaAccesoDatosAsync(
+            dbUser.IdUsuario,
+            dbUser.IdUsuario,
+            "inv_usuarios_metadata",
+            "p12PasswordEncrypted",
+            "ESCRITURA",
+            "Subida y configuración de certificado digital de firma electrónica con cifrado simétrico",
+            ip,
+            userAgent);
+
+        return Ok(new { message = "Firma electrónica configurada y contraseña cifrada exitosamente." });
+    }
 }
+
