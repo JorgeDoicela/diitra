@@ -36,3 +36,27 @@ public class SolicitudArcoResponse
     public DateTime? FechaResolucion { get; set; }
     public string? DocumentoResolucionPath { get; set; }
 }
+
+public class PerfilLopdpDto
+{
+    public string? OrcidId { get; set; }
+    public string? ScopusId { get; set; }
+    public string? GoogleScholarUrl { get; set; }
+    public string? ResearchGateUrl { get; set; }
+    public string? Especialidad { get; set; }
+    public string? GradoAcademicoMaximo { get; set; }
+    public bool AceptoTerminosFirma { get; set; }
+    public DateTime? FechaConsentimientoFirma { get; set; }
+    public bool HasP12Certificate { get; set; }
+}
+
+public class ActualizarPerfilRequest
+{
+    public string? OrcidId { get; set; }
+    public string? ScopusId { get; set; }
+    public string? GoogleScholarUrl { get; set; }
+    public string? ResearchGateUrl { get; set; }
+    public string? Especialidad { get; set; }
+    public string? GradoAcademicoMaximo { get; set; }
+}
+

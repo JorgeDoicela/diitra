@@ -166,22 +166,45 @@ namespace diitra_api.Controllers
                 var genResult = await _documentEngine.GenerateAsync(request);
 
                 // 3. Aplicar Firma Criptográfica Avanzada (.p12 / BouncyCastle)
-                byte[] signedPdfBytes;
+                byte[]? certificateBytes = null;
+                string? finalPassword = password;
+
                 if (certificate != null && certificate.Length > 0)
                 {
-                    byte[] certificateBytes;
                     using (var ms = new System.IO.MemoryStream())
                     {
                         await certificate.CopyToAsync(ms);
                         certificateBytes = ms.ToArray();
                     }
+                }
+                else if (userMeta != null && !string.IsNullOrEmpty(userMeta.RutaFirmaP12))
+                {
+                    if (System.IO.File.Exists(userMeta.RutaFirmaP12))
+                    {
+                        try
+                        {
+                            certificateBytes = await System.IO.File.ReadAllBytesAsync(userMeta.RutaFirmaP12);
+                            var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+                            var encryptionKey = config["JWTSettings:Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+                            finalPassword = diitra_infrastructure.Security.CryptoHelper.Decrypt(userMeta.P12PasswordEncrypted!, encryptionKey);
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error al cargar o descifrar la firma digital almacenada del usuario.");
+                            return BadRequest(new { error = "No se pudo cargar o descifrar la firma digital almacenada en su perfil." });
+                        }
+                    }
+                }
 
-                    if (!firmaService.ValidateCertificate(certificateBytes, password))
+                byte[] signedPdfBytes;
+                if (certificateBytes != null)
+                {
+                    if (!firmaService.ValidateCertificate(certificateBytes, finalPassword!))
                     {
                         return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
                     }
 
-                    signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, password,
+                    signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, finalPassword!,
                         reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
                         location: "Quito, Ecuador");
                 }
@@ -190,7 +213,7 @@ namespace diitra_api.Controllers
                     // Bypass de demostración (Demo Mode)
                     if (password != "diitra2026")
                     {
-                        return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o ingresar la contraseña de demostración." });
+                        return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
                     }
                     signedPdfBytes = genResult.PdfBytes;
                 }

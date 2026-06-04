@@ -13,4 +13,8 @@ public interface ILopdpService
     Task<List<SolicitudArcoResponse>> GetMisSolicitudesArcoAsync(int idUsuario);
     Task<List<SolicitudArcoResponse>> GetAllSolicitudesArcoAsync();
     Task AuditoriaAccesoDatosAsync(int? idUsuarioActor, int idUsuarioAfectado, string tablaAfectada, string? columnaAfectada, string operacion, string? motivo, string? ip, string? userAgent);
+    Task<PerfilLopdpDto?> GetPerfilAsync(int idUsuario);
+    Task UpdatePerfilAsync(int idUsuario, ActualizarPerfilRequest request);
+    Task GuardarFirmaElectronicaAsync(int idUsuario, string rutaArchivo, string passwordCifrada);
 }
+

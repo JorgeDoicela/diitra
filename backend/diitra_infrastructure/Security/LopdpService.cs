@@ -194,4 +194,105 @@ public class LopdpService : ILopdpService
             // No propagamos la excepción en auditoría para evitar interrumpir la operación principal
         }
     }
+
+    public async Task<PerfilLopdpDto?> GetPerfilAsync(int idUsuario)
+    {
+        try
+        {
+            var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
+            if (meta == null)
+            {
+                meta = new InvUsuarioMetadata
+                {
+                    IdUsuario = idUsuario,
+                    Uuid = Guid.NewGuid(),
+                    Version = 1
+                };
+                _context.InvUsuariosMetadata.Add(meta);
+                await _context.SaveChangesAsync();
+            }
+
+            return new PerfilLopdpDto
+            {
+                OrcidId = meta.OrcidId,
+                ScopusId = meta.ScopusId,
+                GoogleScholarUrl = meta.GoogleScholarUrl,
+                ResearchGateUrl = meta.ResearchGateUrl,
+                Especialidad = meta.Especialidad,
+                GradoAcademicoMaximo = meta.GradoAcademicoMaximo,
+                AceptoTerminosFirma = meta.AceptoTerminosFirma,
+                FechaConsentimientoFirma = meta.FechaConsentimientoFirma,
+                HasP12Certificate = !string.IsNullOrEmpty(meta.RutaFirmaP12)
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener perfil LOPDP para Usuario={IdUsuario}", idUsuario);
+            throw;
+        }
+    }
+
+    public async Task UpdatePerfilAsync(int idUsuario, ActualizarPerfilRequest request)
+    {
+        try
+        {
+            var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
+            if (meta == null)
+            {
+                meta = new InvUsuarioMetadata
+                {
+                    IdUsuario = idUsuario,
+                    Uuid = Guid.NewGuid(),
+                    Version = 1
+                };
+                _context.InvUsuariosMetadata.Add(meta);
+            }
+
+            meta.OrcidId = request.OrcidId;
+            meta.ScopusId = request.ScopusId;
+            meta.GoogleScholarUrl = request.GoogleScholarUrl;
+            meta.ResearchGateUrl = request.ResearchGateUrl;
+            meta.Especialidad = request.Especialidad;
+            meta.GradoAcademicoMaximo = request.GradoAcademicoMaximo;
+            meta.Version++;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al actualizar perfil LOPDP para Usuario={IdUsuario}", idUsuario);
+            throw;
+        }
+    }
+
+    public async Task GuardarFirmaElectronicaAsync(int idUsuario, string rutaArchivo, string passwordCifrada)
+    {
+        try
+        {
+            var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
+            if (meta == null)
+            {
+                meta = new InvUsuarioMetadata
+                {
+                    IdUsuario = idUsuario,
+                    Uuid = Guid.NewGuid(),
+                    Version = 1
+                };
+                _context.InvUsuariosMetadata.Add(meta);
+            }
+
+            meta.RutaFirmaP12 = rutaArchivo;
+            meta.P12PasswordEncrypted = passwordCifrada;
+            meta.FirmaHabilitada = true;
+            meta.Version++;
+
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al guardar firma electrónica para Usuario={IdUsuario}", idUsuario);
+            throw;
+        }
+    }
 }
+
