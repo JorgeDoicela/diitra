@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
     X, BookOpen, Activity, Shield, History, 
     Settings2, BarChart3, Bell, ShieldCheck, PenTool, Scale,
-    Award, Zap, ChevronLeft, ChevronRight, Check
+    Award, Zap, ChevronLeft, ChevronRight, Check, Mail
 } from 'lucide-react';
 
 interface HelpStep {
@@ -387,6 +387,215 @@ const HELP_MAP: Record<string, HelpConfig> = {
             "El sistema bloquea automáticamente la postulación a las 23:59:59 del día de cierre indicado en la convocatoria. No se podrán realizar excepciones ya que los plazos están firmados criptográficamente.",
             "Asegúrate de que la línea de investigación seleccionada en tu propuesta esté habilitada en los términos específicos de la convocatoria para evitar descalificaciones automáticas."
         ]
+    },
+    '/settings': {
+        icon: <Settings2 size={24} className="text-brand" />,
+        title: "Mi Cuenta y Privacidad LOPDP",
+        summary: "Consola de configuración personal, credenciales académicas y gestión de consentimientos bajo la normativa LOPDP.",
+        description: "Espacio individual para que el docente o usuario administre sus datos personales, perfiles de investigación (ORCID, Google Scholar), preferencias de notificaciones y la revocación o aceptación de consentimientos de privacidad de datos conforme a la ley vigente.",
+        steps: [
+            {
+                title: "Gestión de información de perfil y filiación",
+                description: "Actualiza tus datos de contacto, enlaces académicos externos como ORCID o Scopus ID, e información de tu departamento para asegurar que tus firmas de reportes y certificaciones se generen con metadatos correctos.",
+                highlight: 'content-top'
+            },
+            {
+                title: "Seguridad, contraseña y firma electrónica",
+                description: "Configura tus credenciales de acceso seguro y administra tu certificado de firma electrónica (token o archivo pfx) para la suscripción inmutable de actas e informes técnicos.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Privacidad y consentimiento LOPDP",
+                description: "Revisa y administra tus autorizaciones de tratamiento de datos personales. DIITRA cumple con la Ley Orgánica de Protección de Datos Personales, permitiendo el ejercicio de tus derechos de acceso, rectificación y oposición.",
+                highlight: 'content-bottom'
+            }
+        ],
+        compliance: "Alineado con la Ley Orgánica de Protección de Datos Personales (LOPDP) del Ecuador, garantizando el control sobre el uso de datos del personal docente y administrativo, y el Criterio de Infraestructura y Transparencia del CACES.",
+        tips: [
+            "Mantén vinculados y actualizados tus perfiles de ORCID y Google Scholar para permitir la sincronización automatizada de tu producción científica periódica.",
+            "Por seguridad, te recomendamos renovar tus credenciales de acceso periódicamente y utilizar contraseñas de alta complejidad."
+        ]
+    },
+    '/grupos': {
+        icon: <Award size={24} className="text-brand" />,
+        title: "Grupos de Investigación",
+        summary: "Registro institucional, estructura colaborativa y proyectos de los grupos de investigación oficiales.",
+        description: "Panel para la postulación, formalización y seguimiento de los grupos de investigación de la institución. Permite a los directores y coordinadores registrar líneas de investigación grupales, integrar miembros docentes y estudiantes, y reportar la producción colectiva.",
+        steps: [
+            {
+                title: "Directorio y visualización de grupos activos",
+                description: "Explora la lista completa de grupos de investigación aprobados por el consejo científico. Revisa sus líneas de acción, miembros activos y la producción científica acumulada durante el ciclo.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Creación y postulación de nuevo grupo",
+                description: "Inicia una solicitud para la creación de un nuevo grupo de investigación completando los campos de justificación académica, plan de trabajo bienal, líneas de investigación institucionales y presupuesto estimado.",
+                highlight: 'content-top'
+            },
+            {
+                title: "Gestión de miembros y roles del grupo",
+                description: "Configura el equipo de trabajo asignando el rol de Director de Grupo, Co-investigadores docentes o estudiantes colaboradores de semilleros para fortalecer el indicador de investigación formativa.",
+                highlight: 'content-bottom'
+            }
+        ],
+        compliance: "Mapea el Criterio B.1.2 del CACES sobre fomento a la investigación formativa y asociatividad científica, promoviendo la consolidación de redes de investigación internas y externas.",
+        tips: [
+            "Asegúrate de incluir al menos un estudiante colaborador para cumplir con los requerimientos institucionales de semilleros de investigación.",
+            "Actualiza el plan de trabajo bienal de tu grupo para evitar el estado de inactividad temporal en el sistema."
+        ]
+    },
+    '/admin/emails': {
+        icon: <Mail size={24} className="text-brand" />,
+        title: "Motor de Plantillas y Correos",
+        summary: "Consola de administración para la edición de plantillas de correo electrónico transaccionales y notificaciones del sistema.",
+        description: "Módulo exclusivo para administradores diseñado para configurar y parametrizar los correos electrónicos que el sistema envía de forma automatizada (alertas de firma, invitaciones de arbitraje, recordatorios de hitos y credenciales de usuarios).",
+        steps: [
+            {
+                title: "Selección y edición de plantillas dinámicas",
+                description: "Navega por el catálogo de plantillas de correo categorizadas por módulo. Puedes editar el contenido HTML utilizando variables dinámicas del sistema como el nombre del docente, título del proyecto o enlace de firma.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Configuración de SMTP y envío de prueba",
+                description: "Administra los parámetros de conexión con el servidor de correo institucional y realiza pruebas de entrega en tiempo real para verificar la correcta visualización del diseño y etiquetas.",
+                highlight: 'content-top'
+            }
+        ],
+        compliance: "Garantiza la formalidad de la comunicación institucional y el debido proceso administrativo en las notificaciones del ciclo de vida de los proyectos de investigación científica.",
+        tips: [
+            "Utiliza las variables dinámicas entre llaves dobles (ej. {{nombre_usuario}}) con precaución para no alterar la estructura de datos del renderizador.",
+            "Siempre realiza un envío de prueba a tu dirección de correo antes de guardar y aplicar cambios globales en una plantilla activa."
+        ]
+    },
+    '/investigacion/adopcion': {
+        icon: <Award size={24} className="text-brand" />,
+        title: "Bandeja de Adopción",
+        summary: "Consola para la asignación y adopción de proyectos de investigación por parte de docentes de libre distributivo.",
+        description: "Espacio para que los docentes investigadores exploren propuestas de proyectos institucionales aprobadas que requieren la incorporación de un director o co-investigador para su ejecución, optimizando la asignación horaria institucional.",
+        steps: [
+            {
+                title: "Exploración de proyectos disponibles para adopción",
+                description: "Inspecciona las propuestas publicadas por la Dirección de Investigación que se alinean con tu área de conocimiento y que se encuentran pendientes de asignación de equipo técnico.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Solicitud de adopción e ingreso de horas distributivas",
+                description: "Postula para adoptar un proyecto especificando las horas que comprometerás en tu distributivo académico y cargando tu justificación de idoneidad técnica.",
+                highlight: 'content-top'
+            }
+        ],
+        compliance: "Optimiza el Criterio B.1.1 (Cuerpo Docente de Investigación) del CACES, certificando que la distribución de la carga horaria dedicada a la investigación sea eficiente, justificada y alineada al perfil académico.",
+        tips: [
+            "Revisa detenidamente los requisitos y entregables mínimos del proyecto antes de enviar la solicitud de adopción, ya que la asignación es vinculante.",
+            "Coordina con el director de tu departamento académico para asegurar la disponibilidad de horas en tu distributivo antes de postular."
+        ]
+    },
+    '/investigacion/monitoreo': {
+        icon: <Activity size={24} className="text-brand" />,
+        title: "Monitoreo de Proyectos",
+        summary: "Consola de seguimiento técnico y financiero, cronograma de entregables y carga de evidencias en tiempo real.",
+        description: "Interfaz integral para supervisar la ejecución física y financiera de los proyectos de investigación activos. Permite al docente reportar avances semanales, registrar bitácoras, subir archivos de evidencias y solicitar modificaciones presupuestarias o extensiones de plazo.",
+        steps: [
+            {
+                title: "Control del cronograma físico e hitos de actividades",
+                description: "Monitorea el progreso de cada actividad planificada en tu propuesta original. Marca hitos como completados y sube los entregables correspondientes para la validación del analista de investigación.",
+                highlight: 'content-top'
+            },
+            {
+                title: "Carga de evidencias y justificación de entregables",
+                description: "Sube los soportes que respaldan tus avances (informes de laboratorio, actas de encuestas, borradores de artículos). Todos los documentos son almacenados de forma segura con firma del investigador.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Bitácora de campo y registro de egresos financieros",
+                description: "Registra detalladamente las horas invertidas y los gastos ejecutados en base al presupuesto del proyecto, adjuntando facturas y justificativos de viáticos u adquisiciones de insumos.",
+                highlight: 'content-bottom'
+            }
+        ],
+        compliance: "Asegura el cumplimiento del Criterio de Control Financiero y Evaluación de Avances del CACES, justificando cuantitativa y documentalmente cada recurso y hora docente invertida en investigación.",
+        tips: [
+            "Sube tus evidencias inmediatamente al completar un hito para agilizar el desembolso de los siguientes tramos de financiamiento del proyecto.",
+            "Usa el chat de soporte interno del proyecto para solventar dudas metodológicas directamente con el analista asignado a tu seguimiento."
+        ]
+    },
+    '/investigacion/informes-avance': {
+        icon: <BookOpen size={24} className="text-brand" />,
+        title: "Bandeja de Informes de Avance",
+        summary: "Consola de revisión y validación de informes técnicos y financieros periódicos de proyectos activos.",
+        description: "Espacio centralizado donde la Dirección de Investigación y los analistas técnicos revisan, aprueban o devuelven los informes parciales presentados por los directores de proyectos para asegurar el cumplimiento del cronograma.",
+        steps: [
+            {
+                title: "Revisión técnica de informes e hitos declarados",
+                description: "Examina la documentación y evidencias cargadas por los investigadores para cada hito del cronograma del proyecto. Valida si la calidad y formato del entregable cumple con los estándares exigidos.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Gestión de observaciones y re-envíos",
+                description: "En caso de inconsistencias técnicas o falta de evidencias, emite observaciones detalladas y devuelve el informe al docente, estableciendo un plazo de subsanación automatizado.",
+                highlight: 'content-top'
+            }
+        ],
+        compliance: "Respalda los procesos de auditoría y control de calidad académica requeridos en los modelos de acreditación institucional del CACES, certificando la supervisión formal de los recursos públicos.",
+        tips: [
+            "Sé específico en tus observaciones textuales para que el docente sepa exactamente qué corregir y se eviten múltiples iteraciones de devolución.",
+            "Utiliza los filtros de fecha de vencimiento para dar prioridad a la revisión de informes cuyos plazos de desembolso estén próximos."
+        ]
+    },
+    '/revisiones/evaluacion': {
+        icon: <Scale size={24} className="text-brand" />,
+        title: "Rúbrica de Evaluación",
+        summary: "Interface estructurada para la calificación paramétrica, justificación de puntajes y dictamen de propuestas.",
+        description: "Formulario dinámico de evaluación doble ciego donde el revisor par califica individualmente cada criterio obligatorio de la propuesta de investigación, proporcionando retroalimentación de valor y un veredicto formal.",
+        steps: [
+            {
+                title: "Calificación de criterios y ponderaciones obligatorias",
+                description: "Evalúa la pertinencia, justificación, metodología y plan de egresos de la propuesta seleccionando los puntajes específicos de las escalas descriptivas.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Ingreso de justificaciones cualitativas por criterio",
+                description: "Transcribe una justificación analítica obligatoria para cada puntuación asignada, brindando argumentos de sustento científico para el proponente.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Dictamen final y firma electrónica del veredicto",
+                description: "Selecciona el veredicto definitivo (Aprobado, Pendiente de Correcciones o Rechazado) y firma el reporte digitalmente para integrarlo al expediente del proyecto.",
+                highlight: 'content-top'
+            }
+        ],
+        compliance: "Cumple rigurosamente con los estándares internacionales de arbitraje científico y las exigencias de transparencia e idoneidad metodológica evaluadas en los modelos del CACES.",
+        tips: [
+            "Tus valoraciones deben ser objetivas y constructivas; recuerda que el autor recibirá tus comentarios de forma totalmente anónima.",
+            "El sistema guardará automáticamente tus avances; puedes suspender la evaluación y completarla en otro momento del día."
+        ]
+    },
+    '/arbitraje/proyecto': {
+        icon: <Scale size={24} className="text-brand" />,
+        title: "Arbitraje de Proyecto",
+        summary: "Panel del Comité Científico para la resolución de evaluaciones divergentes y emisión de dictamen final.",
+        description: "Entorno operativo del Consejo de Investigación diseñado para analizar discrepancias en los dictámenes de revisores pares y emitir una resolución definitiva que dirima la postulación.",
+        steps: [
+            {
+                title: "Visor comparativo de dictámenes de pares",
+                description: "Analiza de forma paralela los puntajes, comentarios específicos y audios de los revisores que intervinieron en la evaluación de la propuesta en conflicto.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Debate, resolución de consenso y carga de acta",
+                description: "Registra la decisión definitiva del consejo, adjuntando el acta de sesión respectiva y transcribiendo los fundamentos del fallo que se comunicarán al docente.",
+                highlight: 'content-bottom'
+            },
+            {
+                title: "Emisión de resolución definitiva firmada",
+                description: "Genera y suscribe digitalmente la resolución oficial de arbitraje, la cual causará estado y actualizará de inmediato el flujo del proyecto en DIITRA.",
+                highlight: 'content-top'
+            }
+        ],
+        compliance: "Garantiza el debido proceso y la seguridad jurídica en la asignación de recursos competitivos de investigación, de acuerdo a la normativa nacional y el modelo de evaluación del CACES.",
+        tips: [
+            "Puedes solicitar una tercera evaluación dirimente antes de emitir el fallo si el comité considera que el tema requiere especialidad técnica adicional.",
+            "Todas las actas de arbitraje quedan respaldadas en la base de datos inmutable para resguardo de la institución."
+        ]
     }
 };
 
@@ -698,6 +907,225 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
                     </>
                 );
 
+            case '/settings':
+                return (
+                    <>
+                        {/* Profile Settings Panel */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-success/20 border border-success/30 rounded flex items-center justify-center text-[6px] text-success font-semibold">Guardar</div>
+                        </div>
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="flex gap-2 items-center pb-1 border-b border-border-thin/20">
+                                <div className="w-6 h-6 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center text-[7px] text-brand">PD</div>
+                                <div className="space-y-0.5">
+                                    <div className="w-12 h-2 bg-text-main/20 rounded" />
+                                    <div className="w-8 h-1 bg-text-dim/10 rounded" />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5 py-1">
+                                <div className="w-full h-3 bg-text-dim/10 rounded-sm border border-border-thin" />
+                                <div className="w-3/4 h-3 bg-text-dim/10 rounded-sm border border-border-thin" />
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-3 h-3 bg-brand/20 border border-brand/40 rounded-sm" />
+                                    <div className="w-16 h-1 bg-text-dim/20 rounded" />
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/grupos':
+                return (
+                    <>
+                        {/* Groups grid */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/4 h-5 bg-brand text-white rounded flex items-center justify-center text-[6px] font-semibold">Nuevo Grupo</div>
+                        </div>
+                        <div className={`flex-1 grid grid-cols-2 gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            {[1, 2].map((i) => (
+                                <div key={i} className="rounded-lg border border-border-thin p-1.5 flex flex-col justify-between bg-surface">
+                                    <div className="space-y-1">
+                                        <div className="w-3/4 h-2 bg-text-main/20 rounded" />
+                                        <div className="w-1/2 h-1 bg-brand/35 rounded" />
+                                    </div>
+                                    <div className="flex gap-1 items-center mt-1">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-text-dim/20" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-text-dim/20" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-text-dim/20" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                );
+
+            case '/admin/emails':
+                return (
+                    <>
+                        {/* Email Templates Engine */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-brand/10 border border-brand/20 rounded flex items-center justify-center text-[6px] text-brand font-semibold">Test SMTP</div>
+                        </div>
+                        <div className={`flex-1 rounded-lg border p-2 flex gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            {/* Templates list */}
+                            <div className="w-1/3 border border-border-thin/40 rounded p-1 space-y-1 bg-surface-hover/20">
+                                <div className="w-full h-2.5 bg-brand/15 border border-brand/30 rounded-sm" />
+                                <div className="w-full h-2.5 bg-text-dim/10 rounded-sm" />
+                                <div className="w-full h-2.5 bg-text-dim/10 rounded-sm" />
+                            </div>
+                            {/* Editor workspace */}
+                            <div className="flex-1 border border-border-thin/40 rounded p-1.5 flex flex-col gap-1 bg-surface">
+                                <div className="w-2/3 h-1.5 bg-text-main/30 rounded" />
+                                <div className="flex-1 border border-dashed border-border-thin rounded-sm p-1 space-y-1">
+                                    <div className="w-full h-1 bg-text-dim/10 rounded" />
+                                    <div className="w-4/5 h-1 bg-text-dim/10 rounded" />
+                                    <div className="w-3/4 h-1.5 bg-brand/25 rounded-sm" />
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/investigacion/adopcion':
+                return (
+                    <>
+                        {/* Adoption Tray */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-text-dim/10 rounded border border-border-thin flex items-center justify-center text-[6px] text-text-dim">Filtrar</div>
+                        </div>
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="flex justify-between border-b border-border-thin/40 pb-1 text-[6px] text-text-dim">
+                                <span>Propuesta</span>
+                                <span>Presupuesto</span>
+                            </div>
+                            <div className="space-y-1 py-1 flex-1">
+                                <div className="flex justify-between items-center py-0.5 border-b border-border-thin/20">
+                                    <div className="w-16 h-1.5 bg-text-main/20 rounded" />
+                                    <div className="w-10 h-3 bg-brand/10 border border-brand/20 rounded-md flex items-center justify-center text-[5px] text-brand font-semibold">Adoptar</div>
+                                </div>
+                                <div className="flex justify-between items-center py-0.5 border-b border-border-thin/20">
+                                    <div className="w-12 h-1.5 bg-text-main/20 rounded" />
+                                    <div className="w-10 h-3 bg-brand/10 border border-brand/20 rounded-md flex items-center justify-center text-[5px] text-brand font-semibold">Adoptar</div>
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/investigacion/monitoreo':
+                return (
+                    <>
+                        {/* Monitoring detail and Gantt */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/2 h-3 bg-text-main/25 rounded" />
+                            <div className="w-1/5 h-5 bg-success/20 border border-success/30 rounded flex items-center justify-center text-[6px] text-success font-semibold">Reportar</div>
+                        </div>
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Gantt / Activities List */}
+                            <div className={`flex-[1.2] rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-1/2 h-1.5 bg-text-dim/30 rounded" />
+                                <div className="space-y-1 py-1 flex-1">
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-8 h-1 bg-text-main/20 rounded" />
+                                        <div className="flex-1 h-2 bg-brand/40 rounded-sm" />
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-10 h-1 bg-text-main/20 rounded" />
+                                        <div className="flex-1 h-2 bg-success/40 rounded-sm" />
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Evidence dropzone */}
+                            <div className={`flex-1 rounded-lg border p-1.5 flex flex-col gap-1 justify-center items-center border-dashed transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-4 h-4 bg-brand/20 border border-brand/40 rounded flex items-center justify-center text-[6px] text-brand">+</div>
+                                <div className="w-12 h-1.5 bg-text-dim/20 rounded" />
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/investigacion/informes-avance':
+                return (
+                    <>
+                        {/* Advanced reports tray */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-brand text-white rounded flex items-center justify-center text-[6px] font-semibold">Aprobar</div>
+                        </div>
+                        <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                            <div className="w-2/3 h-2 bg-text-main/25 rounded" />
+                            <div className="space-y-1 flex-1 py-1">
+                                {[1, 2].map((i) => (
+                                    <div key={i} className="flex justify-between items-center py-0.5 border-b border-border-thin/20">
+                                        <div className="w-1/2 h-1.5 bg-text-main/20 rounded" />
+                                        <div className="w-10 h-3 rounded bg-warning/20 border border-warning/30 flex items-center justify-center text-[5px] text-warning font-semibold">Pendiente</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/revisiones/evaluacion':
+                return (
+                    <>
+                        {/* Peer evaluation rubric workspace */}
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Left Side: Document View */}
+                            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightTopClass}`}>
+                                <div className="w-1/2 h-2 bg-text-main/30 rounded mb-1" />
+                                <div className="space-y-1.5 flex-1 border border-border-thin bg-surface-hover/30 rounded p-1">
+                                    <div className="w-full h-1 bg-text-dim/10 rounded" />
+                                    <div className="w-11/12 h-1 bg-text-dim/10 rounded" />
+                                </div>
+                            </div>
+                            {/* Right Side: Evaluation Rubric details */}
+                            <div className={`flex-[0.9] rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-2/3 h-1.5 bg-text-main/20 rounded" />
+                                {/* Rubric stars */}
+                                <div className="flex gap-0.5">
+                                    {[1, 2, 3, 4, 5].map((s) => <div key={s} className="w-1.5 h-1.5 rounded-full bg-amber-400" />)}
+                                </div>
+                                {/* Audio comment block */}
+                                <div className="h-4 rounded bg-brand/10 border border-brand/20 flex items-center px-1 gap-1">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 animate-pulse" />
+                                    <div className="w-8 h-1 bg-brand/35 rounded" />
+                                </div>
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case '/arbitraje/proyecto':
+                return (
+                    <>
+                        {/* Project Arbitraje comparison layout */}
+                        <div className="flex-1 flex gap-1.5 min-h-0">
+                            {/* Left Evaluator 1 */}
+                            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-1/2 h-2 bg-text-main/25 rounded" />
+                                <div className="w-full h-1 bg-text-dim/10 rounded mt-1" />
+                                <div className="w-10 h-3 bg-success/15 border border-success/30 rounded flex items-center justify-center text-[5px] text-success font-semibold">9.0 Aprobado</div>
+                            </div>
+                            {/* Right Evaluator 2 */}
+                            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1 transition-all duration-300 ${highlightBottomClass}`}>
+                                <div className="w-1/2 h-2 bg-text-main/25 rounded" />
+                                <div className="w-full h-1 bg-text-dim/10 rounded mt-1" />
+                                <div className="w-10 h-3 bg-error/15 border border-error/30 rounded flex items-center justify-center text-[5px] text-error font-semibold">5.0 Rechazado</div>
+                            </div>
+                        </div>
+                        {/* Resolution committee action bottom */}
+                        <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                            <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                            <div className="w-1/5 h-5 bg-brand text-white rounded flex items-center justify-center text-[6px] font-semibold">Resolver</div>
+                        </div>
+                    </>
+                );
+
             default:
                 return (
                     <>
@@ -808,8 +1236,27 @@ const LayoutMockup: React.FC<LayoutMockupProps> = ({ highlight, stepTitle, pathn
     );
 };
 
+const normalizePathname = (path: string): string => {
+    const segments = path.split('/').filter(Boolean);
+
+    if (segments[0] === 'investigacion' && segments[1] === 'monitoreo' && segments.length > 2) {
+        return '/investigacion/monitoreo';
+    }
+    if (segments[0] === 'investigacion' && segments[1] === 'informes-avance' && segments.length > 2) {
+        return '/investigacion/informes-avance';
+    }
+    if (segments[0] === 'revisiones' && segments.length > 1) {
+        return '/revisiones/evaluacion';
+    }
+    if (segments[0] === 'arbitraje' && segments[1] === 'proyecto' && segments.length > 2) {
+        return '/arbitraje/proyecto';
+    }
+    return path;
+};
+
 export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname }) => {
-    const config = HELP_MAP[pathname] || DEFAULT_CONFIG;
+    const normalizedPathname = normalizePathname(pathname);
+    const config = HELP_MAP[normalizedPathname] || DEFAULT_CONFIG;
     const [currentStep, setCurrentStep] = useState(0);
     const [direction, setDirection] = useState<'next' | 'prev'>('next');
 
@@ -822,7 +1269,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
             setCurrentStep(0);
             setDirection('next');
         }
-    }, [pathname, isOpen]);
+    }, [normalizedPathname, isOpen]);
 
     if (!isOpen) return null;
 
@@ -995,7 +1442,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose, pathname 
                         <LayoutMockup 
                             highlight={getActiveHighlight()} 
                             stepTitle={getActiveStepLabel()}
-                            pathname={pathname}
+                            pathname={normalizedPathname}
                         />
                     </div>
                 </div>
