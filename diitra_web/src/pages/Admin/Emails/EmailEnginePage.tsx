@@ -1344,10 +1344,10 @@ const EmailEnginePage: React.FC = () => {
 
                                         {/* Campos editables con etiquetas en español */}
                                         {userFacingTokens.length > 0 && (
-                                            <div className="space-y-4 p-4 bg-[#fcf8f2] dark:bg-[#221c10] border border-[#f5a623]/30 rounded-xl">
+                                            <div className="space-y-4 p-4 bg-warning/5 border border-warning/20 rounded-xl">
                                                 <div className="flex items-center gap-2">
-                                                    <Layers size={14} className="text-[#f5a623]" />
-                                                    <h5 className="text-[10px] font-black text-[#b87200] dark:text-[#f5a623] uppercase tracking-widest">
+                                                    <Layers size={14} className="text-warning" />
+                                                    <h5 className="text-[10px] font-black text-warning uppercase tracking-widest">
                                                         Datos del mensaje ({userFacingTokens.length})
                                                     </h5>
                                                 </div>
@@ -1368,7 +1368,7 @@ const EmailEnginePage: React.FC = () => {
                                                                 </span>
                                                                 <input
                                                                     type="text"
-                                                                    className="input-vercel !py-1.5 text-xs bg-bg-deep border-border-thin focus:border-[#f5a623] font-sans"
+                                                                    className="input-vercel !py-1.5 text-xs bg-bg-deep border-border-thin focus:border-warning font-sans"
                                                                     value={tokenValues[tok] || ''}
                                                                     onChange={e => handleTokenValChange(tok, e.target.value)}
                                                                     placeholder={`Ingrese ${meta.label.toLowerCase()}`}
@@ -2001,7 +2001,7 @@ const EmailEnginePage: React.FC = () => {
             {isHistoryDrawerOpen && selectedHistoryLog && (
                 <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
+                        className="absolute inset-0 bg-black/70 cursor-pointer animate-fade-in"
                         onClick={() => setIsHistoryDrawerOpen(false)}
                     />
                     <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
