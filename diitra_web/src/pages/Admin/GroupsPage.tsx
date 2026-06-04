@@ -87,6 +87,13 @@ const formatCareerName = (name: string) => {
         .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase());
 };
 
+const formatNombre = (nombre: string | null | undefined) => {
+    if (!nombre) return '';
+    return nombre
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
 const GroupsPage = () => {
     const { user, isAdmin } = useAuth();
 
@@ -497,7 +504,7 @@ const GroupsPage = () => {
                                     >
                                         <td className="p-4">
                                             <div className="space-y-1">
-                                                <h4 className="text-sm font-black text-text-main tracking-tight uppercase group-hover:text-brand transition-colors">
+                                                <h4 className="text-sm font-semibold text-text-main tracking-tight group-hover:text-brand transition-colors">
                                                     {g.nombre}
                                                 </h4>
                                                 <div className="flex gap-2">
@@ -511,7 +518,7 @@ const GroupsPage = () => {
                                             </div>
                                         </td>
                                         <td className="p-4">
-                                            <p className="text-xs font-bold text-text-main uppercase">{g.nombre_coordinador || 'No asignado'}</p>
+                                            <p className="text-xs font-semibold text-text-main">{g.nombre_coordinador ? formatNombre(g.nombre_coordinador) : 'No asignado'}</p>
                                             {g.carrera_coordinador && (
                                                 <p className="text-[9px] text-text-dim uppercase font-semibold mt-0.5">{formatCareerName(g.carrera_coordinador)}</p>
                                             )}
@@ -599,7 +606,7 @@ const GroupsPage = () => {
                                     {isReviewRejecting ? <XCircle size={20} /> : <CheckCircle size={20} />}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
+                                    <h3 className="text-lg font-semibold text-text-main tracking-tight">
                                         Evaluar Propuesta de Grupo
                                     </h3>
                                     <p className="section-label text-text-dim">Revisión y Aprobación Normativa Institucional</p>
@@ -639,11 +646,11 @@ const GroupsPage = () => {
                         <div className="flex-1 overflow-y-auto p-6 space-y-6">
                             <div className="bg-bg-deep/30 border border-border-thin rounded-2xl p-4 space-y-2">
                                 <span className="text-[8px] font-black uppercase text-text-dim tracking-widest block">Propuesta Bajo Revisión</span>
-                                <h4 className="text-sm font-bold text-text-main uppercase">{reviewingGroup.nombre}</h4>
+                                <h4 className="text-sm font-semibold text-text-main">{reviewingGroup.nombre}</h4>
                                 <div className="flex gap-2 text-[9px] font-mono text-text-dim font-bold uppercase">
                                     <span>Siglas: {reviewingGroup.siglas || 'S/S'}</span>
                                     <span>|</span>
-                                    <span>Coordinador: {reviewingGroup.nombre_coordinador}</span>
+                                    <span>Coordinador: {formatNombre(reviewingGroup.nombre_coordinador)}</span>
                                 </div>
                             </div>
 
@@ -827,13 +834,13 @@ const GroupsPage = () => {
                                     {confirmDialog.type === 'success' && <CheckCircle size={18} />}
                                     {confirmDialog.type === 'info' && <Shield size={18} />}
                                 </div>
-                                <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                                <h3 className="text-sm font-semibold text-text-main tracking-tight">
                                     {confirmDialog.title}
                                 </h3>
                             </div>
                         </div>
                         <div className="modal-body py-6">
-                            <p className="text-xs text-text-dim leading-relaxed font-medium uppercase">
+                            <p className="text-xs text-text-dim leading-relaxed font-medium">
                                 {confirmDialog.message}
                             </p>
                         </div>

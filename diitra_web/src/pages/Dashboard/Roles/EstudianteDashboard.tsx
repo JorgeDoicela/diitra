@@ -6,7 +6,8 @@ import { useAuth } from '../../../api/AuthContext';
 
 export const EstudianteDashboard: React.FC = () => {
     const { user } = useAuth();
-    const firstName = user?.nombre_completo?.split(' ')[0] || 'Estudiante';
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Estudiante';
 
     return (
         <>

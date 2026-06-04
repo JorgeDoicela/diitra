@@ -51,6 +51,13 @@ const ESTADO_CONFIG: Record<string, { badge: string; dot: string }> = {
 const estadoConfig = (estado: string) =>
     ESTADO_CONFIG[estado] ?? { badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
 
+const formatNombre = (nombre: string | null | undefined) => {
+    if (!nombre) return '';
+    return nombre
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
 export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
     const { user, isAdmin, roles } = useAuth();
@@ -1015,7 +1022,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             >
                                                                 <div>
                                                                     <p className="font-semibold text-text-main text-xs flex items-center gap-2">
-                                                                        <span>{su.nombre}</span>
+                                                                        <span>{formatNombre(su.nombre)}</span>
                                                                         {su.tipo === 'profesor' && su.horas_disponibles !== undefined && (
                                                                             <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${
                                                                                 (su.horas_disponibles - (su.horas_asignadas || 0)) > 0 
@@ -1088,7 +1095,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             </div>
                                                             <div>
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="text-xs font-medium text-text-main">{member.nombre}</span>
+                                                                    <span className="text-xs font-medium text-text-main">{formatNombre(member.nombre)}</span>
                                                                     {isDirector && (
                                                                         <div className="flex items-center gap-1.5">
                                                                             <span className="badge-vercel badge-vercel-info text-[8px] font-semibold">
@@ -1233,7 +1240,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-[11px] font-semibold text-text-main">{member.nombre}</span>
+                                                                    <span className="text-[11px] font-semibold text-text-main">{formatNombre(member.nombre)}</span>
                                                                     <span className="text-[9px] text-text-dim font-mono ml-1.5">C.I. {member.cedula || 'N/A'}</span>
                                                                 </div>
                                                             </div>
@@ -1540,7 +1547,7 @@ export const ProjectWorkspace: React.FC = () => {
                         {transferDirector && (
                             <div className="mx-6 mt-4 badge-vercel badge-vercel-violet !rounded-md !p-3 !text-[11px] space-y-1">
                                 <span className="font-semibold block uppercase tracking-wider text-[10px]">Director a Relevar:</span>
-                                <p className="font-semibold text-text-main text-xs">{transferDirector.nombre}</p>
+                                <p className="font-semibold text-text-main text-xs">{formatNombre(transferDirector.nombre)}</p>
                                 <p className="text-text-dim font-mono text-[10px]">C.I. {transferDirector.cedula} | {transferDirector.rol}</p>
                             </div>
                         )}
@@ -1578,13 +1585,13 @@ export const ProjectWorkspace: React.FC = () => {
                                                         type="button"
                                                         onClick={() => {
                                                             setNewDirectorCedula(su.cedula);
-                                                            setTransferSearchQuery(su.nombre);
+                                                            setTransferSearchQuery(formatNombre(su.nombre));
                                                             setShowTransferSearchResults(false);
                                                         }}
                                                         className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
                                                     >
                                                         <div>
-                                                            <p className="font-semibold text-text-main">{su.nombre}</p>
+                                                            <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
                                                             <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
                                                         </div>
                                                         <span className={`badge-vercel text-[8px] font-semibold ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>

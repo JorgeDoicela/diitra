@@ -29,7 +29,8 @@ interface DashboardStats {
 export const DocenteDashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const firstName = user?.nombre_completo?.split(' ')[0] || 'Investigador';
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Investigador';
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
 
