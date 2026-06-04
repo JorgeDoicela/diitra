@@ -134,8 +134,8 @@ const Sidebar = ({
         // Grupo 1: Principal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
-        { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], indent: true, group: 1 },
-        { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], indent: true, group: 1 },
+        { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], group: 1 },
+        { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
 
         // Grupo 2: Procesos y Analíticas
         { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 2 },
@@ -233,21 +233,23 @@ const Sidebar = ({
             const isMenuOpen = isAnalyticsOpen;
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            setIsAnalyticsOpen(!isAnalyticsOpen);
-                            if (!location.pathname.startsWith('/analiticas')) {
-                                navigate('/analiticas');
-                            }
-                        }}
-                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group border-0 w-full text-left ${
+                    <div
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${
                             isActive
                                 ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                                 : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                         }`}
                     >
-                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setIsAnalyticsOpen(true);
+                                if (!location.pathname.startsWith('/analiticas')) {
+                                    navigate('/analiticas');
+                                }
+                            }}
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                        >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
                                 isActive
                                     ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
@@ -260,13 +262,23 @@ const Sidebar = ({
                             }`}>
                                 {item.name}
                             </span>
-                        </div>
-                        <ChevronRightIcon className={`shrink-0 ml-1.5 transition-all duration-200 ${
-                            isMenuOpen ? 'rotate-90' : ''
-                        } ${
-                            isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                        }`} />
-                    </button>
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsAnalyticsOpen(!isAnalyticsOpen);
+                            }}
+                            className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
+                            title={isMenuOpen ? "Colapsar" : "Expandir"}
+                        >
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${
+                                isMenuOpen ? 'rotate-90' : ''
+                            } ${
+                                isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                            }`} />
+                        </button>
+                    </div>
                     
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
@@ -320,21 +332,23 @@ const Sidebar = ({
             const isMenuOpen = isUsersOpen;
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            setIsUsersOpen(!isUsersOpen);
-                            if (!location.pathname.startsWith('/usuarios')) {
-                                navigate('/usuarios');
-                            }
-                        }}
-                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group border-0 w-full text-left ${
+                    <div
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${
                             isActive
                                 ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                                 : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                         }`}
                     >
-                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setIsUsersOpen(true);
+                                if (!location.pathname.startsWith('/usuarios')) {
+                                    navigate('/usuarios');
+                                }
+                            }}
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                        >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
                                 isActive
                                     ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
@@ -347,13 +361,23 @@ const Sidebar = ({
                             }`}>
                                 {item.name}
                             </span>
-                        </div>
-                        <ChevronRightIcon className={`shrink-0 ml-1.5 transition-all duration-200 ${
-                            isMenuOpen ? 'rotate-90' : ''
-                        } ${
-                            isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                        }`} />
-                    </button>
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsUsersOpen(!isUsersOpen);
+                            }}
+                            className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
+                            title={isMenuOpen ? "Colapsar" : "Expandir"}
+                        >
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${
+                                isMenuOpen ? 'rotate-90' : ''
+                            } ${
+                                isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                            }`} />
+                        </button>
+                    </div>
                     
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
@@ -407,21 +431,23 @@ const Sidebar = ({
             const isMenuOpen = isConfigOpen;
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
-                    <button
-                        onClick={(e) => {
-                            e.preventDefault();
-                            setIsConfigOpen(!isConfigOpen);
-                            if (!location.pathname.startsWith('/configuracion')) {
-                                navigate('/configuracion');
-                            }
-                        }}
-                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group border-0 w-full text-left ${
+                    <div
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${
                             isActive
                                 ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                                 : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
                         }`}
                     >
-                        <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                setIsConfigOpen(true);
+                                if (!location.pathname.startsWith('/configuracion')) {
+                                    navigate('/configuracion');
+                                }
+                            }}
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                        >
                             <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
                                 isActive
                                     ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
@@ -434,13 +460,23 @@ const Sidebar = ({
                             }`}>
                                 {item.name}
                             </span>
-                        </div>
-                        <ChevronRightIcon className={`shrink-0 ml-1.5 transition-all duration-200 ${
-                            isMenuOpen ? 'rotate-90' : ''
-                        } ${
-                            isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                        }`} />
-                    </button>
+                        </button>
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsConfigOpen(!isConfigOpen);
+                            }}
+                            className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
+                            title={isMenuOpen ? "Colapsar" : "Expandir"}
+                        >
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${
+                                isMenuOpen ? 'rotate-90' : ''
+                            } ${
+                                isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                            }`} />
+                        </button>
+                    </div>
                     
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
