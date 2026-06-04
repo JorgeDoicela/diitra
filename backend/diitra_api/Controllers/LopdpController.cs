@@ -219,7 +219,7 @@ public class LopdpController : ControllerBase
         await System.IO.File.WriteAllBytesAsync(filePath, certificateBytes);
 
         // 3. Cifrar la contraseña
-        var encryptionKey = configuration["JWTSettings:Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+        var encryptionKey = configuration["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
         var encryptedPassword = diitra_infrastructure.Security.CryptoHelper.Encrypt(password, encryptionKey);
 
         // 4. Guardar en base de datos

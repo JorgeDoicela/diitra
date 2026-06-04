@@ -185,7 +185,7 @@ namespace diitra_api.Controllers
                         {
                             certificateBytes = await System.IO.File.ReadAllBytesAsync(userMeta.RutaFirmaP12);
                             var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-                            var encryptionKey = config["JWTSettings:Secret"] ?? "ISTPET_Sistemas_Seguridad_ClaveCompartidaSecretSymmetricKey2026!";
+                            var encryptionKey = config["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
                             finalPassword = diitra_infrastructure.Security.CryptoHelper.Decrypt(userMeta.P12PasswordEncrypted!, encryptionKey);
                         }
                         catch (Exception ex)

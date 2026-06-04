@@ -18,6 +18,7 @@ SET SQL_SAFE_UPDATES = 0;
 
 DROP TABLE IF EXISTS
     -- Grupo K (Seguridad y Notificaciones)
+    inv_backup_logs,
     inv_lopdp_consentimientos,
     inv_lopdp_derechos_arco,
     inv_lopdp_auditoria_datos,
@@ -992,6 +993,21 @@ CREATE TABLE inv_lopdp_auditoria_datos (
     FOREIGN KEY (idUsuarioAfectado) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Registro inalterable de acceso a datos sensibles (Auditoría CACES)';
 
+CREATE TABLE inv_backup_logs (
+    idBackup            INT           AUTO_INCREMENT PRIMARY KEY,
+    uuid                VARCHAR(36)   NOT NULL UNIQUE,
+    fechaBackup         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    tipo                ENUM('Completo', 'BaseDatos', 'Archivos') NOT NULL,
+    destino             VARCHAR(255)  NOT NULL COMMENT 'Ej: Local, Google Drive, AWS S3, OneDrive',
+    nombreArchivo       VARCHAR(255)  NOT NULL COMMENT 'Nombre del archivo zip/sql de respaldo',
+    tamanioBytes        BIGINT        NOT NULL,
+    estado              ENUM('Exitoso', 'Fallido', 'En_Proceso') DEFAULT 'En_Proceso',
+    hashVerificacion    VARCHAR(64)   NULL COMMENT 'Hash SHA-256 para validación de integridad',
+    errorMensaje        TEXT          NULL,
+    ejecutadoPor        INT(11)       NULL COMMENT 'Usuario que inició el respaldo (NULL para automático/cron)',
+    FOREIGN KEY (ejecutadoPor) REFERENCES usuarios(idUsuario) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SEGURIDAD] Registro y trazabilidad de copias de seguridad (LOPDP Art. 47 & EGSI)';
+
 DELIMITER $$
 CREATE TRIGGER trg_usermeta_uuid
 BEFORE INSERT ON inv_usuarios_metadata FOR EACH ROW
@@ -1003,6 +1019,8 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 CREATE TRIGGER trg_lopdp_arco_uuid BEFORE INSERT ON inv_lopdp_derechos_arco FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_lopdp_auditoria_uuid BEFORE INSERT ON inv_lopdp_auditoria_datos FOR EACH ROW
+BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
+CREATE TRIGGER trg_backup_logs_uuid BEFORE INSERT ON inv_backup_logs FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 DELIMITER ;
 
@@ -1109,7 +1127,11 @@ INSERT INTO inv_cat_tipo_evidencia (uuid, nombre, descripcion) VALUES
 -- Configuración General Semilla
 INSERT INTO inv_config_general (Clave, Valor, Descripcion) VALUES
 ('PeerReview.AutoExtendDeadlines', 'false', 'Indica si se deben extender los plazos de manera automática'),
-('PeerReview.AutoExtendDays', '7', 'Días de prórroga automática al expirar plazo');
+('PeerReview.AutoExtendDays', '7', 'Días de prórroga automática al expirar plazo'),
+('Backup.AutoSchedule', '0 2 * * *', 'Frecuencia en formato CRON para el respaldo automático (Ej: todos los días a las 2:00 AM)'),
+('Backup.RetentionDays', '30', 'Cantidad de días que se conservarán las copias de seguridad locales'),
+('Backup.CloudBackupEnabled', 'false', 'Indica si se deben subir los respaldos a la nube configurada'),
+('Backup.DestinationPath', 'C:\\diitra_backups\\', 'Ruta local donde se almacenarán temporal o permanentemente los respaldos');
 
 -- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
 INSERT INTO inv_config_indicadores (codigoIndicador, nombreIndicador, tipoDato, añoNormativa) VALUES

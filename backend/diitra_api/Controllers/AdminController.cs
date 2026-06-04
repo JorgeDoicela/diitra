@@ -3,6 +3,7 @@ using diitra_application.Security;
 using diitra_application.Security.DTOs;
 using diitra_domain.Identity.Enums;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Controllers;
 
@@ -12,10 +13,17 @@ namespace diitra_api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
+    private readonly diitra_api.Services.BackupBackgroundService _backupService;
+    private readonly diitra_infrastructure.data.models.DiitraContext _context;
 
-    public AdminController(IAdminService adminService)
+    public AdminController(
+        IAdminService adminService,
+        diitra_api.Services.BackupBackgroundService backupService,
+        diitra_infrastructure.data.models.DiitraContext context)
     {
         _adminService = adminService;
+        _backupService = backupService;
+        _context = context;
     }
 
     [HttpGet("users")]
@@ -118,5 +126,52 @@ public class AdminController : ControllerBase
     {
         var logs = await _adminService.GetAuditLogsPagedAsync(from, to, action, modulo, search, page, pageSize);
         return Ok(logs);
+    }
+
+    /// <summary>
+    /// Lista el historial de copias de seguridad del sistema (Solo administradores).
+    /// </summary>
+    [HttpGet("backups")]
+    public async Task<IActionResult> GetBackupLogs()
+    {
+        var logs = await _context.InvBackupLogs
+            .OrderByDescending(l => l.FechaBackup)
+            .Select(l => new 
+            {
+                l.IdBackup,
+                l.Uuid,
+                l.FechaBackup,
+                l.Tipo,
+                l.Destino,
+                l.NombreArchivo,
+                l.TamanioBytes,
+                l.Estado,
+                l.HashVerificacion,
+                l.ErrorMensaje
+            })
+            .ToListAsync();
+        return Ok(logs);
+    }
+
+    /// <summary>
+    /// Desencadena manualmente una copia de seguridad local (Base de datos + Archivos).
+    /// </summary>
+    [HttpPost("backups/trigger")]
+    public async Task<IActionResult> TriggerBackup()
+    {
+        try
+        {
+            // Ejecutar el respaldo de forma asíncrona en segundo plano para no bloquear la respuesta HTTP
+            _ = Task.Run(async () => 
+            {
+                await _backupService.RunBackupAndRetentionAsync(CancellationToken.None);
+            });
+
+            return Ok(new { message = "Proceso de copia de seguridad iniciado en segundo plano." });
+        }
+        catch (System.Exception ex)
+        {
+            return StatusCode(500, new { error = "No se pudo iniciar el respaldo.", detalles = ex.Message });
+        }
     }
 }
