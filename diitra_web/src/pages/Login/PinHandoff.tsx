@@ -192,10 +192,10 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
                     <div className="flex flex-col gap-3 text-center pt-2">
                         <Link
                             to="/auth/magic-resend"
-                            className="border border-border-thin rounded-lg py-2.5 text-[9px] font-bold text-text-dim hover:text-text-main hover:border-border-hover transition-all flex items-center justify-center gap-1.5 no-underline"
+                            className="w-full h-11 flex items-center justify-center gap-1.5 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
                             title="Solicitar reenvío de enlace de acceso"
                         >
-                            <span className="uppercase tracking-widest">Perdí mi Enlace</span>
+                            <span>Perdí mi Enlace</span>
                         </Link>
                         <div className="w-full border-t border-border-thin my-1"></div>
                         <Link to="/login" className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium no-underline">
