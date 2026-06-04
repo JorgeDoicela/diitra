@@ -485,6 +485,12 @@ namespace diitra_infrastructure.Research
                 .FirstOrDefaultAsync();
             var periodId = currentPeriod?.IdPeriodo;
 
+            var researchSubcatId = await _context.SubcategoriasActividades
+                .Where(s => s.Subcategoria == "INVESTIGACION")
+                .Select(s => s.IdSubcategoria)
+                .FirstOrDefaultAsync();
+            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
             var profCedulas = p.InvProyectosProfesores
                 .Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim())
                 .Where(c => !string.IsNullOrEmpty(c))
@@ -520,7 +526,7 @@ namespace diitra_infrastructure.Research
             if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
             {
                 researchHours = await _context.ProfesoresActividades
-                    .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                    .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == periodId)
                     .ToListAsync();
 
                 var profUserIds = p.InvProyectosProfesores.Select(pp => pp.IdUsuario).Distinct().ToList();
@@ -697,11 +703,11 @@ namespace diitra_infrastructure.Research
 
             stats.TotalProductosPeriodo = await _context.InvProductos.CountAsync();
             stats.ArticulosIndexados = await _context.InvProductos
-                .CountAsync(p => p.IdTipoProducto == 1); // 1 = Artículo indexado
+                .CountAsync(p => p.IdTipoProductoNavigation.Nombre.Contains("Artículo"));
             stats.Prototipos = await _context.InvProductos
-                .CountAsync(p => p.IdTipoProducto == 3); // 3 = Prototipo
+                .CountAsync(p => p.IdTipoProductoNavigation.Nombre.Contains("Prototipo"));
             stats.Ponencias = await _context.InvProductos
-                .CountAsync(p => p.IdTipoProducto == 5); // 5 = Ponencia
+                .CountAsync(p => p.IdTipoProductoNavigation.Nombre.Contains("Libro") || p.IdTipoProductoNavigation.Nombre.Contains("Ponencia"));
 
             stats.PresupuestoTotalAsignado = await _context.InvPresupuestoItems
                 .SumAsync(i => (decimal?)(i.ValorUnitario * i.Cantidad)) ?? 0;
@@ -786,8 +792,14 @@ namespace diitra_infrastructure.Research
 
                 if (currentPeriod != null)
                 {
+                    var researchSubcatId = await _context.SubcategoriasActividades
+                        .Where(s => s.Subcategoria == "INVESTIGACION")
+                        .Select(s => s.IdSubcategoria)
+                        .FirstOrDefaultAsync();
+                    if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
                     stats.HorasDisponiblesDistributivo = await _context.ProfesoresActividades
-                        .Where(pa => pa.IdProfesor == userIdReferencia && pa.IdSubcategoria == 7 && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .Where(pa => pa.IdProfesor == userIdReferencia && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                         .SumAsync(pa => (decimal?)pa.HorasSemana ?? 0);
                 }
                 else
@@ -1365,6 +1377,12 @@ namespace diitra_infrastructure.Research
                 return new SyncResult { Success = false, Message = "No se ha configurado un período académico activo en el sistema." };
             }
 
+            var researchSubcatId = await _context.SubcategoriasActividades
+                .Where(s => s.Subcategoria == "INVESTIGACION")
+                .Select(s => s.IdSubcategoria)
+                .FirstOrDefaultAsync();
+            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
             foreach (var inv in investigadores)
             {
                 if (string.IsNullOrEmpty(inv.Cedula)) continue;
@@ -1377,7 +1395,7 @@ namespace diitra_infrastructure.Research
                 decimal proposedHours = inv.HorasSemanales ?? 0;
 
                 var availableHours = await _context.ProfesoresActividades
-                    .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == 7 && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                    .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                     .Select(pa => pa.HorasSemana)
                     .FirstOrDefaultAsync() ?? 0;
 
@@ -1643,12 +1661,18 @@ namespace diitra_infrastructure.Research
                     .FirstOrDefaultAsync();
                 var periodId = currentPeriod?.IdPeriodo;
 
+                var researchSubcatId = await _context.SubcategoriasActividades
+                     .Where(s => s.Subcategoria == "INVESTIGACION")
+                     .Select(s => s.IdSubcategoria)
+                     .FirstOrDefaultAsync();
+                if (researchSubcatId == 0) researchSubcatId = 7;
+
                 var researchHours = new List<ProfesoresActividade>();
                 var otherAssignedHours = new List<InvProyectoProfesor>();
                 if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
                 {
                     researchHours = await _context.ProfesoresActividades
-                        .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                        .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == periodId)
                         .ToListAsync();
 
                     var profUserIds = updatedProfs.Select(pp => pp.IdUsuario).Distinct().ToList();

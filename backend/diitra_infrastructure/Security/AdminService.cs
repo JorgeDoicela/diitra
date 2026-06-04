@@ -36,6 +36,12 @@ public class AdminService : IAdminService
 
         var periodId = currentPeriod?.IdPeriodo;
 
+        var researchSubcatId = await _context.SubcategoriasActividades
+            .Where(s => s.Subcategoria == "INVESTIGACION")
+            .Select(s => s.IdSubcategoria)
+            .FirstOrDefaultAsync();
+        if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+
         var result = new PagedResult<UserManagementDto>
         {
             PageNumber = page,
@@ -211,12 +217,12 @@ public class AdminService : IAdminService
         {
             var query = _context.Profesores.Where(p => p.Activo == 1);
 
-            // Solo docentes que tengan actividades de investigación (idSubcategoria = 7) en el periodo actual
+            // Solo docentes que tengan actividades de investigación (idSubcategoria = researchSubcatId) en el periodo actual
             if (!string.IsNullOrEmpty(periodId))
             {
                 query = query.Where(p => _context.ProfesoresActividades.Any(pa =>
                     pa.IdProfesor == p.IdProfesor &&
-                    pa.IdSubcategoria == 7 &&
+                    pa.IdSubcategoria == researchSubcatId &&
                     pa.IdPeriodo == periodId));
             }
 
@@ -243,9 +249,9 @@ public class AdminService : IAdminService
                 .Where(u => ids.Contains(u.IdSigafi.Trim()))
                 .ToListAsync();
 
-            // Obtener horas de investigación (idSubcategoria = 7)
+            // Obtener horas de investigación (idSubcategoria = researchSubcatId)
             var researchHours = await _context.ProfesoresActividades
-                .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == periodId)
                 .ToListAsync();
 
             // Obtener horas comprometidas en proyectos activos/enviados
