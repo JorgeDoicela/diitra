@@ -96,7 +96,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                 {/* Section: Modulos Bento Grid */}
                 <section className="space-y-12">
                     <div className="space-y-4">
-                        <h2 className="text-3xl font-semibold tracking-tighter uppercase">Módulos Esenciales</h2>
+                        <h2 className="text-3xl font-semibold tracking-tight">Módulos Esenciales</h2>
                         <div className="h-[1px] w-20 bg-text-main" />
                     </div>
 

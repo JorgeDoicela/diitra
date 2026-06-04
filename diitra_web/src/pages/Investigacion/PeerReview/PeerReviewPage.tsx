@@ -68,7 +68,7 @@ const PeerReviewPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h2 className="text-4xl font-bold text-text-main tracking-tighter uppercase leading-none mb-3">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none mb-3">
                             Mis Revisiones
                         </h2>
                         <p className="text-sm text-text-dim max-w-2xl font-medium leading-relaxed">

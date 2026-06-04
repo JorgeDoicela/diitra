@@ -391,7 +391,7 @@ const GroupsPage = () => {
                         <Users size={10} strokeWidth={2} />
                         <span>Investigación y Desarrollo</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Grupos de Investigación</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Grupos de Investigación</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Administración centralizada de grupos institucionales, semilleros y líneas de vinculación tecnológica.
                     </p>

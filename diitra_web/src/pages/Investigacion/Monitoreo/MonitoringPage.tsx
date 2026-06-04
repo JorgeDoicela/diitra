@@ -160,7 +160,7 @@ export const MonitoringPage: React.FC = () => {
                             <Activity size={10} className="text-brand animate-pulse" />
                             <span>Módulo de Monitoreo & Ejecución · IST Traversari</span>
                         </div>
-                        <h1 className="text-2xl font-bold tracking-tight mt-0.5">{projectDetail.titulo}</h1>
+                        <h1 className="text-2xl font-semibold tracking-tight mt-0.5">{projectDetail.titulo}</h1>
                     </div>
                 </div>
                 
@@ -394,7 +394,7 @@ export const MonitoringPage: React.FC = () => {
                     <div className="modal-card modal-card--sm animate-fade-up max-h-[85vh] overflow-y-auto">
                         <div className="modal-header border-b border-border-thin pb-4">
                             <div>
-                                <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
+                                <h3 className="text-xl font-semibold tracking-tight text-text-main">
                                     Registrar Egreso
                                 </h3>
                                 <p className="text-[9px] text-text-dim font-mono uppercase tracking-widest mt-0.5">Control Financiero - Fase C</p>

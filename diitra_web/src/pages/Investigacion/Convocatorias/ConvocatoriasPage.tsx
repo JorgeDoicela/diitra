@@ -611,7 +611,7 @@ const ConvocatoriasPage = () => {
                         <Activity size={10} strokeWidth={2} />
                         <span>Gestión de Investigación - Convocatorias</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-bold text-text-main tracking-tighter uppercase leading-none">Ciclos de Investigación</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Ciclos de Investigación</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Administración de convocatorias anuales para proyectos de I+D+i. 
                         Alineado con estándares CACES y SENESCYT.

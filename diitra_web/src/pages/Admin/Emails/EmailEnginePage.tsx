@@ -1114,7 +1114,7 @@ const EmailEnginePage: React.FC = () => {
                             <Mail size={10} strokeWidth={2} />
                             <span>Comunicaciones de Investigación</span>
                         </div>
-                        <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                             Correos DIITRA
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">

@@ -37,7 +37,7 @@ const VerifyDocument = () => {
                         <ShieldCheck size={10} />
                         <span>Verificador Documental</span>
                     </div>
-                    <h2 className="text-2xl md:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">Verificación Forense</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Verificación Forense</h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Ingrese el código de trazabilidad impreso en el documento o escaneado vía QR para validar su autenticidad y estado legal ante el CACES.
                     </p>

@@ -258,7 +258,7 @@ const InformesAvancePage: React.FC = () => {
                 </div>
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <h2 className="text-3xl font-bold text-text-main tracking-tighter uppercase leading-none mb-2">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none mb-2">
                             Informes de Avance
                         </h2>
                         {projectTitle && (

@@ -349,14 +349,14 @@ const KPICard: React.FC<KPICardProps> = ({
     return (
         <div className="bento-card static p-5 space-y-4 relative overflow-hidden group select-none hover:-translate-y-1 hover:shadow-md hover:shadow-brand/5 hover:border-brand/35 transition-all duration-300">
             <div className="flex items-center justify-between">
-                <span className="text-[9px] font-black uppercase tracking-widest text-text-dim font-mono">{title}</span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-text-dim font-mono">{title}</span>
                 <span className={`p-2 rounded-lg transition-all duration-300 group-hover:scale-105 ${iconBgClass}`}>
                     {icon}
                 </span>
             </div>
             
             <div className="space-y-1">
-                <h3 className="text-3xl font-black tracking-tight text-text-main font-sans">{value}</h3>
+                <h3 className="text-3xl font-semibold tracking-tight text-text-main font-sans">{value}</h3>
                 {subText && (
                     <div className="flex items-center gap-1.5 mt-1 text-[10px] font-bold text-text-dim uppercase">
                         {badgeText && (
@@ -622,9 +622,9 @@ const AnalyticsPage = () => {
                             <span className="dot dot-info dot-pulse" />
                             CACES Acreditación
                         </span>
-                        <span className="text-[9px] font-black uppercase tracking-widest text-brand font-mono">Quito, Ecuador</span>
+                        <span className="text-[9px] font-semibold uppercase tracking-widest text-brand font-mono">Quito, Ecuador</span>
                     </div>
-                    <h1 id="analytics-main-title" className="text-2xl font-black tracking-tight text-text-main font-sans">
+                    <h1 id="analytics-main-title" className="text-2xl font-semibold tracking-tight text-text-main font-sans">
                         Analíticas de Investigación e Innovación
                     </h1>
                     <p className="text-xs text-text-dim max-w-2xl leading-relaxed font-medium">
@@ -747,7 +747,7 @@ const AnalyticsPage = () => {
                         <FolderOpen size={32} className="text-text-dim/60" />
                     </div>
                     <div className="space-y-1">
-                        <h3 className="text-sm font-black text-text-main uppercase tracking-wider">Sin registros en el corte</h3>
+                        <h3 className="text-sm font-semibold text-text-main tracking-tight">Sin registros en el corte</h3>
                         <p className="text-xs text-text-dim max-w-sm leading-relaxed">
                             No se encontraron proyectos de investigación registrados en el sistema para el periodo o carrera seleccionada.
                         </p>
@@ -976,9 +976,9 @@ const AnalyticsPage = () => {
                                     <div className="space-y-2">
                                         <div className="flex items-center gap-1.5 text-brand">
                                             <Globe size={14} className="animate-pulse" />
-                                            <h4 className="text-[9px] font-black uppercase tracking-widest font-mono">Servicios Conectados</h4>
+                                            <h4 className="text-[9px] font-semibold uppercase tracking-widest font-mono">Servicios Conectados</h4>
                                         </div>
-                                        <h3 className="text-sm font-black text-text-main font-sans tracking-tight">Preservación Digital DSpace</h3>
+                                        <h3 className="text-sm font-semibold text-text-main font-sans tracking-tight">Preservación Digital DSpace</h3>
                                         <p className="text-xs text-text-dim leading-relaxed font-medium">
                                             Sincronización automatizada de metadatos firmados con el repositorio abierto del instituto. Se garantiza el resguardo digital permanente bajo las directrices del CACES.
                                         </p>
@@ -1026,7 +1026,7 @@ const AnalyticsPage = () => {
                             <div className="p-4 bg-brand/5 border border-brand/20 rounded-2xl flex items-start gap-3">
                                 <AlertCircle size={16} className="text-brand mt-0.5 shrink-0" />
                                 <div className="space-y-1">
-                                    <h4 className="text-xs font-black uppercase text-brand tracking-widest">Modelos de Evaluación del CACES</h4>
+                                    <h4 className="text-xs font-semibold uppercase text-brand tracking-widest">Modelos de Evaluación del CACES</h4>
                                     <p className="text-xs text-text-dim leading-relaxed font-medium">
                                         Análisis dinámico de cumplimiento de estándares del Consejo de Aseguramiento de la Calidad de la Educación Superior (CACES) calculados a partir de los datos en tiempo real del sistema.
                                     </p>

@@ -533,7 +533,7 @@ const ConfiguracionPage = () => {
                         <Settings2 size={10} className="text-text-main animate-spin-slow" />
                         <span>Configuración del Sistema</span>
                     </div>
-                    <h2 className="text-3xl lg:text-4xl font-semibold text-text-main tracking-tighter uppercase leading-none">
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                         Parámetros Normativos
                     </h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">

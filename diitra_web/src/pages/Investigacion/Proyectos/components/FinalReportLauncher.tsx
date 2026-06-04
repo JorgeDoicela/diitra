@@ -105,7 +105,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                             <Activity size={12} className="animate-pulse" />
                             <span>DIITRA Launcher</span>
                         </div>
-                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tighter uppercase leading-tight">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-tight">
                             Informe Final
                         </h2>
                         <p className="text-text-dim text-[11px] md:text-sm font-medium">
