@@ -804,7 +804,8 @@ namespace diitra_infrastructure.Common.Notifications
                                 Activo = pp.Activo ?? true,
                                 FechaInicio = pp.FechaInicio,
                                 FechaFin = pp.FechaFin,
-                                MotivoCambio = pp.MotivoCambio
+                                MotivoCambio = pp.MotivoCambio,
+                                HorasSemanales = pp.HorasSemanales
                             }).ToList();
 
                             project.MetadataCacesJson = JsonSerializer.Serialize(dto);

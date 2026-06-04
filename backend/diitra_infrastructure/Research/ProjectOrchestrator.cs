@@ -515,6 +515,27 @@ namespace diitra_infrastructure.Research
             }
             var allCarrerasList = await _context.Carreras.ToListAsync();
 
+            var researchHours = new List<ProfesoresActividade>();
+            var otherAssignedHours = new List<InvProyectoProfesor>();
+            if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
+            {
+                researchHours = await _context.ProfesoresActividades
+                    .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                    .ToListAsync();
+
+                var profUserIds = p.InvProyectosProfesores.Select(pp => pp.IdUsuario).Distinct().ToList();
+                otherAssignedHours = await _context.InvProyectosProfesores
+                    .Include(pp => pp.IdProyectoNavigation)
+                    .Where(pp => profUserIds.Contains(pp.IdUsuario) &&
+                                 pp.IdProyecto != p.IdProyecto &&
+                                 pp.Activo != false &&
+                                 (pp.IdProyectoNavigation.Estado == "Enviado" ||
+                                  pp.IdProyectoNavigation.Estado == "En Revisión" ||
+                                  pp.IdProyectoNavigation.Estado == "Aprobado" ||
+                                  pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                    .ToListAsync();
+            }
+
             var investigadoresList = new List<InvestigadorDto>();
 
             foreach (var pp in p.InvProyectosProfesores)
@@ -525,6 +546,9 @@ namespace diitra_infrastructure.Research
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
                     .ToList();
                 var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+
+                var availableHours = researchHours.Where(pa => pa.IdProfesor == cedula).Sum(pa => pa.HorasSemana ?? 0);
+                var assignedHours = otherAssignedHours.Where(o => o.IdUsuario == pp.IdUsuario).Sum(o => o.HorasSemanales ?? 0);
 
                 investigadoresList.Add(new InvestigadorDto
                 {
@@ -538,7 +562,10 @@ namespace diitra_infrastructure.Research
                     FechaInicio = pp.FechaInicio,
                     FechaFin = pp.FechaFin,
                     MotivoCambio = pp.MotivoCambio,
-                    Carrera = carreraNom
+                    Carrera = carreraNom,
+                    HorasSemanales = pp.HorasSemanales,
+                    HorasDisponibles = availableHours,
+                    HorasAsignadas = assignedHours
                 });
             }
 
@@ -741,13 +768,32 @@ namespace diitra_infrastructure.Research
                     .Where(p => misIds.Contains(p.IdProyecto))
                     .CountAsync();
 
-                stats.MisInformesPendientes = await _context.InvInformesAvance
+                 stats.MisInformesPendientes = await _context.InvInformesAvance
                     .Where(i => misIds.Contains(i.IdProyecto) && i.Estado == "Pendiente")
                     .CountAsync();
 
                 stats.MisHorasInvestigacion = await _context.InvProyectosProfesores
                     .Where(pp => pp.IdUsuario == userId.Value && pp.Activo != false && (pp.IdProyectoNavigation.Estado == "En Ejecución" || pp.IdProyectoNavigation.Estado == "Aprobado"))
                     .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
+
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var currentPeriod = await _context.Periodos
+                    .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                    .ThenByDescending(p => p.Activo == true)
+                    .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                    .ThenByDescending(p => p.FechaInicial)
+                    .FirstOrDefaultAsync();
+
+                if (currentPeriod != null)
+                {
+                    stats.HorasDisponiblesDistributivo = await _context.ProfesoresActividades
+                        .Where(pa => pa.IdProfesor == userIdReferencia && pa.IdSubcategoria == 7 && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .SumAsync(pa => (decimal?)pa.HorasSemana ?? 0);
+                }
+                else
+                {
+                    stats.HorasDisponiblesDistributivo = 0;
+                }
             }
 
             // ── Actividad Reciente (últimos 10 eventos) ──
@@ -897,6 +943,7 @@ namespace diitra_infrastructure.Research
                         existingProf.NivelAcademico = inv.NivelAcademico;
                         existingProf.Telefono = inv.Telefono;
                         existingProf.EsDirector = esDirector;
+                        existingProf.HorasSemanales = inv.HorasSemanales;
                         if (existingProf.Activo == false)
                         {
                             existingProf.Activo = true;
@@ -916,6 +963,7 @@ namespace diitra_infrastructure.Research
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = inv.Telefono,
                             EsDirector = esDirector,
+                            HorasSemanales = inv.HorasSemanales,
                             Activo = true,
                             FechaInicio = DateTime.Now
                         });
@@ -1278,6 +1326,53 @@ namespace diitra_infrastructure.Research
 
             string beforeJson = project.MetadataCacesJson ?? "{}";
 
+            // Validación de Carga Horaria para Docentes (CACES Compliance)
+            var currentPeriod = await _context.Periodos
+                .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                .FirstOrDefaultAsync();
+
+            if (currentPeriod == null)
+            {
+                return new SyncResult { Success = false, Message = "No se ha configurado un período académico activo en el sistema." };
+            }
+
+            foreach (var inv in investigadores)
+            {
+                if (string.IsNullOrEmpty(inv.Cedula)) continue;
+                
+                var cedulaTrim = inv.Cedula.Trim();
+                var persona = await _authService.GetOrProvisionUserByCedulaAsync(cedulaTrim);
+                if (persona == null || persona.TablaSigafi == "alumno") continue;
+
+                decimal proposedHours = inv.HorasSemanales ?? 0;
+
+                var availableHours = await _context.ProfesoresActividades
+                    .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == 7 && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                    .Select(pa => pa.HorasSemana)
+                    .FirstOrDefaultAsync() ?? 0;
+
+                var otherProjectsHours = await _context.InvProyectosProfesores
+                    .Where(pp => pp.IdUsuario == persona.IdUsuario && 
+                                 pp.IdProyecto != project.IdProyecto && 
+                                 pp.Activo != false && 
+                                 pp.IdProyectoNavigation.Activo != false &&
+                                 (pp.IdProyectoNavigation.Estado == "Enviado" || 
+                                  pp.IdProyectoNavigation.Estado == "En Revisión" || 
+                                  pp.IdProyectoNavigation.Estado == "Aprobado" || 
+                                  pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                    .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
+
+                var totalProposedHours = otherProjectsHours + proposedHours;
+                if (totalProposedHours > availableHours)
+                {
+                    return new SyncResult 
+                    { 
+                        Success = false, 
+                        Message = $"El docente {persona.Nombre} (C.I. {persona.IdSigafi}) excede el límite de carga horaria de investigación para el período académico activo. Horas disponibles en distributivo: {availableHours}h. Horas asignadas en otros proyectos: {otherProjectsHours}h. Horas propuestas en este proyecto: {proposedHours}h. Total: {totalProposedHours}h." 
+                    };
+                }
+            }
+
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -1508,17 +1603,56 @@ namespace diitra_infrastructure.Research
                     .Where(pa => pa.IdProyecto == project.IdProyecto)
                     .ToListAsync();
 
-                dto.Investigadores = updatedProfs.Select(pp => new InvestigadorDto
+                var profCedulas = updatedProfs.Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "").Where(c => !string.IsNullOrEmpty(c)).ToList();
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
+                var currentPeriod = await _context.Periodos
+                    .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                    .ThenByDescending(p => p.Activo == true)
+                    .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                    .ThenByDescending(p => p.FechaInicial)
+                    .FirstOrDefaultAsync();
+                var periodId = currentPeriod?.IdPeriodo;
+
+                var researchHours = new List<ProfesoresActividade>();
+                var otherAssignedHours = new List<InvProyectoProfesor>();
+                if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
                 {
-                    Nombre = pp.IdUsuarioNavigation?.Nombre,
-                    Cedula = pp.IdUsuarioNavigation?.IdSigafi,
-                    Rol = pp.Rol,
-                    NivelAcademico = pp.NivelAcademico,
-                    Telefono = pp.Telefono,
-                    Activo = pp.Activo ?? true,
-                    FechaInicio = pp.FechaInicio,
-                    FechaFin = pp.FechaFin,
-                    MotivoCambio = pp.MotivoCambio
+                    researchHours = await _context.ProfesoresActividades
+                        .Where(pa => profCedulas.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                        .ToListAsync();
+
+                    var profUserIds = updatedProfs.Select(pp => pp.IdUsuario).Distinct().ToList();
+                    otherAssignedHours = await _context.InvProyectosProfesores
+                        .Include(pp => pp.IdProyectoNavigation)
+                        .Where(pp => profUserIds.Contains(pp.IdUsuario) &&
+                                     pp.IdProyecto != project.IdProyecto &&
+                                     pp.Activo != false &&
+                                     (pp.IdProyectoNavigation.Estado == "Enviado" ||
+                                      pp.IdProyectoNavigation.Estado == "En Revisión" ||
+                                      pp.IdProyectoNavigation.Estado == "Aprobado" ||
+                                      pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                        .ToListAsync();
+                }
+
+                dto.Investigadores = updatedProfs.Select(pp => {
+                    var cedula = pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
+                    var availableHours = researchHours.Where(pa => pa.IdProfesor == cedula).Sum(pa => pa.HorasSemana ?? 0);
+                    var assignedHours = otherAssignedHours.Where(o => o.IdUsuario == pp.IdUsuario).Sum(o => o.HorasSemanales ?? 0);
+                    return new InvestigadorDto
+                    {
+                        Nombre = pp.IdUsuarioNavigation?.Nombre,
+                        Cedula = pp.IdUsuarioNavigation?.IdSigafi,
+                        Rol = pp.Rol,
+                        NivelAcademico = pp.NivelAcademico,
+                        Telefono = pp.Telefono,
+                        Activo = pp.Activo ?? true,
+                        FechaInicio = pp.FechaInicio,
+                        FechaFin = pp.FechaFin,
+                        MotivoCambio = pp.MotivoCambio,
+                        HorasSemanales = pp.HorasSemanales,
+                        HorasDisponibles = availableHours,
+                        HorasAsignadas = assignedHours
+                    };
                 }).Concat(updatedAlums.Select(pa => new InvestigadorDto
                 {
                     Nombre = pa.IdUsuarioNavigation?.Nombre,

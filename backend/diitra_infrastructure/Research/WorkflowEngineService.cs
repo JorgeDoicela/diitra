@@ -86,6 +86,54 @@ namespace Diitra.Infrastructure.Research
                 }
             }
 
+            // 1.2 Validación de Carga Horaria para Docentes (CACES Compliance)
+            if (nuevoEstado == "Enviado")
+            {
+                var currentPeriod = await _context.Periodos
+                    .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                    .FirstOrDefaultAsync();
+
+                if (currentPeriod == null)
+                {
+                    throw new InvalidOperationException("No se ha configurado un período académico activo en el sistema.");
+                }
+
+                var activeProfs = await _context.InvProyectosProfesores
+                    .Include(pp => pp.IdUsuarioNavigation)
+                    .Where(pp => pp.IdProyecto == proyecto.IdProyecto && pp.Activo != false)
+                    .ToListAsync();
+
+                foreach (var prof in activeProfs)
+                {
+                    var persona = prof.IdUsuarioNavigation;
+                    if (persona == null || persona.TablaSigafi == "alumno") continue;
+
+                    decimal proposedHours = prof.HorasSemanales ?? 0;
+                    
+                    var availableHours = await _context.ProfesoresActividades
+                        .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == 7 && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .Select(pa => pa.HorasSemana)
+                        .FirstOrDefaultAsync() ?? 0;
+
+                    var otherProjectsHours = await _context.InvProyectosProfesores
+                        .Where(pp => pp.IdUsuario == persona.IdUsuario && 
+                                     pp.IdProyecto != proyecto.IdProyecto && 
+                                     pp.Activo != false && 
+                                     pp.IdProyectoNavigation.Activo != false &&
+                                     (pp.IdProyectoNavigation.Estado == "Enviado" || 
+                                      pp.IdProyectoNavigation.Estado == "En Revisión" || 
+                                      pp.IdProyectoNavigation.Estado == "Aprobado" || 
+                                      pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                        .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
+
+                    var totalProposedHours = otherProjectsHours + proposedHours;
+                    if (totalProposedHours > availableHours)
+                    {
+                        throw new InvalidOperationException($"El docente {persona.Nombre} (C.I. {persona.IdSigafi}) excede el límite de carga horaria de investigación para el período académico activo. Horas disponibles en distributivo: {availableHours}h. Horas asignadas en otros proyectos: {otherProjectsHours}h. Horas propuestas en este proyecto: {proposedHours}h. Total: {totalProposedHours}h.");
+                    }
+                }
+            }
+
             // 2. Ejecutar Transición
             proyecto.Estado = nuevoEstado;
             proyecto.FechaModificacion = DateTime.Now;

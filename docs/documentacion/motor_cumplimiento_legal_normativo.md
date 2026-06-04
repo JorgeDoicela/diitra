@@ -22,6 +22,7 @@ El sistema facilita la preparación para los procesos de evaluación institucion
 
 - **Gestión de Entregables de Acreditación**: Clasificación automática de evidencias técnicas y administrativas requeridas por los modelos de evaluación de institutos.
 - **Auditoría de Ejecución**: Mantenimiento de bitácoras inmutables relacionadas con la ejecución de los fondos de investigación.
+- **Control de Carga Horaria y Cruce de Distributivo**: Validación en tiempo real e inmutable de la carga horaria semanal asignada a investigadores en proyectos, contrastándola contra el distributivo oficial institucional (SIGAFI) para mitigar sobrecargas y asegurar la consistencia documental requerida por el Criterio B.1.1 del CACES.
 
 ## Gestión de Propiedad Intelectual
 

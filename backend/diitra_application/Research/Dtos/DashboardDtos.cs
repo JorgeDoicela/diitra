@@ -53,6 +53,7 @@ namespace Diitra.Application.Research.Dtos
         public int MisProductosRegistrados { get; set; }
         public int MisInformesPendientes { get; set; }
         public decimal MisHorasInvestigacion { get; set; }
+        public decimal? HorasDisponiblesDistributivo { get; set; }
 
         // ── Métricas Globales (Director/Admin) ──
         public int TotalProyectos { get; set; }
