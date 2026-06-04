@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, ShieldCheck, Key, UploadCloud, FileText, CheckCircle2, XCircle, AlertCircle, Calendar, ChevronRight, Info, Lock, FileSignature, Loader2 } from 'lucide-react';
+import { User, ShieldCheck, Key, UploadCloud, FileText, CheckCircle2, AlertCircle, Calendar, Info, Lock, FileSignature, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { useNotifications } from '../../api/NotificationsContext';
@@ -33,7 +33,7 @@ interface ArcoRequest {
 }
 
 const SettingsPage: React.FC = () => {
-    const { user, isAdmin } = useAuth();
+    const { isAdmin } = useAuth();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
 

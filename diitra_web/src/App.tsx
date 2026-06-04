@@ -8,6 +8,7 @@ import Login from './pages/Login/Login';
 import MagicLogin from './pages/Login/MagicLogin';
 import PinHandoff from './pages/Login/PinHandoff';
 import MagicResend from './pages/Login/MagicResend';
+import MicrosoftCallback from './pages/Login/MicrosoftCallback';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
 import { ConfirmProvider } from './api/ConfirmContext';
@@ -25,7 +26,6 @@ import AuditPage from './pages/Admin/AuditPage';
 import ConfiguracionPage from './pages/Admin/ConfiguracionPage';
 import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
 import VerifyDocument from './pages/Public/VerifyDocument';
-import UnderDevelopment from './components/Common/UnderDevelopment';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
 import NotificationsPage from './pages/Notificaciones/NotificationsPage';
 import EmailEnginePage from './pages/Admin/Emails/EmailEnginePage';
@@ -163,6 +163,9 @@ function App() {
                         } />
                         <Route path="/auth/magic-resend" element={
                             <MagicResend currentTheme={theme} toggleTheme={toggleTheme} />
+                        } />
+                        <Route path="/auth/microsoft-callback" element={
+                            <MicrosoftCallback />
                         } />
 
                         {/* Internal Pages with Layout (Stable) */}
