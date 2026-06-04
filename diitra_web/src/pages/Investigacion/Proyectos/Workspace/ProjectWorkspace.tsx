@@ -25,6 +25,7 @@ import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignatur
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
+import { useConfirm } from '../../../../api/ConfirmContext';
 import { iniciarEjecucion } from '../../../../services/peerReviewService';
 import DocumentEditor from '../Wizard/DocumentEditor';
 import WorkspaceActivityPanel from './WorkspaceActivityPanel';
@@ -54,6 +55,7 @@ export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
     const { user, isAdmin, roles } = useAuth();
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -236,7 +238,13 @@ export const ProjectWorkspace: React.FC = () => {
     };
 
     const handleDeleteProduct = async (id: number) => {
-        if (!window.confirm("¿Está seguro de eliminar este producto de investigación?")) return;
+        if (!await confirm({
+            title: "Eliminar Producto",
+            message: "¿Está seguro de eliminar este producto de investigación?",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
         try {
             await api.delete(`/ResearchProducts/${id}`);
             fetchProducts(resolvedProjectUuid || undefined);
@@ -256,7 +264,13 @@ export const ProjectWorkspace: React.FC = () => {
     const handleIniciarEjecucion = async () => {
         const uuid = resolvedProjectUuid || currentProject?.uuid;
         if (!uuid) return;
-        if (!window.confirm('¿Iniciar la fase de ejecución? Se habilitarán los informes de avance periódicos.')) return;
+        if (!await confirm({
+            title: "Iniciar Ejecución",
+            message: "¿Iniciar la fase de ejecución? Se habilitarán los informes de avance periódicos.",
+            confirmText: "Iniciar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         setIniciandoEjecucion(true);
         try {
             await iniciarEjecucion(uuid);
@@ -522,11 +536,17 @@ export const ProjectWorkspace: React.FC = () => {
         }
     };
 
-    const handleToggleTieneGrupo = (val: boolean) => {
+    const handleToggleTieneGrupo = async (val: boolean) => {
         if (!val) {
             const director = investigadores.find(inv => inv.rol?.toLowerCase().includes('director')) || investigadores[0];
             if (investigadores.length > 1) {
-                if (window.confirm("Al cambiar a Trabajo Individual, se removerán los demás co-investigadores y estudiantes. ¿Deseas continuar?")) {
+                if (await confirm({
+                    title: "Trabajo Individual",
+                    message: "Al cambiar a Trabajo Individual, se removerán los demás co-investigadores y estudiantes. ¿Deseas continuar?",
+                    confirmText: "Continuar",
+                    cancelText: "Cancelar",
+                    variant: "warning"
+                })) {
                     setInvestigadores(director ? [director] : []);
                     setTieneGrupo(false);
                 }

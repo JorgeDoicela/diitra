@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../../api/axios_config';
+import { useConfirm } from '../../../api/ConfirmContext';
 import {
     Mail, Plus, Edit2, Trash2, Send, History, FileText, CheckCircle2,
     AlertTriangle, Eye, Loader2, ArrowRight,
@@ -502,6 +503,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
 // ─────────────────────────────────────────────────────────────────────────────
 const EmailEnginePage: React.FC = () => {
     const hasAutoSelectedRef = useRef(false);
+    const confirm = useConfirm();
 
     // Tab State: 'send' | 'templates' | 'history'
     const [activeTab, setActiveTab] = useState<'send' | 'templates' | 'history'>('send');
@@ -1063,7 +1065,13 @@ const EmailEnginePage: React.FC = () => {
     };
 
     const handleDeleteTemplate = async (id: number) => {
-        if (!window.confirm('¿Está seguro de eliminar esta plantilla de correo de forma permanente?')) return;
+        if (!await confirm({
+            title: "Eliminar Plantilla",
+            message: "¿Está seguro de eliminar esta plantilla de correo de forma permanente?",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
         try {
             await api.delete(`/Admin/email-engine/templates/${id}`);
             setTemplates(prev => prev.filter(t => t.idEmailTemplate !== id));

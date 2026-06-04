@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
+import { useConfirm } from '../../../api/ConfirmContext';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
@@ -28,6 +29,7 @@ export const MonitoringPage: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
     const { addToast } = useNotifications();
+    const confirm = useConfirm();
 
     const [activeTab, setActiveTab] = useState<'cronograma' | 'presupuesto'>('cronograma');
     const [projectDetail, setProjectDetail] = useState<any>(null);
@@ -96,8 +98,14 @@ export const MonitoringPage: React.FC = () => {
         });
     };
 
-    const handleDeleteGasto = (id: string) => {
-        if (!window.confirm('¿Está seguro de eliminar este registro de gasto?')) return;
+    const handleDeleteGasto = async (id: string) => {
+        if (!await confirm({
+            title: "Eliminar Registro de Gasto",
+            message: "¿Está seguro de eliminar este registro de gasto?",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            variant: "destructive"
+        })) return;
         setGastos(prev => prev.filter(g => g.id !== id));
         addToast('Egreso Eliminado', 'El egreso ha sido eliminado con éxito.', 'success');
     };

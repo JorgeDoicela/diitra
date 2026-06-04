@@ -5,6 +5,7 @@ import {
     Tag, Globe, BarChart2, ChevronRight
 } from 'lucide-react';
 import api from '../../api/axios_config';
+import { useConfirm } from '../../api/ConfirmContext';
 
 interface LineaInvestigacion {
     idLinea?: number;
@@ -57,6 +58,7 @@ const ConfiguracionPage = () => {
     const [activeTab, setActiveTab] = useState<'lineas' | 'periodos' | 'productos' | 'dominios' | 'indicadores'>('lineas');
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
+    const confirm = useConfirm();
     
     const [detailItem, setDetailItem] = useState<{
         type: 'linea' | 'periodo' | 'producto' | 'dominio' | 'indicador';
@@ -257,7 +259,13 @@ const ConfiguracionPage = () => {
     };
 
     const handleToggleLinea = async (item: LineaInvestigacion) => {
-        if (!window.confirm(`¿Está seguro de cambiar el estado de la línea "${item.nombreLinea}"?`)) return;
+        if (!await confirm({
+            title: "Cambiar Estado de Línea",
+            message: `¿Está seguro de cambiar el estado de la línea "${item.nombreLinea}"?`,
+            confirmText: "Cambiar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         try {
             await api.delete(`/catalogs/lineas-investigacion/${item.uuid}`);
             fetchData();
@@ -311,7 +319,13 @@ const ConfiguracionPage = () => {
     };
 
     const handleTogglePeriodo = async (item: PeriodoAcademico) => {
-        if (!window.confirm(`¿Está seguro de cambiar el estado de activación del período "${item.idPeriodo}"?`)) return;
+        if (!await confirm({
+            title: "Cambiar Estado de Período",
+            message: `¿Está seguro de cambiar el estado de activación del período "${item.idPeriodo}"?`,
+            confirmText: "Cambiar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         try {
             await api.delete(`/catalogs/periodos/${item.idPeriodo}`);
             fetchData();
@@ -364,7 +378,13 @@ const ConfiguracionPage = () => {
     };
 
     const handleToggleProducto = async (item: TipoProducto) => {
-        if (!window.confirm(`¿Está seguro de cambiar el estado del tipo de producto "${item.nombre}"?`)) return;
+        if (!await confirm({
+            title: "Cambiar Estado de Producto",
+            message: `¿Está seguro de cambiar el estado del tipo de producto "${item.nombre}"?`,
+            confirmText: "Cambiar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         try {
             await api.delete(`/catalogs/tipo-producto/${item.uuid}`);
             fetchData();
@@ -411,7 +431,13 @@ const ConfiguracionPage = () => {
     };
 
     const handleToggleDominio = async (item: DominioAcademico) => {
-        if (!window.confirm(`¿Está seguro de cambiar el estado del dominio "${item.nombre}"?`)) return;
+        if (!await confirm({
+            title: "Cambiar Estado de Dominio",
+            message: `¿Está seguro de cambiar el estado del dominio "${item.nombre}"?`,
+            confirmText: "Cambiar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         try {
             await api.delete(`/catalogs/dominios/${item.uuid}`);
             fetchData();
@@ -473,7 +499,13 @@ const ConfiguracionPage = () => {
     };
 
     const handleToggleIndicador = async (item: ConfigIndicador) => {
-        if (!window.confirm(`¿Está seguro de cambiar el estado del indicador "${item.nombreIndicador}"?`)) return;
+        if (!await confirm({
+            title: "Cambiar Estado de Indicador",
+            message: `¿Está seguro de cambiar el estado del indicador "${item.nombreIndicador}"?`,
+            confirmText: "Cambiar",
+            cancelText: "Cancelar",
+            variant: "warning"
+        })) return;
         try {
             await api.delete(`/catalogs/config-indicadores/${item.idConfig}`);
             fetchData();
