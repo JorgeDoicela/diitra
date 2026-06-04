@@ -19,6 +19,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (credentials: any) => Promise<User>;
+    loginWithMicrosoft: (idToken: string) => Promise<User>;
     magicLogin: (token: string) => Promise<{ user: User; pin: string | null; token: string }>;
     confirmMagicLogin: (user: User, token: string) => Promise<void>;
     handoffLogin: (pin: string) => Promise<User>;
@@ -73,6 +74,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             role: data.role_codes?.[0] || data.role
         };
         
+        setUser(normalizedUser);
+        localStorage.setItem('diitra_logged_in', 'true');
+        return normalizedUser;
+    };
+
+    const loginWithMicrosoft = async (idToken: string) => {
+        const response = await api.post('/auth/microsoft-login', { idToken });
+        const data = response.data;
+
+        const normalizedUser: User = {
+            ...data,
+            roles: data.role_codes || data.roles || [],
+            role: data.role_codes?.[0] || data.role
+        };
+
         setUser(normalizedUser);
         localStorage.setItem('diitra_logged_in', 'true');
         return normalizedUser;
@@ -164,6 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAuthenticated: !!user, 
             isLoading, 
             login, 
+            loginWithMicrosoft,
             magicLogin,
             confirmMagicLogin,
             handoffLogin,
