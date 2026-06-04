@@ -13,6 +13,13 @@ interface UserProfileModalProps {
     onDraftCleared?: () => void;
 }
 
+const formatNombre = (nombre: string | null | undefined) => {
+    if (!nombre) return '';
+    return nombre
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
 const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalProps) => {
     const confirm = useConfirm();
     const [loading, setLoading] = useState(false);
@@ -154,7 +161,7 @@ const UserProfileModal = ({ user, onClose, onDraftCleared }: UserProfileModalPro
                             <Award size={20} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">{user.nombre_completo}</h3>
+                            <h3 className="text-lg font-semibold text-text-main tracking-tight">{formatNombre(user.nombre_completo)}</h3>
                             <p className="section-label text-text-dim">Perfil del Investigador - CACES/SENESCYT</p>
                         </div>
                     </div>

@@ -72,6 +72,13 @@ interface GroupDetailDrawerProps {
     handleOpenReview: (group: Group) => void;
 }
 
+const formatNombre = (nombre: string | null | undefined) => {
+    if (!nombre) return '';
+    return nombre
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
 export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     isOpen,
     onClose,
@@ -656,7 +663,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                     : ''
                             }`}
                         >
-                            <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">{detailGroup.nombre}</h3>
+                            <h3 className="text-lg font-semibold text-text-main tracking-tight">{detailGroup.nombre}</h3>
                             <div className="flex items-center gap-2">
                                 <p className="section-label text-text-dim">
                                     {detailGroup.tipo_grupo === 'Semillero' ? 'Semillero' : 'Grupo de Investigación'} — {detailGroup.siglas || 'SIN_SIGLAS'}
@@ -761,7 +768,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                 </label>
                                 {renderFieldFeedbackButton('coordinador', 'Coordinador Responsable')}
                             </div>
-                            <p className="text-sm font-bold text-text-main uppercase">{detailGroup.nombre_coordinador || 'No asignado'}</p>
+                            <p className="text-sm font-semibold text-text-main">{detailGroup.nombre_coordinador ? formatNombre(detailGroup.nombre_coordinador) : 'No asignado'}</p>
                             {detailGroup.id_profesor_coordinador && (
                                 <p className="text-[10px] font-mono text-text-dim">C.I. {detailGroup.id_profesor_coordinador}</p>
                             )}
@@ -771,7 +778,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                         {detailGroup.id_dominio && (
                             <div className="bento-card static p-4 space-y-2">
                                 <label className="section-label text-text-dim">Dominio Académico</label>
-                                <p className="text-xs font-bold text-text-main uppercase">
+                                <p className="text-xs font-semibold text-text-main">
                                     {dominios.find(d => d.id_dominio === detailGroup.id_dominio)?.nombre || 'Sin dominio'}
                                 </p>
                             </div>
@@ -941,7 +948,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                             <User size={14} />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-xs font-bold text-text-main uppercase truncate" title={member.nombre_completo}>{member.nombre_completo}</p>
+                                                            <p className="text-xs font-semibold text-text-main truncate" title={formatNombre(member.nombre_completo)}>{formatNombre(member.nombre_completo)}</p>
                                                             <span className="text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                                                                 {member.rol}
                                                             </span>
@@ -972,7 +979,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                                             <GraduationCap size={14} />
                                                         </div>
                                                         <div className="min-w-0">
-                                                            <p className="text-xs font-bold text-text-main uppercase truncate" title={member.nombre_completo}>{member.nombre_completo}</p>
+                                                            <p className="text-xs font-semibold text-text-main truncate" title={formatNombre(member.nombre_completo)}>{formatNombre(member.nombre_completo)}</p>
                                                             <span className="text-[8px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
                                                                 {member.rol}
                                                             </span>

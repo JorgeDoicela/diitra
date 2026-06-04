@@ -72,6 +72,13 @@ interface GroupFormDrawerProps {
     onDraftCleared?: () => void;
 }
 
+const formatNombre = (nombre: string | null | undefined) => {
+    if (!nombre) return '';
+    return nombre
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
 export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     isOpen,
     onClose,
@@ -669,7 +676,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                             <Award size={20} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
+                            <h3 className="text-lg font-semibold text-text-main tracking-tight">
                                 {isReadOnly ? 'Ver Grupo de Investigación' : (editingGroup ? 'Editar Grupo de Investigación' : 'Nuevo Grupo de Investigación')}
                             </h3>
                             <p className="section-label text-text-dim">Configuración administrativa y normativa</p>
@@ -896,8 +903,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                             className="w-full p-3 flex items-center justify-between hover:bg-surface-hover text-left transition-colors"
                                                         >
                                                             <div className="space-y-1 truncate pr-2">
-                                                                <p className="font-bold text-text-main text-xs uppercase truncate flex items-center gap-2">
-                                                                    <span>{selectedUser.nombre}</span>
+                                                                <p className="font-bold text-text-main text-xs truncate flex items-center gap-2">
+                                                                    <span>{formatNombre(selectedUser.nombre)}</span>
                                                                     {selectedUser.horas_disponibles !== undefined && (
                                                                         <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
                                                                             (selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)) > 0 
@@ -926,7 +933,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                         <User size={16} />
                                     </div>
                                     <div>
-                                        <h4 className="text-xs font-black text-text-main uppercase tracking-wider">{selectedCoordName || 'S/D'}</h4>
+                                        <h4 className="text-xs font-semibold text-text-main tracking-wider">{selectedCoordName ? formatNombre(selectedCoordName) : 'S/D'}</h4>
                                         <p className="text-[10px] text-text-dim font-mono uppercase tracking-tight">
                                             C.I. {formData.id_profesor_coordinador || 'S/D'} {selectedCoordCareer ? ` | ${formatCareerName(selectedCoordCareer)}` : ''}
                                         </p>
@@ -1024,8 +1031,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
                                                                     >
                                                                         <div className="space-y-0.5">
-                                                                            <p className="font-bold text-text-main text-xs uppercase flex items-center gap-2">
-                                                                                <span>{teacher.nombre}</span>
+                                                                            <p className="font-bold text-text-main text-xs flex items-center gap-2">
+                                                                                <span>{formatNombre(teacher.nombre)}</span>
                                                                                 {teacher.horas_disponibles !== undefined && (
                                                                                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
                                                                                         (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
@@ -1090,8 +1097,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                     <User size={14} />
                                                 </div>
                                                 <div className="min-w-0 space-y-0.5">
-                                                    <p className="text-xs font-extrabold text-text-main uppercase truncate max-w-[200px]" title={member.nombre_completo}>
-                                                        {member.nombre_completo}
+                                                    <p className="text-xs font-semibold text-text-main truncate max-w-[200px]" title={formatNombre(member.nombre_completo)}>
+                                                        {formatNombre(member.nombre_completo)}
                                                     </p>
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
@@ -1196,7 +1203,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
                                                                     >
                                                                         <div className="space-y-0.5">
-                                                                            <p className="font-bold text-text-main text-xs uppercase">{student.nombre}</p>
+                                                                            <p className="font-bold text-text-main text-xs">{formatNombre(student.nombre)}</p>
                                                                             <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(student)}</p>
                                                                         </div>
                                                                         <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-blue-500/15 border-blue-500/25 text-blue-400">
@@ -1250,8 +1257,8 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                     <GraduationCap size={14} />
                                                 </div>
                                                 <div className="min-w-0 space-y-0.5">
-                                                    <p className="text-xs font-extrabold text-text-main uppercase truncate max-w-[200px]" title={member.nombre_completo}>
-                                                        {member.nombre_completo}
+                                                    <p className="text-xs font-semibold text-text-main truncate max-w-[200px]" title={formatNombre(member.nombre_completo)}>
+                                                        {formatNombre(member.nombre_completo)}
                                                     </p>
                                                     <div className="flex items-center gap-1.5 flex-wrap">
                                                         <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">

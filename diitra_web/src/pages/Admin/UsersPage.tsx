@@ -48,6 +48,13 @@ const formatCarrera = (carrera: string | null | undefined) => {
         .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m) => m.toLowerCase());
 };
 
+const formatNombre = (nombre: string | null | undefined) => {
+    if (!nombre) return '';
+    return nombre
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
+};
+
 const UsersPage = () => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
@@ -596,7 +603,7 @@ const UsersPage = () => {
                                                 <UserIcon size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-bold text-text-main tracking-tight uppercase">{u.nombre_completo}</p>
+                                                <p className="text-sm font-semibold text-text-main tracking-tight">{formatNombre(u.nombre_completo)}</p>
                                                 <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">{u.id_profesor} &bull; {u.email}</p>
                                             </div>
                                         </div>
@@ -908,7 +915,7 @@ const UsersPage = () => {
                                     <UserIcon size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">{detailUser.nombre_completo}</h3>
+                                    <h3 className="text-lg font-semibold text-text-main tracking-tight">{formatNombre(detailUser.nombre_completo)}</h3>
                                     <p className="section-label text-text-dim">
                                         {detailUser.type === 'DOCENTE' ? 'Docente Investigador' : detailUser.type === 'ESTUDIANTE' ? 'Estudiante' : 'Evaluador Externo'} — DIITRA
                                     </p>
@@ -1075,7 +1082,7 @@ const UsersPage = () => {
                                     {confirmDialog.type === 'success' && <CheckCircle size={18} />}
                                     {confirmDialog.type === 'info' && <Shield size={18} />}
                                 </div>
-                                <h3 className="text-sm font-bold text-text-main uppercase tracking-tight">
+                                <h3 className="text-sm font-semibold text-text-main tracking-tight">
                                     {confirmDialog.title}
                                 </h3>
                             </div>

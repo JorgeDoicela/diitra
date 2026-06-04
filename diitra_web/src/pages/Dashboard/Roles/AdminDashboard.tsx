@@ -37,7 +37,8 @@ interface GlobalStats {
 export const AdminDashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const firstName = user?.nombre_completo?.split(' ')[0] || 'Admin';
+    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+    const firstName = user?.nombre_completo ? capitalize(user.nombre_completo.split(' ')[0]) : 'Admin';
     const [stats, setStats] = useState<GlobalStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
