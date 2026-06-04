@@ -281,7 +281,9 @@ public class BackupBackgroundService : BackgroundService
         {
             if (!Directory.Exists(sourceAbsPath))
             {
-                throw new DirectoryNotFoundException($"La carpeta origen de archivos '{sourceAbsPath}' no existe.");
+                Directory.CreateDirectory(sourceAbsPath);
+                // Crear un placeholder para que la carpeta quede inicializada y el ZipFile no falle
+                await File.WriteAllTextAsync(Path.Combine(sourceAbsPath, ".placeholder"), "DIITRA uploads folder initialized", cancellationToken);
             }
 
             // Comprimir la carpeta de subidas en un archivo zip en segundo plano

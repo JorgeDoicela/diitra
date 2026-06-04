@@ -118,8 +118,9 @@ namespace diitra_api.Controllers
         /// Simulación y aplicación de firma electrónica PAdES usando el motor DIITRA.
         /// </summary>
         [HttpPost("sign")]
+        [Consumes("multipart/form-data")]
         public async Task<IActionResult> SignDocument(
-            [FromForm] Microsoft.AspNetCore.Http.IFormFile? certificate,
+            Microsoft.AspNetCore.Http.IFormFile? certificate,
             [FromForm] string password,
             [FromForm] string projectUuid,
             [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,

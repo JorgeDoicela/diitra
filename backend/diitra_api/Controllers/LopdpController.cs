@@ -177,8 +177,9 @@ public class LopdpController : ControllerBase
     /// Sube y configura el certificado de firma electrónica (.p12) del usuario con su contraseña cifrada.
     /// </summary>
     [HttpPost("perfil/firma")]
+    [Consumes("multipart/form-data")]
     public async Task<IActionResult> ConfigurarFirma(
-        [FromForm] Microsoft.AspNetCore.Http.IFormFile file,
+        Microsoft.AspNetCore.Http.IFormFile file,
         [FromForm] string password,
         [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
         [FromServices] Microsoft.Extensions.Configuration.IConfiguration configuration)
