@@ -1028,8 +1028,10 @@ CREATE TABLE inv_magic_links (
     user_agent            VARCHAR(255) NULL,
     codigo_pin_handoff    VARCHAR(12)  NULL,
     fecha_expiracion_pin  DATETIME     NULL,
+    proposito             VARCHAR(30)  NOT NULL DEFAULT 'MAGIC_LINK' COMMENT 'MAGIC_LINK | PASSWORD_RECOVERY',
+    UNIQUE KEY uk_token_hash (token_hash),
     FOREIGN KEY (id_usuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Enlaces mágicos para autenticación passwordless y handoff';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Token pool: magic links de autenticación y recuperación de contraseña';
 
 
 -- CONFIGURACIÓN GENERAL (Llave-Valor)

@@ -16,4 +16,14 @@ public interface IAuthService
     Task<string> CreateMagicLinkAsync(int idUsuario, DateTime expirationDate);
     Task<bool> ResendMagicLinkAsync(string email);
     Task<AuthResponse?> LoginWithMicrosoftAsync(MicrosoftLoginRequest request);
+    /// <summary>
+    /// Genera un token de recuperación (30 min) y envía el enlace al correo institucional del usuario.
+    /// Siempre retorna true para evitar enumeración de usuarios.
+    /// </summary>
+    Task<bool> RequestPasswordRecoveryAsync(string identificador, string? ipAddress);
+    /// <summary>
+    /// Valida el token de recuperación y retorna la contraseña original de SIGAFI si es legible.
+    /// Consume el token (un solo uso).
+    /// </summary>
+    Task<PasswordRecoveryValidationResult> ValidatePasswordRecoveryTokenAsync(string plainToken, string? ipAddress);
 }

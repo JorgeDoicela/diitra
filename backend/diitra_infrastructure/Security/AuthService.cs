@@ -980,4 +980,192 @@ public class AuthService : IAuthService
             throw new SecurityTokenException("El token de Microsoft no es válido o ha expirado.", ex);
         }
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  RECUPERACIÓN DE CONTRASEÑA
+    //  Flujo: Solicitud → Token en inv_magic_links (proposito=PASSWORD_RECOVERY)
+    //         → Enlace por email → Validación → Contraseña SIGAFI en pantalla
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Genera un token seguro de recuperación de contraseña y envía el enlace al correo
+    /// institucional del usuario. SIEMPRE retorna true para evitar enumeración de cuentas.
+    /// Rate limit: máximo 3 tokens activos por usuario en los últimos 15 minutos.
+    /// </summary>
+    public async Task<bool> RequestPasswordRecoveryAsync(string identificador, string? ipAddress)
+    {
+        if (string.IsNullOrWhiteSpace(identificador)) return true;
+
+        identificador = identificador.Trim().ToLower();
+
+        // 1. Buscar usuario en DIITRA (por cédula o email)
+        var user = await _context.Users.FirstOrDefaultAsync(u =>
+            u.Activo &&
+            (u.IdSigafi.ToLower() == identificador || (u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == identificador)));
+
+        if (user == null) return true; // Sin revelar que no existe
+
+        // Verificar que tiene email institucional
+        var emailDestino = user.EmailInstitucional;
+        if (string.IsNullOrEmpty(emailDestino)) return true;
+
+        // 2. Rate limiting: máximo 3 tokens de recuperación activos en 15 min
+        var ventana = DateTime.Now.AddMinutes(-15);
+        var tokensRecientes = await _context.Set<InvMagicLink>()
+            .CountAsync(l => l.IdUsuario == user.IdUsuario
+                          && l.Proposito == "PASSWORD_RECOVERY"
+                          && l.FechaCreacion >= ventana
+                          && !l.Utilizado);
+
+        if (tokensRecientes >= 3)
+        {
+            await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_RATE_LIMIT",
+                $"Rate limit alcanzado para recuperación de contraseña desde IP {ipAddress}", "SEGURIDAD");
+            return true; // Sin revelar el rate limit externamente
+        }
+
+        // 3. Invalidar tokens anteriores de recuperación activos para este usuario
+        var tokensAnteriores = await _context.Set<InvMagicLink>()
+            .Where(l => l.IdUsuario == user.IdUsuario && l.Proposito == "PASSWORD_RECOVERY" && !l.Utilizado)
+            .ToListAsync();
+
+        foreach (var t in tokensAnteriores)
+        {
+            t.Utilizado = true;
+            t.FechaUtilizado = DateTime.Now;
+        }
+
+        // 4. Generar token criptográfico seguro (32 bytes → hex → SHA-256 en BD)
+        var tokenBytes = new byte[32];
+        using (var rng = System.Security.Cryptography.RandomNumberGenerator.Create())
+        {
+            rng.GetBytes(tokenBytes);
+        }
+        var plainToken = Convert.ToHexString(tokenBytes);
+        var tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+        var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+        // 5. Guardar en inv_magic_links con proposito=PASSWORD_RECOVERY
+        var recoveryLink = new InvMagicLink
+        {
+            IdUsuario = user.IdUsuario,
+            TokenHash = tokenHash,
+            FechaCreacion = DateTime.Now,
+            FechaExpiracion = DateTime.Now.AddMinutes(30),
+            Utilizado = false,
+            IpCreacion = ipAddress,
+            Proposito = "PASSWORD_RECOVERY"
+        };
+
+        _context.Set<InvMagicLink>().Add(recoveryLink);
+        await _context.SaveChangesAsync();
+
+        // 6. Construir enlace y enviar email usando el MasterLayout institucional
+        var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/ver-contrasenia?token={plainToken}";
+
+        // El body se inyecta dentro del MasterLayout — sin repetir cabecera ni pie
+        var emailBody =
+            $"<p>Has solicitado recuperar tu contraseña de acceso a <strong>DIITRA</strong>.</p>" +
+            $"<p>Haz clic en el botón a continuación para ver tu contraseña de forma segura. " +
+            $"<strong>Este enlace expira en 30 minutos y es de un solo uso.</strong></p>" +
+            $"<p style=\"color:#888888; font-size:12px;\">Si no realizaste esta solicitud, ignora este correo. " +
+            $"Tu contraseña no será revelada sin que hagas clic en el enlace.</p>";
+
+        await _notificationService.NotifyUserAsync(
+            user.IdUsuario,
+            "Recuperación de Contraseña — DIITRA",
+            emailBody,
+            "SISTEMA",
+            recoveryUrl
+        );
+
+        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_REQUESTED",
+            $"Enlace de recuperación de contraseña generado y enviado a {emailDestino} desde IP {ipAddress}", "SEGURIDAD");
+
+        return true;
+    }
+
+    /// <summary>
+    /// Valida el token de recuperación (un solo uso, 30 min) y retorna la contraseña
+    /// original de SIGAFI si está en texto plano. Consume el token al validarlo.
+    /// </summary>
+    public async Task<PasswordRecoveryValidationResult> ValidatePasswordRecoveryTokenAsync(string plainToken, string? ipAddress)
+    {
+        var invalido = new PasswordRecoveryValidationResult { Valido = false };
+
+        if (string.IsNullOrWhiteSpace(plainToken))
+            return invalido;
+
+        // 1. Hash del token recibido
+        byte[] tokenHashBytes;
+        try
+        {
+            tokenHashBytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plainToken));
+        }
+        catch { return invalido; }
+
+        var tokenHash = Convert.ToHexString(tokenHashBytes);
+
+        // 2. Buscar token válido (no utilizado, no expirado, propósito correcto)
+        var link = await _context.Set<InvMagicLink>()
+            .Include(l => l.Usuario)
+            .FirstOrDefaultAsync(l =>
+                l.TokenHash == tokenHash &&
+                l.Proposito == "PASSWORD_RECOVERY" &&
+                !l.Utilizado &&
+                l.FechaExpiracion > DateTime.Now);
+
+        if (link == null) return invalido;
+
+        // 3. Consumir token (un solo uso)
+        link.Utilizado = true;
+        link.FechaUtilizado = DateTime.Now;
+        link.IpUtilizacion = ipAddress;
+        await _context.SaveChangesAsync();
+
+        var user = link.Usuario;
+
+        // 4. Obtener contraseña original de SIGAFI según la tabla fuente
+        string? passwordOriginal = null;
+        bool esHashInaccesible = false;
+
+        if (user.TablaSigafi == "profesor")
+        {
+            var profesor = await _context.Profesores
+                .FirstOrDefaultAsync(p => p.IdProfesor == user.IdSigafi);
+
+            if (profesor?.Clave != null)
+            {
+                if (IsBCryptHash(profesor.Clave))
+                    esHashInaccesible = true;
+                else
+                    passwordOriginal = profesor.Clave;
+            }
+        }
+        else if (user.TablaSigafi == "alumno")
+        {
+            var alumno = await _context.Alumnos
+                .FirstOrDefaultAsync(a => a.IdAlumno == user.IdSigafi);
+
+            if (!string.IsNullOrEmpty(alumno?.Password))
+                passwordOriginal = alumno.Password;
+        }
+
+        // Si no se encontró contraseña en la fuente, indicar que debe contactar admin
+        if (passwordOriginal == null && !esHashInaccesible)
+            esHashInaccesible = true;
+
+        await _auditService.LogActionAsync(user.IdUsuario, "PASSWORD_RECOVERY_VIEWED",
+            $"Contraseña consultada mediante token de recuperación desde IP {ipAddress}. " +
+            (esHashInaccesible ? "Hash inaccesible." : "Contraseña entregada."), "SEGURIDAD");
+
+        return new PasswordRecoveryValidationResult
+        {
+            Valido = true,
+            Password = passwordOriginal,
+            NombreUsuario = user.Nombre,
+            EsHashInaccesible = esHashInaccesible
+        };
+    }
 }

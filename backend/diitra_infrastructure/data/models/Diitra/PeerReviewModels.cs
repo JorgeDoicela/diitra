@@ -100,6 +100,11 @@ public class InvMagicLink
     [Column("fecha_expiracion_pin")]
     public DateTime? FechaExpiracionPin { get; set; }
 
+    /// <summary>Propósito del token: MAGIC_LINK | PASSWORD_RECOVERY</summary>
+    [Column("proposito")]
+    [MaxLength(30)]
+    public string Proposito { get; set; } = "MAGIC_LINK";
+
     [ForeignKey("IdUsuario")]
     public virtual User Usuario { get; set; } = null!;
 }
