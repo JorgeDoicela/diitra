@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Loader2, Eye, EyeOff, AlertTriangle, ArrowLeft, ShieldCheck, Copy, CheckCheck } from 'lucide-react';
+import { Loader2, Eye, EyeOff, AlertTriangle, ArrowLeft, ShieldCheck, Copy, CheckCheck, Sun, Moon } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5175';
 
 type Estado = 'validando' | 'valido' | 'hash_inaccesible' | 'invalido';
 
-const VerContrasenia = () => {
+interface VerContraseniaProps {
+    currentTheme?: 'dark' | 'light';
+    toggleTheme?: () => void;
+}
+
+const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaProps) => {
+    const theme = currentTheme;
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
 
@@ -63,16 +69,26 @@ const VerContrasenia = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500">
+        <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 relative">
+            {/* Theme Toggle Button */}
+            {toggleTheme && (
+                <button
+                    onClick={toggleTheme}
+                    className="absolute top-6 right-6 text-text-dim hover:text-text-main transition-all duration-300 z-30 cursor-pointer"
+                    title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                >
+                    {currentTheme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
+                </button>
+            )}
+
             <div className="w-full max-w-[380px] space-y-7 animate-fade-up">
 
                 {/* Brand */}
                 <div className="flex flex-col items-center space-y-6">
                     <img
-                        src="/logo_blanco.png"
+                        src={theme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
                         alt="DIITRA Logo"
                         className="h-16 w-auto object-contain"
-                        onError={(e) => { (e.target as HTMLImageElement).src = '/logo_negro.png'; }}
                     />
                     <div className="text-center space-y-1">
                         <h1 className="text-2xl font-bold tracking-tighter text-text-main">

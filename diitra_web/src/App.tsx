@@ -170,10 +170,10 @@ function App() {
                             <MicrosoftCallback />
                         } />
                         <Route path="/auth/recuperar-contrasenia" element={
-                            <RecuperarContrasenia />
+                            <RecuperarContrasenia currentTheme={theme} toggleTheme={toggleTheme} />
                         } />
                         <Route path="/auth/ver-contrasenia" element={
-                            <VerContrasenia />
+                            <VerContrasenia currentTheme={theme} toggleTheme={toggleTheme} />
                         } />
 
                         {/* Internal Pages with Layout (Stable) */}
