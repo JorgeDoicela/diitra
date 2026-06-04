@@ -81,6 +81,7 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvDispositivoToken> InvDispositivosTokens   { get; set; }
     public virtual DbSet<InvMagicLink>        InvMagicLinks          { get; set; }
     public virtual DbSet<InvConfigGeneral>    InvConfigsGenerales    { get; set; }
+    public virtual DbSet<InvBackupLog>        InvBackupLogs          { get; set; }
 
     // --- Catálogos Nucleares y Configuración ---
     public virtual DbSet<InvCatTipoProducto>   InvCatTipoProductos    { get; set; }
@@ -1620,6 +1621,27 @@ public partial class DiitraContext : DbContext
             
             entity.HasOne(d => d.UsuarioAfectado).WithMany()
                 .HasForeignKey(d => d.IdUsuarioAfectado).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_audit_datos_afectado");
+        });
+
+        modelBuilder.Entity<InvBackupLog>(entity =>
+        {
+            entity.HasKey(e => e.IdBackup).HasName("PRIMARY");
+            entity.ToTable("inv_backup_logs");
+            entity.Property(e => e.IdBackup).HasColumnName("idBackup");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.FechaBackup).HasColumnName("fechaBackup").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.Tipo).HasColumnName("tipo").HasColumnType("enum('Completo','BaseDatos','Archivos')").IsRequired();
+            entity.Property(e => e.Destino).HasColumnName("destino").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.NombreArchivo).HasColumnName("nombreArchivo").HasMaxLength(255).IsRequired();
+            entity.Property(e => e.TamanioBytes).HasColumnName("tamanioBytes").IsRequired();
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Exitoso','Fallido','En_Proceso')").HasDefaultValue("En_Proceso");
+            entity.Property(e => e.HashVerificacion).HasColumnName("hashVerificacion").HasMaxLength(64);
+            entity.Property(e => e.ErrorMensaje).HasColumnName("errorMensaje").HasColumnType("text");
+            entity.Property(e => e.EjecutadoPor).HasColumnName("ejecutadoPor");
+
+            entity.HasOne(d => d.Ejecutor).WithMany()
+                .HasForeignKey(d => d.EjecutadoPor).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_backup_ejecutor");
         });
 
         modelBuilder.Entity<InvAuditAdmin>(entity =>

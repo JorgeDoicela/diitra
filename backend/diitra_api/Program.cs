@@ -165,6 +165,8 @@ builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 builder.Services.AddScoped<Diitra.Application.Research.IWorkflowEngineService, Diitra.Infrastructure.Research.WorkflowEngineService>();
 builder.Services.AddScoped<diitra_application.Security.IAuditService, diitra_infrastructure.Security.AuditService>();
 builder.Services.AddScoped<diitra_application.Security.ILopdpService, diitra_infrastructure.Security.LopdpService>();
+builder.Services.AddSingleton<diitra_api.Services.BackupBackgroundService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<diitra_api.Services.BackupBackgroundService>());
 
 // 3. DATABASE CONNECTION
 var connectionString = builder.Configuration.GetConnectionString("default_connection");
