@@ -470,7 +470,10 @@ export const ProjectWorkspace: React.FC = () => {
             cedula: selectedUser.cedula,
             rol: selectedUser.rol || "Co-Investigador (Docente)",
             nivelAcademico: selectedUser.nivelAcademico || "Tercer Nivel",
-            telefono: selectedUser.telefono || ""
+            telefono: selectedUser.telefono || "",
+            horasSemanales: selectedUser.horasSemanales || 0,
+            horasDisponibles: selectedUser.horas_disponibles,
+            horasAsignadas: selectedUser.horas_asignadas
         };
         setInvestigadores(prev => [...prev, newMember]);
         setSearchQuery('');
@@ -494,7 +497,8 @@ export const ProjectWorkspace: React.FC = () => {
                 cedula: inv.cedula,
                 rol: inv.rol,
                 nivelAcademico: inv.nivelAcademico,
-                telefono: inv.telefono || ""
+                telefono: inv.telefono || "",
+                horasSemanales: inv.horasSemanales !== undefined && inv.horasSemanales !== null && inv.horasSemanales !== '' ? parseFloat(inv.horasSemanales) : null
             }));
             const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload);
             if (res.data.success) {
@@ -985,7 +989,18 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
                                                             >
                                                                 <div>
-                                                                    <p className="font-bold text-text-main text-xs">{su.nombre}</p>
+                                                                    <p className="font-bold text-text-main text-xs flex items-center gap-2">
+                                                                        <span>{su.nombre}</span>
+                                                                        {su.tipo === 'profesor' && su.horas_disponibles !== undefined && (
+                                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                                                                                (su.horas_disponibles - (su.horas_asignadas || 0)) > 0 
+                                                                                    ? 'bg-success/15 text-success border border-success/30' 
+                                                                                    : 'bg-error/15 text-error border border-error/30'
+                                                                            }`}>
+                                                                                Disp: {su.horas_disponibles - (su.horas_asignadas || 0)}h / {su.horas_disponibles}h
+                                                                            </span>
+                                                                        )}
+                                                                    </p>
                                                                     <p className="text-text-dim font-mono text-[10px]">
                                                                         C.I. {su.cedula} {su.email && su.email !== 'S/D' && `| ${su.email}`} {su.carrera && `| ${su.carrera.toLowerCase().replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase())}`}
                                                                     </p>
@@ -1089,6 +1104,21 @@ export const ProjectWorkspace: React.FC = () => {
                                                                             className="bg-transparent text-text-dim placeholder:text-text-dim outline-none border-b border-border-thin hover:border-text-dim focus:border-text-main w-20 inline-block px-0.5 py-0 text-[10px] transition-colors" 
                                                                         />
                                                                     </div>
+                                                                    {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
+                                                                        <>
+                                                                            <span>·</span>
+                                                                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition-all ${
+                                                                                (member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                                                                    ? 'bg-error/15 text-error border border-error/30 animate-pulse font-black'
+                                                                                    : 'bg-info/10 text-info border border-info/20'
+                                                                            }`}>
+                                                                                {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                                                                    ? `⚠️ Excede límite! Máx disp: ${Math.max(0, member.horasDisponibles - (member.horasAsignadas || 0))}h`
+                                                                                    : `Disp: ${member.horasDisponibles - (member.horasAsignadas || 0)}h / ${member.horasDisponibles}h`
+                                                                                }
+                                                                            </span>
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -1121,6 +1151,19 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <option value="Cuarto Nivel (PhD)">PhD</option>
                                                                     <option value="Pregrado">Pregrado</option>
                                                                 </select>
+                                                            </div>
+                                                            <div className="flex flex-col gap-1 w-full sm:w-auto">
+                                                                <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest">Horas</span>
+                                                                <input 
+                                                                    type="number"
+                                                                    value={member.horasSemanales ?? ''}
+                                                                    disabled={currentProject.puedeEditar === false}
+                                                                    onChange={(e) => handleUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
+                                                                    placeholder="0"
+                                                                    min="0"
+                                                                    max="40"
+                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-16 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                />
                                                             </div>
                                                             {currentProject.puedeEditar !== false && (!isDirector || tieneGrupo) && (
                                                                 <button

@@ -14,6 +14,7 @@ interface DashboardStats {
     mis_productos_registrados: number;
     mis_informes_pendientes: number;
     mis_horas_investigacion: number;
+    horas_disponibles_distributivo?: number;
     actividad_reciente: Array<{
         tipo: string;
         descripcion: string;
@@ -267,28 +268,41 @@ export const DocenteDashboard: React.FC = () => {
                         />
 
                         {/* Carga Horaria progress card */}
-                        {stats?.mis_horas_investigacion !== undefined && (
-                            <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div className="section-label">
-                                        <ClipboardList size={12} className="text-info" />
-                                        <span className="text-[13px] font-semibold text-text-main">Carga Horaria Semanal</span>
+                        {stats?.mis_horas_investigacion !== undefined && (() => {
+                            const maxHours = stats.horas_disponibles_distributivo ?? 0;
+                            const hasDistributivo = maxHours > 0;
+                            const percentage = hasDistributivo ? Math.min(100, (stats.mis_horas_investigacion / maxHours) * 100) : 0;
+                            return (
+                                <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="section-label">
+                                            <ClipboardList size={12} className="text-info" />
+                                            <span className="text-[13px] font-semibold text-text-main">Carga Horaria Semanal</span>
+                                        </div>
+                                        <span className="font-mono text-[13px] font-bold text-info">
+                                            {stats.mis_horas_investigacion} / {maxHours} hrs
+                                        </span>
                                     </div>
-                                    <span className="font-mono text-[13px] font-bold text-info">
-                                        {stats.mis_horas_investigacion} hrs
-                                    </span>
+                                    {hasDistributivo ? (
+                                        <>
+                                            <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full rounded-full bg-info transition-all duration-700"
+                                                    style={{ width: `${percentage}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[10px] text-text-dim mt-2 block font-medium">
+                                                Dedicación de investigación ({stats.mis_horas_investigacion}h) asignada de un máximo de {maxHours}h semanales según tu distributivo.
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <div className="mt-2 text-[10px] text-error bg-error-subtle/10 border border-error/20 rounded-lg p-2.5 font-medium leading-relaxed">
+                                            ⚠️ No tienes registradas horas de investigación en tu distributivo académico para el período actual.
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full rounded-full bg-info transition-all duration-700"
-                                        style={{ width: `${Math.min(100, (stats.mis_horas_investigacion / 40) * 100)}%` }}
-                                    />
-                                </div>
-                                <span className="text-[10px] text-text-dim mt-2 block font-medium">
-                                    Dedicación asignada de un máximo de 40 hrs semanales.
-                                </span>
-                            </div>
-                        )}
+                            );
+                        })()}
                     </div>
                 </div>
             )}

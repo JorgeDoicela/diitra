@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Search, Shield, User as UserIcon, X, RefreshCw,
     Settings2, GraduationCap, UserPlus, History, Globe,
-    Activity, ChevronRight, Mail, Hash,
+    Activity, ChevronRight, Mail, Hash, Briefcase, TrendingUp,
     Fingerprint, XCircle, AlertTriangle, CheckCircle, FileText
 } from 'lucide-react';
 import api from '../../api/axios_config';
@@ -19,6 +19,7 @@ interface ManagedUser {
     orcid_id?: string;
     firma_habilitada: boolean;
     horas_investigacion?: number;
+    horas_asignadas?: number;
     carrera?: string;
     nivel?: string;
 }
@@ -597,11 +598,16 @@ const UsersPage = () => {
                                     </td>
                                     <td className="p-4">
                                         {u.type === 'DOCENTE' ? (
-                                             <div className="space-y-1">
-                                                 <div className="flex items-center gap-2">
-                                                     <span className={`badge-vercel ${(u.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
-                                                         <Activity size={10} />
-                                                         {u.horas_investigacion || 0}h Investigación
+                                             <div className="space-y-1.5">
+                                                 <div className="flex flex-wrap items-center gap-1.5">
+                                                     <span className={`badge-vercel ${(u.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`} title="Horas Distributivo (SIGAFI)">
+                                                         SIGAFI: {u.horas_investigacion || 0}h
+                                                     </span>
+                                                     <span className={`badge-vercel ${(u.horas_asignadas || 0) > 0 ? 'badge-vercel-info' : 'badge-vercel-neutral'}`} title="Horas Comprometidas en Proyectos (DIITRA)">
+                                                         Asig: {u.horas_asignadas || 0}h
+                                                     </span>
+                                                     <span className={`badge-vercel ${((u.horas_investigacion || 0) - (u.horas_asignadas || 0)) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`} title="Horas Disponibles">
+                                                         Disp: {Math.max(0, (u.horas_investigacion || 0) - (u.horas_asignadas || 0))}h
                                                      </span>
                                                  </div>
                                                  <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
@@ -932,10 +938,24 @@ const UsersPage = () => {
                                     <div className="divider-vercel !my-0" />
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <p className="section-label text-text-dim mb-1">Horas Investigación</p>
+                                            <p className="section-label text-text-dim mb-1">Horas Distributivo (SIGAFI)</p>
                                             <div className={`badge-vercel ${(detailUser.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
                                                 <Activity size={10} />
                                                 {detailUser.horas_investigacion || 0}h
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="section-label text-text-dim mb-1">Horas Asignadas (DIITRA)</p>
+                                            <div className={`badge-vercel ${(detailUser.horas_asignadas || 0) > 0 ? 'badge-vercel-info' : 'badge-vercel-neutral'}`}>
+                                                <Briefcase size={10} />
+                                                {detailUser.horas_asignadas || 0}h
+                                            </div>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="section-label text-text-dim mb-1">Horas Disponibles</p>
+                                            <div className={`badge-vercel ${((detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0)) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
+                                                <TrendingUp size={10} />
+                                                {Math.max(0, (detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0))}h
                                             </div>
                                         </div>
                                         <div className="col-span-2">

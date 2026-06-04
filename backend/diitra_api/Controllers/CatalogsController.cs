@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.data.models;
+using diitra_domain.Identity.Entities;
 
 namespace diitra_api.Controllers
 {
@@ -355,12 +356,36 @@ namespace diitra_api.Controllers
                         tipo = "profesor"
                     });
 
-                var profsList = await profesoresSelect.ToListAsync();
+                 var profsList = await profesoresSelect.ToListAsync();
                 var ids = profsList.Select(p => p.cedula).ToList();
                 var profCareers = await _context.ProfesoresCarrerasPeriodos
                     .Include(pc => pc.IdCarreraNavigation)
                     .Where(pc => ids.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
                     .ToListAsync();
+
+                var researchHours = new List<ProfesoresActividade>();
+                var assignedHoursList = new List<InvProyectoProfesor>();
+                var linkedUsersList = new List<User>();
+                if (ids.Any() && !string.IsNullOrEmpty(periodId))
+                {
+                    researchHours = await _context.ProfesoresActividades
+                        .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
+                        .ToListAsync();
+
+                    linkedUsersList = await _context.Users
+                        .Where(u => ids.Contains(u.IdSigafi.Trim()))
+                        .ToListAsync();
+                    var linkedUserIds = linkedUsersList.Select(u => u.IdUsuario).ToList();
+
+                    assignedHoursList = await _context.InvProyectosProfesores
+                        .Include(pp => pp.IdProyectoNavigation)
+                        .Where(pp => linkedUserIds.Contains(pp.IdUsuario) && pp.Activo != false &&
+                                     (pp.IdProyectoNavigation.Estado == "Enviado" ||
+                                      pp.IdProyectoNavigation.Estado == "En Revisión" ||
+                                      pp.IdProyectoNavigation.Estado == "Aprobado" ||
+                                      pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                        .ToListAsync();
+                }
 
                 profs = profsList.Select(p => {
                     var linkedCareers = profCareers
@@ -368,6 +393,12 @@ namespace diitra_api.Controllers
                         .Select(pc => pc.IdCarreraNavigation!.Carrera1)
                         .ToList();
                     var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+
+                    var availableHours = researchHours.Where(pa => pa.IdProfesor.Trim() == p.cedula).Sum(pa => pa.HorasSemana ?? 0);
+                    var userObj = linkedUsersList.FirstOrDefault(u => u.IdSigafi.Trim() == p.cedula);
+                    var assignedHours = userObj != null
+                        ? assignedHoursList.Where(ah => ah.IdUsuario == userObj.IdUsuario).Sum(ah => ah.HorasSemanales ?? 0)
+                        : 0;
 
                     return new {
                         p.cedula,
@@ -377,7 +408,9 @@ namespace diitra_api.Controllers
                         p.nivelAcademico,
                         p.rol,
                         p.tipo,
-                        carrera = carreraNom
+                        carrera = carreraNom,
+                        horasDisponibles = availableHours,
+                        horasAsignadas = assignedHours
                     };
                 }).Cast<object>().ToList();
             }

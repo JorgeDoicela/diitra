@@ -77,7 +77,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                 />
                             </div>
-                            <div className="md:col-span-5">
+                            <div className="md:col-span-3">
                                 <CoWorkField 
                                     name={`Inv_${_inv.id || idx}_nivel`} 
                                     cowork={cowork} 
@@ -87,13 +87,23 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     placeholder="Ej: Magíster en..."
                                 />
                             </div>
-                            <div className="md:col-span-4">
+                            <div className="md:col-span-3">
                                 <CoWorkField 
                                     name={`Inv_${_inv.id || idx}_rol`} 
                                     cowork={cowork} 
                                     label="Rol"
                                     onValueChange={(v) => onUpdate(idx, 'Rol', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                />
+                            </div>
+                            <div className="md:col-span-3">
+                                <CoWorkField 
+                                    name={`Inv_${_inv.id || idx}_horas`} 
+                                    cowork={cowork} 
+                                    label="Horas Semanales"
+                                    onValueChange={(v) => onUpdate(idx, 'HorasSemanales', v ? parseFloat(v) : null)}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                    placeholder="Ej: 12"
                                 />
                             </div>
                         </div>

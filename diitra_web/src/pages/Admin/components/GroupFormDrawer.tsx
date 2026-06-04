@@ -896,7 +896,18 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                             className="w-full p-3 flex items-center justify-between hover:bg-surface-hover text-left transition-colors"
                                                         >
                                                             <div className="space-y-1 truncate pr-2">
-                                                                <p className="font-bold text-text-main text-xs uppercase truncate">{selectedUser.nombre}</p>
+                                                                <p className="font-bold text-text-main text-xs uppercase truncate flex items-center gap-2">
+                                                                    <span>{selectedUser.nombre}</span>
+                                                                    {selectedUser.horas_disponibles !== undefined && (
+                                                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                                                                            (selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)) > 0 
+                                                                                ? 'bg-success/15 text-success border border-success/30' 
+                                                                                : 'bg-error/15 text-error border border-error/30'
+                                                                        }`}>
+                                                                            Disp: {selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)}h / {selectedUser.horas_disponibles}h
+                                                                        </span>
+                                                                    )}
+                                                                </p>
                                                                 <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(selectedUser)}</p>
                                                             </div>
                                                             <span className="px-2 py-0.5 rounded text-[8px] shrink-0 font-extrabold tracking-wider uppercase border bg-text-main/10 border-text-main/20 text-text-main">
@@ -1013,7 +1024,18 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
                                                                     >
                                                                         <div className="space-y-0.5">
-                                                                            <p className="font-bold text-text-main text-xs uppercase">{teacher.nombre}</p>
+                                                                            <p className="font-bold text-text-main text-xs uppercase flex items-center gap-2">
+                                                                                <span>{teacher.nombre}</span>
+                                                                                {teacher.horas_disponibles !== undefined && (
+                                                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                                                                                        (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
+                                                                                            ? 'bg-success/15 text-success border border-success/30' 
+                                                                                            : 'bg-error/15 text-error border border-error/30'
+                                                                                    }`}>
+                                                                                        Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
+                                                                                    </span>
+                                                                                )}
+                                                                            </p>
                                                                             <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(teacher)}</p>
                                                                         </div>
                                                                         <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-emerald-500/15 border-emerald-500/25 text-emerald-400">

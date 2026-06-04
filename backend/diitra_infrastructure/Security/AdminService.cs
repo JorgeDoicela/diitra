@@ -248,7 +248,17 @@ public class AdminService : IAdminService
                 .Where(pa => ids.Contains(pa.IdProfesor) && pa.IdSubcategoria == 7 && pa.IdPeriodo == periodId)
                 .ToListAsync();
 
-
+            // Obtener horas comprometidas en proyectos activos/enviados
+            var linkedUserIdsQuery = linkedUsers.Select(u => u.IdUsuario).ToList();
+            var assignedHoursList = await _context.InvProyectosProfesores
+                .Include(pp => pp.IdProyectoNavigation)
+                .Where(pp => linkedUserIdsQuery.Contains(pp.IdUsuario) && pp.Activo != false &&
+                             (pp.IdProyectoNavigation.Estado == "Enviado" ||
+                              pp.IdProyectoNavigation.Estado == "En Revisión" ||
+                              pp.IdProyectoNavigation.Estado == "Aprobado" ||
+                              pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                .Select(pp => new { pp.IdUsuario, pp.HorasSemanales })
+                .ToListAsync();
 
             // Obtener carreras vinculadas a los docentes en este periodo cargando su navegación
             var profCareers = await _context.ProfesoresCarrerasPeriodos
@@ -274,6 +284,10 @@ public class AdminService : IAdminService
                 var firstUserId = linkedUser?.IdUsuario ?? roleInfo.FirstOrDefault()?.User?.IdUsuario;
                 var userMeta = firstUserId.HasValue ? metadatas.FirstOrDefault(m => m.IdUsuario == firstUserId.Value) : null;
 
+                var assignedHours = firstUserId.HasValue
+                    ? assignedHoursList.Where(ah => ah.IdUsuario == firstUserId.Value).Sum(ah => ah.HorasSemanales ?? 0)
+                    : 0;
+
                 // Buscar carrera vinculada al docente en este periodo usando la navegación precargada
                 var linkedCareers = profCareers
                     .Where(pc => pc.IdProfesor.Trim() == pId && pc.IdCarreraNavigation != null)
@@ -295,7 +309,8 @@ public class AdminService : IAdminService
                     FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
                     Carrera = carreraNom,
                     Nivel = "N/A",
-                    HorasInvestigacion = hours
+                    HorasInvestigacion = hours,
+                    HorasAsignadas = assignedHours
                 };
             }).ToList();
         }
