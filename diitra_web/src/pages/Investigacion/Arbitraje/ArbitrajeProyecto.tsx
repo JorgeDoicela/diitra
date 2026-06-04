@@ -15,10 +15,12 @@ import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../
 import AsignarArbitroModal from './AsignarArbitroModal';
 import DictamenModal from './DictamenModal';
 import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 const ArbitrajeProyecto: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
+    const { addToast } = useNotifications();
 
     const [arbitraje, setArbitraje] = useState<ArbitrajeProyectoDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -59,8 +61,9 @@ const ArbitrajeProyecto: React.FC = () => {
             });
             setProjectAutoExtendDeadlines(autoExtend);
             setProjectAutoExtendDays(days);
+            addToast('Configuración Guardada', 'La configuración de prórrogas ha sido guardada con éxito.', 'success');
         } catch (err: any) {
-            alert(err?.response?.data?.message ?? 'Error al guardar la configuración de prórrogas.');
+            addToast('Error', err?.response?.data?.message ?? 'Error al guardar la configuración de prórrogas.', 'error');
         } finally {
             setSavingSettings(false);
         }
@@ -77,8 +80,9 @@ const ArbitrajeProyecto: React.FC = () => {
             const result = await cerrarArbitraje(projectUuid);
             setDictamen(result);
             loadData();
+            addToast('Arbitraje Cerrado', 'El arbitraje ha sido cerrado y el dictamen final emitido con éxito.', 'success');
         } catch (err: any) {
-            alert(err?.response?.data?.message ?? 'Error al cerrar el arbitraje.');
+            addToast('Error', err?.response?.data?.message ?? 'Error al cerrar el arbitraje.', 'error');
         } finally {
             setCerrando(false);
         }
@@ -101,7 +105,7 @@ const ArbitrajeProyecto: React.FC = () => {
             URL.revokeObjectURL(url);
         } catch (err: any) {
             console.error('[DIITRA] Error descargando dictamen PDF:', err);
-            alert(err?.response?.data?.message ?? 'No se pudo descargar el Acta de Dictamen.');
+            addToast('Error de Descarga', err?.response?.data?.message ?? 'No se pudo descargar el Acta de Dictamen.', 'error');
         } finally {
             setDescargandoPdf(false);
         }
@@ -112,8 +116,9 @@ const ArbitrajeProyecto: React.FC = () => {
         try {
             await revocarAsignacion(rev.uuid);
             loadData();
+            addToast('Asignación Revocada', 'La asignación del árbitro ha sido revocada con éxito.', 'success');
         } catch {
-            alert('No se pudo revocar la asignación.');
+            addToast('Error', 'No se pudo revocar la asignación.', 'error');
         }
     };
 
@@ -124,8 +129,9 @@ const ArbitrajeProyecto: React.FC = () => {
         try {
             await iniciarEjecucion(projectUuid);
             loadData();
+            addToast('Ejecución Iniciada', 'El proyecto ha pasado a la fase de ejecución con éxito.', 'success');
         } catch (err: any) {
-            alert(err?.response?.data?.message ?? 'Error al iniciar ejecución.');
+            addToast('Error', err?.response?.data?.message ?? 'Error al iniciar ejecución.', 'error');
         } finally {
             setIniciandoEjecucion(false);
         }

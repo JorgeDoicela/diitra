@@ -8,6 +8,7 @@ import {
     BookOpen, Layers
 } from 'lucide-react';
 import api from '../../../api/axios_config';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 interface Convocatoria {
     uuid: string;
@@ -47,6 +48,7 @@ interface Catalogo {
 }
 
 const ConvocatoriasPage = () => {
+    const { addToast } = useNotifications();
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [periodos, setPeriodos] = useState<Periodo[]>([]);
     const [tiposConv, setTiposConv] = useState<Catalogo[]>([]);
@@ -310,7 +312,7 @@ const ConvocatoriasPage = () => {
                 isInitializedRef.current = true;
                 setShowModal(true);
             } else {
-                alert("No se pudo encontrar el registro original de la convocatoria.");
+                addToast('Error', 'No se pudo encontrar el registro original de la convocatoria.', 'error');
             }
         }
     };
@@ -518,16 +520,16 @@ const ConvocatoriasPage = () => {
         try {
             await api.patch(`/Convocatorias/${uuid}/status?status=${newStatus}`);
             if (newStatus === 'Abierta') {
-                alert('Convocatoria publicada exitosamente. Se ha notificado a los docentes.');
+                addToast('Publicación Exitosa', 'Convocatoria publicada exitosamente. Se ha notificado a los docentes.', 'success');
             } else {
-                alert(`Estado actualizado a ${newStatus}.`);
+                addToast('Estado Actualizado', `Estado actualizado a ${newStatus}.`, 'success');
             }
             fetchConvocatorias();
         } catch (error: any) {
             const message = error?.response?.status === 403
-                ? 'No tienes permisos para realizar esta accion.'
+                ? 'No tienes permisos para realizar esta acción.'
                 : `Error al cambiar el estado: ${error?.response?.data?.message || error.message}`;
-            alert(message);
+            addToast('Error', message, 'error');
         }
     };
 

@@ -14,6 +14,7 @@ import {
 } from '../../../services/peerReviewService';
 import type { ArbitrajeProyectoDto, ArbitrajeStatsDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal.tsx';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 // ─────────────────────────────────────────────────────────────
 //  CACES Alert type
@@ -248,6 +249,7 @@ import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
 // ─────────────────────────────────────────────────────────────
 const ArbitrajePage: React.FC = () => {
     const navigate = useNavigate();
+    const { addToast } = useNotifications();
     const [proyectos, setProyectos] = useState<ArbitrajeProyectoDto[]>([]);
     const [stats, setStats] = useState<ArbitrajeStatsDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -297,7 +299,7 @@ const ArbitrajePage: React.FC = () => {
             URL.revokeObjectURL(url);
         } catch (err: any) {
             console.error('[DIITRA] Error descargando dictamen PDF:', err);
-            alert(err?.response?.data?.message ?? 'No se pudo descargar el Acta de Dictamen. Ejecute el cierre formal primero.');
+            addToast('Error de Descarga', err?.response?.data?.message ?? 'No se pudo descargar el Acta de Dictamen. Ejecute el cierre formal primero.', 'error');
         } finally {
             setDescargandoPdf(null);
         }

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { useAuth } from '../../../api/AuthContext';
+import { useNotifications } from '../../../api/NotificationsContext';
 import type {
     InformeAvanceDto,
     CreateInformeAvanceDto,
@@ -31,6 +32,7 @@ const InformesAvancePage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
     const { isAdmin, roles } = useAuth();
+    const { addToast } = useNotifications();
     const canReview = isAdmin || roles?.includes('DIRECTOR_INV');
 
     const [informes, setInformes] = useState<InformeAvanceDto[]>([]);
@@ -111,10 +113,10 @@ const InformesAvancePage: React.FC = () => {
             if (instanceUuid) {
                 setEditorInstanceUuid(instanceUuid);
             } else {
-                alert('No se pudo abrir el editor del informe.');
+                addToast('Error de Editor', 'No se pudo abrir el editor del informe.', 'error');
             }
         } catch {
-            alert('No se pudo abrir el editor CACES (hitos, evidencias y presupuesto).');
+            addToast('Error de Editor CACES', 'No se pudo abrir el editor CACES (hitos, evidencias y presupuesto).', 'error');
         } finally {
             setOpeningEditor(false);
         }

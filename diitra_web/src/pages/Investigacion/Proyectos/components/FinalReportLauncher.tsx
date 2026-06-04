@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../../api/axios_config';
+import { useNotifications } from '../../../../api/NotificationsContext';
 
 interface Project {
     uuid: string;
@@ -44,6 +45,7 @@ const getEstadoDotClass = (estado: string) => {
 };
 
 const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) => {
+    const { addToast } = useNotifications();
     const [projects, setProjects] = useState<Project[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
@@ -85,7 +87,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
             onClose();
         } catch (err: any) {
             console.error("[DIITRA] Error al lanzar informe:", err.response?.data || err.message);
-            alert(`Error: ${err.response?.data?.message || "No se pudo inicializar el Informe Final."}`);
+            addToast('Error', err.response?.data?.message || "No se pudo inicializar el Informe Final.", 'error');
         }
     };
 

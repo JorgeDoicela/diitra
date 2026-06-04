@@ -6,6 +6,7 @@ import {
     Plus, Trash2, ArrowUpRight, BarChart3, X 
 } from 'lucide-react';
 import api from '../../../api/axios_config';
+import { useNotifications } from '../../../api/NotificationsContext';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
@@ -26,6 +27,7 @@ interface GastoRegistrado {
 export const MonitoringPage: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
+    const { addToast } = useNotifications();
 
     const [activeTab, setActiveTab] = useState<'cronograma' | 'presupuesto'>('cronograma');
     const [projectDetail, setProjectDetail] = useState<any>(null);
@@ -68,7 +70,7 @@ export const MonitoringPage: React.FC = () => {
     const handleAddGasto = (e: React.FormEvent) => {
         e.preventDefault();
         if (!nuevoGasto.descripcion || !nuevoGasto.monto) {
-            alert('Por favor complete los campos obligatorios');
+            addToast('Campos Requeridos', 'Por favor complete los campos obligatorios', 'warning');
             return;
         }
 
@@ -84,6 +86,7 @@ export const MonitoringPage: React.FC = () => {
 
         setGastos(prev => [gasto, ...prev]);
         setShowGastoModal(false);
+        addToast('Egreso Registrado', 'El egreso ha sido registrado con éxito en el Libro Diario.', 'success');
         setNuevoGasto({
             descripcion: '',
             partida: '',
@@ -96,6 +99,7 @@ export const MonitoringPage: React.FC = () => {
     const handleDeleteGasto = (id: string) => {
         if (!window.confirm('¿Está seguro de eliminar este registro de gasto?')) return;
         setGastos(prev => prev.filter(g => g.id !== id));
+        addToast('Egreso Eliminado', 'El egreso ha sido eliminado con éxito.', 'success');
     };
 
     // Cálculos financieros consolidantes
