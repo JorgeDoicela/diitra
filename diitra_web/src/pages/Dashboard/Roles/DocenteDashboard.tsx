@@ -121,9 +121,9 @@ export const DocenteDashboard: React.FC = () => {
 
                         {/* Actividad reciente */}
                         <div className="bento-card static bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden animate-fade-up">
-                            <div className="flex items-center gap-2 px-6 py-4 border-b border-border-thin bg-surface/30">
+                            <div className="flex items-center gap-2 px-6 py-4 border-b border-border-thin">
                                 <TrendingUp size={14} className="text-text-dim" />
-                                <span className="text-xs font-bold text-text-dim uppercase tracking-wider">Actividad Reciente</span>
+                                <span className="text-sm font-medium text-text-dim">Actividad reciente</span>
                             </div>
                             
                             <div className="divide-y divide-border-thin bg-bg-deep/10">
@@ -179,7 +179,7 @@ export const DocenteDashboard: React.FC = () => {
                                             >
                                                 {/* Col 1: Title & Description */}
                                                 <div className="flex-1 min-w-0 md:max-w-xs lg:max-w-md xl:max-w-2xl">
-                                                    <h4 className="text-xs font-bold text-text-main truncate group-hover:text-brand transition-colors" title={item.descripcion}>
+                                                    <h4 className="text-xs font-medium text-text-main truncate group-hover:text-brand transition-colors" title={item.descripcion}>
                                                         {item.descripcion}
                                                     </h4>
                                                 </div>
