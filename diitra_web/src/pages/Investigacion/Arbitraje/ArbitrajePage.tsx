@@ -334,8 +334,6 @@ const ArbitrajePage: React.FC = () => {
     const totalExternos = proyectos.flatMap(p => p.revisiones).filter(r => r.es_externo).length;
     const pctExternos = totalArbitrosAsignados > 0 ? Math.round((totalExternos / totalArbitrosAsignados) * 100) : 0;
 
-    const alertasBanners = alertas.filter(a => !alertasDismissed.has(a.id));
-
     return (
         <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* ── Header ─────────────────────────────────── */}
@@ -1029,8 +1027,8 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                     viewBox="0 0 24 24" 
                                     stroke="currentColor" 
                                     strokeWidth="2.5"
-                                    title={item.tooltip}
                                 >
+                                    <title>{item.tooltip}</title>
                                     <circle cx="12" cy="12" r="10" />
                                     <line x1="12" y1="16" x2="12" y2="12" />
                                     <line x1="12" y1="8" x2="12.01" y2="8" />

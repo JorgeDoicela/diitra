@@ -3,6 +3,7 @@ import * as signalR from '@microsoft/signalr';
 import api from './axios_config';
 import { useAuth } from './AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { CheckCircle2, AlertCircle, Info, XCircle, Bell, X } from 'lucide-react';
 
 interface Notification {
     uuid: string;
@@ -14,6 +15,14 @@ interface Notification {
     url_accion?: string;
 }
 
+export interface Toast {
+    id: string;
+    title: string;
+    body: string;
+    type?: 'success' | 'error' | 'warning' | 'info' | 'default';
+    url?: string;
+}
+
 interface NotificationsContextType {
     notifications: Notification[];
     unreadCount: number;
@@ -22,6 +31,7 @@ interface NotificationsContextType {
     markAllAsRead: () => Promise<void>;
     isLoading: boolean;
     isConnected: boolean;
+    addToast: (title: string, body: string, type?: 'success' | 'error' | 'warning' | 'info' | 'default', url?: string) => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextType | undefined>(undefined);
@@ -33,7 +43,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
     const [connection, setConnection] = useState<signalR.HubConnection | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const navigate = useNavigate();
-    const [toasts, setToasts] = useState<{ id: string; title: string; body: string; url?: string }[]>([]);
+    const [toasts, setToasts] = useState<Toast[]>([]);
 
     const requestNotificationPermission = useCallback(async () => {
         if (!('Notification' in window)) return;
@@ -46,27 +56,27 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         }
     }, []);
 
-    const addToast = useCallback((title: string, body: string, url?: string) => {
+    const addToast = useCallback((title: string, body: string, type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default', url?: string) => {
         const id = Math.random().toString(36).substring(2, 9);
         
         // Limpiar etiquetas HTML para que el toast en app se vea limpio y profesional
         const cleanBody = body.replace(/<\/?[^>]+(>|$)/g, "");
         
-        setToasts(prev => [...prev, { id, title, body: cleanBody, url }]);
+        setToasts(prev => [...prev, { id, title, body: cleanBody, type, url }]);
         
-        // Auto-remove after 6 seconds
+        // Auto-remove after 5 seconds
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
-        }, 6000);
+        }, 5000);
 
         // Evitar duplicar la notificación nativa si Web Push está activo y sincronizado en este navegador
         const isWebPushActive = localStorage.getItem('web_push_active') === 'true';
 
-        // Solo lanzamos la notificación nativa de SignalR si Web Push no está activo y tenemos permisos
+        // Solo lanzamos la notificación nativa si Web Push no está activo y tenemos permisos
         if (!isWebPushActive && 'Notification' in window && Notification.permission === 'granted') {
             try {
                 const n = new window.Notification(title, {
-                    body: cleanBody, // Usar cuerpo limpio de HTML
+                    body: cleanBody,
                     icon: '/favicon.ico'
                 });
                 
@@ -149,7 +159,14 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                 newConnection.on('ReceiveNotification', (payload?: any) => {
                     fetchNotifications();
                     if (payload && payload.title && payload.body) {
-                        addToast(payload.title, payload.body, payload.url || undefined);
+                        // Mapear categoría si viene en el payload o usar 'default'
+                        let type: 'success' | 'error' | 'warning' | 'info' | 'default' = 'default';
+                        if (payload.categoria === 'SUCCESS') type = 'success';
+                        else if (payload.categoria === 'ERROR') type = 'error';
+                        else if (payload.categoria === 'WARNING') type = 'warning';
+                        else if (payload.categoria === 'INFO') type = 'info';
+
+                        addToast(payload.title, payload.body, type, payload.url || undefined);
                     }
                 });
             })
@@ -191,44 +208,67 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
             markAsRead,
             markAllAsRead,
             isLoading,
-            isConnected
+            isConnected,
+            addToast
         }}>
             {children}
 
             {/* Real-time Vercel-style Toasts */}
             <div className="toast-container-vercel">
-                {toasts.map(t => (
-                    <div 
-                        key={t.id} 
-                        className="toast-vercel group cursor-pointer hover:border-text-main"
-                        onClick={() => {
-                            if (t.url) {
-                                navigate(t.url);
-                            }
-                            setToasts(prev => prev.filter(x => x.id !== t.id));
-                        }}
-                    >
-                        <span className="dot dot-brand mt-1.5 dot-pulse" />
-                        <div className="flex-1 space-y-1">
-                            <h4 className="text-xs font-bold text-text-main leading-tight">{t.title}</h4>
-                            <p className="text-[10px] text-text-dim leading-relaxed">{t.body}</p>
-                            {t.url && (
-                                <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase mt-1">
-                                    Ver detalle
-                                </span>
-                            )}
-                        </div>
-                        <button 
-                            className="text-[10px] text-text-dim hover:text-text-main ml-2"
-                            onClick={(e) => {
-                                e.stopPropagation();
+                {toasts.map(t => {
+                    const toastType = t.type || 'default';
+                    let IconComponent = Bell;
+                    let typeClass = 'toast-vercel-default';
+
+                    if (toastType === 'success') {
+                        IconComponent = CheckCircle2;
+                        typeClass = 'toast-vercel-success';
+                    } else if (toastType === 'error') {
+                        IconComponent = XCircle;
+                        typeClass = 'toast-vercel-error';
+                    } else if (toastType === 'warning') {
+                        IconComponent = AlertCircle;
+                        typeClass = 'toast-vercel-warning';
+                    } else if (toastType === 'info') {
+                        IconComponent = Info;
+                        typeClass = 'toast-vercel-info';
+                    }
+
+                    return (
+                        <div 
+                            key={t.id} 
+                            className={`toast-vercel ${typeClass} group cursor-pointer`}
+                            onClick={() => {
+                                if (t.url) {
+                                    navigate(t.url);
+                                }
                                 setToasts(prev => prev.filter(x => x.id !== t.id));
                             }}
                         >
-                            ✕
-                        </button>
-                    </div>
-                ))}
+                            <div className={`toast-icon-wrapper toast-icon-${toastType}`}>
+                                <IconComponent size={14} />
+                            </div>
+                            <div className="flex-1 min-w-0 space-y-0.5">
+                                <h4 className="text-xs font-semibold text-text-main leading-tight">{t.title}</h4>
+                                <p className="text-[10px] text-text-dim leading-relaxed">{t.body}</p>
+                                {t.url && (
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-brand font-bold uppercase mt-1">
+                                        Ver detalle
+                                    </span>
+                                )}
+                            </div>
+                            <button 
+                                className="text-text-dim hover:text-text-main ml-2 shrink-0 p-1 rounded hover:bg-surface-hover transition-colors"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setToasts(prev => prev.filter(x => x.id !== t.id));
+                                }}
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    );
+                })}
             </div>
         </NotificationsContext.Provider>
     );

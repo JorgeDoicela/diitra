@@ -24,6 +24,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
+import { useNotifications } from '../../../../api/NotificationsContext';
 import { iniciarEjecucion } from '../../../../services/peerReviewService';
 import DocumentEditor from '../Wizard/DocumentEditor';
 import WorkspaceActivityPanel from './WorkspaceActivityPanel';
@@ -52,6 +53,7 @@ const estadoConfig = (estado: string) =>
 export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
     const { user, isAdmin, roles } = useAuth();
+    const { addToast } = useNotifications();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -226,9 +228,10 @@ export const ProjectWorkspace: React.FC = () => {
                 fecha_registro_senadi: ''
             });
             fetchProducts(resolvedProjectUuid);
+            addToast("Producto Registrado", "Producto de investigación registrado con éxito.", "success");
         } catch (err) {
             console.error("[DIITRA] Error al crear producto", err);
-            alert("Error al registrar el producto");
+            addToast("Error al Registrar", "Error al registrar el producto.", "error");
         }
     };
 
@@ -263,8 +266,9 @@ export const ProjectWorkspace: React.FC = () => {
                 status: res.data.estado || 'En Ejecución',
                 codigoInstitucional: res.data.codigo_institucional,
             });
+            addToast("Inicio de Ejecución", "Se ha iniciado la fase de ejecución exitosamente.", "success");
         } catch (e: any) {
-            alert(e?.response?.data?.message ?? 'No se pudo iniciar la ejecución.');
+            addToast("Error al Iniciar Ejecución", e?.response?.data?.message ?? 'No se pudo iniciar la ejecución.', "error");
         } finally {
             setIniciandoEjecucion(false);
         }
@@ -399,7 +403,7 @@ export const ProjectWorkspace: React.FC = () => {
     const handleConfirmTransfer = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newDirectorCedula) {
-            alert("Por favor selecciona un nuevo director.");
+            addToast("Validación de Relevo", "Por favor selecciona un nuevo director.", "warning");
             return;
         }
         setIsTransferring(true);
@@ -410,7 +414,7 @@ export const ProjectWorkspace: React.FC = () => {
                 descripcion: transferDescripcion
             });
             if (res.data.success) {
-                setTeamMessage({ type: 'success', text: '¡Transferencia de dirección realizada con éxito!' });
+                addToast("Transferencia Exitosa", "¡Transferencia de dirección realizada con éxito!", "success");
                 setShowTransferModal(false);
                 const updatedProjectRes = await api.get(`/projects/${currentProject.uuid}/detail`);
                 setInvestigadores(updatedProjectRes.data.investigadores || []);
@@ -419,14 +423,13 @@ export const ProjectWorkspace: React.FC = () => {
                     ...prev,
                     tieneGrupoInvestigacion: updatedProjectRes.data.tieneGrupoInvestigacion
                 }));
-                setTimeout(() => setTeamMessage(null), 5000);
             } else {
-                alert(res.data.message || "Error al realizar la transferencia.");
+                addToast("Error de Transferencia", res.data.message || "Error al realizar la transferencia.", "error");
             }
         } catch (err: any) {
             console.error("[DIITRA] Error en transferencia de director", err);
             const errMsg = err.response?.data?.message || err.response?.data?.error || "Error al realizar la transferencia.";
-            alert(errMsg);
+            addToast("Error de Transferencia", errMsg, "error");
         } finally {
             setIsTransferring(false);
         }
@@ -462,7 +465,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleAddMember = (selectedUser: any) => {
         if (investigadores.some(inv => inv.cedula?.trim() === selectedUser.cedula?.trim())) {
-            alert("Esta persona ya está registrada en el equipo de trabajo.");
+            addToast("Miembro Existente", "Esta persona ya está registrada en el equipo de trabajo.", "warning");
             return;
         }
         const newMember = {
@@ -503,18 +506,17 @@ export const ProjectWorkspace: React.FC = () => {
             }));
             const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload);
             if (res.data.success) {
-                setTeamMessage({ type: 'success', text: '¡Equipo de trabajo guardado y sincronizado con éxito!' });
+                addToast("Equipo de Trabajo", "¡Equipo de trabajo guardado y sincronizado con éxito!", "success");
                 const isGroup = investigadores.length > 1;
                 setTieneGrupo(isGroup);
                 setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: isGroup }));
-                setTimeout(() => setTeamMessage(null), 4000);
             } else {
-                setTeamMessage({ type: 'error', text: res.data.message || 'Error al guardar los cambios.' });
+                addToast("Error al Guardar", res.data.message || 'Error al guardar los cambios.', "error");
             }
         } catch (err: any) {
             console.error("[DIITRA] Error al guardar equipo de trabajo", err);
             const errMsg = err.response?.data?.message || err.response?.data?.error || 'Ocurrió un error inesperado al guardar.';
-            setTeamMessage({ type: 'error', text: errMsg });
+            addToast("Error al Guardar", errMsg, "error");
         } finally {
             setIsSavingTeam(false);
         }
@@ -563,7 +565,7 @@ export const ProjectWorkspace: React.FC = () => {
             }
         } catch (err) {
             console.error(`[DIITRA] Error al resolver instancia de documento ${docTemplateCode}:`, err);
-            alert(`No se pudo abrir el documento. Inténtelo de nuevo.`);
+            addToast("Error de Documento", "No se pudo abrir el documento. Inténtelo de nuevo.", "error");
         } finally {
             setResolvingDocument(null);
         }
@@ -679,9 +681,10 @@ export const ProjectWorkspace: React.FC = () => {
                                     document.body.appendChild(link);
                                     link.click();
                                     link.remove();
+                                    addToast("Exportación CACES", "Metadatos CACES exportados con éxito.", "success");
                                 } catch (err) {
                                     console.error("[DIITRA] Error al exportar metadatos CACES", err);
-                                    alert("No se pudo realizar la exportación de metadatos CACES");
+                                    addToast("Error de Exportación", "No se pudo realizar la exportación de metadatos CACES", "error");
                                 }
                             }}
                             className="btn-vercel-secondary !py-2 text-xs flex-1 sm:flex-none justify-center"
@@ -695,11 +698,11 @@ export const ProjectWorkspace: React.FC = () => {
                                 try {
                                     setIsPublishingDSpace(true);
                                     const res = await api.post(`/projects/${currentProject.uuid}/publish-dspace`);
-                                    alert(`¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`);
+                                    addToast("Publicación en DSpace", `¡Proyecto publicado con éxito en DSpace! URI: ${res.data.uri}`, "success");
                                 } catch (err: any) {
                                     console.error("[DIITRA] Error al publicar en DSpace", err);
                                     const errMsg = err.response?.data?.error || "No se pudo realizar la publicación en DSpace";
-                                    alert(errMsg);
+                                    addToast("Error de Publicación", errMsg, "error");
                                 } finally {
                                     setIsPublishingDSpace(false);
                                 }
