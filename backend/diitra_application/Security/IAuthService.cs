@@ -15,4 +15,5 @@ public interface IAuthService
     Task<AuthResponse?> ValidateAndConsumeHandoffPinAsync(string pin, string? ipAddress);
     Task<string> CreateMagicLinkAsync(int idUsuario, DateTime expirationDate);
     Task<bool> ResendMagicLinkAsync(string email);
+    Task<AuthResponse?> LoginWithMicrosoftAsync(MicrosoftLoginRequest request);
 }

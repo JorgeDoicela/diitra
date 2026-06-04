@@ -164,6 +164,7 @@ builder.Services.AddScoped<IGroupsService, GroupsService>();
 builder.Services.AddScoped<IAIAssistantService, AIAssistantService>();
 builder.Services.AddScoped<Diitra.Application.Research.IWorkflowEngineService, Diitra.Infrastructure.Research.WorkflowEngineService>();
 builder.Services.AddScoped<diitra_application.Security.IAuditService, diitra_infrastructure.Security.AuditService>();
+builder.Services.AddScoped<diitra_application.Security.ILopdpService, diitra_infrastructure.Security.LopdpService>();
 
 // 3. DATABASE CONNECTION
 var connectionString = builder.Configuration.GetConnectionString("default_connection");

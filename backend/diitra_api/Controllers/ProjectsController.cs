@@ -123,11 +123,26 @@ namespace diitra_api.Controllers
             [FromForm] string password,
             [FromForm] string projectUuid,
             [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
-            [FromServices] Microsoft.Extensions.Logging.ILogger<ProjectsController> logger)
+            [FromServices] Microsoft.Extensions.Logging.ILogger<ProjectsController> logger,
+            [FromServices] diitra_infrastructure.data.models.DiitraContext context,
+            [FromServices] diitra_application.Security.ILopdpService lopdpService)
         {
             try 
             {
                 logger.LogInformation("[DIITRA CORE] Solicitud de firma avanzada PAdES para proyecto {Uuid}", projectUuid);
+
+                // ── LOPDP: Verificar consentimiento de firma electrónica antes de firmar ──
+                var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+                var dbUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+                if (dbUser == null) return Unauthorized();
+
+                var userMeta = await context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == dbUser.IdUsuario);
+                if (userMeta == null || !userMeta.AceptoTerminosFirma)
+                {
+                    return BadRequest(new { error = "Debe aceptar los términos y condiciones de firma electrónica (conforme a la LOPDP) en su perfil antes de proceder a la firma." });
+                }
 
                 // 1. Obtener los datos reales del proyecto
                 var projectDto = await _projectOrchestrator.GetProjectDetailAsync(projectUuid);
@@ -180,6 +195,20 @@ namespace diitra_api.Controllers
                     signedPdfBytes = genResult.PdfBytes;
                 }
 
+                // ── LOPDP: Registrar auditoría de acceso a datos sensibles ──
+                var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+                var userAgent = Request.Headers["User-Agent"].ToString();
+                await lopdpService.AuditoriaAccesoDatosAsync(
+                    dbUser.IdUsuario,
+                    dbUser.IdUsuario,
+                    "inv_usuarios_metadata",
+                    "rutaFirmaP12",
+                    "DESCARGA",
+                    $"Uso y validación del certificado digital para firma del proyecto {projectDto.Titulo}",
+                    ip,
+                    userAgent);
+
+
                 // 4. Sello de Trazabilidad e Integridad (SHA-256)
                 string finalHash;
                 using (var sha256 = System.Security.Cryptography.SHA256.Create())
@@ -200,7 +229,6 @@ namespace diitra_api.Controllers
                 // 6. Sellar y Registrar Instancia de Documento (Integración CoWork Read-Only)
                 try
                 {
-                    var context = HttpContext.RequestServices.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
                     var instance = await context.DocumentInstances
                         .FirstOrDefaultAsync(i => i.EntityUuid == projectDto.Uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION");
 

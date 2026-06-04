@@ -821,4 +821,98 @@ public class AuthService : IAuthService
 
         return true;
     }
+
+    public async Task<AuthResponse?> LoginWithMicrosoftAsync(MicrosoftLoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.IdToken))
+            return null;
+
+        string email;
+        string fullName;
+
+        try
+        {
+            var handler = new JwtSecurityTokenHandler();
+            if (!handler.CanReadToken(request.IdToken))
+            {
+                return null;
+            }
+
+            var jwtToken = handler.ReadJwtToken(request.IdToken);
+            
+            // Extraer claims
+            email = jwtToken.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value 
+                         ?? jwtToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value 
+                         ?? "";
+            email = email.Trim().ToLower();
+
+            fullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "";
+        }
+        catch
+        {
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(email))
+            return null;
+
+        var emailPrefix = email.Contains('@') ? email.Split('@')[0] : email;
+
+        // 1. Buscar en usuarios de DIITRA
+        var user = await _context.Users.FirstOrDefaultAsync(u => 
+            u.Activo && 
+            ((u.EmailInstitucional != null && u.EmailInstitucional.ToLower() == email) || 
+             u.IdSigafi.ToLower() == email || 
+             u.IdSigafi.ToLower() == emailPrefix));
+
+        if (user == null)
+        {
+            // 2. Intentar buscar en Profesores para JIT Provisioning
+            var profesor = await _context.Profesores.FirstOrDefaultAsync(p => 
+                (p.Activo == 1 || p.Activo == null) && 
+                ((p.EmailInstitucional != null && p.EmailInstitucional.ToLower() == email) || 
+                 (p.Email != null && p.Email.ToLower() == email) || 
+                 p.IdProfesor.Trim() == emailPrefix));
+
+            if (profesor != null)
+            {
+                string name = $"{profesor.PrimerNombre} {profesor.SegundoNombre} {profesor.PrimerApellido} {profesor.SegundoApellido}".Replace("  ", " ").Trim();
+                if (string.IsNullOrEmpty(name)) name = fullName;
+                
+                user = await ProvisionUserAsync(emailPrefix, name, Guid.NewGuid().ToString("N"), "profesor", profesor.IdProfesor.Trim());
+                await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Profesor vía Microsoft SSO)", "SEGURIDAD");
+            }
+            else
+            {
+                // 3. Intentar buscar en Alumnos para JIT Provisioning
+                var alumno = await _context.Alumnos.FirstOrDefaultAsync(a => 
+                    ((a.EmailInstitucional != null && a.EmailInstitucional.ToLower() == email) || 
+                     (a.Email != null && a.Email.ToLower() == email) || 
+                     a.IdAlumno.Trim() == emailPrefix || 
+                     (a.UserAlumno != null && a.UserAlumno.Trim() == emailPrefix)));
+
+                if (alumno != null)
+                {
+                    string name = $"{alumno.PrimerNombre} {alumno.SegundoNombre} {alumno.ApellidoPaterno} {alumno.ApellidoMaterno}".Replace("  ", " ").Trim();
+                    if (string.IsNullOrEmpty(name)) name = fullName;
+
+                    user = await ProvisionUserAsync(emailPrefix, name, Guid.NewGuid().ToString("N"), "alumno", alumno.IdAlumno.Trim());
+                    await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (JIT Alumno vía Microsoft SSO)", "SEGURIDAD");
+                }
+            }
+        }
+        else
+        {
+            // Si el usuario existe, registrar auditoría de login
+            await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (Usuario DIITRA vía Microsoft SSO)", "SEGURIDAD");
+        }
+
+        // Si no se encuentra/provisiona el usuario, se bloquea el acceso retornando null
+        if (user == null)
+        {
+            return null;
+        }
+
+        return await GetAuthResponseAsync(user);
+    }
 }

@@ -74,6 +74,9 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvEmailHistorial>    InvEmailHistorials     { get; set; }
     public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
+    public virtual DbSet<InvLopdpConsentimiento> InvLopdpConsentimientos { get; set; }
+    public virtual DbSet<InvLopdpDerechoArco>    InvLopdpDerechosArco    { get; set; }
+    public virtual DbSet<InvLopdpAuditoriaDatos> InvLopdpAuditoriaDatos  { get; set; }
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
     public virtual DbSet<InvDispositivoToken> InvDispositivosTokens   { get; set; }
     public virtual DbSet<InvMagicLink>        InvMagicLinks          { get; set; }
@@ -1539,6 +1542,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.RutaFirmaP12).HasColumnName("rutaFirmaP12").HasMaxLength(255);
             entity.Property(e => e.RutaFirmaImagen).HasColumnName("rutaFirmaImagen").HasMaxLength(255);
             entity.Property(e => e.FirmaHabilitada).HasColumnName("firmaHabilitada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
+            entity.Property(e => e.AceptoTerminosFirma).HasColumnName("aceptoTerminosFirma").HasColumnType("tinyint(1)").HasDefaultValue(false);
+            entity.Property(e => e.FechaConsentimientoFirma).HasColumnName("fechaConsentimientoFirma");
+            entity.Property(e => e.P12PasswordEncrypted).HasColumnName("p12PasswordEncrypted").HasMaxLength(512);
             entity.Property(e => e.Configuracion).HasColumnName("configuracion").HasColumnType("json");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaUltimoAcceso).HasColumnName("fechaUltimoAcceso");
@@ -1548,6 +1554,72 @@ public partial class DiitraContext : DbContext
                 .HasPrincipalKey<User>(u => u.IdUsuario)
                 .HasForeignKey<InvUsuarioMetadata>(d => d.IdUsuario)
                 .HasConstraintName("fk_usermeta_usuario");
+        });
+
+        modelBuilder.Entity<InvLopdpConsentimiento>(entity =>
+        {
+            entity.HasKey(e => e.IdConsentimiento).HasName("PRIMARY");
+            entity.ToTable("inv_lopdp_consentimientos");
+            entity.Property(e => e.IdConsentimiento).HasColumnName("idConsentimiento");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+            entity.Property(e => e.VersionPolitica).HasColumnName("versionPolitica").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Canal).HasColumnName("canal").HasColumnType("enum('Web','Movil','Presencial')").HasDefaultValue("Web");
+            entity.Property(e => e.FechaConsentimiento).HasColumnName("fechaConsentimiento").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.IpDireccion).HasColumnName("ipDireccion").HasMaxLength(45);
+            entity.Property(e => e.UserAgent).HasColumnName("userAgent").HasMaxLength(255);
+            entity.Property(e => e.FirmaHash).HasColumnName("firmaHash").HasColumnType("text");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Otorgado','Revocado')").HasDefaultValue("Otorgado");
+            entity.Property(e => e.FechaRevocacion).HasColumnName("fechaRevocacion");
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_consentimiento_usuario");
+        });
+
+        modelBuilder.Entity<InvLopdpDerechoArco>(entity =>
+        {
+            entity.HasKey(e => e.IdSolicitudArco).HasName("PRIMARY");
+            entity.ToTable("inv_lopdp_derechos_arco");
+            entity.Property(e => e.IdSolicitudArco).HasColumnName("idSolicitudArco");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
+            entity.Property(e => e.TipoSolicitud).HasColumnName("tipoSolicitud").HasColumnType("enum('Acceso','Rectificacion','Eliminacion','Oposicion','Portabilidad','Limitacion')").IsRequired();
+            entity.Property(e => e.DetalleSolicitud).HasColumnName("detalleSolicitud").HasColumnType("text").IsRequired();
+            entity.Property(e => e.FechaSolicitud).HasColumnName("fechaSolicitud").HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.FechaLimiteResolucion).HasColumnName("fechaLimiteResolucion");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Recibido','En_Analisis','Aprobado','Rechazado')").HasDefaultValue("Recibido");
+            entity.Property(e => e.ResolucionDetalle).HasColumnName("resolucionDetalle").HasColumnType("text");
+            entity.Property(e => e.FechaResolucion).HasColumnName("fechaResolucion");
+            entity.Property(e => e.DocumentoResolucionPath).HasColumnName("documentoResolucionPath").HasMaxLength(512);
+
+            entity.HasOne(d => d.User).WithMany()
+                .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_arco_usuario");
+        });
+
+        modelBuilder.Entity<InvLopdpAuditoriaDatos>(entity =>
+        {
+            entity.HasKey(e => e.IdAuditoriaDatos).HasName("PRIMARY");
+            entity.ToTable("inv_lopdp_auditoria_datos");
+            entity.Property(e => e.IdAuditoriaDatos).HasColumnName("idAuditoriaDatos");
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
+            entity.HasIndex(e => e.Uuid).IsUnique();
+            entity.Property(e => e.IdUsuarioActor).HasColumnName("idUsuarioActor");
+            entity.Property(e => e.IdUsuarioAfectado).HasColumnName("idUsuarioAfectado");
+            entity.Property(e => e.TablaAfectada).HasColumnName("tablaAfectada").HasMaxLength(100).IsRequired();
+            entity.Property(e => e.ColumnaAfectada).HasColumnName("columnaAfectada").HasMaxLength(100);
+            entity.Property(e => e.Operacion).HasColumnName("operacion").HasColumnType("enum('LECTURA','ESCRITURA','ELIMINACION','DESCARGA')").IsRequired();
+            entity.Property(e => e.Motivo).HasColumnName("motivo").HasMaxLength(255);
+            entity.Property(e => e.IpDireccion).HasColumnName("ipDireccion").HasMaxLength(45);
+            entity.Property(e => e.UserAgent).HasColumnName("userAgent").HasMaxLength(255);
+            entity.Property(e => e.FechaAcceso).HasColumnName("fechaAcceso").HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+            entity.HasOne(d => d.UsuarioActor).WithMany()
+                .HasForeignKey(d => d.IdUsuarioActor).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_audit_datos_actor");
+            
+            entity.HasOne(d => d.UsuarioAfectado).WithMany()
+                .HasForeignKey(d => d.IdUsuarioAfectado).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_audit_datos_afectado");
         });
 
         modelBuilder.Entity<InvAuditAdmin>(entity =>

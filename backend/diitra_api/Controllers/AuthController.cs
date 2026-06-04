@@ -67,6 +67,43 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Inicia sesión utilizando un token de Microsoft SSO.
+    /// </summary>
+    /// <param name="request">El token ID enviado desde el frontend.</param>
+    /// <returns>Información del usuario autenticado y sus permisos.</returns>
+    [HttpPost("microsoft-login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(AuthResponse), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> MicrosoftLogin([FromBody] MicrosoftLoginRequest request)
+    {
+        if (request == null || string.IsNullOrEmpty(request.IdToken))
+        {
+            return BadRequest(new { message = "El token de Microsoft es obligatorio." });
+        }
+
+        var response = await _authService.LoginWithMicrosoftAsync(request);
+
+        if (response == null)
+        {
+            return Unauthorized(new { message = "Acceso denegado. El usuario no está registrado en el sistema institucional o su cuenta está inactiva." });
+        }
+
+        // Guardar el JWT en una cookie HttpOnly para compatibilidad local
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(8)
+        };
+
+        Response.Cookies.Append("diitra_auth", response.Token, cookieOptions);
+
+        return Ok(response);
+    }
+
+    /// <summary>
     /// Inicia sesión utilizando un token de enlace mágico (Magic Link) de un solo uso.
     /// </summary>
     [HttpPost("magic-login")]
