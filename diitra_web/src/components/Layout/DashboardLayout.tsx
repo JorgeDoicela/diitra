@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 import { CommandPalette } from '../Common/CommandPalette';
 import { Menu, MoreHorizontal } from 'lucide-react';
 import NotificationBell from '../Notifications/NotificationBell';
-import { HelpModal } from './HelpModal';
+import { HelpModal } from './Help/HelpModal';
 import api from '../../api/axios_config';
 
 interface LayoutProps {
