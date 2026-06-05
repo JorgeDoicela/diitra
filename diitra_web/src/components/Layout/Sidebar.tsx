@@ -167,6 +167,8 @@ const Sidebar = ({
     ];
 
     const menuItems = allMenuItems.filter(item => {
+        if (item.path === '/derechos-arco' && isAdmin) return false;
+
         if (isAdmin) return true;
         if (item.permission) {
             const [module, op] = item.permission.split(':');

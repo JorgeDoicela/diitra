@@ -156,6 +156,9 @@ export interface DictamenDto {
 export const getPendingReviews = (): Promise<PeerReviewDto[]> =>
     api.get('/PeerReviews/pending').then(r => r.data);
 
+export const getMyReviews = (): Promise<PeerReviewDto[]> =>
+    api.get('/PeerReviews/my').then(r => r.data);
+
 export const getRubricaForRevision = (revisionUuid: string): Promise<RubricaDinamicaDto> =>
     api.get(`/PeerReviews/${revisionUuid}/rubrica`).then(r => r.data);
 

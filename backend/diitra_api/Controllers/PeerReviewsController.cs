@@ -51,6 +51,17 @@ public class PeerReviewsController : ControllerBase
     }
 
     /// <summary>
+    /// Todas las revisiones (pendientes y completadas) del usuario autenticado (vista del revisor).
+    /// </summary>
+    [HttpGet("my")]
+    public async Task<IActionResult> GetMyReviews()
+    {
+        var userId = GetCurrentUserId();
+        var result = await _peerReviewService.GetMyReviewsAsync(userId);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Carga la rúbrica dinámica de la convocatoria para una revisión específica.
     /// Anonimiza el protocolo si es modalidad doble ciego.
     /// </summary>

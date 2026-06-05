@@ -63,6 +63,8 @@ export const CommandPalette = () => {
 
     const filteredItems = items
         .filter(item => {
+            if (item.id === 'derechos-arco' && isAdmin) return false;
+
             if (isAdmin) return true;
             if (item.permission) {
                 const [module, op] = item.permission.split(':');

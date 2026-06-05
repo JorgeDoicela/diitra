@@ -6,6 +6,7 @@ public interface IPeerReviewService
 {
     // ── Vista del Revisor ──────────────────────────────────────
     Task<IEnumerable<PeerReviewDto>> GetPendingReviewsAsync(int revisorId);
+    Task<IEnumerable<PeerReviewDto>> GetMyReviewsAsync(int revisorId);
     Task<RubricaDinamicaDto?> GetRubricaForRevisionAsync(string revisionUuid);
     Task<bool> SubmitEvaluationAsync(EvaluationDto dto);
 
