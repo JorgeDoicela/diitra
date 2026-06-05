@@ -12,7 +12,7 @@ El almacenamiento físico de DIITRA utiliza un modelo relacional basado en **Mar
 
 *   **Segregación de Esquema (`inv_`)**: Para evitar conflictos con esquemas relacionales preexistentes de la institución (como el sistema académico SIGAFI), todas las tablas propias del dominio de investigación utilizan el prefijo `inv_`.
 *   **Identificación Segura**: Se implementan identificadores universales únicos de tipo **UUID v4** en las claves públicas expuestas a las APIs e interfaces de usuario, previniendo ataques de enumeración y recolección de datos secuenciales.
-*   **Estrategia de Soft Delete**: Para cumplir con los requerimientos de auditoría y auditoría legal, los registros nunca se borran físicamente. Se implementa la columna booleana `activo` en combinación con restricciones de clave foránea estructuradas.
+*   **Estrategia de Soft Delete**: Para cumplir con los requerimientos de auditoría y trazabilidad legal, los registros nunca se borran físicamente. Se implementa la columna booleana `activo` en combinación con restricciones de clave foránea estructuradas.
 *   **Codificación**: El charset de base de datos está configurado en `utf8mb4_unicode_ci`, asegurando el soporte tipográfico completo de caracteres en español y consistencia en consultas de búsqueda.
 
 ---
@@ -75,11 +75,11 @@ sequenceDiagram
     participant GW as API Gateway / Backend .NET
     participant DB as MariaDB (inv_tokens_acceso)
     actor RE as Revisor Externo
-    
+
     DR->>GW: Asignar Revisor a Proyecto (Doble Ciego = true)
     GW->>DB: Registrar Token de Acceso Temporal (inv_tokens_acceso)
     GW->>RE: Enviar Correo con Enlace Seguro y Autenticado
-    
+
     RE->>GW: Acceder al Enlace de Evaluación (Bearer Token)
     GW->>DB: Validar vigencia y firmas del token
     DB-->>GW: Token Válido
@@ -117,7 +117,7 @@ El `DocumentDataOrchestrator` centraliza la recolección de datos desde múltipl
 Para facilitar los procesos de auditoría externa y acreditación institucional, DIITRA incorpora un nodo de verificación pública de documentos. Al escanear el código QR presente en el pie de página de un documento oficial emitido por la plataforma, el auditor accede a una interfaz que valida:
 1. **La autenticidad del emisor**: Certificación de que el documento proviene de la entidad oficial (IST Traversari).
 2. **Fecha y hora exactas** en las que el documento fue generado físicamente por el motor de plantillas.
-3. **Match de integridad**: Comparación del hash SHA-256 del PDF impreso contra la huella persistida en el nodo de confianza.
+3. **Verificación de integridad**: Comparación del hash SHA-256 del PDF impreso contra la huella persistida en el nodo de confianza.
 4. **Vigencia legal**: Estado actual del proyecto dentro del ciclo de flujos y transiciones de la institución.
 
 ### Ciclo de Transición de Estados (Cadena de Custodia SHA-256)
@@ -130,7 +130,7 @@ sequenceDiagram
     actor USR as Usuario/Gestor
     participant SRV as WorkflowEngineService
     participant DB as inv_trazabilidad_proyectos
-    
+
     USR->>SRV: Solicitar Cambio de Estado (ej: de Borrador a Enviado)
     SRV->>DB: Obtener registro del último estado del proyecto
     DB-->>SRV: Registro del Estado Anterior (con Hash_Anterior)
@@ -144,9 +144,9 @@ sequenceDiagram
 
 ## 3. Módulo de Cumplimiento Legal y Normativo
 
-## 1. ¿Qué exigen las autoridades (CES, CACES, SENESCYT)?
+### 3.1. ¿Qué exigen las autoridades (CES, CACES y SENESCYT)?
 
-Para que la institución apruebe auditorías regulatorias, el control horaria y de distributivo es mandatorio. Las exigencias se rigen por la siguiente normativa:
+Para que la institución apruebe auditorías regulatorias, el control horario y del distributivo es mandatorio. Las exigencias se rigen por la siguiente normativa:
 
 ### A. Jornada Laboral y Funciones Sustantivas (RRA - Art. 47/48)
 
@@ -204,7 +204,7 @@ public async Task ValidateTeacherWorkloadAsync(Guid proyectoId, int periodoId)
 
         // 2. Sumar horas asignadas en otros proyectos activos en DIITRA
         decimal horasOtrosProyectos = await _context.InvProyectosProfesores
-            .Where(ipp => ipp.IdUsuario == inv.IdUsuario && ipp.IdProyecto != proyectoId && 
+            .Where(ipp => ipp.IdUsuario == inv.IdUsuario && ipp.IdProyecto != proyectoId &&
                           (ipp.Proyecto.Estado == "Enviado" || ipp.Proyecto.Estado == "Aprobado" || ipp.Proyecto.Estado == "En Ejecución"))
             .SumAsync(ipp => ipp.HorasSemanales ?? 0);
 
