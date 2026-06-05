@@ -60,3 +60,18 @@ public class ActualizarPerfilRequest
     public string? GradoAcademicoMaximo { get; set; }
 }
 
+public class ConsentimientoResponse
+{
+    public int IdConsentimiento { get; set; }
+    public Guid Uuid { get; set; }
+    public int IdUsuario { get; set; }
+    public string NombreUsuario { get; set; } = null!;
+    public string VersionPolitica { get; set; } = null!;
+    public string Canal { get; set; } = null!;
+    public DateTime FechaConsentimiento { get; set; }
+    public string? IpDireccion { get; set; }
+    public string? UserAgent { get; set; }
+    public string Estado { get; set; } = null!;
+}
+
+

@@ -8,6 +8,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using diitra_infrastructure.data.models;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Controllers;
 
@@ -17,11 +19,13 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly IConfiguration _configuration;
+    private readonly DiitraContext _context;
 
-    public AuthController(IAuthService authService, IConfiguration configuration)
+    public AuthController(IAuthService authService, IConfiguration configuration, DiitraContext context)
     {
         _authService = authService;
         _configuration = configuration;
+        _context = context;
     }
 
     /// <summary>
@@ -311,7 +315,7 @@ public class AuthController : ControllerBase
     /// </summary>
     [HttpGet("me")]
     [Authorize]
-    public IActionResult GetCurrentUser()
+    public async Task<IActionResult> GetCurrentUser()
     {
         if (User.Identity?.IsAuthenticated == true)
         {
@@ -322,6 +326,14 @@ public class AuthController : ControllerBase
             var isAdmin = User.FindFirst("es_admin")?.Value == "true" || tipo == "ADMIN";
             var permissions = User.FindAll("permission").Select(c => c.Value).ToList();
 
+            var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+            bool aceptoLopdp = false;
+            if (dbUser != null)
+            {
+                aceptoLopdp = await _context.InvLopdpConsentimientos
+                    .AnyAsync(c => c.IdUsuario == dbUser.IdUsuario && c.VersionPolitica == "LOPDP_GENERAL" && c.Estado == "Otorgado");
+            }
+
             return Ok(new
             {
                 id_referencia = idReferencia,
@@ -330,7 +342,8 @@ public class AuthController : ControllerBase
                 roles = roles,
                 tipo_usuario = tipo,
                 administrador = isAdmin,
-                permissions = permissions
+                permissions = permissions,
+                acepto_lopdp = aceptoLopdp
             });
         }
 
