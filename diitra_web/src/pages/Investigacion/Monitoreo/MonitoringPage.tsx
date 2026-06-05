@@ -25,6 +25,16 @@ interface GastoRegistrado {
     categoria: string;
 }
 
+const ESTADO_CONFIG: Record<string, { label: string, badge: string, dot: string }> = {
+    'Borrador':     { label: 'Borrador',      badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
+    'Enviado':      { label: 'Enviado',        badge: 'badge-vercel-info',    dot: 'dot-info' },
+    'En Revisión':  { label: 'En Revisión',    badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
+    'Aprobado':     { label: 'Aprobado',       badge: 'badge-vercel-success', dot: 'dot-success' },
+    'En Ejecución': { label: 'En Ejecución',   badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
+    'Finalizado':   { label: 'Finalizado',     badge: 'badge-vercel-success', dot: 'dot-success' },
+    'Rechazado':    { label: 'Rechazado',      badge: 'badge-vercel-error',   dot: 'dot-error' },
+};
+
 export const MonitoringPage: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
@@ -36,11 +46,12 @@ export const MonitoringPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    const estado = projectDetail?.estado || 'Borrador';
+    const cfg = ESTADO_CONFIG[estado] ?? { label: estado, badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
+    const esSoloLectura = estado !== 'En Ejecución';
+
     // Estado para el Libro Diario (Gastos Ejecutados reales en la Fase C)
-    const [gastos, setGastos] = useState<GastoRegistrado[]>([
-        { id: '1', descripcion: 'Reactivos de laboratorio para cultivos', partida: '53.08.04', monto: 350.00, fecha: '2026-05-10', referenciaFactura: 'FAC-2026-0089', categoria: 'Materiales de Consumo' },
-        { id: '2', descripcion: 'Servicios de Computación en la Nube (AWS Dev)', partida: '53.01.05', monto: 120.00, fecha: '2026-05-18', referenciaFactura: 'FAC-AWS-9982', categoria: 'Tecnología/Servicios' }
-    ]);
+    const [gastos, setGastos] = useState<GastoRegistrado[]>([]);
 
     const [showGastoModal, setShowGastoModal] = useState(false);
     const [nuevoGasto, setNuevoGasto] = useState({
@@ -58,6 +69,11 @@ export const MonitoringPage: React.FC = () => {
             try {
                 const res = await api.get(`/projects/${projectUuid}/detail`);
                 setProjectDetail(res.data);
+                if (res.data.gastos) {
+                    setGastos(res.data.gastos);
+                } else {
+                    setGastos([]);
+                }
             } catch (err: any) {
                 console.error('[DIITRA] Error al cargar detalles para el monitoreo:', err);
                 setError(err.response?.data?.message || 'No se pudo cargar la información del proyecto.');
@@ -69,33 +85,37 @@ export const MonitoringPage: React.FC = () => {
         fetchDetail();
     }, [projectUuid]);
 
-    const handleAddGasto = (e: React.FormEvent) => {
+    const handleAddGasto = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!nuevoGasto.descripcion || !nuevoGasto.monto) {
             addToast('Campos Requeridos', 'Por favor complete los campos obligatorios', 'warning');
             return;
         }
 
-        const gasto: GastoRegistrado = {
-            id: Math.random().toString(36).substring(2, 9),
-            descripcion: nuevoGasto.descripcion,
-            partida: nuevoGasto.partida || 'General',
-            monto: parseFloat(nuevoGasto.monto),
-            fecha: new Date().toISOString().split('T')[0],
-            referenciaFactura: nuevoGasto.referenciaFactura || 'S/N',
-            categoria: nuevoGasto.categoria
-        };
+        try {
+            const res = await api.post(`/projects/${projectUuid}/gastos`, {
+                descripcion: nuevoGasto.descripcion,
+                partida: nuevoGasto.partida,
+                monto: parseFloat(nuevoGasto.monto),
+                referenciaFactura: nuevoGasto.referenciaFactura,
+                categoria: nuevoGasto.categoria,
+                fecha: new Date().toISOString().split('T')[0]
+            });
 
-        setGastos(prev => [gasto, ...prev]);
-        setShowGastoModal(false);
-        addToast('Egreso Registrado', 'El egreso ha sido registrado con éxito en el Libro Diario.', 'success');
-        setNuevoGasto({
-            descripcion: '',
-            partida: '',
-            monto: '',
-            referenciaFactura: '',
-            categoria: 'Materiales de Consumo'
-        });
+            setGastos(prev => [res.data, ...prev]);
+            setShowGastoModal(false);
+            addToast('Egreso Registrado', 'El egreso ha sido registrado con éxito en el Libro Diario.', 'success');
+            setNuevoGasto({
+                descripcion: '',
+                partida: '',
+                monto: '',
+                referenciaFactura: '',
+                categoria: 'Materiales de Consumo'
+            });
+        } catch (err: any) {
+            console.error('[DIITRA] Error al registrar egreso:', err);
+            addToast('Error', err.response?.data?.message || 'No se pudo registrar el egreso.', 'error');
+        }
     };
 
     const handleDeleteGasto = async (id: string) => {
@@ -106,8 +126,15 @@ export const MonitoringPage: React.FC = () => {
             cancelText: "Cancelar",
             variant: "destructive"
         })) return;
-        setGastos(prev => prev.filter(g => g.id !== id));
-        addToast('Egreso Eliminado', 'El egreso ha sido eliminado con éxito.', 'success');
+
+        try {
+            await api.delete(`/projects/${projectUuid}/gastos/${id}`);
+            setGastos(prev => prev.filter(g => g.id !== id));
+            addToast('Egreso Eliminado', 'El egreso ha sido eliminado con éxito.', 'success');
+        } catch (err: any) {
+            console.error('[DIITRA] Error al eliminar egreso:', err);
+            addToast('Error', err.response?.data?.message || 'No se pudo eliminar el egreso.', 'error');
+        }
     };
 
     // Cálculos financieros consolidantes
@@ -195,9 +222,9 @@ export const MonitoringPage: React.FC = () => {
                 </div>
                 <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Estado de Ciclo de Vida</span>
-                    <span className="badge-vercel badge-vercel-violet text-[9px] font-bold w-fit mt-1">
-                        <span className="dot dot-brand dot-pulse" />
-                        En Ejecución (Fase C)
+                    <span className={`badge-vercel ${cfg.badge} text-[9px] font-bold w-fit mt-1`}>
+                        <span className={`dot ${cfg.dot}`} />
+                        {cfg.label}
                     </span>
                 </div>
                 <div className="bento-card static p-5 space-y-1">
@@ -323,13 +350,20 @@ export const MonitoringPage: React.FC = () => {
                                     <h3 className="text-lg font-bold text-text-main">Libro Diario de Gastos</h3>
                                     <p className="text-xs text-text-dim mt-0.5">Control y registro de facturas para justificación física ante auditorías del CACES.</p>
                                 </div>
-                                <button 
-                                    onClick={() => setShowGastoModal(true)}
-                                    className="btn-vercel-primary !py-2 text-xs flex items-center gap-1.5 w-full sm:w-auto justify-center"
-                                >
-                                    <Plus size={14} />
-                                    <span>Registrar Egreso</span>
-                                </button>
+                                {!esSoloLectura ? (
+                                    <button 
+                                        onClick={() => setShowGastoModal(true)}
+                                        className="btn-vercel-primary !py-2 text-xs flex items-center gap-1.5 w-full sm:w-auto justify-center"
+                                    >
+                                        <Plus size={14} />
+                                        <span>Registrar Egreso</span>
+                                    </button>
+                                ) : (
+                                    <div className="text-[11px] font-semibold text-text-dim bg-surface border border-border-thin px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                                        <span className="dot dot-neutral" />
+                                        Presupuesto en Modo Solo Lectura ({cfg.label})
+                                    </div>
+                                )}
                             </div>
 
                             {/* Listado de egresos */}
@@ -362,13 +396,15 @@ export const MonitoringPage: React.FC = () => {
                                                 <td className="p-4 text-right font-bold text-text-main">${g.monto.toFixed(2)}</td>
                                                 <td className="p-4 text-center font-mono text-text-dim uppercase tracking-wider">{g.referenciaFactura}</td>
                                                 <td className="p-4 text-center">
-                                                    <button 
-                                                        onClick={() => handleDeleteGasto(g.id)}
-                                                        className="p-2 text-text-dim hover:text-red-500 transition-colors rounded hover:bg-red-500/10 cursor-pointer"
-                                                        title="Eliminar Gasto"
-                                                    >
-                                                        <Trash2 size={12} />
-                                                    </button>
+                                                    {!esSoloLectura && (
+                                                        <button 
+                                                            onClick={() => handleDeleteGasto(g.id)}
+                                                            className="p-2 text-text-dim hover:text-red-500 transition-colors rounded hover:bg-red-500/10 cursor-pointer"
+                                                            title="Eliminar Gasto"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}

@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Diitra.Application.Research;
@@ -5,6 +6,7 @@ using Diitra.Application.Research.Dtos;
 using Diitra.Application.Common.Documents;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers
 {
@@ -17,17 +19,20 @@ namespace diitra_api.Controllers
         private readonly IDocumentInstanceService _documentInstanceService;
         private readonly diitra_application.Security.IAuthService _authService;
         private readonly IProjectOrchestrator _projectOrchestrator;
+        private readonly DiitraContext _context;
 
         public ProjectsController(
             IDocumentEngine documentEngine,
             IDocumentInstanceService documentInstanceService,
             diitra_application.Security.IAuthService authService,
-            IProjectOrchestrator projectOrchestrator)
+            IProjectOrchestrator projectOrchestrator,
+            DiitraContext context)
         {
             _documentEngine = documentEngine;
             _documentInstanceService = documentInstanceService;
             _authService = authService;
             _projectOrchestrator = projectOrchestrator;
+            _context = context;
         }
 
         /// <summary>
@@ -647,5 +652,142 @@ namespace diitra_api.Controllers
 
             return await _projectOrchestrator.UserCanViewProjectAsync(uuid, userIdRef);
         }
+
+        /// <summary>
+        /// Registra un nuevo gasto asociado a un proyecto en estado En Ejecución.
+        /// </summary>
+        [HttpPost("{uuid}/gastos")]
+        public async Task<IActionResult> RegistrarGasto(string uuid, [FromBody] RegistrarGastoRequest request)
+        {
+            if (request == null) return BadRequest("Petición nula.");
+            if (string.IsNullOrEmpty(request.Descripcion) || request.Monto <= 0)
+            {
+                return BadRequest(new { success = false, message = "La descripción y un monto mayor a cero son obligatorios." });
+            }
+
+            var project = await _context.InvProyectos
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (project == null)
+            {
+                return NotFound(new { success = false, message = "Proyecto no encontrado." });
+            }
+
+            if (project.Estado != "En Ejecución")
+            {
+                return BadRequest(new { success = false, message = "Solo se pueden registrar egresos en la fase de En Ejecución del proyecto." });
+            }
+
+            // Buscar o crear la partida presupuestaria correspondientes
+            var item = await _context.InvPresupuestoItems
+                .FirstOrDefaultAsync(i => i.IdProyecto == project.IdProyecto && i.IdPartida == request.Partida);
+
+            if (item == null)
+            {
+                item = new InvPresupuestoItem
+                {
+                    IdProyecto = project.IdProyecto,
+                    Categoria = string.IsNullOrEmpty(request.Categoria) ? "Otros" : request.Categoria,
+                    IdPartida = string.IsNullOrEmpty(request.Partida) ? "GEN-999" : request.Partida,
+                    Detalle = request.Descripcion,
+                    Cantidad = 1,
+                    ValorUnitario = request.Monto,
+                    ValorTotal = request.Monto,
+                    EsGastoCapital = false
+                };
+                _context.InvPresupuestoItems.Add(item);
+                await _context.SaveChangesAsync();
+            }
+
+            DateOnly fechaGasto = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (!string.IsNullOrEmpty(request.Fecha) && DateOnly.TryParse(request.Fecha, out var parsedDate))
+            {
+                fechaGasto = parsedDate;
+            }
+
+            var gasto = new InvGasto
+            {
+                Uuid = Guid.NewGuid(),
+                IdProyecto = project.IdProyecto,
+                IdItem = item.IdItem,
+                Monto = request.Monto,
+                FechaGasto = fechaGasto,
+                NumeroFactura = request.ReferenciaFactura,
+                Descripcion = request.Descripcion
+            };
+
+            _context.InvGastos.Add(gasto);
+
+            // Actualizar acumulado de ValorEjecucion
+            project.ValorEjecucion = (project.ValorEjecucion ?? 0) + request.Monto;
+
+            await _context.SaveChangesAsync();
+
+            // Mapear al DTO para retornar al frontend
+            var dto = new GastoDto
+            {
+                Id = gasto.Uuid.ToString(),
+                Descripcion = gasto.Descripcion,
+                Partida = item.IdPartida,
+                Monto = gasto.Monto,
+                Fecha = gasto.FechaGasto.ToString("yyyy-MM-dd"),
+                ReferenciaFactura = gasto.NumeroFactura,
+                Categoria = item.Categoria
+            };
+
+            return Ok(dto);
+        }
+
+        /// <summary>
+        /// Elimina un registro de gasto asociado a un proyecto en estado En Ejecución.
+        /// </summary>
+        [HttpDelete("{uuid}/gastos/{gastoUuid}")]
+        public async Task<IActionResult> EliminarGasto(string uuid, string gastoUuid)
+        {
+            var project = await _context.InvProyectos
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
+
+            if (project == null)
+            {
+                return NotFound(new { success = false, message = "Proyecto no encontrado." });
+            }
+
+            if (project.Estado != "En Ejecución")
+            {
+                return BadRequest(new { success = false, message = "Solo se pueden modificar egresos en la fase de En Ejecución del proyecto." });
+            }
+
+            if (!Guid.TryParse(gastoUuid, out var parsedGastoUuid))
+            {
+                return BadRequest(new { success = false, message = "UUID de gasto inválido." });
+            }
+
+            var gasto = await _context.InvGastos
+                .FirstOrDefaultAsync(g => g.Uuid == parsedGastoUuid && g.IdProyecto == project.IdProyecto);
+
+            if (gasto == null)
+            {
+                return NotFound(new { success = false, message = "Registro de gasto no encontrado." });
+            }
+
+            _context.InvGastos.Remove(gasto);
+
+            // Actualizar acumulado de ValorEjecucion
+            project.ValorEjecucion = Math.Max(0, (project.ValorEjecucion ?? 0) - gasto.Monto);
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true });
+        }
+    }
+
+    public class RegistrarGastoRequest
+    {
+        public string Descripcion { get; set; } = string.Empty;
+        public string Partida { get; set; } = string.Empty;
+        public decimal Monto { get; set; }
+        public string ReferenciaFactura { get; set; } = string.Empty;
+        public string Categoria { get; set; } = string.Empty;
+        public string? Fecha { get; set; }
     }
 }
