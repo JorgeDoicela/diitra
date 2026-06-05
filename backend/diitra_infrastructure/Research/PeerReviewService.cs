@@ -92,6 +92,27 @@ public class PeerReviewService : IPeerReviewService
         return result;
     }
 
+    public async Task<IEnumerable<PeerReviewDto>> GetMyReviewsAsync(int revisorId)
+    {
+        var revisiones = await _context.Set<InvRevisionesPares>()
+            .Include(r => r.Proyecto)
+            .Where(r => r.IdRevisor == revisorId)
+            .ToListAsync();
+
+        var result = new List<PeerReviewDto>();
+
+        foreach (var r in revisiones)
+        {
+            var user = r.IdRevisor.HasValue
+                ? await _context.Users.FindAsync(r.IdRevisor.Value)
+                : null;
+            var nombreRevisor = user?.Nombre ?? "Revisor";
+            result.Add(MapToDto(r, nombreRevisor));
+        }
+
+        return result;
+    }
+
     /// </summary>
     public async Task<RubricaDinamicaDto?> GetRubricaForRevisionAsync(string revisionUuid)
     {
