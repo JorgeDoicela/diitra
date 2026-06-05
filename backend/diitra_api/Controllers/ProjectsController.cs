@@ -245,6 +245,27 @@ namespace diitra_api.Controllers
                     return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
                 }
 
+                // MODO PRODUCCIÓN: descomentar para firma PAdES estricta
+                // byte[] signedPdfBytes;
+                // if (certificateBytes != null)
+                // {
+                //     if (!firmaService.ValidateCertificate(certificateBytes, finalPassword!))
+                //     {
+                //         return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
+                //     }
+                //     signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, finalPassword!,
+                //         reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
+                //         location: "Quito, Ecuador");
+                // }
+                // else
+                // {
+                //     if (password != "diitra2026")
+                //     {
+                //         return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
+                //     }
+                //     signedPdfBytes = genResult.PdfBytes;
+                // }
+
                 // ── LOPDP: Registrar auditoría de acceso a datos sensibles ──
                 var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
                 var userAgent = Request.Headers["User-Agent"].ToString();
