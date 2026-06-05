@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using diBaseModels = diitra_infrastructure.data.models;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
@@ -208,13 +210,22 @@ public class LopdpController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> ConfigurarFirma(
         Microsoft.AspNetCore.Http.IFormFile file,
-        [FromForm] string password,
+        [FromForm] string? password,
         [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
-        [FromServices] Microsoft.Extensions.Configuration.IConfiguration configuration)
+        [FromServices] Microsoft.Extensions.Configuration.IConfiguration configuration,
+        [FromServices] IWebHostEnvironment env)
     {
-        if (file == null || file.Length == 0 || string.IsNullOrEmpty(password))
+        if (file == null || file.Length == 0)
         {
-            return BadRequest(new { error = "El archivo de firma (.p12) y la contraseña son requeridos." });
+            return BadRequest(new { error = "Debe adjuntar un archivo de firma." });
+        }
+
+        var skipCertificateValidation = env.IsDevelopment()
+            || configuration.GetValue<bool>("Firma:SkipCertificateValidation");
+
+        if (!skipCertificateValidation && string.IsNullOrWhiteSpace(password))
+        {
+            return BadRequest(new { error = "La contraseña del certificado es requerida." });
         }
 
         var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -223,7 +234,7 @@ public class LopdpController : ControllerBase
         var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
         if (dbUser == null) return Unauthorized();
 
-        // 1. Validar el certificado
+        // 1. Validar el certificado (omitido en modo pruebas/desarrollo)
         byte[] certificateBytes;
         using (var ms = new System.IO.MemoryStream())
         {
@@ -231,7 +242,9 @@ public class LopdpController : ControllerBase
             certificateBytes = ms.ToArray();
         }
 
-        if (!firmaService.ValidateCertificate(certificateBytes, password))
+        password ??= string.Empty;
+
+        if (!skipCertificateValidation && !firmaService.ValidateCertificate(certificateBytes, password))
         {
             return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
         }
@@ -243,7 +256,13 @@ public class LopdpController : ControllerBase
             Directory.CreateDirectory(uploadsFolder);
         }
 
-        var fileName = $"user_sig_{dbUser.IdUsuario}.p12";
+        var extension = Path.GetExtension(file.FileName);
+        if (string.IsNullOrWhiteSpace(extension))
+        {
+            extension = ".p12";
+        }
+
+        var fileName = $"user_sig_{dbUser.IdUsuario}{extension}";
         var filePath = Path.Combine(uploadsFolder, fileName);
         await System.IO.File.WriteAllBytesAsync(filePath, certificateBytes);
 
@@ -267,7 +286,11 @@ public class LopdpController : ControllerBase
             ip,
             userAgent);
 
-        return Ok(new { message = "Firma electrónica configurada y contraseña cifrada exitosamente." });
+        var message = skipCertificateValidation
+            ? "Firma configurada en modo pruebas (validación de certificado omitida)."
+            : "Firma electrónica configurada y contraseña cifrada exitosamente.";
+
+        return Ok(new { message });
     }
 }
 

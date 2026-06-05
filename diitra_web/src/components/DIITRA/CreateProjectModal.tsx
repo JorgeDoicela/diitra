@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check } from 'lucide-react';
 import api from '../../api/axios_config';
@@ -134,9 +135,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const selectedConvocatoria = convocatorias.find(c => getConvocatoriaId(c) === idConvocatoria);
     const selectedConvocatoriaLabel = selectedConvocatoria ? getConvocatoriaName(selectedConvocatoria) : "Seleccione una convocatoria...";
 
-    return (
+    return createPortal(
         <div className="modal-overlay">
-            <div className="modal-card bg-glow animate-fade-up">
+            <div className="modal-card bg-glow animate-fade-up relative">
                 
                 {!isCreating && (
                     <button 
@@ -301,6 +302,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };

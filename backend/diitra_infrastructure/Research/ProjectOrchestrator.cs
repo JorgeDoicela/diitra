@@ -14,6 +14,8 @@ namespace diitra_infrastructure.Research
 {
     public class ProjectOrchestrator : IProjectOrchestrator
     {
+        private static readonly string[] OversightRoleCodes = { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" };
+
         private readonly DiitraContext _context;
         private readonly IAuthService _authService;
         private readonly IAuditService _auditService;
@@ -183,11 +185,11 @@ namespace diitra_infrastructure.Research
                     await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores);
                 }
 
-                // Auto-vincular al creador como Director si no hay investigadores registrados o no está ya vinculado
+                // Auto-vincular al creador como Director (nunca para roles de supervisión institucional)
                 if (!string.IsNullOrEmpty(creatorUserIdRef))
                 {
                     var internalUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == creatorUserIdRef);
-                    if (internalUser != null)
+                    if (internalUser != null && !await IsOversightUserAsync(internalUser.IdUsuario))
                     {
                         var isLinked = await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == internalUser.IdUsuario) ||
                                        await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == internalUser.IdUsuario);
@@ -1975,6 +1977,19 @@ namespace diitra_infrastructure.Research
                 // Reintentar guardar
                 await _context.SaveChangesAsync();
             }
+        }
+
+        private async Task<bool> IsOversightUserAsync(int idUsuario)
+        {
+            if (await _context.Users.AsNoTracking().AnyAsync(u => u.IdUsuario == idUsuario && u.Administrador))
+            {
+                return true;
+            }
+
+            return await _context.UserRoles.AsNoTracking()
+                .AnyAsync(ur => ur.IdUsuario == idUsuario
+                    && (ur.EsActivo ?? true)
+                    && OversightRoleCodes.Contains(ur.Role.CodigoRol));
         }
     }
 }

@@ -122,6 +122,42 @@ namespace diitra_infrastructure.Collaboration
 
             bool isBlindMode = false;
             bool isReadOnly = instance != null && (int)instance.State >= 3;
+            bool isOversightObserver = false;
+
+            if (isHubAdmin)
+            {
+                var observerId = Context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrEmpty(observerId))
+                {
+                    var observerUser = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdSigafi == observerId);
+                    if (observerUser != null)
+                    {
+                        string? observedProjectUuid = instance?.EntityUuid ?? instanceUuid;
+                        var observedProject = await _db.InvProyectos.AsNoTracking()
+                            .FirstOrDefaultAsync(p => p.Uuid == observedProjectUuid);
+
+                        if (observedProject != null)
+                        {
+                            var isTeamMember = await _db.InvProyectosProfesores.AnyAsync(pp =>
+                                    pp.IdProyecto == observedProject.IdProyecto
+                                    && pp.IdUsuario == observerUser.IdUsuario
+                                    && pp.Activo != false)
+                                || await _db.InvProyectosAlumnos.AnyAsync(pa =>
+                                    pa.IdProyecto == observedProject.IdProyecto
+                                    && pa.IdUsuario == observerUser.IdUsuario
+                                    && pa.Activo != false);
+
+                            if (!isTeamMember)
+                            {
+                                isOversightObserver = true;
+                                isReadOnly = true;
+                                userName = $"{userName} (Supervisión)";
+                                userRole = "Observador";
+                            }
+                        }
+                    }
+                }
+            }
 
             // 2.1 Lógica de Anonimización (Doble Ciego)
             var revision = await _db.InvRevisionesPares
@@ -151,7 +187,10 @@ namespace diitra_infrastructure.Collaboration
 
             await Groups.AddToGroupAsync(Context.ConnectionId, documentId);
             await Groups.AddToGroupAsync(Context.ConnectionId, instanceUuid); // Grupo de Coordinación (Team Pulse)
-            await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
+            if (!isOversightObserver)
+            {
+                await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
+            }
 
             // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas
             var updatesToSend = new List<byte[]>();
