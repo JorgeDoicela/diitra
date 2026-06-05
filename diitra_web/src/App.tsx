@@ -135,6 +135,11 @@ const NavigateToProjectDetail = () => {
     return <Navigate to={`/investigacion/monitoreo/${projectUuid}`} replace />;
 };
 
+const NavigateToWorkspaceDetail = () => {
+    const { documentUuid } = useParams();
+    return <Navigate to={`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${documentUuid}`} replace />;
+};
+
 function App() {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -213,6 +218,10 @@ function App() {
                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
                             <Route path="/admin/configuracion" element={<Navigate to="/configuracion" replace />} />
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
+                            <Route path="/investigacion/proyectos" element={<Navigate to="/investigacion" replace />} />
+                            <Route path="/investigacion/proyectos/workspace/:documentUuid" element={<NavigateToWorkspaceDetail />} />
+                            <Route path="/lopdp/arco" element={<Navigate to="/derechos-arco" replace />} />
+                            <Route path="/lopdp/admin" element={<Navigate to="/admin/lopdp" replace />} />
                             <Route path="/investigacion" element={<ResearchProjectsPage />} />
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
                             <Route path="/investigacion/adopcion" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><ProjectAdoptionPage /></RoleRoute>} />

@@ -757,7 +757,7 @@ const EmailEnginePage: React.FC = () => {
                     '[[proyecto_descripcion]]': p.descripcion || 'Sin descripción',
                     '[[proyecto_estado]]': p.estado || 'En Ejecución',
                     '[[linea_investigacion]]': p.linea_investigacion || 'General',
-                    '[[proyecto_workspace_url]]': `${window.location.origin}/investigacion/proyectos/workspace/${p.uuid}`
+                    '[[proyecto_workspace_url]]': `${window.location.origin}/investigacion/workspace/PROTOCOLO_INVESTIGACION/${p.uuid}`
                 }));
             }
         } else if (contextType === 'Convocatoria') {
