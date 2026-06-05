@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
     Users, Plus, Search, Edit2,
     Trash2, CheckCircle, XCircle, AlertTriangle,
@@ -96,6 +97,8 @@ const formatNombre = (nombre: string | null | undefined) => {
 
 const GroupsPage = () => {
     const { user, isAdmin } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const openUuid = searchParams.get('open'); // deep-link from CommandPalette
 
     const [groups, setGroups] = useState<Group[]>([]);
     const [lines, setLines] = useState<ResearchLine[]>([]);
@@ -181,6 +184,22 @@ const GroupsPage = () => {
     useEffect(() => {
         fetchData();
     }, [search]);
+
+    // Deep-link from CommandPalette: ?open=GROUP_UUID
+    // When fetchData resolves, find the group by UUID and open its detail drawer.
+    useEffect(() => {
+        if (!openUuid || groups.length === 0) return;
+        const target = groups.find(g => g.uuid === openUuid);
+        if (target) {
+            setDetailGroup(target);
+            // Clear param so refresh doesn't reopen
+            setSearchParams(prev => {
+                const next = new URLSearchParams(prev);
+                next.delete('open');
+                return next;
+            });
+        }
+    }, [openUuid, groups]);
 
     useEffect(() => {
         const metaStr = localStorage.getItem('groups_draft_metadata');

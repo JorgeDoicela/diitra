@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
     Plus, Calendar, DollarSign, FileText, CheckCircle, 
     Trash2, Edit2, Activity, 
@@ -51,6 +52,8 @@ interface Catalogo {
 const ConvocatoriasPage = () => {
     const { addToast } = useNotifications();
     const confirm = useConfirm();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const openUuid = searchParams.get('open'); // deep-link from CommandPalette
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [periodos, setPeriodos] = useState<Periodo[]>([]);
     const [tiposConv, setTiposConv] = useState<Catalogo[]>([]);
@@ -102,7 +105,21 @@ const ConvocatoriasPage = () => {
         setLoading(true);
         try {
             const response = await api.get('/Convocatorias');
-            setConvocatorias(response.data);
+            const data: Convocatoria[] = response.data;
+            setConvocatorias(data);
+
+            // Deep-link: ?open=UUID opens that convocatoria's side panel automatically
+            if (openUuid && !selectedConvocatoria) {
+                const target = data.find(c => c.uuid === openUuid);
+                if (target) {
+                    setSelectedConvocatoria(target);
+                    setSearchParams(prev => {
+                        const next = new URLSearchParams(prev);
+                        next.delete('open');
+                        return next;
+                    });
+                }
+            }
         } catch (error) {
             console.error('Error fetching convocatorias:', error);
         } finally {
