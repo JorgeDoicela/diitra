@@ -640,7 +640,7 @@ select:focus-visible {
 /**
  * 10. COMPONENTE: NOTIFICACIONES EMERGENTES (TOASTS) DE VERCEL
  * -----------------------------------------------------------------------------
- * Alertas flotantes en la esquina superior derecha con diseño minimalista oficial de Vercel.com.
+ * Alertas flotantes en la esquina inferior izquierda con diseño minimalista oficial de Vercel.com.
  *
  * Ejemplo en React:
  *   <div className="toast-container-vercel">
@@ -654,11 +654,11 @@ select:focus-visible {
  *   </div>
  */
 
-/* Contenedor flotante en la esquina superior derecha */
+/* Contenedor flotante en la esquina inferior izquierda */
 .toast-container-vercel {
   position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
+  bottom: 1.5rem;
+  left: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -751,7 +751,7 @@ select:focus-visible {
 @keyframes toastSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px) scale(0.95);
+    transform: translateY(20px) scale(0.95);
   }
   to {
     opacity: 1;

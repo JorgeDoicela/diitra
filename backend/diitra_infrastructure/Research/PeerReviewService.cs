@@ -442,6 +442,7 @@ public class PeerReviewService : IPeerReviewService
                         .Include(pc => pc.IdCarreraNavigation)
                         .Where(pc => pc.IdProfesor.Trim() == teacherId && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
                         .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                        .Distinct()
                         .ToListAsync();
                     careerNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
                 }
@@ -554,6 +555,7 @@ public class PeerReviewService : IPeerReviewService
                     .Include(pc => pc.IdCarreraNavigation)
                     .Where(pc => pc.IdProfesor.Trim() == teacherId && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .Distinct()
                     .ToListAsync();
                 careerNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
             }
@@ -763,6 +765,7 @@ public class PeerReviewService : IPeerReviewService
                 var linkedCareers = profCareers
                     .Where(pc => pc.IdProfesor.Trim() == pId && pc.IdCarreraNavigation != null)
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .Distinct()
                     .ToList();
                 var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
 
@@ -1367,6 +1370,7 @@ public class PeerReviewService : IPeerReviewService
                     .Include(pc => pc.IdCarreraNavigation)
                     .Where(pc => pc.IdProfesor.Trim() == teacherId && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .Distinct()
                     .ToListAsync();
                 careerNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
             }

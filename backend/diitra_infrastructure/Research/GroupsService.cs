@@ -101,6 +101,7 @@ public class GroupsService : IGroupsService
                 .Include(pc => pc.IdCarreraNavigation)
                 .Where(pc => pc.IdProfesor.Trim() == coordCedula && pc.IdPeriodo == periodId && pc.EsActivo == 1 && pc.IdCarreraNavigation != null)
                 .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                .Distinct()
                 .ToListAsync();
             if (coordCareers.Any())
             {
@@ -118,6 +119,7 @@ public class GroupsService : IGroupsService
                 var tCareers = teacherCareers
                     .Where(pc => pc.IdProfesor.Trim() == cedula && pc.IdCarreraNavigation != null)
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .Distinct()
                     .ToList();
                 if (tCareers.Any())
                 {

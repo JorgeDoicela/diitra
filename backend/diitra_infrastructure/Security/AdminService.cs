@@ -298,6 +298,7 @@ public class AdminService : IAdminService
                 var linkedCareers = profCareers
                     .Where(pc => pc.IdProfesor.Trim() == pId && pc.IdCarreraNavigation != null)
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                    .Distinct()
                     .ToList();
                 var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
 
@@ -650,8 +651,8 @@ public class AdminService : IAdminService
             searchTerm = searchTerm.ToLower();
             query = query.Where(a => 
                 (a.Detalle != null && a.Detalle.ToLower().Contains(searchTerm)) ||
-                (a.UserAdmin.Nombre != null && a.UserAdmin.Nombre.ToLower().Contains(searchTerm)) ||
-                (a.UserAfectado.Nombre != null && a.UserAfectado.Nombre.ToLower().Contains(searchTerm))
+                (a.UserAdmin != null && a.UserAdmin.Nombre != null && a.UserAdmin.Nombre.ToLower().Contains(searchTerm)) ||
+                (a.UserAfectado != null && a.UserAfectado.Nombre != null && a.UserAfectado.Nombre.ToLower().Contains(searchTerm))
             );
         }
 
