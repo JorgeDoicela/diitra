@@ -30,7 +30,6 @@ import {
     Hash,
     Zap,
     Loader2,
-    FileText,
     User,
     FolderOpen,
 } from 'lucide-react';
@@ -334,7 +333,7 @@ export const CommandPalette = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const listRef = useRef<HTMLDivElement>(null);
     const abortRef = useRef<AbortController | null>(null);
-    const { isAdmin, isDocente, isEstudiante, isRevisor, roleDisplayName, hasPermission, roles } = useAuth();
+    const { isAdmin, isDocente, isEstudiante, isRevisor, roleDisplayName, hasPermission } = useAuth();
     const passesRoleFilter = useRoleFilter();
 
     const staticItems = React.useMemo(

@@ -90,6 +90,7 @@ public class UnitTest1
             PropertyNameCaseInsensitive = true
         };
         var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(json, options);
+        Assert.NotNull(dto);
         dto.Uuid = "c4515615-d3a5-44e0-998a-14111b2c8ebf"; // Simulating the real EntityUuid mapping
         
         var result1 = await orchestrator.SyncProjectWizardDataAsync(dto, "0302144159");
