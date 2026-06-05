@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.data.models;
 using Diitra.Application.Research;
 using diitra_application.Security;
+using diitra_application.Common.Notifications;
 
 namespace Diitra.Infrastructure.Research
 {
@@ -11,11 +12,13 @@ namespace Diitra.Infrastructure.Research
     {
         private readonly DiitraContext _context;
         private readonly IAuditService _auditService;
+        private readonly INotificationService _notificationService;
 
-        public WorkflowEngineService(DiitraContext context, IAuditService auditService)
+        public WorkflowEngineService(DiitraContext context, IAuditService auditService, INotificationService notificationService)
         {
             _context = context;
             _auditService = auditService;
+            _notificationService = notificationService;
         }
 
         public async Task<bool> TransicionarEstadoAsync(string proyectoUuid, string nuevoEstado, int idUsuario, string observacion)
@@ -183,6 +186,24 @@ namespace Diitra.Infrastructure.Research
             string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
 
             await _auditService.LogActionAsync(idUsuario, "TRANSICIONAR_PROYECTO", $"Proyecto \"{proyecto.Titulo}\" transicionó de {estadoAnterior} a {nuevoEstado}", "PROYECTOS", beforeJson, afterJson);
+
+            // Notify admins/directors when a project is submitted
+            if (nuevoEstado == "Enviado")
+            {
+                try
+                {
+                    await _notificationService.NotifyByRoleCodesAsync(
+                        "Proyecto Postulado",
+                        $"El proyecto '{proyecto.Titulo}' ha sido postulado y requiere revisión.",
+                        new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                        $"/arbitraje/proyecto/{proyecto.Uuid}"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA] Error al notificar postulación de proyecto: {ex.Message}");
+                }
+            }
 
             return true;
         }
