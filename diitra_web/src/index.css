@@ -476,6 +476,10 @@ body {
   outline-offset: 2px;
 }
 
+*:focus:not(:focus-visible) {
+  outline: none !important;
+}
+
 /* Evitar outline de color y aplicar sombreado negro/blanco limpio (estilo Vercel) en campos de entrada y texto */
 input:focus,
 textarea:focus,

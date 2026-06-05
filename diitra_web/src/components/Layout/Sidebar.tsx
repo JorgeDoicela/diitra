@@ -607,7 +607,7 @@ const Sidebar = ({
                     width: window.innerWidth >= 1024 ? (isCollapsed ? 0 : width) : undefined
                 }}
                 className={`
-          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-4 pb-3
+          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-4 pb-3 outline-none
           lg:translate-x-0 lg:static lg:h-screen lg:relative
           ${isResizing ? '' : 'transition-all duration-200 ease-in-out'}
           ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full lg:translate-x-0'}
@@ -653,7 +653,7 @@ const Sidebar = ({
                 </div>
 
                 {/* Navigation list */}
-                <nav className="flex-1 px-3 space-y-1 overflow-y-auto pr-1 select-none">
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto pr-1 select-none outline-none">
                     {/* Grupo 1 */}
                     {group1.map(renderMenuItem)}
 
@@ -835,7 +835,7 @@ const Sidebar = ({
                 {!isCollapsed && (
                     <div
                         onMouseDown={startResizing}
-                        className="hidden lg:block absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-brand/30 active:bg-brand/50 transition-colors z-[80]"
+                        className="hidden lg:block absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-border-hover/50 active:bg-border-hover transition-colors z-[80] outline-none"
                     />
                 )}
             </aside>
