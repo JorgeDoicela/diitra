@@ -88,6 +88,28 @@ public class InformesAvanceController : ControllerBase
         if (!int.TryParse(userIdClaim, out int userId))
             return Unauthorized(new { message = "No se pudo identificar al usuario autenticado." });
 
+        var userUuidRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userUuidRef)) return Unauthorized();
+
+        // Resolver IdProyecto y ProjectUuid para verificación de permisos
+        string projectUuid = dto.ProjectUuid;
+        if (string.IsNullOrEmpty(projectUuid) && dto.IdProyecto != 0)
+        {
+            var p = await _context.InvProyectos.FindAsync(dto.IdProyecto);
+            if (p != null) projectUuid = p.Uuid;
+        }
+
+        if (!string.IsNullOrEmpty(projectUuid))
+        {
+            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userUuidRef);
+            var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(projectUuid, userUuidRef);
+
+            if (!isSystemAdmin && !isProjectDirector)
+            {
+                return Forbid("Solo el Director del Proyecto o el Administrador del Sistema pueden registrar informes de avance.");
+            }
+        }
+
         // Resolver IdProyecto desde UUID cuando el frontend solo tiene el UUID
         if (dto.IdProyecto == 0 && !string.IsNullOrEmpty(dto.ProjectUuid))
         {
@@ -129,6 +151,7 @@ public class InformesAvanceController : ControllerBase
     /// Cambia el estado de 'Pendiente'/'Observado' a 'Aprobado'.
     /// </summary>
     [HttpPost("{id:int}/aprobar")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> Aprobar(int id)
     {
         var userIdClaim = User.FindFirstValue("id_usuario");
@@ -153,6 +176,7 @@ public class InformesAvanceController : ControllerBase
     /// Solo disponible cuando el informe está en estado 'Pendiente'.
     /// </summary>
     [HttpPost("{id:int}/observar")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> Observar(int id, [FromBody] ObservarInformeAvanceDto dto)
     {
         var userIdClaim = User.FindFirstValue("id_usuario");
@@ -179,6 +203,24 @@ public class InformesAvanceController : ControllerBase
     [HttpPost("{id:int}/firmar")]
     public async Task<IActionResult> FirmarDigitalmente(int id, [FromBody] FirmarInformeAvanceDto dto)
     {
+        var userUuidRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userUuidRef)) return Unauthorized();
+
+        var informe = await _context.InvInformesAvance
+            .Include(i => i.IdProyectoNavigation)
+            .FirstOrDefaultAsync(i => i.IdInforme == id);
+
+        if (informe == null) return NotFound(new { message = $"Informe {id} no encontrado." });
+
+        var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userUuidRef);
+        var isDirectorInv = User.IsInRole("DIRECTOR_INV");
+        var isProjectDirector = informe.IdProyectoNavigation != null && await _projectOrchestrator.IsProjectDirectorAsync(informe.IdProyectoNavigation.Uuid, userUuidRef);
+
+        if (!isSystemAdmin && !isDirectorInv && !isProjectDirector)
+        {
+            return Forbid("No tienes permisos para firmar digitalmente este informe.");
+        }
+
         try
         {
             byte[] certBytes = Convert.FromBase64String(dto.CertificadoBase64);

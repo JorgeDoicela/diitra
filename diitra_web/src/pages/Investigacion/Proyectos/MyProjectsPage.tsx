@@ -48,7 +48,7 @@ const estadoConfig = (estado: string) =>
 
 const MyProjectsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { isDocente } = useAuth();
+    const { isDocente, isAdmin } = useAuth();
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -121,13 +121,15 @@ const MyProjectsPage: React.FC = () => {
                 <div className="space-y-2">
                     <div className="section-label text-brand">
                         <ClipboardList size={10} />
-                        <span>Mis Investigaciones</span>
+                        <span>{isAdmin ? "Supervisión de Investigaciones" : "Mis Investigaciones"}</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        Mis Proyectos de I+D+i
+                        {isAdmin ? "Revisión General de Proyectos de I+D+i" : "Mis Proyectos de I+D+i"}
                     </h2>
                     <p className="text-xs text-text-dim max-w-lg font-medium">
-                        {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
+                        {isAdmin 
+                            ? `${proyectos.length} proyecto${proyectos.length !== 1 ? 's' : ''} registrados en el sistema.` 
+                            : `${proyectos.length} proyecto${proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.`}
                     </p>
                 </div>
                 {!isDocente && (

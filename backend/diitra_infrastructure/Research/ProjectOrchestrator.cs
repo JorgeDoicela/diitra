@@ -1765,6 +1765,8 @@ namespace diitra_infrastructure.Research
 
         public async Task<bool> UserCanModifyProjectAsync(string projectUuid, string userSigafiId)
         {
+            if (await IsSystemAdminAsync(userSigafiId)) return true;
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
             if (user == null) return false;
 
@@ -1797,6 +1799,8 @@ namespace diitra_infrastructure.Research
 
         public async Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId)
         {
+            if (await IsSystemAdminAsync(userSigafiId)) return true;
+
             var user = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
             if (user == null) return false;
 
@@ -1823,6 +1827,36 @@ namespace diitra_infrastructure.Research
             if (isPeerReviewer) return true;
 
             return false;
+        }
+
+        public async Task<bool> IsSystemAdminAsync(string userSigafiId)
+        {
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
+            if (user == null) return false;
+
+            if (user.Administrador) return true;
+
+            var adminRoles = new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA" };
+            return await _context.UserRoles.AsNoTracking()
+                .AnyAsync(ur => ur.IdUsuario == user.IdUsuario
+                    && (ur.EsActivo ?? true)
+                    && adminRoles.Contains(ur.Role.CodigoRol));
+        }
+
+        public async Task<bool> IsProjectDirectorAsync(string projectUuid, string userSigafiId)
+        {
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
+            if (user == null) return false;
+
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.AsNoTracking().FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
+            if (project == null) return false;
+
+            return await _context.InvProyectosProfesores.AsNoTracking().AnyAsync(pp => 
+                pp.IdProyecto == project.IdProyecto && 
+                pp.IdUsuario == user.IdUsuario && 
+                pp.EsDirector == true && 
+                pp.Activo != false);
         }
 
         /// <summary>

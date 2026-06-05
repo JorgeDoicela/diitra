@@ -350,7 +350,7 @@ namespace diitra_api.Controllers
         [HttpPost("{id}/transition")]
         public async Task<IActionResult> TransitionState(string id, [FromQuery] string newState, [FromQuery] string observation, [FromServices] IWorkflowEngineService workflowEngine)
         {
-            if (!await CanCurrentUserModifyProjectAsync(id))
+            if (!await CanCurrentUserManageProjectAsync(id))
             {
                 return Forbid("No tienes permisos para transicionar el estado de este proyecto.");
             }
@@ -414,12 +414,20 @@ namespace diitra_api.Controllers
 
         /// <summary>
         /// Devuelve los proyectos donde el usuario autenticado participa (docente o estudiante).
+        /// Si el usuario es Administrador del Sistema, devuelve la lista total de proyectos para su revisión.
         /// </summary>
         [HttpGet("my")]
         public async Task<IActionResult> GetMyProjects()
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
+            if (isSystemAdmin)
+            {
+                var allProjects = await _projectOrchestrator.GetAllProjectsAsync();
+                return Ok(allProjects);
+            }
 
             var projects = await _projectOrchestrator.GetMyProjectsAsync(userIdRef);
             return Ok(projects);
@@ -579,7 +587,7 @@ namespace diitra_api.Controllers
         {
             if (investigadores == null) return BadRequest("Lista de investigadores nula.");
 
-            if (!await CanCurrentUserModifyProjectAsync(uuid))
+            if (!await CanCurrentUserManageProjectAsync(uuid))
             {
                 return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
             }
@@ -604,9 +612,24 @@ namespace diitra_api.Controllers
                 return BadRequest(new { success = false, message = "La cédula del nuevo director y el motivo son obligatorios." });
             }
 
-            if (!await CanCurrentUserModifyProjectAsync(uuid))
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
+            var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
+
+            if (!isSystemAdmin)
             {
-                return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
+                if (!isProjectDirector)
+                {
+                    return Forbid("No tienes permisos para transferir la dirección de este proyecto.");
+                }
+
+                var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+                if (project == null || (project.Estado != "Borrador" && project.Estado != "En Corrección"))
+                {
+                    return Forbid("Solo se puede transferir la dirección del proyecto durante la fase de formulación.");
+                }
             }
 
             var result = await _projectOrchestrator.TransferDirectorAsync(uuid, request);
@@ -625,7 +648,7 @@ namespace diitra_api.Controllers
         [HttpDelete("{uuid}")]
         public async Task<IActionResult> DeleteProject(string uuid)
         {
-            if (!await CanCurrentUserModifyProjectAsync(uuid))
+            if (!await CanCurrentUserManageProjectAsync(uuid))
             {
                 return Forbid("No tienes permisos para eliminar este proyecto de investigación.");
             }
@@ -661,22 +684,44 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return false;
 
-            // 1. Si el proyecto ya fue enviado o aprobado, está blindado de forma absoluta para todos en el editor colaborativo
+            // 1. Administradores del sistema tienen control absoluto
+            if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
+
+            // 2. Si el proyecto ya fue enviado o aprobado, está blindado de forma absoluta para todos en el editor colaborativo
             var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
             if (project != null && project.Estado != "Borrador" && project.Estado != "En Corrección")
             {
                 return false;
             }
 
-            // 2. Incluso administradores requieren pertenecer al equipo para editar.
-            // La supervisión institucional es sólo lectura; evita auto-vinculación al guardar.
+            // 3. Comprobar si el usuario pertenece al equipo
             return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
+        }
+
+        private async Task<bool> CanCurrentUserManageProjectAsync(string uuid)
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return false;
+
+            // 1. Si es Administrador del Sistema, tiene control absoluto
+            if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
+
+            // 2. Si es el Director de Proyecto del proyecto y el proyecto está en fases de edición
+            var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
+            if (project != null && (project.Estado == "Borrador" || project.Estado == "En Corrección"))
+            {
+                return await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
+            }
+
+            return false;
         }
 
         private async Task<bool> CanCurrentUserViewProjectAsync(string uuid)
         {
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return false;
+
+            if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
 
             var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
                           User.IsInRole("DIITRA_ADMIN") ||
@@ -698,6 +743,17 @@ namespace diitra_api.Controllers
             if (string.IsNullOrEmpty(request.Descripcion) || request.Monto <= 0)
             {
                 return BadRequest(new { success = false, message = "La descripción y un monto mayor a cero son obligatorios." });
+            }
+
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
+            var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
+
+            if (!isSystemAdmin && !isProjectDirector)
+            {
+                return Forbid("No tienes permisos para registrar gastos en este proyecto de investigación.");
             }
 
             var project = await _context.InvProyectos
@@ -779,6 +835,17 @@ namespace diitra_api.Controllers
         [HttpDelete("{uuid}/gastos/{gastoUuid}")]
         public async Task<IActionResult> EliminarGasto(string uuid, string gastoUuid)
         {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
+            var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
+
+            if (!isSystemAdmin && !isProjectDirector)
+            {
+                return Forbid("No tienes permisos para eliminar gastos de este proyecto de investigación.");
+            }
+
             var project = await _context.InvProyectos
                 .FirstOrDefaultAsync(p => p.Uuid == uuid);
 

@@ -66,6 +66,16 @@ namespace Diitra.Application.Research
         Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId);
 
         /// <summary>
+        /// Determina si el usuario autenticado tiene el rol de Administrador del Sistema (DIITRA_ADMIN o ADMIN_SISTEMA).
+        /// </summary>
+        Task<bool> IsSystemAdminAsync(string userSigafiId);
+
+        /// <summary>
+        /// Determina si el usuario es el Director del Proyecto activo.
+        /// </summary>
+        Task<bool> IsProjectDirectorAsync(string projectUuid, string userSigafiId);
+
+        /// <summary>
         /// Devuelve la actividad reciente de un proyecto: sesiones CoWork, cambios de estado
         /// de sección y transiciones de workflow. Para el panel de actividad del Workspace.
         /// </summary>

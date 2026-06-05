@@ -7,6 +7,7 @@ using diitra_infrastructure.data.models.Cowork;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.SignalR;
 using diitra_infrastructure.Collaboration;
+using Microsoft.AspNetCore.Authorization;
 
 namespace diitra_api.Controllers
 {
@@ -16,6 +17,7 @@ namespace diitra_api.Controllers
     /// </summary>
     [ApiController]
     [Route("api/collaboration")]
+    [Authorize]
     public class CollaborationController : ControllerBase
     {
         private readonly DiitraContext _db;

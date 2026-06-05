@@ -11,7 +11,7 @@ import { useAuth } from '../../../api/AuthContext';
 
 const ResearchProjectsPage = () => {
     const navigate = useNavigate();
-    const { isDocente } = useAuth();
+    const { isDocente, isAdmin } = useAuth();
     const [showWizard, setShowWizard] = useState(false);
     const [showReportLauncher, setShowReportLauncher] = useState(false);
 
@@ -22,11 +22,15 @@ const ResearchProjectsPage = () => {
                 <div className="space-y-2">
                     <div className="section-label text-brand">
                         <ClipboardList size={10} />
-                        <span>Mis Investigaciones</span>
+                        <span>{isAdmin ? "Supervisión de Investigaciones" : "Mis Investigaciones"}</span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Proyectos de I+D+i</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
+                        {isAdmin ? "Supervisión de Proyectos de I+D+i" : "Proyectos de I+D+i"}
+                    </h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Gestione sus protocolos, informes de avance y productos de investigación.
+                        {isAdmin 
+                            ? "Administre y supervise todos los protocolos, informes de avance y productos de investigación." 
+                            : "Gestione sus protocolos, informes de avance y productos de investigación."}
                     </p>
                 </div>
 
@@ -52,8 +56,12 @@ const ResearchProjectsPage = () => {
                         className="bento-card p-6 cursor-pointer group"
                     >
                         <ListChecks className="text-brand mb-4 group-hover:scale-110 transition-transform" size={24} />
-                        <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Mis Proyectos</h4>
-                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Expediente Personal</p>
+                        <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">
+                            {isAdmin ? "Todos los Proyectos" : "Mis Proyectos"}
+                        </h4>
+                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">
+                            {isAdmin ? "Expediente General" : "Expediente Personal"}
+                        </p>
                     </div>
                     <div
                         onClick={() => setShowReportLauncher(true)}
