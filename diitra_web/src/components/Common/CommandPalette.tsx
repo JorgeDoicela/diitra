@@ -38,7 +38,8 @@ import {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Category = 'Navegación' | 'Acciones Rápidas' | 'Administración' | 'Configuración'
-    | 'Mis Proyectos' | 'Todos los Proyectos' | 'Convocatorias' | 'Usuarios';
+    | 'Mis Proyectos' | 'Todos los Proyectos' | 'Convocatorias' | 'Usuarios'
+    | 'Mis Revisiones' | 'Grupos';
 
 interface SearchItem {
     id: string;
@@ -253,14 +254,15 @@ function proyectoToItem(p: any, isMyProject: boolean): SearchItem {
 }
 
 function convocatoriaToItem(c: any): SearchItem {
+    const openParam = c.uuid ? `?open=${c.uuid}` : '';
     return {
         id: `conv-${c.id_convocatoria ?? c.uuid ?? Math.random()}`,
         label: c.titulo || c.nombre || 'Convocatoria',
-        description: [c.estado, c.periodo, c.tipo_agenda].filter(Boolean).join(' · '),
+        description: [c.estado, c.periodo_nombre || c.periodo, c.tipo_agenda].filter(Boolean).join(' · '),
         category: 'Convocatorias',
         icon: PenTool,
-        path: '/convocatorias',
-        keywords: [c.estado || '', c.periodo || ''],
+        path: `/convocatorias${openParam}`,
+        keywords: [c.estado || '', c.periodo_nombre || c.periodo || '', c.codigo_convocatoria || ''],
         boost: 0,
         isLive: true,
         badge: c.estado,
@@ -271,16 +273,52 @@ let _uidCounter = 0;
 function usuarioToItem(u: any): SearchItem {
     // Guarantee a unique id even when api returns users without uuid/id_profesor
     const uid = u.user_uuid || u.id_profesor || u.email || `__anon${++_uidCounter}`;
+    // Use id_profesor (cedula) as open param — it's searchable directly via the API
+    // and works regardless of pagination. Falls back to user_uuid.
+    const openId = u.id_profesor || u.user_uuid;
+    const openParam = openId ? `&open=${encodeURIComponent(openId)}` : '';
     return {
         id: `user-${uid}`,
         label: u.nombre_completo || 'Usuario',
         description: [u.email, u.carrera, u.type].filter(Boolean).join(' · '),
         category: 'Usuarios',
         icon: User,
-        path: `/usuarios?type=${u.type ?? 'DOCENTE'}`,
+        path: `/usuarios?type=${u.type ?? 'DOCENTE'}${openParam}`,
         keywords: [u.email || '', u.carrera || '', u.id_profesor || ''],
         boost: 0,
         isLive: true,
+    };
+}
+
+function revisionToItem(r: any): SearchItem {
+    // Peer reviews navigate directly to their evaluation page
+    return {
+        id: `rev-${r.uuid}`,
+        label: r.proyecto_titulo || 'Revisión sin título',
+        description: [r.estado, r.revisor_nombre, r.es_externo ? 'Par Externo' : null].filter(Boolean).join(' · '),
+        category: 'Mis Revisiones',
+        icon: ShieldCheck,
+        path: `/revisiones/${r.uuid}`,
+        keywords: [r.proyecto_titulo || '', r.estado || '', r.revisor_nombre || ''],
+        boost: r.estado === 'Pendiente' ? 5 : 0,
+        isLive: true,
+        badge: r.estado,
+    };
+}
+
+function grupoToItem(g: any): SearchItem {
+    // Groups open their side detail drawer via ?open=UUID in GroupsPage
+    return {
+        id: `grupo-${g.uuid || g.id_grupo}`,
+        label: g.nombre || 'Grupo de Investigación',
+        description: [g.siglas, g.tipo_grupo, g.nombre_coordinador].filter(Boolean).join(' · '),
+        category: 'Grupos',
+        icon: Users,
+        path: `/grupos?open=${g.uuid}`,
+        keywords: [g.nombre || '', g.siglas || '', g.tipo_grupo || '', g.nombre_coordinador || ''],
+        boost: 0,
+        isLive: true,
+        badge: g.estado,
     };
 }
 
@@ -304,6 +342,10 @@ export const CommandPalette = () => {
         [navigate, isAdmin, isDocente, isEstudiante, isRevisor]
     );
 
+    // Ref keeps the current flatItems list accessible inside useEffect without
+    // triggering re-subscriptions every render. Updated synchronously each render.
+    const flatItemsRef = useRef<SearchItem[]>([]);
+
     // ── Live search from backend ──────────────────────────────────────────────
 
     const fetchLive = useCallback(async (q: string) => {
@@ -313,6 +355,8 @@ export const CommandPalette = () => {
 
         setIsLoadingLive(true);
         const results: SearchItem[] = [];
+        const ql = q.toLowerCase();
+        const matches = (str: string) => !q || str.toLowerCase().includes(ql);
 
         try {
             const promises: Promise<void>[] = [];
@@ -322,10 +366,10 @@ export const CommandPalette = () => {
                 api.get('/projects/my', { signal: ctrl.signal }).then(res => {
                     const data: any[] = Array.isArray(res.data) ? res.data : [];
                     data
-                        .filter(p => !q || p.titulo?.toLowerCase().includes(q.toLowerCase()) || (p.codigo_institucional || '').toLowerCase().includes(q.toLowerCase()))
+                        .filter(p => matches(p.titulo || '') || matches(p.codigo_institucional || ''))
                         .slice(0, 5)
                         .forEach(p => results.push(proyectoToItem(p, true)));
-                }).catch(() => { })
+                }).catch(() => {})
             );
 
             // Todos los proyectos (admin)
@@ -334,14 +378,14 @@ export const CommandPalette = () => {
                     api.get('/projects', { signal: ctrl.signal }).then(res => {
                         const data: any[] = Array.isArray(res.data) ? res.data : (res.data?.items ?? []);
                         data
-                            .filter(p => !q || p.titulo?.toLowerCase().includes(q.toLowerCase()) || (p.codigo_institucional || '').toLowerCase().includes(q.toLowerCase()))
+                            .filter(p => matches(p.titulo || '') || matches(p.codigo_institucional || ''))
                             .slice(0, 5)
                             .forEach(p => {
                                 if (!results.some(r => r.id === `proj-${p.uuid}`)) {
                                     results.push(proyectoToItem(p, false));
                                 }
                             });
-                    }).catch(() => { })
+                    }).catch(() => {})
                 );
             }
 
@@ -350,19 +394,52 @@ export const CommandPalette = () => {
                 api.get('/Convocatorias', { signal: ctrl.signal }).then(res => {
                     const data: any[] = Array.isArray(res.data) ? res.data : [];
                     data
-                        .filter(c => !q || (c.titulo || c.nombre || '').toLowerCase().includes(q.toLowerCase()))
+                        .filter(c => matches(c.titulo || '') || matches(c.codigo_convocatoria || '') || matches(c.periodo_nombre || c.periodo || ''))
                         .slice(0, 4)
                         .forEach(c => results.push(convocatoriaToItem(c)));
-                }).catch(() => { })
+                }).catch(() => {})
             );
 
-            // Usuarios (solo admin con permiso)
+            // Usuarios (admin con permiso) — busca docentes, estudiantes y externos
             if (isAdmin || hasPermission('USUARIOS', 'VER')) {
+                const userTypes = ['DOCENTE', 'ESTUDIANTE', 'EXTERNO'];
+                userTypes.forEach(type => {
+                    promises.push(
+                        api.get(`/Admin/users?search=${encodeURIComponent(q)}&type=${type}&page=1&pageSize=3`, { signal: ctrl.signal }).then(res => {
+                            const data: any[] = res.data?.items ?? [];
+                            data.forEach(u => {
+                                if (!results.some(r => r.id === `user-${u.user_uuid || u.id_profesor}`)) {
+                                    results.push(usuarioToItem(u));
+                                }
+                            });
+                        }).catch(() => {})
+                    );
+                });
+            }
+
+            // Mis revisiones por pares — solo si el usuario tiene rol revisor
+            // (el endpoint /PeerReviews/my devuelve 404 para roles que no tienen revisiones)
+            if (isRevisor) {
                 promises.push(
-                    api.get(`/Admin/users?search=${encodeURIComponent(q)}&type=DOCENTE&page=1&pageSize=4`, { signal: ctrl.signal }).then(res => {
-                        const data: any[] = res.data?.items ?? [];
-                        data.forEach(u => results.push(usuarioToItem(u)));
-                    }).catch(() => { })
+                    api.get('/PeerReviews/my', { signal: ctrl.signal }).then(res => {
+                        const data: any[] = Array.isArray(res.data) ? res.data : [];
+                        data
+                            .filter(r => matches(r.proyecto_titulo || '') || matches(r.estado || '') || matches(r.revisor_nombre || ''))
+                            .slice(0, 4)
+                            .forEach(r => results.push(revisionToItem(r)));
+                    }).catch(() => {})
+                );
+            }
+
+            // Grupos de investigación
+            if (q.length >= 2) { // Solo buscar grupos cuando hay query (evitar cargar lista completa)
+                promises.push(
+                    api.get(`/Groups?search=${encodeURIComponent(q)}`, { signal: ctrl.signal }).then(res => {
+                        const data: any[] = Array.isArray(res.data) ? res.data : [];
+                        data
+                            .slice(0, 4)
+                            .forEach(g => results.push(grupoToItem(g)));
+                    }).catch(() => {})
                 );
             }
 
@@ -378,7 +455,7 @@ export const CommandPalette = () => {
                 setIsLoadingLive(false);
             }
         }
-    }, [isAdmin, isDocente, isEstudiante, hasPermission]);
+    }, [isAdmin, isDocente, isEstudiante, isRevisor, hasPermission]);
 
     // Debounced live search
     useEffect(() => {
@@ -430,7 +507,9 @@ export const CommandPalette = () => {
         return results.sort((a, b) => b.score - a.score);
     }, [staticItems, passesRoleFilter, query, liveItems]);
 
-    const flatItems = scoredItems.map(s => s.item);
+    // flatItems must match the visual grouped order so ↑↓ keyboard navigation
+    // moves through items exactly as the user sees them on screen.
+    // Defined after grouped (below) and synced into flatItemsRef each render.
 
     // ── Keyboard handler ──────────────────────────────────────────────────────
 
@@ -444,14 +523,15 @@ export const CommandPalette = () => {
                 setLiveItems([]);
             }
             if (!isOpen) return;
+            const items = flatItemsRef.current;
             if (e.key === 'Escape') { setIsOpen(false); }
-            else if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(prev => (prev + 1) % flatItems.length); }
-            else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(prev => (prev - 1 + flatItems.length) % flatItems.length); }
-            else if (e.key === 'Enter') { e.preventDefault(); handleSelect(flatItems[selectedIndex]); }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); setSelectedIndex(prev => (prev + 1) % items.length); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); setSelectedIndex(prev => (prev - 1 + items.length) % items.length); }
+            else if (e.key === 'Enter') { e.preventDefault(); handleSelect(items[selectedIndex]); }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, flatItems, selectedIndex]);
+    }, [isOpen, selectedIndex]);
 
     useEffect(() => { if (isOpen && inputRef.current) inputRef.current.focus(); }, [isOpen]);
 
@@ -474,7 +554,7 @@ export const CommandPalette = () => {
     // ── Grouping ──────────────────────────────────────────────────────────────
 
     const categoryOrder: Category[] = [
-        'Mis Proyectos', 'Todos los Proyectos', 'Convocatorias', 'Usuarios',
+        'Mis Proyectos', 'Todos los Proyectos', 'Mis Revisiones', 'Convocatorias', 'Usuarios', 'Grupos',
         'Navegación', 'Acciones Rápidas', 'Administración', 'Configuración',
     ];
 
@@ -487,6 +567,8 @@ export const CommandPalette = () => {
         'Todos los Proyectos': <ClipboardList size={10} className="opacity-60" />,
         'Convocatorias': <PenTool size={10} className="opacity-60" />,
         'Usuarios': <Users size={10} className="opacity-60" />,
+        'Mis Revisiones': <ShieldCheck size={10} className="opacity-60" />,
+        'Grupos': <Users size={10} className="opacity-60" />,
     };
 
     const categoryLabels: Record<string, string> = {
@@ -494,6 +576,8 @@ export const CommandPalette = () => {
         'Todos los Proyectos': 'Proyectos del Sistema',
         'Convocatorias': 'Convocatorias',
         'Usuarios': 'Usuarios',
+        'Mis Revisiones': 'Mis Revisiones',
+        'Grupos': 'Grupos de Investigación',
         'Navegación': 'Navegación',
         'Acciones Rápidas': 'Acciones Rápidas',
         'Administración': 'Administración',
@@ -503,6 +587,11 @@ export const CommandPalette = () => {
     const grouped = categoryOrder
         .map(cat => ({ cat, items: scoredItems.filter(s => s.item.category === cat) }))
         .filter(g => g.items.length > 0);
+
+    // ↑↓ navigation order = visual grouped order (not score order)
+    const flatItems = grouped.flatMap(g => g.items.map(s => s.item));
+    // Sync into ref so the keyboard handler always reads the current list
+    flatItemsRef.current = flatItems;
 
     // Badge color
     const getBadgeClass = (badge?: string) => {

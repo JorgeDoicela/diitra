@@ -63,6 +63,7 @@ const UsersPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const typeParam = searchParams.get('type');
     const userType = (typeParam === 'DOCENTE' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
+    const openUuid = searchParams.get('open'); // deep-link from CommandPalette
     
     const setUserType = (type: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO') => {
         setSearchParams(prev => {
@@ -130,7 +131,8 @@ const UsersPage = () => {
         setLoading(true);
         try {
             const response = await api.get(`/Admin/users?search=${search}&type=${userType}&page=${page}&pageSize=${pageSize}`);
-            setUsers(response.data.items);
+            const items: ManagedUser[] = response.data.items;
+            setUsers(items);
             setTotalCount(response.data.total_count);
             setTotalPages(response.data.total_pages);
         } catch (error) {
@@ -139,6 +141,47 @@ const UsersPage = () => {
             setLoading(false);
         }
     };
+
+    // Deep-link from CommandPalette: ?open=CEDULA
+    // Makes a direct targeted API call to find and open that specific user's
+    // detail panel, regardless of which pagination page they fall on.
+    useEffect(() => {
+        if (!openUuid) return;
+        let cancelled = false;
+
+        const resolveOpenUser = async () => {
+            try {
+                // Search directly by cedula (id_profesor) — the most reliable identifier
+                const res = await api.get(
+                    `/Admin/users?search=${encodeURIComponent(openUuid)}&type=${userType}&page=1&pageSize=5`
+                );
+                if (cancelled) return;
+
+                const items: ManagedUser[] = res.data.items ?? [];
+                // Exact match on id_profesor or user_uuid
+                const target = items.find(
+                    u => u.id_profesor === openUuid || u.user_uuid === openUuid
+                ) ?? items[0]; // fallback to first result if exact match not found
+
+                if (target) {
+                    setDetailUser(target);
+                }
+
+                // Clear param from URL so refreshing doesn't reopen
+                setSearchParams(prev => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('open');
+                    return next;
+                });
+            } catch {
+                // Silently fail — user just lands on the list
+            }
+        };
+
+        resolveOpenUser();
+        return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [openUuid]);
 
     const fetchRoles = async () => {
         try {

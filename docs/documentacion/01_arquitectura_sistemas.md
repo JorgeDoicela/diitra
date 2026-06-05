@@ -31,10 +31,39 @@ graph TD
     *   *Validaciones*: Define las reglas de transición y estados de negocio mediante **FluentValidation**.
 *   **Capa de Infraestructura (`diitra_infrastructure`)**:
     *   *Responsabilidad*: Provee la implementación de persistencia a base de datos (`DiitraContext` vía Entity Framework Core), el renderizado dinámico de archivos PDF binarios mediante **iText9**, compilación de plantillas HTML con **Handlebars.Net** y el middleware de integración con FirmaEC.
-*   **Capa de Presentación (`diitra_api`)**:
-    *   *Responsabilidad*: Expone los controladores RESTful que consumen los clientes, maneja la serialización JSON de salida y define los Hubs de comunicación interactiva en tiempo real (SignalR).
+*   **Capa de Presentación (`diitra_api`)**: Expone los endpoints HTTP RESTful del backend y los Hubs de SignalR. Gestiona la autenticación, autorización y el mapeo de excepciones globales.
 
-### Capa de Resiliencia e Integridad Forense (Compliance CACES 2026)
+---
+
+## 2. Modelo C4: Contexto y Contenedores
+
+El sistema se visualiza mediante el estándar C4 para asegurar una comunicación técnica uniforme entre los equipos de desarrollo, arquitectura y auditoría externa.
+
+```mermaid
+C4Context
+  title Diagrama de Contexto - Ecosistema DIITRA
+  Person(director, "Director de Investigación", "Administra convocatorias, aprueba distributivos y gestiona auditorías.")
+  Person(revisor, "Pares Revisores", "Evalúan proyectos académicos mediante doble ciego.")
+  Person(investigador, "Investigadores (Docentes/Estudiantes)", "Postulan ideas, cargan evidencias y editan protocolos.")
+  
+  System(diitra, "Sistema Core DIITRA", "Servicios Backend .NET 8, Clientes Web React y Mobile Expo App.")
+  
+  System_Ext(sigafig, "SIGAFI (Académico-Financiero)", "Sistema Institucional de carga de distributivos y presupuestos.")
+  System_Ext(firmaec, "FirmaEC Middleware", "Servicio externo para validación de certificados P12 y firma digital.")
+  System_Ext(smtp, "Servidor SMTP Institucional", "Distribución de notificaciones y alertas por correo.")
+  
+  Rel(director, diitra, "Administración de convocatorias y reportes", "HTTPS")
+  Rel(revisor, diitra, "Evaluaciones anónimas", "HTTPS (Token temporal)")
+  Rel(investigador, diitra, "Registro de propuestas y CoWork", "HTTPS/WSS")
+  
+  Rel(diitra, sigafig, "Sincronización de distributivos y docentes", "REST/SQL Sync")
+  Rel(diitra, firmaec, "Firma y verificación de documentos", "REST API")
+  Rel(diitra, smtp, "Envío de notificaciones y alertas", "SMTP/TLS")
+```
+
+---
+
+## 3. Capa de Resiliencia e Integridad Forense (Compliance CACES 2026)
 
 Para satisfacer las regulaciones de acreditación institucionales vigentes en el país, el orquestador implementa políticas específicas de seguridad:
 *   **Bloqueo de Estado (State Locking)**: Una vez que un proyecto es transicionado a revisión por pares, aprobación o ejecución, el orquestador bloquea los comandos de modificación sobre el formulario e inhabilita las peticiones de escritura.
@@ -43,7 +72,7 @@ Para satisfacer las regulaciones de acreditación institucionales vigentes en el
 
 ---
 
-## 2. Patrones de Diseño Corporativo y Persistencia
+## 4. Patrones de Diseño Corporativo y Persistencia
 
 ### Transaccionalidad Atómica (Unit of Work)
 
@@ -71,7 +100,7 @@ Todos los eventos significativos, excepciones no controladas y transiciones de f
 
 ---
 
-## 3. Frontend Web: Modular Layered React (Vite + React 19)
+## 5. Frontend Web: Modular Layered React (Vite + React 19)
 
 La aplicación del portal administrativo centralizado está desarrollada con React 19 y compilada con Vite.js utilizando ESBuild para optimizar el arranque en desarrollo y la carga atómica.
 
@@ -96,7 +125,7 @@ El cliente intercepta de forma centralizada todas las respuestas HTTP a través 
 
 ---
 
-## 4. Frontend Mobile (Expo React Native v6)
+## 6. Frontend Mobile (Expo React Native v6)
 
 Permite al personal docente evaluar proyectos, firmar y cargar evidencias de forma ágil desde dispositivos móviles iOS y Android.
 
@@ -115,7 +144,7 @@ Permite al personal docente evaluar proyectos, firmar y cargar evidencias de for
 
 ---
 
-## 5. Motor de Edición Colaborativa (CoWork Engine)
+## 7. Motor de Edición Colaborativa (CoWork Engine)
 
 Sincroniza en tiempo real las secciones del protocolo de investigación entre múltiples investigadores utilizando técnicas asíncronas de baja latencia.
 
@@ -129,6 +158,8 @@ Sincroniza en tiempo real las secciones del protocolo de investigación entre m�
 *   **SignalR sobre WebSockets**: Permite la actualización bidireccional inmediata con tiempos de respuesta de milisegundos.
 *   **Cursores Dinámicos**: Identifica visualmente a los colaboradores y muestra la ubicación de sus cursores en pantalla.
 *   **Aislamiento y Anonimización**: Separa los contextos de edición por campos de texto y cuenta con soporte para anonimizar los cursores durante fases de evaluación externa.
+*   **Sincronización Asíncrona**: Soporte para trabajo remoto concurrente de equipos de investigación multidisciplinarios, garantizando la persistencia local y sincronización de cambios al recuperar conexión, sin riesgo de pérdida de información.
+*   **Aislamiento por Niveles / Control de Acceso Granular**: Restringe y segmenta la edición y visualización de secciones específicas del protocolo científico de acuerdo al rol asignado a cada investigador en el equipo de proyecto.
 
 ### Asistencia para la Investigación (IA & Pertinencia)
 
@@ -137,14 +168,14 @@ Sincroniza en tiempo real las secciones del protocolo de investigación entre m�
 
 ---
 
-## 6. Interoperabilidad Científica y Servicios Externos
+## 8. Interoperabilidad Científica y Servicios Externos
 
 *   **Interoperabilidad (DSpace & Dublin Core)**: El ecosistema implementa conectividad con repositorios institucionales de tesis y publicaciones utilizando protocolos de metadatos bajo el estándar **Dublin Core** para facilitar la indexación académica global.
 *   **Drivers de Notificación Desacoplados**: Lógica de comunicaciones (notificaciones push, correos electrónicos SMTP y SMS) implementada mediante adaptadores aislados. Esto permite cambiar de proveedor de correos o mensajería sin tocar el núcleo de lógica de la aplicación.
 
 ---
 
-## 7. Infraestructura, Escalabilidad y Calidad
+## 9. Infraestructura, Escalabilidad y Calidad
 
 *   **Almacenamiento Distribuido**: El almacenamiento de evidencias, fotos y documentos binarios soporta múltiples drivers (almacenamiento local, MinIO o AWS S3), permitiendo una escalabilidad de recursos de archivos separada de la base de datos relacional.
 *   **Gestión de Entornos**: Uso riguroso de perfiles de configuración (`appsettings.Development.json`, `appsettings.Production.json`) para aislar cadenas de conexión de base de datos y credenciales de APIs.
