@@ -312,6 +312,15 @@ namespace diitra_api.Controllers
                             }
 
                             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                            if (!isNewProject && !string.IsNullOrEmpty(dto.Uuid) && !string.IsNullOrEmpty(userIdRef))
+                            {
+                                var canModify = await projectOrchestrator.UserCanModifyProjectAsync(dto.Uuid, userIdRef);
+                                if (!canModify)
+                                {
+                                    return Forbid();
+                                }
+                            }
+
                             var result = await projectOrchestrator.SyncProjectWizardDataAsync(dto, userIdRef);
                             
                             if (!result.Success)

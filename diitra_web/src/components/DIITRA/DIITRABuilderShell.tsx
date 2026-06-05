@@ -84,11 +84,17 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
+    // IMPORTANTE: revocar la URL ANTERIOR solo después de crear la nueva,
+    // para que el <iframe> nunca apunte a una URL ya revocada (net::ERR_FAILED).
     useEffect(() => {
         if (!pdfBlob) { setPdfUrl(null); return; }
         const url = URL.createObjectURL(pdfBlob);
+        // Guardamos la URL nueva PRIMERO para que el iframe la reciba antes de que limpiemos
         setPdfUrl(url);
-        return () => URL.revokeObjectURL(url);
+        // Solo revocamos la URL al reemplazarla o al desmontar el componente
+        return () => {
+            setTimeout(() => URL.revokeObjectURL(url), 100);
+        };
     }, [pdfBlob]);
 
     const addAudit = useCallback((msg: string, type: string = 'info') => {
@@ -254,7 +260,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     // ── Firma Electrónica PAdES ──
     const handleSign = async () => {
-        if (!signaturePassword) return alert('Ingresa la clave de tu firma (.p12)');
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica PAdES...');
         try {
@@ -262,22 +267,59 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             if (signatureFile) {
                 formDataObj.append('certificate', signatureFile);
             }
-            formDataObj.append('password', signaturePassword);
+            formDataObj.append('password', signaturePassword || '');
             formDataObj.append('projectUuid', entityUuid || formData.EntityUuid || formData.entityUuid || formData.Uuid || '');
 
             const response = await api.post(
                 '/projects/sign',
                 formDataObj,
                 {
-                    headers: { 'Content-Type': 'multipart/form-data' },
+                    headers: { 'Content-Type': undefined },
+                    transformRequest: [(data, headers) => {
+                        if (data instanceof FormData) {
+                            delete headers['Content-Type'];
+                        }
+                        return data;
+                    }],
                     responseType: 'blob'
                 }
             );
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
-            addAudit('Firma digital aplicada e integrada', 'success');
+            addAudit(
+                import.meta.env.DEV
+                    ? 'Firma digital aplicada (modo pruebas: sello criptográfico puede estar omitido)'
+                    : 'Firma digital aplicada e integrada',
+                'success'
+            );
         } catch (err: any) {
             console.error('[DIITRA] Error signing document:', err);
-            addAudit('Error de firma: Clave o certificado inválido', 'error');
+
+            // Intentar extraer el mensaje real del servidor (la respuesta es blob por responseType)
+            let serverMessage = '';
+            try {
+                if (err?.response?.data instanceof Blob) {
+                    const text = await err.response.data.text();
+                    const parsed = JSON.parse(text);
+                    serverMessage = parsed?.error || parsed?.message || '';
+                } else if (err?.response?.data?.error) {
+                    serverMessage = err.response.data.error;
+                }
+            } catch {
+                // silenciar errores de parseo
+            }
+
+            // Detectar la barrera de consentimiento LOPDP
+            const isLopdpGate = serverMessage.toLowerCase().includes('términos') ||
+                                 serverMessage.toLowerCase().includes('lopdp') ||
+                                 serverMessage.toLowerCase().includes('consentimiento');
+
+            if (isLopdpGate) {
+                addAudit('Firma bloqueada: Acepte los términos de firma en Configuración → Mi Cuenta y Firma', 'warning');
+            } else if (serverMessage) {
+                addAudit(`Error de firma: ${serverMessage}`, 'error');
+            } else {
+                addAudit('Error de firma: Clave o certificado inválido', 'error');
+            }
         } finally {
             setIsSigning(false);
         }
@@ -542,10 +584,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a Ley de Comercio Electrónico.</p>
                                                 <div className="space-y-4">
                                                     <div>
-                                                        <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Archivo de Firma (.p12 / .pfx)</label>
+                                                        <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Archivo de Firma</label>
                                                         <input
                                                             type="file"
-                                                            accept=".p12,.pfx"
                                                             onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
                                                             className="w-full text-xs text-text-dim file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded-xl p-3 bg-bg-deep/30"
                                                         />
@@ -559,7 +600,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                         <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Contraseña del Certificado</label>
                                                         <input
                                                             type="password"
-                                                            placeholder="Contraseña Certificado (.p12)"
+                                                            placeholder="Contraseña (opcional en pruebas)"
                                                             value={signaturePassword}
                                                             onChange={(e) => setSignaturePassword(e.target.value)}
                                                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"

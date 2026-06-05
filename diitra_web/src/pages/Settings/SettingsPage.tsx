@@ -118,22 +118,24 @@ const SettingsPage: React.FC = () => {
     const handleFirmaSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!p12File) {
-            addToast('Validación', 'Seleccione un archivo de firma digital (.p12).', 'warning');
-            return;
-        }
-        if (!p12Password) {
-            addToast('Validación', 'Ingrese la contraseña del certificado.', 'warning');
+            addToast('Validación', 'Seleccione un archivo de firma.', 'warning');
             return;
         }
 
         setIsUploadingFirma(true);
         const formData = new FormData();
         formData.append('file', p12File);
-        formData.append('password', p12Password);
+        formData.append('password', p12Password || '');
 
         try {
             const res = await api.post('/lopdp/perfil/firma', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { 'Content-Type': undefined },
+                transformRequest: [(data, headers) => {
+                    if (data instanceof FormData) {
+                        delete headers['Content-Type'];
+                    }
+                    return data;
+                }],
             });
             addToast('Certificado Guardado', res.data.message || 'Firma configurada exitosamente.', 'success');
             setP12File(null);
@@ -313,18 +315,17 @@ const SettingsPage: React.FC = () => {
                             {profile.acepto_terminos_firma && (
                                 <form onSubmit={handleFirmaSubmit} className="space-y-4 pt-2">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Subir Certificado (.p12 / .pfx)</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Subir Certificado</label>
                                         <div className="flex items-center justify-center border border-dashed border-border-thin rounded-lg p-4 bg-surface hover:border-brand/40 transition-colors cursor-pointer relative">
                                             <input
                                                 type="file"
-                                                accept=".p12,.pfx"
                                                 onChange={e => setP12File(e.target.files?.[0] || null)}
                                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                             />
                                             <div className="text-center space-y-1">
                                                 <UploadCloud className="mx-auto text-text-dim" size={20} />
                                                 <p className="text-xs font-semibold text-text-main">{p12File ? p12File.name : 'Seleccionar Archivo'}</p>
-                                                <p className="text-[10px] text-text-dim">Formatos válidos: PKCS#12 (.p12, .pfx)</p>
+                                                <p className="text-[10px] text-text-dim">En pruebas acepta cualquier archivo. En producción: .p12 / .pfx</p>
                                             </div>
                                         </div>
                                     </div>
@@ -334,9 +335,8 @@ const SettingsPage: React.FC = () => {
                                         <div className="relative">
                                             <input
                                                 type="password"
-                                                required
                                                 className="w-full bg-surface border border-border-thin rounded-lg pl-3 pr-8 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                                placeholder="Contraseña del certificado"
+                                                placeholder="Contraseña del certificado (opcional en pruebas)"
                                                 value={p12Password}
                                                 onChange={e => setP12Password(e.target.value)}
                                             />

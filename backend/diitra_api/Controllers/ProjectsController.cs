@@ -171,6 +171,11 @@ namespace diitra_api.Controllers
 
                 var genResult = await _documentEngine.GenerateAsync(request);
 
+                var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+                var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+                var skipCertificateValidation = env.IsDevelopment()
+                    || config.GetValue<bool>("Firma:SkipCertificateValidation");
+
                 // 3. Aplicar Firma Criptográfica Avanzada (.p12 / BouncyCastle)
                 byte[]? certificateBytes = null;
                 string? finalPassword = password;
@@ -190,7 +195,6 @@ namespace diitra_api.Controllers
                         try
                         {
                             certificateBytes = await System.IO.File.ReadAllBytesAsync(userMeta.RutaFirmaP12);
-                            var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
                             var encryptionKey = config["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
                             finalPassword = diitra_infrastructure.Security.CryptoHelper.Decrypt(userMeta.P12PasswordEncrypted!, encryptionKey);
                         }
@@ -205,23 +209,40 @@ namespace diitra_api.Controllers
                 byte[] signedPdfBytes;
                 if (certificateBytes != null)
                 {
-                    if (!firmaService.ValidateCertificate(certificateBytes, finalPassword!))
+                    if (!skipCertificateValidation)
                     {
-                        return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
-                    }
+                        if (string.IsNullOrWhiteSpace(finalPassword))
+                        {
+                            return BadRequest(new { error = "La contraseña del certificado es requerida." });
+                        }
 
-                    signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, finalPassword!,
-                        reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
-                        location: "Quito, Ecuador");
+                        if (!firmaService.ValidateCertificate(certificateBytes, finalPassword!))
+                        {
+                            return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
+                        }
+
+                        signedPdfBytes = firmaService.SignPdf(genResult.PdfBytes, certificateBytes, finalPassword!,
+                            reason: $"Firma de Aprobación de Protocolo - {projectDto.Titulo}",
+                            location: "Quito, Ecuador");
+                    }
+                    else
+                    {
+                        logger.LogWarning("[DIITRA CORE] Modo pruebas: firma criptográfica PAdES omitida para proyecto {Uuid}", projectUuid);
+                        signedPdfBytes = genResult.PdfBytes;
+                    }
+                }
+                else if (skipCertificateValidation)
+                {
+                    logger.LogWarning("[DIITRA CORE] Modo pruebas: PDF oficial generado sin certificado para proyecto {Uuid}", projectUuid);
+                    signedPdfBytes = genResult.PdfBytes;
+                }
+                else if (password == "diitra2026")
+                {
+                    signedPdfBytes = genResult.PdfBytes;
                 }
                 else
                 {
-                    // Bypass de demostración (Demo Mode)
-                    if (password != "diitra2026")
-                    {
-                        return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
-                    }
-                    signedPdfBytes = genResult.PdfBytes;
+                    return BadRequest(new { error = "Debe subir un archivo de firma (.p12) válido, o haberla configurado previamente en su perfil." });
                 }
 
                 // ── LOPDP: Registrar auditoría de acceso a datos sensibles ──
@@ -626,15 +647,8 @@ namespace diitra_api.Controllers
                 return false;
             }
 
-            // 2. Administradores o Directores de Investigación pueden editar cualquier proyecto NO blindado (Borrador/En Corrección)
-            var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
-                          User.IsInRole("DIITRA_ADMIN") ||
-                          User.IsInRole("ADMIN_SISTEMA") ||
-                          User.IsInRole("DIRECTOR_INV");
-
-            if (isAdmin) return true;
-
-            // 3. Usuarios regulares requieren pertenecer al equipo del proyecto
+            // 2. Incluso administradores requieren pertenecer al equipo para editar.
+            // La supervisión institucional es sólo lectura; evita auto-vinculación al guardar.
             return await _projectOrchestrator.UserCanModifyProjectAsync(uuid, userIdRef);
         }
 
