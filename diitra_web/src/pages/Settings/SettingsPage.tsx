@@ -319,7 +319,7 @@ const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left: Metadata form */}
                     <div className="lg:col-span-2 space-y-6">
-                        <form onSubmit={handleSaveProfile} className="bento-card p-6 space-y-6">
+                        <form onSubmit={handleSaveProfile} className="bento-card static p-6 space-y-6">
                             <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                                 <User size={16} />
                                 Perfil Científico
@@ -416,7 +416,7 @@ const SettingsPage: React.FC = () => {
 
                     {/* Right: Signature settings & Consent */}
                     <div className="space-y-6">
-                        <div className="bento-card p-6 space-y-6">
+                        <div className="bento-card static p-6 space-y-6">
                             <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                                 <Key size={16} />
                                 Firma Electrónica
@@ -518,7 +518,7 @@ const SettingsPage: React.FC = () => {
             {activeTab === 'arco' && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Form to submit ARCO */}
-                    <div className="bento-card p-6 space-y-6">
+                    <div className="bento-card static p-6 space-y-6">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <ShieldCheck size={16} />
                             Nueva Solicitud ARCO
@@ -572,7 +572,7 @@ const SettingsPage: React.FC = () => {
                     </div>
 
                     {/* List of requests */}
-                    <div className="lg:col-span-2 bento-card p-6 space-y-6">
+                    <div className="lg:col-span-2 bento-card static p-6 space-y-6">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <FileText size={16} />
                             Historial de Solicitudes ARCO
@@ -639,7 +639,7 @@ const SettingsPage: React.FC = () => {
             {activeTab === 'admin_arco' && isAdmin && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Request selector & list */}
-                    <div className="lg:col-span-2 bento-card p-6 space-y-6">
+                    <div className="lg:col-span-2 bento-card static p-6 space-y-6">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <FileText size={16} />
                             Peticiones ARCO Pendientes del Instituto
@@ -684,7 +684,7 @@ const SettingsPage: React.FC = () => {
                     </div>
 
                     {/* Resolution Form */}
-                    <div className="bento-card p-6 space-y-6">
+                    <div className="bento-card static p-6 space-y-6">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-text-main flex items-center gap-2">
                             <Lock size={16} />
                             Resolución LOPDP
