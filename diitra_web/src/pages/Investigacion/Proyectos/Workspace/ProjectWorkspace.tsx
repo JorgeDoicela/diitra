@@ -196,9 +196,12 @@ export const ProjectWorkspace: React.FC = () => {
                 const data = res.data; // ArbitrajeProyectoDto
                 
                 // Buscar si el usuario actual es un revisor asignado
-                const userRevision = data.revisiones?.find((r: any) => 
-                    (r.idRevisor ?? r.IdRevisor) === user.id_usuario
-                );
+                const currentUserId = user.id_usuario ?? user.idUsuario;
+                const userRevision = currentUserId
+                    ? data.revisiones?.find((r: any) => 
+                        (r.id_revisor ?? r.idRevisor ?? r.IdRevisor) === currentUserId
+                      )
+                    : null;
                 
                 if (userRevision) {
                     setAssignedRevisionUuid(userRevision.uuid ?? userRevision.Uuid);

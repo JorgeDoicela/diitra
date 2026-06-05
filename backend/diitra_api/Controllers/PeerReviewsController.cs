@@ -5,6 +5,8 @@ using diitra_application.Research.Dtos;
 using System.Security.Claims;
 using diitra_infrastructure.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.EntityFrameworkCore;
+using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers;
 
@@ -16,15 +18,18 @@ public class PeerReviewsController : ControllerBase
     private readonly IPeerReviewService _peerReviewService;
     private readonly IFirmaElectronicaService _firmaService;
     private readonly IConfiguration _configuration;
+    private readonly DiitraContext _context;
 
     public PeerReviewsController(
         IPeerReviewService peerReviewService,
         IFirmaElectronicaService firmaService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        DiitraContext context)
     {
         _peerReviewService = peerReviewService;
         _firmaService = firmaService;
         _configuration = configuration;
+        _context = context;
     }
 
     private int GetCurrentUserId()
@@ -70,8 +75,23 @@ public class PeerReviewsController : ControllerBase
     {
         try
         {
+            var userId = GetCurrentUserId();
+            var revision = await _context.Set<InvRevisionesPares>().FirstOrDefaultAsync(r => r.Uuid == revisionUuid);
+            if (revision == null) return NotFound(new { message = "Revisión no encontrada." });
+
+            var user = await _context.Users.FindAsync(userId);
+            bool isPrivileged = user != null && (user.Administrador || 
+                                User.IsInRole("DIITRA_ADMIN") || 
+                                User.IsInRole("ADMIN_SISTEMA") || 
+                                User.IsInRole("DIRECTOR_INV"));
+
+            if (revision.IdRevisor != userId && !isPrivileged)
+            {
+                return Forbid("No tienes permisos para visualizar esta rúbrica de evaluación.");
+            }
+
             var rubrica = await _peerReviewService.GetRubricaForRevisionAsync(revisionUuid);
-            if (rubrica == null) return NotFound(new { message = "Revisión no encontrada o sin rúbrica configurada." });
+            if (rubrica == null) return NotFound(new { message = "Rúbrica no configurada." });
             return Ok(rubrica);
         }
         catch (InvalidOperationException ex)
@@ -88,6 +108,15 @@ public class PeerReviewsController : ControllerBase
     {
         try
         {
+            var userId = GetCurrentUserId();
+            var revision = await _context.Set<InvRevisionesPares>().FirstOrDefaultAsync(r => r.Uuid == dto.RevisionUuid);
+            if (revision == null) return NotFound(new { message = "Revisión no encontrada." });
+
+            if (revision.IdRevisor != userId)
+            {
+                return Forbid("No tienes permisos para enviar esta evaluación.");
+            }
+
             var result = await _peerReviewService.SubmitEvaluationAsync(dto);
             if (!result) return NotFound(new { message = "Revisión no encontrada." });
             return Ok(new { message = "Evaluación enviada con éxito." });
