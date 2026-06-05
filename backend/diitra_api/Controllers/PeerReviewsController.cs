@@ -106,6 +106,7 @@ public class PeerReviewsController : ControllerBase
     /// Vista global de todos los arbitrajes activos (para el Director de Investigación).
     /// </summary>
     [HttpGet("arbitraje")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> GetArbitrajesActivos()
     {
         var result = await _peerReviewService.GetArbitrajesActivosAsync();
@@ -116,6 +117,7 @@ public class PeerReviewsController : ControllerBase
     /// KPIs y estadísticas del módulo de arbitraje.
     /// </summary>
     [HttpGet("arbitraje/stats")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> GetArbitrajeStats()
     {
         var stats = await _peerReviewService.GetArbitrajeStatsAsync();
@@ -126,6 +128,7 @@ public class PeerReviewsController : ControllerBase
     /// Vista de arbitraje detallada de un proyecto específico (árbitros, puntajes, estado).
     /// </summary>
     [HttpGet("project/{projectUuid}")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> GetByProject(string projectUuid)
     {
         // Compatibilidad: si es un número (ID legado), intentar búsqueda por ID
@@ -162,6 +165,7 @@ public class PeerReviewsController : ControllerBase
     /// Asignar un árbitro a un proyecto de investigación.
     /// </summary>
     [HttpPost("assign")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> Assign([FromBody] AsignarArbitroDto dto)
     {
         var directorId = GetCurrentUserId();
@@ -173,6 +177,7 @@ public class PeerReviewsController : ControllerBase
     /// Revocar la asignación de un árbitro (solo si aún no completó la evaluación).
     /// </summary>
     [HttpDelete("{revisionUuid}/revocar")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> RevocarAsignacion(string revisionUuid)
     {
         var directorId = GetCurrentUserId();
@@ -190,6 +195,7 @@ public class PeerReviewsController : ControllerBase
     /// Aplica la lógica normativa CACES: promedio ponderado, umbral de aprobación, detección de desempate.
     /// </summary>
     [HttpPost("project/{projectUuid}/cerrar")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> CerrarArbitraje(string projectUuid)
     {
         var directorId = GetCurrentUserId();
@@ -213,6 +219,7 @@ public class PeerReviewsController : ControllerBase
     /// Habilita informes de avance y monitoreo operativo CACES.
     /// </summary>
     [HttpPost("project/{projectUuid}/iniciar-ejecucion")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> IniciarEjecucion(string projectUuid)
     {
         var directorId = GetCurrentUserId();
@@ -238,6 +245,7 @@ public class PeerReviewsController : ControllerBase
     /// Si el sistema tiene un certificado de firma configurado, el PDF se devuelve firmado digitalmente en formato PAdES.
     /// </summary>
     [HttpGet("project/{projectUuid}/dictamen-pdf")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> DescargarDictamenPdf(string projectUuid)
     {
         var directorId = GetCurrentUserId();
@@ -303,6 +311,7 @@ public class PeerReviewsController : ControllerBase
     /// Cumple criterio CACES: participación de evaluadores externos a la institución.
     /// </summary>
     [HttpPost("revisores/externos")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> RegisterRevisorExterno([FromBody] RegistrarRevisorExternoDto dto)
     {
         var directorId = GetCurrentUserId();
@@ -314,6 +323,7 @@ public class PeerReviewsController : ControllerBase
     /// Listar todos los árbitros externos registrados en el sistema.
     /// </summary>
     [HttpGet("revisores/externos")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> GetRevisoresExternos()
     {
         var result = await _peerReviewService.GetRevisoresExternosAsync();
@@ -324,6 +334,7 @@ public class PeerReviewsController : ControllerBase
     /// Extender la fecha límite de una revisión manual.
     /// </summary>
     [HttpPut("{revisionUuid}/extender")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> ExtenderFechaLimite(string revisionUuid, [FromBody] ExtenderPlazoDto dto)
     {
         var directorId = GetCurrentUserId();
@@ -339,6 +350,7 @@ public class PeerReviewsController : ControllerBase
     /// Actualiza las configuraciones de prórrogas de arbitraje de un proyecto.
     /// </summary>
     [HttpPut("project/{projectUuid}/settings")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> UpdateProjectSettings(string projectUuid, [FromBody] PeerReviewSettingsDto dto)
     {
         try
