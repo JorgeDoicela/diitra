@@ -35,6 +35,8 @@ import ProjectAdoptionPage from './pages/Investigacion/Proyectos/ProjectAdoption
 import InformesAvancePage from './pages/Investigacion/Proyectos/InformesAvancePage';
 import SettingsPage from './pages/Settings/SettingsPage';
 import LopdpConsentPage from './pages/Lopdp/LopdpConsentPage';
+import ArcoPage from './pages/Lopdp/ArcoPage';
+import LopdpAdminPage from './pages/Lopdp/LopdpAdminPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading, user } = useAuth();
@@ -197,6 +199,8 @@ function App() {
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/derechos-arco" element={<ArcoPage />} />
+                            <Route path="/admin/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />

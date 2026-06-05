@@ -35,6 +35,7 @@ public class SolicitudArcoResponse
     public string? ResolucionDetalle { get; set; }
     public DateTime? FechaResolucion { get; set; }
     public string? DocumentoResolucionPath { get; set; }
+    public string? EvidenciaPath { get; set; }
 }
 
 public class PerfilLopdpDto

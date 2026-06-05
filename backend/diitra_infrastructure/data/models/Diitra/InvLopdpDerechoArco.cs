@@ -19,6 +19,7 @@ public class InvLopdpDerechoArco
     public string? ResolucionDetalle { get; set; }
     public DateTime? FechaResolucion { get; set; }
     public string? DocumentoResolucionPath { get; set; }
+    public string? EvidenciaPath { get; set; }
 
     // Propiedad de Navegación
     public virtual User? User { get; set; }
