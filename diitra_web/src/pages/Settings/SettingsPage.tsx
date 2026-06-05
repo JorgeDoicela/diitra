@@ -122,10 +122,21 @@ const SettingsPage: React.FC = () => {
             return;
         }
 
+        // MODO PRODUCCIÓN: descomentar para exigir .p12 y contraseña
+        // if (!p12File) {
+        //     addToast('Validación', 'Seleccione un archivo de firma digital (.p12).', 'warning');
+        //     return;
+        // }
+        // if (!p12Password) {
+        //     addToast('Validación', 'Ingrese la contraseña del certificado.', 'warning');
+        //     return;
+        // }
+
         setIsUploadingFirma(true);
         const formData = new FormData();
         formData.append('file', p12File);
         formData.append('password', p12Password || '');
+        // MODO PRODUCCIÓN: formData.append('password', p12Password);
 
         try {
             const res = await api.post('/lopdp/perfil/firma', formData, {
@@ -322,10 +333,12 @@ const SettingsPage: React.FC = () => {
                                                 onChange={e => setP12File(e.target.files?.[0] || null)}
                                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                             />
+                                            {/* MODO PRODUCCIÓN: accept=".p12,.pfx" y label "Subir Certificado (.p12 / .pfx)" */}
                                             <div className="text-center space-y-1">
                                                 <UploadCloud className="mx-auto text-text-dim" size={20} />
                                                 <p className="text-xs font-semibold text-text-main">{p12File ? p12File.name : 'Seleccionar Archivo'}</p>
                                                 <p className="text-[10px] text-text-dim">En pruebas acepta cualquier archivo. En producción: .p12 / .pfx</p>
+                                                {/* MODO PRODUCCIÓN: <p className="text-[10px] text-text-dim">Formatos válidos: PKCS#12 (.p12, .pfx)</p> */}
                                             </div>
                                         </div>
                                     </div>
@@ -340,6 +353,7 @@ const SettingsPage: React.FC = () => {
                                                 value={p12Password}
                                                 onChange={e => setP12Password(e.target.value)}
                                             />
+                                            {/* MODO PRODUCCIÓN: required y placeholder="Contraseña del certificado" */}
                                             <Lock className="absolute right-2.5 top-2.5 text-text-dim" size={14} />
                                         </div>
                                     </div>

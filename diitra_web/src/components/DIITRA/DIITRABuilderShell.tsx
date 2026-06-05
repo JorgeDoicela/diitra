@@ -260,6 +260,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     // ── Firma Electrónica PAdES ──
     const handleSign = async () => {
+        // MODO PRODUCCIÓN: descomentar para exigir contraseña
+        // if (!signaturePassword) return alert('Ingresa la clave de tu firma (.p12)');
+
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica PAdES...');
         try {
@@ -268,6 +271,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 formDataObj.append('certificate', signatureFile);
             }
             formDataObj.append('password', signaturePassword || '');
+            // MODO PRODUCCIÓN: formDataObj.append('password', signaturePassword);
             formDataObj.append('projectUuid', entityUuid || formData.EntityUuid || formData.entityUuid || formData.Uuid || '');
 
             const response = await api.post(
@@ -291,6 +295,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                     : 'Firma digital aplicada e integrada',
                 'success'
             );
+            // MODO PRODUCCIÓN: addAudit('Firma digital aplicada e integrada', 'success');
         } catch (err: any) {
             console.error('[DIITRA] Error signing document:', err);
 
@@ -590,6 +595,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                             onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
                                                             className="w-full text-xs text-text-dim file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded-xl p-3 bg-bg-deep/30"
                                                         />
+                                                        {/* MODO PRODUCCIÓN: accept=".p12,.pfx" y label "Archivo de Firma (.p12 / .pfx)" */}
                                                         {signatureFile && (
                                                             <p className="text-[8px] text-green-500 font-bold uppercase tracking-widest mt-1.5">
                                                                 ✓ {signatureFile.name} ({(signatureFile.size / 1024).toFixed(1)} KB)
@@ -598,6 +604,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                     </div>
                                                     <div>
                                                         <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Contraseña del Certificado</label>
+                                                        {/* MODO PRODUCCIÓN: placeholder="Contraseña Certificado (.p12)" */}
                                                         <input
                                                             type="password"
                                                             placeholder="Contraseña (opcional en pruebas)"

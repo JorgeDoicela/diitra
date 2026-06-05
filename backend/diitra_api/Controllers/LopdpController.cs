@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Hosting;
 using diBaseModels = diitra_infrastructure.data.models;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
@@ -228,13 +227,19 @@ public class LopdpController : ControllerBase
             return BadRequest(new { error = "La contraseña del certificado es requerida." });
         }
 
+        // MODO PRODUCCIÓN: descomentar para exigir .p12 y contraseña siempre
+        // if (file == null || file.Length == 0 || string.IsNullOrEmpty(password))
+        // {
+        //     return BadRequest(new { error = "El archivo de firma (.p12) y la contraseña son requeridos." });
+        // }
+
         var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
 
         var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
         if (dbUser == null) return Unauthorized();
 
-        // 1. Validar el certificado (omitido en modo pruebas/desarrollo)
+        // 1. Validar el certificado (omitido en modo flexible/pruebas)
         byte[] certificateBytes;
         using (var ms = new System.IO.MemoryStream())
         {
@@ -248,6 +253,12 @@ public class LopdpController : ControllerBase
         {
             return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
         }
+
+        // MODO PRODUCCIÓN: descomentar para validación PKCS#12 estricta
+        // if (!firmaService.ValidateCertificate(certificateBytes, password))
+        // {
+        //     return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
+        // }
 
         // 2. Guardar el archivo en el servidor
         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads", "signatures");
@@ -265,6 +276,11 @@ public class LopdpController : ControllerBase
         var fileName = $"user_sig_{dbUser.IdUsuario}{extension}";
         var filePath = Path.Combine(uploadsFolder, fileName);
         await System.IO.File.WriteAllBytesAsync(filePath, certificateBytes);
+
+        // MODO PRODUCCIÓN: descomentar para forzar extensión .p12
+        // var fileName = $"user_sig_{dbUser.IdUsuario}.p12";
+        // var filePath = Path.Combine(uploadsFolder, fileName);
+        // await System.IO.File.WriteAllBytesAsync(filePath, certificateBytes);
 
         // 3. Cifrar la contraseña
         var encryptionKey = configuration["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
@@ -291,6 +307,9 @@ public class LopdpController : ControllerBase
             : "Firma electrónica configurada y contraseña cifrada exitosamente.";
 
         return Ok(new { message });
+
+        // MODO PRODUCCIÓN:
+        // return Ok(new { message = "Firma electrónica configurada y contraseña cifrada exitosamente." });
     }
 }
 
