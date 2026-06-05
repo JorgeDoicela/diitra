@@ -177,6 +177,7 @@ namespace Diitra.Application.Research.Dtos
         // --- Compliance Enterprise ---
         public List<MmlRowDto>? MatrizMarcoLogico { get; set; }
         public List<DocumentoAdjuntoDto>? DocumentosAdjuntos { get; set; }
+        public List<GastoDto>? Gastos { get; set; }
     }
 
     public class MmlRowDto
@@ -283,5 +284,16 @@ namespace Diitra.Application.Research.Dtos
 
         /// <summary>Código de ícono sugerido: 'edit', 'check', 'eye', 'workflow', 'comment'</summary>
         public string Icono { get; set; } = "edit";
+    }
+
+    public class GastoDto
+    {
+        public string? Id { get; set; }
+        public string? Descripcion { get; set; }
+        public string? Partida { get; set; }
+        public decimal Monto { get; set; }
+        public string? Fecha { get; set; }
+        public string? ReferenciaFactura { get; set; }
+        public string? Categoria { get; set; }
     }
 }

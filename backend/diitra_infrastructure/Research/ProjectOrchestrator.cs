@@ -471,6 +471,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.InvProductos)
                 .Include(p => p.MatrizMarcoLogico)
                 .Include(p => p.InvRecursosDisponibles)
+                .Include(p => p.InvGastos).ThenInclude(g => g.IdItemNavigation)
                 .FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
 
             if (p == null) return null;
@@ -672,6 +673,17 @@ namespace diitra_infrastructure.Research
                 Indicadores = m.Indicadores,
                 Medios = m.MediosVerificacion,
                 Supuestos = m.Supuestos
+            }).ToList();
+
+            dto.Gastos = p.InvGastos.Select(g => new GastoDto
+            {
+                Id = g.Uuid.ToString(),
+                Descripcion = g.Descripcion,
+                Partida = g.IdItemNavigation?.IdPartida,
+                Monto = g.Monto,
+                Fecha = g.FechaGasto.ToString("yyyy-MM-dd"),
+                ReferenciaFactura = g.NumeroFactura,
+                Categoria = g.IdItemNavigation?.Categoria
             }).ToList();
 
             return dto;
