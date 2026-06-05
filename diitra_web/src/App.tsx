@@ -34,9 +34,10 @@ import EmailEnginePage from './pages/Admin/Emails/EmailEnginePage';
 import ProjectAdoptionPage from './pages/Investigacion/Proyectos/ProjectAdoptionPage';
 import InformesAvancePage from './pages/Investigacion/Proyectos/InformesAvancePage';
 import SettingsPage from './pages/Settings/SettingsPage';
+import LopdpConsentPage from './pages/Lopdp/LopdpConsentPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading, user } = useAuth();
     const location = useLocation();
 
     if (isLoading) {
@@ -49,6 +50,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    // Intercept user if LOPDP terms have not been accepted yet
+    if (user?.acepto_lopdp === false && location.pathname !== '/consentimiento-lopdp') {
+        return <Navigate to="/consentimiento-lopdp" replace />;
+    }
+
+    // Redirect user to dashboard if trying to go back to consent screen after accepting
+    if (user?.acepto_lopdp === true && location.pathname === '/consentimiento-lopdp') {
+        return <Navigate to="/dashboard" replace />;
     }
 
     return <>{children}</>;
@@ -213,6 +224,12 @@ function App() {
 
                         {/* Public Verification Page (Accessible without authentication) */}
                         <Route path="/verify/:code" element={<VerifyDocument />} />
+
+                        <Route path="/consentimiento-lopdp" element={
+                            <ProtectedRoute>
+                                <LopdpConsentPage />
+                            </ProtectedRoute>
+                        } />
 
                         <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
                             <ProtectedRoute>

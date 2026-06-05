@@ -12,6 +12,7 @@ public interface ILopdpService
     Task ResolverSolicitudArcoAsync(int idSolicitudArco, string resolucionDetalle, string estado, string? documentPath);
     Task<List<SolicitudArcoResponse>> GetMisSolicitudesArcoAsync(int idUsuario);
     Task<List<SolicitudArcoResponse>> GetAllSolicitudesArcoAsync();
+    Task<List<ConsentimientoResponse>> GetAllConsentimientosAsync();
     Task AuditoriaAccesoDatosAsync(int? idUsuarioActor, int idUsuarioAfectado, string tablaAfectada, string? columnaAfectada, string operacion, string? motivo, string? ip, string? userAgent);
     Task<PerfilLopdpDto?> GetPerfilAsync(int idUsuario);
     Task UpdatePerfilAsync(int idUsuario, ActualizarPerfilRequest request);

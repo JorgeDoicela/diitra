@@ -12,6 +12,7 @@ interface User {
     usuario?: string;
     id_usuario?: number;
     role_codes?: string[];
+    acepto_lopdp?: boolean;
 }
 
 interface AuthContextType {
@@ -48,7 +49,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         try {
             const response = await api.get('/auth/me');
-            setUser(response.data);
+            const data = response.data;
+            const normalized: User = {
+                ...data,
+                acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
+            };
+            setUser(normalized);
         } catch (error: any) {
             setUser(null);
             localStorage.removeItem('diitra_logged_in');
@@ -71,7 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const normalizedUser: User = {
             ...data,
             roles: data.role_codes || data.roles || [],
-            role: data.role_codes?.[0] || data.role
+            role: data.role_codes?.[0] || data.role,
+            acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
         };
         
         setUser(normalizedUser);
@@ -86,7 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const normalizedUser: User = {
             ...data,
             roles: data.role_codes || data.roles || [],
-            role: data.role_codes?.[0] || data.role
+            role: data.role_codes?.[0] || data.role,
+            acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
         };
 
         setUser(normalizedUser);
@@ -101,7 +109,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const normalizedUser: User = {
             ...auth,
             roles: auth.role_codes || auth.roles || [],
-            role: auth.role_codes?.[0] || auth.role
+            role: auth.role_codes?.[0] || auth.role,
+            acepto_lopdp: auth.acepto_lopdp !== undefined ? auth.acepto_lopdp : auth.aceptoLopdp
         };
         
         // Retornamos sin iniciar la sesión en este dispositivo de forma automática.
@@ -122,7 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const normalizedUser: User = {
             ...data,
             roles: data.role_codes || data.roles || [],
-            role: data.role_codes?.[0] || data.role
+            role: data.role_codes?.[0] || data.role,
+            acepto_lopdp: data.acepto_lopdp !== undefined ? data.acepto_lopdp : data.aceptoLopdp
         };
         
         setUser(normalizedUser);

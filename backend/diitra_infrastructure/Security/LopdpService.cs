@@ -168,6 +168,34 @@ public class LopdpService : ILopdpService
         }
     }
 
+    public async Task<List<ConsentimientoResponse>> GetAllConsentimientosAsync()
+    {
+        try
+        {
+            return await _context.InvLopdpConsentimientos
+                .OrderByDescending(c => c.FechaConsentimiento)
+                .Select(c => new ConsentimientoResponse
+                {
+                    IdConsentimiento = c.IdConsentimiento,
+                    Uuid = c.Uuid,
+                    IdUsuario = c.IdUsuario,
+                    NombreUsuario = c.User != null ? (c.User.Nombre ?? "Usuario " + c.IdUsuario) : "Usuario " + c.IdUsuario,
+                    VersionPolitica = c.VersionPolitica,
+                    Canal = c.Canal,
+                    FechaConsentimiento = c.FechaConsentimiento,
+                    IpDireccion = c.IpDireccion,
+                    UserAgent = c.UserAgent,
+                    Estado = c.Estado
+                })
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener todos los consentimientos LOPDP");
+            throw;
+        }
+    }
+
     public async Task AuditoriaAccesoDatosAsync(int? idUsuarioActor, int idUsuarioAfectado, string tablaAfectada, string? columnaAfectada, string operacion, string? motivo, string? ip, string? userAgent)
     {
         try

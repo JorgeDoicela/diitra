@@ -23,6 +23,7 @@ public class AuthResponse
     public int IdUsuario { get; set; }
     public string UserUuid { get; set; } = null!;
     public string Usuario { get; set; } = null!;
+    public bool AceptoLopdp { get; set; }
 }
 
 /// <summary>Respuesta cuando el usuario está bloqueado por exceso de intentos fallidos.</summary>

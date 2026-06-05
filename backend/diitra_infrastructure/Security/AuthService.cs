@@ -286,6 +286,9 @@ public class AuthService : IAuthService
 
         var systemsClaim = string.Join(",", sistemas);
 
+        var hasAcceptedLopdp = await _context.InvLopdpConsentimientos
+            .AnyAsync(c => c.IdUsuario == user.IdUsuario && c.VersionPolitica == "LOPDP_GENERAL" && c.Estado == "Otorgado");
+
         var response = new AuthResponse
         {
             IdReferencia = user.IdSigafi.Trim(),
@@ -300,7 +303,8 @@ public class AuthService : IAuthService
             Permissions = permissions,
             Administrador = (user.IdSigafi == _masterAdminId) || user.Administrador,
             Email = user.EmailInstitucional ?? "",
-            Sistemas = systemsClaim
+            Sistemas = systemsClaim,
+            AceptoLopdp = hasAcceptedLopdp
         };
 
         response.Token = GenerateToken(response);

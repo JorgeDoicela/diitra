@@ -140,6 +140,17 @@ public class LopdpController : ControllerBase
     }
 
     /// <summary>
+    /// Devuelve todos los consentimientos registrados en el sistema (Solo para administradores/directores).
+    /// </summary>
+    [HttpGet("consentimientos")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    public async Task<IActionResult> GetAllConsentimientos()
+    {
+        var consentimientos = await _lopdpService.GetAllConsentimientosAsync();
+        return Ok(consentimientos);
+    }
+
+    /// <summary>
     /// Devuelve el perfil LOPDP del usuario autenticado (incluyendo metadatos científicos e información de consentimiento).
     /// </summary>
     [HttpGet("perfil")]
