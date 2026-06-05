@@ -397,6 +397,7 @@ namespace diitra_api.Controllers
                     var linkedCareers = profCareers
                         .Where(pc => pc.IdProfesor.Trim() == p.cedula && pc.IdCarreraNavigation != null)
                         .Select(pc => pc.IdCarreraNavigation!.Carrera1)
+                        .Distinct()
                         .ToList();
                     var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
 
