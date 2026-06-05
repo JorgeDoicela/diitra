@@ -110,36 +110,30 @@ export const DASHBOARD_CONFIG: HelpConfig = {
 
 export const SETTINGS_CONFIG: HelpConfig = {
     icon: <Settings2 size={24} className="text-brand" />,
-    title: "Mi Cuenta y Privacidad LOPDP",
-    summary: "Consola de configuración personal, credenciales académicas y gestión de consentimientos bajo la normativa LOPDP.",
-    description: "Espacio individual para que el docente o usuario administre sus datos personales, perfiles de investigación (ORCID, Google Scholar), preferencias de notificaciones y la revocación o aceptación de consentimientos de privacidad de datos conforme a la ley vigente.",
+    title: "Mi Cuenta y Firma Electrónica",
+    summary: "Consola de configuración personal, credenciales académicas y gestión de firma electrónica.",
+    description: "Espacio individual para que el docente o usuario administre sus datos personales, perfiles de investigación (ORCID, Google Scholar) y configure la firma digital necesaria para la suscripción académica.",
     steps: [
         {
             title: "Gestión de información de perfil y filiación",
-            description: "Actualiza tus datos de contacto, enlaces académicos externos como ORCID o Scopus ID, e información de tu departamento para asegurar que tus firmas de reportes y certificaciones se generen con metadatos correctos.",
+            description: "Actualiza tus datos de contacto, enlaces académicos externos como ORCID o Scopus ID, e información de tu departamento para asegurar que tus firmas de reportes y entregables se generen con metadatos correctos.",
             highlight: 'content-top'
         },
         {
-            title: "Seguridad, contraseña y firma electrónica",
-            description: "Configura tus credenciales de acceso seguro y administra tu certificado de firma electrónica (token o archivo pfx) para la suscripción inmutable de actas e informes técnicos.",
-            highlight: 'content-bottom'
-        },
-        {
-            title: "Privacidad y consentimiento LOPDP",
-            description: "Revisa y administra tus autorizaciones de tratamiento de datos personales. DIITRA cumple con la Ley Orgánica de Protección de Datos Personales, permitiendo el ejercicio de tus derechos de acceso, rectificación y oposición.",
+            title: "Seguridad y firma electrónica cifrada",
+            description: "Administra tu certificado de firma electrónica (token o archivo p12) y otorga el consentimiento de custodia para la firma inmutable de actas e informes técnicos.",
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Alineado con la Ley Orgánica de Protección de Datos Personales (LOPDP) del Ecuador, garantizando el control sobre el uso de datos del personal docente y administrativo, y el Criterio de Infraestructura y Transparencia del CACES.",
+    compliance: "Alineado con el Criterio de Infraestructura y Transparencia del CACES para la gestión de claustro docente e investigadores autorizados.",
     tips: [
         "Mantén vinculados y actualizados tus perfiles de ORCID y Google Scholar para permitir la sincronización automatizada de tu producción científica periódica.",
-        "Por seguridad, te recomendamos renovar tus credenciales de acceso periódicamente y utilizar contraseñas de alta complejidad."
+        "Por seguridad, el certificado .p12 y su clave se cifran bajo AES-256 antes de guardarse en la base de datos."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
             <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                 <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
-                <div className="w-1/5 h-5 bg-success/20 border border-success/30 rounded flex items-center justify-center text-[6px] text-success font-semibold">Guardar</div>
             </div>
             <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
                 <div className="flex gap-2 items-center pb-1 border-b border-border-thin/20">
@@ -152,11 +146,79 @@ export const SETTINGS_CONFIG: HelpConfig = {
                 <div className="space-y-1.5 py-1">
                     <div className="w-full h-3 bg-text-dim/10 rounded-sm border border-border-thin" />
                     <div className="w-3/4 h-3 bg-text-dim/10 rounded-sm border border-border-thin" />
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-3 h-3 bg-brand/20 border border-brand/40 rounded-sm" />
-                        <div className="w-16 h-1 bg-text-dim/20 rounded" />
-                    </div>
                 </div>
+            </div>
+        </>
+    )
+};
+
+export const ARCO_CONFIG: HelpConfig = {
+    icon: <ShieldCheck size={24} className="text-brand" />,
+    title: "Derechos ARCO · Protección de Datos",
+    summary: "Portal del usuario para el ejercicio de sus derechos de protección de datos (ARCO).",
+    description: "DIITRA garantiza el ejercicio de sus derechos de Acceso, Rectificación, Cancelación y Oposición sobre sus datos personales conforme a la Ley Orgánica de Protección de Datos Personales (LOPDP) del Ecuador.",
+    steps: [
+        {
+            title: "Presentación de nueva solicitud",
+            description: "Seleccione el tipo de derecho que desea ejercer (Acceso, Rectificación, Eliminación, Oposición, Portabilidad o Limitación) y describa detalladamente su justificación en el formulario.",
+            highlight: 'content-top'
+        },
+        {
+            title: "Seguimiento e historial de resoluciones",
+            description: "Revise el historial de sus peticiones presentadas. Por ley, el instituto cuenta con un plazo de 15 días laborables para emitir una resolución formal y dictamen legal.",
+            highlight: 'content-bottom'
+        }
+    ],
+    compliance: "Alineado con el Título III de la LOPDP sobre los Derechos de los Titulares de Datos Personales en el Ecuador.",
+    tips: [
+        "Describa de la forma más clara posible los registros o datos específicos que desea modificar o eliminar para agilizar el análisis del departamento legal.",
+        "Las resoluciones emitidas por el administrador del sistema quedarán registradas de forma inmutable en su historial."
+    ],
+    Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
+        <>
+            <div className={`h-8 rounded-lg border px-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                <div className="w-1/3 h-3 bg-text-dim/15 rounded border border-border-thin" />
+                <div className="w-1/5 h-5 bg-brand text-white rounded flex items-center justify-center text-[6px] font-semibold">Enviar</div>
+            </div>
+            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                <div className="w-3/4 h-2 bg-text-main/20 rounded" />
+                <div className="w-full h-8 bg-text-dim/10 rounded border border-border-thin" />
+            </div>
+        </>
+    )
+};
+
+export const LOPDP_ADMIN_CONFIG: HelpConfig = {
+    icon: <ShieldCheck size={24} className="text-brand" />,
+    title: "Panel de Administración LOPDP",
+    summary: "Consola de gobernanza y auditoría de protección de datos personales para administradores.",
+    description: "Permite a los administradores del sistema responder legalmente a las peticiones de Derechos ARCO presentadas y auditar la bitácora completa de consentimientos otorgados y revocados.",
+    steps: [
+        {
+            title: "Resolución legal de peticiones ARCO",
+            description: "Revise la lista de peticiones pendientes y seleccione una para analizarla. Ingrese el dictamen legal formal y actualice su estado a Aprobado, Rechazado o En Análisis.",
+            highlight: 'content-top'
+        },
+        {
+            title: "Auditoría de consentimiento digital",
+            description: "Consulte la tabla de consentimientos para verificar la fecha, versión de la política aceptada, dirección IP y el user-agent del navegador del titular al otorgar o revocar su autorización.",
+            highlight: 'content-bottom'
+        }
+    ],
+    compliance: "Asegura la trazabilidad y el cumplimiento de las obligaciones institucionales del Responsable de Tratamiento establecidas en la Ley Orgánica de Protección de Datos Personales (LOPDP).",
+    tips: [
+        "Es obligatorio incluir una justificación o dictamen legal debidamente fundamentado para cualquier resolución, especialmente al rechazar una solicitud.",
+        "Utilice los filtros y ordenamiento para priorizar aquellas peticiones que se encuentran próximas a vencer su plazo de SLA (15 días)."
+    ],
+    Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
+        <>
+            <div className={`h-8 rounded-lg border px-2 flex items-center gap-2 transition-all duration-300 shrink-0 ${highlightTopClass}`}>
+                <div className="w-16 h-3 bg-brand/10 border border-brand/20 rounded" />
+                <div className="w-16 h-3 bg-text-dim/10 rounded" />
+            </div>
+            <div className={`flex-1 rounded-lg border p-2 flex flex-col gap-1.5 transition-all duration-300 ${highlightBottomClass}`}>
+                <div className="w-full h-8 bg-text-dim/10 rounded border border-border-thin" />
+                <div className="w-full h-8 bg-text-dim/10 rounded border border-border-thin" />
             </div>
         </>
     )

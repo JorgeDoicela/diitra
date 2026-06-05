@@ -157,8 +157,10 @@ const Sidebar = ({
 
         // Grupo 3: Sistema y Admin
         { name: 'Notificaciones', icon: Bell, path: '/notificaciones', roles: ['ANY'], group: 3 },
+        { name: 'Derechos ARCO', icon: ShieldCheck, path: '/derechos-arco', roles: ['ANY'], group: 3 },
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
+        { name: 'Panel LOPDP', icon: ShieldCheck, path: '/admin/lopdp', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
         { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/admin/emails', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
         { name: 'Configuración', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },

@@ -1594,6 +1594,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ResolucionDetalle).HasColumnName("resolucionDetalle").HasColumnType("text");
             entity.Property(e => e.FechaResolucion).HasColumnName("fechaResolucion");
             entity.Property(e => e.DocumentoResolucionPath).HasColumnName("documentoResolucionPath").HasMaxLength(512);
+            entity.Property(e => e.EvidenciaPath).HasColumnName("evidenciaPath").HasMaxLength(512);
 
             entity.HasOne(d => d.User).WithMany()
                 .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_arco_usuario");

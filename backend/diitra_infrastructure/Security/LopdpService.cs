@@ -59,7 +59,7 @@ public class LopdpService : ILopdpService
         }
     }
 
-    public async Task RegistrarSolicitudArcoAsync(int idUsuario, string tipoSolicitud, string detalleSolicitud)
+    public async Task RegistrarSolicitudArcoAsync(int idUsuario, string tipoSolicitud, string detalleSolicitud, string? evidenciaPath)
     {
         try
         {
@@ -70,7 +70,8 @@ public class LopdpService : ILopdpService
                 DetalleSolicitud = detalleSolicitud,
                 FechaSolicitud = DateTime.Now,
                 FechaLimiteResolucion = DateOnly.FromDateTime(DateTime.Now.AddDays(15)), // LOPDP 15 días límite
-                Estado = "Recibido"
+                Estado = "Recibido",
+                EvidenciaPath = evidenciaPath
             };
 
             _context.InvLopdpDerechosArco.Add(solicitud);
@@ -127,7 +128,8 @@ public class LopdpService : ILopdpService
                     Estado = s.Estado,
                     ResolucionDetalle = s.ResolucionDetalle,
                     FechaResolucion = s.FechaResolucion,
-                    DocumentoResolucionPath = s.DocumentoResolucionPath
+                    DocumentoResolucionPath = s.DocumentoResolucionPath,
+                    EvidenciaPath = s.EvidenciaPath
                 })
                 .ToListAsync();
         }
@@ -157,7 +159,8 @@ public class LopdpService : ILopdpService
                     Estado = s.Estado,
                     ResolucionDetalle = s.ResolucionDetalle,
                     FechaResolucion = s.FechaResolucion,
-                    DocumentoResolucionPath = s.DocumentoResolucionPath
+                    DocumentoResolucionPath = s.DocumentoResolucionPath,
+                    EvidenciaPath = s.EvidenciaPath
                 })
                 .ToListAsync();
         }

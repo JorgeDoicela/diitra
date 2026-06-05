@@ -17,6 +17,8 @@ interface LayoutProps {
 const getPageTitle = (pathname: string): string => {
     if (pathname === '/dashboard') return 'Panel de Control';
     if (pathname === '/settings') return 'Configuración';
+    if (pathname === '/derechos-arco') return 'Derechos ARCO';
+    if (pathname === '/admin/lopdp') return 'Panel LOPDP (Admin)';
     if (pathname === '/analiticas') return 'Analíticas';
     if (pathname === '/notificaciones') return 'Notificaciones';
     if (pathname === '/usuarios') return 'Gestión de Usuarios';

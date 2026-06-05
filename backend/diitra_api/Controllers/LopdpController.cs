@@ -51,19 +51,24 @@ public class LopdpController : ControllerBase
     }
 
     /// <summary>
-    /// Registra una solicitud de derechos ARCO por parte del titular.
+    /// Registra una solicitud de derechos ARCO por parte del titular con evidencia adjunta.
     /// </summary>
     [HttpPost("arco")]
-    public async Task<IActionResult> RegistrarSolicitudArco([FromBody] SolicitudArcoRequest request)
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> RegistrarSolicitudArco(
+        [FromForm] string tipoSolicitud,
+        [FromForm] string detalleSolicitud,
+        Microsoft.AspNetCore.Http.IFormFile? file,
+        [FromServices] Diitra.Infrastructure.Common.Storage.IFileStorageService storageService)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.TipoSolicitud) || string.IsNullOrWhiteSpace(request.DetalleSolicitud))
+        if (string.IsNullOrWhiteSpace(tipoSolicitud) || string.IsNullOrWhiteSpace(detalleSolicitud))
         {
             return BadRequest(new { error = "El tipo y detalle de la solicitud son obligatorios." });
         }
 
         // Validar tipo de solicitud ARCO
         var tiposValidos = new List<string> { "Acceso", "Rectificacion", "Eliminacion", "Oposicion", "Portabilidad", "Limitacion" };
-        if (!tiposValidos.Contains(request.TipoSolicitud))
+        if (!tiposValidos.Contains(tipoSolicitud))
         {
             return BadRequest(new { error = $"Tipo de solicitud no válido. Debe ser uno de: {string.Join(", ", tiposValidos)}" });
         }
@@ -74,7 +79,19 @@ public class LopdpController : ControllerBase
         var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
         if (dbUser == null) return Unauthorized();
 
-        await _lopdpService.RegistrarSolicitudArcoAsync(dbUser.IdUsuario, request.TipoSolicitud, request.DetalleSolicitud);
+        string? fileRelativePath = null;
+        if (file != null && file.Length > 0)
+        {
+            byte[] fileBytes;
+            using (var ms = new System.IO.MemoryStream())
+            {
+                await file.CopyToAsync(ms);
+                fileBytes = ms.ToArray();
+            }
+            fileRelativePath = await storageService.SaveFileAsync(file.FileName, fileBytes, "arco_evidence");
+        }
+
+        await _lopdpService.RegistrarSolicitudArcoAsync(dbUser.IdUsuario, tipoSolicitud, detalleSolicitud, fileRelativePath);
 
         return Ok(new { message = "Solicitud ARCO registrada exitosamente. Se responderá en un plazo máximo de 15 días laborables." });
     }
