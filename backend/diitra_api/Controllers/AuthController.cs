@@ -328,8 +328,10 @@ public class AuthController : ControllerBase
 
             var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
             bool aceptoLopdp = false;
+            int? idUsuario = null;
             if (dbUser != null)
             {
+                idUsuario = dbUser.IdUsuario;
                 aceptoLopdp = await _context.InvLopdpConsentimientos
                     .AnyAsync(c => c.IdUsuario == dbUser.IdUsuario && c.VersionPolitica == "LOPDP_GENERAL" && c.Estado == "Otorgado");
             }
@@ -337,6 +339,7 @@ public class AuthController : ControllerBase
             return Ok(new
             {
                 id_referencia = idReferencia,
+                id_usuario = idUsuario,
                 nombre_completo = nombre,
                 role = roles.FirstOrDefault(),
                 roles = roles,
