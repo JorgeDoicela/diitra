@@ -401,6 +401,29 @@ public class PeerReviewService : IPeerReviewService
         await _auditService.LogActionAsync(revisorId, "EVALUAR_PROYECTO",
             $"Rúbrica completada. Puntaje: {totalScore}/100. Dictamen: {revision.DictamenRevisor}", "PEER_REVIEW", beforeState, afterState);
 
+        // Notify admins/directors
+        if (project != null)
+        {
+            try
+            {
+                var revisorUser = revision.IdRevisor.HasValue
+                    ? await _context.Users.FindAsync(revision.IdRevisor.Value)
+                    : null;
+                var nombreRevisor = revisorUser?.Nombre ?? "Un evaluador";
+
+                await _notificationService.NotifyByRoleCodesAsync(
+                    "Evaluación de Par Completada",
+                    $"El evaluador {nombreRevisor} ha completado la revisión del proyecto '{project.Titulo}'.",
+                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                    $"/arbitraje/proyecto/{project.Uuid}"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificación de evaluación completada");
+            }
+        }
+
         return true;
     }
 
@@ -1117,6 +1140,8 @@ public class PeerReviewService : IPeerReviewService
     {
         var project = await _context.InvProyectos
             .Include(p => p.IdConvocatoriaNavigation)
+            .Include(p => p.InvProyectosProfesores)
+            .Include(p => p.InvProyectosAlumnos)
             .FirstOrDefaultAsync(p => p.Uuid == projectUuid)
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
 
@@ -1203,6 +1228,44 @@ public class PeerReviewService : IPeerReviewService
             $"Arbitraje cerrado. Proyecto: '{project.Titulo}'. Resultado: {resultado}. Promedio: {promedio:F2}",
             "PEER_REVIEW", null, afterState);
 
+        // Notify all project participants
+        try
+        {
+            var participantUserIds = project.InvProyectosProfesores.Select(p => p.IdUsuario)
+                .Concat(project.InvProyectosAlumnos.Select(a => a.IdUsuario))
+                .Distinct()
+                .ToList();
+
+            var title = resultado switch
+            {
+                "Aprobado" => "Proyecto Aprobado",
+                "Rechazado" => "Proyecto Rechazado",
+                _ => "Proyecto en Desempate"
+            };
+
+            var body = resultado switch
+            {
+                "Aprobado" => $"El proyecto '{project.Titulo}' ha sido Aprobado tras el proceso de arbitraje con un promedio de {promedio:F2}/100.",
+                "Rechazado" => $"El proyecto '{project.Titulo}' ha sido Rechazado tras el proceso de arbitraje con un promedio de {promedio:F2}/100.",
+                _ => $"El proyecto '{project.Titulo}' ha entrado en fase de Desempate tras el proceso de arbitraje."
+            };
+
+            foreach (var userId in participantUserIds)
+            {
+                await _notificationService.NotifyUserAsync(
+                    userId,
+                    title,
+                    body,
+                    "INVESTIGACION",
+                    $"/investigacion/workspace/PROTOCOLO_INVESTIGACION/{project.Uuid}"
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al notificar cierre de arbitraje a los participantes del proyecto");
+        }
+
         var revDtos = new List<PeerReviewDto>();
         foreach (var rev in revisiones)
         {
@@ -1236,6 +1299,8 @@ public class PeerReviewService : IPeerReviewService
     public async Task<bool> IniciarEjecucionAsync(string projectUuid, int directorId)
     {
         var project = await _context.InvProyectos
+            .Include(p => p.InvProyectosProfesores)
+            .Include(p => p.InvProyectosAlumnos)
             .FirstOrDefaultAsync(p => p.Uuid == projectUuid)
             ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado.");
 
@@ -1259,6 +1324,31 @@ public class PeerReviewService : IPeerReviewService
             System.Text.Json.JsonSerializer.Serialize(new { Estado = project.Estado, project.CodigoInstitucional }));
 
         _logger.LogInformation("[DIITRA] Proyecto {Uuid} transicionó Aprobado → En Ejecución.", projectUuid);
+
+        // Notify all project participants
+        try
+        {
+            var participantUserIds = project.InvProyectosProfesores.Select(p => p.IdUsuario)
+                .Concat(project.InvProyectosAlumnos.Select(a => a.IdUsuario))
+                .Distinct()
+                .ToList();
+
+            foreach (var userId in participantUserIds)
+            {
+                await _notificationService.NotifyUserAsync(
+                    userId,
+                    "Proyecto en Ejecución",
+                    $"Su proyecto '{project.Titulo}' ha iniciado la fase de ejecución operativa.",
+                    "INVESTIGACION",
+                    $"/investigacion/workspace/PROTOCOLO_INVESTIGACION/{project.Uuid}"
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al notificar inicio de ejecución a los participantes del proyecto");
+        }
+
         return true;
     }
 

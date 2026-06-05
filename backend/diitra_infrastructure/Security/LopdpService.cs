@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
 using diitra_infrastructure.data.models;
+using diitra_application.Common.Notifications;
 
 namespace diitra_infrastructure.Security;
 
@@ -14,10 +15,12 @@ public class LopdpService : ILopdpService
 {
     private readonly DiitraContext _context;
     private readonly ILogger<LopdpService> _logger;
+    private readonly INotificationService _notificationService;
 
-    public LopdpService(DiitraContext context, ILogger<LopdpService> logger)
+    public LopdpService(DiitraContext context, INotificationService notificationService, ILogger<LopdpService> logger)
     {
         _context = context;
+        _notificationService = notificationService;
         _logger = logger;
     }
 
@@ -76,6 +79,40 @@ public class LopdpService : ILopdpService
 
             _context.InvLopdpDerechosArco.Add(solicitud);
             await _context.SaveChangesAsync();
+
+            var user = await _context.Users.FindAsync(idUsuario);
+            var userName = user?.Nombre ?? $"Usuario {idUsuario}";
+
+            // Notify admin
+            try
+            {
+                await _notificationService.NotifyByRoleCodesAsync(
+                    "Nueva Solicitud ARCO LOPDP",
+                    $"El usuario {userName} ha registrado una solicitud de tipo '{tipoSolicitud}'.",
+                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                    "/lopdp/admin"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al notificar nueva solicitud ARCO a los administradores");
+            }
+
+            // Notify user
+            try
+            {
+                await _notificationService.NotifyUserAsync(
+                    idUsuario,
+                    "Solicitud ARCO Recibida",
+                    $"Tu solicitud de tipo '{tipoSolicitud}' ha sido registrada y está en proceso de revisión. Fecha límite de resolución: {solicitud.FechaLimiteResolucion:dd/MM/yyyy}.",
+                    "INFO",
+                    "/lopdp/arco"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificación de confirmación de solicitud ARCO al usuario");
+            }
         }
         catch (Exception ex)
         {
@@ -100,6 +137,22 @@ public class LopdpService : ILopdpService
             solicitud.DocumentoResolucionPath = documentPath;
 
             await _context.SaveChangesAsync();
+
+            // Notify user
+            try
+            {
+                await _notificationService.NotifyUserAsync(
+                    solicitud.IdUsuario,
+                    "Solicitud ARCO Resuelta",
+                    $"Tu solicitud ARCO de tipo '{solicitud.TipoSolicitud}' ha sido resuelta con estado: '{estado}'. Detalle: {resolucionDetalle}",
+                    "INFO",
+                    "/lopdp/arco"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificación de resolución de solicitud ARCO al usuario");
+            }
         }
         catch (Exception ex)
         {
