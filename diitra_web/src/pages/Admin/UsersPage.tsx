@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-    Search, Shield, User as UserIcon, X, RefreshCw,
-    Settings2, GraduationCap, UserPlus, History, Globe,
+    Search, Shield, User as UserIcon, X,
+    Settings2, GraduationCap, UserPlus, Globe,
     Activity, ChevronRight, Mail, Hash, Briefcase, TrendingUp,
     Fingerprint, XCircle, AlertTriangle, CheckCircle, FileText
 } from 'lucide-react';
@@ -31,15 +31,6 @@ interface Role {
     codigo_rol: string;
 }
 
-interface AuditLog {
-    id_audit: number;
-    admin_name: string;
-    target_name: string;
-    action: string;
-    details: string;
-    date: string;
-}
-
 const formatCarrera = (carrera: string | null | undefined) => {
     if (!carrera) return 'Sin carrera asignada';
     return carrera
@@ -58,7 +49,6 @@ const formatNombre = (nombre: string | null | undefined) => {
 const UsersPage = () => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
-    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [search, setSearch] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
     const typeParam = searchParams.get('type');
@@ -83,7 +73,6 @@ const UsersPage = () => {
     const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
     const [detailUser, setDetailUser] = useState<ManagedUser | null>(null);
     const [showExternalForm, setShowExternalForm] = useState(false);
-    const [showAudit, setShowAudit] = useState(false);
     const [error, setError] = useState('');
 
     // Researcher profile metadata draft states
@@ -192,18 +181,8 @@ const UsersPage = () => {
         }
     };
 
-    const fetchAuditLogs = async () => {
-        try {
-            const response = await api.get('/Admin/audit');
-            setAuditLogs(response.data);
-        } catch (error) {
-            console.error('Error fetching audit logs:', error);
-        }
-    };
-
     useEffect(() => {
         fetchRoles();
-        fetchAuditLogs();
 
         // Check researcher draft
         const userMetaStr = localStorage.getItem('user_metadata_draft_metadata');
@@ -423,7 +402,6 @@ const UsersPage = () => {
                 await api.post('/Admin/roles/assign', { id_usuario: userId, role_code: roleCode, user_type: userType });
             }
             await fetchUsers();
-            fetchAuditLogs();
         } catch (error) {
             console.error('Error updating role:', error);
         } finally {
@@ -442,7 +420,6 @@ const UsersPage = () => {
             setShowExternalForm(false);
             setExternalForm({ cedula: '', nombres: '', apellidos: '', email: '', especialidad: '', grado_academico: '', institucion: '', orcid_id: '' });
             fetchUsers();
-            fetchAuditLogs();
 
             setConfirmDialog({
                 isOpen: true,
@@ -477,23 +454,14 @@ const UsersPage = () => {
                 </div>
 
                 <div className="w-full lg:w-auto flex flex-col md:flex-row gap-4">
-                    <div className="flex gap-2">
+                    {userType === 'EXTERNO' && (
                         <button
-                            onClick={() => setShowAudit(!showAudit)}
-                            className={`flex-1 md:flex-none p-2.5 border rounded-md transition-all flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest ${showAudit ? 'btn-vercel-primary' : 'btn-vercel-secondary'}`}
+                            onClick={() => { setError(''); setShowExternalForm(true); }}
+                            className="btn-brand w-full md:w-auto flex items-center justify-center gap-2"
                         >
-                            <History size={14} /> Auditoría
+                            <UserPlus size={14} /> Nuevo Externo
                         </button>
-
-                        {userType === 'EXTERNO' && (
-                            <button
-                                onClick={() => { setError(''); setShowExternalForm(true); }}
-                                className="btn-brand flex-1 md:flex-none flex items-center justify-center gap-2"
-                            >
-                                <UserPlus size={14} /> Nuevo Externo
-                            </button>
-                        )}
-                    </div>
+                    )}
 
                     <div className="bg-surface border border-border-thin p-1 rounded-lg flex overflow-x-auto custom-scrollbar">
                         <button
@@ -609,9 +577,8 @@ const UsersPage = () => {
                 </div>
             )}
 
-            <div className={`grid transition-all duration-500 gap-6 ${showAudit ? 'lg:grid-cols-[1fr,350px]' : 'grid-cols-1'}`}>
-                <div className="bento-card static overflow-hidden animate-fade-up">
-                    <div className="overflow-x-auto custom-scrollbar">
+            <div className="bento-card static overflow-hidden animate-fade-up">
+                <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
@@ -775,41 +742,6 @@ const UsersPage = () => {
                     </footer>
                 </div>
 
-                {showAudit && (
-                    <aside className="bento-card static p-6 animate-fade-left flex flex-col gap-6">
-                        <div className="flex items-center justify-between">
-                            <h4 className="section-label text-text-main">
-                                <History size={14} /> Registro de Actividad
-                            </h4>
-                            <button onClick={fetchAuditLogs} className="text-text-dim hover:text-text-main transition-colors">
-                                <RefreshCw size={12} />
-                            </button>
-                        </div>
-                        <div className="space-y-4 overflow-y-auto max-h-[600px] pr-2 custom-scrollbar">
-                            {auditLogs.map((log) => (
-                                <div key={log.id_audit} className="p-3 bg-bg-deep/50 rounded-lg border border-border-thin space-y-2 group hover:border-border-hover transition-all">
-                                    <div className="flex justify-between items-start">
-                                        <span className="status-tag text-text-dim border-border-thin">
-                                            {log.action}
-                                        </span>
-                                        <span className="text-[8px] text-text-dim font-mono">{new Date(log.date).toLocaleTimeString()}</span>
-                                    </div>
-                                    <p className="text-[10px] text-text-main font-medium leading-tight">
-                                        <span className="text-text-dim">Por:</span> {log.admin_name}
-                                    </p>
-                                    <p className="text-[10px] text-text-main font-medium leading-tight">
-                                        <span className="text-text-dim">A:</span> {log.target_name}
-                                    </p>
-                                    <p className="text-[9px] text-text-dim italic leading-snug border-t border-border-thin pt-2 mt-2">
-                                        {log.details}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </aside>
-                )}
-            </div>
-
             {showExternalForm && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleCloseExternalModal(); }}>
                     <div className="modal-card modal-card--lg animate-scale-up">
@@ -940,7 +872,7 @@ const UsersPage = () => {
             {selectedUser && (
                 <UserProfileModal
                     user={selectedUser}
-                    onClose={() => { setSelectedUser(null); fetchUsers(); fetchAuditLogs(); }}
+                    onClose={() => { setSelectedUser(null); fetchUsers(); }}
                     onDraftCleared={() => setPendingUserDraft(null)}
                 />
             )}
