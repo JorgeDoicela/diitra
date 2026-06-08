@@ -1372,7 +1372,7 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores)
+        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null)
         {
             var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == uuid);
             if (project == null)
@@ -1468,8 +1468,30 @@ namespace diitra_infrastructure.Research
                 }
 
                 dto.Investigadores = investigadores;
-                dto.TieneGrupoInvestigacion = investigadores.Count > 1;
-                project.TieneGrupo = investigadores.Count > 1;
+                project.TieneGrupo = investigadores.Count > 1 || !string.IsNullOrEmpty(grupoInvestigacion);
+                dto.TieneGrupoInvestigacion = project.TieneGrupo;
+
+                if (!string.IsNullOrEmpty(grupoInvestigacion))
+                {
+                    var group = await _context.InvGruposInvestigacion
+                        .FirstOrDefaultAsync(g => g.Nombre == grupoInvestigacion || g.Siglas == grupoInvestigacion);
+                    if (group != null)
+                    {
+                        project.IdGrupo = group.IdGrupo;
+                        dto.GrupoInvestigacion = group.Nombre;
+                    }
+                    else
+                    {
+                        project.IdGrupo = null;
+                        dto.GrupoInvestigacion = null;
+                    }
+                }
+                else
+                {
+                    project.IdGrupo = null;
+                    dto.GrupoInvestigacion = null;
+                }
+
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
 

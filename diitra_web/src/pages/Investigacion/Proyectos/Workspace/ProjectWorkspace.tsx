@@ -92,6 +92,8 @@ export const ProjectWorkspace: React.FC = () => {
 
     const [investigadores, setInvestigadores] = useState<any[]>([]);
     const [tieneGrupo, setTieneGrupo] = useState<boolean>(false);
+    const [grupoInvestigacion, setGrupoInvestigacion] = useState<string>('');
+    const [availableGroups, setAvailableGroups] = useState<any[]>([]);
     const [isSavingTeam, setIsSavingTeam] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -181,10 +183,20 @@ export const ProjectWorkspace: React.FC = () => {
         }
     };
 
+    const fetchGroups = async () => {
+        try {
+            const res = await api.get('/groups');
+            setAvailableGroups(res.data || []);
+        } catch (err) {
+            console.error("[DIITRA] Error al cargar grupos de investigación", err);
+        }
+    };
+
     useEffect(() => {
         if (resolvedProjectUuid) {
             fetchProducts(resolvedProjectUuid);
             fetchProductTypes();
+            fetchGroups();
         }
     }, [resolvedProjectUuid, activeDocument]);
 
@@ -352,6 +364,7 @@ export const ProjectWorkspace: React.FC = () => {
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
+                setGrupoInvestigacion(res.data.grupoInvestigacion || '');
             } else if (isNotFound) {
                 // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
                 setCurrentProject({
@@ -365,6 +378,7 @@ export const ProjectWorkspace: React.FC = () => {
                 });
                 setInvestigadores([]);
                 setTieneGrupo(false);
+                setGrupoInvestigacion('');
             } else {
                 // Ante cualquier otro error (500, Red, etc.), bloqueamos por Fail-Closed
                 setIsUnauthorized(true);
@@ -528,12 +542,12 @@ export const ProjectWorkspace: React.FC = () => {
                 activo: inv.activo !== false,
                 horasSemanales: inv.horasSemanales !== undefined && inv.horasSemanales !== null && inv.horasSemanales !== '' ? parseFloat(inv.horasSemanales) : null
             }));
-            const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload);
+            const res = await api.patch(`/projects/${currentProject.uuid}/team?grupoInvestigacion=${encodeURIComponent(grupoInvestigacion)}`, payload);
             if (res.data.success) {
                 addToast("Equipo de Trabajo", "¡Equipo de trabajo guardado y sincronizado con éxito!", "success");
-                const isGroup = investigadores.length > 1;
+                const isGroup = investigadores.length > 1 || !!grupoInvestigacion;
                 setTieneGrupo(isGroup);
-                setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: isGroup }));
+                setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: isGroup, grupoInvestigacion: grupoInvestigacion }));
             } else {
                 addToast("Error al Guardar", res.data.message || 'Error al guardar los cambios.', "error");
             }
@@ -559,9 +573,11 @@ export const ProjectWorkspace: React.FC = () => {
                 })) {
                     setInvestigadores(director ? [director] : []);
                     setTieneGrupo(false);
+                    setGrupoInvestigacion('');
                 }
             } else {
                 setTieneGrupo(false);
+                setGrupoInvestigacion('');
             }
         } else {
             setTieneGrupo(true);
@@ -956,7 +972,7 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
 
                             <div className="mt-6 space-y-4">
-                                {/* Toggle Individual / Grupo */}
+                                {/* Toggle Individual / Colectivo */}
                                 <div className="flex bg-surface-hover p-1 rounded-md border border-border-thin">
                                     <button 
                                         type="button"
@@ -972,7 +988,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         onClick={() => handleToggleTieneGrupo(true)}
                                         className={`flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
-                                        Grupo
+                                        Colectivo
                                     </button>
                                 </div>
 
@@ -980,12 +996,37 @@ export const ProjectWorkspace: React.FC = () => {
                                 {!tieneGrupo ? (
                                     <div className="badge-vercel badge-vercel-warning !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                                        <span><span className="font-semibold">Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Grupo para agregar colaboradores.</span>
+                                        <span><span className="font-semibold">Trabajo Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Colectivo para asociar un Grupo de Investigación de respaldo y agregar colaboradores.</span>
                                     </div>
                                 ) : (
                                     <div className="badge-vercel badge-vercel-info !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <Sparkles size={14} className="shrink-0 mt-0.5" />
-                                        <span><span className="font-semibold">Grupo:</span> Usa el buscador para invitar docentes y estudiantes al equipo.</span>
+                                        <span><span className="font-semibold">Trabajo Colectivo:</span> Puedes asociar un Grupo de Investigación de respaldo y agregar docentes/estudiantes colaboradores.</span>
+                                    </div>
+                                )}
+
+                                {/* Selector de Grupo de Investigación de Respaldo */}
+                                {tieneGrupo && (
+                                    <div className="space-y-1.5 animate-fade-in">
+                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Grupo de Investigación de Respaldo</label>
+                                        <select
+                                            value={grupoInvestigacion}
+                                            disabled={currentProject.puedeEditar === false}
+                                            onChange={(e) => setGrupoInvestigacion(e.target.value)}
+                                            className="bg-surface border border-border-thin rounded px-2.5 py-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                        >
+                                            <option value="">-- Sin Grupo Asociado / Proyecto Independiente --</option>
+                                            {availableGroups.filter(g => g.activo && g.estado === 'Aprobado').map((g: any) => (
+                                                <option key={g.idGrupo} value={g.nombre}>
+                                                    {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {grupoInvestigacion && currentProject.puedeEditar !== false && (
+                                            <p className="text-[9px] text-brand-light italic">
+                                                * Al guardar, los miembros activos de este grupo se sincronizarán en el proyecto.
+                                            </p>
+                                        )}
                                     </div>
                                 )}
 
