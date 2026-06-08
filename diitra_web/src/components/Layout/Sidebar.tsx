@@ -835,7 +835,7 @@ const Sidebar = ({
                 {!isCollapsed && (
                     <div
                         onMouseDown={startResizing}
-                        className="hidden lg:block absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-border-hover/50 active:bg-border-hover transition-colors z-[80] outline-none"
+                        className="hidden lg:block absolute top-0 right-0 bottom-0 w-1 cursor-col-resize z-[80] outline-none"
                     />
                 )}
             </aside>

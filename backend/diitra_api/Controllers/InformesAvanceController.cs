@@ -92,7 +92,7 @@ public class InformesAvanceController : ControllerBase
         if (string.IsNullOrEmpty(userUuidRef)) return Unauthorized();
 
         // Resolver IdProyecto y ProjectUuid para verificación de permisos
-        string projectUuid = dto.ProjectUuid;
+        string? projectUuid = dto.ProjectUuid;
         if (string.IsNullOrEmpty(projectUuid) && dto.IdProyecto != 0)
         {
             var p = await _context.InvProyectos.FindAsync(dto.IdProyecto);
