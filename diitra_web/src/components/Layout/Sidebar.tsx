@@ -2,17 +2,23 @@ import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search,
 import { useAuth } from '../../api/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+export const SIDEBAR_WIDTH = 248;
+const COLLAPSE_VISIBLE_RATIO = 0.72;
+const COLLAPSE_INSTANT_RATIO = 0.9;
+const DRAG_CLICK_THRESHOLD = 4;
+const SIDEBAR_TRANSITION_MS = 280;
+const SIDEBAR_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
 
 interface SidebarProps {
     currentTheme: 'dark' | 'light';
     toggleTheme: () => void;
     isOpen?: boolean;
     onClose?: () => void;
-    width: number;
     isCollapsed: boolean;
-    onWidthChange: (w: number) => void;
-    onCollapseToggle: () => void;
+    onCollapse: () => void;
+    onExpand: () => void;
 }
 
 // Custom simple SVG icons to ensure consistency and speed
@@ -58,10 +64,9 @@ const Sidebar = ({
     toggleTheme,
     isOpen,
     onClose,
-    width,
     isCollapsed,
-    onWidthChange,
-    onCollapseToggle
+    onCollapse,
+    onExpand
 }: SidebarProps) => {
     const { logout, hasPermission, roles, isAdmin, isDocente, isEstudiante, isRevisor, user, roleDisplayName } = useAuth();
     const navigate = useNavigate();
@@ -70,7 +75,17 @@ const Sidebar = ({
     const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
     const searchShortcut = isMac ? '⌥K' : 'Alt+K';
 
-    const [isResizing, setIsResizing] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [peekWidth, setPeekWidth] = useState<number | null>(null);
+    const peekWidthRef = useRef<number | null>(null);
+
+    const setPeek = (w: number | null) => {
+        peekWidthRef.current = w;
+        setPeekWidth(w);
+    };
+
+    const desktopWidth = peekWidth ?? (isCollapsed ? 0 : SIDEBAR_WIDTH);
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(
@@ -163,7 +178,7 @@ const Sidebar = ({
         { name: 'Panel LOPDP', icon: ShieldCheck, path: '/admin/lopdp', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
         { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/admin/emails', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
-        { name: 'Parámetros Normativos', icon: Scale, path: '/parametros-normativos', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },
+        { name: 'Parámetros', icon: Scale, path: '/parametros-normativos', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },
     ];
 
     const menuItems = allMenuItems.filter(item => {
@@ -206,28 +221,125 @@ const Sidebar = ({
     const group2 = menuItems.filter(item => item.group === 2);
     const group3 = menuItems.filter(item => item.group === 3);
 
+    const animatePeekWidth = (target: number, onDone?: () => void) => {
+        const from = peekWidthRef.current ?? (isCollapsed ? 0 : SIDEBAR_WIDTH);
+        setPeek(from);
+
+        if (target === 0) {
+            onDone?.();
+        }
+
+        requestAnimationFrame(() => {
+            setPeek(target);
+            window.setTimeout(() => {
+                if (target !== 0) {
+                    onDone?.();
+                }
+                setPeek(null);
+            }, SIDEBAR_TRANSITION_MS);
+        });
+    };
+
+    const collapseWithAnimation = () => {
+        if (isCollapsed) return;
+        animatePeekWidth(0, onCollapse);
+    };
+
+    const cleanupDragListeners = (
+        doDrag: (e: MouseEvent) => void,
+        stopDrag: () => void
+    ) => {
+        document.body.style.removeProperty('user-select');
+        document.body.style.removeProperty('cursor');
+        document.removeEventListener('mousemove', doDrag);
+        document.removeEventListener('mouseup', stopDrag);
+    };
+
     const startResizing = (mouseDownEvent: React.MouseEvent) => {
         mouseDownEvent.preventDefault();
-        setIsResizing(true);
-        const startWidth = width;
+        setIsDragging(true);
+        setPeek(peekWidthRef.current ?? SIDEBAR_WIDTH);
         const startX = mouseDownEvent.clientX;
+        let maxPull = 0;
 
         const stopDrag = () => {
-            setIsResizing(false);
-            document.removeEventListener('mousemove', doDrag);
-            document.removeEventListener('mouseup', stopDrag);
-        };
+            setIsDragging(false);
+            cleanupDragListeners(doDrag, stopDrag);
 
-        const doDrag = (mouseMoveEvent: MouseEvent) => {
-            const currentWidth = startWidth + (mouseMoveEvent.clientX - startX);
-            if (currentWidth < 150) {
-                onCollapseToggle();
-                stopDrag();
-            } else if (currentWidth >= 150 && currentWidth <= 450) {
-                onWidthChange(currentWidth);
+            const currentWidth = peekWidthRef.current ?? SIDEBAR_WIDTH;
+            const clicked = maxPull <= DRAG_CLICK_THRESHOLD;
+            const shouldCollapse = clicked || currentWidth <= SIDEBAR_WIDTH * COLLAPSE_VISIBLE_RATIO;
+
+            if (shouldCollapse) {
+                collapseWithAnimation();
+            } else {
+                animatePeekWidth(SIDEBAR_WIDTH);
             }
         };
 
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const pull = Math.max(0, startX - mouseMoveEvent.clientX);
+            maxPull = Math.max(maxPull, pull);
+
+            if (pull >= SIDEBAR_WIDTH * COLLAPSE_INSTANT_RATIO) {
+                setIsDragging(false);
+                cleanupDragListeners(doDrag, stopDrag);
+                onCollapse();
+                setPeek(null);
+                return;
+            }
+
+            setPeek(Math.max(0, SIDEBAR_WIDTH - pull));
+        };
+
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+    };
+
+    const startExpandDrag = (mouseDownEvent: React.MouseEvent) => {
+        mouseDownEvent.preventDefault();
+        setIsDragging(true);
+        setPeek(0);
+        const startX = mouseDownEvent.clientX;
+        let lastReveal = 0;
+
+        const stopDrag = () => {
+            setIsDragging(false);
+            cleanupDragListeners(doDrag, stopDrag);
+
+            const currentWidth = peekWidthRef.current ?? 0;
+            const clicked = lastReveal <= DRAG_CLICK_THRESHOLD;
+            const shouldExpand = clicked || currentWidth >= SIDEBAR_WIDTH * COLLAPSE_VISIBLE_RATIO;
+
+            if (shouldExpand) {
+                animatePeekWidth(SIDEBAR_WIDTH, onExpand);
+            } else {
+                animatePeekWidth(0);
+            }
+        };
+
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const reveal = Math.max(0, mouseMoveEvent.clientX - startX);
+            lastReveal = reveal;
+
+            if (reveal >= SIDEBAR_WIDTH * COLLAPSE_INSTANT_RATIO) {
+                setIsDragging(false);
+                document.body.style.removeProperty('user-select');
+                document.body.style.removeProperty('cursor');
+                document.removeEventListener('mousemove', doDrag);
+                document.removeEventListener('mouseup', stopDrag);
+                onExpand();
+                setPeek(null);
+                return;
+            }
+
+            setPeek(Math.min(SIDEBAR_WIDTH, reveal));
+        };
+
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
         document.addEventListener('mousemove', doDrag);
         document.addEventListener('mouseup', stopDrag);
     };
@@ -314,7 +426,7 @@ const Sidebar = ({
                                         onClick={() => {
                                             if (onClose) onClose();
                                         }}
-                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-3 pl-4 ${
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${
                                             isSubActive
                                                 ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                                                 : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
@@ -413,7 +525,7 @@ const Sidebar = ({
                                         onClick={() => {
                                             if (onClose) onClose();
                                         }}
-                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-3 pl-4 ${
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${
                                             isSubActive
                                                 ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                                                 : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
@@ -442,7 +554,7 @@ const Sidebar = ({
             );
         }
 
-        if (item.name === 'Parámetros Normativos') {
+        if (item.path === '/parametros-normativos') {
             const isMenuOpen = isParametrosOpen;
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
@@ -514,7 +626,7 @@ const Sidebar = ({
                                         onClick={() => {
                                             if (onClose) onClose();
                                         }}
-                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-3 pl-4 ${
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${
                                             isSubActive
                                                 ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                                                 : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
@@ -551,7 +663,7 @@ const Sidebar = ({
                     if (onClose) onClose();
                 }}
                 className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ${
-                    item.indent ? 'ml-3 pl-4' : ''
+                    item.indent ? 'ml-2 pl-2.5' : ''
                 } ${
                     isActive
                         ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
@@ -604,16 +716,22 @@ const Sidebar = ({
 
             <aside
                 style={{
-                    width: window.innerWidth >= 1024 ? (isCollapsed ? 0 : width) : undefined
+                    width: isDesktop ? desktopWidth : undefined,
+                    transition: isDesktop && !isDragging
+                        ? `width ${SIDEBAR_TRANSITION_MS}ms ${SIDEBAR_EASING}, opacity 200ms ease`
+                        : undefined
                 }}
                 className={`
-          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin flex flex-col pt-4 pb-3 outline-none
+          fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin outline-none shrink-0 overflow-hidden
           lg:translate-x-0 lg:static lg:h-screen lg:relative
-          ${isResizing ? '' : 'transition-all duration-200 ease-in-out'}
-          ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full lg:translate-x-0'}
-          ${isCollapsed ? 'lg:border-r-0 lg:opacity-0 lg:pointer-events-none lg:w-0 lg:p-0 lg:overflow-hidden' : 'w-64'}
+          ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full w-64 lg:translate-x-0 lg:w-auto'}
+          ${isCollapsed && peekWidth === null ? 'lg:border-r-0 lg:opacity-0 lg:pointer-events-none lg:p-0' : 'lg:opacity-100'}
         `}
             >
+                <div
+                    className="flex flex-col h-full pt-4 pb-3"
+                    style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
+                >
                 {/* Mobile Close Button */}
                 <button
                     onClick={onClose}
@@ -628,7 +746,7 @@ const Sidebar = ({
                     onClick={() => {
                         if (onClose) onClose();
                     }}
-                    className="px-5 mb-4 flex items-center gap-2.5 cursor-pointer select-none no-underline"
+                    className="px-4 mb-4 flex items-center gap-2 cursor-pointer select-none no-underline"
                 >
                     <img
                         src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
@@ -641,7 +759,7 @@ const Sidebar = ({
                 </Link>
 
                 {/* Navigator Search */}
-                <div className="px-4 mb-4">
+                <div className="px-3 mb-4">
                     <div
                         onClick={triggerCommandPalette}
                         className="flex h-8.5 items-center gap-2 px-2.5 bg-surface border border-border-thin rounded-md group hover:border-text-dim/50 hover:bg-surface-hover/30 transition-all cursor-pointer"
@@ -653,7 +771,7 @@ const Sidebar = ({
                 </div>
 
                 {/* Navigation list */}
-                <nav className="flex-1 px-3 space-y-1 overflow-y-auto pr-1 select-none outline-none">
+                <nav className="flex-1 px-2.5 space-y-1 overflow-y-auto pr-1 select-none outline-none [mask-image:linear-gradient(to_bottom,black_88%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black_88%,transparent)]">
                     {/* Grupo 1 */}
                     {group1.map(renderMenuItem)}
 
@@ -673,7 +791,11 @@ const Sidebar = ({
                 </nav>
 
                 {/* Vercel Footer profile section */}
-                <div className="px-3 pt-3 border-t border-border-thin mt-auto relative">
+                <div className="px-2.5 pt-3 mt-auto relative shrink-0 bg-bg-deep">
+                    <div
+                        className="pointer-events-none absolute -top-5 left-0 right-0 h-5 bg-gradient-to-b from-transparent to-bg-deep z-10"
+                        aria-hidden
+                    />
                     {isUserMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
@@ -800,7 +922,7 @@ const Sidebar = ({
                                     {userInitials}
                                 </div>
                             </div>
-                            {/* Username & Role - no hover background shade */}
+                            {/* Username & Role */}
                             <div className="flex-1 min-w-0 flex flex-col items-start leading-tight">
                                 <span className="text-[12px] font-semibold text-text-main truncate w-full group-hover:text-text-main transition-colors">
                                     {user?.nombre_completo || username}
@@ -816,7 +938,7 @@ const Sidebar = ({
                         </div>
 
                         {/* Notification Bell */}
-                        <div className="relative shrink-0 border-l border-border-thin pl-1.5 ml-1">
+                        <div className="relative shrink-0 ml-1.5">
                             <button
                                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                                 className="w-7 h-7 rounded-full hover:bg-surface-hover/50 text-text-dim hover:text-text-main transition-colors relative flex items-center justify-center cursor-pointer"
@@ -831,14 +953,28 @@ const Sidebar = ({
                     </div>
                 </div>
 
+                </div>
+
                 {/* Drag Resizer Handle */}
                 {!isCollapsed && (
                     <div
                         onMouseDown={startResizing}
-                        className="hidden lg:block absolute top-0 right-0 bottom-0 w-1 cursor-col-resize z-[80] outline-none"
-                    />
+                        className="hidden lg:block absolute top-0 -right-1.5 bottom-0 w-3 cursor-col-resize z-[80] outline-none group"
+                        title="Clic para ocultar · Arrastrar para ajustar"
+                    >
+                        <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border-thin/60 group-hover:bg-text-dim/50 group-active:bg-text-dim/70 transition-colors" />
+                    </div>
                 )}
             </aside>
+
+            {/* Zona de arrastre para reabrir (estilo Vercel) */}
+            {isCollapsed && (
+                <div
+                    onMouseDown={startExpandDrag}
+                    className="hidden lg:block fixed inset-y-0 left-0 w-3 z-[65] cursor-col-resize"
+                    title="Arrastrar para mostrar panel"
+                />
+            )}
         </>
     );
 };
