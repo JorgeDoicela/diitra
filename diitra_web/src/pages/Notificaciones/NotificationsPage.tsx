@@ -29,7 +29,7 @@ const getCategoryConfig = (cat: string) => categoryConfig[cat] || { icon: Mail, 
 
 const NotificationsPage = () => {
     const navigate = useNavigate();
-    const { notifications, markAsRead, markAllAsRead, fetchNotifications, isLoading, isConnected } = useNotifications();
+    const { notifications, markAsRead, markAllAsRead, fetchNotifications, isLoading } = useNotifications();
     const [allNotifications, setAllNotifications] = useState<NotificationItem[]>([]);
     const [filter, setFilter] = useState<'all' | 'unread' | 'investigacion' | 'sistema' | 'urgente'>('all');
     const [search, setSearch] = useState('');
@@ -335,34 +335,9 @@ const NotificationsPage = () => {
                             displayValue: `${unreadCount} pendientes`,
                             max: allNotifications.length || 1,
                             color: unreadCount > 0 ? 'var(--brand)' : 'var(--text-dim)'
-                        },
-                        {
-                            label: 'Conexión en vivo',
-                            value: isConnected ? 1 : 0,
-                            displayValue: isConnected ? 'Activa' : 'Manual',
-                            max: 1,
-                            color: isConnected ? 'var(--success)' : 'var(--warning)'
                         }
                     ]}
                 />
-
-                {/* WebSocket Details Bento Card */}
-                <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="section-label">
-                            <span className={`dot ${isConnected ? 'dot-success dot-pulse' : 'dot-neutral'} w-2 h-2`} />
-                            <span className="text-[13px] font-semibold text-text-main">Actualización automática</span>
-                        </div>
-                        <span className="font-mono text-[9px] bg-bg-deep px-2 py-0.5 rounded border border-border-thin text-text-dim">
-                            {isConnected ? 'En vivo' : 'Manual'}
-                        </span>
-                    </div>
-                    <p className="text-[11px] text-text-dim leading-relaxed">
-                        {isConnected 
-                            ? 'Las notificaciones llegan al instante sin necesidad de recargar la página.' 
-                            : 'La conexión en vivo no está activa. Las alertas se actualizarán al recargar o sincronizar manualmente.'}
-                    </p>
-                </div>
             </div>
         </div>
 
@@ -370,7 +345,7 @@ const NotificationsPage = () => {
             {allNotifications.length > 0 && (
                 <div className="mt-8 text-center">
                     <p className="text-[9px] font-mono text-text-dim uppercase tracking-wider">
-                        {allNotifications.length} notificaciones en total · {unreadCount} sin leer · Actualización automática
+                        {allNotifications.length} notificaciones en total · {unreadCount} sin leer
                     </p>
                 </div>
             )}
