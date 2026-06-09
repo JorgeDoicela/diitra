@@ -212,7 +212,7 @@ export const ARBITRAJE_CONFIG: HelpConfig = {
     ],
     compliance: "Asegura el debido proceso y la transparencia institucional en las fases de dictaminación científica, mitigando conflictos de interés en procesos de asignación de financiamiento público evaluados bajo estándares del CACES.",
     tips: [
-        "Puedes convocar a un tercer revisor dirimente ('Evaluador Ciego 3') desde la misma consola en caso de que el comité científico requiera un dictamen técnico adicional.",
+        "Puedes convocar a un tercer revisor para desempatar desde la misma consola si el comité científico requiere un dictamen técnico adicional.",
         "Todas las resoluciones de arbitraje quedan registradas con fecha y hora en el historial de auditoría del sistema."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
@@ -302,7 +302,7 @@ export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
     ],
     compliance: "Garantiza el debido proceso y la seguridad jurídica en la asignación de recursos competitivos de investigación, de acuerdo a la normativa nacional y el modelo de evaluación del CACES.",
     tips: [
-        "Puedes solicitar una tercera evaluación dirimente antes de emitir el fallo si el comité considera que el tema requiere especialidad técnica adicional.",
+        "Puedes solicitar una tercera evaluación de desempate antes de emitir el fallo si el comité considera que el tema requiere especialidad técnica adicional.",
         "Todas las actas de arbitraje quedan respaldadas en el sistema para resguardo de la institución."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (

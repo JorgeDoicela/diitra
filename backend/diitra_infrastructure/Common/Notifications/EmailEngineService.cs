@@ -964,7 +964,7 @@ namespace diitra_infrastructure.Common.Notifications
             if (aprueba == rechaza && revisiones.Count >= 2)
             {
                 resultado = "Desempate";
-                mensajeDesempate = $"Panel dividido: {aprueba} aprueba(n) vs {rechaza} rechaza(n). Se requiere un tercer árbitro dirimente.";
+                mensajeDesempate = $"Panel dividido: {aprueba} aprueba(n) vs {rechaza} rechaza(n). Se requiere un tercer árbitro para desempatar.";
             }
 
             var revisionsData = new List<Dictionary<string, object?>>();

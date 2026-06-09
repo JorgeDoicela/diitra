@@ -50,8 +50,8 @@ function generarAlertas(proyectos: ArbitrajeProyectoDto[]): CacesAlert[] {
             alerts.push({
                 id: `des-${p.proyecto_uuid}`,
                 tipo: 'critico',
-                titulo: 'Dirimente Necesario',
-                descripcion: `El proyecto "${p.proyecto_titulo}" presenta alta discrepancia entre evaluadores (empate en dictamen). Se requiere asignar un tercer árbitro dirimente.`,
+                titulo: 'Desempate en evaluación',
+                descripcion: `El proyecto "${p.proyecto_titulo}" tiene evaluaciones divididas (empate en dictamen). Asigne un tercer árbitro para desempatar.`,
                 proyectoUuid: p.proyecto_uuid,
                 proyectoTitulo: p.proyecto_titulo,
             });
