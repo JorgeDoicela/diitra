@@ -274,7 +274,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             <div>
                                 <p className="text-sm font-semibold text-text-main">Caso de Desempate Detectado</p>
                                 <p className="text-xs text-text-dim mt-1">
-                                    Los árbitros presentan dictámenes contradictorios. Puede asignar un árbitro dirimente adicional
+                                    Los árbitros presentan dictámenes contradictorios. Puede asignar un tercer árbitro para desempatar
                                     o emitir una resolución fundada del Director de Investigación.
                                 </p>
                             </div>

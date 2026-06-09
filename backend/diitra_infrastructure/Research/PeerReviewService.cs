@@ -1171,7 +1171,7 @@ public class PeerReviewService : IPeerReviewService
             project.Estado = "En Revisión"; // Se mantiene en revisión hasta resolución
             project.PuntajeEvaluacion = promedio;
             mensajeDesempate = $"Los {revisiones.Count} árbitros presentan dictámenes contradictorios (empate {aprobadosCount} vs {rechazadosCount}). " +
-                               $"Se requiere la designación de un árbitro dirimente o decisión fundada del Director de Investigación.";
+                               $"Se requiere designar un tercer árbitro para desempatar o una decisión fundada del Director de Investigación.";
         }
         else if (aprobadosCount > rechazadosCount)
         {
@@ -1729,7 +1729,7 @@ public class PeerReviewService : IPeerReviewService
         if (aprueba == rechaza && revisiones.Count >= 2)
         {
             resultado = "Desempate";
-            mensajeDesempate = $"Panel dividido: {aprueba} aprueba(n) vs {rechaza} rechaza(n). Se requiere un tercer árbitro dirimente.";
+            mensajeDesempate = $"Panel dividido: {aprueba} aprueba(n) vs {rechaza} rechaza(n). Se requiere un tercer árbitro para desempatar.";
         }
 
         // 2. Construir el objeto de datos para el motor de documentos (Scriban)
