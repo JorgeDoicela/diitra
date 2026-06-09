@@ -94,6 +94,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [tieneGrupo, setTieneGrupo] = useState<boolean>(false);
     const [grupoInvestigacion, setGrupoInvestigacion] = useState<string>('');
     const [availableGroups, setAvailableGroups] = useState<any[]>([]);
+    const [isSyncingGroupMembers, setIsSyncingGroupMembers] = useState(false);
     const [isSavingTeam, setIsSavingTeam] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -527,6 +528,81 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleRemoveMember = (cedula: string) => {
         setInvestigadores(prev => prev.filter(inv => inv.cedula !== cedula));
+    };
+
+    const handleSyncGroupMembers = async () => {
+        if (!grupoInvestigacion) {
+            addToast("Sincronización", "Por favor seleccione un grupo de investigación adscrito primero.", "warning");
+            return;
+        }
+
+        const selectedGroup = availableGroups.find(g => g.nombre === grupoInvestigacion);
+        if (!selectedGroup) {
+            addToast("Sincronización", "No se encontró el grupo seleccionado en la lista.", "error");
+            return;
+        }
+
+        setIsSyncingGroupMembers(true);
+        try {
+            const res = await api.get(`/groups/${selectedGroup.uuid}`);
+            const groupDetail = res.data;
+            const groupMembers = groupDetail.miembros || [];
+
+            if (groupMembers.length === 0) {
+                addToast("Sincronización", "El grupo seleccionado no tiene miembros activos registrados.", "warning");
+                return;
+            }
+
+            let addedCount = 0;
+            const updatedMembers = [...investigadores];
+
+            groupMembers.forEach((m: any) => {
+                const isActive = m.activo !== false;
+                if (!isActive) return;
+                
+                const memberCedula = m.cedula?.trim();
+                if (!memberCedula) return;
+
+                const exists = updatedMembers.some(inv => inv.cedula?.trim() === memberCedula);
+                if (!exists) {
+                    const groupRol = m.rol || "";
+                    let projectRol = "Co-Investigador (Docente)";
+                    if (groupRol.toLowerCase().includes("coordinador") || groupRol.toLowerCase().includes("director")) {
+                        const hasDirector = updatedMembers.some(inv => inv.rol?.toLowerCase().includes("director"));
+                        projectRol = hasDirector ? "Co-Investigador (Docente)" : "Director de Proyecto";
+                    } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno")) {
+                        projectRol = "Co-Investigador (Estudiante)";
+                    } else if (groupRol.toLowerCase().includes("tecnico") || groupRol.toLowerCase().includes("técnico")) {
+                        projectRol = "Técnico de Apoyo";
+                    }
+
+                    updatedMembers.push({
+                        nombre: m.nombre_completo || m.nombreCompleto || "Desconocido",
+                        cedula: memberCedula,
+                        rol: projectRol,
+                        nivelAcademico: "Tercer Nivel",
+                        telefono: "",
+                        horasSemanales: 0,
+                        horasDisponibles: 0,
+                        horasAsignadas: 0,
+                        carrera: m.carrera || ""
+                    });
+                    addedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                setInvestigadores(updatedMembers);
+                addToast("Sincronización Exitosa", `Se han importado ${addedCount} miembros del grupo al equipo de trabajo.`, "success");
+            } else {
+                addToast("Sincronización", "Todos los miembros activos de este grupo ya forman parte del equipo.", "info");
+            }
+        } catch (err) {
+            console.error("[DIITRA] Error al sincronizar miembros del grupo", err);
+            addToast("Error de Sincronización", "No se pudieron obtener los miembros del grupo de investigación.", "error");
+        } finally {
+            setIsSyncingGroupMembers(false);
+        }
     };
 
     const handleSaveTeam = async () => {
@@ -972,7 +1048,7 @@ export const ProjectWorkspace: React.FC = () => {
                             </div>
 
                             <div className="mt-6 space-y-4">
-                                {/* Toggle Individual / Colectivo */}
+                                {/* Toggle Individual / Asociativo */}
                                 <div className="flex bg-surface-hover p-1 rounded-md border border-border-thin">
                                     <button 
                                         type="button"
@@ -988,7 +1064,7 @@ export const ProjectWorkspace: React.FC = () => {
                                         onClick={() => handleToggleTieneGrupo(true)}
                                         className={`flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                                     >
-                                        Colectivo
+                                        Asociativo (Grupo)
                                     </button>
                                 </div>
 
@@ -996,35 +1072,72 @@ export const ProjectWorkspace: React.FC = () => {
                                 {!tieneGrupo ? (
                                     <div className="badge-vercel badge-vercel-warning !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <AlertCircle size={14} className="shrink-0 mt-0.5" />
-                                        <span><span className="font-semibold">Trabajo Individual:</span> Solo el Director ejecuta el proyecto. Cambia a Colectivo para asociar un Grupo de Investigación de respaldo y agregar colaboradores.</span>
+                                        <span><span className="font-semibold">Proyecto Independiente:</span> Liderado únicamente por el Director. Cambia a Asociativo para vincular a un Grupo de Investigación acreditado y agregar co-investigadores o estudiantes.</span>
                                     </div>
                                 ) : (
                                     <div className="badge-vercel badge-vercel-info !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <Sparkles size={14} className="shrink-0 mt-0.5" />
-                                        <span><span className="font-semibold">Trabajo Colectivo:</span> Puedes asociar un Grupo de Investigación de respaldo y agregar docentes/estudiantes colaboradores.</span>
+                                        <span><span className="font-semibold">Proyecto Asociativo CACES:</span> Permite asociar un Grupo de Investigación promotor y sincronizar/agregar docentes y estudiantes (semilleristas) al equipo.</span>
                                     </div>
                                 )}
 
-                                {/* Selector de Grupo de Investigación de Respaldo */}
+                                {/* Selector de Grupo de Investigación Adscrito */}
                                 {tieneGrupo && (
                                     <div className="space-y-1.5 animate-fade-in">
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Grupo de Investigación de Respaldo</label>
-                                        <select
-                                            value={grupoInvestigacion}
-                                            disabled={currentProject.puedeEditar === false}
-                                            onChange={(e) => setGrupoInvestigacion(e.target.value)}
-                                            className="bg-surface border border-border-thin rounded px-2.5 py-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="">-- Sin Grupo Asociado / Proyecto Independiente --</option>
-                                            {availableGroups.filter(g => g.activo && g.estado === 'Aprobado').map((g: any) => (
-                                                <option key={g.idGrupo} value={g.nombre}>
-                                                    {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
-                                                </option>
-                                            ))}
-                                        </select>
+                                        <div className="flex items-center justify-between">
+                                            <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Grupo de Investigación Adscrito</label>
+                                            {grupoInvestigacion && (
+                                                (() => {
+                                                    const selectedGroupObj = availableGroups.find(g => g.nombre === grupoInvestigacion);
+                                                    return selectedGroupObj?.uuid ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => navigate(`/grupos?open=${selectedGroupObj.uuid}`)}
+                                                            className="text-[9px] text-brand hover:text-brand-light font-bold flex items-center gap-0.5 hover:underline"
+                                                            title="Ver Ficha del Grupo en Administración"
+                                                        >
+                                                            <span>Ficha del Grupo</span>
+                                                            <ExternalLink size={10} />
+                                                        </button>
+                                                    ) : null;
+                                                })()
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={grupoInvestigacion}
+                                                disabled={currentProject.puedeEditar === false}
+                                                onChange={(e) => setGrupoInvestigacion(e.target.value)}
+                                                className="flex-1 bg-surface border border-border-thin rounded px-2.5 py-2 text-xs text-text-main outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                <option value="">-- Sin Grupo Asociado / Proyecto Independiente --</option>
+                                                {availableGroups.filter(g => g.activo && g.estado === 'Aprobado').map((g: any) => (
+                                                    <option key={g.id_grupo || g.idGrupo} value={g.nombre}>
+                                                        {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
+                                                     </option>
+                                                ))}
+                                            </select>
+
+                                            {grupoInvestigacion && currentProject.puedeEditar !== false && (
+                                                <button
+                                                    type="button"
+                                                    disabled={isSyncingGroupMembers}
+                                                    onClick={handleSyncGroupMembers}
+                                                    className="btn-vercel-secondary !py-2 !px-3 text-xs flex items-center justify-center gap-1.5 shrink-0"
+                                                    title="Importa co-investigadores activos de este grupo"
+                                                >
+                                                    {isSyncingGroupMembers ? (
+                                                        <RefreshCw size={12} className="animate-spin text-brand" />
+                                                    ) : (
+                                                        <RefreshCw size={12} className="text-brand" />
+                                                    )}
+                                                    <span>Sincronizar</span>
+                                                </button>
+                                            )}
+                                        </div>
                                         {grupoInvestigacion && currentProject.puedeEditar !== false && (
                                             <p className="text-[9px] text-brand-light italic">
-                                                * Al guardar, los miembros activos de este grupo se sincronizarán en el proyecto.
+                                                * Al guardar, los miembros del grupo adscrito se consolidarán en la base de datos. Presiona "Sincronizar" para importarlos a la lista inferior antes de guardar.
                                             </p>
                                         )}
                                     </div>
