@@ -47,6 +47,67 @@ TRUNCATE TABLE inv_grupos_investigacion;
 TRUNCATE TABLE inv_entidades_externas;
 TRUNCATE TABLE inv_usuarios_metadata;
 
+-- 1.5. Asegurar usuarios requeridos en tabla central (sincroniza desde SIGAFI o crea placeholders de demo)
+--      Los estudiantes y algunos docentes no tienen registro en `usuarios` hasta su primer login.
+--      Sin este paso, las subconsultas (SELECT idUsuario FROM usuarios WHERE idSigafi = '...') devuelven NULL.
+
+-- Docentes: sincronizar desde tabla profesores si existen
+INSERT INTO usuarios (idSigafi, tablaSigafi, nombre, contrasenia, activo, emailInstitucional)
+SELECT
+    p.idProfesor,
+    'profesor',
+    TRIM(CONCAT(
+        IFNULL(p.primerNombre, ''), ' ',
+        IFNULL(p.segundoNombre, ''), ' ',
+        IFNULL(p.primerApellido, ''), ' ',
+        IFNULL(p.segundoApellido, '')
+    )),
+    IFNULL(p.clave, '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
+    1,
+    COALESCE(p.emailInstitucional, p.email)
+FROM profesores p
+WHERE p.idProfesor IN (
+    '1718161126', '1802707511', '0302144159', '1802989226', '1719134759',
+    '1724649338', '1719322149', '1720477031'
+)
+AND NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.idSigafi = p.idProfesor);
+
+-- Estudiantes: sincronizar desde tabla alumnos si existen
+INSERT INTO usuarios (idSigafi, tablaSigafi, nombre, contrasenia, activo, emailInstitucional)
+SELECT
+    a.idAlumno,
+    'alumno',
+    TRIM(CONCAT(
+        IFNULL(a.primerNombre, ''), ' ',
+        IFNULL(a.segundoNombre, ''), ' ',
+        IFNULL(a.apellidoPaterno, ''), ' ',
+        IFNULL(a.apellidoMaterno, '')
+    )),
+    IFNULL(a.password, '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
+    1,
+    COALESCE(a.email_institucional, a.email)
+FROM alumnos a
+WHERE a.idAlumno IN (
+    '1725555377', '0102598570', '1751325000', '0103057584', '0105057335'
+)
+AND NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.idSigafi = a.idAlumno);
+
+-- Placeholders de demo para cédulas ficticias que no existen en profesores/alumnos
+INSERT INTO usuarios (idSigafi, tablaSigafi, nombre, contrasenia, activo, emailInstitucional)
+SELECT v.idSigafi, v.tablaSigafi, v.nombre, '$2a$11$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, v.email
+FROM (
+    SELECT '1719322149' AS idSigafi, 'profesor' AS tablaSigafi, 'María Fernanda Cevallos' AS nombre, 'mcevallos@traversari.edu.ec' AS email UNION ALL
+    SELECT '1720477031', 'profesor', 'Carlos Andrés Mendieta', 'cmendieta@traversari.edu.ec' UNION ALL
+    SELECT '1725555377', 'alumno',   'Diego Alejandro Romero',  'dromero@est.traversari.edu.ec' UNION ALL
+    SELECT '0102598570', 'alumno',   'Valentina Paz Herrera',   'vherrera@est.traversari.edu.ec' UNION ALL
+    SELECT '1751325000', 'alumno',   'Sebastián Morales Vega',  'smorales@est.traversari.edu.ec' UNION ALL
+    SELECT '0103057584', 'alumno',   'Camila Torres Salinas',   'ctorres@est.traversari.edu.ec' UNION ALL
+    SELECT '0105057335', 'alumno',   'Mateo Javier Intriago',   'mintriago@est.traversari.edu.ec' UNION ALL
+    SELECT '1725555376', 'otros',    'Revisor Externo A',       'revisor.externo.a@demo.ec' UNION ALL
+    SELECT '1725555355', 'otros',    'Revisor Externo B',       'revisor.externo.b@demo.ec'
+) AS v
+WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.idSigafi = v.idSigafi);
+
 -- 2. Poblar Sublíneas de Investigación
 INSERT INTO inv_sublineas (idSublinea, uuid, idLinea, nombre, activo) VALUES
 (1, UUID(), 1, 'Inteligencia Artificial y Aprendizaje Automático Aplicado', 1),
