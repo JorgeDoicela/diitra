@@ -151,7 +151,7 @@ public partial class GroupsController : ControllerBase
     }
 
     [HttpPatch("{uuid}/review")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA")]
     public async Task<IActionResult> ReviewGroup(string uuid, [FromBody] ReviewGroupRequest request)
     {
         try
