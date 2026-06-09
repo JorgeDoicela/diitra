@@ -24,7 +24,7 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/usuarios') return 'Gestión de Usuarios';
     if (pathname === '/auditoria') return 'Auditoría Forense';
     if (pathname === '/grupos') return 'Grupos de Investigación';
-    if (pathname === '/parametros-normativos') return 'Parámetros Normativos';
+    if (pathname === '/parametros-normativos') return 'Parámetros';
     if (pathname === '/investigacion') return 'Proyectos de I+D+i';
     if (pathname === '/investigacion/mis-proyectos') return 'Mis Proyectos';
     if (pathname.startsWith('/investigacion/monitoreo/')) return 'Monitoreo de Proyecto';
@@ -42,14 +42,14 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     const location = useLocation();
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
-        const saved = localStorage.getItem('sidebar_width');
-        return saved ? parseInt(saved, 10) : 240;
-    });
     const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
         const saved = localStorage.getItem('sidebar_collapsed');
         return saved === 'true';
     });
+
+    useEffect(() => {
+        localStorage.removeItem('sidebar_width');
+    }, []);
 
     useEffect(() => {
         const initWebPush = async () => {
@@ -136,17 +136,14 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         return () => clearTimeout(timer);
     }, []);
 
-    const handleCollapseToggle = () => {
-        setIsCollapsed(prev => {
-            const newVal = !prev;
-            localStorage.setItem('sidebar_collapsed', newVal.toString());
-            return newVal;
-        });
+    const handleSidebarCollapse = () => {
+        setIsCollapsed(true);
+        localStorage.setItem('sidebar_collapsed', 'true');
     };
 
-    const handleWidthChange = (w: number) => {
-        setSidebarWidth(w);
-        localStorage.setItem('sidebar_width', w.toString());
+    const handleSidebarExpand = () => {
+        setIsCollapsed(false);
+        localStorage.setItem('sidebar_collapsed', 'false');
     };
 
     return (
@@ -158,10 +155,9 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 toggleTheme={toggleTheme}
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
-                width={sidebarWidth}
                 isCollapsed={isCollapsed}
-                onWidthChange={handleWidthChange}
-                onCollapseToggle={handleCollapseToggle}
+                onCollapse={handleSidebarCollapse}
+                onExpand={handleSidebarExpand}
             />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -172,7 +168,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                             {isCollapsed && (
                                 <>
                                     <button
-                                        onClick={handleCollapseToggle}
+                                        onClick={handleSidebarExpand}
                                         className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors duration-150 cursor-pointer"
                                         title="Mostrar panel lateral"
                                     >
