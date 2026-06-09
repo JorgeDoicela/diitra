@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    FileText, 
-    Plus, 
-    ExternalLink, 
-    Download, 
-    Shield,
+import {
+    FileText,
+    Plus,
+    ExternalLink,
+    Download,
     AlertCircle,
     Fingerprint,
     Layers
@@ -42,10 +41,10 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
 
     const fetchDocuments = async () => {
         try {
-            const url = entityUuid === 'GLOBAL' 
-                ? '/documents/instances/global' 
+            const url = entityUuid === 'GLOBAL'
+                ? '/documents/instances/global'
                 : `/documents/instances/entity/${entityUuid}`;
-                
+
             const response = await api.get(url);
             setDocuments(response.data);
         } catch (error) {
@@ -79,9 +78,9 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                     <FileText size={14} className="text-text-dim" />
                     <span className="text-sm font-medium text-text-dim">{title}</span>
                 </div>
-                
+
                 {entityUuid !== 'GLOBAL' && (
-                    <button 
+                    <button
                         onClick={handleCreateNew}
                         className="btn-vercel-primary px-3 py-1.5 text-xs gap-1.5"
                     >
@@ -128,8 +127,8 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                         const isProtocolo = tCode.toUpperCase().includes('PROTOCOLO');
 
                         return (
-                            <div 
-                                key={doc.uuid || doc.Uuid} 
+                            <div
+                                key={doc.uuid || doc.Uuid}
                                 onClick={() => navigate(`/investigacion/workspace/${tCode}/${doc.uuid || doc.Uuid}`)}
                                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer"
                             >
@@ -142,7 +141,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
 
                                 {/* Columns Group */}
                                 <div className="flex flex-wrap md:flex-nowrap items-center justify-between md:justify-end gap-x-8 gap-y-2 text-[11px] text-text-dim font-medium w-full md:w-auto">
-                                    
+
                                     {/* Col 2: Estado */}
                                     <div className="flex items-center gap-1.5 min-w-[90px]">
                                         <span className={`w-1.5 h-1.5 rounded-full ${statusColor} shrink-0`} />
@@ -151,11 +150,10 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
 
                                     {/* Col 3: Tipo Badge */}
                                     <div className="shrink-0 min-w-[100px]">
-                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                                            isProtocolo 
-                                                ? 'bg-brand/10 text-brand border border-brand/20' 
-                                                : 'bg-info/10 text-info border border-info/20'
-                                        }`}>
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${isProtocolo
+                                            ? 'bg-brand/10 text-brand border border-brand/20'
+                                            : 'bg-info/10 text-info border border-info/20'
+                                            }`}>
                                             {isProtocolo ? <Layers size={10} /> : <FileText size={10} />}
                                             {isProtocolo ? 'Protocolo' : 'Informe'}
                                         </span>
@@ -174,7 +172,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                                         </span>
                                         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {state === 3 && (
-                                                <button 
+                                                <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         window.open(`/api/projects/generate-pdf?isDraft=false`, '_blank');
@@ -194,11 +192,6 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                         );
                     })
                 )}
-            </div>
-
-            <div className="flex items-center justify-center gap-2 py-3 border-t border-border-thin">
-                <Shield size={11} className="text-text-dim" />
-                <span className="text-[9px] font-medium text-text-dim uppercase tracking-widest">Protocolo de Inmutabilidad DIITRA Activado</span>
             </div>
         </div>
     );

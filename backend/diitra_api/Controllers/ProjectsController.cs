@@ -448,6 +448,9 @@ namespace diitra_api.Controllers
             if (detail == null) return NotFound();
 
             detail.PuedeEditar = await CanCurrentUserModifyProjectAsync(uuid);
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            detail.PuedeSolicitarCambioEquipo = !string.IsNullOrEmpty(userIdRef) &&
+                await _projectOrchestrator.UserCanRequestTeamChangeAsync(uuid, userIdRef);
             return Ok(detail);
         }
 
@@ -604,6 +607,54 @@ namespace diitra_api.Controllers
             return Ok(new { success = true });
         }
 
+        [HttpPost("{uuid}/team-change-requests")]
+        public async Task<IActionResult> CreateTeamChangeRequest(string uuid, [FromBody] TeamChangeRequestDto request)
+        {
+            if (!await CanCurrentUserRequestTeamChangeAsync(uuid))
+            {
+                return Forbid("No tienes permisos para solicitar cambios de equipo en este proyecto.");
+            }
+
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
+
+            var result = await _projectOrchestrator.CreateTeamChangeRequestAsync(uuid, userIdRef, request);
+            if (!result.Success)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+
+            return Ok(new { success = true, requestUuid = result.Uuid, message = result.Message });
+        }
+
+        [HttpGet("{uuid}/team-change-requests")]
+        public async Task<IActionResult> GetTeamChangeRequests(string uuid)
+        {
+            if (!await CanCurrentUserViewProjectAsync(uuid))
+            {
+                return Forbid("No tienes permisos para visualizar solicitudes de cambio de equipo de este proyecto.");
+            }
+
+            var records = await _projectOrchestrator.GetTeamChangeRequestsAsync(uuid);
+            return Ok(records);
+        }
+
+        [HttpPatch("{uuid}/team-change-requests/{requestUuid}/review")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA")]
+        public async Task<IActionResult> ReviewTeamChangeRequest(string uuid, string requestUuid, [FromBody] TeamChangeReviewDto review)
+        {
+            var reviewerSigafiId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(reviewerSigafiId)) return Unauthorized();
+
+            var result = await _projectOrchestrator.ReviewTeamChangeRequestAsync(uuid, requestUuid, reviewerSigafiId, review);
+            if (!result.Success)
+            {
+                return BadRequest(new { success = false, message = result.Message });
+            }
+
+            return Ok(new { success = true, message = result.Message });
+        }
+
         /// <summary>
         /// Transfiere la dirección de un proyecto formalmente a un nuevo docente con justificación.
         /// </summary>
@@ -718,6 +769,14 @@ namespace diitra_api.Controllers
             }
 
             return false;
+        }
+
+        private async Task<bool> CanCurrentUserRequestTeamChangeAsync(string uuid)
+        {
+            var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdRef)) return false;
+
+            return await _projectOrchestrator.UserCanRequestTeamChangeAsync(uuid, userIdRef);
         }
 
         private async Task<bool> CanCurrentUserViewProjectAsync(string uuid)

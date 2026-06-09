@@ -97,6 +97,16 @@ export const ProjectWorkspace: React.FC = () => {
     const [isSyncingGroupMembers, setIsSyncingGroupMembers] = useState(false);
     const [isSavingTeam, setIsSavingTeam] = useState(false);
     const [teamMessage, setTeamMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [teamChangeRequests, setTeamChangeRequests] = useState<any[]>([]);
+    const [isLoadingTeamChangeRequests, setIsLoadingTeamChangeRequests] = useState(false);
+    const [isSubmittingTeamChangeRequest, setIsSubmittingTeamChangeRequest] = useState(false);
+    const [teamChangeForm, setTeamChangeForm] = useState({
+        tipo: 'ALTA',
+        cedulaObjetivo: '',
+        rolPropuesto: 'Co-Investigador (Docente)',
+        motivo: '',
+        resolucionReferencia: ''
+    });
 
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [transferDirector, setTransferDirector] = useState<any>(null);
@@ -117,6 +127,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
     const approvedGroups = availableGroups.filter(g => g.activo && g.estado === 'Aprobado');
+    const canReviewTeamChanges = isAdmin || roles?.includes('DIITRA_ADMIN') || roles?.includes('ADMIN_SISTEMA');
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -178,6 +189,23 @@ export const ProjectWorkspace: React.FC = () => {
             }
         } catch (err) {
             console.error("[DIITRA] Error al cargar tipos de producto", err);
+        }
+    };
+
+    const fetchTeamChangeRequests = async (projectUuid?: string) => {
+        const uuidToUse = projectUuid || currentProject?.uuid;
+        if (!uuidToUse || !tieneGrupo) {
+            setTeamChangeRequests([]);
+            return;
+        }
+        setIsLoadingTeamChangeRequests(true);
+        try {
+            const res = await api.get(`/projects/${uuidToUse}/team-change-requests`);
+            setTeamChangeRequests(res.data || []);
+        } catch (err) {
+            console.error("[DIITRA] Error al obtener solicitudes de cambio de equipo", err);
+        } finally {
+            setIsLoadingTeamChangeRequests(false);
         }
     };
 
@@ -358,11 +386,17 @@ export const ProjectWorkspace: React.FC = () => {
                     // FIX: fallback seguro — sin datos explícitos, denegamos edición (mínimo privilegio)
                     puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
                                  (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
+                    puedeSolicitarCambioEquipo: res.data.puedeSolicitarCambioEquipo ?? res.data.puede_solicitar_cambio_equipo ?? false,
                     puntajeEvaluacion: res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
                 setGrupoInvestigacion(res.data.grupoInvestigacionUuid || res.data.grupoInvestigacion || '');
+                if (res.data.tieneGrupoInvestigacion) {
+                    await fetchTeamChangeRequests(res.data.uuid);
+                } else {
+                    setTeamChangeRequests([]);
+                }
             } else if (isNotFound) {
                 // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
                 setCurrentProject({
@@ -372,11 +406,13 @@ export const ProjectWorkspace: React.FC = () => {
                     status: 'Borrador',
                     presupuesto: 0,
                     linea: 'No definida',
-                    puedeEditar: true
+                    puedeEditar: true,
+                    puedeSolicitarCambioEquipo: false
                 });
                 setInvestigadores([]);
                 setTieneGrupo(false);
                 setGrupoInvestigacion('');
+                setTeamChangeRequests([]);
             } else {
                 // Ante cualquier otro error (500, Red, etc.), bloqueamos por Fail-Closed
                 setIsUnauthorized(true);
@@ -621,6 +657,11 @@ export const ProjectWorkspace: React.FC = () => {
                     grupoInvestigacion: refreshed.data.grupoInvestigacion || null,
                     grupoInvestigacionUuid: refreshed.data.grupoInvestigacionUuid || null
                 }));
+                if (refreshed.data.tieneGrupoInvestigacion) {
+                    await fetchTeamChangeRequests(currentProject.uuid);
+                } else {
+                    setTeamChangeRequests([]);
+                }
             } else {
                 addToast("Error al Guardar", res.data.message || 'Error al guardar los cambios.', "error");
             }
@@ -630,6 +671,66 @@ export const ProjectWorkspace: React.FC = () => {
             addToast("Error al Guardar", errMsg, "error");
         } finally {
             setIsSavingTeam(false);
+        }
+    };
+
+    const handleCreateTeamChangeRequest = async () => {
+        if (!currentProject?.uuid || !tieneGrupo) return;
+        if (!teamChangeForm.cedulaObjetivo.trim() || !teamChangeForm.motivo.trim()) {
+            addToast("Solicitud incompleta", "Debes indicar cédula objetivo y motivo de la solicitud.", "warning");
+            return;
+        }
+
+        setIsSubmittingTeamChangeRequest(true);
+        try {
+            const payload = {
+                tipo: teamChangeForm.tipo,
+                cedulaObjetivo: teamChangeForm.cedulaObjetivo.trim(),
+                rolPropuesto: teamChangeForm.tipo === 'BAJA' ? null : teamChangeForm.rolPropuesto,
+                motivo: teamChangeForm.motivo.trim(),
+                resolucionReferencia: teamChangeForm.resolucionReferencia.trim() || null
+            };
+            const res = await api.post(`/projects/${currentProject.uuid}/team-change-requests`, payload);
+            if (res.data?.success) {
+                addToast("Solicitud registrada", "La solicitud de cambio quedó en trazabilidad para revisión.", "success");
+                setTeamChangeForm({
+                    tipo: 'ALTA',
+                    cedulaObjetivo: '',
+                    rolPropuesto: 'Co-Investigador (Docente)',
+                    motivo: '',
+                    resolucionReferencia: ''
+                });
+                await fetchTeamChangeRequests(currentProject.uuid);
+            } else {
+                addToast("No se pudo registrar", res.data?.message || "Error al registrar solicitud.", "error");
+            }
+        } catch (err: any) {
+            const errMsg = err.response?.data?.message || 'Error al registrar solicitud de cambio.';
+            addToast("Error de Solicitud", errMsg, "error");
+        } finally {
+            setIsSubmittingTeamChangeRequest(false);
+        }
+    };
+
+    const handleReviewTeamChangeRequest = async (requestUuid: string, aprobar: boolean) => {
+        if (!currentProject?.uuid) return;
+        try {
+            const res = await api.patch(`/projects/${currentProject.uuid}/team-change-requests/${requestUuid}/review`, {
+                aprobar,
+                ejecutar: aprobar,
+                observacionRevision: aprobar ? "Aprobado por autoridad competente." : "Rechazado por autoridad competente."
+            });
+            if (res.data?.success) {
+                addToast("Revisión completada", res.data.message || "Solicitud procesada.", "success");
+                await fetchTeamChangeRequests(currentProject.uuid);
+                const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
+                setInvestigadores(refreshed.data.investigadores || []);
+            } else {
+                addToast("Error de revisión", res.data?.message || "No se pudo revisar la solicitud.", "error");
+            }
+        } catch (err: any) {
+            const errMsg = err.response?.data?.message || "No se pudo revisar la solicitud.";
+            addToast("Error de revisión", errMsg, "error");
         }
     };
 
@@ -1148,6 +1249,104 @@ export const ProjectWorkspace: React.FC = () => {
                                             En proyectos asociativos no se permite agregar o quitar miembros desde este workspace.
                                             La conformación del grupo se administra en <span className="font-semibold">/grupos</span>; aquí solo se asigna y sincroniza el grupo aprobado.
                                         </span>
+                                    </div>
+                                )}
+
+                                {tieneGrupo && (
+                                    <div className="border border-border-thin rounded-md p-3 space-y-3 bg-bg-deep/50">
+                                        <div className="flex items-center justify-between">
+                                            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-text-main">Solicitudes Formales de Cambio</h4>
+                                            <span className="text-[9px] text-text-dim">Con trazabilidad y revisión</span>
+                                        </div>
+
+                                        {currentProject.puedeSolicitarCambioEquipo && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <select
+                                                    value={teamChangeForm.tipo}
+                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, tipo: e.target.value }))}
+                                                    className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
+                                                >
+                                                    <option value="ALTA">Alta de integrante</option>
+                                                    <option value="BAJA">Baja de integrante</option>
+                                                    <option value="CAMBIO_DIRECTOR">Cambio de director</option>
+                                                </select>
+                                                <input
+                                                    type="text"
+                                                    value={teamChangeForm.cedulaObjetivo}
+                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
+                                                    placeholder="Cédula objetivo"
+                                                    className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
+                                                />
+                                                {teamChangeForm.tipo !== 'BAJA' && (
+                                                    <select
+                                                        value={teamChangeForm.rolPropuesto}
+                                                        onChange={(e) => setTeamChangeForm(prev => ({ ...prev, rolPropuesto: e.target.value }))}
+                                                        className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
+                                                    >
+                                                        <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
+                                                        <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
+                                                        <option value="Director de Proyecto">Director de Proyecto</option>
+                                                    </select>
+                                                )}
+                                                <input
+                                                    type="text"
+                                                    value={teamChangeForm.resolucionReferencia}
+                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, resolucionReferencia: e.target.value }))}
+                                                    placeholder="Referencia acta / memo (opcional)"
+                                                    className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
+                                                />
+                                                <textarea
+                                                    value={teamChangeForm.motivo}
+                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, motivo: e.target.value }))}
+                                                    placeholder="Motivo formal del cambio"
+                                                    className="md:col-span-2 bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main min-h-[56px]"
+                                                />
+                                                <div className="md:col-span-2 flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        disabled={isSubmittingTeamChangeRequest}
+                                                        onClick={handleCreateTeamChangeRequest}
+                                                        className={`btn-vercel-secondary !py-2 !px-3 text-xs ${isSubmittingTeamChangeRequest ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                    >
+                                                        {isSubmittingTeamChangeRequest ? 'Registrando...' : 'Registrar Solicitud'}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {currentProject.puedeEditar === false && currentProject.puedeSolicitarCambioEquipo && (
+                                            <div className="badge-vercel badge-vercel-info !rounded-md !p-2.5 !text-[10px] !font-normal !leading-relaxed w-full">
+                                                El protocolo está en solo lectura, pero como integrante del proyecto o del grupo puedes registrar solicitudes formales (alta, baja o cambio de director). Solo el administrador puede aprobarlas y ejecutarlas.
+                                            </div>
+                                        )}
+
+                                        <div className="space-y-2">
+                                            {isLoadingTeamChangeRequests ? (
+                                                <div className="text-[10px] text-text-dim uppercase tracking-wider">Cargando solicitudes...</div>
+                                            ) : teamChangeRequests.length === 0 ? (
+                                                <div className="text-[10px] text-text-dim uppercase tracking-wider">Sin solicitudes registradas</div>
+                                            ) : (
+                                                teamChangeRequests.map((req: any) => (
+                                                    <div key={req.requestUuid} className="p-2 rounded border border-border-thin bg-surface">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="text-[10px] font-semibold text-text-main uppercase">{req.tipo} · {req.estado}</span>
+                                                            <span className="text-[9px] text-text-dim">{req.cedulaObjetivo || 'N/A'}</span>
+                                                        </div>
+                                                        <p className="text-[10px] text-text-dim mt-1">{req.motivo}</p>
+                                                        {canReviewTeamChanges && req.estado === 'PENDIENTE' && (
+                                                            <div className="flex gap-2 mt-2">
+                                                                <button type="button" className="btn-vercel-secondary !py-1.5 !px-2 text-[10px]" onClick={() => handleReviewTeamChangeRequest(req.requestUuid, true)}>
+                                                                    Aprobar y Ejecutar
+                                                                </button>
+                                                                <button type="button" className="btn-vercel-outline !py-1.5 !px-2 text-[10px]" onClick={() => handleReviewTeamChangeRequest(req.requestUuid, false)}>
+                                                                    Rechazar
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 

@@ -1941,6 +1941,392 @@ namespace diitra_infrastructure.Research
                 .ToDictionary(g => g.Key, g => g.First());
         }
 
+        public async Task<SyncResult> CreateTeamChangeRequestAsync(string projectUuid, string requesterSigafiId, TeamChangeRequestDto request)
+        {
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
+            }
+
+            if (project.TieneGrupo != true || !project.IdGrupo.HasValue)
+            {
+                return new SyncResult { Success = false, Message = "Las solicitudes de cambio de equipo aplican únicamente para proyectos asociativos con grupo aprobado." };
+            }
+
+            if (request == null || string.IsNullOrWhiteSpace(request.Tipo) || string.IsNullOrWhiteSpace(request.Motivo))
+            {
+                return new SyncResult { Success = false, Message = "Debe indicar tipo de cambio y motivo de la solicitud." };
+            }
+
+            var tipo = request.Tipo.Trim().ToUpperInvariant();
+            if (tipo != "ALTA" && tipo != "BAJA" && tipo != "CAMBIO_DIRECTOR")
+            {
+                return new SyncResult { Success = false, Message = "Tipo de solicitud inválido. Use: ALTA, BAJA o CAMBIO_DIRECTOR." };
+            }
+
+            if (string.IsNullOrWhiteSpace(request.CedulaObjetivo))
+            {
+                return new SyncResult { Success = false, Message = "Debe especificar la cédula objetivo para la solicitud." };
+            }
+
+            var requester = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == requesterSigafiId);
+            if (requester == null)
+            {
+                return new SyncResult { Success = false, Message = "No se pudo identificar al solicitante." };
+            }
+
+            var tracePayload = new TeamChangeTracePayload
+            {
+                Modulo = "CAMBIO_EQUIPO",
+                Estado = "PENDIENTE",
+                Tipo = tipo,
+                CedulaObjetivo = request.CedulaObjetivo?.Trim(),
+                RolPropuesto = string.IsNullOrWhiteSpace(request.RolPropuesto) ? null : request.RolPropuesto.Trim(),
+                Motivo = request.Motivo.Trim(),
+                ResolucionReferencia = string.IsNullOrWhiteSpace(request.ResolucionReferencia) ? null : request.ResolucionReferencia.Trim(),
+                Observacion = string.IsNullOrWhiteSpace(request.Observacion) ? null : request.Observacion.Trim(),
+                SolicitadoPorSigafiId = requesterSigafiId,
+                FechaSolicitud = DateTime.Now,
+                FechaEfectiva = request.FechaEfectiva
+            };
+
+            var requestUuid = Guid.NewGuid().ToString();
+            var trace = new InvTrazabilidadProyecto
+            {
+                Uuid = requestUuid,
+                IdProyecto = project.IdProyecto,
+                IdUsuario = requester.IdUsuario,
+                EstadoAnterior = project.Estado ?? "Borrador",
+                EstadoNuevo = "SOLICITUD_CAMBIO_EQUIPO_PENDIENTE",
+                Observacion = System.Text.Json.JsonSerializer.Serialize(tracePayload),
+                FechaTransicion = DateTime.Now
+            };
+
+            _context.InvTrazabilidadProyectos.Add(trace);
+            await _context.SaveChangesAsync();
+
+            await _auditService.LogActionAsync(
+                requester.IdUsuario,
+                "SOLICITUD_CAMBIO_EQUIPO",
+                $"Solicitud {tipo} registrada para proyecto {project.Uuid}",
+                "INVESTIGACION",
+                null,
+                trace.Observacion);
+
+            return new SyncResult
+            {
+                Success = true,
+                Uuid = requestUuid,
+                Message = "Solicitud de cambio de equipo registrada."
+            };
+        }
+
+        public async Task<List<TeamChangeRequestRecordDto>> GetTeamChangeRequestsAsync(string projectUuid)
+        {
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
+            if (project == null)
+            {
+                return new List<TeamChangeRequestRecordDto>();
+            }
+
+            var traces = await _context.InvTrazabilidadProyectos
+                .Where(t => t.IdProyecto == project.IdProyecto && t.EstadoNuevo.StartsWith("SOLICITUD_CAMBIO_EQUIPO"))
+                .OrderByDescending(t => t.FechaTransicion)
+                .ToListAsync();
+
+            var usersById = await _context.Users
+                .Where(u => traces.Where(t => t.IdUsuario.HasValue).Select(t => t.IdUsuario!.Value).Contains(u.IdUsuario))
+                .ToDictionaryAsync(u => u.IdUsuario, u => u.Nombre);
+
+            var result = new List<TeamChangeRequestRecordDto>();
+            foreach (var trace in traces)
+            {
+                var payload = ParseTeamChangePayload(trace.Observacion);
+                if (payload == null) continue;
+
+                string? requesterName = null;
+                if (trace.IdUsuario.HasValue)
+                {
+                    usersById.TryGetValue(trace.IdUsuario.Value, out requesterName);
+                }
+
+                string? reviewerName = null;
+                if (!string.IsNullOrWhiteSpace(payload.RevisadoPorSigafiId))
+                {
+                    reviewerName = await _context.Users
+                        .Where(u => u.IdSigafi == payload.RevisadoPorSigafiId)
+                        .Select(u => u.Nombre)
+                        .FirstOrDefaultAsync();
+                }
+
+                result.Add(new TeamChangeRequestRecordDto
+                {
+                    RequestUuid = trace.Uuid,
+                    Estado = payload.Estado ?? "PENDIENTE",
+                    Tipo = payload.Tipo ?? "N/A",
+                    CedulaObjetivo = payload.CedulaObjetivo,
+                    RolPropuesto = payload.RolPropuesto,
+                    Motivo = payload.Motivo ?? string.Empty,
+                    ResolucionReferencia = payload.ResolucionReferencia,
+                    ResolucionAprobacion = payload.ResolucionAprobacion,
+                    Observacion = payload.ObservacionRevision ?? payload.Observacion,
+                    SolicitadoPor = requesterName,
+                    RevisadoPor = reviewerName,
+                    FechaSolicitud = payload.FechaSolicitud ?? trace.FechaTransicion ?? DateTime.MinValue,
+                    FechaRevision = payload.FechaRevision,
+                    FechaEfectiva = payload.FechaEfectiva
+                });
+            }
+
+            return result;
+        }
+
+        public async Task<SyncResult> ReviewTeamChangeRequestAsync(string projectUuid, string requestUuid, string reviewerSigafiId, TeamChangeReviewDto review)
+        {
+            if (!await IsSystemAdminAsync(reviewerSigafiId))
+            {
+                return new SyncResult
+                {
+                    Success = false,
+                    Message = "Solo el administrador del sistema puede aprobar o rechazar solicitudes de cambio de equipo."
+                };
+            }
+
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
+            if (project == null)
+            {
+                return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
+            }
+
+            var trace = await _context.InvTrazabilidadProyectos
+                .FirstOrDefaultAsync(t => t.IdProyecto == project.IdProyecto && t.Uuid == requestUuid && t.EstadoNuevo.StartsWith("SOLICITUD_CAMBIO_EQUIPO"));
+            if (trace == null)
+            {
+                return new SyncResult { Success = false, Message = "Solicitud de cambio no encontrada." };
+            }
+
+            var payload = ParseTeamChangePayload(trace.Observacion);
+            if (payload == null || payload.Modulo != "CAMBIO_EQUIPO")
+            {
+                return new SyncResult { Success = false, Message = "La solicitud no tiene un formato de trazabilidad válido." };
+            }
+
+            if (!string.Equals(payload.Estado, "PENDIENTE", StringComparison.OrdinalIgnoreCase))
+            {
+                return new SyncResult { Success = false, Message = $"La solicitud ya fue procesada ({payload.Estado})." };
+            }
+
+            var reviewer = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == reviewerSigafiId);
+            if (reviewer == null)
+            {
+                return new SyncResult { Success = false, Message = "No se pudo identificar al revisor." };
+            }
+
+            using var tx = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                payload.RevisadoPorSigafiId = reviewerSigafiId;
+                payload.FechaRevision = DateTime.Now;
+                payload.ObservacionRevision = string.IsNullOrWhiteSpace(review.ObservacionRevision) ? null : review.ObservacionRevision.Trim();
+
+                if (!review.Aprobar)
+                {
+                    payload.Estado = "RECHAZADA";
+                    trace.EstadoNuevo = "SOLICITUD_CAMBIO_EQUIPO_RECHAZADA";
+                }
+                else
+                {
+                    payload.ResolucionAprobacion = string.IsNullOrWhiteSpace(review.ResolucionAprobacion) ? null : review.ResolucionAprobacion.Trim();
+                    payload.Estado = review.Ejecutar ? "EJECUTADA" : "APROBADA";
+                    trace.EstadoNuevo = review.Ejecutar
+                        ? "SOLICITUD_CAMBIO_EQUIPO_EJECUTADA"
+                        : "SOLICITUD_CAMBIO_EQUIPO_APROBADA";
+
+                    if (review.Ejecutar)
+                    {
+                        var executeResult = await ExecuteTeamChangeRequestAsync(project, payload);
+                        if (!executeResult.Success)
+                        {
+                            await tx.RollbackAsync();
+                            return executeResult;
+                        }
+                    }
+                }
+
+                trace.Observacion = System.Text.Json.JsonSerializer.Serialize(payload);
+                trace.FechaTransicion = DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                await _auditService.LogActionAsync(
+                    reviewer.IdUsuario,
+                    review.Aprobar ? "REVISAR_CAMBIO_EQUIPO_APROBAR" : "REVISAR_CAMBIO_EQUIPO_RECHAZAR",
+                    $"Solicitud de cambio de equipo {requestUuid} procesada para proyecto {project.Uuid}",
+                    "INVESTIGACION",
+                    null,
+                    trace.Observacion);
+
+                await tx.CommitAsync();
+
+                return new SyncResult
+                {
+                    Success = true,
+                    Uuid = requestUuid,
+                    Message = review.Aprobar
+                        ? (review.Ejecutar ? "Solicitud aprobada y ejecutada." : "Solicitud aprobada.")
+                        : "Solicitud rechazada."
+                };
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                _logger.LogError(ex, "Error al revisar solicitud de cambio de equipo {RequestUuid}", requestUuid);
+                return new SyncResult { Success = false, Message = $"No se pudo procesar la solicitud: {ex.Message}" };
+            }
+        }
+
+        private async Task<SyncResult> ExecuteTeamChangeRequestAsync(InvProyecto project, TeamChangeTracePayload payload)
+        {
+            if (project.TieneGrupo != true || !project.IdGrupo.HasValue)
+            {
+                return new SyncResult { Success = false, Message = "Solo se pueden ejecutar cambios de equipo en proyectos asociativos con grupo vinculado." };
+            }
+
+            if (string.IsNullOrWhiteSpace(payload.CedulaObjetivo))
+            {
+                return new SyncResult { Success = false, Message = "La solicitud no tiene cédula objetivo para ejecutar." };
+            }
+
+            var targetCedula = payload.CedulaObjetivo.Trim();
+            var targetUser = await _authService.GetOrProvisionUserByCedulaAsync(targetCedula);
+            if (targetUser == null)
+            {
+                return new SyncResult { Success = false, Message = "No se pudo resolver el usuario objetivo por cédula." };
+            }
+
+            var groupId = project.IdGrupo.Value;
+            var groupMember = await _context.InvGruposMiembros
+                .FirstOrDefaultAsync(m => m.IdGrupo == groupId && m.IdUsuario == targetUser.IdUsuario);
+
+            switch ((payload.Tipo ?? string.Empty).Trim().ToUpperInvariant())
+            {
+                case "ALTA":
+                    if (groupMember == null)
+                    {
+                        _context.InvGruposMiembros.Add(new InvGrupoMiembro
+                        {
+                            IdGrupo = groupId,
+                            IdUsuario = targetUser.IdUsuario,
+                            Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? "Co-Investigador (Docente)" : payload.RolPropuesto,
+                            Activo = true,
+                            FechaInicio = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now)
+                        });
+                    }
+                    else
+                    {
+                        groupMember.Activo = true;
+                        groupMember.Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? groupMember.Rol : payload.RolPropuesto;
+                        groupMember.FechaInicio = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now);
+                        groupMember.FechaFin = null;
+                        groupMember.MotivoSalida = null;
+                    }
+                    break;
+
+                case "BAJA":
+                    if (groupMember == null || groupMember.Activo == false)
+                    {
+                        return new SyncResult { Success = false, Message = "No existe un integrante activo con esa cédula en el grupo." };
+                    }
+                    groupMember.Activo = false;
+                    groupMember.FechaFin = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now);
+                    groupMember.MotivoSalida = payload.Motivo;
+                    break;
+
+                case "CAMBIO_DIRECTOR":
+                    var activeMembers = await _context.InvGruposMiembros
+                        .Where(m => m.IdGrupo == groupId && m.Activo != false)
+                        .ToListAsync();
+
+                    foreach (var member in activeMembers.Where(m => !string.IsNullOrWhiteSpace(m.Rol) && m.Rol!.ToLower().Contains("director")))
+                    {
+                        member.Rol = "Co-Investigador (Docente)";
+                    }
+
+                    if (groupMember == null)
+                    {
+                        _context.InvGruposMiembros.Add(new InvGrupoMiembro
+                        {
+                            IdGrupo = groupId,
+                            IdUsuario = targetUser.IdUsuario,
+                            Rol = "Director de Proyecto",
+                            Activo = true,
+                            FechaInicio = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now)
+                        });
+                    }
+                    else
+                    {
+                        groupMember.Activo = true;
+                        groupMember.Rol = "Director de Proyecto";
+                        groupMember.FechaInicio = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now);
+                        groupMember.FechaFin = null;
+                        groupMember.MotivoSalida = null;
+                    }
+                    break;
+
+                default:
+                    return new SyncResult { Success = false, Message = "Tipo de cambio no soportado para ejecución." };
+            }
+
+            var effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(groupId, project.IdProyecto);
+            await SyncInvestigadoresAsync(project.IdProyecto, effectiveInvestigadores);
+
+            var dto = DeserializeProyectoMetadata(project.MetadataCacesJson);
+            dto.TieneGrupoInvestigacion = true;
+            dto.Investigadores = effectiveInvestigadores;
+            dto.Uuid = project.Uuid;
+            project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
+            project.FechaModificacion = DateTime.Now;
+
+            return new SyncResult { Success = true, Uuid = project.Uuid };
+        }
+
+        private ProyectoDto DeserializeProyectoMetadata(string? metadataJson)
+        {
+            if (string.IsNullOrWhiteSpace(metadataJson))
+            {
+                return new ProyectoDto();
+            }
+
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(metadataJson) ?? new ProyectoDto();
+            }
+            catch
+            {
+                return new ProyectoDto();
+            }
+        }
+
+        private TeamChangeTracePayload? ParseTeamChangePayload(string? observacion)
+        {
+            if (string.IsNullOrWhiteSpace(observacion))
+            {
+                return null;
+            }
+
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<TeamChangeTracePayload>(observacion);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         public async Task<bool> UserCanModifyProjectAsync(string projectUuid, string userSigafiId)
         {
             if (await IsSystemAdminAsync(userSigafiId)) return true;
@@ -2035,6 +2421,54 @@ namespace diitra_infrastructure.Research
                 pp.IdUsuario == user.IdUsuario && 
                 pp.EsDirector == true && 
                 pp.Activo != false);
+        }
+
+        public async Task<bool> UserCanRequestTeamChangeAsync(string projectUuid, string userSigafiId)
+        {
+            if (await IsSystemAdminAsync(userSigafiId)) return true;
+
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
+            if (user == null) return false;
+
+            var isDirectorInv = await _context.UserRoles.AsNoTracking()
+                .AnyAsync(ur => ur.IdUsuario == user.IdUsuario
+                    && (ur.EsActivo ?? true)
+                    && ur.Role.CodigoRol == "DIRECTOR_INV");
+            if (isDirectorInv) return true;
+
+            var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
+            var project = await _context.InvProyectos.AsNoTracking().FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
+            if (project == null) return false;
+
+            if (project.Estado is "Finalizado" or "Rechazado") return false;
+            if (project.TieneGrupo != true || !project.IdGrupo.HasValue) return false;
+
+            if (await IsProjectDirectorAsync(projectUuid, userSigafiId)) return true;
+
+            // Integrante activo del equipo del proyecto (p. ej. co-investigador si el director se retira)
+            var isProjectTeamMember = await _context.InvProyectosProfesores.AsNoTracking()
+                    .AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == user.IdUsuario && pp.Activo != false)
+                || await _context.InvProyectosAlumnos.AsNoTracking()
+                    .AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == user.IdUsuario && pa.Activo != false);
+            if (isProjectTeamMember) return true;
+
+            var group = await _context.InvGruposInvestigacion.AsNoTracking()
+                .Include(g => g.IdCoordinadorNavigation)
+                .FirstOrDefaultAsync(g => g.IdGrupo == project.IdGrupo.Value);
+            if (group == null) return false;
+
+            if (group.IdCoordinador == user.IdUsuario) return true;
+
+            var coordinatorSigafi = group.IdCoordinadorNavigation?.IdSigafi?.Trim();
+            if (!string.IsNullOrEmpty(coordinatorSigafi) &&
+                string.Equals(coordinatorSigafi, userSigafiId.Trim(), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // Miembro activo del grupo de investigación adscrito
+            return await _context.InvGruposMiembros.AsNoTracking()
+                .AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
         }
 
         /// <summary>
@@ -2202,6 +2636,25 @@ namespace diitra_infrastructure.Research
                 .AnyAsync(ur => ur.IdUsuario == idUsuario
                     && (ur.EsActivo ?? true)
                     && OversightRoleCodes.Contains(ur.Role.CodigoRol));
+        }
+
+        private sealed class TeamChangeTracePayload
+        {
+            public string Modulo { get; set; } = "CAMBIO_EQUIPO";
+            public string? Estado { get; set; }
+            public string? Tipo { get; set; }
+            public string? CedulaObjetivo { get; set; }
+            public string? RolPropuesto { get; set; }
+            public string? Motivo { get; set; }
+            public string? ResolucionReferencia { get; set; }
+            public string? ResolucionAprobacion { get; set; }
+            public string? Observacion { get; set; }
+            public string? ObservacionRevision { get; set; }
+            public string? SolicitadoPorSigafiId { get; set; }
+            public string? RevisadoPorSigafiId { get; set; }
+            public DateTime? FechaSolicitud { get; set; }
+            public DateTime? FechaRevision { get; set; }
+            public DateTime? FechaEfectiva { get; set; }
         }
     }
 }

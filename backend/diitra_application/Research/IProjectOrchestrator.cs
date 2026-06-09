@@ -76,10 +76,33 @@ namespace Diitra.Application.Research
         Task<bool> IsProjectDirectorAsync(string projectUuid, string userSigafiId);
 
         /// <summary>
+        /// Determina si el usuario puede registrar solicitudes formales de cambio de equipo
+        /// (independiente del estado Borrador; aplica en ejecución y fases posteriores).
+        /// Incluye director, coordinador del grupo e integrantes activos del proyecto/grupo.
+        /// </summary>
+        Task<bool> UserCanRequestTeamChangeAsync(string projectUuid, string userSigafiId);
+
+        /// <summary>
         /// Devuelve la actividad reciente de un proyecto: sesiones CoWork, cambios de estado
         /// de sección y transiciones de workflow. Para el panel de actividad del Workspace.
         /// </summary>
         Task<List<ProyectoActividadDto>> GetProjectActivityAsync(string projectUuid, int maxItems = 20);
+
+        /// <summary>
+        /// Registra una solicitud formal de cambio de equipo para trazabilidad institucional.
+        /// </summary>
+        Task<SyncResult> CreateTeamChangeRequestAsync(string projectUuid, string requesterSigafiId, TeamChangeRequestDto request);
+
+        /// <summary>
+        /// Lista el historial de solicitudes de cambio de equipo de un proyecto.
+        /// </summary>
+        Task<List<TeamChangeRequestRecordDto>> GetTeamChangeRequestsAsync(string projectUuid);
+
+        /// <summary>
+        /// Revisa (aprueba/rechaza) una solicitud de cambio y, opcionalmente, la ejecuta.
+        /// Solo administradores del sistema (DIITRA_ADMIN / ADMIN_SISTEMA).
+        /// </summary>
+        Task<SyncResult> ReviewTeamChangeRequestAsync(string projectUuid, string requestUuid, string reviewerSigafiId, TeamChangeReviewDto review);
     }
 
     public class TransferDirectorRequest
@@ -94,5 +117,42 @@ namespace Diitra.Application.Research
         public bool Success { get; set; }
         public string? Uuid { get; set; }
         public string? Message { get; set; }
+    }
+
+    public class TeamChangeRequestDto
+    {
+        public string Tipo { get; set; } = null!; // ALTA | BAJA | CAMBIO_DIRECTOR
+        public string? CedulaObjetivo { get; set; }
+        public string? RolPropuesto { get; set; }
+        public string Motivo { get; set; } = null!;
+        public string? ResolucionReferencia { get; set; }
+        public DateTime? FechaEfectiva { get; set; }
+        public string? Observacion { get; set; }
+    }
+
+    public class TeamChangeReviewDto
+    {
+        public bool Aprobar { get; set; }
+        public bool Ejecutar { get; set; } = true;
+        public string? ResolucionAprobacion { get; set; }
+        public string? ObservacionRevision { get; set; }
+    }
+
+    public class TeamChangeRequestRecordDto
+    {
+        public string RequestUuid { get; set; } = null!;
+        public string Estado { get; set; } = null!;
+        public string Tipo { get; set; } = null!;
+        public string? CedulaObjetivo { get; set; }
+        public string? RolPropuesto { get; set; }
+        public string Motivo { get; set; } = null!;
+        public string? ResolucionReferencia { get; set; }
+        public string? ResolucionAprobacion { get; set; }
+        public string? Observacion { get; set; }
+        public string? SolicitadoPor { get; set; }
+        public string? RevisadoPor { get; set; }
+        public DateTime FechaSolicitud { get; set; }
+        public DateTime? FechaRevision { get; set; }
+        public DateTime? FechaEfectiva { get; set; }
     }
 }
