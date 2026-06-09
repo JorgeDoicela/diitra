@@ -124,12 +124,12 @@ export const USUARIOS_CONFIG: HelpConfig = {
 
 export const AUDITORIA_CONFIG: HelpConfig = {
     icon: <History size={24} className="text-brand" />,
-    title: "Trazabilidad de Auditoría Forense",
-    summary: "Bitácora inmutable de transacciones y control de cambios forenses en la base de datos.",
-    description: "Módulo forense de alta seguridad diseñado para el registro cronológico e inmutable de toda acción crítica realizada en la base de datos de DIITRA. Permite rastrear con precisión absoluta qué usuario realizó una modificación, qué campos cambiaron, la fecha, hora exacta, dirección IP, User Agent de conexión y el hash de verificación de la transacción.",
+    title: "Registro de auditoría del sistema",
+    summary: "Historial de acciones y cambios realizados en la base de datos.",
+    description: "Módulo de seguridad que registra cronológicamente cada acción importante en DIITRA. Permite saber qué usuario hizo un cambio, qué campos se modificaron, la fecha y hora, la dirección IP y otros datos de verificación.",
     steps: [
         {
-            title: "Filtros de búsqueda y parametrización forense",
+            title: "Filtros de búsqueda y consulta de registros",
             description: "Utiliza el panel de búsqueda superior para filtrar las transacciones. Puedes acotar los registros por módulo específico del sistema (por ejemplo: Proyectos, Usuarios, Finanzas), acción ejecutada (Inserción, Actualización, Eliminación), rango de fechas con marcas de tiempo y el identificador único del usuario operante.",
             highlight: 'content-top'
         },
@@ -156,7 +156,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col">
                         <span className="text-[4px] text-text-dim uppercase font-mono tracking-wider font-semibold">Seguridad e Integridad</span>
-                        <span className="text-[7px] text-text-main font-bold">Bitácora de Auditoría Forense</span>
+                        <span className="text-[7px] text-text-main font-bold">Registro de auditoría</span>
                     </div>
                     <div className="px-1.5 py-0.5 bg-text-main/10 border border-border-thin text-text-main rounded text-[5px] font-bold flex items-center gap-0.5">
                         📥 Exportar Reporte <span className="text-[3.5px] text-text-dim font-mono">(SHA-256)</span>

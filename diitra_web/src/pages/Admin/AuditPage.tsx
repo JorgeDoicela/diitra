@@ -237,7 +237,7 @@ const AuditPage: React.FC = () => {
 
             // 4. Crear el libro de trabajo (workbook)
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoría Forense");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Auditoría");
 
             // 5. Generar y descargar el archivo binario nativo .xlsx
             let dateStr = 'export';
@@ -248,7 +248,7 @@ const AuditPage: React.FC = () => {
                 dateStr = now.toISOString().replace(/[:.]/g, '-');
             }
 
-            XLSX.writeFile(workbook, `auditoria_forense_${dateStr}.xlsx`);
+            XLSX.writeFile(workbook, `auditoria_${dateStr}.xlsx`);
         } catch (error) {
             console.error('Error al exportar reporte de auditoria a Excel XLSX:', error);
         }
@@ -528,7 +528,7 @@ const AuditPage: React.FC = () => {
                             <span>Seguridad Institucional</span>
                         </div>
                         <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                            Auditoría Forense
+                            Registro de auditoría
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                             Trazabilidad total de acciones administrativas y académicas para el cumplimiento de normativas SENESCYT/CACES.
@@ -755,8 +755,8 @@ const AuditPage: React.FC = () => {
                         <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                             <div className="modal-header">
                                 <div className="space-y-1">
-                                    <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">Inspección Forense</h3>
-                                    <p className="section-label text-text-dim">Hash de Integridad Verificado</p>
+                                    <h3 className="text-xl font-semibold tracking-tighter text-text-main uppercase">Detalle del registro</h3>
+                                    <p className="section-label text-text-dim">Integridad del registro verificada</p>
                                 </div>
                                 <button onClick={() => setIsDrawerOpen(false)} className="text-text-dim hover:text-text-main transition-colors cursor-pointer">
                                     <ChevronRight size={20} />

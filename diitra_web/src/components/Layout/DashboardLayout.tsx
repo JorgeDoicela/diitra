@@ -22,7 +22,7 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/analiticas') return 'Analíticas';
     if (pathname === '/notificaciones') return 'Notificaciones';
     if (pathname === '/usuarios') return 'Gestión de Usuarios';
-    if (pathname === '/auditoria') return 'Auditoría Forense';
+    if (pathname === '/auditoria') return 'Registro de auditoría';
     if (pathname === '/grupos') return 'Grupos de Investigación';
     if (pathname === '/parametros-normativos') return 'Parámetros';
     if (pathname === '/investigacion') return 'Proyectos de I+D+i';

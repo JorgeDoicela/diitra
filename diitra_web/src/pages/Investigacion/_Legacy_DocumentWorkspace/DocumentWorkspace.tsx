@@ -230,7 +230,7 @@ const DocumentWorkspace: React.FC = () => {
                             <Shield size={12} className="text-green-500" /> CUMPLIMIENTO SENESCYT
                         </div>
                         <p className="text-[9px] text-gray-400 dark:text-text-dim leading-relaxed">
-                            Registro de auditoría forense activo. Todas las ediciones están firmadas digitalmente.
+                            Registro de auditoría activo. Todas las ediciones están firmadas digitalmente.
                         </p>
                     </div>
                 </aside>

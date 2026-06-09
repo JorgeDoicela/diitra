@@ -136,7 +136,7 @@ export const RevisorDashboard: React.FC = () => {
                                 {String(completedReviews.length).padStart(2, '0')}
                             </p>
                             <p className="text-[10px] text-text-dim mt-2 uppercase font-medium">
-                                Ciclo Activo
+                                Total entregadas
                             </p>
                         </div>
                     </BentoCard>
@@ -153,9 +153,9 @@ export const RevisorDashboard: React.FC = () => {
                                  <Shield size={24} />
                              </div>
                             <div>
-                                <p className="text-[11px] font-semibold text-text-main uppercase tracking-widest">Protocolo Doble Ciego Activo</p>
+                                <p className="text-[11px] font-semibold text-text-main uppercase tracking-widest">Evaluación anónima activa</p>
                                 <p className="text-[10px] text-text-dim mt-1 max-w-xl">
-                                    Su identidad y la de los autores se mantiene encriptada. Todas las comunicaciones se realizan a través de la plataforma DIITRA.
+                                    Su identidad y la de los autores permanecen ocultas. Todas las comunicaciones se realizan a través de la plataforma.
                                 </p>
                             </div>
                         </div>
