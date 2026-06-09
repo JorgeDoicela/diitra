@@ -96,10 +96,6 @@ export const ProjectWorkspace: React.FC = () => {
     const [availableGroups, setAvailableGroups] = useState<any[]>([]);
     const [isSyncingGroupMembers, setIsSyncingGroupMembers] = useState(false);
     const [isSavingTeam, setIsSavingTeam] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [showResults, setShowResults] = useState(false);
     const [teamMessage, setTeamMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const [showTransferModal, setShowTransferModal] = useState(false);
@@ -120,6 +116,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [isUnauthorized, setIsUnauthorized] = useState(false);
     const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
+    const approvedGroups = availableGroups.filter(g => g.activo && g.estado === 'Aprobado');
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -365,7 +362,7 @@ export const ProjectWorkspace: React.FC = () => {
                 });
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
-                setGrupoInvestigacion(res.data.grupoInvestigacion || '');
+                setGrupoInvestigacion(res.data.grupoInvestigacionUuid || res.data.grupoInvestigacion || '');
             } else if (isNotFound) {
                 // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
                 setCurrentProject({
@@ -391,26 +388,6 @@ export const ProjectWorkspace: React.FC = () => {
     }, [resolvedProjectUuid, activeDocument]);
 
     useEffect(() => {
-        if (!searchQuery.trim()) {
-            setSearchResults([]);
-            return;
-        }
-        const delayDebounceFn = setTimeout(async () => {
-            setIsSearching(true);
-            try {
-                const res = await api.get(`/catalogs/search-users?q=${encodeURIComponent(searchQuery)}`);
-                setSearchResults(res.data || []);
-                setShowResults(true);
-            } catch (err) {
-                console.error("[DIITRA] Error al buscar usuarios", err);
-            } finally {
-                setIsSearching(false);
-            }
-        }, 300);
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchQuery]);
-
-    useEffect(() => {
         if (!transferSearchQuery.trim()) {
             setTransferSearchResults([]);
             return;
@@ -429,6 +406,18 @@ export const ProjectWorkspace: React.FC = () => {
         }, 300);
         return () => clearTimeout(delayDebounceFn);
     }, [transferSearchQuery]);
+
+    useEffect(() => {
+        if (!grupoInvestigacion || approvedGroups.length === 0) return;
+
+        const alreadyUuid = approvedGroups.some(g => g.uuid === grupoInvestigacion);
+        if (alreadyUuid) return;
+
+        const byLegacyName = approvedGroups.find(g => g.nombre === grupoInvestigacion || g.siglas === grupoInvestigacion);
+        if (byLegacyName?.uuid) {
+            setGrupoInvestigacion(byLegacyName.uuid);
+        }
+    }, [grupoInvestigacion, approvedGroups]);
 
     const handleOpenTransferModal = (director: any) => {
         setTransferDirector(director);
@@ -502,31 +491,20 @@ export const ProjectWorkspace: React.FC = () => {
         );
     }
 
-    const handleAddMember = (selectedUser: any) => {
-        if (investigadores.some(inv => inv.cedula?.trim() === selectedUser.cedula?.trim())) {
-            addToast("Miembro Existente", "Esta persona ya está registrada en el equipo de trabajo.", "warning");
+    const handleUpdateMember = (cedula: string, field: string, value: any) => {
+        if (tieneGrupo) {
+            addToast("Acción no permitida", "En proyectos asociativos la edición del equipo se realiza únicamente en /grupos.", "warning");
             return;
         }
-        const newMember = {
-            nombre: selectedUser.nombre,
-            cedula: selectedUser.cedula,
-            rol: selectedUser.rol || "Co-Investigador (Docente)",
-            nivelAcademico: selectedUser.nivelAcademico || "Tercer Nivel",
-            telefono: selectedUser.telefono || "",
-            horasSemanales: selectedUser.horasSemanales || 0,
-            horasDisponibles: selectedUser.horas_disponibles,
-            horasAsignadas: selectedUser.horas_asignadas
-        };
-        setInvestigadores(prev => [...prev, newMember]);
-        setSearchQuery('');
-        setShowResults(false);
-    };
-
-    const handleUpdateMember = (cedula: string, field: string, value: any) => {
         setInvestigadores(prev => prev.map(inv => inv.cedula === cedula ? { ...inv, [field]: value } : inv));
     };
 
     const handleRemoveMember = (cedula: string) => {
+        if (tieneGrupo) {
+            addToast("Acción no permitida", "No puedes remover integrantes de un grupo aprobado desde este workspace. Hazlo en /grupos.", "warning");
+            return;
+        }
+
         setInvestigadores(prev => prev.filter(inv => inv.cedula !== cedula));
     };
 
@@ -536,9 +514,9 @@ export const ProjectWorkspace: React.FC = () => {
             return;
         }
 
-        const selectedGroup = availableGroups.find(g => g.nombre === grupoInvestigacion);
+        const selectedGroup = approvedGroups.find(g => g.uuid === grupoInvestigacion);
         if (!selectedGroup) {
-            addToast("Sincronización", "No se encontró el grupo seleccionado en la lista.", "error");
+            addToast("Sincronización", "Debe seleccionar un grupo aprobado y activo de la lista institucional.", "error");
             return;
         }
 
@@ -609,6 +587,11 @@ export const ProjectWorkspace: React.FC = () => {
         setIsSavingTeam(true);
         setTeamMessage(null);
         try {
+            if (tieneGrupo && !grupoInvestigacion) {
+                addToast("Validación CACES", "Para proyectos asociativos debes seleccionar un grupo de investigación aprobado.", "warning");
+                return;
+            }
+
             const payload = investigadores.map(inv => ({
                 nombre: inv.nombre,
                 cedula: inv.cedula,
@@ -618,12 +601,26 @@ export const ProjectWorkspace: React.FC = () => {
                 activo: inv.activo !== false,
                 horasSemanales: inv.horasSemanales !== undefined && inv.horasSemanales !== null && inv.horasSemanales !== '' ? parseFloat(inv.horasSemanales) : null
             }));
-            const res = await api.patch(`/projects/${currentProject.uuid}/team?grupoInvestigacion=${encodeURIComponent(grupoInvestigacion)}`, payload);
+            const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload, {
+                params: {
+                    grupoInvestigacion: grupoInvestigacion || null,
+                    tieneGrupoInvestigacion: tieneGrupo
+                }
+            });
             if (res.data.success) {
                 addToast("Equipo de Trabajo", "¡Equipo de trabajo guardado y sincronizado con éxito!", "success");
-                const isGroup = investigadores.length > 1 || !!grupoInvestigacion;
-                setTieneGrupo(isGroup);
-                setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: isGroup, grupoInvestigacion: grupoInvestigacion }));
+                setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: tieneGrupo, grupoInvestigacion: grupoInvestigacion }));
+
+                const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
+                setInvestigadores(refreshed.data.investigadores || []);
+                setTieneGrupo(refreshed.data.tieneGrupoInvestigacion || false);
+                setGrupoInvestigacion(refreshed.data.grupoInvestigacionUuid || refreshed.data.grupoInvestigacion || '');
+                setCurrentProject((prev: any) => ({
+                    ...prev,
+                    tieneGrupoInvestigacion: refreshed.data.tieneGrupoInvestigacion || false,
+                    grupoInvestigacion: refreshed.data.grupoInvestigacion || null,
+                    grupoInvestigacionUuid: refreshed.data.grupoInvestigacionUuid || null
+                }));
             } else {
                 addToast("Error al Guardar", res.data.message || 'Error al guardar los cambios.', "error");
             }
@@ -1088,7 +1085,7 @@ export const ProjectWorkspace: React.FC = () => {
                                             <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Grupo de Investigación Adscrito</label>
                                             {grupoInvestigacion && (
                                                 (() => {
-                                                    const selectedGroupObj = availableGroups.find(g => g.nombre === grupoInvestigacion);
+                                                    const selectedGroupObj = approvedGroups.find(g => g.uuid === grupoInvestigacion);
                                                     return selectedGroupObj?.uuid ? (
                                                         <button
                                                             type="button"
@@ -1110,9 +1107,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                 onChange={(e) => setGrupoInvestigacion(e.target.value)}
                                                 className="flex-1 bg-surface border border-border-thin rounded px-2.5 py-2 text-xs text-text-main outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                                             >
-                                                <option value="">-- Sin Grupo Asociado / Proyecto Independiente --</option>
-                                                {availableGroups.filter(g => g.activo && g.estado === 'Aprobado').map((g: any) => (
-                                                    <option key={g.id_grupo || g.idGrupo} value={g.nombre}>
+                                                <option value="">-- Seleccione Grupo Aprobado --</option>
+                                                {approvedGroups.map((g: any) => (
+                                                    <option key={g.id_grupo || g.idGrupo} value={g.uuid}>
                                                         {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
                                                      </option>
                                                 ))}
@@ -1143,68 +1140,14 @@ export const ProjectWorkspace: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Buscador */}
+                                {/* Gestión bloqueada en modo asociativo */}
                                 {tieneGrupo && currentProject.puedeEditar !== false && (
-                                    <div className="relative space-y-1.5">
-                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Agregar Miembros</label>
-                                        <div className="relative">
-                                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                                            <input 
-                                                type="text"
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                onFocus={() => setShowResults(true)}
-                                                placeholder="Buscar por nombre o cédula..."
-                                                className="input-vercel !text-xs !py-3 !pl-9"
-                                            />
-                                            {isSearching && (
-                                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-brand rounded-full"></div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        {showResults && searchQuery.trim() && (
-                                            <>
-                                                <div className="fixed inset-0 z-20" onClick={() => setShowResults(false)}></div>
-                                                <div className="absolute left-0 right-0 top-full mt-1 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-48 overflow-y-auto z-30">
-                                                    {searchResults.length === 0 ? (
-                                                        <div className="p-4 text-center text-[10px] text-text-dim font-mono uppercase tracking-wider">Sin resultados</div>
-                                                    ) : (
-                                                        searchResults.map((su: any) => (
-                                                            <button 
-                                                                key={su.cedula}
-                                                                type="button"
-                                                                onClick={() => handleAddMember(su)}
-                                                                className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
-                                                            >
-                                                                <div>
-                                                                    <p className="font-semibold text-text-main text-xs flex items-center gap-2">
-                                                                        <span>{formatNombre(su.nombre)}</span>
-                                                                        {su.tipo === 'profesor' && su.horas_disponibles !== undefined && (
-                                                                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded ${
-                                                                                (su.horas_disponibles - (su.horas_asignadas || 0)) > 0 
-                                                                                    ? 'bg-success/15 text-success border border-success/30' 
-                                                                                    : 'bg-error/15 text-error border border-error/30'
-                                                                            }`}>
-                                                                                Disp: {su.horas_disponibles - (su.horas_asignadas || 0)}h / {su.horas_disponibles}h
-                                                                            </span>
-                                                                        )}
-                                                                    </p>
-                                                                    <p className="text-text-dim font-mono text-[10px]">
-                                                                        C.I. {su.cedula} {su.email && su.email !== 'S/D' && `| ${su.email}`} {su.carrera && `| ${su.carrera.toLowerCase().replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase())}`}
-                                                                    </p>
-                                                                </div>
-                                                                <span className={`badge-vercel text-[8px] font-semibold ${
-                                                                    su.tipo === 'profesor' ? 'badge-vercel-info' : 'badge-vercel-success'
-                                                                }`}>
-                                                                    {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
-                                                                </span>
-                                                            </button>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </>
-                                        )}
+                                    <div className="badge-vercel badge-vercel-warning !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
+                                        <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                                        <span>
+                                            En proyectos asociativos no se permite agregar o quitar miembros desde este workspace.
+                                            La conformación del grupo se administra en <span className="font-semibold">/grupos</span>; aquí solo se asigna y sincroniza el grupo aprobado.
+                                        </span>
                                     </div>
                                 )}
 
@@ -1258,7 +1201,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                             <span className="badge-vercel badge-vercel-info text-[8px] font-semibold">
                                                                                 Director
                                                                             </span>
-                                                                            {currentProject.puedeEditar !== false && (
+                                                                            {currentProject.puedeEditar !== false && !tieneGrupo && (
                                                                                 <button
                                                                                     type="button"
                                                                                     onClick={() => handleOpenTransferModal(member)}
@@ -1287,9 +1230,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                                         <input 
                                                                             type="text" 
                                                                             value={member.telefono || ''} 
-                                                                            disabled={currentProject.puedeEditar === false}
+                                                                            disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                                             onChange={(e) => handleUpdateMember(member.cedula, 'telefono', e.target.value)}
-                                                                            placeholder={currentProject.puedeEditar === false ? "No asignado" : "Añadir..."} 
+                                                                            placeholder={currentProject.puedeEditar === false || tieneGrupo ? "No editable" : "Añadir..."} 
                                                                             className="bg-transparent text-text-dim placeholder:text-text-dim outline-none border-b border-border-thin hover:border-text-dim focus:border-text-main w-20 inline-block px-0.5 py-0 text-[10px] transition-colors" 
                                                                         />
                                                                     </div>
@@ -1317,7 +1260,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Rol</span>
                                                                 <select
                                                                     value={member.rol}
-                                                                    disabled={currentProject.puedeEditar === false}
+                                                                    disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
                                                                     className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-40 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 >
@@ -1331,7 +1274,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Nivel</span>
                                                                 <select
                                                                     value={member.nivelAcademico}
-                                                                    disabled={currentProject.puedeEditar === false}
+                                                                    disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
                                                                     className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-36 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 >
@@ -1346,7 +1289,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <input 
                                                                     type="number"
                                                                     value={member.horasSemanales ?? ''}
-                                                                    disabled={currentProject.puedeEditar === false}
+                                                                    disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                                     onChange={(e) => handleUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
                                                                     placeholder="0"
                                                                     min="0"
@@ -1354,7 +1297,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-16 disabled:opacity-60 disabled:cursor-not-allowed"
                                                                 />
                                                             </div>
-                                                            {currentProject.puedeEditar !== false && (!isDirector || tieneGrupo) && (
+                                                            {currentProject.puedeEditar !== false && !tieneGrupo && !isDirector && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveMember(member.cedula)}

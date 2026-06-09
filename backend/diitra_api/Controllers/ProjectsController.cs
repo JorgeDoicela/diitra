@@ -583,7 +583,11 @@ namespace diitra_api.Controllers
         /// Actualiza dinámicamente el equipo de investigadores asignado al proyecto.
         /// </summary>
         [HttpPatch("{uuid}/team")]
-        public async Task<IActionResult> UpdateProjectTeam(string uuid, [FromBody] System.Collections.Generic.List<InvestigadorDto> investigadores, [FromQuery] string? grupoInvestigacion = null)
+        public async Task<IActionResult> UpdateProjectTeam(
+            string uuid,
+            [FromBody] System.Collections.Generic.List<InvestigadorDto> investigadores,
+            [FromQuery] string? grupoInvestigacion = null,
+            [FromQuery] bool? tieneGrupoInvestigacion = null)
         {
             if (investigadores == null) return BadRequest("Lista de investigadores nula.");
 
@@ -592,7 +596,7 @@ namespace diitra_api.Controllers
                 return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
             }
 
-            var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion);
+            var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion);
             if (!result.Success)
             {
                 return BadRequest(new { success = false, message = result.Message });
