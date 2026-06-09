@@ -9,11 +9,20 @@ import { stripHtmlToText } from '../../utils/notificationText';
 const NOTIF_PANEL_WIDTH = 380;
 
 export const SIDEBAR_WIDTH = 248;
+const SIDEBAR_WIDTH_MAX = 368;
+/** Por debajo de esto, al soltar, el panel se cierra con animación. */
+const SIDEBAR_AUTO_COLLAPSE_AT = 180;
+/** Ancho mínimo en modo compacto: puede estrecharse hasta aquí y quedarse abierto. */
+const SIDEBAR_OPEN_MIN = 200;
+const NAV_FADE_HEIGHT = '3.5rem';
+const NAV_SCROLL_SPACER = 'h-24';
 const COLLAPSE_VISIBLE_RATIO = 0.72;
 const COLLAPSE_INSTANT_RATIO = 0.9;
 const DRAG_CLICK_THRESHOLD = 4;
 const SIDEBAR_TRANSITION_MS = 280;
+const SIDEBAR_COLLAPSE_MS = 420;
 const SIDEBAR_EASING = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const SIDEBAR_COLLAPSE_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
 interface SidebarProps {
     currentTheme: 'dark' | 'light';
@@ -79,7 +88,15 @@ const Sidebar = ({
     const isMac = typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
     const searchShortcut = isMac ? '⌥K' : 'Alt+K';
 
+    const [expandedWidth, setExpandedWidth] = useState(() => {
+        const saved = localStorage.getItem('sidebar_width');
+        const parsed = saved ? parseInt(saved, 10) : SIDEBAR_WIDTH;
+        if (!Number.isFinite(parsed)) return SIDEBAR_WIDTH;
+        if (parsed < SIDEBAR_OPEN_MIN) return SIDEBAR_WIDTH;
+        return Math.min(SIDEBAR_WIDTH_MAX, parsed);
+    });
     const [isDragging, setIsDragging] = useState(false);
+    const [isClosingAnim, setIsClosingAnim] = useState(false);
     const [peekWidth, setPeekWidth] = useState<number | null>(null);
     const peekWidthRef = useRef<number | null>(null);
 
@@ -88,10 +105,11 @@ const Sidebar = ({
         setPeekWidth(w);
     };
 
-    const desktopWidth = peekWidth ?? (isCollapsed ? 0 : SIDEBAR_WIDTH);
+    const desktopWidth = peekWidth ?? (isCollapsed ? 0 : expandedWidth);
+    const contentWidth = peekWidth ?? (isCollapsed ? SIDEBAR_WIDTH : expandedWidth);
     const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
     const sidebarReveal = isDesktop
-        ? Math.min(1, Math.max(0, desktopWidth / SIDEBAR_WIDTH))
+        ? Math.min(1, Math.max(0, desktopWidth / expandedWidth))
         : 1;
     const isSidebarClosing = isDesktop && sidebarReveal < 1;
     const bellRef = useRef<HTMLButtonElement>(null);
@@ -258,27 +276,40 @@ const Sidebar = ({
     const group2 = menuItems.filter(item => item.group === 2);
     const group3 = menuItems.filter(item => item.group === 3);
 
-    const animatePeekWidth = (target: number, onDone?: () => void) => {
-        const from = peekWidthRef.current ?? (isCollapsed ? 0 : SIDEBAR_WIDTH);
-        setPeek(from);
+    const persistExpandedWidth = (width: number) => {
+        const clamped = Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_OPEN_MIN, Math.round(width)));
+        setExpandedWidth(clamped);
+        localStorage.setItem('sidebar_width', String(clamped));
+        return clamped;
+    };
 
-        if (target === 0) {
-            onDone?.();
+    const animatePeekWidth = (target: number, onDone?: () => void) => {
+        const from = peekWidthRef.current ?? (isCollapsed ? 0 : expandedWidth);
+        const isClosing = target === 0;
+        const duration = isClosing ? SIDEBAR_COLLAPSE_MS : SIDEBAR_TRANSITION_MS;
+
+        if (isClosing) {
+            setIsClosingAnim(true);
         }
 
+        setPeek(from);
+
         requestAnimationFrame(() => {
-            setPeek(target);
-            window.setTimeout(() => {
-                if (target !== 0) {
+            requestAnimationFrame(() => {
+                setPeek(target);
+                window.setTimeout(() => {
                     onDone?.();
-                }
-                setPeek(null);
-            }, SIDEBAR_TRANSITION_MS);
+                    setPeek(null);
+                    if (isClosing) {
+                        setIsClosingAnim(false);
+                    }
+                }, duration);
+            });
         });
     };
 
     const collapseWithAnimation = () => {
-        if (isCollapsed) return;
+        if (isCollapsed || isClosingAnim) return;
         animatePeekWidth(0, onCollapse);
     };
 
@@ -295,38 +326,38 @@ const Sidebar = ({
     const startResizing = (mouseDownEvent: React.MouseEvent) => {
         mouseDownEvent.preventDefault();
         setIsDragging(true);
-        setPeek(peekWidthRef.current ?? SIDEBAR_WIDTH);
+        const startWidth = peekWidthRef.current ?? expandedWidth;
+        setPeek(startWidth);
         const startX = mouseDownEvent.clientX;
-        let maxPull = 0;
+        let maxDelta = 0;
 
         const stopDrag = () => {
             setIsDragging(false);
             cleanupDragListeners(doDrag, stopDrag);
 
-            const currentWidth = peekWidthRef.current ?? SIDEBAR_WIDTH;
-            const clicked = maxPull <= DRAG_CLICK_THRESHOLD;
-            const shouldCollapse = clicked || currentWidth <= SIDEBAR_WIDTH * COLLAPSE_VISIBLE_RATIO;
+            const currentWidth = peekWidthRef.current ?? expandedWidth;
+            const clicked = maxDelta <= DRAG_CLICK_THRESHOLD;
+            const releasedInCollapseZone = maxDelta > DRAG_CLICK_THRESHOLD
+                && currentWidth < SIDEBAR_AUTO_COLLAPSE_AT;
+            const shouldCollapse = clicked || releasedInCollapseZone;
 
             if (shouldCollapse) {
                 collapseWithAnimation();
             } else {
-                animatePeekWidth(SIDEBAR_WIDTH);
+                const finalWidth = persistExpandedWidth(currentWidth);
+                if (Math.abs(finalWidth - currentWidth) > 2) {
+                    animatePeekWidth(finalWidth);
+                } else {
+                    setPeek(null);
+                }
             }
         };
 
         const doDrag = (mouseMoveEvent: MouseEvent) => {
-            const pull = Math.max(0, startX - mouseMoveEvent.clientX);
-            maxPull = Math.max(maxPull, pull);
-
-            if (pull >= SIDEBAR_WIDTH * COLLAPSE_INSTANT_RATIO) {
-                setIsDragging(false);
-                cleanupDragListeners(doDrag, stopDrag);
-                onCollapse();
-                setPeek(null);
-                return;
-            }
-
-            setPeek(Math.max(0, SIDEBAR_WIDTH - pull));
+            const delta = mouseMoveEvent.clientX - startX;
+            maxDelta = Math.max(maxDelta, Math.abs(delta));
+            const nextWidth = startWidth + delta;
+            setPeek(Math.min(SIDEBAR_WIDTH_MAX, Math.max(0, nextWidth)));
         };
 
         document.body.style.userSelect = 'none';
@@ -348,10 +379,10 @@ const Sidebar = ({
 
             const currentWidth = peekWidthRef.current ?? 0;
             const clicked = lastReveal <= DRAG_CLICK_THRESHOLD;
-            const shouldExpand = clicked || currentWidth >= SIDEBAR_WIDTH * COLLAPSE_VISIBLE_RATIO;
+            const shouldExpand = clicked || currentWidth >= expandedWidth * COLLAPSE_VISIBLE_RATIO;
 
             if (shouldExpand) {
-                animatePeekWidth(SIDEBAR_WIDTH, onExpand);
+                animatePeekWidth(expandedWidth, onExpand);
             } else {
                 animatePeekWidth(0);
             }
@@ -361,7 +392,7 @@ const Sidebar = ({
             const reveal = Math.max(0, mouseMoveEvent.clientX - startX);
             lastReveal = reveal;
 
-            if (reveal >= SIDEBAR_WIDTH * COLLAPSE_INSTANT_RATIO) {
+            if (reveal >= expandedWidth * COLLAPSE_INSTANT_RATIO) {
                 setIsDragging(false);
                 document.body.style.removeProperty('user-select');
                 document.body.style.removeProperty('cursor');
@@ -372,7 +403,7 @@ const Sidebar = ({
                 return;
             }
 
-            setPeek(Math.min(SIDEBAR_WIDTH, reveal));
+            setPeek(Math.min(expandedWidth, reveal));
         };
 
         document.body.style.userSelect = 'none';
@@ -755,24 +786,24 @@ const Sidebar = ({
                 style={{
                     width: isDesktop ? desktopWidth : undefined,
                     transition: isDesktop && !isDragging
-                        ? `width ${SIDEBAR_TRANSITION_MS}ms ${SIDEBAR_EASING}, opacity 200ms ease`
+                        ? `width ${isClosingAnim ? SIDEBAR_COLLAPSE_MS : SIDEBAR_TRANSITION_MS}ms ${isClosingAnim ? SIDEBAR_COLLAPSE_EASING : SIDEBAR_EASING}, opacity ${isClosingAnim ? SIDEBAR_COLLAPSE_MS : 200}ms ${SIDEBAR_COLLAPSE_EASING}`
                         : undefined
                 }}
                 className={`
           fixed inset-y-0 left-0 z-[70] bg-bg-deep border-r border-border-thin outline-none shrink-0 overflow-hidden
           lg:translate-x-0 lg:static lg:h-screen lg:relative
           ${isOpen ? 'translate-x-0 shadow-2xl w-64' : '-translate-x-full w-64 lg:translate-x-0 lg:w-auto'}
-          ${isCollapsed && peekWidth === null ? 'lg:border-r-0 lg:opacity-0 lg:pointer-events-none lg:p-0' : 'lg:opacity-100'}
+          ${isCollapsed && peekWidth === null && !isClosingAnim ? 'lg:border-r-0 lg:opacity-0 lg:pointer-events-none lg:p-0' : 'lg:opacity-100'}
         `}
             >
                 <div
                     className="flex flex-col h-full pt-4 pb-3"
                     style={{
-                        width: SIDEBAR_WIDTH,
-                        minWidth: SIDEBAR_WIDTH,
+                        width: contentWidth,
+                        minWidth: contentWidth,
                         opacity: sidebarReveal,
                         transition: isDesktop && !isDragging
-                            ? `opacity ${SIDEBAR_TRANSITION_MS}ms ${SIDEBAR_EASING}`
+                            ? `opacity ${isClosingAnim ? SIDEBAR_COLLAPSE_MS : SIDEBAR_TRANSITION_MS}ms ${isClosingAnim ? SIDEBAR_COLLAPSE_EASING : SIDEBAR_EASING}`
                             : undefined
                     }}
                 >
@@ -814,30 +845,33 @@ const Sidebar = ({
                     </div>
                 </div>
 
-                {/* Navigation list */}
-                <nav className="flex-1 px-2.5 space-y-1 overflow-y-auto pr-1 select-none outline-none [mask-image:linear-gradient(to_bottom,black_88%,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black_88%,transparent)]">
-                    {/* Grupo 1 */}
-                    {group1.map(renderMenuItem)}
+                {/* Navigation list — espacio al final para scroll; el desvanecido arranca en el pie del menú */}
+                <nav className="flex-1 min-h-0 overflow-y-auto pr-1 scroll-pb-24 select-none outline-none relative">
+                    <div className="px-2.5 space-y-1">
+                        {group1.map(renderMenuItem)}
 
-                    {group2.length > 0 && (
-                        <>
-                            <hr className="border-border-thin my-3" />
-                            {group2.map(renderMenuItem)}
-                        </>
-                    )}
+                        {group2.length > 0 && (
+                            <>
+                                <hr className="border-border-thin my-3" />
+                                {group2.map(renderMenuItem)}
+                            </>
+                        )}
 
-                    {group3.length > 0 && (
-                        <>
-                            <hr className="border-border-thin my-3" />
-                            {group3.map(renderMenuItem)}
-                        </>
-                    )}
+                        {group3.length > 0 && (
+                            <>
+                                <hr className="border-border-thin my-3" />
+                                {group3.map(renderMenuItem)}
+                            </>
+                        )}
+                    </div>
+                    <div className={`${NAV_SCROLL_SPACER} shrink-0`} aria-hidden="true" />
                 </nav>
 
-                {/* Vercel Footer profile section */}
-                <div className="px-2.5 pt-3 mt-auto relative shrink-0 bg-bg-deep">
+                {/* Pie del sidebar — desvanecido hacia arriba desde aquí (sin línea divisoria) */}
+                <div className="px-2.5 pt-2 mt-auto relative shrink-0 bg-bg-deep">
                     <div
-                        className="pointer-events-none absolute -top-5 left-0 right-0 h-5 bg-gradient-to-b from-transparent to-bg-deep z-10"
+                        className="pointer-events-none absolute left-0 right-0 h-14 bg-gradient-to-b from-transparent to-bg-deep z-10"
+                        style={{ top: `-${NAV_FADE_HEIGHT}` }}
                         aria-hidden
                     />
                     {isUserMenuOpen && (
@@ -928,17 +962,17 @@ const Sidebar = ({
 
                 </div>
 
-                {isSidebarClosing && (
+                {(isSidebarClosing || isClosingAnim) && (
                     <div
                         aria-hidden
                         className="absolute inset-y-0 right-0 pointer-events-none z-10"
                         style={{
-                            width: Math.max(48, SIDEBAR_WIDTH - desktopWidth + 32),
+                            width: Math.max(48, expandedWidth - desktopWidth + 32),
                             background: 'linear-gradient(to right, transparent, var(--bg))',
                             opacity: 1 - sidebarReveal,
                             transition: isDragging
                                 ? undefined
-                                : `opacity ${SIDEBAR_TRANSITION_MS}ms ${SIDEBAR_EASING}`
+                                : `opacity ${isClosingAnim ? SIDEBAR_COLLAPSE_MS : SIDEBAR_TRANSITION_MS}ms ${isClosingAnim ? SIDEBAR_COLLAPSE_EASING : SIDEBAR_EASING}`
                         }}
                     />
                 )}
@@ -947,8 +981,8 @@ const Sidebar = ({
                 {!isCollapsed && (
                     <div
                         onMouseDown={startResizing}
-                        className="hidden lg:block absolute top-0 -right-1.5 bottom-0 w-3 cursor-col-resize z-[80] outline-none group"
-                        title="Clic para ocultar · Arrastrar para ajustar"
+                        className="hidden lg:block absolute top-0 -right-2 bottom-0 w-4 cursor-col-resize z-[80] outline-none group"
+                        title="Derecha ensancha · izquierda compacta (se queda) · más allá se oculta · clic oculta"
                     >
                         <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-border-thin/60 group-hover:bg-text-dim/50 group-active:bg-text-dim/70 transition-colors" />
                     </div>
