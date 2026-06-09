@@ -18,7 +18,7 @@ const VerifyDocument = () => {
             const response = await api.get(`/documents/verify/${verifyCode}`);
             setResult(response.data);
         } catch (err: any) {
-            setError(err.response?.status === 404 ? "El código de trazabilidad no es válido o el documento no ha sido emitido oficialmente." : "Error de conexión con el nodo de integridad DIITRA.");
+            setError(err.response?.status === 404 ? "El código de trazabilidad no es válido o el documento no ha sido emitido oficialmente." : "No se pudo conectar con el servicio de verificación. Intente de nuevo.");
             setResult(null);
         } finally {
             setLoading(false);
@@ -37,7 +37,7 @@ const VerifyDocument = () => {
                         <ShieldCheck size={10} />
                         <span>Verificador Documental</span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Verificación Forense</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Verificación de autenticidad</h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         Ingrese el código de trazabilidad impreso en el documento o escaneado vía QR para validar su autenticidad y estado legal ante el CACES.
                     </p>

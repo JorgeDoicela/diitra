@@ -628,7 +628,7 @@ const AnalyticsPage = () => {
                         Analíticas de Investigación e Innovación
                     </h1>
                     <p className="text-xs text-text-dim max-w-2xl leading-relaxed font-medium">
-                        Consola directiva en tiempo real del <strong className="text-text-main font-semibold">IST Traversari</strong>. Sincronización inmutable de proyectos y cumplimiento de estándares del CACES.
+                        Consola directiva en tiempo real del <strong className="text-text-main font-semibold">IST Traversari</strong>. Seguimiento actualizado de proyectos y cumplimiento de estándares del CACES.
                     </p>
                 </div>
 
@@ -963,7 +963,7 @@ const AnalyticsPage = () => {
                                                 <div className="space-y-1 max-w-xs">
                                                     <h5 className="text-[10.5px] font-black uppercase text-text-main tracking-wider">Bitácora Técnica Inactiva</h5>
                                                     <p className="text-[10px] text-text-dim leading-relaxed font-medium">
-                                                        No se registran firmas ni cambios de estado en este periodo. Las acciones inmutables del portafolio se sincronizan aquí en tiempo real.
+                                                        No se registran firmas ni cambios de estado en este periodo. Los cambios del portafolio se reflejan aquí en tiempo real.
                                                     </p>
                                                 </div>
                                             </div>

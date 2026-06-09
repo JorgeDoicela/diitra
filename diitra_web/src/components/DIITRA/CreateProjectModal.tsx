@@ -93,7 +93,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         setError(null);
 
         try {
-            setCreationStepMsg("Generando expediente digital en el núcleo...");
+            setCreationStepMsg("Creando el expediente digital del proyecto...");
             const response = await api.post('/documents/instances', { 
                 templateCode: 'PROTOCOLO_INVESTIGACION', 
                 entityUuid: 'GLOBAL', 
@@ -117,7 +117,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             await api.patch(`/documents/instances/${newUuid}/metadata`, initialMetadata);
 
-            setCreationStepMsg("Estableciendo entorno colaborativo en CoWork...");
+            setCreationStepMsg("Preparando el editor colaborativo...");
             setTimeout(() => {
                 navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '?edit=true'), { replace: true });
                 onClose();
@@ -156,7 +156,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             <Shield size={20} />
                         </div>
                         <div>
-                            <span className="section-label text-text-dim !gap-0">DIITRA Builder</span>
+                            <span className="section-label text-text-dim !gap-0">Nueva postulación</span>
                             <h3 className="text-sm font-black text-text-main uppercase tracking-widest leading-none mt-1">Iniciar Nueva Postulación</h3>
                         </div>
                     </div>

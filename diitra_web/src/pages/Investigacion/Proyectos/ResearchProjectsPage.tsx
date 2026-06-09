@@ -48,7 +48,7 @@ const ResearchProjectsPage = () => {
             {/* ── ACCIONES RÁPIDAS ── */}
             <section className="mb-12 animate-fade-up [animation-delay:100ms]">
                 <div className="section-label text-brand mb-4">
-                    <span>Centro de Control</span>
+                    <span>Accesos rápidos</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div
@@ -69,7 +69,7 @@ const ResearchProjectsPage = () => {
                     >
                         <FileCheck className="text-brand mb-4 group-hover:scale-110 transition-transform" size={24} />
                         <h4 className="text-sm font-bold text-text-main uppercase tracking-tight mb-1">Informe Final</h4>
-                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Consolidación de Resultados</p>
+                        <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">Cierre y entrega formal</p>
                     </div>
                 </div>
             </section>

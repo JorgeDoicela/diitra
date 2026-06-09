@@ -1705,7 +1705,7 @@ const EmailEnginePage: React.FC = () => {
                             <div className="space-y-6">
                                 <div className="flex flex-wrap justify-between items-center gap-3">
                                     <h3 className="text-sm font-bold text-text-main uppercase tracking-widest flex items-center gap-2">
-                                        Bitácora Auditoría Forense LOPDP
+                                        Registro de auditoría LOPDP
                                     </h3>
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-2 border border-border-thin rounded-lg px-3 py-1.5 bg-surface/30">

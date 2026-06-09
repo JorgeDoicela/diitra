@@ -160,7 +160,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         } catch (error) {
             console.error("[DIITRA] saveDirtyData: Error al guardar en base de datos:", error);
             if (!isUnmounting) {
-                addAudit('Fallo de persistencia en el núcleo', 'error');
+                addAudit('Error al guardar el documento', 'error');
             }
         } finally {
             isSavingRef.current = false;
@@ -501,7 +501,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         <Clock size={14} className="text-text-dim" /> Auditoría de Sesión
                                     </p>
                                     <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                        {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Esperando acciones del núcleo...</p>}
+                                        {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Sin actividad registrada aún</p>}
                                         {auditLogs.map((log, i) => (
                                             <div key={i} className="flex gap-3">
                                                 <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' : log.type === 'error' ? 'bg-red-500' : log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'}`} />

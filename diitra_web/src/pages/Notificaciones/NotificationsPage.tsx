@@ -163,7 +163,7 @@ const NotificationsPage = () => {
                         Historial Completo
                     </h1>
                     <p className="text-xs text-text-dim max-w-lg font-medium leading-relaxed">
-                        Registro inmutable de actividad del sistema, alertas de investigación y comunicados institucionales.
+                        Historial de alertas del sistema, avisos de investigación y mensajes institucionales.
                     </p>
                 </div>
 
@@ -318,7 +318,7 @@ const NotificationsPage = () => {
             {/* Sidebar: Right Column */}
             <div className="space-y-6">
                 <VercelUsageCard 
-                    title="Centro de Alertas"
+                    title="Resumen de notificaciones"
                     buttonLabel="Actualizar"
                     onButtonClick={handleRefresh}
                     items={[
@@ -337,9 +337,9 @@ const NotificationsPage = () => {
                             color: unreadCount > 0 ? 'var(--brand)' : 'var(--text-dim)'
                         },
                         {
-                            label: 'WebSocket Activo',
+                            label: 'Conexión en vivo',
                             value: isConnected ? 1 : 0,
-                            displayValue: isConnected ? 'En vivo' : 'Https',
+                            displayValue: isConnected ? 'Activa' : 'Manual',
                             max: 1,
                             color: isConnected ? 'var(--success)' : 'var(--warning)'
                         }
@@ -351,16 +351,16 @@ const NotificationsPage = () => {
                     <div className="flex items-center justify-between mb-3">
                         <div className="section-label">
                             <span className={`dot ${isConnected ? 'dot-success dot-pulse' : 'dot-neutral'} w-2 h-2`} />
-                            <span className="text-[13px] font-semibold text-text-main">Canal en Tiempo Real</span>
+                            <span className="text-[13px] font-semibold text-text-main">Actualización automática</span>
                         </div>
                         <span className="font-mono text-[9px] bg-bg-deep px-2 py-0.5 rounded border border-border-thin text-text-dim">
-                            {isConnected ? 'LIVE' : 'HTTPS'}
+                            {isConnected ? 'En vivo' : 'Manual'}
                         </span>
                     </div>
                     <p className="text-[11px] text-text-dim leading-relaxed">
                         {isConnected 
-                            ? 'Suscripción bidireccional activa. Recibiendo notificaciones instantáneas sin necesidad de recargar la página.' 
-                            : 'El canal WebSocket está inactivo. Las alertas se actualizarán de forma convencional mediante solicitudes HTTPS.'}
+                            ? 'Las notificaciones llegan al instante sin necesidad de recargar la página.' 
+                            : 'La conexión en vivo no está activa. Las alertas se actualizarán al recargar o sincronizar manualmente.'}
                     </p>
                 </div>
             </div>

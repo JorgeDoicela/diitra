@@ -231,7 +231,7 @@ export const MonitoringPage: React.FC = () => {
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Acreditación CACES</span>
                     <p className="text-xs font-semibold text-text-main flex items-center gap-1.5">
                         <CheckCircle2 size={12} className="text-success" />
-                        <span>Metadatos Forenses Listos</span>
+                        <span>Datos de acreditación listos</span>
                     </p>
                 </div>
             </div>
