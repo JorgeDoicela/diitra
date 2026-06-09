@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Bell, ExternalLink, Mail, Info, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
+import { stripHtmlToText } from '../../utils/notificationText';
 
 const NotificationBell = () => {
     const navigate = useNavigate();
@@ -80,12 +81,12 @@ const NotificationBell = () => {
                                             <div className="mt-1 shrink-0">
                                                 {getIcon(n.categoria)}
                                             </div>
-                                            <div className="space-y-1 flex-1">
-                                                <div className="flex justify-between items-start">
-                                                    <h5 className="text-[11px] font-semibold text-text-main leading-tight">{n.titulo}</h5>
-                                                    <span className="text-[8px] font-mono text-text-dim">{new Date(n.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                            <div className="space-y-1 flex-1 min-w-0 overflow-hidden">
+                                                <div className="flex justify-between items-start gap-1">
+                                                    <h5 className="text-[11px] font-semibold text-text-main leading-tight truncate">{stripHtmlToText(n.titulo)}</h5>
+                                                    <span className="text-[8px] font-mono text-text-dim shrink-0">{new Date(n.fecha_envio).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                                 </div>
-                                                <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2">{n.mensaje}</p>
+                                                <p className="text-[10px] text-text-dim leading-relaxed line-clamp-2 break-words">{stripHtmlToText(n.mensaje)}</p>
                                                 {n.url_accion && (
                                                     <span 
                                                         className="inline-flex items-center gap-1 text-[9px] font-semibold text-text-main uppercase mt-2 hover:underline cursor-pointer"

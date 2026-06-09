@@ -7,6 +7,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
+import { stripHtmlToText } from '../../utils/notificationText';
 
 interface NotificationItem {
     uuid: string;
@@ -87,7 +88,8 @@ const NotificationsPage = () => {
         if (search.trim()) {
             const q = search.toLowerCase();
             list = list.filter(n =>
-                n.titulo.toLowerCase().includes(q) || n.mensaje.toLowerCase().includes(q)
+                stripHtmlToText(n.titulo).toLowerCase().includes(q) ||
+                stripHtmlToText(n.mensaje).toLowerCase().includes(q)
             );
         }
 
@@ -271,7 +273,7 @@ const NotificationsPage = () => {
                                                 <div className="flex-1 min-w-0 space-y-1">
                                                     <div className="flex justify-between items-start gap-2">
                                                         <h5 className={`text-xs font-semibold text-text-main leading-tight truncate ${!n.leido ? '' : 'font-medium'}`}>
-                                                            {n.titulo}
+                                                            {stripHtmlToText(n.titulo)}
                                                         </h5>
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <span className="text-[9px] font-mono text-text-dim">
@@ -279,8 +281,8 @@ const NotificationsPage = () => {
                                                             </span>
                                                         </div>
                                                     </div>
-                                                    <p className="text-[11px] text-text-dim leading-relaxed line-clamp-2">
-                                                        {n.mensaje}
+                                                    <p className="text-[11px] text-text-dim leading-relaxed line-clamp-2 break-words">
+                                                        {stripHtmlToText(n.mensaje)}
                                                     </p>
                                                     <div className="flex items-center gap-3 mt-1.5">
                                                         <span className={`badge-vercel badge-vercel-${
