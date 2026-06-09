@@ -791,7 +791,7 @@ const EmailEnginePage: React.FC = () => {
                     '[[peer_review_puntaje]]': r.puntajeTotal?.toString() || '0',
                     '[[peer_review_observaciones]]': r.observacionesGral || '',
                     '[[peer_review_tipo]]': r.esExterno ? 'Externo' : 'Interno',
-                    '[[peer_review_anonimo]]': r.esDobleCiego ? 'Doble Ciego' : 'Abierto'
+                    '[[peer_review_anonimo]]': r.esDobleCiego ? 'Anónimo' : 'Abierto'
                 }));
             }
         }
@@ -996,7 +996,7 @@ const EmailEnginePage: React.FC = () => {
                 message: apiMessage
                     || (err.response?.status === 400
                         ? 'No se encontraron destinatarios válidos. Verifique los correos ingresados.'
-                        : 'Error al despachar el correo. Revise el log del servidor o la configuración SMTP.')
+                        : 'Error al despachar el correo. Revise el historial de envíos o la configuración del servidor de correo.')
             });
         } finally {
             setSending(false);
@@ -1758,7 +1758,7 @@ const EmailEnginePage: React.FC = () => {
                                                 ) : history.length === 0 ? (
                                                     <tr>
                                                         <td colSpan={6} className="p-12 text-center text-text-dim">
-                                                            No se registran envíos en el historial del motor de correos.
+                                                            No se registran envíos en el historial de correos.
                                                         </td>
                                                     </tr>
                                                 ) : (
@@ -1865,7 +1865,7 @@ const EmailEnginePage: React.FC = () => {
                                             value={templateForm.codigo}
                                             onChange={e => setTemplateForm(prev => ({ ...prev, codigo: e.target.value }))}
                                         />
-                                        <span className="text-[8px] text-text-dim block">Código identificador usado por el backend. Inmutable al editar.</span>
+                                        <span className="text-[8px] text-text-dim block">Código interno del sistema. No se puede cambiar al editar.</span>
                                     </div>
 
                                     {/* Nombre */}
@@ -2028,7 +2028,7 @@ const EmailEnginePage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="bento-card static p-4">
-                                    <label className="section-label text-text-dim mb-2">Estado SMTP</label>
+                                    <label className="section-label text-text-dim mb-2">Estado del servidor de correo</label>
                                     <span className={`status-tag ${getStatusBadge(selectedHistoryLog.estado)}`}>
                                         <span className={`dot ${getStatusDot(selectedHistoryLog.estado)}`} />
                                         {selectedHistoryLog.estado}
@@ -2085,7 +2085,7 @@ const EmailEnginePage: React.FC = () => {
                             {/* Error trace if failed */}
                             {selectedHistoryLog.errorMensaje && (
                                 <div className="space-y-2">
-                                    <label className="section-label text-error">Traza del Error SMTP</label>
+                                    <label className="section-label text-error">Detalle del error de envío</label>
                                     <pre className="text-[10px] font-mono bg-error-subtle border border-error/20 p-4 rounded-xl text-error leading-relaxed whitespace-pre-wrap max-h-60 overflow-y-auto">
                                         {selectedHistoryLog.errorMensaje}
                                     </pre>

@@ -5,10 +5,10 @@ export const REVISIONES_CONFIG: HelpConfig = {
     icon: <Scale size={24} className="text-brand" />,
     title: "Consola de Revisores Pares",
     summary: "Entorno de evaluación ciega para revisores pares internos y externos de propuestas científicas.",
-    description: "Plataforma de trabajo especializada para revisores pares académicos, diseñada para realizar la evaluación doble ciego de propuestas de investigación. Asegura la total confidencialidad de la identidad de los proponentes y proporciona una rúbrica estructurada de calificación y herramientas para el registro de retroalimentación verbal por audio.",
+    description: "Plataforma para revisores pares académicos. Permite evaluar propuestas de investigación sin conocer la identidad de los autores, con rúbrica estructurada y herramientas para registrar retroalimentación.",
     steps: [
         {
-            title: "Buzón de expedientes asignados en doble ciego",
+            title: "Proyectos asignados para evaluación anónima",
             description: "Revisa la lista de propuestas asignadas a tu perfil de revisor. Al abrir cualquier propuesta, accederás a la documentación anonimizada (resumen, metodología, presupuesto). La información del docente autor se mantiene oculta para garantizar la imparcialidad del dictamen.",
             highlight: 'content-bottom'
         },
@@ -23,7 +23,7 @@ export const REVISIONES_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Garantiza la aplicación estricta del estándar del CACES sobre evaluación por pares externos bajo la metodología doble ciego, documentando la idoneidad académica del tribunal evaluador y la rigurosidad de los procesos de arbitraje institucional.",
+    compliance: "Garantiza la aplicación del estándar del CACES sobre evaluación anónima por pares externos, documentando la idoneidad académica del tribunal evaluador y la rigurosidad de los procesos de arbitraje institucional.",
     tips: [
         "El sistema guarda borradores parciales de tu evaluación para que puedas interrumpir y retomar tu trabajo en cualquier momento sin perder la información ingresada.",
         "Recuerda que tus audios de retroalimentación son distorsionados levemente de forma digital por el sistema para evitar la identificación de la voz del revisor por parte del docente."
@@ -99,7 +99,7 @@ export const EVALUACION_CONFIG: HelpConfig = {
     ...REVISIONES_CONFIG,
     title: "Rúbrica de Evaluación",
     summary: "Interface estructurada para la calificación paramétrica, justificación de puntajes y dictamen de propuestas.",
-    description: "Formulario dinámico de evaluación doble ciego donde el revisor par califica individualmente cada criterio obligatorio de la propuesta de investigación, proporcionando retroalimentación de valor y un veredicto formal.",
+    description: "Formulario de evaluación anónima donde el revisor califica cada criterio de la propuesta, registra observaciones y emite un veredicto formal.",
     steps: [
         {
             title: "Calificación de criterios y ponderaciones obligatorias",
@@ -213,7 +213,7 @@ export const ARBITRAJE_CONFIG: HelpConfig = {
     compliance: "Asegura el debido proceso y la transparencia institucional en las fases de dictaminación científica, mitigando conflictos de interés en procesos de asignación de financiamiento público evaluados bajo estándares del CACES.",
     tips: [
         "Puedes convocar a un tercer revisor dirimente ('Evaluador Ciego 3') desde la misma consola en caso de que el comité científico requiera un dictamen técnico adicional.",
-        "Todas las resoluciones de arbitraje quedan grabadas con sellos de tiempo inmutables en la bitácora de auditoría forense para fines de auditoría externa."
+        "Todas las resoluciones de arbitraje quedan registradas con fecha y hora en el historial de auditoría del sistema."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
@@ -303,7 +303,7 @@ export const ARBITRAJE_PROYECTO_CONFIG: HelpConfig = {
     compliance: "Garantiza el debido proceso y la seguridad jurídica en la asignación de recursos competitivos de investigación, de acuerdo a la normativa nacional y el modelo de evaluación del CACES.",
     tips: [
         "Puedes solicitar una tercera evaluación dirimente antes de emitir el fallo si el comité considera que el tema requiere especialidad técnica adicional.",
-        "Todas las actas de arbitraje quedan respaldadas en la base de datos inmutable para resguardo de la institución."
+        "Todas las actas de arbitraje quedan respaldadas en el sistema para resguardo de la institución."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>

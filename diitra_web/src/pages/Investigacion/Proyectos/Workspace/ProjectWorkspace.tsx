@@ -511,7 +511,7 @@ export const ProjectWorkspace: React.FC = () => {
             <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center gap-4">
                     <div className="animate-spin h-8 w-8 border-t-2 border-brand rounded-full"></div>
-                    <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">Cargando Workspace...</p>
+                    <p className="text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">Cargando proyecto...</p>
                 </div>
             </div>
         );
@@ -544,7 +544,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleRemoveMember = (cedula: string) => {
         if (tieneGrupo) {
-            addToast("Acción no permitida", "No puedes remover integrantes de un grupo aprobado desde este workspace. Hazlo en /grupos.", "warning");
+            addToast("Acción no permitida", "No puedes remover integrantes de un grupo aprobado desde aquí. Hazlo en la sección de grupos.", "warning");
             return;
         }
 
@@ -699,7 +699,7 @@ export const ProjectWorkspace: React.FC = () => {
             };
             const res = await api.post(`/projects/${currentProject.uuid}/team-change-requests`, payload);
             if (res.data?.success) {
-                addToast("Solicitud registrada", "La solicitud de cambio quedó en trazabilidad para revisión.", "success");
+                addToast("Solicitud registrada", "La solicitud de cambio quedó registrada para revisión.", "success");
                 setTeamChangeForm({
                     tipo: 'ALTA',
                     cedulaObjetivo: '',
@@ -868,7 +868,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-1.5 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
                                     <Activity size={10} strokeWidth={2} className="text-brand" />
-                                    <span>Workspace · ISTPET</span>
+                                    <span>Proyecto · ISTPET</span>
                                 </div>
                                 <div className="flex items-center gap-1 text-[10px] text-text-dim">
                                     <span>diitra</span>
@@ -981,7 +981,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     {templateCode === 'INFORME_FINAL_INVESTIGACION' ? 'Informe Final en Proceso' : 'Documento en Edición'}
                                 </h3>
                                 <p className="text-xs text-text-dim mt-1.5 leading-relaxed max-w-xl">
-                                    Estás en el workspace de este proyecto. Puedes continuar completando los campos colaborativos del {templateCode === 'INFORME_FINAL_INVESTIGACION' ? 'informe final' : 'documento'} o revisar el estado institucional abajo.
+                                    Estás en el espacio de trabajo de este proyecto. Puedes continuar completando los campos colaborativos del {templateCode === 'INFORME_FINAL_INVESTIGACION' ? 'informe final' : 'documento'} o revisar el estado institucional abajo.
                                 </p>
                             </div>
                         </div>
@@ -1018,7 +1018,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                 <h3 className={`text-xs font-semibold tracking-wider uppercase ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
                                                 <p className="text-[11px] text-text-dim mt-1 leading-relaxed">
                                                     {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
-                                                    {phase.id === 'En Revisión' && 'Revisión técnica doble ciego por pares evaluadores asignados por el Director.'}
+                                                    {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
                                                     {phase.id === 'En Ejecución' && 'Seguimiento de hitos, envío de informes de avance y ejecución presupuestaria.'}
                                                 </p>
@@ -1064,8 +1064,8 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 <div className="flex items-start gap-2 bg-surface border border-border-thin rounded-lg p-3 max-w-xl text-text-dim text-xs leading-relaxed">
                                                                     <AlertCircle size={14} className="text-brand shrink-0 mt-0.5" />
                                                                     <span>
-                                                                        El proyecto se encuentra en la etapa formal de **Evaluación por Pares Doble Ciego**. 
-                                                                        Por motivos de blindaje académico y confidencialidad CACES, los evaluadores asignados 
+                                                                        El proyecto se encuentra en la etapa formal de **evaluación anónima por pares**. 
+                                                                        Por motivos de confidencialidad de la evaluación anónima (CACES), los evaluadores asignados 
                                                                         y el desarrollo de sus rúbricas permanecen anónimos. Una vez concluido el arbitraje y 
                                                                         emitido el dictamen final, el puntaje obtenido y la resolución legal se publicarán aquí.
                                                                     </span>
@@ -1253,7 +1253,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     <div className="badge-vercel badge-vercel-warning !rounded-md !p-3 !text-[11px] !font-normal !leading-relaxed w-full flex gap-2 items-start">
                                         <AlertCircle size={14} className="shrink-0 mt-0.5" />
                                         <span>
-                                            En proyectos asociativos no se permite agregar o quitar miembros desde este workspace.
+                                            En proyectos asociativos no se permite agregar o quitar miembros desde esta vista.
                                             La conformación del grupo se administra en <span className="font-semibold">/grupos</span>; aquí solo se asigna y sincroniza el grupo aprobado.
                                         </span>
                                     </div>
@@ -1263,7 +1263,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     <div className="border border-border-thin rounded-md p-3 space-y-3 bg-bg-deep/50">
                                         <div className="flex items-center justify-between">
                                             <h4 className="text-[10px] font-semibold uppercase tracking-wider text-text-main">Solicitudes Formales de Cambio</h4>
-                                            <span className="text-[9px] text-text-dim">Con trazabilidad y revisión</span>
+                                            <span className="text-[9px] text-text-dim">Con registro y revisión</span>
                                         </div>
 
                                         {currentProject.puedeSolicitarCambioEquipo && (
@@ -1670,7 +1670,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     <FileSignature size={16} className="text-brand group-hover:text-text-main transition-colors" />
                                     <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Bóveda de Firmas</h3>
                                 </div>
-                                <p className="text-[10px] text-text-dim leading-relaxed mt-1">Sube tu archivo PAdES · Firma auditada permanentemente por DocumentEngine.</p>
+                                <p className="text-[10px] text-text-dim leading-relaxed mt-1">Sube tu certificado digital (.p12 o .pfx). La firma quedará registrada en el sistema.</p>
                             </div>
                             <div className="mt-4">
                                 <div className="p-3 rounded-md bg-bg-deep border border-border-thin flex items-center justify-between hover:border-text-dim transition-colors">
@@ -1692,7 +1692,7 @@ export const ProjectWorkspace: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-2.5 mb-1.5">
                                     <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Metadata Normativa</h3>
+                                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Datos normativos CACES</h3>
                                 </div>
                             </div>
                             <div className="mt-4 space-y-2 text-[11px] font-mono">

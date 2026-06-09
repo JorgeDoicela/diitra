@@ -113,7 +113,7 @@ const DocumentWorkspace: React.FC = () => {
             const { traceabilityCode, fileName } = response.data;
             
             console.info(`[DIITRA Builder] Documento finalizado exitosamente. Trazabilidad: ${traceabilityCode}`);
-            alert(`Documento finalizado y guardado como ${fileName}.\nCódigo de Trazabilidad: ${traceabilityCode}`);
+            alert(`Documento finalizado y guardado como ${fileName}.\nCódigo de verificación: ${traceabilityCode}`);
 
             window.location.reload();
         } catch (error: any) {
@@ -150,7 +150,7 @@ const DocumentWorkspace: React.FC = () => {
                             </h1>
                             {instance?.state === 3 && (
                                 <div className="flex items-center gap-1 px-2 py-0.5 bg-green-500/10 border border-green-500/20 rounded text-[9px] font-black text-green-500 uppercase tracking-widest">
-                                    <Shield size={10} /> Firmado e Inmutable
+                                    <Shield size={10} /> Firmado y bloqueado
                                 </div>
                             )}
                         </div>
@@ -158,7 +158,7 @@ const DocumentWorkspace: React.FC = () => {
                             <span>ID: {documentUuid?.substring(0, 8)}...</span>
                             <span className="w-1 h-1 rounded-full bg-gray-200 dark:bg-border-thin"></span>
                             <span className="flex items-center gap-1 font-bold text-primary">
-                                <Activity size={10} className="animate-pulse" /> Team Pulse Activado
+                                <Activity size={10} className="animate-pulse" /> Colaboración activa
                             </span>
                         </div>
                     </div>
@@ -262,7 +262,7 @@ const DocumentWorkspace: React.FC = () => {
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-[600px] text-gray-400 gap-4">
                                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary"></div>
-                                    <p className="text-sm font-medium">Preparando entorno...</p>
+                                    <p className="text-sm font-medium">Cargando editor...</p>
                                 </div>
                             )}
                         </div>

@@ -35,7 +35,7 @@ interface DocumentTrayProps {
     title?: string;
 }
 
-const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expediente Documental" }) => {
+const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Documentos generados" }) => {
     const [documents, setDocuments] = useState<DocumentInstance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const navigate = useNavigate();

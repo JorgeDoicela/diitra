@@ -259,7 +259,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                     <div className="flex items-center gap-2">
                         <Activity size={14} className="text-text-main animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-wider text-text-main">
-                            Modo Arbitraje Académico (Doble Ciego)
+                            Evaluación anónima (arbitraje)
                         </span>
                     </div>
                     <button 
@@ -281,7 +281,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                             <BookOpen size={18} className="text-text-main" />
                             <div>
                                 <h5 className="text-[10px] font-black uppercase tracking-widest text-text-main">
-                                    Dossier Técnico de Propuesta
+                                    Documento de referencia
                                 </h5>
                                 <p className="text-[8px] text-text-dim uppercase mt-0.5">
                                     Protocolo de Investigación Original

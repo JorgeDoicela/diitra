@@ -630,7 +630,7 @@ const ConvocatoriasPage = () => {
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Ciclos de Investigación</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Administración de convocatorias anuales para proyectos de I+D+i. 
+                        Administración de convocatorias anuales para proyectos de investigación. 
                         Alineado con estándares CACES y SENESCYT.
                     </p>
                 </div>
@@ -1330,7 +1330,7 @@ const ConvocatoriasPage = () => {
                                     <BookOpen size={14} /> Configuración Académica & Auditoría
                                 </div>
                                 <p className="text-xs text-text-dim leading-relaxed font-medium">
-                                    Esta convocatoria tiene un puntaje mínimo de aprobación de <strong>{selectedConvocatoria.puntaje_minimo_aprobacion}%</strong> para el proceso de pares doble ciego. Cualquier cambio de estado a "Abierta" publicará las bases a los docentes inmediatamente.
+                                    Esta convocatoria tiene un puntaje mínimo de aprobación de <strong>{selectedConvocatoria.puntaje_minimo_aprobacion}%</strong> para la evaluación anónima por pares. Cualquier cambio de estado a "Abierta" publicará las bases a los docentes inmediatamente.
                                 </p>
                             </div>
                             

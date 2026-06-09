@@ -370,7 +370,7 @@ const NotificationsPage = () => {
             {allNotifications.length > 0 && (
                 <div className="mt-8 text-center">
                     <p className="text-[9px] font-mono text-text-dim uppercase tracking-wider">
-                        {allNotifications.length} notificaciones en total · {unreadCount} sin leer · Sincronizado en tiempo real
+                        {allNotifications.length} notificaciones en total · {unreadCount} sin leer · Actualización automática
                     </p>
                 </div>
             )}

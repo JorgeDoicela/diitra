@@ -242,7 +242,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     // ── Generación de PDF ──
     const handleGeneratePdf = async (blind = false) => {
         setIsGenerating(true);
-        addAudit(`Renderizando ${templateCode} [${blind ? 'BLIND' : 'NORMAL'}]...`);
+        addAudit(blind ? 'Generando vista previa sin identidades...' : 'Generando vista previa del documento...');
         try {
             const response = await api.post(
                 `/documents/render?templateCode=${templateCode}&isDraft=${isDraftMode}&isBlind=${blind}`,
@@ -252,7 +252,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
             addAudit('PDF Generado exitosamente', 'success');
         } catch {
-            addAudit('Error de renderizado en el motor Scriban', 'error');
+            addAudit('Error al generar el documento PDF', 'error');
         } finally {
             setIsGenerating(false);
         }
@@ -264,7 +264,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         // if (!signaturePassword) return alert('Ingresa la clave de tu firma (.p12)');
 
         setIsSigning(true);
-        addAudit('Iniciando proceso de firma electrónica PAdES...');
+        addAudit('Iniciando proceso de firma digital...');
         try {
             const formDataObj = new FormData();
             if (signatureFile) {
@@ -291,7 +291,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
             addAudit(
                 import.meta.env.DEV
-                    ? 'Firma digital aplicada (modo pruebas: sello criptográfico puede estar omitido)'
+                    ? 'Firma digital aplicada (modo pruebas: sello de verificación puede estar omitido)'
                     : 'Firma digital aplicada e integrada',
                 'success'
             );
@@ -349,7 +349,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 </div>
                                 <div>
                                     <h2 className="text-sm md:text-xl font-black text-text-main tracking-tighter uppercase leading-none">
-                                        DIITRA <span className="text-text-dim font-light hidden sm:inline">Builder Core</span>
+                                        DIITRA <span className="text-text-dim font-light hidden sm:inline">Editor de documentos</span>
                                     </h2>
                                     <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v1.0.0</p>
                                 </div>
@@ -382,12 +382,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                     {isOnline ? (
                                         <>
                                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-green-500 uppercase tracking-widest">Online</span>
+                                            <span className="text-[7px] md:text-[9px] font-black text-green-500 uppercase tracking-widest">En línea</span>
                                         </>
                                     ) : (
                                         <>
                                             <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                                            <span className="text-[7px] md:text-[9px] font-black text-red-500 uppercase tracking-widest">Offline</span>
+                                            <span className="text-[7px] md:text-[9px] font-black text-red-500 uppercase tracking-widest">Sin conexión</span>
                                         </>
                                     )}
                                 </div>
@@ -418,10 +418,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         ? 'bg-text-main text-bg-deep border-text-main shadow-lg font-black' 
                                         : 'bg-bg-deep hover:bg-surface border-border-thin text-text-dim hover:text-text-main'
                                     }`}
-                                    title="Chat y Pulso de Trabajo (Team Pulse)"
+                                    title="Chat y actividad del equipo"
                                 >
                                     <MessageSquare size={16} className={isOnline ? 'animate-pulse' : ''} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline">Team Pulse</span>
+                                    <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline">Actividad</span>
                                 </button>
                             )}
 
@@ -577,7 +577,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                             <FileText size={18} /> Generar Vista Previa
                                                         </button>
                                                         <button onClick={() => handleGeneratePdf(true)} className="w-full border border-text-main/30 text-text-main/60 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-text-main hover:text-bg-deep transition-all flex items-center justify-center gap-3">
-                                                            <Users size={18} /> Modo Doble Ciego
+                                                            <Users size={18} /> Vista sin identidades
                                                         </button>
                                                     </div>
                                                 </div>
@@ -585,7 +585,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
                                             {/* Firma Digital PAdES */}
                                             <div className="p-8 bg-surface border border-border-thin rounded-2xl shadow-sm border-t-4 border-t-brand-dark">
-                                                <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Digital PAdES</h4>
+                                                <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma digital</h4>
                                                 <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a Ley de Comercio Electrónico.</p>
                                                 <div className="space-y-4">
                                                     <div>
@@ -630,8 +630,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 <div className="flex-1 flex flex-col items-center justify-center gap-6">
                                                     <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-text-main border-t-transparent rounded-full animate-spin shadow-lg" />
                                                     <div className="text-center px-4">
-                                                        <p className="text-[10px] md:text-xs font-black text-text-main uppercase tracking-[0.3em]">Rendering Engine</p>
-                                                        <p className="text-[8px] md:text-[9px] text-text-dim uppercase tracking-widest mt-2">Construyendo evidencia digital...</p>
+                                                        <p className="text-[10px] md:text-xs font-black text-text-main uppercase tracking-[0.3em]">Generando documento</p>
+                                                        <p className="text-[8px] md:text-[9px] text-text-dim uppercase tracking-widest mt-2">Preparando vista previa...</p>
                                                     </div>
                                                 </div>
                                             ) : pdfUrl ? (
@@ -639,7 +639,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             ) : (
                                                 <div className="flex-1 flex flex-col items-center justify-center text-text-dim/20 p-8">
                                                     <FileText size={80} strokeWidth={0.5} className="mb-6 lg:mb-8 md:w-[120px]" />
-                                                    <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Esperando Emisión</p>
+                                                    <p className="text-xs md:text-sm font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-center">Listo para generar</p>
                                                     <button onClick={() => handleGeneratePdf(false)} className="mt-6 px-6 py-3 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest lg:hidden">
                                                         Generar PDF
                                                     </button>

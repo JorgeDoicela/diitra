@@ -125,7 +125,7 @@ const MyProjectsPage: React.FC = () => {
                         <span>{isAdmin ? "Supervisión de Investigaciones" : "Mis Investigaciones"}</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        {isAdmin ? "Revisión General de Proyectos de I+D+i" : "Mis Proyectos de I+D+i"}
+                        {isAdmin ? "Revisión general de proyectos de investigación" : "Mis proyectos de investigación"}
                     </h2>
                     <p className="text-xs text-text-dim max-w-lg font-medium">
                         {isAdmin 

@@ -742,7 +742,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                             </div>
 
                             <div className="bento-card static p-4">
-                                <label className="section-label text-text-dim mb-2">Consolidación</label>
+                                <label className="section-label text-text-dim mb-2">Etapa del grupo</label>
                                 <span className={`badge-vercel ${
                                     detailGroup.categoria_consolidacion === 'Consolidado'
                                         ? 'badge-vercel-success'

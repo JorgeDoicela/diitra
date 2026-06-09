@@ -836,7 +836,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Categoría de Consolidación</label>
+                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest">Etapa del grupo</label>
                             <select
                                 disabled={isReadOnly}
                                 value={formData.categoria_consolidacion}

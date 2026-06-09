@@ -548,7 +548,7 @@ const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void; onEx
                             <span className="badge-vercel badge-vercel-info text-[9px]">PAR EXTERNO</span>
                         )}
                         {review.es_doble_ciego && (
-                            <span className="status-tag text-text-dim">Doble Ciego</span>
+                            <span className="status-tag text-text-dim">Anónimo</span>
                         )}
                         <div className={`badge-vercel ${cfg.badge}`}>
                             <span className={`dot ${cfg.dot}`} />

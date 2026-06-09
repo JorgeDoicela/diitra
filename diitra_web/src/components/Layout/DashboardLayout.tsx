@@ -25,7 +25,7 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/auditoria') return 'Registro de auditoría';
     if (pathname === '/grupos') return 'Grupos de Investigación';
     if (pathname === '/parametros-normativos') return 'Parámetros';
-    if (pathname === '/investigacion') return 'Proyectos de I+D+i';
+    if (pathname === '/investigacion') return 'Proyectos de investigación';
     if (pathname === '/investigacion/mis-proyectos') return 'Mis Proyectos';
     if (pathname.startsWith('/investigacion/monitoreo/')) return 'Monitoreo de Proyecto';
     if (pathname === '/convocatorias') return 'Convocatorias';
@@ -120,8 +120,8 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 localStorage.setItem('web_push_active', 'true');
             } catch (error) {
                 console.warn(
-                    'Aviso: No se pudieron activar las notificaciones Web Push nativas en segundo plano (esto es común en Brave, Safari o navegación privada si el servicio de push del navegador está deshabilitado). ' +
-                    'Las notificaciones en tiempo real dentro de la aplicación seguirán funcionando normalmente mediante WebSockets/SignalR.',
+                    'Aviso: No se pudieron activar las notificaciones del navegador en segundo plano (esto es común en Brave, Safari o navegación privada). ' +
+                    'Las notificaciones dentro de la aplicación seguirán funcionando con normalidad.',
                     error
                 );
                 localStorage.setItem('web_push_active', 'false');

@@ -164,7 +164,7 @@ const PeerReviewPage: React.FC = () => {
                                                                 <span className="badge-vercel badge-vercel-violet text-[9px]">PAR EXTERNO</span>
                                                             )}
                                                             {review.es_doble_ciego && (
-                                                                <span className="status-tag text-text-dim bg-surface">Doble Ciego</span>
+                                                                <span className="status-tag text-text-dim bg-surface">Anónimo</span>
                                                             )}
                                                         </div>
                                                         <h4 className="text-lg font-bold tracking-tight text-text-main group-hover:text-brand transition-colors line-clamp-2 md:line-clamp-1">
@@ -244,7 +244,7 @@ const PeerReviewPage: React.FC = () => {
                                                                 <span className="badge-vercel badge-vercel-violet text-[9px]">PAR EXTERNO</span>
                                                             )}
                                                             {review.es_doble_ciego && (
-                                                                <span className="status-tag text-text-dim bg-surface">Doble Ciego</span>
+                                                                <span className="status-tag text-text-dim bg-surface">Anónimo</span>
                                                             )}
                                                         </div>
                                                         <h4 className="text-lg font-bold tracking-tight text-text-main line-clamp-2 md:line-clamp-1">

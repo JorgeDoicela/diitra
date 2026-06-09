@@ -45,6 +45,28 @@ interface PagedResult {
     total_pages: number;
 }
 
+const ACTION_LABELS: Record<string, string> = {
+    ACTUALIZAR_METADATA: 'Actualizar datos del documento',
+    ACTUALIZAR_PROYECTO: 'Actualizar proyecto',
+    ACTUALIZAR_EQUIPO_PROYECTO: 'Actualizar equipo del proyecto',
+    REGISTRO_EXTERNO: 'Registro externo',
+    ASIGNAR_ROL: 'Asignar rol',
+    REVOCAR_ROL: 'Revocar rol',
+    CREAR_GRUPO: 'Crear grupo',
+    EDITAR_GRUPO: 'Editar grupo',
+    APROBAR_GRUPO: 'Aprobar grupo',
+    RECHAZAR_GRUPO: 'Rechazar grupo',
+    DESACTIVAR_GRUPO: 'Desactivar grupo',
+    AGREGAR_MIEMBRO_GRUPO: 'Agregar miembro al grupo',
+    LOGIN: 'Inicio de sesión',
+};
+
+const formatActionLabel = (action: string | null | undefined): string => {
+    if (!action) return 'S/A';
+    if (ACTION_LABELS[action]) return ACTION_LABELS[action];
+    return action.replace(/_/g, ' ').toLowerCase().replace(/^\w/, c => c.toUpperCase());
+};
+
 const formatDateSafe = (dateString: string | null | undefined, formatStr: string) => {
     if (!dateString) return '—';
     try {
@@ -217,7 +239,7 @@ const AuditPage: React.FC = () => {
                 "Afectado": log.target_name || 'Global',
                 "Detalles": log.details || '—',
                 "IP de Red": log.ip_address || '—',
-                "User Agent": log.user_agent || '—'
+                "Navegador": log.user_agent || '—'
             }));
 
             // 2. Crear una hoja de cálculo a partir de los datos JSON
@@ -531,7 +553,7 @@ const AuditPage: React.FC = () => {
                             Registro de auditoría
                         </h2>
                         <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                            Trazabilidad total de acciones administrativas y académicas para el cumplimiento de normativas SENESCYT/CACES.
+                            Registro completo de acciones administrativas y académicas para el cumplimiento de normativas SENESCYT/CACES.
                         </p>
                     </div>
 
@@ -587,7 +609,7 @@ const AuditPage: React.FC = () => {
                                 <option value="ASIGNAR_ROL">Asignar Rol</option>
                                 <option value="REVOCAR_ROL">Revocar Rol</option>
                                 <option value="REGISTRO_EXTERNO">Registro Externo</option>
-                                <option value="ACTUALIZAR_METADATA">Actualizar Metadata</option>
+                                <option value="ACTUALIZAR_METADATA">Actualizar datos del documento</option>
                                 <option value="LOGIN">Inicio de Sesión</option>
                                 <option value="CREAR_GRUPO">Crear Grupo</option>
                                 <option value="EDITAR_GRUPO">Editar Grupo</option>
@@ -694,7 +716,7 @@ const AuditPage: React.FC = () => {
                                             </td>
                                             <td className="p-4 whitespace-nowrap">
                                                 <span className={`status-tag ${getActionBadge(log.action)}`}>
-                                                    {log.action?.replace('_', ' ') || 'S/A'}
+                                                    {formatActionLabel(log.action)}
                                                 </span>
                                             </td>
                                             <td className="p-4 whitespace-nowrap">
@@ -781,7 +803,7 @@ const AuditPage: React.FC = () => {
                                             <Activity size={12} /> Acción
                                         </label>
                                         <span className={`status-tag ${getActionBadge(selectedLog.action)}`}>
-                                            {selectedLog.action}
+                                            {formatActionLabel(selectedLog.action)}
                                         </span>
                                         <div className="text-xs text-text-dim mt-2 uppercase tracking-widest opacity-50">
                                             {selectedLog.modulo || 'GLOBAL'}
@@ -791,7 +813,7 @@ const AuditPage: React.FC = () => {
 
                                 <div className="space-y-4">
                                     <label className="section-label text-text-dim">
-                                        <MapPin size={12} /> Metadata de Origen
+                                        <MapPin size={12} /> Origen de la acción
                                     </label>
                                     <div className="grid grid-cols-1 gap-3">
                                         <div className="bento-card static p-4 flex items-center justify-between">
@@ -800,10 +822,10 @@ const AuditPage: React.FC = () => {
                                         </div>
                                         <div className="bento-card static p-4">
                                             <div className="section-label text-text-dim mb-3">
-                                                <Monitor size={12} /> User Agent (Browser Metadata)
+                                                <Monitor size={12} /> Navegador utilizado
                                             </div>
                                             <p className="text-[10px] font-mono text-text-dim leading-relaxed bg-bg-deep p-3 rounded border border-border-thin italic">
-                                                {selectedLog.user_agent || 'Client Information Not Captured'}
+                                                {selectedLog.user_agent || 'Información del navegador no registrada'}
                                             </p>
                                         </div>
                                     </div>
@@ -811,7 +833,7 @@ const AuditPage: React.FC = () => {
 
                                 <div className="space-y-4">
                                     <label className="section-label text-text-dim">
-                                        <Code size={12} /> Trazabilidad de Estado (Snapshots)
+                                        <Code size={12} /> Historial de cambios
                                     </label>
 
                                     {selectedLog && (parseJson(selectedLog.values_before) !== null || parseJson(selectedLog.values_after) !== null) && selectedLog.action?.toUpperCase() !== 'LOGIN' && (
@@ -827,7 +849,7 @@ const AuditPage: React.FC = () => {
                                                     onClick={() => setSnapshotView('before')}
                                                     className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'before' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                                 >
-                                                    JSON Antes
+                                                    Valores anteriores
                                                 </button>
                                             )}
                                             {parseJson(selectedLog.values_after) !== null && (
@@ -835,7 +857,7 @@ const AuditPage: React.FC = () => {
                                                     onClick={() => setSnapshotView('after')}
                                                     className={`flex-1 py-1.5 text-[10px] font-semibold uppercase tracking-wider rounded transition-all cursor-pointer ${snapshotView === 'after' ? 'bg-surface text-text-main shadow-sm border border-border-thin' : 'text-text-dim hover:text-text-main border border-transparent'}`}
                                                 >
-                                                    JSON Después
+                                                    Valores nuevos
                                                 </button>
                                             )}
                                         </div>
@@ -851,7 +873,7 @@ const AuditPage: React.FC = () => {
                                         ID Autogenerado: {selectedLog.id_audit}
                                     </p>
                                     <p className="text-[8px] font-mono text-text-dim opacity-50 uppercase">
-                                        Firmado digitalmente por el Motor de Auditoría DIITRA
+                                        Registro certificado por DIITRA
                                     </p>
                                 </div>
                             </div>

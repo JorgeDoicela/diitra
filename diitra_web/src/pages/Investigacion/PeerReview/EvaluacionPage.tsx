@@ -450,7 +450,7 @@ const EvaluacionPage: React.FC = () => {
                                 </p>
                                 <div className="mt-2 flex flex-col items-center justify-center gap-1.5">
                                     <div className="badge-vercel badge-vercel-info text-[10px] font-semibold uppercase tracking-wider">
-                                        {rubrica.es_doble_ciego ? 'Arbitraje Doble Ciego' : 'Arbitraje Estándar'}
+                                        {rubrica.es_doble_ciego ? 'Evaluación anónima' : 'Evaluación abierta'}
                                     </div>
                                     {rubrica.es_doble_ciego && (
                                         <p className="text-[10px] text-text-dim max-w-md leading-relaxed font-medium">

@@ -980,7 +980,7 @@ const AnalyticsPage = () => {
                                         </div>
                                         <h3 className="text-sm font-semibold text-text-main font-sans tracking-tight">Preservación Digital DSpace</h3>
                                         <p className="text-xs text-text-dim leading-relaxed font-medium">
-                                            Sincronización automatizada de metadatos firmados con el repositorio abierto del instituto. Se garantiza el resguardo digital permanente bajo las directrices del CACES.
+                                            Sincronización automatizada de documentos firmados con el repositorio abierto del instituto. Se garantiza el resguardo digital permanente bajo las directrices del CACES.
                                         </p>
                                     </div>
 
@@ -989,21 +989,21 @@ const AnalyticsPage = () => {
                                             <span className="text-text-dim uppercase tracking-wider text-[8px]">Servidor DSpace</span>
                                             <span className="text-success flex items-center gap-1.5 font-bold">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse" />
-                                                ONLINE
+                                                En línea
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-text-dim uppercase tracking-wider text-[8px]">SSO Autenticación</span>
+                                            <span className="text-text-dim uppercase tracking-wider text-[8px]">Acceso institucional</span>
                                             <span className="text-success flex items-center gap-1.5 font-bold">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse" />
-                                                ONLINE
+                                                En línea
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-text-dim uppercase tracking-wider text-[8px]">Integridad de Firma</span>
                                             <span className="text-success flex items-center gap-1.5 font-bold">
                                                 <span className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
-                                                SECURE
+                                                Seguro
                                             </span>
                                         </div>
                                     </div>

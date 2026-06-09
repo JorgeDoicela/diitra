@@ -274,7 +274,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
                             <Wifi size={11} className="text-green-500" />
                             <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-green-500">
-                                DIITRA CoWork — En línea
+                                Colaboración en línea
                             </span>
                         </>
                     ) : session.error ? (
@@ -288,7 +288,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                         <>
                             <Loader2 size={11} className="animate-spin text-text-dim" />
                             <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-text-dim">
-                                Conectando al motor...
+                                Conectando...
                             </span>
                         </>
                     )}
@@ -348,14 +348,14 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             {session.isBlindMode && (
                 <div className="px-5 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2 text-amber-500 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <EyeOff size={13} className="shrink-0 animate-pulse text-amber-400" />
-                    <span>Anonimización Doble Ciego Activa: Las identidades del autor y del revisor se enmascaran automáticamente según normativa CACES.</span>
+                    <span>Evaluación anónima activa: las identidades del autor y del revisor están ocultas según normativa CACES.</span>
                 </div>
             )}
 
             {(readonly || session.readOnly) && (
                 <div className="px-5 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2 text-indigo-400 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <Lock size={13} className="shrink-0 text-indigo-400" />
-                    <span>Sección Inmutable: El documento ya ha sido firmado digitalmente y se congela por control de auditoría interna.</span>
+                    <span>Documento bloqueado: ya fue firmado digitalmente y no puede modificarse.</span>
                 </div>
             )}
 

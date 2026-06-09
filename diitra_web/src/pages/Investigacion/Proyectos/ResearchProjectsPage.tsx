@@ -25,7 +25,7 @@ const ResearchProjectsPage = () => {
                         <span>{isAdmin ? "Supervisión de Investigaciones" : "Mis Investigaciones"}</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        {isAdmin ? "Supervisión de Proyectos de I+D+i" : "Proyectos de I+D+i"}
+                        {isAdmin ? "Supervisión de proyectos de investigación" : "Proyectos de investigación"}
                     </h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
                         {isAdmin 
@@ -60,7 +60,7 @@ const ResearchProjectsPage = () => {
                             {isAdmin ? "Todos los Proyectos" : "Mis Proyectos"}
                         </h4>
                         <p className="text-[10px] text-text-dim uppercase tracking-widest font-bold">
-                            {isAdmin ? "Expediente General" : "Expediente Personal"}
+                            {isAdmin ? "Vista institucional" : "Mis proyectos activos"}
                         </p>
                     </div>
                     <div

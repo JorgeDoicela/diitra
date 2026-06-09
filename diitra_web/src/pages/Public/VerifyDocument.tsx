@@ -18,7 +18,7 @@ const VerifyDocument = () => {
             const response = await api.get(`/documents/verify/${verifyCode}`);
             setResult(response.data);
         } catch (err: any) {
-            setError(err.response?.status === 404 ? "El código de trazabilidad no es válido o el documento no ha sido emitido oficialmente." : "No se pudo conectar con el servicio de verificación. Intente de nuevo.");
+            setError(err.response?.status === 404 ? "El código de verificación no es válido o el documento no ha sido emitido oficialmente." : "No se pudo conectar con el servicio de verificación. Intente de nuevo.");
             setResult(null);
         } finally {
             setLoading(false);
@@ -39,7 +39,7 @@ const VerifyDocument = () => {
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Verificación de autenticidad</h2>
                     <p className="text-xs md:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Ingrese el código de trazabilidad impreso en el documento o escaneado vía QR para validar su autenticidad y estado legal ante el CACES.
+                        Ingrese el código de verificación impreso en el documento o escaneado vía QR para validar su autenticidad ante el CACES.
                     </p>
                 </div>
             </header>
@@ -72,7 +72,7 @@ const VerifyDocument = () => {
                 {loading && (
                     <div className="lg:col-span-5 flex flex-col items-center justify-center py-20 gap-4">
                         <Loader2 className="animate-spin text-brand" size={32} />
-                        <p className="section-label text-text-dim">Consultando Nodo de Integridad...</p>
+                        <p className="section-label text-text-dim">Consultando verificación...</p>
                     </div>
                 )}
 
@@ -99,11 +99,11 @@ const VerifyDocument = () => {
                                 <div className="flex flex-wrap gap-2 mt-2">
                                     <div className="badge-vercel badge-vercel-success">
                                         <span className="dot dot-success" />
-                                        Integridad SHA-256 Verificada
+                                        Integridad verificada
                                     </div>
                                     <div className="badge-vercel badge-vercel-success bg-brand/10 border-brand/20 text-brand-light">
                                         <span className="dot bg-brand animate-pulse" />
-                                        Firma Digital PAdES Activa
+                                        Firma digital activa
                                     </div>
                                 </div>
                             </div>
@@ -132,7 +132,7 @@ const VerifyDocument = () => {
                             </div>
                             <div>
                                 <label className="section-label text-text-dim mb-1">
-                                    <ShieldCheck size={12}/> Hash de Integridad
+                                    <ShieldCheck size={12}/> Código de verificación
                                 </label>
                                 <p className="text-[10px] font-mono break-all text-text-dim">{result.file_hash || result.fileHash || 'N/A'}</p>
                             </div>

@@ -178,7 +178,7 @@ export const MonitoringPage: React.FC = () => {
                     <button 
                         onClick={() => navigate(-1)} 
                         className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all"
-                        title="Volver al Workspace"
+                        title="Volver al proyecto"
                     >
                         <ArrowLeft size={14} />
                     </button>

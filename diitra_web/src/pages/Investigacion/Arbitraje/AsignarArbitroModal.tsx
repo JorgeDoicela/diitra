@@ -301,7 +301,7 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                 onChange={(e) => setEsDobleCiego(e.target.checked)}
                                             />
                                             <div>
-                                                <p className="text-xs font-semibold text-text-main">Doble Ciego</p>
+                                                <p className="text-xs font-semibold text-text-main">Evaluación anónima</p>
                                                 <p className="text-[10px] text-text-dim">Identidades ocultadas (recomendado CACES)</p>
                                             </div>
                                         </label>
