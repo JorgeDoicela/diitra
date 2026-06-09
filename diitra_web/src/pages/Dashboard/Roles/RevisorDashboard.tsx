@@ -110,8 +110,8 @@ export const RevisorDashboard: React.FC = () => {
                     </BentoCard>
 
                     <BentoCard 
-                        title="Estado del Pipeline" 
-                        description="Tu progreso como evaluador"
+                        title="Revisiones en curso" 
+                        description="Evaluaciones que aún debes completar"
                         icon={<FileSearch size={14} />}
                         isStatic={true}
                     >

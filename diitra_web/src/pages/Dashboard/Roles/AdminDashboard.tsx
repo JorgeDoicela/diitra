@@ -118,14 +118,14 @@ export const AdminDashboard: React.FC = () => {
                     {/* Main Content: Left Column */}
                     <div className="lg:col-span-3 space-y-6">
                         
-                        {/* Status Grid: Pipeline & Budget */}
+                        {/* Status Grid: proyectos por estado y presupuesto */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             
-                            {/* Embudo de proyectos */}
+                            {/* Proyectos por estado */}
                             <div className="bento-card static flex flex-col justify-between bg-surface border border-border-thin shadow-sm rounded-xl overflow-hidden">
                                 <div className="p-6">
                                     <div className="flex items-center justify-between mb-5">
-                                        <span className="text-sm font-medium text-text-dim">Pipeline de proyectos</span>
+                                        <span className="text-sm font-medium text-text-dim">Proyectos por estado</span>
                                     </div>
                                     
                                     <div className="space-y-4">
