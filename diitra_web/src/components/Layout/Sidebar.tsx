@@ -9,6 +9,8 @@ import { stripHtmlToText } from '../../utils/notificationText';
 const NOTIF_PANEL_WIDTH = 380;
 
 export const SIDEBAR_WIDTH = 248;
+/** Ancho al reabrir tras modo compacto: un poco más estrecho que el predeterminado. */
+const SIDEBAR_REOPEN_WIDTH = 212;
 const SIDEBAR_WIDTH_MAX = 368;
 /** Por debajo de esto, al soltar, el panel se cierra con animación. */
 const SIDEBAR_AUTO_COLLAPSE_AT = 180;
@@ -92,9 +94,11 @@ const Sidebar = ({
         const saved = localStorage.getItem('sidebar_width');
         const parsed = saved ? parseInt(saved, 10) : SIDEBAR_WIDTH;
         if (!Number.isFinite(parsed)) return SIDEBAR_WIDTH;
-        if (parsed < SIDEBAR_OPEN_MIN) return SIDEBAR_WIDTH;
+        if (parsed < SIDEBAR_WIDTH) return SIDEBAR_REOPEN_WIDTH;
         return Math.min(SIDEBAR_WIDTH_MAX, parsed);
     });
+    const prevCollapsedRef = useRef(isCollapsed);
+    const skipNextExpandEffectRef = useRef(false);
     const [isDragging, setIsDragging] = useState(false);
     const [isClosingAnim, setIsClosingAnim] = useState(false);
     const [peekWidth, setPeekWidth] = useState<number | null>(null);
@@ -276,6 +280,10 @@ const Sidebar = ({
     const group2 = menuItems.filter(item => item.group === 2);
     const group3 = menuItems.filter(item => item.group === 3);
 
+    /** Al reabrir: si quedó en modo compacto, volver al ancho cómodo para leer los textos. */
+    const resolveExpandTarget = (width = expandedWidth) =>
+        width < SIDEBAR_WIDTH ? SIDEBAR_REOPEN_WIDTH : width;
+
     const persistExpandedWidth = (width: number) => {
         const clamped = Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_OPEN_MIN, Math.round(width)));
         setExpandedWidth(clamped);
@@ -312,6 +320,28 @@ const Sidebar = ({
         if (isCollapsed || isClosingAnim) return;
         animatePeekWidth(0, onCollapse);
     };
+
+    useEffect(() => {
+        const wasCollapsed = prevCollapsedRef.current;
+        prevCollapsedRef.current = isCollapsed;
+
+        if (!wasCollapsed || isCollapsed) return;
+
+        const target = resolveExpandTarget();
+        if (target !== expandedWidth) {
+            setExpandedWidth(target);
+            localStorage.setItem('sidebar_width', String(target));
+        }
+
+        if (skipNextExpandEffectRef.current) {
+            skipNextExpandEffectRef.current = false;
+            return;
+        }
+
+        if (peekWidthRef.current === null) {
+            animatePeekWidth(target);
+        }
+    }, [isCollapsed]);
 
     const cleanupDragListeners = (
         doDrag: (e: MouseEvent) => void,
@@ -371,6 +401,7 @@ const Sidebar = ({
         setIsDragging(true);
         setPeek(0);
         const startX = mouseDownEvent.clientX;
+        const expandTarget = resolveExpandTarget();
         let lastReveal = 0;
 
         const stopDrag = () => {
@@ -379,10 +410,15 @@ const Sidebar = ({
 
             const currentWidth = peekWidthRef.current ?? 0;
             const clicked = lastReveal <= DRAG_CLICK_THRESHOLD;
-            const shouldExpand = clicked || currentWidth >= expandedWidth * COLLAPSE_VISIBLE_RATIO;
+            const shouldExpand = clicked || currentWidth >= expandTarget * COLLAPSE_VISIBLE_RATIO;
 
             if (shouldExpand) {
-                animatePeekWidth(expandedWidth, onExpand);
+                if (expandTarget !== expandedWidth) {
+                    setExpandedWidth(expandTarget);
+                    localStorage.setItem('sidebar_width', String(expandTarget));
+                }
+                skipNextExpandEffectRef.current = true;
+                animatePeekWidth(expandTarget, onExpand);
             } else {
                 animatePeekWidth(0);
             }
@@ -392,18 +428,23 @@ const Sidebar = ({
             const reveal = Math.max(0, mouseMoveEvent.clientX - startX);
             lastReveal = reveal;
 
-            if (reveal >= expandedWidth * COLLAPSE_INSTANT_RATIO) {
+            if (reveal >= expandTarget * COLLAPSE_INSTANT_RATIO) {
                 setIsDragging(false);
                 document.body.style.removeProperty('user-select');
                 document.body.style.removeProperty('cursor');
                 document.removeEventListener('mousemove', doDrag);
                 document.removeEventListener('mouseup', stopDrag);
+                if (expandTarget !== expandedWidth) {
+                    setExpandedWidth(expandTarget);
+                    localStorage.setItem('sidebar_width', String(expandTarget));
+                }
+                skipNextExpandEffectRef.current = true;
                 onExpand();
                 setPeek(null);
                 return;
             }
 
-            setPeek(Math.min(expandedWidth, reveal));
+            setPeek(Math.min(expandTarget, reveal));
         };
 
         document.body.style.userSelect = 'none';
@@ -429,11 +470,10 @@ const Sidebar = ({
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
                     <div
-                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${
-                            isActive
-                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
-                                : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                        }`}
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${isActive
+                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                            : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                            }`}
                     >
                         <button
                             onClick={(e) => {
@@ -445,16 +485,14 @@ const Sidebar = ({
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >
-                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                                isActive
-                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                            }`}>
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
+                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
-                            <span className={`text-[13px] tracking-tight truncate ${
-                                isActive ? 'font-semibold text-text-main' : 'font-medium'
-                            }`}>
+                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                                }`}>
                                 {item.name}
                             </span>
                         </button>
@@ -467,14 +505,12 @@ const Sidebar = ({
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
                             title={isMenuOpen ? "Colapsar" : "Expandir"}
                         >
-                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${
-                                isMenuOpen ? 'rotate-90' : ''
-                            } ${
-                                isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                            }`} />
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
+                                } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                                }`} />
                         </button>
                     </div>
-                    
+
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
                             {[
@@ -486,7 +522,7 @@ const Sidebar = ({
                                     (subItem.path.includes('tab=general') && (!location.search || location.search.includes('tab=general'))) ||
                                     location.search.includes(subItem.path.split('?')[1])
                                 );
-                                
+
                                 return (
                                     <Link
                                         key={subItem.name}
@@ -494,23 +530,20 @@ const Sidebar = ({
                                         onClick={() => {
                                             if (onClose) onClose();
                                         }}
-                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${
-                                            isSubActive
-                                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
-                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                                        }`}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${isSubActive
+                                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2.5 min-w-0 py-0.5">
-                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                                                isSubActive
-                                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                                            }`}>
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isSubActive
+                                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                                }`}>
                                                 <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
                                             </div>
-                                            <span className={`text-[12px] tracking-tight truncate ${
-                                                isSubActive ? 'font-semibold text-text-main' : 'font-medium'
-                                            }`}>
+                                            <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                                }`}>
                                                 {subItem.name}
                                             </span>
                                         </div>
@@ -528,11 +561,10 @@ const Sidebar = ({
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
                     <div
-                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${
-                            isActive
-                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
-                                : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                        }`}
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${isActive
+                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                            : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                            }`}
                     >
                         <button
                             onClick={(e) => {
@@ -544,16 +576,14 @@ const Sidebar = ({
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >
-                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                                isActive
-                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                            }`}>
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
+                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
-                            <span className={`text-[13px] tracking-tight truncate ${
-                                isActive ? 'font-semibold text-text-main' : 'font-medium'
-                            }`}>
+                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                                }`}>
                                 {item.name}
                             </span>
                         </button>
@@ -566,14 +596,12 @@ const Sidebar = ({
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
                             title={isMenuOpen ? "Colapsar" : "Expandir"}
                         >
-                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${
-                                isMenuOpen ? 'rotate-90' : ''
-                            } ${
-                                isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                            }`} />
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
+                                } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                                }`} />
                         </button>
                     </div>
-                    
+
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
                             {[
@@ -585,7 +613,7 @@ const Sidebar = ({
                                     (subItem.path.includes('type=DOCENTE') && (!location.search || location.search.includes('type=DOCENTE'))) ||
                                     location.search.includes(subItem.path.split('?')[1])
                                 );
-                                
+
                                 return (
                                     <Link
                                         key={subItem.name}
@@ -593,23 +621,20 @@ const Sidebar = ({
                                         onClick={() => {
                                             if (onClose) onClose();
                                         }}
-                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${
-                                            isSubActive
-                                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
-                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                                        }`}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${isSubActive
+                                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2.5 min-w-0 py-0.5">
-                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                                                isSubActive
-                                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                                            }`}>
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isSubActive
+                                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                                }`}>
                                                 <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
                                             </div>
-                                            <span className={`text-[12px] tracking-tight truncate ${
-                                                isSubActive ? 'font-semibold text-text-main' : 'font-medium'
-                                            }`}>
+                                            <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                                }`}>
                                                 {subItem.name}
                                             </span>
                                         </div>
@@ -627,11 +652,10 @@ const Sidebar = ({
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
                     <div
-                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${
-                            isActive
-                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
-                                : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                        }`}
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${isActive
+                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                            : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                            }`}
                     >
                         <button
                             onClick={(e) => {
@@ -643,16 +667,14 @@ const Sidebar = ({
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
                         >
-                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                                isActive
-                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                            }`}>
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
+                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                }`}>
                                 <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                             </div>
-                            <span className={`text-[13px] tracking-tight truncate ${
-                                isActive ? 'font-semibold text-text-main' : 'font-medium'
-                            }`}>
+                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                                }`}>
                                 {item.name}
                             </span>
                         </button>
@@ -665,14 +687,12 @@ const Sidebar = ({
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
                             title={isMenuOpen ? "Colapsar" : "Expandir"}
                         >
-                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${
-                                isMenuOpen ? 'rotate-90' : ''
-                            } ${
-                                isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                            }`} />
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
+                                } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                                }`} />
                         </button>
                     </div>
-                    
+
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
                             {[
@@ -686,7 +706,7 @@ const Sidebar = ({
                                     (subItem.path.includes('tab=lineas') && (!location.search || location.search.includes('tab=lineas'))) ||
                                     location.search.includes(subItem.path.split('?')[1])
                                 );
-                                
+
                                 return (
                                     <Link
                                         key={subItem.name}
@@ -694,23 +714,20 @@ const Sidebar = ({
                                         onClick={() => {
                                             if (onClose) onClose();
                                         }}
-                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${
-                                            isSubActive
-                                                ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
-                                                : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                                        }`}
+                                        className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${isSubActive
+                                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                            : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2.5 min-w-0 py-0.5">
-                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                                                isSubActive
-                                                    ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                                                    : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                                            }`}>
+                                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isSubActive
+                                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                                }`}>
                                                 <subItem.icon size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
                                             </div>
-                                            <span className={`text-[12px] tracking-tight truncate ${
-                                                isSubActive ? 'font-semibold text-text-main' : 'font-medium'
-                                            }`}>
+                                            <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                                }`}>
                                                 {subItem.name}
                                             </span>
                                         </div>
@@ -730,34 +747,28 @@ const Sidebar = ({
                 onClick={() => {
                     if (onClose) onClose();
                 }}
-                className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ${
-                    item.indent ? 'ml-2 pl-2.5' : ''
-                } ${
-                    isActive
+                className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ${item.indent ? 'ml-2 pl-2.5' : ''
+                    } ${isActive
                         ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
                         : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
-                }`}
+                    }`}
             >
                 <div className="flex items-center gap-2.5 min-w-0 py-0.5">
-                    <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${
-                        isActive
-                            ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
-                            : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
-                    }`}>
+                    <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
+                        ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                        : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                        }`}>
                         <item.icon size={item.indent ? 13 : 15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
                     </div>
-                    <span className={`text-[13px] tracking-tight truncate ${
-                        item.indent ? 'text-[12px]' : ''
-                    } ${
-                        isActive ? 'font-semibold text-text-main' : 'font-medium'
-                    }`}>
+                    <span className={`text-[13px] tracking-tight truncate ${item.indent ? 'text-[12px]' : ''
+                        } ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                        }`}>
                         {item.name}
                     </span>
                 </div>
                 {item.hasChevron && (
-                    <ChevronRightIcon className={`shrink-0 ml-1.5 transition-colors ${
-                        isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
-                    }`} />
+                    <ChevronRightIcon className={`shrink-0 ml-1.5 transition-colors ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                        }`} />
                 )}
             </Link>
         );
@@ -807,158 +818,158 @@ const Sidebar = ({
                             : undefined
                     }}
                 >
-                {/* Mobile Close Button */}
-                <button
-                    onClick={onClose}
-                    className="absolute right-4 top-4 p-2 text-text-dim hover:text-text-main lg:hidden"
-                >
-                    <X size={20} />
-                </button>
-
-                {/* Brand Header */}
-                <Link
-                    to="/dashboard"
-                    onClick={() => {
-                        if (onClose) onClose();
-                    }}
-                    className="px-4 mb-4 flex items-center gap-2 cursor-pointer select-none no-underline"
-                >
-                    <img
-                        src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
-                        alt="DIITRA Logo"
-                        className="h-6 w-auto object-contain"
-                    />
-                    <span className="text-[14px] font-semibold text-text-main tracking-[0.2em] font-sans uppercase">
-                        DIITRA
-                    </span>
-                </Link>
-
-                {/* Navigator Search */}
-                <div className="px-3 mb-4">
-                    <div
-                        onClick={triggerCommandPalette}
-                        className="flex h-8.5 items-center gap-2 px-2.5 bg-surface border border-border-thin rounded-md group hover:border-text-dim/50 hover:bg-surface-hover/30 transition-all cursor-pointer"
+                    {/* Mobile Close Button */}
+                    <button
+                        onClick={onClose}
+                        className="absolute right-4 top-4 p-2 text-text-dim hover:text-text-main lg:hidden"
                     >
-                        <Search size={13} className="text-text-dim group-hover:text-text-main transition-colors" />
-                        <span className="text-xs text-text-dim flex-1 font-medium group-hover:text-text-main transition-colors">Buscar</span>
-                        <kbd className="text-[10px] font-sans font-semibold bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim shadow-sm">{searchShortcut}</kbd>
-                    </div>
-                </div>
+                        <X size={20} />
+                    </button>
 
-                {/* Navigation list — espacio al final para scroll; el desvanecido arranca en el pie del menú */}
-                <nav className="flex-1 min-h-0 overflow-y-auto pr-1 scroll-pb-24 select-none outline-none relative">
-                    <div className="px-2.5 space-y-1">
-                        {group1.map(renderMenuItem)}
+                    {/* Brand Header */}
+                    <Link
+                        to="/dashboard"
+                        onClick={() => {
+                            if (onClose) onClose();
+                        }}
+                        className="px-4 mb-4 flex items-center gap-2 cursor-pointer select-none no-underline"
+                    >
+                        <img
+                            src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                            alt="DIITRA Logo"
+                            className="h-6 w-auto object-contain"
+                        />
+                        <span className="text-[14px] font-semibold text-text-main tracking-[0.2em] font-sans uppercase">
+                            DIITRA
+                        </span>
+                    </Link>
 
-                        {group2.length > 0 && (
-                            <>
-                                <hr className="border-border-thin my-3" />
-                                {group2.map(renderMenuItem)}
-                            </>
-                        )}
-
-                        {group3.length > 0 && (
-                            <>
-                                <hr className="border-border-thin my-3" />
-                                {group3.map(renderMenuItem)}
-                            </>
-                        )}
-                    </div>
-                    <div className={`${NAV_SCROLL_SPACER} shrink-0`} aria-hidden="true" />
-                </nav>
-
-                {/* Pie del sidebar — desvanecido hacia arriba desde aquí (sin línea divisoria) */}
-                <div className="px-2.5 pt-2 mt-auto relative shrink-0 bg-bg-deep">
-                    <div
-                        className="pointer-events-none absolute left-0 right-0 h-14 bg-gradient-to-b from-transparent to-bg-deep z-10"
-                        style={{ top: `-${NAV_FADE_HEIGHT}` }}
-                        aria-hidden
-                    />
-                    {isUserMenuOpen && (
-                        <>
-                            <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
-                            <div className="absolute bottom-14 left-3 right-3 bg-bg-deep border border-border-thin rounded-lg shadow-xl z-50 p-1.5 space-y-0.5 animate-in fade-in duration-200 slide-in-from-bottom-2">
-                                <div
-                                    onClick={() => {
-                                        toggleTheme();
-                                        setIsUserMenuOpen(false);
-                                    }}
-                                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
-                                >
-                                    {currentTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
-                                    <span>{currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
-                                </div>
-                                <div
-                                    onClick={() => {
-                                        navigate('/configuracion');
-                                        setIsUserMenuOpen(false);
-                                    }}
-                                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
-                                >
-                                    <Settings size={14} />
-                                    <span>Configuración</span>
-                                </div>
-                                <hr className="border-border-thin my-1" />
-                                <div
-                                    onClick={async () => {
-                                        setIsUserMenuOpen(false);
-                                        await logout();
-                                        navigate('/');
-                                    }}
-                                    className="flex items-center gap-2.5 px-3 py-2 text-xs text-error hover:bg-error/10 rounded-md cursor-pointer transition-colors"
-                                >
-                                    <LogOut size={14} />
-                                    <span>Cerrar Sesión</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    <div className="flex items-center justify-between gap-1 p-1 select-none">
+                    {/* Navigator Search */}
+                    <div className="px-3 mb-4">
                         <div
-                            className="flex items-center gap-2 min-w-0 cursor-pointer flex-1 group py-1"
-                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                            onClick={triggerCommandPalette}
+                            className="flex h-8.5 items-center gap-2 px-2.5 bg-surface border border-border-thin rounded-md group hover:border-text-dim/50 hover:bg-surface-hover/30 transition-all cursor-pointer"
                         >
-                            {/* User Avatar with circular hover shade wrapper */}
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 transition-colors shrink-0">
-                                <div className="w-5.5 h-5.5 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-semibold text-white uppercase">
-                                    {userInitials}
-                                </div>
-                            </div>
-                            {/* Username & Role */}
-                            <div className="flex-1 min-w-0 flex flex-col items-start leading-tight">
-                                <span className="text-[12px] font-semibold text-text-main truncate w-full group-hover:text-text-main transition-colors">
-                                    {user?.nombre_completo || username}
-                                </span>
-                                <span className="text-[9px] font-semibold text-text-dim truncate w-full uppercase tracking-wider mt-0.5">
-                                    {roleDisplayName}
-                                </span>
-                            </div>
-                            {/* Options Button with circular hover shade wrapper */}
-                            <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 text-text-dim group-hover:text-text-main transition-colors shrink-0">
-                                <MoreHorizontalIcon className="w-3.5 h-3.5" />
-                            </div>
-                        </div>
-
-                        {/* Notification Bell */}
-                        <div className="relative shrink-0 ml-1.5">
-                            <button
-                                ref={bellRef}
-                                onClick={() => {
-                                    if (!isNotificationsOpen) updateNotifPanelPos();
-                                    setIsNotificationsOpen(!isNotificationsOpen);
-                                }}
-                                className="w-7 h-7 rounded-full hover:bg-surface-hover/50 text-text-dim hover:text-text-main transition-colors relative flex items-center justify-center cursor-pointer"
-                                title="Ver notificaciones"
-                            >
-                                <Bell size={14} strokeWidth={1.5} />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                                )}
-                            </button>
+                            <Search size={13} className="text-text-dim group-hover:text-text-main transition-colors" />
+                            <span className="text-xs text-text-dim flex-1 font-medium group-hover:text-text-main transition-colors">Buscar</span>
+                            <kbd className="text-[10px] font-sans font-semibold bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin text-text-dim shadow-sm">{searchShortcut}</kbd>
                         </div>
                     </div>
-                </div>
+
+                    {/* Navigation list — espacio al final para scroll; el desvanecido arranca en el pie del menú */}
+                    <nav className="flex-1 min-h-0 overflow-y-auto pr-1 scroll-pb-24 select-none outline-none relative">
+                        <div className="px-2.5 space-y-1">
+                            {group1.map(renderMenuItem)}
+
+                            {group2.length > 0 && (
+                                <>
+                                    <hr className="border-border-thin my-3" />
+                                    {group2.map(renderMenuItem)}
+                                </>
+                            )}
+
+                            {group3.length > 0 && (
+                                <>
+                                    <hr className="border-border-thin my-3" />
+                                    {group3.map(renderMenuItem)}
+                                </>
+                            )}
+                        </div>
+                        <div className={`${NAV_SCROLL_SPACER} shrink-0`} aria-hidden="true" />
+                    </nav>
+
+                    {/* Pie del sidebar — desvanecido hacia arriba desde aquí (sin línea divisoria) */}
+                    <div className="px-2.5 pt-2 mt-auto relative shrink-0 bg-bg-deep">
+                        <div
+                            className="pointer-events-none absolute left-0 right-0 h-14 bg-gradient-to-b from-transparent to-bg-deep z-10"
+                            style={{ top: `-${NAV_FADE_HEIGHT}` }}
+                            aria-hidden
+                        />
+                        {isUserMenuOpen && (
+                            <>
+                                <div className="fixed inset-0 z-40" onClick={() => setIsUserMenuOpen(false)} />
+                                <div className="absolute bottom-14 left-3 right-3 bg-bg-deep border border-border-thin rounded-lg shadow-xl z-50 p-1.5 space-y-0.5 animate-in fade-in duration-200 slide-in-from-bottom-2">
+                                    <div
+                                        onClick={() => {
+                                            toggleTheme();
+                                            setIsUserMenuOpen(false);
+                                        }}
+                                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                                    >
+                                        {currentTheme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                                        <span>{currentTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
+                                    </div>
+                                    <div
+                                        onClick={() => {
+                                            navigate('/configuracion');
+                                            setIsUserMenuOpen(false);
+                                        }}
+                                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"
+                                    >
+                                        <Settings size={14} />
+                                        <span>Configuración</span>
+                                    </div>
+                                    <hr className="border-border-thin my-1" />
+                                    <div
+                                        onClick={async () => {
+                                            setIsUserMenuOpen(false);
+                                            await logout();
+                                            navigate('/');
+                                        }}
+                                        className="flex items-center gap-2.5 px-3 py-2 text-xs text-error hover:bg-error/10 rounded-md cursor-pointer transition-colors"
+                                    >
+                                        <LogOut size={14} />
+                                        <span>Cerrar Sesión</span>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        <div className="flex items-center justify-between gap-1 p-1 select-none">
+                            <div
+                                className="flex items-center gap-2 min-w-0 cursor-pointer flex-1 group py-1"
+                                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                            >
+                                {/* User Avatar with circular hover shade wrapper */}
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 transition-colors shrink-0">
+                                    <div className="w-5.5 h-5.5 rounded-full bg-purple-600 flex items-center justify-center text-[10px] font-semibold text-white uppercase">
+                                        {userInitials}
+                                    </div>
+                                </div>
+                                {/* Username & Role */}
+                                <div className="flex-1 min-w-0 flex flex-col items-start leading-tight">
+                                    <span className="text-[12px] font-semibold text-text-main truncate w-full group-hover:text-text-main transition-colors">
+                                        {user?.nombre_completo || username}
+                                    </span>
+                                    <span className="text-[9px] font-semibold text-text-dim truncate w-full uppercase tracking-wider mt-0.5">
+                                        {roleDisplayName}
+                                    </span>
+                                </div>
+                                {/* Options Button with circular hover shade wrapper */}
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center group-hover:bg-surface-hover/50 text-text-dim group-hover:text-text-main transition-colors shrink-0">
+                                    <MoreHorizontalIcon className="w-3.5 h-3.5" />
+                                </div>
+                            </div>
+
+                            {/* Notification Bell */}
+                            <div className="relative shrink-0 ml-1.5">
+                                <button
+                                    ref={bellRef}
+                                    onClick={() => {
+                                        if (!isNotificationsOpen) updateNotifPanelPos();
+                                        setIsNotificationsOpen(!isNotificationsOpen);
+                                    }}
+                                    className="w-7 h-7 rounded-full hover:bg-surface-hover/50 text-text-dim hover:text-text-main transition-colors relative flex items-center justify-center cursor-pointer"
+                                    title="Ver notificaciones"
+                                >
+                                    <Bell size={14} strokeWidth={1.5} />
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
 
