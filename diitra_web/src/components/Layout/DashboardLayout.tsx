@@ -48,10 +48,6 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     });
 
     useEffect(() => {
-        localStorage.removeItem('sidebar_width');
-    }, []);
-
-    useEffect(() => {
         const initWebPush = async () => {
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                 console.log('Este navegador no soporta notificaciones Web Push.');
