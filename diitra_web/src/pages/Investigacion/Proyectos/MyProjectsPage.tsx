@@ -7,6 +7,7 @@ import {
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import { useAuth } from '../../../api/AuthContext';
+import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 
 interface ProyectoResumen {
     uuid: string;
@@ -103,7 +104,7 @@ const MyProjectsPage: React.FC = () => {
     });
 
     const abrirWorkspace = (p: ProyectoResumen) => {
-        navigate(`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${p.uuid}`);
+        navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid));
     };
 
     if (loading) return (

@@ -5,6 +5,7 @@ import { DashboardHeader } from '../Components/DashboardHeader';
 import { useAuth } from '../../../api/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../../../api/axios_config';
+import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 
 interface ProyectoResumen {
     uuid: string;
@@ -130,7 +131,7 @@ export const EstudianteDashboard: React.FC = () => {
                                 {colaboraciones.map(p => (
                                     <div 
                                         key={p.uuid}
-                                        onClick={() => navigate(`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${p.uuid}`)}
+                                        onClick={() => navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid))}
                                         className="p-3 rounded-lg border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-border-hover transition-all"
                                     >
                                         <div className="min-w-0 flex-1 pr-2">

@@ -264,7 +264,7 @@ namespace diitra_infrastructure.Common.Notifications
                             contextReplacements["[[proyecto_director_email]]"] = dir?.EmailInstitucional ?? "";
                             contextReplacements["[[linea_investigacion]]"] = proj.IdSublineaNavigation?.IdLineaNavigation?.NombreLinea ?? "General";
                             contextReplacements["[[proyecto_sublinea]]"] = proj.IdSublineaNavigation?.Nombre ?? "No asignada";
-                            contextReplacements["[[proyecto_workspace_url]]"] = $"{frontendUrl}/investigacion/workspace/PROTOCOLO_INVESTIGACION/{proj.Uuid}";
+                            contextReplacements["[[proyecto_workspace_url]]"] = $"{frontendUrl}/investigacion/workspace/protocolo-investigacion/{proj.Uuid}";
                         }
                     }
                     else if (request.EntityType.Equals("Convocatoria", StringComparison.OrdinalIgnoreCase))

@@ -14,12 +14,12 @@ import {
 
 export const HELP_MAP: Record<string, HelpConfig> = {
     '/dashboard': DASHBOARD_CONFIG,
-    '/settings': SETTINGS_CONFIG,
+    '/configuracion': SETTINGS_CONFIG,
     '/derechos-arco': ARCO_CONFIG,
     '/admin/lopdp': LOPDP_ADMIN_CONFIG,
     '/analiticas': ANALYTICS_CONFIG,
     '/notificaciones': NOTIFICATIONS_CONFIG,
-    '/verify': VERIFY_CONFIG,
+    '/verificacion': VERIFY_CONFIG,
     '/convocatorias': CONVOCATORIAS_CONFIG,
     
     '/investigacion': INVESTIGACION_CONFIG,
@@ -35,7 +35,7 @@ export const HELP_MAP: Record<string, HelpConfig> = {
     
     '/usuarios': USUARIOS_CONFIG,
     '/auditoria': AUDITORIA_CONFIG,
-    '/configuracion': CONFIGURACION_CONFIG,
+    '/parametros-normativos': CONFIGURACION_CONFIG,
     '/grupos': GRUPOS_CONFIG,
     '/admin/emails': EMAILS_CONFIG
 };
@@ -56,6 +56,9 @@ export const normalizePathname = (path: string): string => {
     }
     if (segments[0] === 'arbitraje' && segments[1] === 'proyecto' && segments.length > 2) {
         return '/arbitraje/proyecto';
+    }
+    if (segments[0] === 'verificacion' && segments.length > 1) {
+        return '/verificacion';
     }
     return path;
 };

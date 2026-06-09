@@ -15,6 +15,7 @@ import { DocumentTemplateRegistry } from '../../../../core/documents/registry/Do
 import { getDocumentSection } from '../../../../core/documents/registry/DocumentComponentRegistry';
 
 import DIITRABuilderShell from '../../../../components/DIITRA/DIITRABuilderShell';
+import { buildWorkspacePath } from '../../../../core/documents/templateUrl';
 
 /**
  * Mapa de nombres de íconos (string del Registry) → componentes Lucide.
@@ -367,7 +368,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     setFormData((prev: any) => ({ ...prev, Uuid: newUuid }));
                     if (!window.location.pathname.includes('/workspace/')) {
                         await api.patch(`/documents/instances/${newUuid}/metadata`, { ...data, Uuid: newUuid });
-                        navigate(`/investigacion/workspace/${templateCode}/${newUuid}?edit=true`, { replace: true });
+                        navigate(buildWorkspacePath(templateCode, newUuid, '?edit=true'), { replace: true });
                     }
                 }
             }

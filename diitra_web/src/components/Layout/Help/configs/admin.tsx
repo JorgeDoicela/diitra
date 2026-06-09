@@ -248,7 +248,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
 
 export const CONFIGURACION_CONFIG: HelpConfig = {
     icon: <Settings2 size={24} className="text-brand" />,
-    title: "Consola de Configuración del Sistema",
+    title: "Parámetros Normativos",
     summary: "Panel de control para la parametrización de catálogos oficiales, ciclos académicos e indicadores del CACES.",
     description: "Módulo administrativo enfocado en la configuración global de los parámetros operativos de DIITRA. Permite a los directivos actualizar las líneas oficiales de investigación del instituto, dar mantenimiento a las ponderaciones de productos académicos, establecer períodos académicos de postulación y definir las metas anuales de los indicadores del CACES.",
     steps: [

@@ -29,6 +29,7 @@ import { useConfirm } from '../../../../api/ConfirmContext';
 import { iniciarEjecucion } from '../../../../services/peerReviewService';
 import DocumentEditor from '../Wizard/DocumentEditor';
 import WorkspaceActivityPanel from './WorkspaceActivityPanel';
+import { buildWorkspacePath, isLegacyTemplateUrlSegment, slugToTemplateCode } from '../../../../core/documents/templateUrl';
 
 
 const WorkflowPhases = [
@@ -59,7 +60,8 @@ const formatNombre = (nombre: string | null | undefined) => {
 };
 
 export const ProjectWorkspace: React.FC = () => {
-    const { documentUuid, templateCode } = useParams<{ documentUuid: string, templateCode: string }>();
+    const { documentUuid, templateCode: templateSlug } = useParams<{ documentUuid: string, templateCode: string }>();
+    const templateCode = templateSlug ? slugToTemplateCode(templateSlug) : 'PROTOCOLO_INVESTIGACION';
     const { user, isAdmin, roles } = useAuth();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
@@ -69,10 +71,15 @@ export const ProjectWorkspace: React.FC = () => {
     const queryParams = new URLSearchParams(location.search);
     const shouldEdit = queryParams.get('edit') === 'true';
 
+    useEffect(() => {
+        if (!templateSlug || !documentUuid || !isLegacyTemplateUrlSegment(templateSlug)) return;
+        navigate(buildWorkspacePath(templateCode, documentUuid, location.search), { replace: true });
+    }, [templateSlug, templateCode, documentUuid, location.search, navigate]);
+
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeDocument, setActiveDocument] = useState<string | null>(() => {
-        return shouldEdit ? (templateCode || 'PROTOCOLO_INVESTIGACION') : null;
+        return shouldEdit ? templateCode : null;
     });
     const [isPublishingDSpace, setIsPublishingDSpace] = useState(false);
 
@@ -760,7 +767,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleCloseEditor = () => {
         setActiveDocument(null);
-        navigate(`/investigacion/workspace/${templateCode}/${documentUuid}`, { replace: true });
+        navigate(buildWorkspacePath(templateCode, documentUuid!), { replace: true });
     };
 
     const resolveDocumentInstance = async (docTemplateCode: string) => {

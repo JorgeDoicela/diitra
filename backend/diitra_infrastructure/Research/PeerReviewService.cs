@@ -1257,7 +1257,7 @@ public class PeerReviewService : IPeerReviewService
                     title,
                     body,
                     "INVESTIGACION",
-                    $"/investigacion/workspace/PROTOCOLO_INVESTIGACION/{project.Uuid}"
+                    $"/investigacion/workspace/protocolo-investigacion/{project.Uuid}"
                 );
             }
         }
@@ -1340,7 +1340,7 @@ public class PeerReviewService : IPeerReviewService
                     "Proyecto en Ejecución",
                     $"Su proyecto '{project.Titulo}' ha iniciado la fase de ejecución operativa.",
                     "INVESTIGACION",
-                    $"/investigacion/workspace/PROTOCOLO_INVESTIGACION/{project.Uuid}"
+                    $"/investigacion/workspace/protocolo-investigacion/{project.Uuid}"
                 );
             }
         }

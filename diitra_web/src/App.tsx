@@ -37,6 +37,17 @@ import SettingsPage from './pages/Settings/SettingsPage';
 import LopdpConsentPage from './pages/Lopdp/LopdpConsentPage';
 import ArcoPage from './pages/Lopdp/ArcoPage';
 import LopdpAdminPage from './pages/Lopdp/LopdpAdminPage';
+import { buildWorkspacePath } from './core/documents/templateUrl';
+
+const RedirectPreserveSearch = ({ to }: { to: string }) => {
+    const location = useLocation();
+    return <Navigate to={`${to}${location.search}`} replace />;
+};
+
+const RedirectVerifyCode = () => {
+    const { code } = useParams<{ code: string }>();
+    return <Navigate to={code ? `/verificacion/${code}` : '/verificacion'} replace />;
+};
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     const { isAuthenticated, isLoading, user } = useAuth();
@@ -137,7 +148,7 @@ const NavigateToProjectDetail = () => {
 
 const NavigateToWorkspaceDetail = () => {
     const { documentUuid } = useParams();
-    return <Navigate to={`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${documentUuid}`} replace />;
+    return <Navigate to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', documentUuid!)} replace />;
 };
 
 function App() {
@@ -203,7 +214,8 @@ function App() {
                             </ProtectedRoute>
                         }>
                             <Route path="/dashboard" element={<Dashboard />} />
-                            <Route path="/settings" element={<SettingsPage />} />
+                            <Route path="/configuracion" element={<SettingsPage />} />
+                            <Route path="/settings" element={<RedirectPreserveSearch to="/configuracion" />} />
                             <Route path="/derechos-arco" element={<ArcoPage />} />
                             <Route path="/admin/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
@@ -211,12 +223,12 @@ function App() {
                             <Route path="/usuarios" element={<PermissionRoute module="USUARIOS" op="VER"><UsersPage /></PermissionRoute>} />
                             <Route path="/auditoria" element={<AdminRoute><AuditPage /></AdminRoute>} />
                             <Route path="/grupos" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><GroupsPage /></RoleRoute>} />
-                            <Route path="/configuracion" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
+                            <Route path="/parametros-normativos" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
                             <Route path="/admin/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
                             <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
                             <Route path="/admin/groups" element={<Navigate to="/grupos" replace />} />
                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
-                            <Route path="/admin/configuracion" element={<Navigate to="/configuracion" replace />} />
+                            <Route path="/admin/configuracion" element={<RedirectPreserveSearch to="/parametros-normativos" />} />
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
                             <Route path="/investigacion/proyectos" element={<Navigate to="/investigacion" replace />} />
                             <Route path="/investigacion/proyectos/workspace/:documentUuid" element={<NavigateToWorkspaceDetail />} />
@@ -232,11 +244,13 @@ function App() {
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
                             <Route path="/arbitraje" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
                             <Route path="/arbitraje/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
-                            <Route path="/verify" element={<VerifyDocument />} />
+                            <Route path="/verificacion" element={<VerifyDocument />} />
+                            <Route path="/verify" element={<RedirectPreserveSearch to="/verificacion" />} />
                         </Route>
 
                         {/* Public Verification Page (Accessible without authentication) */}
-                        <Route path="/verify/:code" element={<VerifyDocument />} />
+                        <Route path="/verificacion/:code" element={<VerifyDocument />} />
+                        <Route path="/verify/:code" element={<RedirectVerifyCode />} />
 
                         <Route path="/consentimiento-lopdp" element={
                             <ProtectedRoute>

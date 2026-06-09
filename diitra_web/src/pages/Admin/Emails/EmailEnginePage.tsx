@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import api from '../../../api/axios_config';
+import { buildWorkspacePath } from '../../../core/documents/templateUrl';
 import { useConfirm } from '../../../api/ConfirmContext';
 import {
     Mail, Plus, Edit2, Trash2, Send, History, FileText, CheckCircle2,
@@ -757,7 +758,7 @@ const EmailEnginePage: React.FC = () => {
                     '[[proyecto_descripcion]]': p.descripcion || 'Sin descripción',
                     '[[proyecto_estado]]': p.estado || 'En Ejecución',
                     '[[linea_investigacion]]': p.linea_investigacion || 'General',
-                    '[[proyecto_workspace_url]]': `${window.location.origin}/investigacion/workspace/PROTOCOLO_INVESTIGACION/${p.uuid}`
+                    '[[proyecto_workspace_url]]': `${window.location.origin}${buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid)}`
                 }));
             }
         } else if (contextType === 'Convocatoria') {
