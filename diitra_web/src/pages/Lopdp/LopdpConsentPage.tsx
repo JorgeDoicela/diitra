@@ -87,7 +87,7 @@ const LopdpConsentPage: React.FC = () => {
                     <ul className="list-disc pl-5 space-y-1">
                         <li>Gestión, evaluación, monitoreo y archivo de proyectos de investigación científica, desarrollo experimental y transferencia tecnológica.</li>
                         <li>Registro y acreditación de la producción científica ante los organismos de control de la educación superior (SENESCYT, CACES).</li>
-                        <li>Habilitación y custodia segura de firmas electrónicas PAdES para la suscripción de actas de acreditación y reportes de avance.</li>
+                        <li>Habilitación y custodia segura de firmas electrónicas para la suscripción de actas de acreditación y reportes de avance.</li>
                         <li>Procesos de revisión por pares ciegos (evaluadores internos y externos).</li>
                         <li>Envío de notificaciones críticas de la plataforma y alertas sobre hitos y fechas límite.</li>
                     </ul>
@@ -97,12 +97,12 @@ const LopdpConsentPage: React.FC = () => {
                         DIITRA recopila y procesa los siguientes datos:
                         Datos de identificación y contacto (nombres completos, cédula/pasaporte, correo institucional).
                         Datos académicos e investigadores (grados académicos, especialidades, ORCID ID, Scopus Author ID, Google Scholar URL, ResearchGate URL).
-                        Datos técnicos de seguridad y de auditoría (dirección IP, agente de usuario, fecha y hora de acceso, firmas criptográficas y hashes de consentimiento).
+                        Datos técnicos de seguridad y de auditoría (dirección IP, navegador y dispositivo, fecha y hora de acceso, firmas electrónicas y códigos de verificación del consentimiento).
                     </p>
 
                     <p>
                         <strong>4. SEGURIDAD Y CUSTODIA DE LA INFORMACIÓN:</strong><br />
-                        Los datos personales son custodiados utilizando altos estándares de seguridad informática, incluyendo cifrado AES-256 para contraseñas de certificados digitales y almacenamiento inalterable de registros de auditoría de acceso a datos sensibles (trazabilidad legal CACES 2026).
+                        Los datos personales son custodiados utilizando altos estándares de seguridad informática, incluyendo cifrado avanzado para contraseñas de certificados digitales y almacenamiento permanente de registros de auditoría de acceso a datos sensibles (conforme a normativa CACES 2026).
                     </p>
 
                     <p>

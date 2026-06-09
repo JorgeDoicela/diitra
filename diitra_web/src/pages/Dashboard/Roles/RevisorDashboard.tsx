@@ -40,7 +40,7 @@ export const RevisorDashboard: React.FC = () => {
         <>
             <DashboardHeader 
                 title={`Bienvenido, Dr. ${firstName}`} 
-                subtitle="Revisa propuestas de investigación bajo el estándar de doble ciego institucional." 
+                subtitle="Revisa propuestas de investigación sin conocer la identidad de los autores." 
                 roleName="Evaluador Externo"
                 actions={
                     <>

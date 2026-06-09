@@ -26,7 +26,7 @@ const Dashboard: React.FC = () => {
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
                         <Loader2 className="animate-spin text-text-main/20" size={40} />
-                        <p className="section-label text-text-dim">Preparando Entorno...</p>
+                        <p className="section-label text-text-dim">Cargando panel...</p>
                     </div>
                 ) : (
                     roleDashboard

@@ -441,7 +441,7 @@ const ProjectAdoptionPage: React.FC = () => {
                             </div>
 
                             <p className="text-[11px] text-text-dim leading-relaxed">
-                                El sistema auditará este cambio inmutablemente bajo normas de trazabilidad de la LOES, y registrará una transición de estado de <strong className="text-text-main">Inconcluso</strong> a <strong className="text-text-main">En Ejecución</strong>.
+                                El sistema registrará este cambio de forma permanente según la normativa LOES y documentará la transición de estado de <strong className="text-text-main">Inconcluso</strong> a <strong className="text-text-main">En Ejecución</strong>.
                             </p>
 
                             {adoptionSuccess && (
@@ -523,7 +523,7 @@ const ProjectAdoptionPage: React.FC = () => {
                                         value={declareReason}
                                         onChange={e => setDeclareReason(e.target.value)}
                                     />
-                                    <span className="text-[8px] text-text-dim block leading-relaxed">Este motivo será insertado de forma permanente en el bloque de trazabilidad y enviado en el correo de difusión.</span>
+                                    <span className="text-[8px] text-text-dim block leading-relaxed">Este motivo quedará registrado de forma permanente en el historial del proyecto y se enviará en el correo de difusión.</span>
                                 </div>
 
                                 {declareSuccess && (

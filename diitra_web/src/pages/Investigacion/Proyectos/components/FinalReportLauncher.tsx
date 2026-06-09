@@ -176,7 +176,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
 
                 <div className="modal-footer !justify-between">
                     <span className="text-[9px] md:text-[10px] text-text-dim font-medium uppercase tracking-widest">
-                        Trazabilidad Habilitada
+                        Cambios registrados permanentemente
                     </span>
                     <button 
                         onClick={onClose}

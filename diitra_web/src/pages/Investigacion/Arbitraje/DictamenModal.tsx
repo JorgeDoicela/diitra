@@ -131,7 +131,7 @@ const DictamenModal: React.FC<Props> = ({ dictamen, onClose }) => {
                                                 Árbitro #{idx + 1}
                                             </p>
                                             <p className="text-[10px] text-text-dim">
-                                                {ev.es_externo ? 'Par Externo' : 'Par Interno'} · {ev.es_doble_ciego ? 'Doble Ciego' : 'Abierto'}
+                                                {ev.es_externo ? 'Par Externo' : 'Par Interno'} · {ev.es_doble_ciego ? 'Anónimo' : 'Abierto'}
                                             </p>
                                         </div>
                                     </div>

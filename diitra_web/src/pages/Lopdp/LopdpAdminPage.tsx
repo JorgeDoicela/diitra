@@ -322,7 +322,7 @@ const LopdpAdminPage: React.FC = () => {
                                         <th className="py-3 px-4">Canal</th>
                                         <th className="py-3 px-4">Fecha</th>
                                         <th className="py-3 px-4">Dirección IP</th>
-                                        <th className="py-3 px-4">User Agent</th>
+                                        <th className="py-3 px-4">Navegador</th>
                                         <th className="py-3 px-4 text-right">Estado</th>
                                     </tr>
                                 </thead>

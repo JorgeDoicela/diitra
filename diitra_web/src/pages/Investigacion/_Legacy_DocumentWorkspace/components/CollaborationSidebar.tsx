@@ -101,7 +101,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({ instanceUui
             <div className="p-4 border-b border-border-thin flex items-center justify-between bg-gray-50/50 dark:bg-bg-deep/50">
                 <div className="flex items-center gap-2">
                     <Activity size={16} className="text-primary animate-pulse" />
-                    <span className="text-xs font-black uppercase tracking-widest text-text-main">Team Pulse</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-text-main">Actividad del equipo</span>
                 </div>
                 <button 
                     onClick={() => setIsOpen(false)}

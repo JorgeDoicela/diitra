@@ -169,7 +169,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
                 <Loader size={48} className="animate-spin text-primary" />
                 <p className="text-text-dim text-sm font-black uppercase tracking-widest animate-pulse">
-                    Cargando Workspace Colaborativo...
+                    Cargando editor colaborativo...
                 </p>
             </div>
         );

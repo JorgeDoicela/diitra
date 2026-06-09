@@ -128,7 +128,7 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
 
     RUBRICA_EVALUACION: {
         title: "Rúbrica de Evaluación por Pares",
-        subtitle: "Revisión doble ciego (Fase 2) — Normativa CACES",
+        subtitle: "Evaluación anónima (Fase 2) — Normativa CACES",
         schema: {
             Pertinencia: 0,
             Metodologia: 0,
@@ -195,7 +195,7 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
 
     INFORME_FINAL_INVESTIGACION: {
         title: "Informe Final de Investigación",
-        subtitle: "Cierre y Consolidación de Resultados - ISTPET",
+        subtitle: "Cierre y entrega de resultados - ISTPET",
         schema: {
             resumen_ejecutivo: '',
             cumplimiento_objetivos: '',

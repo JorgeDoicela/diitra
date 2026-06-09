@@ -5,7 +5,7 @@ import type { HelpConfig, MockupProps } from '../types';
 
 export const INVESTIGACION_CONFIG: HelpConfig = {
     icon: <PenTool size={24} className="text-brand" />,
-    title: "Propuestas y Proyectos de I+D+i",
+    title: "Propuestas y proyectos de investigación",
     summary: "Módulo administrativo central para la formulación, registro y postulación de protocolos de investigación y desarrollo.",
     description: "Esta consola proporciona un entorno estructurado para la planificación y postulación de proyectos científicos y tecnológicos de la institución. Permite a los investigadores completar el formulario digital, estructurar los presupuestos detallados por partidas, conformar el equipo de coinvestigadores y adjuntar documentos anexos requeridos por las bases de las convocatorias.",
     steps: [
@@ -36,7 +36,7 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
             <div className={`rounded-lg border p-2 flex items-center justify-between transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                 <div className="flex flex-col gap-0.5">
                     <span className="text-[5px] text-brand uppercase font-mono tracking-wider font-semibold">Mis Investigaciones</span>
-                    <span className="text-[8px] text-text-main font-semibold leading-tight">Proyectos de I+D+i</span>
+                    <span className="text-[8px] text-text-main font-semibold leading-tight">Proyectos de investigación</span>
                 </div>
                 <div className="h-5 px-2 bg-brand text-white rounded flex items-center justify-center text-[6px] font-bold shadow-sm">
                     + Nueva Postulación
@@ -50,12 +50,12 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
                     <div className="rounded-md border border-border-thin bg-surface-hover/10 p-1.5 flex flex-col gap-1">
                         <div className="w-3.5 h-3.5 rounded bg-brand/10 text-brand flex items-center justify-center text-[7px]">📁</div>
                         <span className="text-[7px] font-bold text-text-main leading-tight uppercase">Mis Proyectos</span>
-                        <span className="text-[5px] text-text-dim leading-none uppercase">Expediente Personal</span>
+                        <span className="text-[5px] text-text-dim leading-none uppercase">Mis proyectos</span>
                     </div>
                     <div className="rounded-md border border-border-thin bg-surface-hover/10 p-1.5 flex flex-col gap-1">
                         <div className="w-3.5 h-3.5 rounded bg-brand/10 text-brand flex items-center justify-center text-[7px]">📄</div>
                         <span className="text-[7px] font-bold text-text-main leading-tight uppercase">Informe Final</span>
-                        <span className="text-[5px] text-text-dim leading-none uppercase">Consolidación</span>
+                        <span className="text-[5px] text-text-dim leading-none uppercase">Informe final</span>
                     </div>
                 </div>
 
@@ -87,7 +87,7 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
 export const MIS_PROYECTOS_CONFIG: HelpConfig = {
     ...INVESTIGACION_CONFIG,
     title: "Mis Proyectos Académicos",
-    summary: "Expediente personal e histórico de tus postulaciones e investigaciones activas.",
+    summary: "Historial personal de tus postulaciones e investigaciones activas.",
     description: "Espacio de trabajo personal donde puedes realizar el seguimiento pormenorizado del estado de tus propuestas de investigación. Permite editar borradores inconclusos, revisar las observaciones detalladas emitidas por los revisores pares, cargar los entregables periódicos definidos en tu cronograma y consultar resoluciones oficiales.",
     steps: [
         {
@@ -96,7 +96,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         },
         {
-            title: "Acceso al Workspace colaborativo en tiempo real",
+            title: "Acceso al espacio de trabajo colaborativo en tiempo real",
             description: "Haz clic sobre cualquier proyecto en estado 'En Ejecución' para abrir tu área de trabajo colaborativa. En esta sección podrás registrar las bitácoras de avance semanal, subir informes de hitos del cronograma, cargar facturas de presupuesto y chatear con los miembros del equipo y coinvestigadores asignados.",
             highlight: 'content-bottom'
         },
@@ -106,7 +106,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Garantiza la inmutabilidad y la trazabilidad de los informes de avance de investigación exigidos por los comités de evaluación del CES y CACES, demostrando el cumplimiento riguroso de las horas docentes dedicadas al desarrollo científico.",
+    compliance: "Garantiza el registro permanente de los informes de avance de investigación exigidos por los comités de evaluación del CES y CACES, demostrando el cumplimiento de las horas docentes dedicadas al desarrollo científico.",
     tips: [
         "Cuando tu propuesta reciba observaciones, haz clic en el botón amarillo de alerta para ver la rúbrica detallada del revisor paso a paso con los comentarios específicos de lo que debes reformular.",
         "Mantén al día la carga de evidencias de avance en tu cronograma para evitar bloqueos administrativos automáticos al final del periodo académico."
@@ -118,7 +118,7 @@ export const MIS_PROYECTOS_CONFIG: HelpConfig = {
                 <div className="flex justify-between items-center">
                     <div className="flex flex-col">
                         <span className="text-[4px] text-brand uppercase font-mono tracking-wider font-semibold">Mis Investigaciones</span>
-                        <span className="text-[7px] text-text-main font-bold">Mis Proyectos de I+D+i</span>
+                        <span className="text-[7px] text-text-main font-bold">Mis proyectos de investigación</span>
                     </div>
                     <div className="px-1.5 py-0.5 bg-brand text-white rounded text-[5px] font-bold">
                         + Nueva Postulación

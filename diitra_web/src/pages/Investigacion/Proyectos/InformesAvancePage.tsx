@@ -250,7 +250,7 @@ const InformesAvancePage: React.FC = () => {
                     className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-bold uppercase tracking-widest mb-4 transition-colors"
                 >
                     <ArrowLeft size={13} />
-                    Volver al Workspace
+                    Volver al proyecto
                 </button>
                 <div className="section-label mb-2">
                     <FileText size={12} className="text-text-main" />
@@ -303,7 +303,7 @@ const InformesAvancePage: React.FC = () => {
                 <div>
                     <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-1">Flujo de Acreditación CACES</p>
                     <p className="text-[11px] text-text-dim leading-relaxed">
-                        Haz clic en <span className="font-bold text-text-main">«Abrir Builder»</span> para completar las 4 secciones requeridas:
+                        Haz clic en <span className="font-bold text-text-main">«Completar informe»</span> para llenar las 4 secciones requeridas:
                         <span className="text-brand font-bold"> Bitácora Científica</span> ·
                         <span className="text-blue-400 font-bold"> Actividades del Cronograma</span> ·
                         <span className="text-emerald-400 font-bold"> Evidencias Físicas</span> ·
@@ -325,7 +325,7 @@ const InformesAvancePage: React.FC = () => {
                     </p>
                     <p className="text-xs text-text-dim mt-2 max-w-md mx-auto">
                         El identificador <span className="font-mono text-text-main">{projectId}</span> no coincide con ningún proyecto.
-                        Abre esta página desde el workspace del proyecto.
+                        Abre esta página desde el espacio de trabajo del proyecto.
                     </p>
                 </div>
             ) : informes.length === 0 ? (
@@ -376,7 +376,7 @@ const InformesAvancePage: React.FC = () => {
                                     <div className="flex items-center gap-3 shrink-0">
                                         {inf.es_firmado_digital && (
                                             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest hidden sm:block">
-                                                PAdES ✓
+                                                Firmado ✓
                                             </span>
                                         )}
                                         <div className={`badge-vercel ${cfg.badge} flex items-center gap-1.5`}>
@@ -443,7 +443,7 @@ const InformesAvancePage: React.FC = () => {
                                         {inf.hash_firma && (
                                             <div>
                                                 <p className="text-[10px] font-black text-text-dim uppercase tracking-widest mb-1">
-                                                    Hash de Integridad (SHA-256)
+                                                    Código de verificación
                                                 </p>
                                                 <code className="text-[10px] font-mono text-emerald-400 break-all">
                                                     {inf.hash_firma}
@@ -468,7 +468,7 @@ const InformesAvancePage: React.FC = () => {
                                                 {isLoadingThisEditor
                                                     ? <RefreshCw size={12} className="animate-spin" />
                                                     : <Activity size={12} />}
-                                                {inf.estado === 'Aprobado' ? 'Ver Informe Completo' : 'Abrir Builder CACES'}
+                                                {inf.estado === 'Aprobado' ? 'Ver Informe Completo' : 'Completar informe'}
                                             </button>
 
                                             {/* Director de Investigación: validar */}
@@ -510,7 +510,7 @@ const InformesAvancePage: React.FC = () => {
                                             {inf.es_firmado_digital && (
                                                 <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-2 py-1.5">
                                                     <Shield size={12} />
-                                                    PAdES aplicado
+                                                    Firma digital aplicada
                                                 </span>
                                             )}
                                         </div>
@@ -519,7 +519,7 @@ const InformesAvancePage: React.FC = () => {
                                             <div className="flex items-start gap-2 bg-error/5 border border-error/20 rounded-xl p-3">
                                                 <AlertCircle size={14} className="text-error shrink-0 mt-0.5" />
                                                 <p className="text-xs text-text-dim leading-relaxed">
-                                                    Este informe ha sido observado. Revisa el contenido, corrígelo en el Builder y vuelve a enviarlo.
+                                                    Este informe ha sido observado. Revisa el contenido, corrígelo en el editor y vuelve a enviarlo.
                                                 </p>
                                             </div>
                                         )}
@@ -541,7 +541,7 @@ const InformesAvancePage: React.FC = () => {
                                     Nuevo Informe de Avance
                                 </h3>
                                 <p className="text-[10px] text-text-dim mt-1">
-                                    Registra el período y un resumen inicial. Luego completa las 4 secciones CACES en el Builder.
+                                    Registra el período y un resumen inicial. Luego completa las 4 secciones CACES en el editor.
                                 </p>
                             </div>
                             <button onClick={() => setShowCreate(false)} className="text-text-dim hover:text-text-main">
@@ -567,7 +567,7 @@ const InformesAvancePage: React.FC = () => {
                                 </label>
                                 <textarea
                                     rows={4}
-                                    placeholder="Describa brevemente el período. Podrá ampliar con bitácora, cronograma, evidencias y presupuesto en el Builder CACES..."
+                                    placeholder="Describa brevemente el período. Podrá ampliar con bitácora, cronograma, evidencias y presupuesto en el editor del informe..."
                                     value={formData.resumen_actividades}
                                     onChange={e => setFormData(f => ({ ...f, resumen_actividades: e.target.value }))}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40"
@@ -595,7 +595,7 @@ const InformesAvancePage: React.FC = () => {
                                 className="btn-vercel-primary !py-2 !px-4 !text-xs flex items-center gap-1.5"
                             >
                                 {creating ? <RefreshCw size={12} className="animate-spin" /> : <Plus size={12} />}
-                                Crear y Abrir Builder
+                                Crear y abrir editor
                             </button>
                         </div>
                     </div>
@@ -608,7 +608,7 @@ const InformesAvancePage: React.FC = () => {
                     <div className="bg-surface border border-border-thin rounded-3xl w-full max-w-md p-6 space-y-5 animate-fade-in">
                         <div className="flex items-center justify-between">
                             <h3 className="text-sm font-semibold uppercase tracking-widest text-text-main">
-                                Firma PAdES · Informe #{firmarTarget.numero_informe}
+                                Firma digital · Informe #{firmarTarget.numero_informe}
                             </h3>
                             <button onClick={() => setFirmarTarget(null)} className="text-text-dim hover:text-text-main">
                                 <X size={16} />
@@ -688,7 +688,7 @@ const InformesAvancePage: React.FC = () => {
                             </label>
                             <textarea
                                 rows={4}
-                                placeholder="Indique qué correcciones debe realizar el Director de Proyecto en el Builder CACES..."
+                                placeholder="Indique qué correcciones debe realizar el Director de Proyecto en el editor del informe..."
                                 value={observacion}
                                 onChange={e => setObservacion(e.target.value)}
                                 className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-text-main/40"

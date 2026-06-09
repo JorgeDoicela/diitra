@@ -7,7 +7,7 @@ export const USUARIOS_CONFIG: HelpConfig = {
     icon: <Shield size={24} className="text-brand" />,
     title: "Consola de Gestión de Usuarios y Roles",
     summary: "Control administrativo de identidades, perfiles académicos y asignación de capacidades del claustro.",
-    description: "Sección exclusiva para la administración central orientada a la gestión de accesos y configuración de permisos de usuarios en DIITRA. Facilita la asignación rápida de roles clave, la habilitación de firmas digitales y el registro exhaustivo de evaluadores y revisores pares externos para procesos de evaluación doble ciego.",
+    description: "Sección para gestionar accesos y permisos de usuarios en DIITRA. Permite asignar roles, habilitar firmas digitales y registrar evaluadores y revisores externos para procesos de evaluación anónima.",
     steps: [
         {
             title: "Asignación dinámica de roles y capacidades",
@@ -135,18 +135,18 @@ export const AUDITORIA_CONFIG: HelpConfig = {
         },
         {
             title: "Inspección de diferencias estructuradas (Diff)",
-            description: "Haz clic en cualquier registro de la bitácora para desplegar el visor de diferencias comparativo. El sistema mostrará un análisis de campos estructurado, indicando el estado del registro 'Antes' de la modificación (en color rojo/negativo) y el estado del registro 'Después' de la modificación (en color verde/positivo) en formato JSON.",
+            description: "Haz clic en cualquier registro de la bitácora para desplegar el visor de diferencias. El sistema mostrará los valores anteriores (en rojo) y los valores nuevos (en verde) de cada campo modificado.",
             highlight: 'content-bottom'
         },
         {
-            title: "Exportación certificada de reportes y firmas criptográficas",
-            description: "Utiliza el botón 'Exportar Reporte' para generar un archivo Excel certificado digitalmente. Este archivo incluye todas las columnas de auditoría técnica y se encuentra firmado con el hash SHA-256 del servidor de base de datos, garantizando que los registros no han sido alterados manualmente desde su creación.",
+            title: "Exportación certificada de reportes",
+            description: "Utiliza el botón 'Exportar Reporte' para generar un archivo Excel con sello de verificación. Incluye todas las columnas de auditoría y un código que permite comprobar que los registros no han sido alterados manualmente.",
             highlight: 'content-top'
         }
     ],
-    compliance: "Garantiza el cumplimiento estricto de los estándares internacionales de seguridad y la normativa de inmutabilidad de la información exigida en los procesos de auditoría tecnológica y licenciamiento del CACES y entes reguladores de protección de datos (LOPDP).",
+    compliance: "Garantiza el cumplimiento de los estándares de seguridad y la normativa sobre integridad de la información exigida en los procesos de auditoría tecnológica y licenciamiento del CACES y entes reguladores de protección de datos (LOPDP).",
     tips: [
-        "Puedes copiar directamente el fragmento JSON del Diff de cambios con el botón de copiado rápido en el panel lateral para compartirlo con el equipo de soporte técnico en caso de auditorías externas.",
+        "Puedes copiar el detalle de cambios con el botón de copiado rápido en el panel lateral para compartirlo con el equipo de soporte en caso de auditorías externas.",
         "Los registros de eliminación de borradores de proyectos guardan el contenido completo del protocolo para permitir su recuperación rápida en caso de incidentes."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
@@ -159,7 +159,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
                         <span className="text-[7px] text-text-main font-bold">Registro de auditoría</span>
                     </div>
                     <div className="px-1.5 py-0.5 bg-text-main/10 border border-border-thin text-text-main rounded text-[5px] font-bold flex items-center gap-0.5">
-                        📥 Exportar Reporte <span className="text-[3.5px] text-text-dim font-mono">(SHA-256)</span>
+                        📥 Exportar Reporte <span className="text-[3.5px] text-text-dim font-mono">(certificado)</span>
                     </div>
                 </div>
                 <div className="flex gap-1 text-[4.5px]">
@@ -200,7 +200,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
                                 <td className="py-1 text-text-dim">Proyectos</td>
                                 <td className="py-1">
                                     <span className="px-1 py-0.2 bg-warning/10 border border-warning/20 text-warning rounded-[2px] text-[3.5px] font-semibold">
-                                        UPDATE
+                                        Actualización
                                     </span>
                                 </td>
                             </tr>
@@ -216,7 +216,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
                                 <td className="py-1 text-text-dim">Firmas</td>
                                 <td className="py-1">
                                     <span className="px-1 py-0.2 bg-success/10 border border-success/20 text-success rounded-[2px] text-[3.5px] font-semibold">
-                                        INSERT
+                                        Registro nuevo
                                     </span>
                                 </td>
                             </tr>
@@ -226,7 +226,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
 
                 {/* Right side: JSON Diff Viewer */}
                 <div className={`flex-1 rounded-lg border p-1.5 flex flex-col gap-1 transition-all duration-300 min-h-0 bg-bg-deep/80 ${highlightBottomClass}`}>
-                    <span className="text-[4px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Visor de Cambios (JSON Diff)</span>
+                    <span className="text-[4px] font-bold text-text-main uppercase block border-b border-border-thin/40 pb-0.5">Visor de cambios</span>
                     <div className="flex-1 font-mono text-[3.5px] leading-tight overflow-y-auto space-y-0.5">
                         <div className="text-text-dim">{"{"}</div>
                         <div className="pl-1.5 text-text-dim">"id": 104,</div>
@@ -249,7 +249,7 @@ export const AUDITORIA_CONFIG: HelpConfig = {
 export const CONFIGURACION_CONFIG: HelpConfig = {
     icon: <Settings2 size={24} className="text-brand" />,
     title: "Parámetros Normativos",
-    summary: "Panel de control para la parametrización de catálogos oficiales, ciclos académicos e indicadores del CACES.",
+    summary: "Panel para configurar catálogos oficiales, ciclos académicos e indicadores del CACES.",
     description: "Módulo administrativo enfocado en la configuración global de los parámetros operativos de DIITRA. Permite a los directivos actualizar las líneas oficiales de investigación del instituto, dar mantenimiento a las ponderaciones de productos académicos, establecer períodos académicos de postulación y definir las metas anuales de los indicadores del CACES.",
     steps: [
         {
@@ -334,9 +334,9 @@ export const CONFIGURACION_CONFIG: HelpConfig = {
 
 export const EMAILS_CONFIG: HelpConfig = {
     icon: <Mail size={24} className="text-brand" />,
-    title: "Motor de Plantillas y Correos",
+    title: "Plantillas y correos institucionales",
     summary: "Consola de administración para la edición de plantillas de correo electrónico transaccionales y notificaciones del sistema.",
-    description: "Módulo exclusivo para administradores diseñado para configurar y parametrizar los correos electrónicos que el sistema envía de forma automatizada (alertas de firma, invitaciones de arbitraje, recordatorios de hitos y credenciales de usuarios).",
+    description: "Módulo exclusivo para administradores diseñado para configurar los correos electrónicos que el sistema envía de forma automatizada (alertas de firma, invitaciones de arbitraje, recordatorios de hitos y credenciales de usuarios).",
     steps: [
         {
             title: "Selección y edición de plantillas dinámicas",
@@ -344,14 +344,14 @@ export const EMAILS_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         },
         {
-            title: "Configuración de SMTP y envío de prueba",
-            description: "Administra los parámetros de conexión con el servidor de correo institucional y realiza pruebas de entrega en tiempo real para verificar la correcta visualización del diseño y etiquetas.",
+            title: "Configuración del servidor de correo y envío de prueba",
+            description: "Administra los parámetros de conexión con el servidor de correo institucional y realiza pruebas de entrega para verificar la correcta visualización del diseño y etiquetas.",
             highlight: 'content-top'
         }
     ],
     compliance: "Garantiza la formalidad de la comunicación institucional y el debido proceso administrativo en las notificaciones del ciclo de vida de los proyectos de investigación científica.",
     tips: [
-        "Utiliza las variables dinámicas entre llaves dobles (ej. {{nombre_usuario}}) con precaución para no alterar la estructura de datos del renderizador.",
+        "Utiliza las variables dinámicas entre llaves dobles (ej. {{nombre_usuario}}) con precaución para no alterar la estructura de la plantilla.",
         "Siempre realiza un envío de prueba a tu dirección de correo antes de guardar y aplicar cambios globales en una plantilla activa."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
@@ -360,11 +360,11 @@ export const EMAILS_CONFIG: HelpConfig = {
             <div className={`rounded-lg border p-1.5 flex justify-between items-center transition-all duration-300 shrink-0 ${highlightTopClass}`}>
                 <div className="flex flex-col gap-0.5">
                     <span className="text-[4px] text-brand uppercase font-mono tracking-wider font-semibold">Notificaciones</span>
-                    <span className="text-[7px] text-text-main font-bold">Motor de Plantillas Transaccionales</span>
+                    <span className="text-[7px] text-text-main font-bold">Plantillas de correo</span>
                 </div>
                 <div className="flex gap-1">
                     <div className="px-1.5 py-0.5 bg-brand text-white rounded text-[5px] font-bold shadow-sm">
-                        ⚡ Probar SMTP
+                        ⚡ Enviar prueba
                     </div>
                 </div>
             </div>

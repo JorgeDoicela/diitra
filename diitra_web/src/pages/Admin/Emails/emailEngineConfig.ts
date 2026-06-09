@@ -28,7 +28,7 @@ export const TOKEN_LABELS: Record<string, { label: string; hint?: string }> = {
     '[[proyecto_director_email]]': { label: 'Correo del director' },
     '[[linea_investigacion]]': { label: 'Línea de investigación' },
     '[[proyecto_sublinea]]': { label: 'Sublínea de investigación' },
-    '[[proyecto_workspace_url]]': { label: 'Enlace al workspace' },
+    '[[proyecto_workspace_url]]': { label: 'Enlace al proyecto' },
     '[[url_adopcion]]': { label: 'Enlace de adopción' },
     '[[convocatoria_titulo]]': { label: 'Título de la convocatoria' },
     '[[convocatoria_codigo]]': { label: 'Código de convocatoria' },
@@ -78,7 +78,7 @@ export const SUBJECT_VARIANTS: Record<string, SubjectVariant[]> = {
         { id: 'formal', label: 'Acuse formal', asunto: 'DIITRA: Acuse de Recibo — Protocolo [[proyecto_codigo]]' }
     ],
     ASIGNACION_REVISOR: [
-        { id: 'default', label: 'Solicitud de evaluación', asunto: 'DIITRA: Solicitud de Evaluación por Pares Doble Ciego' },
+        { id: 'default', label: 'Solicitud de evaluación', asunto: 'DIITRA: Solicitud de evaluación anónima por pares' },
         { id: 'plazo', label: 'Recordatorio de plazo', asunto: 'DIITRA: Recordatorio — Evaluación pendiente hasta [[peer_review_fecha_limite]]' }
     ],
     DICTAMEN_DISPONIBLE: [

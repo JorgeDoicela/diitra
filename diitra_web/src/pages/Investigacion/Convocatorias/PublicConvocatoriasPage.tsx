@@ -290,7 +290,7 @@ const PublicConvocatoriasPage = () => {
                                     <BookOpen size={14} /> Alineación Académica CACES
                                 </div>
                                 <p className="text-xs text-text-dim leading-relaxed font-medium">
-                                    Esta convocatoria opera bajo el Reglamento de Régimen Académico del <strong>CES</strong> y de la <strong>SENESCYT</strong>. Todos los proyectos presentados pasarán por un proceso de revisión por pares doble ciego y auditoría inmutable de trazabilidad.
+                                    Esta convocatoria opera bajo el Reglamento de Régimen Académico del <strong>CES</strong> y de la <strong>SENESCYT</strong>. Todos los proyectos presentados pasarán por revisión por pares anónima y registro permanente de cambios.
                                 </p>
                             </div>
                             

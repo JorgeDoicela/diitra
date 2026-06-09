@@ -191,7 +191,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 <textarea
                                     value={titulo}
                                     onChange={(e) => setTitulo(e.target.value)}
-                                    placeholder="EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN CON METADATA-DRIVEN UI..."
+                                    placeholder="EJ: AUTOMATIZACIÓN DEL DEPARTAMENTO DE INVESTIGACIÓN MEDIANTE PLATAFORMA DIGITAL..."
                                     className="input-vercel !h-20 !font-bold !text-xs uppercase resize-none !placeholder:text-text-dim/30"
                                     required
                                 />

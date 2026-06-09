@@ -113,7 +113,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 <h4 className="text-lg font-semibold tracking-tight">Gestión de Proyectos & Peer Review</h4>
                                 <p className="text-[11px] text-text-dim leading-relaxed pr-6">
                                     Postulación digital completa con cronogramas Gantt y presupuestos.
-                                    Sistema de **Doble Ciego** que anonimiza documentos automáticamente para evaluadores.
+                                    **Evaluación anónima** que oculta la identidad de los autores durante la revisión por pares.
                                 </p>
                             </div>
                         </div>

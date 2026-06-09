@@ -125,7 +125,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             <div className="p-4 border-b border-border-thin flex items-center justify-between bg-bg-deep/50">
                 <div className="flex items-center gap-2">
                     <Activity size={15} className="text-brand animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-text-main">Team Pulse</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-text-main">Actividad del equipo</span>
                 </div>
                 <button
                     onClick={onClose}
@@ -301,10 +301,10 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             <div className="p-3 bg-bg-deep/50 border-t border-border-thin flex items-center justify-between">
                 <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-wider text-green-500">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                    Sincro Activa
+                    Sincronización activa
                 </div>
                 <div className="text-[8px] text-text-dim font-mono font-bold">
-                    COWORK HUB v1.0
+                    Colaboración en vivo
                 </div>
             </div>
         </aside>

@@ -62,7 +62,7 @@ export const DASHBOARD_CONFIG: HelpConfig = {
         },
         {
             title: "Accesos directos Bento y bandeja de actividades",
-            description: "Interactúa con las tarjetas dinámicas de estilo Bento para ejecutar acciones rápidas. Desde aquí puedes crear una nueva postulación de proyecto, acceder a la bandeja de firmas del informe final, revisar la bitácora histórica de transacciones o consultar los expedientes inmutables sin navegar manualmente por el menú.",
+            description: "Usa las tarjetas de acceso rápido para crear una nueva postulación, firmar el informe final, revisar el historial de actividad o consultar documentos oficiales sin navegar manualmente por el menú.",
             highlight: 'content-bottom'
         },
         {
@@ -121,7 +121,7 @@ export const SETTINGS_CONFIG: HelpConfig = {
         },
         {
             title: "Seguridad y firma electrónica cifrada",
-            description: "Administra tu certificado de firma electrónica (token o archivo p12) y otorga el consentimiento de custodia para la firma inmutable de actas e informes técnicos.",
+            description: "Administra tu certificado de firma electrónica (token o archivo p12) y otorga el consentimiento de custodia para firmar actas e informes técnicos.",
             highlight: 'content-bottom'
         }
     ],
@@ -172,7 +172,7 @@ export const ARCO_CONFIG: HelpConfig = {
     compliance: "Alineado con el Título III de la LOPDP sobre los Derechos de los Titulares de Datos Personales en el Ecuador.",
     tips: [
         "Describa de la forma más clara posible los registros o datos específicos que desea modificar o eliminar para agilizar el análisis del departamento legal.",
-        "Las resoluciones emitidas por el administrador del sistema quedarán registradas de forma inmutable en su historial."
+        "Las resoluciones emitidas por el administrador del sistema quedarán registradas de forma permanente en su historial."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
@@ -205,7 +205,7 @@ export const LOPDP_ADMIN_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Asegura la trazabilidad y el cumplimiento de las obligaciones institucionales del Responsable de Tratamiento establecidas en la Ley Orgánica de Protección de Datos Personales (LOPDP).",
+    compliance: "Asegura el registro permanente y el cumplimiento de las obligaciones institucionales del Responsable de Tratamiento establecidas en la Ley Orgánica de Protección de Datos Personales (LOPDP).",
     tips: [
         "Es obligatorio incluir una justificación o dictamen legal debidamente fundamentado para cualquier resolución, especialmente al rechazar una solicitud.",
         "Utilice los filtros y ordenamiento para priorizar aquellas peticiones que se encuentran próximas a vencer su plazo de SLA (15 días)."
@@ -241,7 +241,7 @@ export const ANALYTICS_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         },
         {
-            title: "Exportación y generación de Dossiers Ejecutivos PDF",
+            title: "Exportación de informes ejecutivos en PDF",
             description: "Usa el botón 'Exportar PDF' para generar y descargar un informe ejecutivo completo con todos los gráficos, tablas comparativas de rendimiento, listados de publicaciones indexadas activas y dictámenes cuantitativos del periodo, optimizado para impresión y presentación formal.",
             highlight: 'content-top'
         }
@@ -294,7 +294,7 @@ export const NOTIFICATIONS_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         }
     ],
-    compliance: "Cumple con las directrices de comunicación formal y debido proceso exigidas en los reglamentos de régimen académico de la institución, asegurando la trazabilidad de la entrega de dictámenes y requerimientos oficiales.",
+    compliance: "Cumple con las directrices de comunicación formal y debido proceso exigidas en los reglamentos de régimen académico de la institución, asegurando el registro de la entrega de dictámenes y requerimientos oficiales.",
     tips: [
         "Las notificaciones de la categoría 'Urgente' contienen plazos de validez para firmas electrónicas que expiran automáticamente en la fecha indicada.",
         "Puedes configurar alertas secundarias a tu correo electrónico institucional desde tu panel de perfil en la barra lateral."
@@ -322,8 +322,8 @@ export const NOTIFICATIONS_CONFIG: HelpConfig = {
 export const VERIFY_CONFIG: HelpConfig = {
     icon: <ShieldCheck size={24} className="text-brand" />,
     title: "Verificación de Certificados y Autenticidad",
-    summary: "Portal criptográfico público para la validación de reportes y actas electrónicas del sistema.",
-    description: "Herramienta pública y de acceso abierto para la validación criptográfica de cualquier documento formal, acta de arbitraje o certificado generado por DIITRA. Al ingresar el código único del documento o escanear el QR, el sistema realiza una comprobación hash SHA-256 en la base de datos central para certificar su validez e inmutabilidad.",
+    summary: "Portal público para verificar la autenticidad de reportes y actas electrónicas del sistema.",
+    description: "Herramienta pública para verificar la autenticidad de documentos formales, actas o certificados generados por DIITRA. Al ingresar el código del documento o escanear el QR, el sistema comprueba en la base de datos si el archivo es válido y no ha sido alterado.",
     steps: [
         {
             title: "Validación por código institucional",
@@ -337,14 +337,14 @@ export const VERIFY_CONFIG: HelpConfig = {
         },
         {
             title: "Dictamen de autenticidad y firmas digitales",
-            description: "Inspecciona el bloque de resultados del validador. Mostrará la información detallada del documento: estado actual ('VIGENTE' o 'ANULADO'), el firmante del comité y la validez legal del archivo basada en el hash de auditoría inmutable del servidor de base de datos.",
+            description: "Inspecciona el bloque de resultados del validador. Mostrará el estado del documento ('VIGENTE' o 'ANULADO'), el firmante del comité y si el archivo es auténtico según el código de verificación del sistema.",
             highlight: 'content-bottom'
         }
     ],
     compliance: "Alineado con las directrices de la Ley de Comercio Electrónico, Firmas Electrónicas y Mensajes de Datos del Ecuador, asegurando la validez legal de las actas de investigación ante visitas de acreditación del CACES.",
     tips: [
         "Este portal público de validación no requiere inicio de sesión, facilitando que entidades externas de educación superior o auditores del CES verifiquen la autenticidad del documento de manera autónoma.",
-        "Si un documento modificado ilegalmente es procesado por este módulo, el sistema alertará de inmediato que el hash de verificación no coincide, detectando posibles falsificaciones."
+        "Si un documento fue alterado, el sistema alertará de inmediato que el código de verificación no coincide, detectando posibles falsificaciones."
     ],
     Mockup: ({ highlightTopClass, highlightBottomClass }: MockupProps) => (
         <>
@@ -380,14 +380,14 @@ export const CONVOCATORIAS_CONFIG: HelpConfig = {
             highlight: 'content-bottom'
         },
         {
-            title: "Creación y parametrización de convocatorias (Administrador)",
+            title: "Creación y configuración de convocatorias (Administrador)",
             description: "Crea y configura nuevos ciclos de investigación definiendo las fechas de postulación, las fechas de evaluación ciega, el presupuesto total institucional asignado, y viniendo la rúbrica de evaluación CACES obligatoria que utilizarán los revisores externos.",
             highlight: 'content-top'
         }
     ],
     compliance: "Garantiza la distribución equitativa, transparente y por concurso de méritos de los presupuestos asignados a la investigación científica en las instituciones de educación superior, un indicador clave del Modelo de Evaluación del CACES.",
     tips: [
-        "El sistema bloquea automáticamente la postulación a las 23:59:59 del día de cierre indicado en la convocatoria. No se podrán realizar excepciones ya que los plazos están firmados criptográficamente.",
+        "El sistema bloquea automáticamente la postulación a las 23:59:59 del día de cierre indicado en la convocatoria. No se podrán realizar excepciones porque los plazos quedan registrados de forma permanente.",
         "Asegúrate de que la línea de investigación seleccionada en tu propuesta esté habilitada en los términos específicos de la convocatoria para evitar descalificaciones automáticas."
     ],
     Mockup: ({ highlightBottomClass }: MockupProps) => (
