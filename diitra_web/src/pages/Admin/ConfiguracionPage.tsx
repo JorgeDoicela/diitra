@@ -531,7 +531,7 @@ const ConfiguracionPage = () => {
                 <div className="space-y-2">
                     <div className="section-label text-text-main">
                         <Settings2 size={10} className="text-text-main animate-spin-slow" />
-                        <span>Configuración del Sistema</span>
+                        <span>Catálogos Institucionales</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
                         Parámetros Normativos

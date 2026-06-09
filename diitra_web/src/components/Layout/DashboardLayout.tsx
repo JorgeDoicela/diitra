@@ -16,7 +16,7 @@ interface LayoutProps {
 
 const getPageTitle = (pathname: string): string => {
     if (pathname === '/dashboard') return 'Panel de Control';
-    if (pathname === '/settings') return 'Configuración';
+    if (pathname === '/configuracion') return 'Configuración';
     if (pathname === '/derechos-arco') return 'Derechos ARCO';
     if (pathname === '/admin/lopdp') return 'Panel LOPDP (Admin)';
     if (pathname === '/analiticas') return 'Analíticas';
@@ -24,7 +24,7 @@ const getPageTitle = (pathname: string): string => {
     if (pathname === '/usuarios') return 'Gestión de Usuarios';
     if (pathname === '/auditoria') return 'Auditoría Forense';
     if (pathname === '/grupos') return 'Grupos de Investigación';
-    if (pathname === '/configuracion') return 'Configuración del Sistema';
+    if (pathname === '/parametros-normativos') return 'Parámetros Normativos';
     if (pathname === '/investigacion') return 'Proyectos de I+D+i';
     if (pathname === '/investigacion/mis-proyectos') return 'Mis Proyectos';
     if (pathname.startsWith('/investigacion/monitoreo/')) return 'Monitoreo de Proyecto';
@@ -33,7 +33,7 @@ const getPageTitle = (pathname: string): string => {
     if (pathname.startsWith('/revisiones/')) return 'Evaluación de Proyecto';
     if (pathname === '/arbitraje') return 'Arbitraje';
     if (pathname.startsWith('/arbitraje/proyecto/')) return 'Arbitraje de Proyecto';
-    if (pathname === '/verify') return 'Verificación Documental';
+    if (pathname === '/verificacion' || pathname.startsWith('/verificacion/')) return 'Verificación Documental';
     return '';
 };
 

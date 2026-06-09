@@ -165,7 +165,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
                 // 4. QR de Verificación Nativo (Esquina inferior derecha)
                 // Usamos el estándar iText 9 Professional para asegurar visibilidad en todos los visores
-                BarcodeQRCode qrCode = new BarcodeQRCode($"{_verificationBaseUrl}/verify/{_traceabilityCode}");
+                BarcodeQRCode qrCode = new BarcodeQRCode($"{_verificationBaseUrl}/verificacion/{_traceabilityCode}");
                 PdfFormXObject qrObject = qrCode.CreateFormXObject(iText.Kernel.Colors.ColorConstants.BLACK, pdfDoc);
                 
                 // Creamos un objeto Image para posicionamiento preciso y escalado automático

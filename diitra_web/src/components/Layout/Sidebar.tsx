@@ -1,4 +1,4 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle, TrendingUp, GraduationCap, Globe, Calendar, Tag, BookOpen } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle, TrendingUp, GraduationCap, Globe, Calendar, Tag, BookOpen, Scale } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
@@ -79,8 +79,8 @@ const Sidebar = ({
     const [isUsersOpen, setIsUsersOpen] = useState(
         location.pathname.startsWith('/usuarios')
     );
-    const [isConfigOpen, setIsConfigOpen] = useState(
-        location.pathname.startsWith('/configuracion')
+    const [isParametrosOpen, setIsParametrosOpen] = useState(
+        location.pathname.startsWith('/parametros-normativos')
     );
 
     useEffect(() => {
@@ -90,8 +90,8 @@ const Sidebar = ({
         if (location.pathname.startsWith('/usuarios')) {
             setIsUsersOpen(true);
         }
-        if (location.pathname.startsWith('/configuracion')) {
-            setIsConfigOpen(true);
+        if (location.pathname.startsWith('/parametros-normativos')) {
+            setIsParametrosOpen(true);
         }
     }, [location.pathname]);
 
@@ -152,7 +152,7 @@ const Sidebar = ({
         { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 2 },
         { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 2 },
         { name: 'Arbitraje', icon: Gavel, path: '/arbitraje', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 2 },
-        { name: 'Verificador', icon: ShieldCheck, path: '/verify', roles: ['ANY'], group: 2 },
+        { name: 'Verificación', icon: ShieldCheck, path: '/verificacion', roles: ['ANY'], group: 2 },
         { name: 'Analíticas', icon: BarChart3, path: '/analiticas', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 2, hasChevron: true },
 
         // Grupo 3: Sistema y Admin
@@ -163,7 +163,7 @@ const Sidebar = ({
         { name: 'Panel LOPDP', icon: ShieldCheck, path: '/admin/lopdp', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
         { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/admin/emails', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3 },
-        { name: 'Configuración', icon: Settings, path: '/configuracion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },
+        { name: 'Parámetros Normativos', icon: Scale, path: '/parametros-normativos', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 3, hasChevron: true },
     ];
 
     const menuItems = allMenuItems.filter(item => {
@@ -442,8 +442,8 @@ const Sidebar = ({
             );
         }
 
-        if (item.name === 'Configuración') {
-            const isMenuOpen = isConfigOpen;
+        if (item.name === 'Parámetros Normativos') {
+            const isMenuOpen = isParametrosOpen;
             return (
                 <div key={item.name} className="flex flex-col gap-0.5">
                     <div
@@ -456,9 +456,9 @@ const Sidebar = ({
                         <button
                             onClick={(e) => {
                                 e.preventDefault();
-                                setIsConfigOpen(true);
-                                if (!location.pathname.startsWith('/configuracion')) {
-                                    navigate('/configuracion');
+                                setIsParametrosOpen(true);
+                                if (!location.pathname.startsWith('/parametros-normativos')) {
+                                    navigate('/parametros-normativos');
                                 }
                             }}
                             className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
@@ -480,7 +480,7 @@ const Sidebar = ({
                             onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                setIsConfigOpen(!isConfigOpen);
+                                setIsParametrosOpen(!isParametrosOpen);
                             }}
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
                             title={isMenuOpen ? "Colapsar" : "Expandir"}
@@ -496,13 +496,13 @@ const Sidebar = ({
                     {isMenuOpen && (
                         <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
                             {[
-                                { name: 'Líneas de Investigación', path: '/configuracion?tab=lineas', icon: BookOpen },
-                                { name: 'Períodos Académicos', path: '/configuracion?tab=periodos', icon: Calendar },
-                                { name: 'Tipos de Producto', path: '/configuracion?tab=productos', icon: Tag },
-                                { name: 'Dominios Académicos', path: '/configuracion?tab=dominios', icon: Globe },
-                                { name: 'Indicadores CACES', path: '/configuracion?tab=indicadores', icon: Activity }
+                                { name: 'Líneas de Investigación', path: '/parametros-normativos?tab=lineas', icon: BookOpen },
+                                { name: 'Períodos Académicos', path: '/parametros-normativos?tab=periodos', icon: Calendar },
+                                { name: 'Tipos de Producto', path: '/parametros-normativos?tab=productos', icon: Tag },
+                                { name: 'Dominios Académicos', path: '/parametros-normativos?tab=dominios', icon: Globe },
+                                { name: 'Indicadores CACES', path: '/parametros-normativos?tab=indicadores', icon: Activity }
                             ].map((subItem) => {
-                                const isSubActive = location.pathname === '/configuracion' && (
+                                const isSubActive = location.pathname === '/parametros-normativos' && (
                                     (subItem.path.includes('tab=lineas') && (!location.search || location.search.includes('tab=lineas'))) ||
                                     location.search.includes(subItem.path.split('?')[1])
                                 );
@@ -690,7 +690,7 @@ const Sidebar = ({
                                 </div>
                                 <div
                                     onClick={() => {
-                                        navigate('/settings');
+                                        navigate('/configuracion');
                                         setIsUserMenuOpen(false);
                                     }}
                                     className="flex items-center gap-2.5 px-3 py-2 text-xs text-text-dim hover:text-text-main hover:bg-surface-hover rounded-md cursor-pointer transition-colors"

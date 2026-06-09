@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios_config';
+import { buildWorkspacePath } from '../../core/documents/templateUrl';
 
 interface DocumentInstance {
     uuid: string;
@@ -65,7 +66,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                 entityUuid: entityUuid,
                 title: `Protocolo - ${new Date().toLocaleDateString()}`
             });
-            navigate(`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${response.data.uuid}`);
+            navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', response.data.uuid));
         } catch (error) {
             alert("No se pudo crear el documento.");
         }
@@ -129,7 +130,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Expedi
                         return (
                             <div
                                 key={doc.uuid || doc.Uuid}
-                                onClick={() => navigate(`/investigacion/workspace/${tCode}/${doc.uuid || doc.Uuid}`)}
+                                onClick={() => navigate(buildWorkspacePath(tCode, doc.uuid || doc.Uuid!))}
                                 className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3.5 hover:bg-surface-hover/30 transition-all duration-150 group cursor-pointer"
                             >
                                 {/* Col 1: Documento / Actividad */}

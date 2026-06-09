@@ -5,6 +5,7 @@ import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check } fro
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
+import { buildWorkspacePath } from '../../core/documents/templateUrl';
 
 interface CreateProjectModalProps {
     preselectedConvocatoriaId?: number | null;
@@ -118,7 +119,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             setCreationStepMsg("Estableciendo entorno colaborativo en CoWork...");
             setTimeout(() => {
-                navigate(`/investigacion/workspace/PROTOCOLO_INVESTIGACION/${newUuid}?edit=true`, { replace: true });
+                navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '?edit=true'), { replace: true });
                 onClose();
             }, 800);
 
