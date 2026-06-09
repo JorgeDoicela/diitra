@@ -25,6 +25,7 @@ namespace Diitra.Application.Research.Dtos
         public string? Titulo { get; set; }
         public string? Programa { get; set; }
         public string? GrupoInvestigacion { get; set; }
+        public string? GrupoInvestigacionUuid { get; set; }
         public bool? TieneGrupoInvestigacion { get; set; } // Opcional para pruebas
         public string? Dominio { get; set; }
         public string? LineaInvestigacion { get; set; }

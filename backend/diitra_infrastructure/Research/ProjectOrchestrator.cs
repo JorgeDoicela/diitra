@@ -96,21 +96,43 @@ namespace diitra_infrastructure.Research
                 project.Metodologia = dto.Metodologia;
                 project.MetodoEvaluacion = dto.Evaluacion;
                 project.TiempoEjecucion = dto.TiempoEjecucion;
-                project.TieneGrupo = dto.TieneGrupoInvestigacion;
 
-                // Mapear el Grupo de Investigación por nombre/siglas
-                if (dto.TieneGrupoInvestigacion == true && !string.IsNullOrEmpty(dto.GrupoInvestigacion))
+                // Cumplimiento CACES: si es asociativo, la adscripción solo puede ser a un grupo aprobado y activo.
+                if (dto.TieneGrupoInvestigacion == true)
                 {
-                    var group = await _context.InvGruposInvestigacion
-                        .FirstOrDefaultAsync(g => g.Nombre == dto.GrupoInvestigacion || g.Siglas == dto.GrupoInvestigacion);
-                    if (group != null)
+                    var groupUuid = dto.GrupoInvestigacionUuid ?? dto.GrupoInvestigacion;
+                    if (string.IsNullOrWhiteSpace(groupUuid))
                     {
-                        project.IdGrupo = group.IdGrupo;
+                        return new SyncResult
+                        {
+                            Success = false,
+                            Message = "Para proyectos asociativos debe seleccionar un grupo de investigación aprobado."
+                        };
                     }
+
+                    var approvedGroup = await ResolveApprovedGroupAsync(groupUuid);
+                    if (approvedGroup == null)
+                    {
+                        return new SyncResult
+                        {
+                            Success = false,
+                            Message = "El grupo seleccionado no existe o no está aprobado/activo."
+                        };
+                    }
+
+                    project.TieneGrupo = true;
+                    project.IdGrupo = approvedGroup.IdGrupo;
+                    dto.GrupoInvestigacion = approvedGroup.Nombre;
+                    dto.GrupoInvestigacionUuid = approvedGroup.Uuid;
+
+                    dto.Investigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
                 }
                 else
                 {
+                    project.TieneGrupo = false;
                     project.IdGrupo = null;
+                    dto.GrupoInvestigacion = null;
+                    dto.GrupoInvestigacionUuid = null;
                 }
 
                 project.IdConvocatoria = (dto.IdConvocatoria.HasValue && dto.IdConvocatoria.Value > 0) ? dto.IdConvocatoria.Value : null;
@@ -645,6 +667,7 @@ namespace diitra_infrastructure.Research
             dto.PuntajeEvaluacion = p.PuntajeEvaluacion;
             dto.LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null;
             dto.GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null;
+            dto.GrupoInvestigacionUuid = p.IdGrupoNavigation?.Uuid;
             dto.CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad);
             dto.Investigadores = investigadoresList;
             dto.ObjetivosEspecificos = p.InvObjetivosProyecto
@@ -1372,7 +1395,7 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null)
+        public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null, bool? tieneGrupoInvestigacion = null)
         {
             var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == uuid);
             if (project == null)
@@ -1381,6 +1404,35 @@ namespace diitra_infrastructure.Research
             }
 
             string beforeJson = project.MetadataCacesJson ?? "{}";
+
+            var isAssociativeRequested = tieneGrupoInvestigacion ?? (investigadores.Count > 1 || !string.IsNullOrWhiteSpace(grupoInvestigacion));
+            InvGrupoInvestigacion? approvedGroup = null;
+            var effectiveInvestigadores = investigadores;
+
+            if (isAssociativeRequested)
+            {
+                if (string.IsNullOrWhiteSpace(grupoInvestigacion))
+                {
+                    return new SyncResult
+                    {
+                        Success = false,
+                        Message = "Para guardar un proyecto asociativo, debe seleccionar un grupo de investigación aprobado."
+                    };
+                }
+
+                approvedGroup = await ResolveApprovedGroupAsync(grupoInvestigacion);
+                if (approvedGroup == null)
+                {
+                    return new SyncResult
+                    {
+                        Success = false,
+                        Message = "El grupo seleccionado no existe o no está aprobado/activo."
+                    };
+                }
+
+                // Regla de gobernanza: el equipo del proyecto asociativo se deriva únicamente del grupo aprobado.
+                effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
+            }
 
             // Validación de Carga Horaria para Docentes (CACES Compliance)
             var currentPeriod = await _context.Periodos
@@ -1398,7 +1450,7 @@ namespace diitra_infrastructure.Research
                 .FirstOrDefaultAsync();
             if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
 
-            foreach (var inv in investigadores)
+            foreach (var inv in effectiveInvestigadores)
             {
                 if (string.IsNullOrEmpty(inv.Cedula)) continue;
                 
@@ -1439,10 +1491,7 @@ namespace diitra_infrastructure.Research
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // 1. Sincronizar en Tablas Relacionales (Profesores / Alumnos)
-                await SyncInvestigadoresAsync(project.IdProyecto, investigadores);
-
-                // 2. Sincronizar en Metadata JSON del CACES para mantener concordancia
+                // 1. Sincronizar en Metadata JSON del CACES para mantener concordancia
                 ProyectoDto? dto = null;
                 if (!string.IsNullOrEmpty(project.MetadataCacesJson))
                 {
@@ -1467,30 +1516,32 @@ namespace diitra_infrastructure.Research
                     };
                 }
 
-                dto.Investigadores = investigadores;
-                project.TieneGrupo = investigadores.Count > 1 || !string.IsNullOrEmpty(grupoInvestigacion);
-                dto.TieneGrupoInvestigacion = project.TieneGrupo;
-
-                if (!string.IsNullOrEmpty(grupoInvestigacion))
+                if (isAssociativeRequested)
                 {
-                    var group = await _context.InvGruposInvestigacion
-                        .FirstOrDefaultAsync(g => g.Nombre == grupoInvestigacion || g.Siglas == grupoInvestigacion);
-                    if (group != null)
+                    if (approvedGroup == null)
                     {
-                        project.IdGrupo = group.IdGrupo;
-                        dto.GrupoInvestigacion = group.Nombre;
+                        return new SyncResult { Success = false, Message = "No se pudo resolver el grupo aprobado." };
                     }
-                    else
-                    {
-                        project.IdGrupo = null;
-                        dto.GrupoInvestigacion = null;
-                    }
+
+                    project.TieneGrupo = true;
+                    project.IdGrupo = approvedGroup.IdGrupo;
+                    dto.TieneGrupoInvestigacion = true;
+                    dto.GrupoInvestigacion = approvedGroup.Nombre;
+                    dto.GrupoInvestigacionUuid = approvedGroup.Uuid;
+                    dto.Investigadores = effectiveInvestigadores;
                 }
                 else
                 {
+                    project.TieneGrupo = false;
                     project.IdGrupo = null;
+                    dto.TieneGrupoInvestigacion = false;
                     dto.GrupoInvestigacion = null;
+                    dto.GrupoInvestigacionUuid = null;
+                    dto.Investigadores = investigadores;
                 }
+
+                // 2. Sincronizar en Tablas Relacionales (Profesores / Alumnos)
+                await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores ?? new List<InvestigadorDto>());
 
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
@@ -1503,7 +1554,7 @@ namespace diitra_infrastructure.Research
                     Titulo = project.Titulo,
                     CodigoInstitucional = project.CodigoInstitucional,
                     TieneGrupo = project.TieneGrupo,
-                    TotalInvestigadores = investigadores.Count,
+                    TotalInvestigadores = dto.Investigadores?.Count ?? 0,
                     FechaModificacion = project.FechaModificacion
                 });
 
@@ -1783,6 +1834,111 @@ namespace diitra_infrastructure.Research
                 _logger.LogError(ex, "Error al transferir la dirección del proyecto UUID: {Uuid}", uuid);
                 return new SyncResult { Success = false, Message = $"Error interno al realizar la transferencia: {ex.Message}" };
             }
+        }
+
+        private async Task<InvGrupoInvestigacion?> ResolveApprovedGroupAsync(string? groupUuid)
+        {
+            if (string.IsNullOrWhiteSpace(groupUuid))
+            {
+                return null;
+            }
+
+            var normalized = groupUuid.Trim();
+            if (!Guid.TryParse(normalized, out _))
+            {
+                return null;
+            }
+
+            return await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g =>
+                g.Uuid == normalized &&
+                g.Activo == true &&
+                g.Estado == "Aprobado");
+        }
+
+        private async Task<List<InvestigadorDto>> BuildProjectInvestigadoresFromGroupAsync(int groupId, int projectId)
+        {
+            var groupMembers = await _context.InvGruposMiembros
+                .Include(m => m.IdUsuarioNavigation)
+                .Where(m => m.IdGrupo == groupId && m.Activo != false && m.IdUsuarioNavigation != null && !string.IsNullOrEmpty(m.IdUsuarioNavigation.IdSigafi))
+                .ToListAsync();
+
+            var existingInvestigadoresByCedula = await BuildExistingProjectInvestigadoresByCedulaAsync(projectId);
+
+            var normalized = new List<InvestigadorDto>();
+            foreach (var member in groupMembers)
+            {
+                var user = member.IdUsuarioNavigation;
+                if (user == null || string.IsNullOrWhiteSpace(user.IdSigafi)) continue;
+
+                var cedula = user.IdSigafi.Trim();
+                existingInvestigadoresByCedula.TryGetValue(cedula, out var existing);
+
+                normalized.Add(new InvestigadorDto
+                {
+                    Nombre = user.Nombre,
+                    Cedula = cedula,
+                    Rol = existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Co-Investigador (Estudiante)" : "Co-Investigador (Docente)"),
+                    NivelAcademico = existing?.NivelAcademico ?? (user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel"),
+                    Telefono = existing?.Telefono ?? string.Empty,
+                    Activo = true,
+                    HorasSemanales = existing?.HorasSemanales ?? 0,
+                    HorasDisponibles = existing?.HorasDisponibles,
+                    HorasAsignadas = existing?.HorasAsignadas,
+                    FechaInicio = existing?.FechaInicio ?? DateTime.Now,
+                    FechaFin = null,
+                    MotivoCambio = null,
+                    Carrera = existing?.Carrera
+                });
+            }
+
+            return normalized;
+        }
+
+        private async Task<Dictionary<string, InvestigadorDto>> BuildExistingProjectInvestigadoresByCedulaAsync(int projectId)
+        {
+            var profesores = await _context.InvProyectosProfesores
+                .Include(p => p.IdUsuarioNavigation)
+                .Where(p => p.IdProyecto == projectId && p.Activo != false && p.IdUsuarioNavigation != null && !string.IsNullOrEmpty(p.IdUsuarioNavigation.IdSigafi))
+                .Select(p => new InvestigadorDto
+                {
+                    Cedula = p.IdUsuarioNavigation!.IdSigafi,
+                    Nombre = p.IdUsuarioNavigation.Nombre,
+                    Rol = p.Rol,
+                    NivelAcademico = p.NivelAcademico,
+                    Telefono = p.Telefono,
+                    Activo = p.Activo,
+                    HorasSemanales = p.HorasSemanales,
+                    HorasDisponibles = null,
+                    HorasAsignadas = null,
+                    FechaInicio = p.FechaInicio,
+                    FechaFin = p.FechaFin,
+                    MotivoCambio = p.MotivoCambio
+                })
+                .ToListAsync();
+
+            var alumnos = await _context.InvProyectosAlumnos
+                .Include(a => a.IdUsuarioNavigation)
+                .Where(a => a.IdProyecto == projectId && a.Activo != false && a.IdUsuarioNavigation != null && !string.IsNullOrEmpty(a.IdUsuarioNavigation.IdSigafi))
+                .Select(a => new InvestigadorDto
+                {
+                    Cedula = a.IdUsuarioNavigation!.IdSigafi,
+                    Nombre = a.IdUsuarioNavigation.Nombre,
+                    Rol = a.Rol,
+                    NivelAcademico = a.NivelAcademico,
+                    Telefono = a.Telefono,
+                    Activo = a.Activo,
+                    HorasSemanales = 0,
+                    FechaInicio = a.FechaInicio,
+                    FechaFin = a.FechaFin,
+                    MotivoCambio = a.MotivoCambio
+                })
+                .ToListAsync();
+
+            return profesores
+                .Concat(alumnos)
+                .Where(i => !string.IsNullOrWhiteSpace(i.Cedula))
+                .GroupBy(i => i.Cedula!.Trim())
+                .ToDictionary(g => g.Key, g => g.First());
         }
 
         public async Task<bool> UserCanModifyProjectAsync(string projectUuid, string userSigafiId)

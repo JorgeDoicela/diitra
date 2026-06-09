@@ -344,7 +344,7 @@ const GroupsPage = () => {
                 try {
                     await api.post(`/Groups/${reviewingGroup.uuid}/review`, {
                         aprobado: true,
-                        resolucionAprobacion: reviewResolution.trim(),
+                        resolucion: reviewResolution.trim(),
                         observaciones: `Aprobado bajo resolución oficial ${reviewResolution.trim()}`
                     });
                     setIsReviewModalOpen(false);
@@ -392,7 +392,7 @@ const GroupsPage = () => {
 
                     await api.post(`/Groups/${reviewingGroup.uuid}/review`, {
                         aprobado: false,
-                        resolucionAprobacion: '',
+                        resolucion: '',
                         observaciones: contentStr
                     });
 
