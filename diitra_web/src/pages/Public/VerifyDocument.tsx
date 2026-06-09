@@ -91,7 +91,7 @@ const VerifyDocument = () => {
                 )}
 
                 {result && (
-<div className="lg:col-span-5 bento-card static p-8 md:p-10 overflow-hidden animate-fade-in">
+                    <div className="lg:col-span-5 bento-card static p-8 md:p-10 overflow-hidden animate-fade-in">
                         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-border-thin">
                             <ShieldCheck size={32} className="text-success shrink-0" />
                             <div>
@@ -112,19 +112,19 @@ const VerifyDocument = () => {
                         <div className="grid grid-cols-1 gap-4 mb-6">
                             <div>
                                 <label className="section-label text-text-dim mb-1">
-                                    <FileText size={12}/> Tipo de Documento
+                                    <FileText size={12} /> Tipo de Documento
                                 </label>
                                 <p className="text-sm font-semibold text-text-main">{result.template_name || result.templateName || 'Protocolo de Investigación'}</p>
                             </div>
                             <div>
                                 <label className="section-label text-text-dim mb-1">
-                                    <User size={12}/> Emitido por
+                                    <User size={12} /> Emitido por
                                 </label>
                                 <p className="text-sm font-semibold text-text-main">{result.generated_by || result.generatedBy || 'Sistema DIITRA'}</p>
                             </div>
                             <div>
                                 <label className="section-label text-text-dim mb-1">
-                                    <Calendar size={12}/> Fecha de Emisión
+                                    <Calendar size={12} /> Fecha de Emisión
                                 </label>
                                 <p className="text-sm font-semibold text-text-main">
                                     {new Date(result.generated_at || result.generatedAt).toLocaleDateString()} - {new Date(result.generated_at || result.generatedAt).toLocaleTimeString()}
@@ -132,7 +132,7 @@ const VerifyDocument = () => {
                             </div>
                             <div>
                                 <label className="section-label text-text-dim mb-1">
-                                    <ShieldCheck size={12}/> Código de verificación
+                                    <ShieldCheck size={12} /> Código de verificación
                                 </label>
                                 <p className="text-[10px] font-mono break-all text-text-dim">{result.file_hash || result.fileHash || 'N/A'}</p>
                             </div>
@@ -149,10 +149,6 @@ const VerifyDocument = () => {
                     </div>
                 )}
             </section>
-
-            <footer className="mt-16 px-2 pb-8">
-                <p className="section-label">Tecnológico Traversari - Sistema DIITRA</p>
-            </footer>
         </main>
     );
 };

@@ -80,7 +80,7 @@ const ResearchProjectsPage = () => {
                     <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-3">
                         Documentos Generados
                     </h3>
-                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">
+                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">
                         Contratos, resoluciones y actas con firma electrónica
                     </p>
                 </div>
