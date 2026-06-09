@@ -80,12 +80,14 @@ const ResearchProjectsPage = () => {
                     <h3 className="text-sm font-black text-text-main uppercase tracking-widest flex items-center gap-3">
                         Documentos Generados
                     </h3>
-                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">Auditoría LOPDP y Trazabilidad en tiempo real</p>
+                    <p className="text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1 ml-7">
+                        Contratos, resoluciones y actas con firma electrónica
+                    </p>
                 </div>
 
                 <DocumentTray
                     entityUuid="GLOBAL"
-                    title="Historial Maestro del Núcleo"
+                    title={isAdmin ? "Registro institucional de documentos" : "Documentos oficiales generados"}
                 />
             </section>
 

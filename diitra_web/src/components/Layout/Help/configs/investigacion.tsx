@@ -16,7 +16,7 @@ export const INVESTIGACION_CONFIG: HelpConfig = {
         },
         {
             title: "Buzón de expedientes y contratos firmados",
-            description: "Inspecciona el buzón inferior de documentos generados por el núcleo de DIITRA. Aquí se listan en tiempo real los contratos de asignación de fondos, resoluciones del comité científico y actas de aceptación. Todos estos documentos incorporan una firma electrónica válida y certificados de validación criptográfica en formato PDF/A.",
+            description: "Inspecciona el buzón inferior de documentos generados por el sistema. Aquí se listan en tiempo real los contratos de asignación de fondos, resoluciones del comité científico y actas de aceptación. Todos incorporan firma electrónica válida y certificados de validación en formato PDF/A.",
             highlight: 'content-bottom'
         },
         {
