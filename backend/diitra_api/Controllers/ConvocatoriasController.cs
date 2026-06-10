@@ -68,7 +68,7 @@ public class ConvocatoriasController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Create([FromBody] CreateConvocatoriaDto dto)
     {
         var uuid = await _convocatoriaService.CreateAsync(dto);
@@ -76,7 +76,7 @@ public class ConvocatoriasController : ControllerBase
     }
 
     [HttpPut("{uuid}")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Update(string uuid, [FromBody] CreateConvocatoriaDto dto)
     {
         var result = await _convocatoriaService.UpdateAsync(uuid, dto);
@@ -85,7 +85,7 @@ public class ConvocatoriasController : ControllerBase
     }
 
     [HttpPatch("{uuid}/status")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> ChangeStatus(string uuid, [FromQuery] string status)
     {
         var result = await _convocatoriaService.ChangeStatusAsync(uuid, status);
@@ -94,7 +94,7 @@ public class ConvocatoriasController : ControllerBase
     }
 
     [HttpDelete("{uuid}")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Delete(string uuid)
     {
         var result = await _convocatoriaService.DeleteAsync(uuid);

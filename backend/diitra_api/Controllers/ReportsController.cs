@@ -31,7 +31,7 @@ namespace diitra_api.Controllers
         }
 
         [HttpGet("analiticas")]
-        [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+        [Authorize(Roles = "DIITRA_ADMIN")]
         public async Task<IActionResult> GenerateAnalyticsReport(
             [FromQuery] string? period = null,
             [FromQuery] string? carrera = null)

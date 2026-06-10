@@ -89,7 +89,7 @@ public class LopdpService : ILopdpService
                 await _notificationService.NotifyByRoleCodesAsync(
                     "Nueva Solicitud ARCO LOPDP",
                     $"El usuario {userName} ha registrado una solicitud de tipo '{tipoSolicitud}'.",
-                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                    new[] { "DIITRA_ADMIN" },
                     "/lopdp/admin"
                 );
             }

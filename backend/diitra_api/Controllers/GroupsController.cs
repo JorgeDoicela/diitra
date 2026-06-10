@@ -46,7 +46,7 @@ public partial class GroupsController : ControllerBase
         {
             var solicitanteNombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
 
-            var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
+            var isAdmin = User.IsInRole("DIITRA_ADMIN");
             if (!isAdmin)
             {
                 dto.Estado = "Pendiente";
@@ -80,7 +80,7 @@ public partial class GroupsController : ControllerBase
 
             var solicitanteNombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
 
-            var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
+            var isAdmin = User.IsInRole("DIITRA_ADMIN");
             if (!isAdmin)
             {
                 if (existingGroup.Estado == "Pendiente")
@@ -153,7 +153,7 @@ public partial class GroupsController : ControllerBase
     }
 
     [HttpPatch("{uuid}/review")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> ReviewGroup(string uuid, [FromBody] ReviewGroupRequest request)
     {
         try
@@ -184,7 +184,7 @@ public class ReviewGroupRequest
 public partial class GroupsController
 {
     private bool IsAdminUser() =>
-        User.IsInRole("DIITRA_ADMIN") || User.IsInRole("ADMIN_SISTEMA") || User.IsInRole("DIRECTOR_INV");
+        User.IsInRole("DIITRA_ADMIN");
 
     private string? GetCurrentUserReference() =>
         User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

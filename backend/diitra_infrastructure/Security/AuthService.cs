@@ -325,46 +325,52 @@ public class AuthService : IAuthService
             .Where(ur => ur.IdUsuario == user.IdUsuario && (ur.EsActivo ?? true))
             .ToListAsync();
 
-        string? requiredRoleCode = null;
+        var requiredRoleCodes = new List<string>();
 
         // Reglas de negocio para roles automáticos
-        if (user.IdSigafi == _masterAdminId) requiredRoleCode = "DIITRA_ADMIN";
-        else if (user.TablaSigafi == "profesor") requiredRoleCode = "DIITRA_DOCENTE";
-        else if (user.TablaSigafi == "alumno") requiredRoleCode = "DIITRA_ESTUDIANTE";
-        else if (user.TablaSigafi == "otros") requiredRoleCode = "DIITRA_REVISOR_EXTERNO";
-
-        if (requiredRoleCode != null && !currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
+        if (user.IdSigafi == _masterAdminId || user.Administrador)
         {
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == requiredRoleCode);
+            requiredRoleCodes.Add("DIITRA_ADMIN");
+        }
+        else if (user.TablaSigafi == "profesor") requiredRoleCodes.Add("DIITRA_DOCENTE");
+        else if (user.TablaSigafi == "alumno") requiredRoleCodes.Add("DIITRA_ESTUDIANTE");
+        else if (user.TablaSigafi == "otros") requiredRoleCodes.Add("DIITRA_REVISOR_EXTERNO");
 
-            // Si el ROL no existe en la base de datos (tabla rbac_rol), lo CREAMOS automáticamente
-            if (role == null)
+        foreach (var requiredRoleCode in requiredRoleCodes)
+        {
+            if (!currentRoles.Any(r => r.Role.CodigoRol == requiredRoleCode))
             {
-                role = new Role
+                var role = await _context.Roles.FirstOrDefaultAsync(r => r.CodigoRol == requiredRoleCode);
+
+                // Si el ROL no existe en la base de datos (tabla rbac_rol), lo CREAMOS automáticamente
+                if (role == null)
                 {
-                    CodigoRol = requiredRoleCode,
-                    Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
-                             requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
-                             requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" :
-                             requiredRoleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : requiredRoleCode,
-                    EsActivo = true
-                };
-                _context.Roles.Add(role);
+                    role = new Role
+                    {
+                        CodigoRol = requiredRoleCode,
+                        Nombre = requiredRoleCode == "DIITRA_ADMIN" ? "Administrador DIITRA" :
+                                 requiredRoleCode == "DIITRA_DOCENTE" ? "Docente Investigador DIITRA" :
+                                 requiredRoleCode == "DIITRA_ESTUDIANTE" ? "Estudiante DIITRA" :
+                                 requiredRoleCode == "DIITRA_REVISOR_EXTERNO" ? "Revisor Externo DIITRA" : requiredRoleCode,
+                        EsActivo = true
+                    };
+                    _context.Roles.Add(role);
+                    await _context.SaveChangesAsync();
+
+                    // Asignar permisos por defecto al nuevo rol (AISLAMIENTO DE SISTEMA)
+                    await AssignDefaultPermissionsToRoleAsync(role);
+                }
+
+                // Ahora que el rol existe, lo asignamos al usuario
+                _context.UserRoles.Add(new UserRole
+                {
+                    IdUsuario = user.IdUsuario,
+                    IdRol = role.IdRol,
+                    EsActivo = true,
+                    FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
+                });
                 await _context.SaveChangesAsync();
-
-                // Asignar permisos por defecto al nuevo rol (AISLAMIENTO DE SISTEMA)
-                await AssignDefaultPermissionsToRoleAsync(role);
             }
-
-            // Ahora que el rol existe, lo asignamos al usuario
-            _context.UserRoles.Add(new UserRole
-            {
-                IdUsuario = user.IdUsuario,
-                IdRol = role.IdRol,
-                EsActivo = true,
-                FechaCreacion = DateOnly.FromDateTime(DateTime.Now)
-            });
-            await _context.SaveChangesAsync();
         }
     }
 

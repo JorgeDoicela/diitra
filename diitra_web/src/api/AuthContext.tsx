@@ -161,11 +161,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [user]);
 
     const isAdmin = React.useMemo(() => {
-        return user?.administrador || roles.includes('DIITRA_ADMIN') || roles.includes('ADMIN_SISTEMA');
+        return user?.administrador || roles.includes('DIITRA_ADMIN');
     }, [user, roles]);
 
     const isDocente = React.useMemo(() => {
-        return roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
+        return roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV');
     }, [roles]);
 
     const isEstudiante = React.useMemo(() => {

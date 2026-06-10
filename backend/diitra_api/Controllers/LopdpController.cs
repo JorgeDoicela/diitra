@@ -101,7 +101,7 @@ public class LopdpController : ControllerBase
     /// Permite a un administrador resolver una solicitud de derechos ARCO pendiente.
     /// </summary>
     [HttpPost("arco/resolver")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> ResolverSolicitudArco([FromBody] ResolverSolicitudArcoRequest request)
     {
         if (request == null || request.IdSolicitudArco <= 0 || string.IsNullOrWhiteSpace(request.ResolucionDetalle) || string.IsNullOrWhiteSpace(request.Estado))
@@ -150,7 +150,7 @@ public class LopdpController : ControllerBase
     /// Devuelve todas las solicitudes ARCO registradas en el sistema (Solo para administradores/directores).
     /// </summary>
     [HttpGet("arco/todas")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetAllSolicitudes()
     {
         var solicitudes = await _lopdpService.GetAllSolicitudesArcoAsync();
@@ -161,7 +161,7 @@ public class LopdpController : ControllerBase
     /// Devuelve todos los consentimientos registrados en el sistema (Solo para administradores/directores).
     /// </summary>
     [HttpGet("consentimientos")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetAllConsentimientos()
     {
         var consentimientos = await _lopdpService.GetAllConsentimientosAsync();

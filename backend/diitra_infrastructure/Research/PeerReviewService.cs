@@ -414,7 +414,7 @@ public class PeerReviewService : IPeerReviewService
                 await _notificationService.NotifyByRoleCodesAsync(
                     "Evaluación de Par Completada",
                     $"El evaluador {nombreRevisor} ha completado la revisión del proyecto '{project.Titulo}'.",
-                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                    new[] { "DIITRA_ADMIN" },
                     $"/arbitraje/proyecto/{project.Uuid}"
                 );
             }

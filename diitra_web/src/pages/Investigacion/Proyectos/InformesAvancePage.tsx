@@ -32,10 +32,10 @@ import DocumentEditor from './Wizard/DocumentEditor';
 const InformesAvancePage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
-    const { isAdmin, roles } = useAuth();
+    const { isAdmin } = useAuth();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
-    const canReview = isAdmin || roles?.includes('DIRECTOR_INV');
+    const canReview = isAdmin;
 
     const [informes, setInformes] = useState<InformeAvanceDto[]>([]);
     const [loading, setLoading] = useState(true);

@@ -329,7 +329,7 @@ public class GroupsService : IGroupsService
                 await _notificationService.NotifyByRoleCodesAsync(
                     "Nueva Propuesta de Grupo de Investigación",
                     $"{remitente} ha enviado la solicitud de creación del grupo \"{group.Nombre}\" para su revisión.",
-                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA" },
+                    new[] { "DIITRA_ADMIN" },
                     "/admin/groups",
                     new Dictionary<string, string>
                     {
@@ -525,7 +525,7 @@ public class GroupsService : IGroupsService
                 await _notificationService.NotifyByRoleCodesAsync(
                     "Propuesta de Grupo Actualizada",
                     $"{remitente} ha modificado el grupo \"{group.Nombre}\" y requiere revisión nuevamente.",
-                    new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA" },
+                    new[] { "DIITRA_ADMIN" },
                     "/admin/groups",
                     new Dictionary<string, string>
                     {

@@ -14,7 +14,7 @@ namespace diitra_infrastructure.Research
 {
     public class ProjectOrchestrator : IProjectOrchestrator
     {
-        private static readonly string[] OversightRoleCodes = { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" };
+        private static readonly string[] OversightRoleCodes = { "DIITRA_ADMIN" };
 
         private readonly DiitraContext _context;
         private readonly IAuthService _authService;
@@ -2544,7 +2544,7 @@ namespace diitra_infrastructure.Research
 
             if (user.Administrador) return true;
 
-            var adminRoles = new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA" };
+            var adminRoles = new[] { "DIITRA_ADMIN" };
             return await _context.UserRoles.AsNoTracking()
                 .AnyAsync(ur => ur.IdUsuario == user.IdUsuario
                     && (ur.EsActivo ?? true)
@@ -2574,11 +2574,7 @@ namespace diitra_infrastructure.Research
             var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.IdSigafi == userSigafiId);
             if (user == null) return false;
 
-            var isDirectorInv = await _context.UserRoles.AsNoTracking()
-                .AnyAsync(ur => ur.IdUsuario == user.IdUsuario
-                    && (ur.EsActivo ?? true)
-                    && ur.Role.CodigoRol == "DIRECTOR_INV");
-            if (isDirectorInv) return true;
+
 
             var canonicalUuid = await ResolveCanonicalUuidAsync(projectUuid) ?? projectUuid;
             var project = await _context.InvProyectos.AsNoTracking().FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);

@@ -195,7 +195,7 @@ namespace Diitra.Infrastructure.Research
                     await _notificationService.NotifyByRoleCodesAsync(
                         "Proyecto Postulado",
                         $"El proyecto '{proyecto.Titulo}' ha sido postulado y requiere revisión.",
-                        new[] { "DIITRA_ADMIN", "ADMIN_SISTEMA", "DIRECTOR_INV" },
+                        new[] { "DIITRA_ADMIN" },
                         $"/arbitraje/proyecto/{proyecto.Uuid}"
                     );
                 }
