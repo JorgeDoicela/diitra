@@ -346,7 +346,7 @@ namespace diitra_infrastructure.Research
                     TiempoEjecucion = p.TiempoEjecucion,
                     ConvocatoriaTitulo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.Titulo : null,
                     TotalInvestigadores = p.InvProyectosProfesores.Count + p.InvProyectosAlumnos.Count,
-                    TotalProductos = p.InvProductos.Count,
+                TotalProductos = p.InvProductos.Count,
                     TotalInformes = p.InvInformesAvance.Count,
                     InformesAprobados = p.InvInformesAvance.Count(i => i.Estado == "Aprobado"),
                     TrlActual = (int?)p.TrlActual,
@@ -354,7 +354,19 @@ namespace diitra_infrastructure.Research
                     TotalEstudiantes = p.InvProyectosAlumnos.Count(pa => pa.Activo != false),
                     EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
                     ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
-                    ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null
+                    ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
+                    DirectorNombre = p.InvProyectosProfesores
+                        .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
+                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .FirstOrDefault() 
+                        ?? p.InvProyectosProfesores
+                        .Where(pp => pp.IdUsuarioNavigation != null)
+                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .FirstOrDefault()
+                        ?? p.InvProyectosAlumnos
+                        .Where(pa => pa.IdUsuarioNavigation != null)
+                        .Select(pa => pa.IdUsuarioNavigation.Nombre)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
         }
@@ -429,7 +441,19 @@ namespace diitra_infrastructure.Research
                     TotalEstudiantes = p.InvProyectosAlumnos.Count(pa => pa.Activo != false),
                     EntidadAliada = p.IdEntidadAliadaNavigation != null ? p.IdEntidadAliadaNavigation.RazonSocial : null,
                     ObjetivoPnd = p.IdObjetivoPndNavigation != null ? p.IdObjetivoPndNavigation.Nombre : null,
-                    ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null
+                    ConvocatoriaCodigo = p.IdConvocatoriaNavigation != null ? p.IdConvocatoriaNavigation.CodigoConvocatoria : null,
+                    DirectorNombre = p.InvProyectosProfesores
+                        .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
+                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .FirstOrDefault() 
+                        ?? p.InvProyectosProfesores
+                        .Where(pp => pp.IdUsuarioNavigation != null)
+                        .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                        .FirstOrDefault()
+                        ?? p.InvProyectosAlumnos
+                        .Where(pa => pa.IdUsuarioNavigation != null)
+                        .Select(pa => pa.IdUsuarioNavigation.Nombre)
+                        .FirstOrDefault()
                 })
                 .ToListAsync();
         }
