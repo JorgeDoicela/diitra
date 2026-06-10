@@ -360,7 +360,7 @@ namespace diitra_api.Controllers
                         email = p.EmailInstitucional ?? p.Email ?? "",
                         telefono = p.Celular ?? p.Telefono ?? "",
                         nivelAcademico = p.Titulo ?? "Tercer Nivel",
-                        rol = "Investigador (Docente)",
+                        rol = "Co-Investigador",
                         tipo = "profesor"
                     });
 
@@ -489,7 +489,7 @@ namespace diitra_api.Controllers
                             email = s.EmailInstitucional ?? s.Email ?? "",
                             telefono = s.Celular ?? s.Telefono ?? "",
                             nivelAcademico = "Pregrado",
-                            rol = "Co-Investigador (Estudiante)",
+                            rol = "Semillerista",
                             tipo = "alumno",
                             carrera = carreraNom ?? "Estudiante"
                         };
