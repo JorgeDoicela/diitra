@@ -974,6 +974,7 @@ CREATE TABLE inv_lopdp_derechos_arco (
     resolucionDetalle    TEXT         NULL COMMENT 'Justificación técnica/legal de la respuesta',
     fechaResolucion      TIMESTAMP    NULL,
     documentoResolucionPath VARCHAR(512) NULL COMMENT 'Ruta física de la respuesta formal firmada electrónicamente',
+    evidenciaPath           VARCHAR(512) NULL COMMENT 'Ruta física del archivo de evidencia adjunto',
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Seguimiento de solicitudes de derechos ARCO del titular';
 
