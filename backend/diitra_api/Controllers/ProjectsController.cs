@@ -640,7 +640,7 @@ namespace diitra_api.Controllers
         }
 
         [HttpPatch("{uuid}/team-change-requests/{requestUuid}/review")]
-        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA")]
+        [Microsoft.AspNetCore.Authorization.Authorize(Roles = "DIITRA_ADMIN")]
         public async Task<IActionResult> ReviewTeamChangeRequest(string uuid, string requestUuid, [FromBody] TeamChangeReviewDto review)
         {
             var reviewerSigafiId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -787,9 +787,7 @@ namespace diitra_api.Controllers
             if (await _projectOrchestrator.IsSystemAdminAsync(userIdRef)) return true;
 
             var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
-                          User.IsInRole("DIITRA_ADMIN") ||
-                          User.IsInRole("ADMIN_SISTEMA") ||
-                          User.IsInRole("DIRECTOR_INV");
+                          User.IsInRole("DIITRA_ADMIN");
 
             if (isAdmin) return true;
 

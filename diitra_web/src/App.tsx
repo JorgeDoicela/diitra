@@ -120,7 +120,7 @@ const RoleRoute = ({ children, allowedRoles }: { children: React.ReactNode; allo
 
     if (allowedRoles.includes('ANY')) return <>{children}</>;
 
-    if (isAdmin && allowedRoles.some(r => ['DIITRA_ADMIN', 'ADMIN_SISTEMA'].includes(r))) return <>{children}</>;
+    if (isAdmin && allowedRoles.includes('DIITRA_ADMIN')) return <>{children}</>;
 
     if (roles.some(r => allowedRoles.map(a => a.toUpperCase()).includes(r.toUpperCase()))) return <>{children}</>;
 

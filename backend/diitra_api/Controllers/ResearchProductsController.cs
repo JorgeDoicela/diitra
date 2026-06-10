@@ -134,9 +134,7 @@ namespace diitra_api.Controllers
             if (string.IsNullOrEmpty(userIdRef)) return false;
 
             var isAdmin = User.FindFirst("es_admin")?.Value == "true" ||
-                          User.IsInRole("DIITRA_ADMIN") ||
-                          User.IsInRole("ADMIN_SISTEMA") ||
-                          User.IsInRole("DIRECTOR_INV");
+                          User.IsInRole("DIITRA_ADMIN");
 
             if (isAdmin) return true;
 

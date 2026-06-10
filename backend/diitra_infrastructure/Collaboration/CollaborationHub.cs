@@ -41,9 +41,7 @@ namespace diitra_infrastructure.Collaboration
 
             // 1.1 SEGURIDAD PLATINUM: Control de Acceso por Defensa en Profundidad
             var isHubAdmin = Context.User?.FindFirst("es_admin")?.Value == "true" ||
-                             Context.User?.IsInRole("DIITRA_ADMIN") == true ||
-                             Context.User?.IsInRole("ADMIN_SISTEMA") == true ||
-                             Context.User?.IsInRole("DIRECTOR_INV") == true;
+                             Context.User?.IsInRole("DIITRA_ADMIN") == true;
 
             if (!isHubAdmin)
             {

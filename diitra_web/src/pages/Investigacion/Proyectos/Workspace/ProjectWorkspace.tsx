@@ -155,7 +155,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [assignedRevisionUuid, setAssignedRevisionUuid] = useState<string | null>(null);
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
     const approvedGroups = availableGroups.filter(g => g.activo && g.estado === 'Aprobado');
-    const canReviewTeamChanges = isAdmin || roles?.includes('DIITRA_ADMIN') || roles?.includes('ADMIN_SISTEMA');
+    const canReviewTeamChanges = isAdmin || roles?.includes('DIITRA_ADMIN');
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -1146,7 +1146,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                     <CheckSquare size={14} />
                                                                     <span>{(isPast || assignedRevisionStatus === 'Completada') ? 'Ver Mi Rúbrica' : 'Llenar Rúbrica de Arbitraje'}</span>
                                                                 </button>
-                                                            ) : (isAdmin || roles?.includes('DIRECTOR_INV')) ? (
+                                                            ) : isAdmin ? (
                                                                 <button 
                                                                     onClick={() => navigate(`/arbitraje/proyecto/${resolvedProjectUuid}`)}
                                                                     className="btn-vercel-primary !py-2"
@@ -1184,7 +1184,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                                 {currentProject.codigoInstitucional}
                                                             </span>
                                                         )}
-                                                        {currentProject.status === 'Aprobado' && (isAdmin || roles?.includes('DIRECTOR_INV')) && (
+                                                        {currentProject.status === 'Aprobado' && isAdmin && (
                                                             <button
                                                                 onClick={handleIniciarEjecucion}
                                                                 disabled={iniciandoEjecucion}

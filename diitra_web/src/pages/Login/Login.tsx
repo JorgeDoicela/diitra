@@ -82,8 +82,8 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
             let target = from;
             if (target === '/dashboard') {
                 const roles = (user.roles || [user.role] || []).map((r: string) => r.toUpperCase());
-                const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN') || roles.includes('ADMIN_SISTEMA');
-                const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
+                const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN');
+                const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV');
 
                 if (isAdmin) target = '/usuarios';
                 else if (isDocente) target = '/investigacion/mis-proyectos';
@@ -149,8 +149,8 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
             let target = from;
             if (target === '/dashboard') {
                 const roles = (user.roles || [user.role] || []).map((r: string) => r.toUpperCase());
-                const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN') || roles.includes('ADMIN_SISTEMA');
-                const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
+                const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN');
+                const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV');
 
                 if (isAdmin) target = '/usuarios';
                 else if (isDocente) target = '/investigacion/mis-proyectos';

@@ -151,7 +151,7 @@ public class InformesAvanceController : ControllerBase
     /// Cambia el estado de 'Pendiente'/'Observado' a 'Aprobado'.
     /// </summary>
     [HttpPost("{id:int}/aprobar")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Aprobar(int id)
     {
         var userIdClaim = User.FindFirstValue("id_usuario");
@@ -176,7 +176,7 @@ public class InformesAvanceController : ControllerBase
     /// Solo disponible cuando el informe está en estado 'Pendiente'.
     /// </summary>
     [HttpPost("{id:int}/observar")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
+    [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Observar(int id, [FromBody] ObservarInformeAvanceDto dto)
     {
         var userIdClaim = User.FindFirstValue("id_usuario");
@@ -213,7 +213,7 @@ public class InformesAvanceController : ControllerBase
         if (informe == null) return NotFound(new { message = $"Informe {id} no encontrado." });
 
         var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userUuidRef);
-        var isDirectorInv = User.IsInRole("DIRECTOR_INV");
+        var isDirectorInv = User.IsInRole("DIITRA_ADMIN");
         var isProjectDirector = informe.IdProyectoNavigation != null && await _projectOrchestrator.IsProjectDirectorAsync(informe.IdProyectoNavigation.Uuid, userUuidRef);
 
         if (!isSystemAdmin && !isDirectorInv && !isProjectDirector)

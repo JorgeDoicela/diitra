@@ -66,7 +66,7 @@ namespace Diitra.Application.Research
         Task<bool> UserCanViewProjectAsync(string projectUuid, string userSigafiId);
 
         /// <summary>
-        /// Determina si el usuario autenticado tiene el rol de Administrador del Sistema (DIITRA_ADMIN o ADMIN_SISTEMA).
+        /// Determina si el usuario autenticado tiene el rol de Administrador del Sistema (DIITRA_ADMIN).
         /// </summary>
         Task<bool> IsSystemAdminAsync(string userSigafiId);
 
@@ -100,7 +100,7 @@ namespace Diitra.Application.Research
 
         /// <summary>
         /// Revisa (aprueba/rechaza) una solicitud de cambio y, opcionalmente, la ejecuta.
-        /// Solo administradores del sistema (DIITRA_ADMIN / ADMIN_SISTEMA).
+        /// Solo administradores del sistema (DIITRA_ADMIN).
         /// </summary>
         Task<SyncResult> ReviewTeamChangeRequestAsync(string projectUuid, string requestUuid, string reviewerSigafiId, TeamChangeReviewDto review);
     }
