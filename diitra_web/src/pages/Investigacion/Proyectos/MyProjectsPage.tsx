@@ -56,6 +56,9 @@ const MyProjectsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [filterEstado, setFilterEstado] = useState<string>('todos');
+    const [filterLinea, setFilterLinea] = useState<string>('todas');
+    const [filterConvocatoria, setFilterConvocatoria] = useState<string>('todas');
+    const [sortBy, setSortBy] = useState<string>('recientes');
     const [showNewProject, setShowNewProject] = useState(false);
     const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
     const [deletingTitle, setDeletingTitle] = useState<string>('');
@@ -97,16 +100,56 @@ const MyProjectsPage: React.FC = () => {
         fetchProyectos();
     }, []);
 
-    const filtered = proyectos.filter(p => {
-        const matchSearch = p.titulo.toLowerCase().includes(search.toLowerCase())
-            || (p.codigo_institucional || '').toLowerCase().includes(search.toLowerCase());
-        const matchEstado = filterEstado === 'todos' || p.estado === filterEstado;
-        return matchSearch && matchEstado;
-    });
+    const lineasDisponibles = Array.from(
+        new Set(proyectos.map(p => p.linea_investigacion).filter(Boolean))
+    ) as string[];
+
+    const convocatoriasDisponibles = Array.from(
+        new Set(proyectos.map(p => p.convocatoria_titulo).filter(Boolean))
+    ) as string[];
+
+    const filtered = proyectos
+        .filter(p => {
+            const query = search.toLowerCase();
+            const matchSearch = 
+                p.titulo.toLowerCase().includes(query) ||
+                (p.codigo_institucional || '').toLowerCase().includes(query) ||
+                (p.director_nombre || '').toLowerCase().includes(query) ||
+                (p.linea_investigacion || '').toLowerCase().includes(query) ||
+                (p.convocatoria_titulo || '').toLowerCase().includes(query) ||
+                (p.carrera || '').toLowerCase().includes(query);
+
+            const matchEstado = filterEstado === 'todos' || p.estado === filterEstado;
+            const matchLinea = filterLinea === 'todas' || p.linea_investigacion === filterLinea;
+            const matchConvocatoria = filterConvocatoria === 'todas' || p.convocatoria_titulo === filterConvocatoria;
+
+            return matchSearch && matchEstado && matchLinea && matchConvocatoria;
+        })
+        .sort((a, b) => {
+            if (sortBy === 'recientes') {
+                const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                return new Date(dateB).getTime() - new Date(dateA).getTime();
+            }
+            if (sortBy === 'antiguos') {
+                const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                return new Date(dateA).getTime() - new Date(dateB).getTime();
+            }
+            if (sortBy === 'titulo') {
+                return a.titulo.localeCompare(b.titulo);
+            }
+            if (sortBy === 'presupuesto') {
+                return (b.presupuesto_total || 0) - (a.presupuesto_total || 0);
+            }
+            return 0;
+        });
 
     const abrirWorkspace = (p: ProyectoResumen) => {
         navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos'));
     };
+
+    const hasActiveFilters = search !== '' || filterEstado !== 'todos' || filterLinea !== 'todas' || filterConvocatoria !== 'todas';
 
     if (loading) return (
         <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -145,28 +188,87 @@ const MyProjectsPage: React.FC = () => {
                 )}
             </header>
 
-            <div className="flex flex-col sm:flex-row gap-3 mb-8 animate-fade-up [animation-delay:100ms]">
-                <div className="relative flex-1">
-                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                    <input
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Buscar por título o código..."
-                        className="input-vercel !pl-9 !rounded-xl !py-2.5 !text-sm !placeholder:text-text-dim"
-                    />
+            <div className="flex flex-col gap-4 mb-8 animate-fade-up [animation-delay:100ms] bg-surface p-5 rounded-2xl border border-border-thin shadow-sm">
+                <div className="flex flex-col lg:flex-row gap-3">
+                    <div className="relative flex-1">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                        <input
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                            placeholder="Buscar por título, código, director, carrera o convocatoria..."
+                            className="input-vercel !pl-9 !rounded-xl !py-2.5 !text-sm !placeholder:text-text-dim w-full"
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <select
+                            value={sortBy}
+                            onChange={e => setSortBy(e.target.value)}
+                            className="input-vercel !rounded-xl !py-2.5 !text-sm min-w-[150px] cursor-pointer"
+                        >
+                            <option value="recientes">Más recientes</option>
+                            <option value="antiguos">Más antiguos</option>
+                            <option value="titulo">Título (A-Z)</option>
+                            <option value="presupuesto">Presupuesto mayor</option>
+                        </select>
+                        {(filterEstado !== 'todos' || filterLinea !== 'todas' || filterConvocatoria !== 'todas' || search !== '') && (
+                            <button
+                                onClick={() => {
+                                    setSearch('');
+                                    setFilterEstado('todos');
+                                    setFilterLinea('todas');
+                                    setFilterConvocatoria('todas');
+                                    setSortBy('recientes');
+                                }}
+                                className="btn-vercel-secondary !py-2.5 !px-4 !rounded-xl !text-xs whitespace-nowrap hover:bg-surface-hover hover:text-text-main transition-all"
+                            >
+                                Limpiar filtros
+                            </button>
+                        )}
+                    </div>
                 </div>
-                <div className="flex gap-2 items-center">
-                    <Filter size={14} className="text-text-dim shrink-0" />
-                    <select
-                        value={filterEstado}
-                        onChange={e => setFilterEstado(e.target.value)}
-                        className="input-vercel !rounded-xl !py-2.5 !text-sm !w-auto"
-                    >
-                        <option value="todos">Todos los estados</option>
-                        {Object.keys(ESTADO_CONFIG).map(e => (
-                            <option key={e} value={e}>{ESTADO_CONFIG[e].label}</option>
-                        ))}
-                    </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-border-thin">
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-1">Estado</label>
+                        <select
+                            value={filterEstado}
+                            onChange={e => setFilterEstado(e.target.value)}
+                            className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
+                        >
+                            <option value="todos">Todos los estados</option>
+                            {Object.keys(ESTADO_CONFIG).map(e => (
+                                <option key={e} value={e}>{ESTADO_CONFIG[e].label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-1">Línea de Investigación</label>
+                        <select
+                            value={filterLinea}
+                            onChange={e => setFilterLinea(e.target.value)}
+                            className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
+                        >
+                            <option value="todas">Todas las líneas</option>
+                            {lineasDisponibles.map(linea => (
+                                <option key={linea} value={linea}>{linea}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider pl-1">Convocatoria</label>
+                        <select
+                            value={filterConvocatoria}
+                            onChange={e => setFilterConvocatoria(e.target.value)}
+                            className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
+                        >
+                            <option value="todas">Todas las convocatorias</option>
+                            {convocatoriasDisponibles.map(conv => (
+                                <option key={conv} value={conv}>{conv}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -183,14 +285,14 @@ const MyProjectsPage: React.FC = () => {
                         <Target size={28} className="text-text-dim" />
                     </div>
                     <h3 className="text-lg font-semibold text-text-main tracking-tight mb-2">
-                        {search || filterEstado !== 'todos' ? 'Sin resultados' : 'Aún no tienes proyectos'}
+                        {hasActiveFilters ? 'Sin resultados' : 'Aún no tienes proyectos'}
                     </h3>
                     <p className="text-sm text-text-dim max-w-xs mb-6">
-                        {search || filterEstado !== 'todos'
+                        {hasActiveFilters
                             ? 'Prueba con otros filtros de búsqueda.'
                             : 'Crea tu primera propuesta de investigación para comenzar.'}
                     </p>
-                    {filterEstado === 'todos' && !search && !isDocente && (
+                    {!hasActiveFilters && !isDocente && (
                         <button
                             onClick={() => setShowNewProject(true)}
                             className="btn-vercel-primary px-6 py-2.5"

@@ -190,165 +190,153 @@ const NotificationsPage = () => {
 
             {/* Two-column Vercel Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:50ms]">
-                
+
                 {/* Main Content: Left Column */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* Filtros y Búsqueda */}
-            <div className="bento-card static p-4 mb-6 flex flex-col md:flex-row items-start md:items-center gap-4 animate-fade-up [animation-delay:100ms]">
-                <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
-                    <Filter size={13} className="text-text-dim shrink-0" />
-                    {filters.map(f => (
-                        <button
-                            key={f.key}
-                            onClick={() => setFilter(f.key)}
-                            className={`text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-sm whitespace-nowrap transition-colors ${
-                                filter === f.key
-                                    ? 'bg-text-main text-bg-deep'
-                                    : 'bg-surface border border-border-thin text-text-dim hover:text-text-main'
-                            }`}
-                        >
-                            {f.label}
-                            {f.count !== undefined && f.count > 0 && (
-                                <span className="ml-1.5 text-[8px] font-semibold">({f.count})</span>
-                            )}
-                        </button>
-                    ))}
+                    <div className="bento-card static p-4 mb-6 flex flex-col md:flex-row items-start md:items-center gap-4 animate-fade-up [animation-delay:100ms]">
+                        <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto">
+                            <Filter size={13} className="text-text-dim shrink-0" />
+                            {filters.map(f => (
+                                <button
+                                    key={f.key}
+                                    onClick={() => setFilter(f.key)}
+                                    className={`text-[10px] font-semibold uppercase tracking-wider px-3 py-1.5 rounded-sm whitespace-nowrap transition-colors ${filter === f.key
+                                            ? 'bg-text-main text-bg-deep'
+                                            : 'bg-surface border border-border-thin text-text-dim hover:text-text-main'
+                                        }`}
+                                >
+                                    {f.label}
+                                    {f.count !== undefined && f.count > 0 && (
+                                        <span className="ml-1.5 text-[8px] font-semibold">({f.count})</span>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="relative flex-1 w-full md:w-auto md:min-w-[240px]">
+                            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Buscar en notificaciones..."
+                                className="input-vercel !pl-8 w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Contenido */}
+                    <div className="animate-fade-up [animation-delay:200ms]">
+                        {loadingAll && allNotifications.length === 0 ? (
+                            <div className="bento-card static p-16 text-center">
+                                <div className="animate-spin w-6 h-6 border-2 border-text-dim border-t-transparent rounded-full mx-auto mb-4" />
+                                <p className="text-xs text-text-dim uppercase tracking-widest font-semibold">Cargando notificaciones...</p>
+                            </div>
+                        ) : filtered.length === 0 ? (
+                            <div className="bento-card static p-16 text-center">
+                                <Inbox size={40} className="mx-auto text-text-dim opacity-20 mb-4" />
+                                <p className="text-sm text-text-dim font-semibold uppercase tracking-widest">
+                                    {search || filter !== 'all' ? 'Sin resultados para este filtro' : 'Todo en orden'}
+                                </p>
+                                <p className="text-[10px] text-text-dim mt-2 uppercase tracking-wider">
+                                    {search || filter !== 'all' ? 'Intenta con otros términos o cambia el filtro' : 'No hay notificaciones pendientes'}
+                                </p>
+                            </div>
+                        ) : (
+                            Object.entries(groupedByDate).map(([groupLabel, items]) => (
+                                <div key={groupLabel} className="mb-8">
+                                    <div className="flex items-center gap-3 mb-3 px-2">
+                                        <h3 className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">{groupLabel}</h3>
+                                        <div className="flex-1 border-t border-border-thin" />
+                                        <span className="text-[9px] font-mono text-text-dim">{items.length}</span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {items.map(n => {
+                                            const config = getCategoryConfig(n.categoria);
+                                            const IconComp = config.icon;
+
+                                            return (
+                                                <div
+                                                    key={n.uuid}
+                                                    onClick={() => handleNotificationClick(n)}
+                                                    className={`bento-card p-4 cursor-pointer group transition-all ${!n.leido ? 'border-l-2 border-l-brand' : 'opacity-60'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className={`shrink-0 p-2.5 rounded-md flex items-center justify-center ${config.bg} ${config.color}`}>
+                                                            <IconComp size={14} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0 space-y-1">
+                                                            <div className="flex justify-between items-start gap-2">
+                                                                <h5 className={`text-xs font-semibold text-text-main leading-tight truncate ${!n.leido ? '' : 'font-medium'}`}>
+                                                                    {stripHtmlToText(n.titulo)}
+                                                                </h5>
+                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                    <span className="text-[9px] font-mono text-text-dim">
+                                                                        {formatDate(n.fecha_envio)}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                            <p className="text-[11px] text-text-dim leading-relaxed line-clamp-2 break-words">
+                                                                {stripHtmlToText(n.mensaje)}
+                                                            </p>
+                                                            <div className="flex items-center gap-3 mt-1.5">
+                                                                <span className={`badge-vercel badge-vercel-${n.categoria === 'URGENTE' ? 'error' :
+                                                                        n.categoria === 'INVESTIGACION' ? 'info' : 'neutral'
+                                                                    } text-[7px]`}>
+                                                                    {config.label}
+                                                                </span>
+                                                                {n.url_accion && (
+                                                                    <span className="text-[9px] font-semibold text-text-main uppercase hover:underline flex items-center gap-1">
+                                                                        Ir al detalle <ExternalLink size={8} />
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[8px] font-mono text-text-dim ml-auto hidden md:inline">
+                                                                    {formatFullDate(n.fecha_envio)}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        {!n.leido && (
+                                                            <div className="w-2 h-2 bg-brand rounded-full mt-2 shrink-0" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
 
-                <div className="relative flex-1 w-full md:w-auto md:min-w-[240px]">
-                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        placeholder="Buscar en notificaciones..."
-                        className="input-vercel !pl-8 w-full"
+                {/* Sidebar: Right Column */}
+                <div className="space-y-6">
+                    <VercelUsageCard
+                        title="Resumen de notificaciones"
+                        buttonLabel="Actualizar"
+                        onButtonClick={handleRefresh}
+                        items={[
+                            {
+                                label: 'Notificaciones',
+                                value: allNotifications.length,
+                                displayValue: `${allNotifications.length} registradas`,
+                                max: 100,
+                                color: 'var(--brand)'
+                            },
+                            {
+                                label: 'Por Leer',
+                                value: unreadCount,
+                                displayValue: `${unreadCount} pendientes`,
+                                max: allNotifications.length || 1,
+                                color: unreadCount > 0 ? 'var(--brand)' : 'var(--text-dim)'
+                            }
+                        ]}
                     />
                 </div>
             </div>
-
-            {/* Contenido */}
-            <div className="animate-fade-up [animation-delay:200ms]">
-                {loadingAll && allNotifications.length === 0 ? (
-                    <div className="bento-card static p-16 text-center">
-                        <div className="animate-spin w-6 h-6 border-2 border-text-dim border-t-transparent rounded-full mx-auto mb-4" />
-                        <p className="text-xs text-text-dim uppercase tracking-widest font-semibold">Cargando notificaciones...</p>
-                    </div>
-                ) : filtered.length === 0 ? (
-                    <div className="bento-card static p-16 text-center">
-                        <Inbox size={40} className="mx-auto text-text-dim opacity-20 mb-4" />
-                        <p className="text-sm text-text-dim font-semibold uppercase tracking-widest">
-                            {search || filter !== 'all' ? 'Sin resultados para este filtro' : 'Todo en orden'}
-                        </p>
-                        <p className="text-[10px] text-text-dim mt-2 uppercase tracking-wider">
-                            {search || filter !== 'all' ? 'Intenta con otros términos o cambia el filtro' : 'No hay notificaciones pendientes'}
-                        </p>
-                    </div>
-                ) : (
-                    Object.entries(groupedByDate).map(([groupLabel, items]) => (
-                        <div key={groupLabel} className="mb-8">
-                            <div className="flex items-center gap-3 mb-3 px-2">
-                                <h3 className="text-[10px] font-semibold text-text-dim uppercase tracking-widest">{groupLabel}</h3>
-                                <div className="flex-1 border-t border-border-thin" />
-                                <span className="text-[9px] font-mono text-text-dim">{items.length}</span>
-                            </div>
-
-                            <div className="space-y-2">
-                                {items.map(n => {
-                                    const config = getCategoryConfig(n.categoria);
-                                    const IconComp = config.icon;
-
-                                    return (
-                                        <div
-                                            key={n.uuid}
-                                            onClick={() => handleNotificationClick(n)}
-                                            className={`bento-card p-4 cursor-pointer group transition-all ${
-                                                !n.leido ? 'border-l-2 border-l-brand' : 'opacity-60'
-                                            }`}
-                                        >
-                                            <div className="flex items-start gap-3">
-                                                <div className={`shrink-0 p-2.5 rounded-md flex items-center justify-center ${config.bg} ${config.color}`}>
-                                                    <IconComp size={14} />
-                                                </div>
-                                                <div className="flex-1 min-w-0 space-y-1">
-                                                    <div className="flex justify-between items-start gap-2">
-                                                        <h5 className={`text-xs font-semibold text-text-main leading-tight truncate ${!n.leido ? '' : 'font-medium'}`}>
-                                                            {stripHtmlToText(n.titulo)}
-                                                        </h5>
-                                                        <div className="flex items-center gap-2 shrink-0">
-                                                            <span className="text-[9px] font-mono text-text-dim">
-                                                                {formatDate(n.fecha_envio)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <p className="text-[11px] text-text-dim leading-relaxed line-clamp-2 break-words">
-                                                        {stripHtmlToText(n.mensaje)}
-                                                    </p>
-                                                    <div className="flex items-center gap-3 mt-1.5">
-                                                        <span className={`badge-vercel badge-vercel-${
-                                                            n.categoria === 'URGENTE' ? 'error' :
-                                                            n.categoria === 'INVESTIGACION' ? 'info' : 'neutral'
-                                                        } text-[7px]`}>
-                                                            {config.label}
-                                                        </span>
-                                                        {n.url_accion && (
-                                                            <span className="text-[9px] font-semibold text-text-main uppercase hover:underline flex items-center gap-1">
-                                                                Ir al detalle <ExternalLink size={8} />
-                                                            </span>
-                                                        )}
-                                                        <span className="text-[8px] font-mono text-text-dim ml-auto hidden md:inline">
-                                                            {formatFullDate(n.fecha_envio)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                {!n.leido && (
-                                                    <div className="w-2 h-2 bg-brand rounded-full mt-2 shrink-0" />
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
-        </div>
-
-            {/* Sidebar: Right Column */}
-            <div className="space-y-6">
-                <VercelUsageCard 
-                    title="Resumen de notificaciones"
-                    buttonLabel="Actualizar"
-                    onButtonClick={handleRefresh}
-                    items={[
-                        {
-                            label: 'Notificaciones',
-                            value: allNotifications.length,
-                            displayValue: `${allNotifications.length} registradas`,
-                            max: 100,
-                            color: 'var(--brand)'
-                        },
-                        {
-                            label: 'Por Leer',
-                            value: unreadCount,
-                            displayValue: `${unreadCount} pendientes`,
-                            max: allNotifications.length || 1,
-                            color: unreadCount > 0 ? 'var(--brand)' : 'var(--text-dim)'
-                        }
-                    ]}
-                />
-            </div>
-        </div>
-
-            {/* Footer Stats */}
-            {allNotifications.length > 0 && (
-                <div className="mt-8 text-center">
-                    <p className="text-[9px] font-mono text-text-dim uppercase tracking-wider">
-                        {allNotifications.length} notificaciones en total · {unreadCount} sin leer
-                    </p>
-                </div>
-            )}
         </main>
     );
 };
@@ -358,8 +346,8 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
-                <button 
-                    onClick={onButtonClick} 
+                <button
+                    onClick={onButtonClick}
                     className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
                 >
                     {buttonLabel}
@@ -372,10 +360,10 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                 const radius = 6.5;
                 const circumference = 2 * Math.PI * radius;
                 const strokeDashoffset = circumference - (percentage / 100) * circumference;
-                
+
                 return (
-                    <div 
-                        key={idx} 
+                    <div
+                        key={idx}
                         className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
@@ -407,11 +395,11 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg 
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor" 
+                                <svg
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
                                     strokeWidth="2.5"
                                 >
                                     <circle cx="12" cy="12" r="10" />
