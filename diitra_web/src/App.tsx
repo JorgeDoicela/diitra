@@ -244,6 +244,7 @@ function App() {
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
                             <Route path="/arbitraje" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
                             <Route path="/arbitraje/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
+                            <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={<ProjectWorkspace />} />
                             <Route path="/verificacion" element={<VerifyDocument />} />
                             <Route path="/verify" element={<RedirectPreserveSearch to="/verificacion" />} />
                         </Route>
@@ -255,12 +256,6 @@ function App() {
                         <Route path="/consentimiento-lopdp" element={
                             <ProtectedRoute>
                                 <LopdpConsentPage />
-                            </ProtectedRoute>
-                        } />
-
-                        <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={
-                            <ProtectedRoute>
-                                <ProjectWorkspace />
                             </ProtectedRoute>
                         } />
 
