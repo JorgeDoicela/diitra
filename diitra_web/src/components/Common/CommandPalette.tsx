@@ -230,7 +230,7 @@ function buildStaticItems(navigate: ReturnType<typeof useNavigate>, isAdmin: boo
         { id: 'config-indicadores', label: 'Indicadores CACES', description: 'Configurar métricas de acreditación institucional', category: 'Parámetros Normativos', icon: Activity, path: '/parametros-normativos?tab=indicadores', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], keywords: ['indicadores', 'caces', 'acreditacion', 'metricas'], boost: 3 },
         { id: 'settings', label: 'Configuración', description: 'Preferencias de cuenta y ajustes personales', category: 'Configuración', icon: Settings, path: '/configuracion', roles: ['ANY'], keywords: ['perfil', 'cuenta', 'preferencias', 'personal', 'configuracion', 'settings'], boost: 4 },
         // ── Acciones Rápidas ──────────────────────────────────────────
-        { id: 'new-project', label: 'Nuevo Proyecto de Investigación', description: 'Iniciar postulación para un nuevo proyecto I+D', category: 'Acciones Rápidas', icon: PlusCircle, shortcut: 'N', action: () => navigate('/investigacion'), roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], keywords: ['nuevo', 'crear', 'postular', 'iniciar', 'registrar', 'nueva investigacion'], boost: isDocente ? 10 : 5 },
+        { id: 'new-project', label: 'Nuevo Proyecto de Investigación', description: 'Iniciar postulación para un nuevo proyecto I+D', category: 'Acciones Rápidas', icon: PlusCircle, shortcut: 'N', action: () => navigate(isAdmin ? '/investigacion' : '/investigacion/mis-proyectos'), roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], keywords: ['nuevo', 'crear', 'postular', 'iniciar', 'registrar', 'nueva investigacion'], boost: isDocente ? 10 : 5 },
         { id: 'export-analiticas', label: 'Exportar Reporte PDF', description: 'Descargar reporte completo de analíticas en PDF', category: 'Acciones Rápidas', icon: FileDown, shortcut: 'E', action: () => navigate('/analiticas'), roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], keywords: ['exportar', 'pdf', 'descargar', 'reporte', 'informe'], boost: isAdmin ? 6 : 0 },
         { id: 'logout', label: 'Cerrar Sesión', description: 'Salir de la sesión actual de forma segura', category: 'Acciones Rápidas', icon: LogOut, action: () => navigate('/login'), roles: ['ANY'], keywords: ['salir', 'cerrar sesion', 'logout', 'desconectar'], boost: 0 },
     ];
@@ -246,7 +246,7 @@ function proyectoToItem(p: any, isMyProject: boolean): SearchItem {
         description: [p.codigo_institucional, p.linea_investigacion, p.estado].filter(Boolean).join(' · '),
         category: cat,
         icon: FolderOpen,
-        path: buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid),
+        path: buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', isMyProject ? '/investigacion/mis-proyectos' : '/investigacion'),
         keywords: [p.codigo_institucional || '', p.linea_investigacion || '', p.estado || ''],
         boost: 0,
         isLive: true,

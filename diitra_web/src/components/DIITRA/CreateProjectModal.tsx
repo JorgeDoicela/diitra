@@ -118,8 +118,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             await api.patch(`/documents/instances/${newUuid}/metadata`, initialMetadata);
 
             setCreationStepMsg("Preparando el editor colaborativo...");
+            const isSupervision = window.location.pathname.startsWith('/investigacion') && !window.location.pathname.startsWith('/investigacion/mis-proyectos');
+            const prefix = isSupervision ? '/investigacion' : '/investigacion/mis-proyectos';
+            
             setTimeout(() => {
-                navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '?edit=true'), { replace: true });
+                navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '?edit=true', prefix), { replace: true });
                 onClose();
             }, 800);
 

@@ -368,7 +368,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     setFormData((prev: any) => ({ ...prev, Uuid: newUuid }));
                     if (!window.location.pathname.includes('/workspace/')) {
                         await api.patch(`/documents/instances/${newUuid}/metadata`, { ...data, Uuid: newUuid });
-                        navigate(buildWorkspacePath(templateCode, newUuid, '?edit=true'), { replace: true });
+                        const isMisProyectos = window.location.pathname.startsWith('/investigacion/mis-proyectos');
+                        const prefix = isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion';
+                        navigate(buildWorkspacePath(templateCode, newUuid, '?edit=true', prefix), { replace: true });
                     }
                 }
             }

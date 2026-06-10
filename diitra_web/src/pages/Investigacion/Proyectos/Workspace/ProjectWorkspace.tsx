@@ -68,13 +68,16 @@ export const ProjectWorkspace: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    const isMisProyectos = location.pathname.startsWith('/investigacion/mis-proyectos');
+    const urlPrefix = isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion';
+
     const queryParams = new URLSearchParams(location.search);
     const shouldEdit = queryParams.get('edit') === 'true';
 
     useEffect(() => {
         if (!templateSlug || !documentUuid || !isLegacyTemplateUrlSegment(templateSlug)) return;
-        navigate(buildWorkspacePath(templateCode, documentUuid, location.search), { replace: true });
-    }, [templateSlug, templateCode, documentUuid, location.search, navigate]);
+        navigate(buildWorkspacePath(templateCode, documentUuid, location.search, urlPrefix), { replace: true });
+    }, [templateSlug, templateCode, documentUuid, location.search, navigate, urlPrefix]);
 
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -526,7 +529,7 @@ export const ProjectWorkspace: React.FC = () => {
                     <p className="text-xs text-text-dim leading-relaxed">
                         No tienes permisos para visualizar ni participar en este proyecto de investigación colaborativo.
                     </p>
-                    <button onClick={() => navigate('/investigacion')} className="btn-vercel-primary text-xs w-full justify-center">
+                    <button onClick={() => navigate(urlPrefix)} className="btn-vercel-primary text-xs w-full justify-center">
                         Volver a Proyectos
                     </button>
                 </div>
@@ -767,7 +770,7 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleCloseEditor = () => {
         setActiveDocument(null);
-        navigate(buildWorkspacePath(templateCode, documentUuid!), { replace: true });
+        navigate(buildWorkspacePath(templateCode, documentUuid!, '', urlPrefix), { replace: true });
     };
 
     const resolveDocumentInstance = async (docTemplateCode: string) => {
@@ -857,7 +860,7 @@ export const ProjectWorkspace: React.FC = () => {
             <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
                 <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate('/investigacion')} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
+                        <button onClick={() => navigate(urlPrefix)} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
                             <ArrowLeft size={14} />
                         </button>
                         <div className="h-4 w-[1px] bg-border-thin" />
@@ -1140,7 +1143,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                 {phase.id === 'En Ejecución' && (isCurrent || isPast) && currentProject.status === 'En Ejecución' && (
                                                     <div className="mt-4 animate-fade-in flex flex-wrap gap-3">
                                                         <button 
-                                                            onClick={() => navigate(`/investigacion/informes-avance/${currentProject.uuid}`)}
+                                                            onClick={() => navigate(`${urlPrefix}/informes-avance/${currentProject.uuid}`)}
                                                             className="btn-vercel-primary !py-2"
                                                         >
                                                             <BarChart size={14} />
@@ -1161,7 +1164,7 @@ export const ProjectWorkspace: React.FC = () => {
                                                             <span>{currentProject.status === 'Finalizado' ? 'Ver Informe Final' : 'Informe Final'}</span>
                                                         </button>
                                                         <button 
-                                                            onClick={() => navigate(`/investigacion/monitoreo/${currentProject.uuid}`)}
+                                                            onClick={() => navigate(`${urlPrefix}/monitoreo/${currentProject.uuid}`)}
                                                             className="btn-vercel-secondary !py-2"
                                                         >
                                                             <Activity size={14} className="text-brand animate-pulse" />

@@ -46,7 +46,7 @@ const MicrosoftCallback = () => {
                 const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV') || roles.includes('DIRECTOR_INV');
 
                 if (isAdmin) target = '/usuarios';
-                else if (isDocente) target = '/investigacion';
+                else if (isDocente) target = '/investigacion/mis-proyectos';
 
                 navigate(target, { replace: true });
             } catch (err: any) {
