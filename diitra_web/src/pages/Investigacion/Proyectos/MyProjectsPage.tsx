@@ -104,7 +104,7 @@ const MyProjectsPage: React.FC = () => {
     });
 
     const abrirWorkspace = (p: ProyectoResumen) => {
-        navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid));
+        navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos'));
     };
 
     if (loading) return (

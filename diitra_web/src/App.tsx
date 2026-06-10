@@ -122,13 +122,13 @@ const RoleRoute = ({ children, allowedRoles }: { children: React.ReactNode; allo
 
     if (isAdmin && allowedRoles.some(r => ['DIITRA_ADMIN', 'ADMIN_SISTEMA'].includes(r))) return <>{children}</>;
 
-    if (isDocente && allowedRoles.some(r => ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIRECTOR_INV'].includes(r))) return <>{children}</>;
-
-    if (isEstudiante && allowedRoles.some(r => ['DIITRA_ESTUDIANTE', 'ESTUDIANTE_COLAB'].includes(r))) return <>{children}</>;
-
-    if (isRevisor && allowedRoles.some(r => ['DIITRA_REVISOR_EXTERNO', 'REVISOR_EXT', 'REVISOR_INT'].includes(r))) return <>{children}</>;
-
     if (roles.some(r => allowedRoles.map(a => a.toUpperCase()).includes(r.toUpperCase()))) return <>{children}</>;
+
+    if (isDocente && allowedRoles.includes('DIITRA_DOCENTE')) return <>{children}</>;
+
+    if (isEstudiante && allowedRoles.includes('DIITRA_ESTUDIANTE')) return <>{children}</>;
+
+    if (isRevisor && allowedRoles.includes('DIITRA_REVISOR_EXTERNO')) return <>{children}</>;
 
     return <Navigate to="/dashboard" replace />;
 };
@@ -143,12 +143,22 @@ const ConvocatoriaRoute = () => {
 
 const NavigateToProjectDetail = () => {
     const { projectUuid } = useParams();
-    return <Navigate to={`/investigacion/monitoreo/${projectUuid}`} replace />;
+    const { isAdmin } = useAuth();
+    const prefix = isAdmin ? '/investigacion' : '/investigacion/mis-proyectos';
+    return <Navigate to={`${prefix}/monitoreo/${projectUuid}`} replace />;
 };
 
 const NavigateToWorkspaceDetail = () => {
     const { documentUuid } = useParams();
-    return <Navigate to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', documentUuid!)} replace />;
+    const { isAdmin } = useAuth();
+    const prefix = isAdmin ? '/investigacion' : '/investigacion/mis-proyectos';
+    return <Navigate to={buildWorkspacePath('PROTOCOLO_INVESTIGACION', documentUuid!, '', prefix)} replace />;
+};
+
+const NavigateToResearchProjects = () => {
+    const { isAdmin } = useAuth();
+    const target = isAdmin ? '/investigacion' : '/investigacion/mis-proyectos';
+    return <Navigate to={target} replace />;
 };
 
 function App() {
@@ -230,21 +240,29 @@ function App() {
                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
                             <Route path="/admin/configuracion" element={<RedirectPreserveSearch to="/parametros-normativos" />} />
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
-                            <Route path="/investigacion/proyectos" element={<Navigate to="/investigacion" replace />} />
+                            <Route path="/investigacion/proyectos" element={<NavigateToResearchProjects />} />
                             <Route path="/investigacion/proyectos/workspace/:documentUuid" element={<NavigateToWorkspaceDetail />} />
                             <Route path="/lopdp/arco" element={<Navigate to="/derechos-arco" replace />} />
                             <Route path="/lopdp/admin" element={<Navigate to="/admin/lopdp" replace />} />
-                            <Route path="/investigacion" element={<ResearchProjectsPage />} />
+                            
+                            {/* Supervision Context (Admin Only) */}
+                            <Route path="/investigacion" element={<AdminRoute><ResearchProjectsPage /></AdminRoute>} />
+                            <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={<AdminRoute><ProjectWorkspace /></AdminRoute>} />
+                            <Route path="/investigacion/monitoreo/:projectUuid" element={<AdminRoute><MonitoringPage /></AdminRoute>} />
+                            <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
+                            
+                            {/* Researcher Context (Docentes, Estudiantes, Externos) */}
                             <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
+                            <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:documentUuid" element={<ProjectWorkspace />} />
+                            <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<MonitoringPage />} />
+                            <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<InformesAvancePage />} />
+                            
                             <Route path="/investigacion/adopcion" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><ProjectAdoptionPage /></RoleRoute>} />
-                            <Route path="/investigacion/monitoreo/:projectUuid" element={<MonitoringPage />} />
-                            <Route path="/investigacion/informes-avance/:projectId" element={<InformesAvancePage />} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
                             <Route path="/revisiones" element={<PeerReviewPage />} />
                             <Route path="/revisiones/:revisionUuid" element={<EvaluacionPage />} />
                             <Route path="/arbitraje" element={<AdminRoute><ArbitrajePage /></AdminRoute>} />
                             <Route path="/arbitraje/proyecto/:projectUuid" element={<AdminRoute><ArbitrajeProyecto /></AdminRoute>} />
-                            <Route path="/investigacion/workspace/:templateCode/:documentUuid" element={<ProjectWorkspace />} />
                             <Route path="/verificacion" element={<VerifyDocument />} />
                             <Route path="/verify" element={<RedirectPreserveSearch to="/verificacion" />} />
                         </Route>

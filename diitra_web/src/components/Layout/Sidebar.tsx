@@ -218,7 +218,7 @@ const Sidebar = ({
     const allMenuItems: MenuItem[] = [
         // Grupo 1: Principal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
-        { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
+        { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN', 'ADMIN_SISTEMA'], group: 1 },
         { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], group: 1 },
         { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
 
@@ -270,6 +270,7 @@ const Sidebar = ({
     const activeItem = menuItems.reduce<typeof menuItems[0] | null>((best, item) => {
         const isMatch = location.pathname === item.path
             || (item.path !== '/dashboard' && location.pathname.startsWith(item.path));
+
         if (isMatch && (!best || item.path.length > best.path.length)) {
             return item;
         }

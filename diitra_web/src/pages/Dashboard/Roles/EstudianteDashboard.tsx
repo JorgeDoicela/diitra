@@ -131,7 +131,7 @@ export const EstudianteDashboard: React.FC = () => {
                                 {colaboraciones.map(p => (
                                     <div 
                                         key={p.uuid}
-                                        onClick={() => navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid))}
+                                        onClick={() => navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', p.uuid, '', '/investigacion/mis-proyectos'))}
                                         className="p-3 rounded-lg border border-border-thin bg-surface flex justify-between items-center group cursor-pointer hover:border-border-hover transition-all"
                                     >
                                         <div className="min-w-0 flex-1 pr-2">

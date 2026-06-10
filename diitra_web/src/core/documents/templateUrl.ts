@@ -8,9 +8,8 @@ export function slugToTemplateCode(slug: string): string {
     return slug.replace(/-/g, '_').toUpperCase();
 }
 
-/** Ruta canónica del workspace de un documento. */
-export function buildWorkspacePath(templateCode: string, documentUuid: string, search = ''): string {
-    return `/investigacion/workspace/${templateCodeToSlug(templateCode)}/${documentUuid}${search}`;
+export function buildWorkspacePath(templateCode: string, documentUuid: string, search = '', prefix = '/investigacion'): string {
+    return `${prefix}/workspace/${templateCodeToSlug(templateCode)}/${documentUuid}${search}`;
 }
 
 /** Indica si el segmento de URL usa el formato legado en mayúsculas/underscores. */
