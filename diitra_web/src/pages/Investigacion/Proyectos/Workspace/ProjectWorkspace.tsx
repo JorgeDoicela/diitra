@@ -21,7 +21,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, CheckCircle2, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
+import { ChevronRight, FileText, CheckCircle2, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield, X } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -66,7 +66,7 @@ const normalizeRole = (role: string | null | undefined): string => {
     if (r.includes("principal")) return "Investigador Principal";
     if (r.includes("semillerista")) return "Semillerista";
     if (r.includes("estudiante") || r.includes("alumno")) return "Co-Investigador (Estudiante)";
-    if (r.includes("apoyo") || r.includes("tecnico") || r.includes("técnico")) return "Técnico de Apoyo";
+    if (r.includes("apoyo") || r.includes("tecnico") || r.includes("técnico")) return "Co-Investigador";
     return "Co-Investigador";
 };
 
@@ -657,7 +657,7 @@ export const ProjectWorkspace: React.FC = () => {
                     } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno")) {
                         projectRol = "Co-Investigador (Estudiante)";
                     } else if (groupRol.toLowerCase().includes("tecnico") || groupRol.toLowerCase().includes("técnico")) {
-                        projectRol = "Técnico de Apoyo";
+                        projectRol = "Co-Investigador";
                     }
 
                     updatedMembers.push({
@@ -1352,179 +1352,270 @@ export const ProjectWorkspace: React.FC = () => {
                                         </span>
                                     </div>
                                 )}
+                                 {(tieneGrupo || currentProject.puedeSolicitarCambioEquipo || teamChangeRequests.length > 0) && (
+                                     <div className="border border-border-thin rounded-md p-3 space-y-3 bg-bg-deep/50">
+                                         <div className="flex items-center justify-between">
+                                             <h4 className="text-[10px] font-semibold uppercase tracking-wider text-text-main">Solicitudes Formales de Cambio</h4>
+                                             <span className="text-[9px] text-text-dim">Con registro y revisión</span>
+                                         </div>
 
-                                {(tieneGrupo || currentProject.puedeSolicitarCambioEquipo || teamChangeRequests.length > 0) && (
-                                    <div className="border border-border-thin rounded-md p-3 space-y-3 bg-bg-deep/50">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="text-[10px] font-semibold uppercase tracking-wider text-text-main">Solicitudes Formales de Cambio</h4>
-                                            <span className="text-[9px] text-text-dim">Con registro y revisión</span>
-                                        </div>
+                                         {currentProject.puedeSolicitarCambioEquipo && (() => {
+                                             const isStudentRole = ['Co-Investigador (Estudiante)', 'SEMILLERISTA', 'Semillerista'].includes(teamChangeForm.rolPropuesto);
+                                             const suggestedUsers = (teamChangeForm.tipo === 'CAMBIO_DIRECTOR' || !isStudentRole)
+                                                 ? availableProfessors
+                                                 : availableStudents;
+                                             return (
+                                                 <div className="space-y-4 animate-fade-in">
+                                            {/* Row 1: Tipo & Referencia */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Tipo de Solicitud</label>
+                                                    <select
+                                                        value={teamChangeForm.tipo}
+                                                        onChange={(e) => {
+                                                            setTeamChangeForm(prev => ({ ...prev, tipo: e.target.value, cedulaObjetivo: '' }));
+                                                            setRequestSearchQuery('');
+                                                        }}
+                                                        className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                    >
+                                                        <option value="ALTA">Alta de integrante</option>
+                                                        <option value="BAJA">Baja de integrante</option>
+                                                        <option value="CAMBIO_DIRECTOR">Cambio de director</option>
+                                                        <option value="CAMBIO_GRUPO">Cambio de grupo de investigación</option>
+                                                    </select>
+                                                </div>
 
-                                        {currentProject.puedeSolicitarCambioEquipo && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                <select
-                                                    value={teamChangeForm.tipo}
-                                                    onChange={(e) => {
-                                                        setTeamChangeForm(prev => ({ ...prev, tipo: e.target.value, cedulaObjetivo: '' }));
-                                                        setRequestSearchQuery('');
-                                                    }}
-                                                    className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
-                                                >
-                                                    <option value="ALTA">Alta de integrante</option>
-                                                    <option value="BAJA">Baja de integrante</option>
-                                                    <option value="CAMBIO_DIRECTOR">Cambio de director</option>
-                                                    <option value="CAMBIO_GRUPO">Cambio de grupo de investigación</option>
-                                                </select>
-                                                {teamChangeForm.tipo === 'CAMBIO_GRUPO' ? (
-                                                    <select
-                                                        value={teamChangeForm.cedulaObjetivo}
-                                                        onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
-                                                        className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
-                                                    >
-                                                        <option value="">-- Seleccione Grupo Destino --</option>
-                                                        {approvedGroups.map((g: any) => (
-                                                            <option key={g.uuid} value={g.uuid}>
-                                                                {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                ) : teamChangeForm.tipo === 'BAJA' ? (
-                                                    <select
-                                                        value={teamChangeForm.cedulaObjetivo}
-                                                        onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
-                                                        className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
-                                                    >
-                                                        <option value="">-- Integrante a dar de Baja --</option>
-                                                        {investigadores.filter((m: any) => m.activo !== false).map((m: any) => (
-                                                            <option key={m.cedula} value={m.cedula}>
-                                                                {formatNombre(m.nombre)} ({m.cedula}) - {m.rol}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                ) : (
-                                                    <div className="flex flex-col gap-1 w-full">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Referencia Acta / Memo (Opcional)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={teamChangeForm.resolucionReferencia}
+                                                        onChange={(e) => setTeamChangeForm(prev => ({ ...prev, resolucionReferencia: e.target.value }))}
+                                                        placeholder="Ej. ACTA-INV-2026-004"
+                                                        className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main placeholder-text-muted outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {/* Row 2: Dynamic Fields (Rol and Target User) */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                                                {teamChangeForm.tipo === 'ALTA' && (
+                                                    <div className="flex flex-col gap-1.5">
+                                                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Rol Propuesto</label>
+                                                        <select
+                                                            value={teamChangeForm.rolPropuesto}
+                                                            onChange={(e) => {
+                                                                setTeamChangeForm(prev => ({ ...prev, rolPropuesto: e.target.value, cedulaObjetivo: '' }));
+                                                                setRequestSearchQuery('');
+                                                            }}
+                                                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                        >
+                                                            <option value="Co-Investigador">Co-Investigador</option>
+                                                            <option value="Investigador Principal">Investigador Principal</option>
+                                                            <option value="Director de Proyecto">Director de Proyecto</option>
+                                                            <option value="Semillerista">Semillerista</option>
+                                                            <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
+                                                        </select>
+                                                    </div>
+                                                )}
+
+                                                <div className={`flex flex-col gap-1.5 ${teamChangeForm.tipo === 'ALTA' ? '' : 'md:col-span-2'}`}>
+                                                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">
+                                                        {teamChangeForm.tipo === 'ALTA' && 'Integrante a Vincular'}
+                                                        {teamChangeForm.tipo === 'BAJA' && 'Integrante a dar de Baja'}
+                                                        {teamChangeForm.tipo === 'CAMBIO_DIRECTOR' && 'Nuevo Director Propuesto'}
+                                                        {teamChangeForm.tipo === 'CAMBIO_GRUPO' && 'Grupo de Investigación Destino'}
+                                                    </label>
+
+                                                    {teamChangeForm.tipo === 'CAMBIO_GRUPO' ? (
                                                         <select
                                                             value={teamChangeForm.cedulaObjetivo}
-                                                            onChange={(e) => {
-                                                                setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }));
-                                                                const isStudent = ['Co-Investigador (Estudiante)', 'SEMILLERISTA', 'Semillerista'].includes(teamChangeForm.rolPropuesto);
-                                                                const list = (teamChangeForm.tipo === 'CAMBIO_DIRECTOR' || !isStudent) ? availableProfessors : availableStudents;
-                                                                const chosen = list.find(u => u.cedula === e.target.value);
-                                                                if (chosen) setRequestSearchQuery(formatNombre(chosen.nombre));
-                                                            }}
-                                                            className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main w-full"
+                                                            onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
+                                                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
                                                         >
-                                                            <option value="">-- Seleccione Integrante --</option>
-                                                            {((teamChangeForm.tipo === 'CAMBIO_DIRECTOR' || !['Co-Investigador (Estudiante)', 'SEMILLERISTA', 'Semillerista'].includes(teamChangeForm.rolPropuesto)) ? availableProfessors : availableStudents).map((u: any) => (
-                                                                <option key={u.cedula} value={u.cedula}>
-                                                                    {formatNombre(u.nombre)} ({u.cedula})
+                                                            <option value="">-- Seleccione Grupo Destino --</option>
+                                                            {approvedGroups.map((g: any) => (
+                                                                <option key={g.uuid} value={g.uuid}>
+                                                                    {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
                                                                 </option>
                                                             ))}
                                                         </select>
-                                                        
-                                                        <div className="relative">
-                                                            <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-text-dim" />
-                                                            <input
-                                                                type="text"
-                                                                value={requestSearchQuery}
-                                                                onChange={(e) => setRequestSearchQuery(e.target.value)}
-                                                                onFocus={() => setShowRequestSearchResults(true)}
-                                                                placeholder="O buscar por nombre/cédula..."
-                                                                className="bg-surface border border-border-thin rounded pl-7 pr-2 py-1 text-[10px] text-text-main outline-none focus:border-text-main w-full"
-                                                            />
-                                                            {isRequestSearching && (
-                                                                <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                                                                    <div className="animate-spin h-3.5 w-3.5 border border-t-transparent border-brand rounded-full"></div>
+                                                    ) : teamChangeForm.tipo === 'BAJA' ? (
+                                                        <select
+                                                            value={teamChangeForm.cedulaObjetivo}
+                                                            onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
+                                                            className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                        >
+                                                            <option value="">-- Seleccione Integrante --</option>
+                                                            {investigadores.filter((m: any) => m.activo !== false).map((m: any) => (
+                                                                <option key={m.cedula} value={m.cedula}>
+                                                                    {formatNombre(m.nombre)} ({m.cedula}) - {m.rol}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <div className="w-full relative">
+                                                            {teamChangeForm.cedulaObjetivo ? (
+                                                                (() => {
+                                                                    const selectedUserObj = [...availableProfessors, ...availableStudents, ...requestSearchResults].find(u => u.cedula === teamChangeForm.cedulaObjetivo);
+                                                                    return (
+                                                                        <div className="border border-border-thin bg-surface rounded-md px-3 py-2 flex items-center justify-between animate-fade-in">
+                                                                            <div className="flex items-center gap-2.5">
+                                                                                <div className="h-7 w-7 rounded-full bg-text-main/10 border border-text-main/10 flex items-center justify-center font-bold text-[10px] text-text-main">
+                                                                                    {selectedUserObj?.nombre?.substring(0, 2).toUpperCase() || 'CI'}
+                                                                                </div>
+                                                                                <div>
+                                                                                    <p className="text-xs font-semibold text-text-main leading-tight">{selectedUserObj ? formatNombre(selectedUserObj.nombre) : 'Usuario Seleccionado'}</p>
+                                                                                    <p className="text-[9px] text-text-dim font-mono leading-none mt-0.5">
+                                                                                        C.I. {teamChangeForm.cedulaObjetivo} {selectedUserObj?.tipo ? `· ${selectedUserObj.tipo === 'profesor' ? 'Docente' : 'Estudiante'}` : ''}
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: '' }));
+                                                                                    setRequestSearchQuery('');
+                                                                                }}
+                                                                                className="text-text-dim hover:text-brand hover:bg-surface-hover transition-all p-1 rounded-full"
+                                                                                title="Cambiar integrante"
+                                                                            >
+                                                                                <X size={12} />
+                                                                            </button>
+                                                                        </div>
+                                                                    );
+                                                                })()
+                                                            ) : (
+                                                                <div className="relative">
+                                                                    <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
+                                                                    <input
+                                                                        type="text"
+                                                                        value={requestSearchQuery}
+                                                                        onChange={(e) => setRequestSearchQuery(e.target.value)}
+                                                                        onFocus={() => setShowRequestSearchResults(true)}
+                                                                        placeholder="Buscar por nombre o cédula..."
+                                                                        className="w-full bg-surface border border-border-thin rounded-md pl-9 pr-8 py-2 text-xs text-text-main placeholder-text-muted outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
+                                                                    />
+                                                                    {isRequestSearching && (
+                                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                                                            <div className="animate-spin h-3.5 w-3.5 border-2 border-brand border-t-transparent rounded-full"></div>
+                                                                        </div>
+                                                                    )}
+
+                                                                    {showRequestSearchResults && (
+                                                                        <>
+                                                                            <div className="fixed inset-0 z-20" onClick={() => setShowRequestSearchResults(false)}></div>
+                                                                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-48 overflow-y-auto z-30 divide-y divide-border-thin/40">
+                                                                                {(!requestSearchQuery.trim() || requestSearchQuery.length < 2) ? (
+                                                                                    <>
+                                                                                        <div className="px-3 py-1.5 text-[8.5px] font-bold text-text-dim uppercase tracking-wider bg-surface-hover/30">
+                                                                                            Sugerencias disponibles ({suggestedUsers.length})
+                                                                                        </div>
+                                                                                        {suggestedUsers.length === 0 ? (
+                                                                                            <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                                                No hay integrantes disponibles
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            suggestedUsers.map((su: any) => (
+                                                                                                <button
+                                                                                                    key={su.cedula}
+                                                                                                    type="button"
+                                                                                                    onClick={() => {
+                                                                                                        setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: su.cedula }));
+                                                                                                        setRequestSearchQuery(formatNombre(su.nombre));
+                                                                                                        setShowRequestSearchResults(false);
+                                                                                                    }}
+                                                                                                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-surface text-left text-[11px] transition-colors"
+                                                                                                >
+                                                                                                    <div>
+                                                                                                        <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
+                                                                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {su.cedula}</p>
+                                                                                                    </div>
+                                                                                                    <span className="badge-vercel text-[8px] font-bold px-1.5 py-0.5 badge-vercel-violet">
+                                                                                                        Docente
+                                                                                                    </span>
+                                                                                                </button>
+                                                                                            ))
+                                                                                        )}
+                                                                                    </>
+                                                                                ) : (
+                                                                                    <>
+                                                                                        <div className="px-3 py-1.5 text-[8.5px] font-bold text-text-dim uppercase tracking-wider bg-surface-hover/30">
+                                                                                            Resultados de búsqueda
+                                                                                        </div>
+                                                                                        {requestSearchResults.length === 0 ? (
+                                                                                            <div className="p-3 text-center text-[10px] text-text-dim font-mono">
+                                                                                                Sin resultados
+                                                                                            </div>
+                                                                                        ) : (
+                                                                                            requestSearchResults.map((su: any) => (
+                                                                                                <button
+                                                                                                    key={su.cedula}
+                                                                                                    type="button"
+                                                                                                    onClick={() => {
+                                                                                                        setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: su.cedula }));
+                                                                                                        setRequestSearchQuery(formatNombre(su.nombre));
+                                                                                                        setShowRequestSearchResults(false);
+                                                                                                        
+                                                                                                        const isTeacher = su.tipo === 'profesor';
+                                                                                                        if (isTeacher) {
+                                                                                                            if (!availableProfessors.some(p => p.cedula === su.cedula)) {
+                                                                                                                setAvailableProfessors(prev => [su, ...prev]);
+                                                                                                            }
+                                                                                                        } else {
+                                                                                                            if (!availableStudents.some(s => s.cedula === su.cedula)) {
+                                                                                                                setAvailableStudents(prev => [su, ...prev]);
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }}
+                                                                                                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-surface text-left text-[11px] transition-colors"
+                                                                                                >
+                                                                                                    <div>
+                                                                                                        <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
+                                                                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {su.cedula}</p>
+                                                                                                    </div>
+                                                                                                    <span className={`badge-vercel text-[8px] font-bold px-1.5 py-0.5 ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
+                                                                                                        {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
+                                                                                                    </span>
+                                                                                                </button>
+                                                                                            ))
+                                                                                        )}
+                                                                                    </>
+                                                                                )}
+                                                                            </div>
+                                                                        </>
+                                                                    )}
                                                                 </div>
                                                             )}
-                                                            
-                                                            {showRequestSearchResults && requestSearchQuery.trim() && (
-                                                                <>
-                                                                    <div className="fixed inset-0 z-20" onClick={() => setShowRequestSearchResults(false)}></div>
-                                                                    <div className="absolute left-0 right-0 top-full mt-1 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-40 overflow-y-auto z-30">
-                                                                        {requestSearchResults.length === 0 ? (
-                                                                            <div className="p-2 text-center text-[10px] text-text-dim uppercase tracking-wider">Sin resultados</div>
-                                                                        ) : (
-                                                                            requestSearchResults.map((su: any) => (
-                                                                                <button
-                                                                                    key={su.cedula}
-                                                                                    type="button"
-                                                                                    onClick={() => {
-                                                                                        setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: su.cedula }));
-                                                                                        setRequestSearchQuery(formatNombre(su.nombre));
-                                                                                        setShowRequestSearchResults(false);
-                                                                                        
-                                                                                        const isTeacher = su.tipo === 'profesor';
-                                                                                        if (isTeacher) {
-                                                                                            if (!availableProfessors.some(p => p.cedula === su.cedula)) {
-                                                                                                setAvailableProfessors(prev => [su, ...prev]);
-                                                                                            }
-                                                                                        } else {
-                                                                                            if (!availableStudents.some(s => s.cedula === su.cedula)) {
-                                                                                                setAvailableStudents(prev => [su, ...prev]);
-                                                                                            }
-                                                                                        }
-                                                                                    }}
-                                                                                    className="w-full p-2 flex items-center justify-between hover:bg-surface text-left text-[10px] transition-colors border-b border-border-thin last:border-b-0"
-                                                                                >
-                                                                                    <div>
-                                                                                        <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
-                                                                                        <p className="text-text-dim font-mono text-[9px]">C.I. {su.cedula}</p>
-                                                                                    </div>
-                                                                                    <span className={`badge-vercel text-[8px] font-semibold ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
-                                                                                        {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
-                                                                                    </span>
-                                                                                </button>
-                                                                            ))
-                                                                        )}
-                                                                    </div>
-                                                                </>
-                                                            )}
                                                         </div>
-                                                    </div>
-                                                )}
-                                                {teamChangeForm.tipo !== 'BAJA' && teamChangeForm.tipo !== 'CAMBIO_GRUPO' && (
-                                                    <select
-                                                        value={teamChangeForm.rolPropuesto}
-                                                        onChange={(e) => {
-                                                            setTeamChangeForm(prev => ({ ...prev, rolPropuesto: e.target.value, cedulaObjetivo: '' }));
-                                                            setRequestSearchQuery('');
-                                                        }}
-                                                        className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
-                                                    >
-                                                        <option value="Co-Investigador">Co-Investigador</option>
-                                                        <option value="Investigador Principal">Investigador Principal</option>
-                                                        <option value="Director de Proyecto">Director de Proyecto</option>
-                                                        <option value="Semillerista">Semillerista</option>
-                                                        <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
-                                                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
-                                                    </select>
-                                                )}
-                                                <input
-                                                    type="text"
-                                                    value={teamChangeForm.resolucionReferencia}
-                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, resolucionReferencia: e.target.value }))}
-                                                    placeholder="Referencia acta / memo (opcional)"
-                                                    className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
-                                                />
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {/* Row 3: Motivo */}
+                                            <div className="flex flex-col gap-1.5">
+                                                <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">Motivo Formal del Cambio</label>
                                                 <textarea
                                                     value={teamChangeForm.motivo}
                                                     onChange={(e) => setTeamChangeForm(prev => ({ ...prev, motivo: e.target.value }))}
-                                                    placeholder="Motivo formal del cambio"
-                                                    className="md:col-span-2 bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main min-h-[56px]"
+                                                    placeholder="Describa detalladamente el motivo de esta solicitud..."
+                                                    className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main placeholder-text-muted outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all min-h-[64px] font-sans resize-y"
                                                 />
-                                                <div className="md:col-span-2 flex justify-end">
-                                                    <button
-                                                        type="button"
-                                                        disabled={isSubmittingTeamChangeRequest}
-                                                        onClick={handleCreateTeamChangeRequest}
-                                                        className={`btn-vercel-secondary !py-2 !px-3 text-xs ${isSubmittingTeamChangeRequest ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                                    >
-                                                        {isSubmittingTeamChangeRequest ? 'Registrando...' : 'Registrar Solicitud'}
-                                                    </button>
-                                                </div>
                                             </div>
-                                        )}
+
+                                            {/* Row 4: Submit Button */}
+                                            <div className="flex justify-end pt-2 border-t border-border-thin/40">
+                                                <button
+                                                    type="button"
+                                                    disabled={isSubmittingTeamChangeRequest}
+                                                    onClick={handleCreateTeamChangeRequest}
+                                                    className="btn-vercel-primary !py-2 !px-4 text-xs font-semibold uppercase tracking-wider flex items-center gap-2 justify-center"
+                                                >
+                                                    {isSubmittingTeamChangeRequest ? 'Registrando...' : 'Registrar Solicitud'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
 
                                         {currentProject.puedeEditar === false && currentProject.puedeSolicitarCambioEquipo && (
                                             <div className="badge-vercel badge-vercel-info !rounded-md !p-2.5 !text-[10px] !font-normal !leading-relaxed w-full">
@@ -1685,7 +1776,6 @@ export const ProjectWorkspace: React.FC = () => {
                                                                         <option value="Co-Investigador">Co-Investigador</option>
                                                                         <option value="Semillerista">Semillerista</option>
                                                                         <option value="Co-Investigador (Estudiante)">Co-Investigador (Est.)</option>
-                                                                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
                                                                     </select>
                                                                 </div>
                                                                 

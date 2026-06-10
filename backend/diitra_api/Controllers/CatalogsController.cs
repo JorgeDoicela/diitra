@@ -247,6 +247,7 @@ namespace diitra_api.Controllers
         public async Task<IActionResult> GetPeriodos()
         {
             var data = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.IdPeriodo)
                 .ToListAsync();
             return Ok(data);
@@ -260,6 +261,7 @@ namespace diitra_api.Controllers
 
             model.Activo = true;
             model.Cerrado = false;
+            model.EsInstituto = 1;
             
             _context.Periodos.Add(model);
             await _context.SaveChangesAsync();
@@ -269,7 +271,7 @@ namespace diitra_api.Controllers
         [HttpPut("periodos/{id}")]
         public async Task<IActionResult> UpdatePeriodo(string id, [FromBody] Periodo model)
         {
-            var existing = await _context.Periodos.FirstOrDefaultAsync(p => p.IdPeriodo == id);
+            var existing = await _context.Periodos.FirstOrDefaultAsync(p => p.IdPeriodo == id && p.EsInstituto == 1);
             if (existing == null) return NotFound();
 
             existing.Detalle = model.Detalle;
@@ -285,7 +287,7 @@ namespace diitra_api.Controllers
         [HttpDelete("periodos/{id}")]
         public async Task<IActionResult> TogglePeriodo(string id)
         {
-            var existing = await _context.Periodos.FirstOrDefaultAsync(p => p.IdPeriodo == id);
+            var existing = await _context.Periodos.FirstOrDefaultAsync(p => p.IdPeriodo == id && p.EsInstituto == 1);
             if (existing == null) return NotFound();
 
             existing.Activo = !(existing.Activo ?? true);
