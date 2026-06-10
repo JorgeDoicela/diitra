@@ -25,7 +25,9 @@ public partial class GroupsController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAll([FromQuery] string? search)
     {
-        var groups = await _groupsService.GetAllAsync(search);
+        var userSigafiId = GetCurrentUserReference();
+        var isAdmin = IsAdminUser();
+        var groups = await _groupsService.GetAllAsync(search, userSigafiId, isAdmin);
         return Ok(groups);
     }
 
