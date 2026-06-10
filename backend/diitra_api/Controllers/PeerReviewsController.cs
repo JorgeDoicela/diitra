@@ -157,18 +157,85 @@ public class PeerReviewsController : ControllerBase
     /// Vista de arbitraje detallada de un proyecto específico (árbitros, puntajes, estado).
     /// </summary>
     [HttpGet("project/{projectUuid}")]
-    [Authorize(Roles = "DIITRA_ADMIN,ADMIN_SISTEMA,DIRECTOR_INV")]
     public async Task<IActionResult> GetByProject(string projectUuid)
     {
-        // Compatibilidad: si es un número (ID legado), intentar búsqueda por ID
-        if (int.TryParse(projectUuid, out var projectId))
+        var userId = GetCurrentUserId();
+        var user = await _context.Users.FindAsync(userId);
+        bool isPrivileged = user != null && (user.Administrador || 
+                            User.IsInRole("DIITRA_ADMIN") || 
+                            User.IsInRole("ADMIN_SISTEMA") || 
+                            User.IsInRole("DIRECTOR_INV"));
+
+        // Buscar el proyecto para validar pertenencia o rol de revisor
+        var proyecto = await _context.InvProyectos
+            .FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+
+        if (proyecto == null && int.TryParse(projectUuid, out var projectId))
         {
-            var legacyResult = await _peerReviewService.GetProjectReviewsAsync(projectId);
+            proyecto = await _context.InvProyectos.FirstOrDefaultAsync(p => p.IdProyecto == projectId);
+        }
+
+        if (proyecto == null) return NotFound(new { message = "Proyecto no encontrado." });
+
+        bool isMember = false;
+        if (!isPrivileged)
+        {
+            isMember = await _context.Set<InvProyectoProfesor>().AnyAsync(pp => pp.IdProyecto == proyecto.IdProyecto && pp.IdUsuario == userId)
+                    || await _context.Set<InvProyectoAlumno>().AnyAsync(pa => pa.IdProyecto == proyecto.IdProyecto && pa.IdUsuario == userId);
+        }
+
+        bool isReviewer = false;
+        if (!isPrivileged && !isMember)
+        {
+            isReviewer = await _context.Set<InvRevisionesPares>().AnyAsync(r => r.IdProyecto == proyecto.IdProyecto && r.IdRevisor == userId);
+        }
+
+        if (!isPrivileged && !isMember && !isReviewer)
+        {
+            return Forbid("No tienes permisos para visualizar el arbitraje de este proyecto.");
+        }
+
+        if (int.TryParse(projectUuid, out var legacyId))
+        {
+            var legacyResult = await _peerReviewService.GetProjectReviewsAsync(legacyId);
+            if (legacyResult == null) return NotFound(new { message = "Arbitraje no encontrado." });
+
+            if (!isPrivileged)
+            {
+                foreach (var rev in legacyResult)
+                {
+                    if (rev.IdRevisor != userId)
+                    {
+                        rev.RevisorNombre = "Evaluador Anónimo";
+                        rev.RevisorEspecialidad = null;
+                        rev.RevisorGrado = null;
+                        rev.RevisorCarrera = null;
+                        rev.IdRevisor = 0;
+                    }
+                }
+            }
             return Ok(legacyResult);
         }
 
         var result = await _peerReviewService.GetArbitrajeByProjectAsync(projectUuid);
-        if (result == null) return NotFound(new { message = "Proyecto no encontrado." });
+        if (result == null) return NotFound(new { message = "Arbitraje no encontrado." });
+
+        // Si no es un usuario privilegiado, anonimizar los datos del revisor para cumplir con el doble ciego
+        if (!isPrivileged)
+        {
+            foreach (var rev in result.Revisiones)
+            {
+                if (rev.IdRevisor != userId)
+                {
+                    rev.RevisorNombre = "Evaluador Anónimo";
+                    rev.RevisorEspecialidad = null;
+                    rev.RevisorGrado = null;
+                    rev.RevisorCarrera = null;
+                    rev.IdRevisor = 0;
+                }
+            }
+        }
+
         return Ok(result);
     }
 

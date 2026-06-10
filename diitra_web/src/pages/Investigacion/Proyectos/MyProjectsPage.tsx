@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen, Trash2
+    Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen, Trash2, User
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -32,6 +32,7 @@ interface ProyectoResumen {
     informes_aprobados: number;
     trl_actual?: number;
     trl_meta?: number;
+    director_nombre?: string;
 }
 
 const ESTADO_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
@@ -225,6 +226,14 @@ const MyProjectsPage: React.FC = () => {
                                     <h3 className="font-medium text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
                                         {p.titulo}
                                     </h3>
+                                    {p.director_nombre && (
+                                        <div className="flex items-center gap-1 text-text-dim mt-2">
+                                            <User size={12} className="text-text-dim opacity-70" />
+                                            <span className="text-[11px] text-text-dim font-medium truncate">
+                                                Director: <span className="text-text-main font-semibold">{p.director_nombre}</span>
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0 ml-2 mt-0.5">
                                     {(p.estado === 'Borrador' || p.estado === 'En Corrección') && (
