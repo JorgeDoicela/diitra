@@ -895,6 +895,7 @@ namespace diitra_infrastructure.Research
                     i.FechaFirma,
                     i.FechaReporte,
                     UuidString = i.Uuid.ToString(),
+                    ProyectoUuid = i.IdProyectoNavigation.Uuid,
                     i.Estado
                 })
                 .ToListAsync();
@@ -905,7 +906,7 @@ namespace diitra_infrastructure.Research
                 Descripcion = $"Informe #{i.NumeroInforme} — {i.TituloProyecto}",
                 // Solución del Bug de Fecha: Convertir la fecha real de base de datos de DateOnly a DateTime en memoria
                 Fecha = i.FechaFirma ?? new DateTime(i.FechaReporte.Year, i.FechaReporte.Month, i.FechaReporte.Day, 0, 0, 0, DateTimeKind.Utc),
-                Uuid = i.UuidString,
+                Uuid = i.ProyectoUuid,
                 Estado = i.Estado
             }).ToList();
 

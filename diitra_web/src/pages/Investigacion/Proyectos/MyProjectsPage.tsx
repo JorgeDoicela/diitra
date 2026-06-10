@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     ClipboardList, Plus, ArrowRight, Calendar, AlertCircle,
-    Loader2, Search, Filter, BarChart3, Zap, Target, BookOpen, Trash2, User
+    Loader2, Search, BarChart3, Zap, Target, BookOpen, Trash2, User
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
@@ -33,6 +33,7 @@ interface ProyectoResumen {
     trl_actual?: number;
     trl_meta?: number;
     director_nombre?: string;
+    carrera?: string;
 }
 
 const ESTADO_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
@@ -50,7 +51,7 @@ const estadoConfig = (estado: string) =>
 
 const MyProjectsPage: React.FC = () => {
     const navigate = useNavigate();
-    const { isDocente, isAdmin } = useAuth();
+    const { isDocente } = useAuth();
     const [proyectos, setProyectos] = useState<ProyectoResumen[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -166,15 +167,13 @@ const MyProjectsPage: React.FC = () => {
                 <div className="space-y-2">
                     <div className="section-label text-brand">
                         <ClipboardList size={10} />
-                        <span>{isAdmin ? "Supervisión de Investigaciones" : "Mis Investigaciones"}</span>
+                        <span>Mis Investigaciones</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">
-                        {isAdmin ? "Revisión general de proyectos de investigación" : "Mis proyectos de investigación"}
+                        Mis proyectos de investigación
                     </h2>
                     <p className="text-xs text-text-dim max-w-lg font-medium">
-                        {isAdmin 
-                            ? `${proyectos.length} proyecto${proyectos.length !== 1 ? 's' : ''} registrados en el sistema.` 
-                            : `${proyectos.length} proyecto${proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.`}
+                        {proyectos.length} proyecto{proyectos.length !== 1 ? 's' : ''} en tu expediente institucional.
                     </p>
                 </div>
                 {!isDocente && (

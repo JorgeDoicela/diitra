@@ -249,7 +249,7 @@ export const AdminDashboard: React.FC = () => {
                                                         if (item.tipo?.toLowerCase() === 'proyecto') {
                                                             navigate(`/proyectos/${item.uuid}`);
                                                         } else {
-                                                            navigate('/investigacion/mis-proyectos');
+                                                            navigate('/investigacion');
                                                         }
                                                     }
                                                 }}

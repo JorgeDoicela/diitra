@@ -133,6 +133,27 @@ const RoleRoute = ({ children, allowedRoles }: { children: React.ReactNode; allo
     return <Navigate to="/dashboard" replace />;
 };
 
+const ResearcherRoute = ({ children }: { children: React.ReactNode }) => {
+    const { isAuthenticated, isLoading, isAdmin } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+    // Si es Administrador, lo redirigimos a la consola institucional de administración
+    if (isAdmin) {
+        return <Navigate to="/investigacion" replace />;
+    }
+
+    return <>{children}</>;
+};
+
 const ConvocatoriaRoute = () => {
     const { isAdmin, isEstudiante } = useAuth();
     if (isEstudiante) {
@@ -252,10 +273,10 @@ function App() {
                             <Route path="/investigacion/informes-avance/:projectId" element={<AdminRoute><InformesAvancePage /></AdminRoute>} />
                             
                             {/* Researcher Context (Docentes, Estudiantes, Externos) */}
-                            <Route path="/investigacion/mis-proyectos" element={<MyProjectsPage />} />
-                            <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:documentUuid" element={<ProjectWorkspace />} />
-                            <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<MonitoringPage />} />
-                            <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<InformesAvancePage />} />
+                            <Route path="/investigacion/mis-proyectos" element={<ResearcherRoute><MyProjectsPage /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/workspace/:templateCode/:documentUuid" element={<ResearcherRoute><ProjectWorkspace /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/monitoreo/:projectUuid" element={<ResearcherRoute><MonitoringPage /></ResearcherRoute>} />
+                            <Route path="/investigacion/mis-proyectos/informes-avance/:projectId" element={<ResearcherRoute><InformesAvancePage /></ResearcherRoute>} />
                             
                             <Route path="/investigacion/adopcion" element={<RoleRoute allowedRoles={['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV']}><ProjectAdoptionPage /></RoleRoute>} />
                             <Route path="/convocatorias" element={<ConvocatoriaRoute />} />
