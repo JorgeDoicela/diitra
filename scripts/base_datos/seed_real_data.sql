@@ -185,25 +185,25 @@ INSERT INTO inv_grupos_carreras (idGrupo, idCarrera) VALUES
 -- Miembros de Grupos
 INSERT INTO inv_grupos_miembros (idGrupo, idUsuario, rol, activo, fechaInicio) VALUES
 -- GIIST
-(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Coordinador', 1, '2025-01-10'),
-(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 'Investigador', 1, '2025-01-15'),
-(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1725555377' LIMIT 1), 'Estudiante', 1, '2025-01-20'),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Director de Proyecto', 1, '2025-01-10'),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 'Co-Investigador', 1, '2025-01-15'),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1725555377' LIMIT 1), 'Semillerista', 1, '2025-01-20'),
 -- GERSA
-(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 'Coordinador', 1, '2025-01-12'),
-(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), 'Investigador', 1, '2025-01-15'),
-(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0102598570' LIMIT 1), 'Estudiante', 1, '2025-01-22'),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 'Director de Proyecto', 1, '2025-01-12'),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), 'Co-Investigador', 1, '2025-01-15'),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0102598570' LIMIT 1), 'Semillerista', 1, '2025-01-22'),
 -- SIGE
-(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 'Coordinador', 1, '2025-02-15'),
-(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 'Investigador', 1, '2025-02-18'),
-(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1751325000' LIMIT 1), 'Estudiante', 1, '2025-02-20'),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 'Director de Proyecto', 1, '2025-02-15'),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 'Co-Investigador', 1, '2025-02-18'),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1751325000' LIMIT 1), 'Semillerista', 1, '2025-02-20'),
 -- GIRCA
-(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 'Coordinador', 1, '2025-03-01'),
-(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Investigador', 1, '2025-03-05'),
-(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0103057584' LIMIT 1), 'Estudiante', 1, '2025-03-10'),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 'Director de Proyecto', 1, '2025-03-01'),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'Co-Investigador', 1, '2025-03-05'),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0103057584' LIMIT 1), 'Semillerista', 1, '2025-03-10'),
 -- GIGPA
-(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719322149' LIMIT 1), 'Coordinador', 1, '2025-03-10'),
-(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1720477031' LIMIT 1), 'Investigador', 1, '2025-03-12'),
-(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0105057335' LIMIT 1), 'Estudiante', 1, '2025-03-15');
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719322149' LIMIT 1), 'Director de Proyecto', 1, '2025-03-10'),
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1720477031' LIMIT 1), 'Co-Investigador', 1, '2025-03-12'),
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0105057335' LIMIT 1), 'Semillerista', 1, '2025-03-15');
 
 -- 6. Poblar Convocatorias
 INSERT INTO inv_convocatorias (idConvocatoria, uuid, codigoConvocatoria, titulo, idPeriodo, fechaApertura, fechaCierre, anio, descripcion, presupuestoTotal, montoMaximoProyecto, urlBases, requisitosMinimos, idTipoConvocatoria, idAgendaZonal, idRubrica, puntajeMinimoAprobacion, estado) VALUES
@@ -302,15 +302,15 @@ INSERT INTO inv_proyectos_carreras (idProyecto, idCarrera, modalidad) VALUES
 -- Profesores participantes
 INSERT INTO inv_proyectos_profesores (idProyecto, idUsuario, esDirector, rol, nivelAcademico, telefono, horasSemanales, activo) VALUES
 (1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Software', '0999999991', 12.0, 1),
-(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 0, 'Investigador Principal', 'Magíster en TI', '0999999992', 8.0, 1),
+(1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 0, 'Co-Investigador', 'Magíster en TI', '0999999992', 8.0, 1),
 (2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Electrónica', '0999999993', 15.0, 1),
-(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), 0, 'Investigador Principal', 'Magíster en Energías', '0999999994', 10.0, 1),
+(2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), 0, 'Co-Investigador', 'Magíster en Energías', '0999999994', 10.0, 1),
 (3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Talento Humano', '0999999992', 10.0, 1),
-(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 0, 'Investigador Principal', 'Magíster en Administración', '0999999995', 8.0, 1),
+(3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 0, 'Co-Investigador', 'Magíster en Administración', '0999999995', 8.0, 1),
 (4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Software', '0999999991', 10.0, 1),
-(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 0, 'Investigador de Apoyo', 'Magíster en TI', '0999999996', 6.0, 1),
+(4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1), 0, 'Co-Investigador', 'Magíster en TI', '0999999996', 6.0, 1),
 (5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Electrónica', '0999999993', 12.0, 1),
-(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 0, 'Investigador Principal', 'Magíster en Software', '0999999991', 8.0, 1),
+(5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 0, 'Co-Investigador', 'Magíster en Software', '0999999991', 8.0, 1),
 (6, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Administración', '0999999995', 8.0, 1);
 
 -- Alumnos participantes (Cumple el indicador CACES de semilleros y fomento a la investigación formativa)

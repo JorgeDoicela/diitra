@@ -119,7 +119,7 @@ const ROLE_OPTIONS = [
     { value: 'DIR_INV', label: 'Directores de Investigación' },
     { value: 'DIITRA_ADMIN', label: 'Administradores DIITRA' },
     { value: 'DIITRA_REVISOR_EXTERNO', label: 'Árbitros Externos' },
-    { value: 'DIITRA_ESTUDIANTE', label: 'Co-Investigadores (Estudiantes)' }
+    { value: 'DIITRA_ESTUDIANTE', label: 'Semilleristas (Estudiantes)' }
 ];
 
 const TYPE_BADGE: Record<string, string> = {

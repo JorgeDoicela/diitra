@@ -1065,8 +1065,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         className="w-full bg-bg-deep border border-border-thin focus:border-emerald-500 rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
                                                     >
                                                         <option value="Co-Investigador">Co-Investigador</option>
-                                                        <option value="Investigador Principal">Investigador Principal</option>
-                                                        <option value="Asesor Externo">Asesor Externo</option>
+                                                        <option value="Director de Proyecto">Director de Proyecto</option>
                                                     </select>
                                                 </div>
                                                 <div className="col-span-4">
@@ -1226,7 +1225,6 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         className="w-full bg-bg-deep border border-border-thin focus:border-blue-500 rounded-lg p-2.5 text-xs text-text-main focus:outline-none transition-all font-medium"
                                                     >
                                                         <option value="Semillerista">Semillerista</option>
-                                                        <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
                                                     </select>
                                                 </div>
                                                 <div className="col-span-4">

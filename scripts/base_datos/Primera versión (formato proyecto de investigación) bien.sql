@@ -243,7 +243,7 @@ CREATE TABLE inv_grupos_miembros (
     idGrupoMiembro INT          AUTO_INCREMENT PRIMARY KEY,
     idGrupo        INT          NOT NULL,
     idUsuario      INT(11)      NOT NULL,
-    rol            VARCHAR(100) COMMENT 'Investigador, Co-investigador, Estudiante, Técnico',
+    rol            VARCHAR(100) COMMENT 'Director de Proyecto, Co-Investigador, Semillerista',
     activo         TINYINT(1)   DEFAULT 1,
     fechaInicio    DATE,
     fechaFin       DATE,

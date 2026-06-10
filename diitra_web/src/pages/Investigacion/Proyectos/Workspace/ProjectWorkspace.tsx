@@ -62,11 +62,8 @@ const formatNombre = (nombre: string | null | undefined) => {
 const normalizeRole = (role: string | null | undefined): string => {
     if (!role) return "Co-Investigador";
     const r = role.toLowerCase().trim();
-    if (r.includes("director")) return "Director de Proyecto";
-    if (r.includes("principal")) return "Investigador Principal";
-    if (r.includes("semillerista")) return "Semillerista";
-    if (r.includes("estudiante") || r.includes("alumno")) return "Co-Investigador (Estudiante)";
-    if (r.includes("apoyo") || r.includes("tecnico") || r.includes("técnico")) return "Co-Investigador";
+    if (r.includes("director") || r.includes("principal")) return "Director de Proyecto";
+    if (r.includes("semillerista") || r.includes("estudiante") || r.includes("alumno")) return "Semillerista";
     return "Co-Investigador";
 };
 
@@ -124,7 +121,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [teamChangeForm, setTeamChangeForm] = useState({
         tipo: 'ALTA',
         cedulaObjetivo: '',
-        rolPropuesto: 'Co-Investigador (Docente)',
+        rolPropuesto: 'Co-Investigador',
         motivo: '',
         resolucionReferencia: ''
     });
@@ -279,7 +276,7 @@ export const ProjectWorkspace: React.FC = () => {
         }
 
         const targetTipo = (teamChangeForm.tipo === 'CAMBIO_DIRECTOR') ? 'profesor' :
-            (['Co-Investigador (Estudiante)', 'SEMILLERISTA', 'Semillerista'].includes(teamChangeForm.rolPropuesto) ? 'alumno' : 'profesor');
+            (['Semillerista', 'SEMILLERISTA'].includes(teamChangeForm.rolPropuesto) ? 'alumno' : 'profesor');
 
         const isAlreadySelected = (targetTipo === 'profesor' ? availableProfessors : availableStudents)
             .some(u => u.nombre === requestSearchQuery);
@@ -650,12 +647,12 @@ export const ProjectWorkspace: React.FC = () => {
                 const exists = updatedMembers.some(inv => inv.cedula?.trim() === memberCedula);
                 if (!exists) {
                     const groupRol = m.rol || "";
-                    let projectRol = "Co-Investigador (Docente)";
+                    let projectRol = "Co-Investigador";
                     if (groupRol.toLowerCase().includes("coordinador") || groupRol.toLowerCase().includes("director")) {
                         const hasDirector = updatedMembers.some(inv => inv.rol?.toLowerCase().includes("director"));
-                        projectRol = hasDirector ? "Co-Investigador (Docente)" : "Director de Proyecto";
-                    } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno")) {
-                        projectRol = "Co-Investigador (Estudiante)";
+                        projectRol = hasDirector ? "Co-Investigador" : "Director de Proyecto";
+                    } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno") || groupRol.toLowerCase().includes("semillerista")) {
+                        projectRol = "Semillerista";
                     } else if (groupRol.toLowerCase().includes("tecnico") || groupRol.toLowerCase().includes("técnico")) {
                         projectRol = "Co-Investigador";
                     }
@@ -762,7 +759,7 @@ export const ProjectWorkspace: React.FC = () => {
                 setTeamChangeForm({
                     tipo: 'ALTA',
                     cedulaObjetivo: '',
-                    rolPropuesto: 'Co-Investigador (Docente)',
+                    rolPropuesto: 'Co-Investigador',
                     motivo: '',
                     resolucionReferencia: ''
                 });
@@ -1360,7 +1357,7 @@ export const ProjectWorkspace: React.FC = () => {
                                          </div>
 
                                          {currentProject.puedeSolicitarCambioEquipo && (() => {
-                                             const isStudentRole = ['Co-Investigador (Estudiante)', 'SEMILLERISTA', 'Semillerista'].includes(teamChangeForm.rolPropuesto);
+                                             const isStudentRole = ['Semillerista', 'SEMILLERISTA'].includes(teamChangeForm.rolPropuesto);
                                              const suggestedUsers = (teamChangeForm.tipo === 'CAMBIO_DIRECTOR' || !isStudentRole)
                                                  ? availableProfessors
                                                  : availableStudents;
@@ -1410,11 +1407,9 @@ export const ProjectWorkspace: React.FC = () => {
                                                             }}
                                                             className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
                                                         >
-                                                            <option value="Co-Investigador">Co-Investigador</option>
-                                                            <option value="Investigador Principal">Investigador Principal</option>
                                                             <option value="Director de Proyecto">Director de Proyecto</option>
+                                                            <option value="Co-Investigador">Co-Investigador</option>
                                                             <option value="Semillerista">Semillerista</option>
-                                                            <option value="Co-Investigador (Estudiante)">Co-Investigador (Estudiante)</option>
                                                         </select>
                                                     </div>
                                                 )}
@@ -1772,10 +1767,8 @@ export const ProjectWorkspace: React.FC = () => {
                                                                         className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
                                                                     >
                                                                         <option value="Director de Proyecto">Director de Proyecto</option>
-                                                                        <option value="Investigador Principal">Investigador Principal</option>
                                                                         <option value="Co-Investigador">Co-Investigador</option>
                                                                         <option value="Semillerista">Semillerista</option>
-                                                                        <option value="Co-Investigador (Estudiante)">Co-Investigador (Est.)</option>
                                                                     </select>
                                                                 </div>
                                                                 

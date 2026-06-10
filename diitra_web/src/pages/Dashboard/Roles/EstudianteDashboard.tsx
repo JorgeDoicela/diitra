@@ -137,7 +137,7 @@ export const EstudianteDashboard: React.FC = () => {
                                         <div className="min-w-0 flex-1 pr-2">
                                             <p className="text-[10px] font-semibold text-text-main uppercase tracking-tighter truncate">{p.titulo}</p>
                                             <p className="text-[9px] text-text-dim mt-1">
-                                                Rol: {p.rol_en_proyecto || 'Co-Investigador (Estudiante)'} · {p.estado}
+                                                Rol: {p.rol_en_proyecto || 'Semillerista'} · {p.estado}
                                             </p>
                                         </div>
                                         <ArrowRight size={12} className="text-text-dim group-hover:text-brand group-hover:translate-x-0.5 transition-all shrink-0" />

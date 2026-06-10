@@ -224,7 +224,7 @@ namespace diitra_infrastructure.Research
                                 {
                                     IdProyecto = project.IdProyecto,
                                     IdUsuario = internalUser.IdUsuario,
-                                    Rol = "Co-Investigador (Estudiante)",
+                                    Rol = "Semillerista",
                                     NivelAcademico = "Pregrado",
                                     Telefono = ""
                                 });
@@ -1902,7 +1902,7 @@ namespace diitra_infrastructure.Research
                 {
                     Nombre = user.Nombre,
                     Cedula = cedula,
-                    Rol = NormalizeRole(existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Co-Investigador (Estudiante)" : "Co-Investigador")),
+                    Rol = NormalizeRole(existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Semillerista" : "Co-Investigador")),
                     NivelAcademico = existing?.NivelAcademico ?? (user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel"),
                     Telefono = existing?.Telefono ?? string.Empty,
                     Activo = true,
@@ -2789,11 +2789,8 @@ namespace diitra_infrastructure.Research
                 return "Co-Investigador";
 
             var r = role.Trim().ToLowerInvariant();
-            if (r.Contains("director")) return "Director de Proyecto";
-            if (r.Contains("principal")) return "Investigador Principal";
-            if (r.Contains("semillerista")) return "Semillerista";
-            if (r.Contains("estudiante") || r.Contains("alumno")) return "Co-Investigador (Estudiante)";
-            if (r.Contains("apoyo") || r.Contains("tecnico") || r.Contains("técnico")) return "Co-Investigador";
+            if (r.Contains("director") || r.Contains("principal")) return "Director de Proyecto";
+            if (r.Contains("semillerista") || r.Contains("estudiante") || r.Contains("alumno")) return "Semillerista";
             
             return "Co-Investigador";
         }
