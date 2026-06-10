@@ -22,6 +22,7 @@ public class AuthService : IAuthService
     private readonly string _masterAdminId;
     private static bool _rbacSeeded = false;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime LockedUntil)> _ipLockouts = new();
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime? LockedUntil)> _userLockouts = new();
 
     public AuthService(DiitraContext context, IConfiguration configuration, IAuditService auditService, diitra_application.Common.Notifications.INotificationService notificationService)
     {
@@ -42,14 +43,17 @@ public class AuthService : IAuthService
 
         if (user != null)
         {
+            var userKey = user.IdSigafi.ToLower();
+            _userLockouts.TryGetValue(userKey, out var lockout);
+
             // ── Verificar bloqueo activo ─────────────────────────────────────────
-            if (user.BloqueadoHasta.HasValue && user.BloqueadoHasta.Value > DateTime.Now)
+            if (lockout.LockedUntil.HasValue && lockout.LockedUntil.Value > DateTime.Now)
             {
-                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.Now).TotalSeconds;
+                var remaining = (int)(lockout.LockedUntil.Value - DateTime.Now).TotalSeconds;
                 return (null, new LoginBlockedResponse
                 {
                     Message = $"Cuenta bloqueada temporalmente por exceso de intentos fallidos. Intenta de nuevo en {remaining} segundos.",
-                    BloqueadoHasta = user.BloqueadoHasta.Value,
+                    BloqueadoHasta = lockout.LockedUntil.Value,
                     SegundosRestantes = remaining
                 });
             }
@@ -57,9 +61,7 @@ public class AuthService : IAuthService
             if (VerifyPassword(user, password))
             {
                 // ── Éxito: resetear contadores ───────────────────────────────────
-                user.IntentosFallidos = 0;
-                user.BloqueadoHasta = null;
-                await _context.SaveChangesAsync();
+                _userLockouts.TryRemove(userKey, out _);
 
                 var response = await GetAuthResponseAsync(user);
                 await _auditService.LogActionAsync(user.IdUsuario, "LOGIN", "Inicio de sesión exitoso (Usuario DIITRA)", "SEGURIDAD");
@@ -67,8 +69,8 @@ public class AuthService : IAuthService
             }
 
             // ── Fallo: incrementar intentos y calcular bloqueo progresivo ────────
-            user.IntentosFallidos++;
-            user.BloqueadoHasta = user.IntentosFallidos switch
+            var newAttempts = lockout.Attempts + 1;
+            DateTime? lockedUntil = newAttempts switch
             {
                 >= 12 => DateTime.Now.AddMinutes(60),
                 >= 9  => DateTime.Now.AddMinutes(30),
@@ -76,18 +78,22 @@ public class AuthService : IAuthService
                 >= 3  => DateTime.Now.AddMinutes(5),
                 _     => null  // < 3 intentos: aún no se bloquea
             };
-            await _context.SaveChangesAsync();
+
+            _userLockouts.AddOrUpdate(userKey, 
+                (newAttempts, lockedUntil), 
+                (key, old) => (newAttempts, lockedUntil));
+
             await _auditService.LogActionAsync(user.IdUsuario, "LOGIN_FAILED",
-                $"Intento fallido #{user.IntentosFallidos}{(user.BloqueadoHasta.HasValue ? $" — cuenta bloqueada hasta {user.BloqueadoHasta:u}" : "")}", "SEGURIDAD");
+                $"Intento fallido #{newAttempts}{(lockedUntil.HasValue ? $" — cuenta bloqueada hasta {lockedUntil:u}" : "")}", "SEGURIDAD");
 
             // Si acaba de superar un umbral, devolver bloqueo
-            if (user.BloqueadoHasta.HasValue)
+            if (lockedUntil.HasValue)
             {
-                var remaining = (int)(user.BloqueadoHasta.Value - DateTime.Now).TotalSeconds;
+                var remaining = (int)(lockedUntil.Value - DateTime.Now).TotalSeconds;
                 return (null, new LoginBlockedResponse
                 {
-                    Message = $"Demasiados intentos fallidos. Cuenta bloqueada por {GetLockoutMinutes(user.IntentosFallidos)} minutos.",
-                    BloqueadoHasta = user.BloqueadoHasta.Value,
+                    Message = $"Demasiados intentos fallidos. Cuenta bloqueada por {GetLockoutMinutes(newAttempts)} minutos.",
+                    BloqueadoHasta = lockedUntil.Value,
                     SegundosRestantes = remaining
                 });
             }
@@ -577,8 +583,7 @@ public class AuthService : IAuthService
                     IdRol = role.IdRol,
                     IdModulosOperaciones = op.IdModulosOperaciones,
                     EsActivo = true,
-                    FechaAsignacion = DateOnly.FromDateTime(DateTime.Now),
-                    UsuarioAsigno = "SISTEMA_DIITRA_JIT"
+                    FechaAsignacion = DateOnly.FromDateTime(DateTime.Now)
                 });
             }
         }
