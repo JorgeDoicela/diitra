@@ -55,8 +55,6 @@ public class RoleModuleOperation
     public DateOnly? FechaModificacion { get; set; }
     public DateOnly? FechaDesactivacion { get; set; }
     public bool? EsActivo { get; set; } = true;
-    public string UsuarioAsigno { get; set; } = string.Empty; // NOT NULL en BD
-    public string? UsuarioDesactivo { get; set; }             // NULL en BD
 
     public ModuleOperation ModuleOperation { get; set; } = null!;
     public Role Role { get; set; } = null!;

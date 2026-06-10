@@ -1370,9 +1370,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.HashEmailToken).HasMaxLength(255).HasColumnName("hashEmailToken");
             entity.Property(e => e.FechaEmailValidacion).HasColumnName("fechaEmailValidacion");
 
-            // Seguridad: bloqueo progresivo
-            entity.Property(e => e.IntentosFallidos).HasColumnName("intentosFallidos").HasDefaultValueSql("'0'");
-            entity.Property(e => e.BloqueadoHasta).HasColumnName("bloqueadoHasta");
+
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -1465,10 +1463,6 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaModificacion).HasColumnName("fecha_modificacion").HasColumnType("date");
             entity.Property(e => e.FechaDesactivacion).HasColumnName("fecha_desactivacion").HasColumnType("date");
             entity.Property(e => e.EsActivo).HasColumnType("tinyint(4)").HasColumnName("esActivo");
-            // NOT NULL en la BD — IsRequired correcto
-            entity.Property(e => e.UsuarioAsigno).HasMaxLength(150).HasColumnName("usuario_asigno").IsRequired();
-            // NULL en la BD
-            entity.Property(e => e.UsuarioDesactivo).HasMaxLength(150).HasColumnName("usuario_desactivo");
 
             entity.HasOne(d => d.ModuleOperation).WithMany(p => p.RoleModuleOperations)
                 .HasForeignKey(d => d.IdModulosOperaciones).HasConstraintName("fk_rmo_mo");
