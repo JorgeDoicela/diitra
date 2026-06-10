@@ -21,7 +21,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ChevronRight, FileText, CheckCircle2, Circle, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
+import { ChevronRight, FileText, CheckCircle2, UploadCloud, FileSignature, Settings, CheckSquare, BarChart, ArrowLeft, BookOpen, Trash2, ExternalLink, Users, UserPlus, Search, Plus, Sparkles, AlertCircle, RefreshCw, History, Activity, Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
 import { useNotifications } from '../../../../api/NotificationsContext';
@@ -999,24 +999,58 @@ export const ProjectWorkspace: React.FC = () => {
                     <div className="lg:col-span-2 flex flex-col gap-3">
                         {/* ── Flujo Institucional CACES ── */}
                         <div className="bento-card static p-6 flex flex-col justify-between group">
-                            <div className="flex items-center gap-2.5 mb-1.5">
+                            <div className="flex items-center gap-2.5 mb-2">
                                 <Settings size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
                                 <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Flujo Institucional CACES</h3>
                             </div>
-                            <div className="mt-4 space-y-0">
+                            
+                            <div className="relative pl-8 space-y-4 mt-6">
+                                {/* Track line */}
+                                <div className="absolute left-3 top-2.5 bottom-2.5 w-0.5 bg-border-thin"></div>
+                                
                                 {WorkflowPhases.map((phase, idx) => {
                                     const currentIdx = getPhaseIndex(currentProject.status);
                                     const isCurrent = currentIdx === idx;
                                     const isPast = currentIdx > idx;
                                     
+                                    const isRevisionDone = phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada';
+                                    const showChecked = isPast || isRevisionDone;
+                                    const isCurrentActive = isCurrent && !isRevisionDone;
+
                                     return (
-                                        <div key={phase.id} className={`p-4 border-b border-border-thin last:border-b-0 flex items-start gap-3 transition-all duration-300 ${isCurrent ? 'bg-surface-hover border-l-2 border-l-brand' : ''}`}>
-                                            <div className={`mt-0.5 transition-colors duration-300 ${(isCurrent && !(phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? 'text-brand' : (isPast || (phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? 'text-success' : 'text-text-dim'}`}>
-                                                {(isPast || (phase.id === 'En Revisión' && assignedRevisionStatus === 'Completada')) ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                                        <div key={phase.id} className="relative group/step">
+                                            {/* Connector segment colored green if past */}
+                                            {idx < WorkflowPhases.length - 1 && (
+                                                <div className={`absolute left-[-21px] top-6 bottom-[-20px] w-0.5 transition-colors duration-300 z-0 ${
+                                                    isPast ? 'bg-success/50' : 'bg-border-thin'
+                                                }`} />
+                                            )}
+
+                                            {/* Step Dot */}
+                                            <div className={`absolute -left-[29px] top-0.5 w-6 h-6 rounded-full flex items-center justify-center border transition-all duration-300 z-10 ${
+                                                showChecked 
+                                                    ? 'bg-success/15 border-success text-success' 
+                                                    : isCurrentActive 
+                                                        ? 'bg-brand/10 border-brand text-brand shadow-[0_0_12px_rgba(0,112,243,0.3)]' 
+                                                        : 'bg-surface border-border-thin text-text-dim'
+                                            }`}>
+                                                {showChecked ? (
+                                                    <CheckCircle2 size={12} className="stroke-[2.5]" />
+                                                ) : (
+                                                    <span className="text-[10px] font-bold font-mono">{idx + 1}</span>
+                                                )}
                                             </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h3 className={`text-xs font-semibold tracking-wider uppercase ${isCurrent ? 'text-text-main' : 'text-text-dim'}`}>{phase.label}</h3>
-                                                <p className="text-[11px] text-text-dim mt-1 leading-relaxed">
+                                            
+                                            {/* Card Content */}
+                                            <div className={`p-4 rounded-xl border transition-all duration-300 ${
+                                                isCurrentActive 
+                                                    ? 'bg-surface-hover/60 border-brand/20 shadow-[0_4px_20px_rgba(0,112,243,0.03)]' 
+                                                    : 'bg-transparent border-transparent hover:border-border-thin/40 hover:bg-surface-hover/10'
+                                            }`}>
+                                                <h3 className={`text-xs font-semibold tracking-wider uppercase ${isCurrentActive ? 'text-text-main font-bold' : 'text-text-dim'}`}>
+                                                    {phase.label}
+                                                </h3>
+                                                <p className="text-[11px] text-text-dim mt-1.5 leading-relaxed">
                                                     {phase.id === 'Borrador' && 'Construcción colaborativa del protocolo de investigación por parte del equipo.'}
                                                     {phase.id === 'En Revisión' && 'Revisión técnica anónima por pares evaluadores asignados por el Director.'}
                                                     {phase.id === 'Aprobado' && 'Validación final del consejo académico y firma electrónica de actas formales.'}
@@ -1369,17 +1403,17 @@ export const ProjectWorkspace: React.FC = () => {
                                 )}
 
                                 {/* Lista de Integrantes */}
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
                                         Activos ({investigadores.filter((m: any) => m.activo !== false).length})
                                     </label>
                                     
                                     {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
-                                        <div className="p-4 rounded-md border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider">
+                                        <div className="p-6 rounded-xl border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider font-mono">
                                             Sin investigadores activos
                                         </div>
                                     ) : (
-                                        <div className="space-y-2">
+                                        <div className="space-y-3">
                                             {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
                                                 const isDirector = member.rol?.toLowerCase().includes('director');
                                                 const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
@@ -1387,130 +1421,135 @@ export const ProjectWorkspace: React.FC = () => {
                                                 return (
                                                     <div 
                                                         key={member.cedula || idx} 
-                                                        className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all flex flex-col md:flex-row md:items-center justify-between gap-3"
+                                                        className="p-4 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover hover:bg-surface-hover/20 transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-4"
                                                     >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold border uppercase ${
+                                                        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                                                            <div className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-[11px] font-semibold border transition-colors ${
                                                                 isDirector 
-                                                                    ? 'icon-circle-brand !p-0 !w-8 !h-8 border border-brand/30' 
+                                                                    ? 'bg-brand/10 border-brand/20 text-brand' 
                                                                     : isEstudiante 
-                                                                        ? 'icon-circle-success !p-0 !w-8 !h-8' 
-                                                                        : 'bg-surface border-border-thin text-text-dim'
+                                                                        ? 'bg-success/10 border-success/20 text-success' 
+                                                                        : 'bg-surface border-border-thin text-text-main'
                                                             }`}>
-                                                                {member.nombre ? member.nombre.substring(0, 2) : 'IN'}
+                                                                {member.nombre ? member.nombre.substring(0, 2).toUpperCase() : 'IN'}
                                                             </div>
-                                                            <div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-xs font-medium text-text-main">{formatNombre(member.nombre)}</span>
-                                                                    {isDirector && (
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className="badge-vercel badge-vercel-info text-[8px] font-semibold">
-                                                                                Director
-                                                                            </span>
-                                                                            {currentProject.puedeEditar !== false && !tieneGrupo && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    onClick={() => handleOpenTransferModal(member)}
-                                                                                    className="badge-vercel badge-vercel-violet text-[8px] font-semibold hover:opacity-80 transition-all cursor-pointer"
-                                                                                    title="Transferir Dirección"
-                                                                                >
-                                                                                    <RefreshCw size={9} className="inline" /> Relevo
-                                                                                </button>
-                                                                            )}
-                                                                        </div>
+                                                            <div className="min-w-0 space-y-1">
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <span className="text-xs font-semibold text-text-main truncate">{formatNombre(member.nombre)}</span>
+                                                                    <span className={`badge-vercel text-[8px] font-bold uppercase tracking-wider py-0.5 ${
+                                                                        isDirector 
+                                                                            ? 'badge-vercel-violet' 
+                                                                            : isEstudiante 
+                                                                                ? 'badge-vercel-success' 
+                                                                                : 'badge-vercel-info'
+                                                                    }`}>
+                                                                        {member.rol}
+                                                                    </span>
+                                                                    {isDirector && currentProject.puedeEditar !== false && !tieneGrupo && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleOpenTransferModal(member)}
+                                                                            className="badge-vercel badge-vercel-warning text-[8px] font-bold uppercase tracking-wider hover:opacity-80 transition-all cursor-pointer flex items-center gap-1 py-0.5"
+                                                                            title="Transferir Dirección"
+                                                                        >
+                                                                            <RefreshCw size={8} /> Relevo
+                                                                        </button>
                                                                     )}
                                                                 </div>
-                                                                <div className="text-[10px] text-text-dim font-mono mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                                <div className="text-[10px] text-text-dim flex flex-wrap items-center gap-x-2 gap-y-1">
                                                                     {member.carrera && (
-                                                                        <>
-                                                                            <span className="text-[9px] text-text-main font-semibold uppercase tracking-wide bg-surface px-1.5 py-0.5 rounded border border-border-thin truncate max-w-[200px]" title={member.carrera}>
-                                                                                {member.carrera}
-                                                                            </span>
-                                                                            <span>·</span>
-                                                                        </>
+                                                                        <span className="text-[9px] text-brand-light font-medium bg-brand/5 border border-brand/10 px-2 py-0.5 rounded-md truncate max-w-[180px]" title={member.carrera}>
+                                                                            {member.carrera}
+                                                                        </span>
                                                                     )}
-                                                                    <span>C.I. {member.cedula || 'N/A'}</span>
+                                                                    <span className="font-mono">C.I. {member.cedula || 'N/A'}</span>
                                                                     <span>·</span>
-                                                                    <div className="flex items-center gap-1">
-                                                                        <span>Tel:</span>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <span className="text-text-dim text-[10px]">Tel:</span>
                                                                         <input 
                                                                             type="text" 
                                                                             value={member.telefono || ''} 
                                                                             disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                                             onChange={(e) => handleUpdateMember(member.cedula, 'telefono', e.target.value)}
-                                                                            placeholder={currentProject.puedeEditar === false || tieneGrupo ? "No editable" : "Añadir..."} 
-                                                                            className="bg-transparent text-text-dim placeholder:text-text-dim outline-none border-b border-border-thin hover:border-text-dim focus:border-text-main w-20 inline-block px-0.5 py-0 text-[10px] transition-colors" 
+                                                                            placeholder="Añadir..." 
+                                                                            className="bg-transparent text-text-main placeholder:text-text-dim outline-none border-b border-border-thin hover:border-text-dim focus:border-text-main w-24 inline-block px-1 py-0 text-[10px] transition-colors" 
                                                                         />
                                                                     </div>
-                                                                    {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
-                                                                        <>
-                                                                            <span>·</span>
-                                                                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded transition-all ${
-                                                                                (member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
-                                                                                    ? 'bg-error/15 text-error border border-error/30 animate-pulse font-semibold'
-                                                                                    : 'bg-info/10 text-info border border-info/20'
-                                                                            }`}>
-                                                                                {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
-                                                                                    ? `⚠️ Excede límite! Máx disp: ${Math.max(0, member.horasDisponibles - (member.horasAsignadas || 0))}h`
-                                                                                    : `Disp: ${member.horasDisponibles - (member.horasAsignadas || 0)}h / ${member.horasDisponibles}h`
-                                                                                }
-                                                                            </span>
-                                                                        </>
-                                                                    )}
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        
+                                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3.5 w-full xl:w-auto xl:justify-end">
+                                                            {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
+                                                                <div className={`text-[9px] px-2 py-1.5 rounded-lg border flex items-center gap-1 w-full sm:w-auto shrink-0 ${
+                                                                    (member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                                                        ? 'bg-error/10 text-error border-error/20 animate-pulse font-semibold'
+                                                                        : 'bg-info/5 text-info border-info/10'
+                                                                }`}>
+                                                                    <AlertCircle size={10} />
+                                                                    <span>
+                                                                        {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                                                            ? `Excede límite! Máx disp: ${Math.max(0, member.horasDisponibles - (member.horasAsignadas || 0))}h`
+                                                                            : `Disp: ${member.horasDisponibles - (member.horasAsignadas || 0)}h / ${member.horasDisponibles}h`
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            )}
 
-                                                        <div className="flex flex-wrap sm:flex-nowrap items-end sm:items-center gap-3 w-full sm:w-auto">
-                                                            <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Rol</span>
-                                                                <select
-                                                                    value={member.rol}
-                                                                    disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                                    onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-40 disabled:opacity-60 disabled:cursor-not-allowed"
-                                                                >
-                                                                    <option value="Director de Proyecto">Director</option>
-                                                                    <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
-                                                                    <option value="Co-Investigador (Estudiante)">Co-Investigador (Est.)</option>
-                                                                    <option value="Técnico de Apoyo">Técnico de Apoyo</option>
-                                                                </select>
+                                                            <div className="grid grid-cols-3 gap-3 w-full sm:w-auto">
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Rol Proyecto</span>
+                                                                    <select
+                                                                        value={member.rol}
+                                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                                        onChange={(e) => handleUpdateMember(member.cedula, 'rol', e.target.value)}
+                                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <option value="Director de Proyecto">Director</option>
+                                                                        <option value="Co-Investigador (Docente)">Co-Investigador (Docente)</option>
+                                                                        <option value="Co-Investigador (Estudiante)">Co-Investigador (Est.)</option>
+                                                                        <option value="Técnico de Apoyo">Técnico de Apoyo</option>
+                                                                    </select>
+                                                                </div>
+                                                                
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Nivel</span>
+                                                                    <select
+                                                                        value={member.nivelAcademico}
+                                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                                        onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
+                                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                    >
+                                                                        <option value="Tercer Nivel">Tercer Nivel</option>
+                                                                        <option value="Cuarto Nivel (Maestría)">Maestría</option>
+                                                                        <option value="Cuarto Nivel (PhD)">PhD</option>
+                                                                        <option value="Pregrado">Pregrado</option>
+                                                                    </select>
+                                                                </div>
+
+                                                                <div className="flex flex-col gap-1">
+                                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Horas</span>
+                                                                    <input 
+                                                                        type="number"
+                                                                        value={member.horasSemanales ?? ''}
+                                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                                        onChange={(e) => handleUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
+                                                                        placeholder="0"
+                                                                        min="0"
+                                                                        max="40"
+                                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                            <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Nivel</span>
-                                                                <select
-                                                                    value={member.nivelAcademico}
-                                                                    disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                                    onChange={(e) => handleUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-36 disabled:opacity-60 disabled:cursor-not-allowed"
-                                                                >
-                                                                    <option value="Tercer Nivel">Tercer Nivel</option>
-                                                                    <option value="Cuarto Nivel (Maestría)">Maestría</option>
-                                                                    <option value="Cuarto Nivel (PhD)">PhD</option>
-                                                                    <option value="Pregrado">Pregrado</option>
-                                                                </select>
-                                                            </div>
-                                                            <div className="flex flex-col gap-1 w-full sm:w-auto">
-                                                                <span className="text-[9px] font-semibold text-text-dim uppercase tracking-widest">Horas</span>
-                                                                <input 
-                                                                    type="number"
-                                                                    value={member.horasSemanales ?? ''}
-                                                                    disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                                    onChange={(e) => handleUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
-                                                                    placeholder="0"
-                                                                    min="0"
-                                                                    max="40"
-                                                                    className="bg-surface border border-border-thin rounded p-1.5 text-[11px] text-text-dim outline-none focus:border-text-main transition-all w-full sm:w-16 disabled:opacity-60 disabled:cursor-not-allowed"
-                                                                />
-                                                            </div>
+
                                                             {currentProject.puedeEditar !== false && !tieneGrupo && !isDirector && (
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleRemoveMember(member.cedula)}
-                                                                    className="p-1.5 text-text-dim hover:text-error hover:bg-error-subtle rounded transition-all sm:self-center self-end mb-1.5 sm:mb-0"
+                                                                    className="p-2 text-text-dim hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-all self-end"
                                                                     title="Remover"
                                                                 >
-                                                                    <Trash2 size={12} />
+                                                                    <Trash2 size={13} />
                                                                 </button>
                                                             )}
                                                         </div>
@@ -1621,35 +1660,43 @@ export const ProjectWorkspace: React.FC = () => {
                                 )}
                                 
                                 {products.length === 0 ? (
-                                    <div className="p-8 text-center text-[10px] text-text-dim uppercase tracking-wider border border-dashed border-border-thin rounded-md font-mono">
+                                    <div className="p-8 text-center text-[10px] text-text-dim uppercase tracking-wider border border-dashed border-border-thin rounded-xl font-mono">
                                         Sin productos registrados
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {products.map((prod: any) => (
-                                            <div key={prod.id_producto} className="p-3 rounded-md bg-bg-deep border border-border-thin hover:border-text-dim transition-all group">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <span className="badge-vercel badge-vercel-info text-[8px] font-semibold">
-                                                        {prod.tipo_producto_nombre}
-                                                    </span>
-                                                    {currentProject.puedeEditar !== false && (
-                                                        <button 
-                                                            onClick={() => handleDeleteProduct(prod.id_producto)}
-                                                            className="p-1 hover:bg-error-subtle hover:text-error text-text-dim rounded transition-all"
-                                                        >
-                                                            <Trash2 size={11} />
-                                                        </button>
-                                                    )}
+                                            <div key={prod.id_producto} className="p-4 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover hover:bg-surface-hover/20 transition-all flex flex-col justify-between group">
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <span className="badge-vercel badge-vercel-info text-[8px] font-bold uppercase tracking-wider py-0.5">
+                                                            {prod.tipo_producto_nombre}
+                                                        </span>
+                                                        {currentProject.puedeEditar !== false && (
+                                                            <button 
+                                                                onClick={() => handleDeleteProduct(prod.id_producto)}
+                                                                className="p-1.5 hover:bg-error/10 hover:text-error text-text-dim rounded-lg transition-all"
+                                                                title="Eliminar producto"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs font-semibold text-text-main leading-relaxed mb-2" title={prod.titulo}>{prod.titulo}</p>
                                                 </div>
-                                                <p className="text-xs font-medium text-text-main line-clamp-1">{prod.titulo}</p>
-                                                <div className="text-[10px] text-text-dim font-mono mt-1">
+                                                
+                                                <div className="text-[10px] font-mono mt-2 space-y-1">
                                                     {prod.url_producto && (
-                                                        <a href={prod.url_producto} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-brand-light hover:underline">
-                                                            <ExternalLink size={9} /> {prod.url_producto.length > 25 ? prod.url_producto.substring(0, 25) + '...' : prod.url_producto}
+                                                        <a href={prod.url_producto} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-brand-light hover:text-brand hover:underline">
+                                                            <ExternalLink size={10} /> 
+                                                            <span className="truncate max-w-[200px]">{prod.url_producto}</span>
                                                         </a>
                                                     )}
                                                     {prod.es_propiedad_intelectual && (
-                                                        <span className="flex items-center gap-1 text-success">★ SENADI: {prod.numero_registro || 'En trámite'}</span>
+                                                        <div className="flex items-center gap-1 text-success font-medium">
+                                                            <Shield size={10} />
+                                                            <span>SENADI: {prod.numero_registro || 'En trámite'}</span>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -1664,23 +1711,26 @@ export const ProjectWorkspace: React.FC = () => {
                     <div className="flex flex-col gap-3">
                         {/* Firmas */}
                         <div className="bento-card static p-6 flex flex-col justify-between group relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-brand/10 rounded-full blur-3xl -mr-8 -mt-8 pointer-events-none"></div>
+                            <div className="absolute top-0 right-0 w-28 h-28 bg-brand/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-brand/10 transition-colors duration-500"></div>
                             <div>
-                                <div className="flex items-center gap-2.5 mb-1.5">
-                                    <FileSignature size={16} className="text-brand group-hover:text-text-main transition-colors" />
+                                <div className="flex items-center gap-2.5 mb-2">
+                                    <Shield size={16} className="text-brand group-hover:text-text-main transition-colors" />
                                     <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Bóveda de Firmas</h3>
                                 </div>
-                                <p className="text-[10px] text-text-dim leading-relaxed mt-1">Sube tu certificado digital (.p12 o .pfx). La firma quedará registrada en el sistema.</p>
+                                <p className="text-[10px] text-text-dim leading-relaxed mt-1">Sube tu certificado digital (.p12 o .pfx) para la firma electrónica del protocolo institucional.</p>
                             </div>
-                            <div className="mt-4">
-                                <div className="p-3 rounded-md bg-bg-deep border border-border-thin flex items-center justify-between hover:border-text-dim transition-colors">
-                                    <div>
-                                        <p className="text-xs font-semibold text-text-main">Director</p>
-                                        <p className="text-[10px] text-warning mt-0.5 flex items-center gap-1">
-                                            <span className="dot dot-warning dot-pulse"></span> Pendiente
-                                        </p>
+                            <div className="mt-5 space-y-2.5">
+                                <div className="p-3.5 rounded-xl bg-bg-deep border border-border-thin flex items-center justify-between hover:border-border-hover hover:bg-surface-hover/20 transition-all">
+                                    <div className="space-y-1">
+                                        <p className="text-xs font-semibold text-text-main">Director de Proyecto</p>
+                                        <div className="flex items-center">
+                                            <span className="badge-vercel badge-vercel-warning text-[9px] font-semibold py-0">
+                                                <span className="dot dot-warning dot-pulse" />
+                                                Pendiente
+                                            </span>
+                                        </div>
                                     </div>
-                                    <button className="p-2 bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main rounded-md transition-all">
+                                    <button className="p-2.5 bg-surface border border-border-thin hover:border-text-main hover:bg-surface-hover text-text-dim hover:text-text-main rounded-xl transition-all shadow-sm cursor-pointer" title="Cargar certificado digital">
                                         <UploadCloud size={14} />
                                     </button>
                                 </div>
@@ -1690,19 +1740,24 @@ export const ProjectWorkspace: React.FC = () => {
                         {/* Metadata */}
                         <div className="bento-card static p-6 flex flex-col justify-between group">
                             <div>
-                                <div className="flex items-center gap-2.5 mb-1.5">
+                                <div className="flex items-center gap-2.5 mb-3">
                                     <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
                                     <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Datos normativos CACES</h3>
                                 </div>
                             </div>
-                            <div className="mt-4 space-y-2 text-[11px] font-mono">
-                                <div className="flex justify-between p-2 rounded-md bg-bg-deep border border-border-thin">
-                                    <span className="text-text-dim uppercase tracking-wider text-[10px]">Línea Inv.</span>
-                                    <span className="text-text-dim">{currentProject.linea || 'N/A'}</span>
+                            <div className="space-y-2.5 mt-2">
+                                <div className="p-3.5 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover transition-all space-y-1">
+                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Línea de Investigación</span>
+                                    <span className="text-xs font-medium text-text-main leading-relaxed">{currentProject.linea || 'No definida'}</span>
                                 </div>
-                                <div className="flex justify-between p-2 rounded-md bg-bg-deep border border-border-thin">
-                                    <span className="text-text-dim uppercase tracking-wider text-[10px]">Presupuesto</span>
-                                    <span className="text-brand-light font-semibold">${currentProject.presupuesto || '0.00'}</span>
+                                <div className="p-3.5 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover transition-all flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Presupuesto Aprobado</span>
+                                        <span className="text-sm font-bold text-success font-mono">
+                                            ${Number(currentProject.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <span className="badge-vercel badge-vercel-success text-[8px] font-bold uppercase tracking-wider">USD</span>
                                 </div>
                             </div>
                         </div>
