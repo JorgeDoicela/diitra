@@ -2067,8 +2067,14 @@ namespace diitra_infrastructure.Research
                 .OrderByDescending(t => t.FechaTransicion)
                 .ToListAsync();
 
+            var userIds = traces
+                .Where(t => t.IdUsuario.HasValue)
+                .Select(t => t.IdUsuario!.Value)
+                .Distinct()
+                .ToList();
+
             var usersById = await _context.Users
-                .Where(u => traces.Where(t => t.IdUsuario.HasValue).Select(t => t.IdUsuario!.Value).Contains(u.IdUsuario))
+                .Where(u => userIds.Contains(u.IdUsuario))
                 .ToDictionaryAsync(u => u.IdUsuario, u => u.Nombre);
 
             var result = new List<TeamChangeRequestRecordDto>();
@@ -2791,7 +2797,7 @@ namespace diitra_infrastructure.Research
             if (r.Contains("principal")) return "Investigador Principal";
             if (r.Contains("semillerista")) return "Semillerista";
             if (r.Contains("estudiante") || r.Contains("alumno")) return "Co-Investigador (Estudiante)";
-            if (r.Contains("apoyo") || r.Contains("tecnico") || r.Contains("técnico")) return "Técnico de Apoyo";
+            if (r.Contains("apoyo") || r.Contains("tecnico") || r.Contains("técnico")) return "Co-Investigador";
             
             return "Co-Investigador";
         }
