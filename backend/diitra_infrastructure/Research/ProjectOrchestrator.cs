@@ -982,7 +982,7 @@ namespace diitra_infrastructure.Research
                     if (existingAlum != null)
                     {
                         // Reactivar o actualizar
-                        existingAlum.Rol = inv.Rol;
+                        existingAlum.Rol = NormalizeRole(inv.Rol);
                         existingAlum.NivelAcademico = inv.NivelAcademico;
                         existingAlum.Telefono = inv.Telefono;
                         if (inv.Activo == false)
@@ -1012,7 +1012,7 @@ namespace diitra_infrastructure.Research
                         {
                             IdProyecto = projectId,
                             IdUsuario = persona.IdUsuario,
-                            Rol = inv.Rol,
+                            Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = inv.Telefono,
                             Activo = inv.Activo ?? true,
@@ -1028,7 +1028,7 @@ namespace diitra_infrastructure.Research
                     if (existingProf != null)
                     {
                         // Reactivar o actualizar
-                        existingProf.Rol = inv.Rol;
+                        existingProf.Rol = NormalizeRole(inv.Rol);
                         existingProf.NivelAcademico = inv.NivelAcademico;
                         existingProf.Telefono = inv.Telefono;
                         existingProf.EsDirector = esDirector;
@@ -1061,7 +1061,7 @@ namespace diitra_infrastructure.Research
                         {
                             IdProyecto = projectId,
                             IdUsuario = persona.IdUsuario,
-                            Rol = inv.Rol,
+                            Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = inv.Telefono,
                             EsDirector = esDirector,
@@ -1902,7 +1902,7 @@ namespace diitra_infrastructure.Research
                 {
                     Nombre = user.Nombre,
                     Cedula = cedula,
-                    Rol = existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Co-Investigador (Estudiante)" : "Co-Investigador (Docente)"),
+                    Rol = NormalizeRole(existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Co-Investigador (Estudiante)" : "Co-Investigador")),
                     NivelAcademico = existing?.NivelAcademico ?? (user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel"),
                     Telefono = existing?.Telefono ?? string.Empty,
                     Activo = true,
@@ -1941,6 +1941,11 @@ namespace diitra_infrastructure.Research
                 })
                 .ToListAsync();
 
+            foreach (var p in profesores)
+            {
+                p.Rol = NormalizeRole(p.Rol);
+            }
+
             var alumnos = await _context.InvProyectosAlumnos
                 .Include(a => a.IdUsuarioNavigation)
                 .Where(a => a.IdProyecto == projectId && a.Activo != false && a.IdUsuarioNavigation != null && !string.IsNullOrEmpty(a.IdUsuarioNavigation.IdSigafi))
@@ -1958,6 +1963,11 @@ namespace diitra_infrastructure.Research
                     MotivoCambio = a.MotivoCambio
                 })
                 .ToListAsync();
+
+            foreach (var a in alumnos)
+            {
+                a.Rol = NormalizeRole(a.Rol);
+            }
 
             return profesores
                 .Concat(alumnos)
@@ -2003,7 +2013,7 @@ namespace diitra_infrastructure.Research
                 Estado = "PENDIENTE",
                 Tipo = tipo,
                 CedulaObjetivo = request.CedulaObjetivo?.Trim(),
-                RolPropuesto = string.IsNullOrWhiteSpace(request.RolPropuesto) ? null : request.RolPropuesto.Trim(),
+                RolPropuesto = string.IsNullOrWhiteSpace(request.RolPropuesto) ? null : NormalizeRole(request.RolPropuesto.Trim()),
                 Motivo = request.Motivo.Trim(),
                 ResolucionReferencia = string.IsNullOrWhiteSpace(request.ResolucionReferencia) ? null : request.ResolucionReferencia.Trim(),
                 Observacion = string.IsNullOrWhiteSpace(request.Observacion) ? null : request.Observacion.Trim(),
@@ -2264,7 +2274,7 @@ namespace diitra_infrastructure.Research
                             {
                                 IdGrupo = groupId,
                                 IdUsuario = targetUser.IdUsuario,
-                                Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? "Co-Investigador (Docente)" : payload.RolPropuesto,
+                                Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? "Co-Investigador" : NormalizeRole(payload.RolPropuesto),
                                 Activo = true,
                                 FechaInicio = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now)
                             });
@@ -2272,7 +2282,7 @@ namespace diitra_infrastructure.Research
                         else
                         {
                             groupMember.Activo = true;
-                            groupMember.Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? groupMember.Rol : payload.RolPropuesto;
+                            groupMember.Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? groupMember.Rol : NormalizeRole(payload.RolPropuesto);
                             groupMember.FechaInicio = DateOnly.FromDateTime(payload.FechaEfectiva ?? DateTime.Now);
                             groupMember.FechaFin = null;
                             groupMember.MotivoSalida = null;
@@ -2296,7 +2306,7 @@ namespace diitra_infrastructure.Research
 
                         foreach (var member in activeMembers.Where(m => !string.IsNullOrWhiteSpace(m.Rol) && m.Rol!.ToLower().Contains("director")))
                         {
-                            member.Rol = "Co-Investigador (Docente)";
+                            member.Rol = "Co-Investigador";
                         }
 
                         if (groupMember == null)
@@ -2351,7 +2361,7 @@ namespace diitra_infrastructure.Research
                             {
                                 Nombre = targetUser.Nombre,
                                 Cedula = targetCedula,
-                                Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? "Co-Investigador (Docente)" : payload.RolPropuesto,
+                                Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? "Co-Investigador" : NormalizeRole(payload.RolPropuesto),
                                 NivelAcademico = targetUser.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
                                 Telefono = string.Empty,
                                 Activo = true,
@@ -2362,7 +2372,7 @@ namespace diitra_infrastructure.Research
                         {
                             var existing = currentTeam.First(i => i.Cedula?.Trim() == targetCedula);
                             existing.Activo = true;
-                            existing.Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? existing.Rol : payload.RolPropuesto;
+                            existing.Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? existing.Rol : NormalizeRole(payload.RolPropuesto);
                         }
                         break;
 
@@ -2382,7 +2392,7 @@ namespace diitra_infrastructure.Research
                         {
                             if (member.Rol?.ToLower().Contains("director") == true)
                             {
-                                member.Rol = "Co-Investigador (Docente)";
+                                member.Rol = "Co-Investigador";
                             }
                         }
 
@@ -2769,6 +2779,21 @@ namespace diitra_infrastructure.Research
                 .AnyAsync(ur => ur.IdUsuario == idUsuario
                     && (ur.EsActivo ?? true)
                     && OversightRoleCodes.Contains(ur.Role.CodigoRol));
+        }
+
+        private string NormalizeRole(string? role)
+        {
+            if (string.IsNullOrWhiteSpace(role))
+                return "Co-Investigador";
+
+            var r = role.Trim().ToLowerInvariant();
+            if (r.Contains("director")) return "Director de Proyecto";
+            if (r.Contains("principal")) return "Investigador Principal";
+            if (r.Contains("semillerista")) return "Semillerista";
+            if (r.Contains("estudiante") || r.Contains("alumno")) return "Co-Investigador (Estudiante)";
+            if (r.Contains("apoyo") || r.Contains("tecnico") || r.Contains("técnico")) return "Técnico de Apoyo";
+            
+            return "Co-Investigador";
         }
 
         private sealed class TeamChangeTracePayload
