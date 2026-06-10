@@ -402,11 +402,7 @@ export const ProjectWorkspace: React.FC = () => {
                 setInvestigadores(res.data.investigadores || []);
                 setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
                 setGrupoInvestigacion(res.data.grupoInvestigacionUuid || res.data.grupoInvestigacion || '');
-                if (res.data.tieneGrupoInvestigacion) {
-                    await fetchTeamChangeRequests(res.data.uuid);
-                } else {
-                    setTeamChangeRequests([]);
-                }
+                await fetchTeamChangeRequests(res.data.uuid);
             } else if (isNotFound) {
                 // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
                 setCurrentProject({
@@ -667,11 +663,7 @@ export const ProjectWorkspace: React.FC = () => {
                     grupoInvestigacion: refreshed.data.grupoInvestigacion || null,
                     grupoInvestigacionUuid: refreshed.data.grupoInvestigacionUuid || null
                 }));
-                if (refreshed.data.tieneGrupoInvestigacion) {
-                    await fetchTeamChangeRequests(currentProject.uuid);
-                } else {
-                    setTeamChangeRequests([]);
-                }
+                await fetchTeamChangeRequests(currentProject.uuid);
             } else {
                 addToast("Error al Guardar", res.data.message || 'Error al guardar los cambios.', "error");
             }
@@ -1296,7 +1288,7 @@ export const ProjectWorkspace: React.FC = () => {
                                     </div>
                                 )}
 
-                                {tieneGrupo && (
+                                {(tieneGrupo || currentProject.puedeSolicitarCambioEquipo || teamChangeRequests.length > 0) && (
                                     <div className="border border-border-thin rounded-md p-3 space-y-3 bg-bg-deep/50">
                                         <div className="flex items-center justify-between">
                                             <h4 className="text-[10px] font-semibold uppercase tracking-wider text-text-main">Solicitudes Formales de Cambio</h4>
@@ -1307,21 +1299,37 @@ export const ProjectWorkspace: React.FC = () => {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                                 <select
                                                     value={teamChangeForm.tipo}
-                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, tipo: e.target.value }))}
+                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, tipo: e.target.value, cedulaObjetivo: '' }))}
                                                     className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
                                                 >
                                                     <option value="ALTA">Alta de integrante</option>
                                                     <option value="BAJA">Baja de integrante</option>
                                                     <option value="CAMBIO_DIRECTOR">Cambio de director</option>
+                                                    <option value="CAMBIO_GRUPO">Cambio de grupo de investigación</option>
                                                 </select>
-                                                <input
-                                                    type="text"
-                                                    value={teamChangeForm.cedulaObjetivo}
-                                                    onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
-                                                    placeholder="Cédula objetivo"
-                                                    className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
-                                                />
-                                                {teamChangeForm.tipo !== 'BAJA' && (
+                                                {teamChangeForm.tipo === 'CAMBIO_GRUPO' ? (
+                                                    <select
+                                                        value={teamChangeForm.cedulaObjetivo}
+                                                        onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
+                                                        className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
+                                                    >
+                                                        <option value="">-- Seleccione Grupo Destino --</option>
+                                                        {approvedGroups.map((g: any) => (
+                                                            <option key={g.uuid} value={g.uuid}>
+                                                                {g.nombre} {g.siglas ? `(${g.siglas})` : ''}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        value={teamChangeForm.cedulaObjetivo}
+                                                        onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
+                                                        placeholder="Cédula objetivo"
+                                                        className="bg-surface border border-border-thin rounded px-2 py-1.5 text-[11px] text-text-main outline-none focus:border-text-main"
+                                                    />
+                                                )}
+                                                {teamChangeForm.tipo !== 'BAJA' && teamChangeForm.tipo !== 'CAMBIO_GRUPO' && (
                                                     <select
                                                         value={teamChangeForm.rolPropuesto}
                                                         onChange={(e) => setTeamChangeForm(prev => ({ ...prev, rolPropuesto: e.target.value }))}
@@ -1360,7 +1368,7 @@ export const ProjectWorkspace: React.FC = () => {
 
                                         {currentProject.puedeEditar === false && currentProject.puedeSolicitarCambioEquipo && (
                                             <div className="badge-vercel badge-vercel-info !rounded-md !p-2.5 !text-[10px] !font-normal !leading-relaxed w-full">
-                                                El protocolo está en solo lectura, pero como integrante del proyecto o del grupo puedes registrar solicitudes formales (alta, baja o cambio de director). Solo el administrador puede aprobarlas y ejecutarlas.
+                                                El protocolo está en solo lectura, pero como integrante del proyecto o del grupo puedes registrar solicitudes formales (alta, baja, cambio de director o de grupo). Solo el administrador puede aprobarlas y ejecutarlas.
                                             </div>
                                         )}
 
@@ -1374,7 +1382,11 @@ export const ProjectWorkspace: React.FC = () => {
                                                     <div key={req.requestUuid} className="p-2 rounded border border-border-thin bg-surface">
                                                         <div className="flex items-center justify-between gap-2">
                                                             <span className="text-[10px] font-semibold text-text-main uppercase">{req.tipo} · {req.estado}</span>
-                                                            <span className="text-[9px] text-text-dim">{req.cedulaObjetivo || 'N/A'}</span>
+                                                            <span className="text-[9px] text-text-dim">
+                                                                {req.tipo === 'CAMBIO_GRUPO' 
+                                                                    ? (approvedGroups.find((g: any) => g.uuid === req.cedulaObjetivo)?.siglas || 'Grupo') 
+                                                                    : (req.cedulaObjetivo || 'N/A')}
+                                                            </span>
                                                         </div>
                                                         <p className="text-[10px] text-text-dim mt-1">{req.motivo}</p>
                                                         {canReviewTeamChanges && req.estado === 'PENDIENTE' && (

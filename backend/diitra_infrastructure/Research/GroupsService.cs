@@ -29,15 +29,25 @@ public class GroupsService : IGroupsService
         _logger = logger;
     }
 
-    public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null)
+    public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null, string? userSigafiId = null, bool isAdmin = false)
     {
         var query = _context.InvGruposInvestigacion
             .Include(g => g.IdCoordinadorNavigation)
+            .Include(g => g.InvGruposMiembros)
+                .ThenInclude(m => m.IdUsuarioNavigation)
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(search))
         {
             query = query.Where(g => g.Nombre.Contains(search) || g.Siglas!.Contains(search));
+        }
+
+        if (!isAdmin && !string.IsNullOrEmpty(userSigafiId))
+        {
+            var userSigafiTrim = userSigafiId.Trim();
+            query = query.Where(g => g.Estado == "Aprobado" 
+                || (g.IdCoordinadorNavigation != null && g.IdCoordinadorNavigation.IdSigafi == userSigafiTrim)
+                || g.InvGruposMiembros.Any(m => m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi == userSigafiTrim && m.Activo != false));
         }
 
         var groups = await query.ToListAsync();
