@@ -165,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [user, roles]);
 
     const isDocente = React.useMemo(() => {
-        return roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV');
+        return roles.includes('DIITRA_DOCENTE');
     }, [roles]);
 
     const isEstudiante = React.useMemo(() => {

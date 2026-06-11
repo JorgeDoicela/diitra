@@ -219,11 +219,11 @@ const Sidebar = ({
         // Grupo 1: Principal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
         { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1 },
-        { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DOCENTE_INV', 'DIITRA_ESTUDIANTE'], group: 1 },
-        { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 1 },
+        { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1 },
+        { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
 
         // Grupo 2: Procesos y Analíticas
-        { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 2 },
+        { name: 'Convocatorias', icon: PenTool, path: '/convocatorias', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 2 },
         { name: 'Mis Revisiones', icon: ShieldCheck, path: '/revisiones', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DIITRA_REVISOR_EXTERNO'], group: 2 },
         { name: 'Arbitraje', icon: Gavel, path: '/arbitraje', roles: ['DIITRA_ADMIN'], group: 2 },
         { name: 'Verificación', icon: ShieldCheck, path: '/verificacion', roles: ['ANY'], group: 2 },
@@ -235,7 +235,7 @@ const Sidebar = ({
         { name: 'Usuarios', icon: Users, path: '/usuarios', permission: 'USUARIOS:VER', group: 3, hasChevron: true },
         { name: 'Auditoría', icon: Activity, path: '/auditoria', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Panel LOPDP', icon: ShieldCheck, path: '/admin/lopdp', roles: ['DIITRA_ADMIN'], group: 3 },
-        { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE', 'DOCENTE_INV'], group: 3 },
+        { name: 'Grupos', icon: Award, path: '/grupos', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 3 },
         { name: 'Correos', icon: Mail, path: '/admin/emails', roles: ['DIITRA_ADMIN'], group: 3 },
         { name: 'Parámetros', icon: Scale, path: '/parametros-normativos', roles: ['DIITRA_ADMIN'], group: 3, hasChevron: true },
     ];
@@ -252,7 +252,7 @@ const Sidebar = ({
         if (item.roles) {
             if (item.roles.includes('ANY')) return true;
             const checkRoles = item.roles.map(r => r.toUpperCase());
-            if (checkRoles.includes('DIITRA_DOCENTE') || checkRoles.includes('DOCENTE_INV')) {
+            if (checkRoles.includes('DIITRA_DOCENTE')) {
                 if (isDocente) return true;
             }
             if (checkRoles.includes('DIITRA_ESTUDIANTE')) {

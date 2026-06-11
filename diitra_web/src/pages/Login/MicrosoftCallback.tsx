@@ -43,7 +43,7 @@ const MicrosoftCallback = () => {
                 let target = '/dashboard';
                 const roles = (user.roles || [user.role] || []).map((r: string) => r.toUpperCase());
                 const isAdmin = user.administrador || roles.includes('DIITRA_ADMIN');
-                const isDocente = roles.includes('DIITRA_DOCENTE') || roles.includes('DOCENTE_INV');
+                const isDocente = roles.includes('DIITRA_DOCENTE');
 
                 if (isAdmin) target = '/usuarios';
                 else if (isDocente) target = '/investigacion/mis-proyectos';
