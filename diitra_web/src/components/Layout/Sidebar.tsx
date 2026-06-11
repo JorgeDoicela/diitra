@@ -1,10 +1,12 @@
-import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle, TrendingUp, GraduationCap, Globe, Calendar, Tag, BookOpen, Scale } from 'lucide-react';
+import { Home, ClipboardList, PenTool, BarChart3, Settings, ShieldCheck, Search, Sun, Moon, Users, LogOut, Award, X, Activity, ListChecks, Bell, Gavel, ExternalLink, Mail, Info, AlertTriangle, TrendingUp, GraduationCap, Globe, Calendar, Tag, BookOpen, Scale, Loader2 } from 'lucide-react';
 import { useAuth } from '../../api/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { stripHtmlToText } from '../../utils/notificationText';
+import api from '../../api/axios_config';
+
 
 const NOTIF_PANEL_WIDTH = 380;
 
@@ -13,9 +15,9 @@ export const SIDEBAR_WIDTH = 248;
 const SIDEBAR_REOPEN_WIDTH = 212;
 const SIDEBAR_WIDTH_MAX = 368;
 /** Por debajo de esto, al soltar, el panel se cierra con animación. */
-const SIDEBAR_AUTO_COLLAPSE_AT = 180;
+const SIDEBAR_AUTO_COLLAPSE_AT = 140;
 /** Ancho mínimo en modo compacto: puede estrecharse hasta aquí y quedarse abierto. */
-const SIDEBAR_OPEN_MIN = 200;
+const SIDEBAR_OPEN_MIN = 160;
 const NAV_FADE_HEIGHT = '3.5rem';
 const NAV_SCROLL_SPACER = 'h-24';
 const COLLAPSE_VISIBLE_RATIO = 0.72;
@@ -156,6 +158,57 @@ const Sidebar = ({
     const [isParametrosOpen, setIsParametrosOpen] = useState(
         location.pathname.startsWith('/parametros-normativos')
     );
+    const [isInvestigacionOpen, setIsInvestigacionOpen] = useState(
+        location.pathname === '/investigacion' || (location.pathname.startsWith('/investigacion/') && !location.pathname.startsWith('/investigacion/mis-proyectos') && !location.pathname.startsWith('/investigacion/adopcion'))
+    );
+    const [isMisProyectosOpen, setIsMisProyectosOpen] = useState(
+        location.pathname.startsWith('/investigacion/mis-proyectos')
+    );
+    const [sidebarProjects, setSidebarProjects] = useState<any[]>([]);
+    const [sidebarProjectsLoading, setSidebarProjectsLoading] = useState(false);
+    const [showAllProjects, setShowAllProjects] = useState(false);
+
+    const isFirstRender = useRef(true);
+
+    const fetchSidebarProjects = useCallback(async () => {
+        if (!user) return;
+        try {
+            setSidebarProjectsLoading(true);
+            const endpoint = isAdmin ? '/projects' : '/projects/my';
+            const res = await api.get(endpoint);
+            
+            // Consistent sorting (recientes) matching main pages
+            const sorted = (res.data || []).sort((a: any, b: any) => {
+                const dateA = a.fecha_modificacion || a.fecha_registro || '';
+                const dateB = b.fecha_modificacion || b.fecha_registro || '';
+                return new Date(dateB).getTime() - new Date(dateA).getTime();
+            });
+            
+            setSidebarProjects(sorted);
+        } catch (err) {
+            console.error('[DIITRA Sidebar] Error al cargar proyectos para el menú:', err);
+        } finally {
+            setSidebarProjectsLoading(false);
+        }
+    }, [user, isAdmin]);
+
+    useEffect(() => {
+        if (!user) {
+            setSidebarProjects([]);
+            return;
+        }
+        fetchSidebarProjects();
+    }, [user, isAdmin, fetchSidebarProjects]);
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        if (location.pathname === '/investigacion' || location.pathname === '/investigacion/mis-proyectos') {
+            fetchSidebarProjects();
+        }
+    }, [location.pathname, fetchSidebarProjects]);
 
     useEffect(() => {
         if (location.pathname.startsWith('/analiticas')) {
@@ -166,6 +219,14 @@ const Sidebar = ({
         }
         if (location.pathname.startsWith('/parametros-normativos')) {
             setIsParametrosOpen(true);
+        }
+        if (location.pathname.startsWith('/investigacion/mis-proyectos')) {
+            setIsMisProyectosOpen(true);
+        } else if (
+            (location.pathname.startsWith('/investigacion') && !location.pathname.startsWith('/investigacion/adopcion')) || 
+            (location.pathname.includes('/workspace/') && !location.pathname.includes('/mis-proyectos/'))
+        ) {
+            setIsInvestigacionOpen(true);
         }
     }, [location.pathname]);
 
@@ -218,8 +279,8 @@ const Sidebar = ({
     const allMenuItems: MenuItem[] = [
         // Grupo 1: Principal
         { name: 'Tablero', icon: Home, path: '/dashboard', roles: ['ANY'], group: 1 },
-        { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1 },
-        { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1 },
+        { name: 'Investigación', icon: ClipboardList, path: '/investigacion', roles: ['DIITRA_ADMIN'], group: 1, hasChevron: true },
+        { name: 'Mis Proyectos', icon: ListChecks, path: '/investigacion/mis-proyectos', roles: ['DIITRA_DOCENTE', 'DIITRA_ESTUDIANTE'], group: 1, hasChevron: true },
         { name: 'Adopción Proyectos', icon: Award, path: '/investigacion/adopcion', roles: ['DIITRA_ADMIN', 'DIITRA_DOCENTE'], group: 1 },
 
         // Grupo 2: Procesos y Analíticas
@@ -282,9 +343,7 @@ const Sidebar = ({
     const group2 = menuItems.filter(item => item.group === 2);
     const group3 = menuItems.filter(item => item.group === 3);
 
-    /** Al reabrir: si quedó en modo compacto, volver al ancho cómodo para leer los textos. */
-    const resolveExpandTarget = (width = expandedWidth) =>
-        width < SIDEBAR_WIDTH ? SIDEBAR_REOPEN_WIDTH : width;
+    const resolveExpandTarget = () => SIDEBAR_REOPEN_WIDTH;
 
     const persistExpandedWidth = (width: number) => {
         const clamped = Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_OPEN_MIN, Math.round(width)));
@@ -467,6 +526,169 @@ const Sidebar = ({
     const renderMenuItem = (item: typeof allMenuItems[0]) => {
         const isActive = item === activeItem;
 
+        if (item.name === 'Investigación' || item.name === 'Mis Proyectos') {
+            const isMenuOpen = item.name === 'Investigación' ? isInvestigacionOpen : isMisProyectosOpen;
+            const toggleOpen = (e: React.MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (item.name === 'Investigación') {
+                    setIsInvestigacionOpen(!isInvestigacionOpen);
+                } else {
+                    setIsMisProyectosOpen(!isMisProyectosOpen);
+                }
+            };
+
+            const displayLimit = 6;
+            const shownProjects = showAllProjects ? sidebarProjects : sidebarProjects.slice(0, displayLimit);
+            const hasMore = sidebarProjects.length > displayLimit;
+
+            return (
+                <div key={item.name} className="flex flex-col gap-0.5">
+                    <div
+                        className={`flex items-center justify-between rounded-lg transition-all duration-150 group w-full ${isActive
+                            ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                            : 'bg-transparent text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                            }`}
+                    >
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                if (item.name === 'Investigación') {
+                                    setIsInvestigacionOpen(true);
+                                    if (location.pathname !== '/investigacion') {
+                                        navigate('/investigacion');
+                                    }
+                                } else {
+                                    setIsMisProyectosOpen(true);
+                                    if (location.pathname !== '/investigacion/mis-proyectos') {
+                                        navigate('/investigacion/mis-proyectos');
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-2.5 min-w-0 py-1.5 px-2.5 rounded-lg border-0 bg-transparent text-inherit cursor-pointer flex-1 text-left"
+                        >
+                            <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isActive
+                                ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                }`}>
+                                <item.icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
+                            </div>
+                            <span className={`text-[13px] tracking-tight truncate ${isActive ? 'font-semibold text-text-main' : 'font-medium'
+                                }`}>
+                                {item.name}
+                            </span>
+                        </button>
+                        <button
+                            onClick={toggleOpen}
+                            className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
+                            title="Expandir"
+                        >
+                            <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
+                                } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
+                                }`} />
+                        </button>
+                    </div>
+
+                    {isMenuOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5 animate-in slide-in-from-top-1 duration-150">
+                            {sidebarProjectsLoading && sidebarProjects.length === 0 ? (
+                                <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[12px] text-text-dim/40 font-medium italic select-none">
+                                    <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                                        <Loader2 size={13} className="shrink-0 animate-spin opacity-40" />
+                                    </div>
+                                    <span>Cargando...</span>
+                                </div>
+                            ) : sidebarProjects.length === 0 ? (
+                                <div className="flex items-center gap-2.5 px-2.5 py-1 ml-2 pl-2.5 text-[12px] text-text-dim/40 font-medium italic select-none">
+                                    <div className="w-7 h-7 flex items-center justify-center shrink-0">
+                                        <BookOpen size={13} strokeWidth={1} className="shrink-0 opacity-40" />
+                                    </div>
+                                    <span>Sin proyectos</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex flex-col gap-0.5 max-h-[340px] overflow-y-auto custom-scrollbar pr-1">
+                                        {shownProjects.map((p) => {
+                                            const projectPath = item.name === 'Investigación'
+                                                ? `/investigacion/workspace/protocolo-investigacion/${p.uuid}`
+                                                : `/investigacion/mis-proyectos/workspace/protocolo-investigacion/${p.uuid}`;
+                                            
+                                            const isSubActive = location.pathname.includes(`/workspace/`) && location.pathname.includes(p.uuid);
+
+                                            return (
+                                                <Link
+                                                    key={p.uuid}
+                                                    to={projectPath}
+                                                    onClick={() => {
+                                                        if (onClose) onClose();
+                                                    }}
+                                                    className={`flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 ${isSubActive
+                                                        ? 'bg-[#ededed] dark:bg-[#1a1a1a] text-text-main'
+                                                        : 'text-text-dim hover:text-text-main hover:bg-surface-hover/50'
+                                                        }`}
+                                                >
+                                                    <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                                        <div className={`w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 ${isSubActive
+                                                            ? 'bg-white dark:bg-zinc-800 shadow-[0_1px_2px_rgba(0,0,0,0.08)] border border-black/10 dark:border-white/10 text-text-main'
+                                                            : 'bg-transparent border border-transparent text-text-dim group-hover:text-text-main'
+                                                            }`}>
+                                                            <BookOpen size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
+                                                        </div>
+                                                        <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
+                                                            }`} title={p.titulo}>
+                                                            {p.titulo}
+                                                        </span>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
+                                    {hasMore && !showAllProjects && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setShowAllProjects(true);
+                                            }}
+                                            className="flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 text-text-dim hover:text-text-main hover:bg-surface-hover/50 border-0 bg-transparent w-full text-left"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                                <div className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 bg-transparent border border-transparent text-text-dim group-hover:text-text-main">
+                                                    <MoreHorizontalIcon className="shrink-0" />
+                                                </div>
+                                                <span className="text-[12px] font-semibold tracking-tight">
+                                                    Ver {sidebarProjects.length - displayLimit} más
+                                                </span>
+                                            </div>
+                                        </button>
+                                    )}
+                                    {hasMore && showAllProjects && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                setShowAllProjects(false);
+                                            }}
+                                            className="flex items-center justify-between px-2.5 py-1 rounded-lg cursor-pointer transition-all duration-150 group no-underline ml-2 pl-2.5 text-text-dim hover:text-text-main hover:bg-surface-hover/50 border-0 bg-transparent w-full text-left"
+                                        >
+                                            <div className="flex items-center gap-2.5 min-w-0 py-0.5">
+                                                <div className="w-7 h-7 flex items-center justify-center rounded-md transition-all duration-150 shrink-0 bg-transparent border border-transparent text-text-dim group-hover:text-text-main">
+                                                    <ChevronRightIcon className="shrink-0 -rotate-90" />
+                                                </div>
+                                                <span className="text-[12px] font-semibold tracking-tight">
+                                                    Ver menos
+                                                </span>
+                                            </div>
+                                        </button>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
         if (item.name === 'Analíticas') {
             const isMenuOpen = isAnalyticsOpen;
             return (
@@ -505,7 +727,7 @@ const Sidebar = ({
                                 setIsAnalyticsOpen(!isAnalyticsOpen);
                             }}
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
-                            title={isMenuOpen ? "Colapsar" : "Expandir"}
+                            title="Expandir"
                         >
                             <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
                                 } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
@@ -596,7 +818,7 @@ const Sidebar = ({
                                 setIsUsersOpen(!isUsersOpen);
                             }}
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
-                            title={isMenuOpen ? "Colapsar" : "Expandir"}
+                            title="Expandir"
                         >
                             <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
                                 } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'
@@ -687,7 +909,7 @@ const Sidebar = ({
                                 setIsParametrosOpen(!isParametrosOpen);
                             }}
                             className="p-1.5 mr-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-inherit border-0 bg-transparent cursor-pointer flex items-center justify-center transition-colors shrink-0"
-                            title={isMenuOpen ? "Colapsar" : "Expandir"}
+                            title="Expandir"
                         >
                             <ChevronRightIcon className={`shrink-0 transition-all duration-200 ${isMenuOpen ? 'rotate-90' : ''
                                 } ${isActive ? 'text-text-main/50' : 'text-text-dim/30 group-hover:text-text-dim/70'

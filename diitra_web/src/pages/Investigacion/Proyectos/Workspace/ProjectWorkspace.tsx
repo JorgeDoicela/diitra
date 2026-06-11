@@ -955,24 +955,22 @@ export const ProjectWorkspace: React.FC = () => {
                                 <div className="h-4 w-[1px] bg-border-thin mx-1" />
                             </>
                         )}
-                        <button onClick={() => navigate(urlPrefix)} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
-                            <ArrowLeft size={14} />
+                        <button 
+                            onClick={() => navigate(urlPrefix)} 
+                            className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors cursor-pointer"
+                            title="Volver"
+                        >
+                            <ArrowLeft size={16} />
                         </button>
-                        <div className="h-4 w-[1px] bg-border-thin" />
-                        <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center text-[10px] font-semibold text-text-main uppercase">
-                                DI
+                        <div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
+                                <Activity size={10} strokeWidth={2} className="text-brand" />
+                                <span>Proyecto · ISTPET</span>
                             </div>
-                            <div>
-                                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-text-dim uppercase tracking-[0.3em]">
-                                    <Activity size={10} strokeWidth={2} className="text-brand" />
-                                    <span>Proyecto · ISTPET</span>
-                                </div>
-                                <div className="flex items-center gap-1 text-[10px] text-text-dim">
-                                    <span>diitra</span>
-                                    <ChevronRight size={10} />
-                                    <span className="text-text-main font-mono">{currentProject.id}</span>
-                                </div>
+                            <div className="flex items-center gap-1 text-[10px] text-text-dim">
+                                <span>diitra</span>
+                                <ChevronRight size={10} />
+                                <span className="text-text-main font-mono">{currentProject.id}</span>
                             </div>
                         </div>
                     </div>
