@@ -2,13 +2,13 @@ import React from 'react';
 import { FileSignature } from 'lucide-react';
 
 const ESTADO_CONFIG: Record<string, { badge: string; dot: string }> = {
-    'Borrador':     { badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
-    'Enviado':      { badge: 'badge-vercel-info',    dot: 'dot-info' },
-    'En Revisión':  { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
-    'Aprobado':     { badge: 'badge-vercel-success', dot: 'dot-success' },
-    'En Ejecución': { badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
-    'Finalizado':   { badge: 'badge-vercel-success', dot: 'dot-success' },
-    'Rechazado':    { badge: 'badge-vercel-error',   dot: 'dot-error' },
+    'Borrador': { badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
+    'Enviado': { badge: 'badge-vercel-info', dot: 'dot-info' },
+    'En Revisión': { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
+    'Aprobado': { badge: 'badge-vercel-success', dot: 'dot-success' },
+    'En Ejecución': { badge: 'badge-vercel-violet', dot: 'dot-brand dot-pulse' },
+    'Finalizado': { badge: 'badge-vercel-success', dot: 'dot-success' },
+    'Rechazado': { badge: 'badge-vercel-error', dot: 'dot-error' },
 };
 
 const estadoConfig = (estado: string) =>
@@ -49,8 +49,6 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                         >
                             {currentProject.uuid.split('-')[0]}
                         </span>
-                        <span className="text-text-dim">·</span>
-                        <span className="text-text-dim">{user?.role || 'Investigador'}</span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title}</h2>
                     <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>

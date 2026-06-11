@@ -319,6 +319,7 @@ const GroupsPage = () => {
     };
 
     const handleOpenReview = (group: Group) => {
+        setDetailGroup(null);
         setReviewingGroup(group);
         setReviewResolution('');
         setRejectObservations('');
@@ -577,16 +578,16 @@ const GroupsPage = () => {
                                         <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex gap-2 justify-end">
                                                 <button
-                                                    onClick={() => handleOpenModal(g, true)}
-                                                    className="p-1.5 rounded hover:bg-surface text-text-dim hover:text-text-main transition-all"
-                                                    title="Ver Detalle"
-                                                >
-                                                    <Eye size={14} />
-                                                </button>
+                                                     onClick={() => setDetailGroup(g)}
+                                                     className="p-1.5 rounded hover:bg-brand/10 text-text-dim group-hover:text-brand transition-all"
+                                                     title="Ver Detalle"
+                                                 >
+                                                     <Eye size={14} />
+                                                 </button>
                                                 {(isAdmin || (g.id_profesor_coordinador === user?.id_referencia && g.estado !== 'Pendiente' && g.estado !== 'Aprobado')) && (
                                                     <button
                                                         onClick={() => handleOpenModal(g, false)}
-                                                        className="p-1.5 rounded hover:bg-surface text-text-dim hover:text-text-main transition-all"
+                                                        className="p-1.5 rounded hover:bg-surface text-text-dim hover:text-text-main transition-all action-btn-exclude"
                                                         title="Editar Grupo"
                                                     >
                                                         <Edit2 size={14} />
@@ -595,7 +596,7 @@ const GroupsPage = () => {
                                                 {(isAdmin || (g.id_profesor_coordinador === user?.id_referencia && g.estado !== 'Pendiente' && g.estado !== 'Aprobado')) && (
                                                     <button
                                                         onClick={() => handleDelete(g.uuid, g.nombre)}
-                                                        className="p-1.5 rounded hover:bg-red-500/10 text-text-dim hover:text-red-500 transition-all"
+                                                        className="p-1.5 rounded hover:bg-red-500/10 text-text-dim hover:text-red-500 transition-all action-btn-exclude"
                                                         title={isAdmin ? "Desactivar" : "Eliminar"}
                                                     >
                                                         <Trash2 size={14} />
@@ -611,9 +612,8 @@ const GroupsPage = () => {
                 </div>
             </div>
 
-            {/* Admin Resolution & Review Drawer */}
             {isReviewModalOpen && reviewingGroup && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
+                <div className="fixed inset-0 z-[10000] flex justify-end">
                     <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                         onClick={() => { setIsReviewModalOpen(false); setReviewingGroup(null); }}
@@ -838,7 +838,7 @@ const GroupsPage = () => {
 
             {/* Custom Confirmation Modal */}
             {confirmDialog.isOpen && (
-                <div className="modal-overlay" style={{ zIndex: 10000 }}>
+                <div className="modal-overlay" style={{ zIndex: 10005 }}>
                     <div className="modal-card animate-scale-up max-w-md">
                         <div className="modal-header !py-4">
                             <div className="flex items-center gap-3">
@@ -917,11 +917,6 @@ const GroupsPage = () => {
                 carreras={carreras}
                 lines={lines}
                 formatCareerName={formatCareerName}
-                handleOpenModal={(group, ro) => {
-                    setEditingGroup(group);
-                    setIsReadOnly(ro);
-                    setIsModalOpen(true);
-                }}
                 handleOpenReview={handleOpenReview}
             />
 
