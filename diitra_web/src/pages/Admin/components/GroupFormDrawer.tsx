@@ -1418,39 +1418,35 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                         </div>
                     </section>
 
-                    {/* Regulations / Normative */}
-                    <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                <FileText size={12} /> Resolución de Aprobación
-                            </label>
-                            <input
-                                type="text"
-                                disabled={isReadOnly || !isAdmin}
-                                value={formData.resolucion_aprobacion}
-                                onChange={(e) => setFormData({ ...formData, resolucion_aprobacion: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed font-medium"
-                                placeholder={!isAdmin ? "ASIGNADO TRAS APROBACIÓN" : "ACTA-DI-2026-001"}
-                            />
-                            {!isAdmin && (
-                                <p className="text-[8px] text-text-dim/60 uppercase font-bold tracking-wider">
-                                    Solo el administrador puede definir este valor tras la aprobación de la propuesta.
-                                </p>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
-                                <Calendar size={12} /> Fecha de Creación / Propuesta
-                            </label>
-                            <input
-                                type="date"
-                                disabled={isReadOnly || !isAdmin}
-                                value={formData.fecha_creacion}
-                                onChange={(e) => setFormData({ ...formData, fecha_creacion: e.target.value })}
-                                className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-                            />
-                        </div>
-                    </section>
+                    {isAdmin && (
+                        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-bg-deep/30 rounded-2xl border border-border-thin">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                    <FileText size={12} /> Resolución de Aprobación
+                                </label>
+                                <input
+                                    type="text"
+                                    disabled={isReadOnly}
+                                    value={formData.resolucion_aprobacion}
+                                    onChange={(e) => setFormData({ ...formData, resolucion_aprobacion: e.target.value })}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all uppercase disabled:opacity-60 disabled:cursor-not-allowed font-medium"
+                                    placeholder="ACTA-DI-2026-001"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-text-dim uppercase tracking-widest flex items-center gap-2">
+                                    <Calendar size={12} /> Fecha de Creación / Propuesta
+                                </label>
+                                <input
+                                    type="date"
+                                    disabled={isReadOnly}
+                                    value={formData.fecha_creacion}
+                                    onChange={(e) => setFormData({ ...formData, fecha_creacion: e.target.value })}
+                                    className="w-full bg-bg-deep border border-border-thin rounded-lg p-3 text-sm text-text-main focus:outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                                />
+                            </div>
+                        </section>
+                    )}
                 </form>
 
                 <div className="modal-footer">

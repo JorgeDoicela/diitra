@@ -17,11 +17,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onClose
 }) => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, isDocente } = useAuth();
 
     const [titulo, setTitulo] = useState('');
     const [idCarrera, setIdCarrera] = useState<number>(0);
     const [idConvocatoria, setIdConvocatoria] = useState<number>(preselectedConvocatoriaId || 0);
+    const [careerLocked, setCareerLocked] = useState(false);
 
     const [isOpenCarrera, setIsOpenCarrera] = useState(false);
     const [isOpenConvocatoria, setIsOpenConvocatoria] = useState(false);
@@ -50,12 +51,24 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     useEffect(() => {
         const loadCatalogs = async () => {
             try {
-                const [rCarreras, rConvocatorias] = await Promise.all([
-                    api.get('/catalogs/carreras').catch(() => ({ data: [] })),
-                    api.get('/Convocatorias').catch(() => ({ data: [] }))
+                const [rConvocatorias, rMiCarrera, rCarreras] = await Promise.all([
+                    api.get('/Convocatorias').catch(() => ({ data: [] })),
+                    isDocente ? api.get('/catalogs/mi-carrera').catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                    api.get('/catalogs/carreras').catch(() => ({ data: [] }))
                 ]);
-                setCarreras(rCarreras.data || []);
+
                 setConvocatorias(rConvocatorias.data || []);
+
+                const linkedCareers = Array.isArray(rMiCarrera.data) ? rMiCarrera.data : [];
+                if (isDocente && linkedCareers.length > 0) {
+                    setCarreras(linkedCareers);
+                    if (linkedCareers.length === 1) {
+                        setIdCarrera(getCarreraId(linkedCareers[0]));
+                        setCareerLocked(true);
+                    }
+                } else {
+                    setCarreras(rCarreras.data || []);
+                }
                 
                 if (preselectedConvocatoriaId) {
                     setIdConvocatoria(preselectedConvocatoriaId);
@@ -68,7 +81,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             }
         };
         loadCatalogs();
-    }, [preselectedConvocatoriaId]);
+    }, [preselectedConvocatoriaId, isDocente]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -86,7 +99,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!titulo.trim()) return setError("El título / tema del proyecto es obligatorio.");
-        if (idCarrera === 0) return setError("Debe seleccionar una carrera asociada.");
+        if (idCarrera === 0) {
+            return setError(isDocente
+                ? "No se encontró una carrera vinculada a su perfil docente. Contacte al administrador institucional."
+                : "Debe seleccionar una carrera asociada.");
+        }
         if (idConvocatoria === 0) return setError("Debe vincular su propuesta a una convocatoria.");
 
         setIsCreating(true);
@@ -117,12 +134,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
             await api.patch(`/documents/instances/${newUuid}/metadata`, initialMetadata);
 
-            setCreationStepMsg("Preparando el editor colaborativo...");
+            setCreationStepMsg("Preparando el espacio de trabajo institucional...");
             const isSupervision = window.location.pathname.startsWith('/investigacion') && !window.location.pathname.startsWith('/investigacion/mis-proyectos');
             const prefix = isSupervision ? '/investigacion' : '/investigacion/mis-proyectos';
             
             setTimeout(() => {
-                navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '?edit=true', prefix), { replace: true });
+                navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '', prefix), { replace: true });
                 onClose();
             }, 800);
 
@@ -205,41 +222,47 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                     <Briefcase size={10} className="text-text-dim" />
                                     Carrera / Unidad Solicitante
                                 </label>
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsOpenCarrera(!isOpenCarrera)}
-                                        className="input-vercel !font-bold !text-xs text-left cursor-pointer flex items-center justify-between"
-                                    >
-                                        <span className={idCarrera === 0 ? 'text-text-dim opacity-50' : ''}>
-                                            {selectedCarreraName}
-                                        </span>
-                                        <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none' }} />
-                                    </button>
-                                    
-                                    {isOpenCarrera && (
-                                        <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
-                                            {carreras.map(c => {
-                                                const cid = getCarreraId(c);
-                                                const cname = getCarreraName(c);
-                                                return (
-                                                    <button
-                                                        key={cid}
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setIdCarrera(cid);
-                                                            setIsOpenCarrera(false);
-                                                        }}
-                                                        className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none ${idCarrera === cid ? 'bg-text-main text-bg-deep font-bold' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}
-                                                    >
-                                                        <span>{cname}</span>
-                                                        {idCarrera === cid && <Check size={12} />}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
+                                {careerLocked ? (
+                                    <div className="input-vercel !font-bold !text-xs text-left opacity-80 cursor-not-allowed">
+                                        {selectedCarreraName}
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsOpenCarrera(!isOpenCarrera)}
+                                            className="input-vercel !font-bold !text-xs text-left cursor-pointer flex items-center justify-between"
+                                        >
+                                            <span className={idCarrera === 0 ? 'text-text-dim opacity-50' : ''}>
+                                                {selectedCarreraName}
+                                            </span>
+                                            <ChevronDown size={14} className="transition-transform duration-200" style={{ transform: isOpenCarrera ? 'rotate(180deg)' : 'none' }} />
+                                        </button>
+                                        
+                                        {isOpenCarrera && (
+                                            <div className="absolute z-[120] mt-1 w-full max-h-48 overflow-y-auto border border-border-thin rounded-md shadow-2xl py-1 bg-surface">
+                                                {carreras.map(c => {
+                                                    const cid = getCarreraId(c);
+                                                    const cname = getCarreraName(c);
+                                                    return (
+                                                        <button
+                                                            key={cid}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIdCarrera(cid);
+                                                                setIsOpenCarrera(false);
+                                                            }}
+                                                            className={`w-full text-left px-4 py-2.5 text-xs transition-colors flex items-center justify-between cursor-pointer border-none outline-none ${idCarrera === cid ? 'bg-text-main text-bg-deep font-bold' : 'bg-transparent text-text-main hover:bg-surface-hover'}`}
+                                                        >
+                                                            <span>{cname}</span>
+                                                            {idCarrera === cid && <Check size={12} />}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-2" ref={convocatoriaRef}>

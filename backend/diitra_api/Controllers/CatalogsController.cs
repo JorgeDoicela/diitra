@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using diitra_infrastructure.data.models;
 using diitra_domain.Identity.Entities;
+using System.Security.Claims;
 
 namespace diitra_api.Controllers
 {
@@ -187,6 +189,56 @@ namespace diitra_api.Controllers
                 .OrderBy(c => c.Carrera1)
                 .ToListAsync();
             return Ok(data);
+        }
+
+        /// <summary>
+        /// Devuelve las carreras vinculadas al usuario autenticado en el periodo académico activo.
+        /// </summary>
+        [HttpGet("mi-carrera")]
+        [Authorize]
+        public async Task<IActionResult> GetMiCarrera()
+        {
+            var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value;
+            if (string.IsNullOrWhiteSpace(idReferencia))
+                return Unauthorized();
+
+            var dbUser = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.IdSigafi.Trim() == idReferencia.Trim());
+            if (dbUser == null)
+                return NotFound(new { message = "Usuario no encontrado." });
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var currentPeriod = await _context.Periodos
+                .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                .ThenByDescending(p => p.Activo == true)
+                .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                .ThenByDescending(p => p.FechaInicial)
+                .FirstOrDefaultAsync();
+
+            if (dbUser.TablaSigafi == "profesor")
+            {
+                var profCareersQuery = _context.ProfesoresCarrerasPeriodos
+                    .AsNoTracking()
+                    .Include(pc => pc.IdCarreraNavigation)
+                    .Where(pc => pc.IdProfesor.Trim() == idReferencia.Trim()
+                                 && pc.EsActivo == 1
+                                 && pc.IdCarreraNavigation != null);
+
+                if (currentPeriod != null)
+                    profCareersQuery = profCareersQuery.Where(pc => pc.IdPeriodo == currentPeriod.IdPeriodo);
+
+                var careers = await profCareersQuery
+                    .Select(pc => pc.IdCarreraNavigation!)
+                    .Distinct()
+                    .OrderBy(c => c.Carrera1)
+                    .ToListAsync();
+
+                return Ok(careers);
+            }
+
+            return Ok(Array.Empty<Carrera>());
         }
 
         // --- CRUD Líneas de Investigación ---

@@ -64,7 +64,6 @@ interface TeamManagementProps {
     setIsHistoryExpanded: (val: boolean) => void;
     onToggleTieneGrupo: (val: boolean) => void;
     onSetGrupoInvestigacion: (val: string) => void;
-    onSyncGroupMembers: () => void;
     onSaveTeam: () => void;
     onCreateTeamChangeRequest: () => void;
     onReviewTeamChangeRequest: (requestUuid: string, aprobar: boolean) => void;
@@ -103,7 +102,6 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     setIsHistoryExpanded,
     onToggleTieneGrupo,
     onSetGrupoInvestigacion,
-    onSyncGroupMembers,
     onSaveTeam,
     onCreateTeamChangeRequest,
     onReviewTeamChangeRequest,
@@ -167,10 +165,10 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                 })()
                             )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                             <select
                                 value={grupoInvestigacion}
-                                disabled={currentProject.puedeEditar === false}
+                                disabled={currentProject.puedeEditar === false || isSyncingGroupMembers}
                                 onChange={(e) => onSetGrupoInvestigacion(e.target.value)}
                                 className="flex-1 bg-surface border border-border-thin rounded px-2.5 py-2 text-xs text-text-main outline-none focus:border-text-main transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                             >
@@ -181,25 +179,10 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                     </option>
                                 ))}
                             </select>
-
-                            {grupoInvestigacion && currentProject.puedeEditar !== false && (
-                                <button
-                                    type="button"
-                                    disabled={isSyncingGroupMembers}
-                                    onClick={onSyncGroupMembers}
-                                    className="btn-vercel-secondary !py-2 !px-3 text-xs flex items-center justify-center gap-1.5 shrink-0"
-                                    title="Importa co-investigadores activos de este grupo"
-                                >
-                                    <RefreshCw size={12} className={isSyncingGroupMembers ? "animate-spin text-brand" : "text-brand"} />
-                                    <span>Sincronizar</span>
-                                </button>
+                            {isSyncingGroupMembers && (
+                                <RefreshCw size={14} className="animate-spin text-brand shrink-0" />
                             )}
                         </div>
-                        {grupoInvestigacion && currentProject.puedeEditar !== false && (
-                            <p className="text-[9px] text-brand-light italic">
-                                * Al guardar, los miembros del grupo adscrito se consolidarán en la base de datos. Presiona "Sincronizar" para importarlos a la lista inferior antes de guardar.
-                            </p>
-                        )}
                     </div>
                 )}
 
