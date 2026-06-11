@@ -82,6 +82,21 @@ export const ProjectWorkspace: React.FC = () => {
     const queryParams = new URLSearchParams(location.search);
     const shouldEdit = queryParams.get('edit') === 'true';
 
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+        return localStorage.getItem('sidebar_collapsed') === 'true';
+    });
+
+    useEffect(() => {
+        const handleStateChange = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            if (customEvent.detail && typeof customEvent.detail.isCollapsed === 'boolean') {
+                setIsSidebarCollapsed(customEvent.detail.isCollapsed);
+            }
+        };
+        window.addEventListener('diitra-sidebar-state-change', handleStateChange);
+        return () => window.removeEventListener('diitra-sidebar-state-change', handleStateChange);
+    }, []);
+
     useEffect(() => {
         if (!templateSlug || !documentUuid || !isLegacyTemplateUrlSegment(templateSlug)) return;
         navigate(buildWorkspacePath(templateCode, documentUuid, location.search, urlPrefix), { replace: true });
@@ -914,6 +929,32 @@ export const ProjectWorkspace: React.FC = () => {
             <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
                 <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
                     <div className="flex items-center gap-4">
+                        {isSidebarCollapsed && (
+                            <>
+                                <button
+                                    onClick={() => window.dispatchEvent(new CustomEvent('diitra-toggle-sidebar', { detail: 'expand' }))}
+                                    className="p-1.5 rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-colors duration-150 cursor-pointer animate-fade-in"
+                                    title="Mostrar panel lateral"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="w-4 h-4"
+                                    >
+                                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                                        <path d="M9 3v18" />
+                                    </svg>
+                                </button>
+                                <div className="h-4 w-[1px] bg-border-thin mx-1" />
+                            </>
+                        )}
                         <button onClick={() => navigate(urlPrefix)} className="p-2.5 rounded-xl bg-surface border border-border-thin hover:border-text-main text-text-dim hover:text-text-main transition-all">
                             <ArrowLeft size={14} />
                         </button>

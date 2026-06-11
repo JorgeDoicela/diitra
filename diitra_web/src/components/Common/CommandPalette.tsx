@@ -538,8 +538,12 @@ export const CommandPalette = () => {
 
     useEffect(() => {
         if (listRef.current) {
-            const el = listRef.current.querySelector(`[data-idx="${selectedIndex}"]`) as HTMLElement;
-            if (el) el.scrollIntoView({ block: 'nearest' });
+            if (selectedIndex === 0) {
+                listRef.current.scrollTop = 0;
+            } else {
+                const el = listRef.current.querySelector(`[data-idx="${selectedIndex}"]`) as HTMLElement;
+                if (el) el.scrollIntoView({ block: 'nearest' });
+            }
         }
     }, [selectedIndex]);
 
@@ -658,14 +662,16 @@ export const CommandPalette = () => {
                                         </span>
                                         <span className="text-[9px] text-text-dim/40 ml-auto">{groupItems.length}</span>
                                     </div>
-                                    {groupItems.map(({ item, labelRanges }) => {
+                                    {groupItems.map(({ item, labelRanges }, itemIdx) => {
                                         const globalIdx = flatItems.indexOf(item);
                                         const isActive = globalIdx === selectedIndex;
                                         return (
                                             <div
                                                 key={item.id}
                                                 data-idx={globalIdx}
-                                                className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-100 group ${isActive
+                                                className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all duration-100 group ${
+                                                    itemIdx === 0 ? 'scroll-mt-10' : ''
+                                                } ${isActive
                                                         ? 'bg-surface-hover text-text-main'
                                                         : 'hover:bg-surface/50 text-text-dim'
                                                     }`}

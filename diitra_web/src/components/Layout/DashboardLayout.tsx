@@ -143,6 +143,31 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         localStorage.setItem('sidebar_collapsed', 'false');
     };
 
+    useEffect(() => {
+        const handleToggle = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            if (customEvent.detail === 'expand') {
+                handleSidebarExpand();
+            } else if (customEvent.detail === 'collapse') {
+                handleSidebarCollapse();
+            } else {
+                setIsCollapsed(prev => {
+                    const next = !prev;
+                    localStorage.setItem('sidebar_collapsed', String(next));
+                    return next;
+                });
+            }
+        };
+        window.addEventListener('diitra-toggle-sidebar', handleToggle);
+        return () => window.removeEventListener('diitra-toggle-sidebar', handleToggle);
+    }, []);
+
+    useEffect(() => {
+        const event = new CustomEvent('diitra-sidebar-state-change', { detail: { isCollapsed } });
+        window.dispatchEvent(event);
+    }, [isCollapsed]);
+
+
     return (
         <div className="flex h-screen w-full bg-bg-deep overflow-hidden font-sans selection:bg-text-main selection:text-bg-deep transition-colors duration-300">
             <CommandPalette />
