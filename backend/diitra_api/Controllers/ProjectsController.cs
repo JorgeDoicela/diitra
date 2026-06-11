@@ -126,7 +126,7 @@ namespace diitra_api.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> SignDocument(
             Microsoft.AspNetCore.Http.IFormFile? certificate,
-            [FromForm] string password,
+            [FromForm] string? password,
             [FromForm] string projectUuid,
             [FromServices] diitra_infrastructure.Security.IFirmaElectronicaService firmaService,
             [FromServices] Microsoft.Extensions.Logging.ILogger<ProjectsController> logger,
@@ -157,26 +157,12 @@ namespace diitra_api.Controllers
                     return NotFound(new { error = "El proyecto de investigación especificado no existe." });
                 }
 
-                // 2. Generar el PDF oficial del protocolo de investigación en modo NO Borrador
-                var request = new DocumentRequest
-                {
-                    TemplateCode = "PROTOCOLO_INVESTIGACION",
-                    Data = projectDto,
-                    IsDraftMode = false, // Emisión oficial inmutable
-                    IsBlindMode = false,
-                    RequestedBy = User.Identity?.Name ?? "Sistema DIITRA (Firma)",
-                    ProjectUuid = projectDto.Uuid,
-                    EntityUuid = projectDto.Uuid
-                };
-
-                var genResult = await _documentEngine.GenerateAsync(request);
-
                 var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
                 var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
                 var skipCertificateValidation = env.IsDevelopment()
                     || config.GetValue<bool>("Firma:SkipCertificateValidation");
 
-                // 3. Aplicar Firma Criptográfica Avanzada (.p12 / BouncyCastle)
+                // 2. Cargar Firma (.p12 / BouncyCastle)
                 byte[]? certificateBytes = null;
                 string? finalPassword = password;
 
@@ -195,8 +181,15 @@ namespace diitra_api.Controllers
                         try
                         {
                             certificateBytes = await System.IO.File.ReadAllBytesAsync(userMeta.RutaFirmaP12);
-                            var encryptionKey = config["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
-                            finalPassword = diitra_infrastructure.Security.CryptoHelper.Decrypt(userMeta.P12PasswordEncrypted!, encryptionKey);
+                            if (!string.IsNullOrWhiteSpace(password))
+                            {
+                                finalPassword = password;
+                            }
+                            else
+                            {
+                                var encryptionKey = config["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
+                                finalPassword = diitra_infrastructure.Security.CryptoHelper.Decrypt(userMeta.P12PasswordEncrypted!, encryptionKey);
+                            }
                         }
                         catch (Exception ex)
                         {
@@ -205,6 +198,57 @@ namespace diitra_api.Controllers
                         }
                     }
                 }
+
+                // Extraer metadatos del certificado de firma digital para inyección visual en el PDF
+                string signerName = dbUser.Nombre;
+                string signerEntity = "Entidad de Certificación Digital";
+                string signatureDate = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+
+                if (certificateBytes != null)
+                {
+                    try
+                    {
+                        using var cert2 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificateBytes, finalPassword ?? "");
+                        var parsedName = cert2.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, false);
+                        if (!string.IsNullOrWhiteSpace(parsedName))
+                        {
+                            signerName = parsedName;
+                        }
+                        var parsedIssuer = cert2.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, true);
+                        if (!string.IsNullOrWhiteSpace(parsedIssuer))
+                        {
+                            signerEntity = parsedIssuer;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "No se pudo extraer metadatos del certificado de firma. Se usará información de perfil.");
+                    }
+                }
+
+                // 3. Generar el PDF oficial del protocolo de investigación en modo NO Borrador
+                var request = new DocumentRequest
+                {
+                    TemplateCode = "PROTOCOLO_INVESTIGACION",
+                    Data = projectDto,
+                    IsDraftMode = false, // Emisión oficial inmutable
+                    IsBlindMode = false,
+                    RequestedBy = User.Identity?.Name ?? "Sistema DIITRA (Firma)",
+                    ProjectUuid = projectDto.Uuid,
+                    EntityUuid = projectDto.Uuid,
+                    ExtraVariables = new System.Collections.Generic.Dictionary<string, object>
+                    {
+                        { "firma_director", new System.Collections.Generic.Dictionary<string, object>
+                            {
+                                { "nombre", signerName },
+                                { "entidad", signerEntity },
+                                { "fecha", signatureDate }
+                            }
+                        }
+                    }
+                };
+
+                var genResult = await _documentEngine.GenerateAsync(request);
 
                 byte[] signedPdfBytes;
                 if (certificateBytes != null)

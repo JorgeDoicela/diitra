@@ -168,6 +168,7 @@ namespace Diitra.Application.Research.Dtos
         public string? CargoDirectorFirma { get; set; }
         public string? NombreCoordinadorFirma { get; set; }
         public string? CargoCoordinadorFirma { get; set; }
+        public FirmasResponsabilidadDto? FirmasResponsabilidad { get; set; }
 
         // --- Extensiones Core Enterprise ---
         public string? IdDspaceHandle { get; set; }
@@ -297,5 +298,13 @@ namespace Diitra.Application.Research.Dtos
         public string? Fecha { get; set; }
         public string? ReferenciaFactura { get; set; }
         public string? Categoria { get; set; }
+    }
+
+    public class FirmasResponsabilidadDto
+    {
+        public string? DirectorNombre { get; set; }
+        public string? DirectorCargo { get; set; }
+        public string? CoordinadorNombre { get; set; }
+        public string? CoordinadorCargo { get; set; }
     }
 }

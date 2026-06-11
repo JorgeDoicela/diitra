@@ -659,7 +659,7 @@ namespace diitra_infrastructure.Research
             {
                 try
                 {
-                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(p.MetadataCacesJson) ?? new ProyectoDto();
+                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(p.MetadataCacesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
                 }
                 catch
                 {
@@ -1522,7 +1522,7 @@ namespace diitra_infrastructure.Research
                 {
                     try
                     {
-                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson);
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     }
                     catch
                     {
@@ -1737,7 +1737,7 @@ namespace diitra_infrastructure.Research
                 {
                     try
                     {
-                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson);
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     }
                     catch { }
                 }
@@ -2446,7 +2446,7 @@ namespace diitra_infrastructure.Research
 
             try
             {
-                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(metadataJson) ?? new ProyectoDto();
+                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(metadataJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
             }
             catch
             {

@@ -646,7 +646,7 @@ namespace diitra_infrastructure.Common.Notifications
             {
                 if (!string.IsNullOrEmpty(project.MetadataCacesJson))
                 {
-                    var dto = JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson);
+                    var dto = JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     if (dto != null)
                     {
                         dto.Estado = "Inconcluso";
@@ -784,7 +784,7 @@ namespace diitra_infrastructure.Common.Notifications
                 {
                     if (!string.IsNullOrEmpty(project.MetadataCacesJson))
                     {
-                        var dto = JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson);
+                        var dto = JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         if (dto != null)
                         {
                             dto.Estado = "En Ejecución";

@@ -326,7 +326,9 @@ const SettingsPage: React.FC = () => {
                             {profile.acepto_terminos_firma && (
                                 <form onSubmit={handleFirmaSubmit} className="space-y-4 pt-2">
                                     <div className="space-y-1.5">
-                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">Subir Certificado</label>
+                                        <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+                                            {profile.has_p12_certificate ? 'Reemplazar Certificado Guardado' : 'Subir Certificado'}
+                                        </label>
                                         <div className="flex items-center justify-center border border-dashed border-border-thin rounded-lg p-4 bg-surface hover:border-brand/40 transition-colors cursor-pointer relative">
                                             <input
                                                 type="file"
@@ -341,6 +343,11 @@ const SettingsPage: React.FC = () => {
                                                 {/* MODO PRODUCCIÓN: <p className="text-[10px] text-text-dim">Formatos válidos: PKCS#12 (.p12, .pfx)</p> */}
                                             </div>
                                         </div>
+                                        {profile.has_p12_certificate && (
+                                            <p className="text-[9px] text-text-dim leading-normal mt-1">
+                                                Al cargar un nuevo archivo, se reemplazará de forma segura y permanente el certificado anterior guardado.
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="space-y-1.5">
@@ -349,7 +356,7 @@ const SettingsPage: React.FC = () => {
                                             <input
                                                 type="password"
                                                 className="w-full bg-surface border border-border-thin rounded-lg pl-3 pr-8 py-2 text-xs text-text-main focus:outline-none focus:border-brand"
-                                                placeholder="Contraseña del certificado (opcional en pruebas)"
+                                                placeholder={profile.has_p12_certificate ? "Contraseña del nuevo certificado" : "Contraseña del certificado (opcional en pruebas)"}
                                                 value={p12Password}
                                                 onChange={e => setP12Password(e.target.value)}
                                             />
@@ -364,7 +371,7 @@ const SettingsPage: React.FC = () => {
                                         className="btn-vercel-primary text-xs w-full justify-center"
                                     >
                                         {isUploadingFirma && <Loader2 className="animate-spin mr-1.5" size={14} />}
-                                        Guardar y Habilitar Firma
+                                        {profile.has_p12_certificate ? 'Reemplazar y Habilitar Firma' : 'Guardar y Habilitar Firma'}
                                     </button>
                                 </form>
                             )}

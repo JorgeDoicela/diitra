@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
@@ -23,17 +25,23 @@ public class InformeAvanceService : IInformeAvanceService
     private readonly IAuditService _auditService;
     private readonly IFirmaElectronicaService _firmaService;
     private readonly ILogger<InformeAvanceService> _logger;
+    private readonly Microsoft.Extensions.Configuration.IConfiguration _configuration;
+    private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
 
     public InformeAvanceService(
         DiitraContext context,
         IAuditService auditService,
         IFirmaElectronicaService firmaService,
-        ILogger<InformeAvanceService> logger)
+        ILogger<InformeAvanceService> logger,
+        Microsoft.Extensions.Configuration.IConfiguration configuration,
+        Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
     {
         _context = context;
         _auditService = auditService;
         _firmaService = firmaService;
         _logger = logger;
+        _configuration = configuration;
+        _env = env;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -191,7 +199,10 @@ public class InformeAvanceService : IInformeAvanceService
         var informe = await _context.InvInformesAvance.FindAsync(id);
         if (informe == null) return false;
 
-        if (!_firmaService.ValidateCertificate(certificateData, password))
+        var skipCertificateValidation = _env.IsDevelopment()
+            || _configuration.GetValue<bool>("Firma:SkipCertificateValidation");
+
+        if (!skipCertificateValidation && !_firmaService.ValidateCertificate(certificateData, password))
             throw new InvalidOperationException("El certificado digital proporcionado no es válido o la contraseña es incorrecta.");
 
         // Generar contenido a firmar: hash SHA-256 del contenido del informe
