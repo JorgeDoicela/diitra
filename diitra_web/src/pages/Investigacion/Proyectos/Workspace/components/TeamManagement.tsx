@@ -186,6 +186,234 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                     </div>
                 )}
 
+
+
+                {/* Modo Solo Lectura Banner */}
+                {currentProject.puedeEditar === false && !currentProject.puedeSolicitarCambioEquipo && (
+                    <div className="badge-vercel badge-vercel-warning !rounded-xl !p-4 !text-[11px] !font-normal flex gap-2.5 leading-relaxed animate-fade-in mb-4 w-full items-start">
+                        <ShieldBanner />
+                    </div>
+                )}
+
+                {/* Lista de Integrantes */}
+                <div className="space-y-3">
+                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
+                        Activos ({investigadores.filter((m: any) => m.activo !== false).length})
+                    </label>
+
+                    {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
+                        <div className="p-6 rounded-xl border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider font-mono">
+                            Sin investigadores activos
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
+                                const isDirector = member.rol?.toLowerCase().includes('director');
+                                const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
+
+                                return (
+                                    <div
+                                        key={member.cedula || idx}
+                                        className="p-4 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover hover:bg-surface-hover/20 transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+                                    >
+                                        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                                            <div className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-[11px] font-semibold border transition-colors ${isDirector
+                                                ? 'bg-brand/10 border-brand/20 text-brand'
+                                                : isEstudiante
+                                                    ? 'bg-success/10 border-success/20 text-success'
+                                                    : 'bg-surface border-border-thin text-text-main'
+                                                }`}>
+                                                {member.nombre ? member.nombre.substring(0, 2).toUpperCase() : 'IN'}
+                                            </div>
+                                            <div className="min-w-0 space-y-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-xs font-semibold text-text-main truncate">{formatNombre(member.nombre)}</span>
+                                                    <span className={`badge-vercel text-[8px] font-bold uppercase tracking-wider py-0.5 ${isDirector
+                                                        ? 'badge-vercel-violet'
+                                                        : isEstudiante
+                                                            ? 'badge-vercel-success'
+                                                            : 'badge-vercel-info'
+                                                        }`}>
+                                                        {member.rol}
+                                                    </span>
+                                                    {isDirector && currentProject.puedeEditar !== false && !tieneGrupo && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onOpenTransferModal(member)}
+                                                            className="badge-vercel badge-vercel-warning text-[8px] font-bold uppercase tracking-wider hover:opacity-80 transition-all cursor-pointer flex items-center gap-1 py-0.5"
+                                                            title="Transferir Dirección"
+                                                        >
+                                                            <RefreshCw size={8} /> Relevo
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="text-[10px] text-text-dim flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                    {member.carrera && (
+                                                        <span className="text-[9px] text-brand-light font-medium bg-brand/5 border border-brand/10 px-2 py-0.5 rounded-md truncate max-w-[180px]" title={member.carrera}>
+                                                            {member.carrera}
+                                                        </span>
+                                                    )}
+                                                    <span className="font-mono">C.I. {member.cedula || 'N/A'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3.5 w-full xl:w-auto xl:justify-end">
+                                            {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
+                                                <div className={`text-[9px] px-2 py-1.5 rounded-lg border flex items-center gap-1 w-full sm:w-auto shrink-0 ${(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                                    ? 'bg-error/10 text-error border-error/20 animate-pulse font-semibold'
+                                                    : 'bg-info/5 text-info border-info/10'
+                                                    }`}>
+                                                    <AlertCircle size={10} />
+                                                    <span>
+                                                        {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                                            ? `Excede límite! Máx disp: ${Math.max(0, member.horasDisponibles - (member.horasAsignadas || 0))}h`
+                                                            : `Disp: ${member.horasDisponibles - (member.horasAsignadas || 0)}h / ${member.horasDisponibles}h`
+                                                        }
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <div className="grid grid-cols-3 gap-3 w-full sm:w-auto">
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Rol</span>
+                                                    <select
+                                                        value={normalizeRole(member.rol)}
+                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                        onChange={(e) => onUpdateMember(member.cedula, 'rol', e.target.value)}
+                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    >
+                                                        <option value="Director de Proyecto">Director de Proyecto</option>
+                                                        <option value="Co-Investigador">Co-Investigador</option>
+                                                        <option value="Semillerista">Semillerista</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Nivel</span>
+                                                    <select
+                                                        value={member.nivelAcademico}
+                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                        onChange={(e) => onUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
+                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    >
+                                                        <option value="Tercer Nivel">Tercer Nivel</option>
+                                                        <option value="Cuarto Nivel (Maestría)">Maestría</option>
+                                                        <option value="Cuarto Nivel (PhD)">PhD</option>
+                                                        <option value="Pregrado">Pregrado</option>
+                                                    </select>
+                                                </div>
+
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Horas</span>
+                                                    <input
+                                                        type="number"
+                                                        value={member.horasSemanales ?? ''}
+                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                        onChange={(e) => onUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
+                                                        placeholder="0"
+                                                        min="0"
+                                                        max="40"
+                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {currentProject.puedeEditar !== false && !tieneGrupo && !isDirector && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => onRemoveMember(member.cedula)}
+                                                    className="p-2 text-text-dim hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-all self-end"
+                                                    title="Remover"
+                                                >
+                                                    <Trash2 size={13} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {/* Historial de Ex-Integrantes */}
+                {investigadores.some((member: any) => member.activo === false) && (
+                    <div className="border-t border-border-thin pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+                            className="w-full flex items-center justify-between text-[10px] font-semibold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-1 outline-none"
+                        >
+                            <div className="flex items-center gap-2">
+                                <History size={12} className="text-brand-light" />
+                                <span>Ex-Integrantes ({investigadores.filter((m: any) => m.activo === false).length})</span>
+                            </div>
+                            <span className="font-mono text-[10px]">{isHistoryExpanded ? '▲' : '▼'}</span>
+                        </button>
+                        {isHistoryExpanded && (
+                            <div className="mt-3 space-y-2 animate-fade-in">
+                                {investigadores.filter((member: any) => member.activo === false).map((member: any, idx: number) => {
+                                    const isExDirector = member.rol?.toLowerCase().includes('director');
+                                    return (
+                                        <div key={member.cedula || idx} className="p-3 rounded-md bg-bg-deep border border-border-thin/50 flex items-center justify-between gap-3">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-semibold border uppercase ${isExDirector ? 'icon-circle-brand !p-0 !w-7 !h-7' : 'bg-surface border-border-thin text-text-dim'}`}>
+                                                    {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
+                                                </div>
+                                                <div>
+                                                    <span className="text-[11px] font-semibold text-text-main">{formatNombre(member.nombre)}</span>
+                                                    <span className="text-[9px] text-text-dim font-mono ml-1.5">C.I. {member.cedula || 'N/A'}</span>
+                                                </div>
+                                            </div>
+                                            <span className="badge-vercel badge-vercel-error text-[9px] font-semibold">
+                                                Baja
+                                            </span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+
+
+                {/* Toast message display */}
+                {teamMessage && (
+                    <div className={`badge-vercel !rounded-md !p-3 !text-[11px] flex gap-2 items-center leading-relaxed animate-fade-in w-full ${teamMessage.type === 'success'
+                        ? 'badge-vercel-success'
+                        : 'badge-vercel-error'
+                        }`}>
+                        <CheckSquare size={14} className="shrink-0" />
+                        <span className="font-medium">{teamMessage.text}</span>
+                    </div>
+                )}
+
+                {/* Guardar equipo button */}
+                {currentProject.puedeEditar !== false && (
+                    <div className="flex justify-end pt-4 border-t border-border-thin">
+                        <button
+                            type="button"
+                            disabled={isSavingTeam}
+                            onClick={onSaveTeam}
+                            className={`btn-vercel-primary !py-2.5 ${isSavingTeam ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                            {isSavingTeam ? (
+                                <>
+                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-text-dim rounded-full"></div>
+                                    <span>Guardando...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus size={12} />
+                                    <span>Guardar Equipo</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                )}
+
                 {(tieneGrupo || currentProject.puedeSolicitarCambioEquipo || teamChangeRequests.length > 0) && (
                     <div className="border border-border-thin rounded-md p-3 bg-bg-deep/50 transition-all duration-300">
                         <button
@@ -504,230 +732,6 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                 </div>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {/* Modo Solo Lectura Banner */}
-                {currentProject.puedeEditar === false && !currentProject.puedeSolicitarCambioEquipo && (
-                    <div className="badge-vercel badge-vercel-warning !rounded-xl !p-4 !text-[11px] !font-normal flex gap-2.5 leading-relaxed animate-fade-in mb-4 w-full items-start">
-                        <ShieldBanner />
-                    </div>
-                )}
-
-                {/* Lista de Integrantes */}
-                <div className="space-y-3">
-                    <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
-                        Activos ({investigadores.filter((m: any) => m.activo !== false).length})
-                    </label>
-
-                    {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
-                        <div className="p-6 rounded-xl border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider font-mono">
-                            Sin investigadores activos
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
-                                const isDirector = member.rol?.toLowerCase().includes('director');
-                                const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
-
-                                return (
-                                    <div
-                                        key={member.cedula || idx}
-                                        className="p-4 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover hover:bg-surface-hover/20 transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-4"
-                                    >
-                                        <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                                            <div className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center text-[11px] font-semibold border transition-colors ${isDirector
-                                                ? 'bg-brand/10 border-brand/20 text-brand'
-                                                : isEstudiante
-                                                    ? 'bg-success/10 border-success/20 text-success'
-                                                    : 'bg-surface border-border-thin text-text-main'
-                                                }`}>
-                                                {member.nombre ? member.nombre.substring(0, 2).toUpperCase() : 'IN'}
-                                            </div>
-                                            <div className="min-w-0 space-y-1">
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="text-xs font-semibold text-text-main truncate">{formatNombre(member.nombre)}</span>
-                                                    <span className={`badge-vercel text-[8px] font-bold uppercase tracking-wider py-0.5 ${isDirector
-                                                        ? 'badge-vercel-violet'
-                                                        : isEstudiante
-                                                            ? 'badge-vercel-success'
-                                                            : 'badge-vercel-info'
-                                                        }`}>
-                                                        {member.rol}
-                                                    </span>
-                                                    {isDirector && currentProject.puedeEditar !== false && !tieneGrupo && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onOpenTransferModal(member)}
-                                                            className="badge-vercel badge-vercel-warning text-[8px] font-bold uppercase tracking-wider hover:opacity-80 transition-all cursor-pointer flex items-center gap-1 py-0.5"
-                                                            title="Transferir Dirección"
-                                                        >
-                                                            <RefreshCw size={8} /> Relevo
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <div className="text-[10px] text-text-dim flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                    {member.carrera && (
-                                                        <span className="text-[9px] text-brand-light font-medium bg-brand/5 border border-brand/10 px-2 py-0.5 rounded-md truncate max-w-[180px]" title={member.carrera}>
-                                                            {member.carrera}
-                                                        </span>
-                                                    )}
-                                                    <span className="font-mono">C.I. {member.cedula || 'N/A'}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3.5 w-full xl:w-auto xl:justify-end">
-                                            {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
-                                                <div className={`text-[9px] px-2 py-1.5 rounded-lg border flex items-center gap-1 w-full sm:w-auto shrink-0 ${(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
-                                                    ? 'bg-error/10 text-error border-error/20 animate-pulse font-semibold'
-                                                    : 'bg-info/5 text-info border-info/10'
-                                                    }`}>
-                                                    <AlertCircle size={10} />
-                                                    <span>
-                                                        {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
-                                                            ? `Excede límite! Máx disp: ${Math.max(0, member.horasDisponibles - (member.horasAsignadas || 0))}h`
-                                                            : `Disp: ${member.horasDisponibles - (member.horasAsignadas || 0)}h / ${member.horasDisponibles}h`
-                                                        }
-                                                    </span>
-                                                </div>
-                                            )}
-
-                                            <div className="grid grid-cols-3 gap-3 w-full sm:w-auto">
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Rol</span>
-                                                    <select
-                                                        value={normalizeRole(member.rol)}
-                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                        onChange={(e) => onUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    >
-                                                        <option value="Director de Proyecto">Director de Proyecto</option>
-                                                        <option value="Co-Investigador">Co-Investigador</option>
-                                                        <option value="Semillerista">Semillerista</option>
-                                                    </select>
-                                                </div>
-
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Nivel</span>
-                                                    <select
-                                                        value={member.nivelAcademico}
-                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                        onChange={(e) => onUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    >
-                                                        <option value="Tercer Nivel">Tercer Nivel</option>
-                                                        <option value="Cuarto Nivel (Maestría)">Maestría</option>
-                                                        <option value="Cuarto Nivel (PhD)">PhD</option>
-                                                        <option value="Pregrado">Pregrado</option>
-                                                    </select>
-                                                </div>
-
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Horas</span>
-                                                    <input
-                                                        type="number"
-                                                        value={member.horasSemanales ?? ''}
-                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
-                                                        onChange={(e) => onUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
-                                                        placeholder="0"
-                                                        min="0"
-                                                        max="40"
-                                                        className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {currentProject.puedeEditar !== false && !tieneGrupo && !isDirector && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => onRemoveMember(member.cedula)}
-                                                    className="p-2 text-text-dim hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-all self-end"
-                                                    title="Remover"
-                                                >
-                                                    <Trash2 size={13} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Historial de Ex-Integrantes */}
-                {investigadores.some((member: any) => member.activo === false) && (
-                    <div className="border-t border-border-thin pt-4">
-                        <button
-                            type="button"
-                            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
-                            className="w-full flex items-center justify-between text-[10px] font-semibold text-text-dim uppercase tracking-wider hover:text-text-main transition-colors py-1 outline-none"
-                        >
-                            <div className="flex items-center gap-2">
-                                <History size={12} className="text-brand-light" />
-                                <span>Ex-Integrantes ({investigadores.filter((m: any) => m.activo === false).length})</span>
-                            </div>
-                            <span className="font-mono text-[10px]">{isHistoryExpanded ? '▲' : '▼'}</span>
-                        </button>
-                        {isHistoryExpanded && (
-                            <div className="mt-3 space-y-2 animate-fade-in">
-                                {investigadores.filter((member: any) => member.activo === false).map((member: any, idx: number) => {
-                                    const isExDirector = member.rol?.toLowerCase().includes('director');
-                                    return (
-                                        <div key={member.cedula || idx} className="p-3 rounded-md bg-bg-deep border border-border-thin/50 flex items-center justify-between gap-3">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-[9px] font-semibold border uppercase ${isExDirector ? 'icon-circle-brand !p-0 !w-7 !h-7' : 'bg-surface border-border-thin text-text-dim'}`}>
-                                                    {member.nombre ? member.nombre.substring(0, 2) : 'EX'}
-                                                </div>
-                                                <div>
-                                                    <span className="text-[11px] font-semibold text-text-main">{formatNombre(member.nombre)}</span>
-                                                    <span className="text-[9px] text-text-dim font-mono ml-1.5">C.I. {member.cedula || 'N/A'}</span>
-                                                </div>
-                                            </div>
-                                            <span className="badge-vercel badge-vercel-error text-[9px] font-semibold">
-                                                Baja
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Toast message display */}
-                {teamMessage && (
-                    <div className={`badge-vercel !rounded-md !p-3 !text-[11px] flex gap-2 items-center leading-relaxed animate-fade-in w-full ${teamMessage.type === 'success'
-                        ? 'badge-vercel-success'
-                        : 'badge-vercel-error'
-                        }`}>
-                        <CheckSquare size={14} className="shrink-0" />
-                        <span className="font-medium">{teamMessage.text}</span>
-                    </div>
-                )}
-
-                {/* Guardar equipo button */}
-                {currentProject.puedeEditar !== false && (
-                    <div className="flex justify-end pt-4 border-t border-border-thin">
-                        <button
-                            type="button"
-                            disabled={isSavingTeam}
-                            onClick={onSaveTeam}
-                            className={`btn-vercel-primary !py-2.5 ${isSavingTeam ? 'opacity-50 cursor-not-allowed' : ''}`}
-                        >
-                            {isSavingTeam ? (
-                                <>
-                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-text-dim rounded-full"></div>
-                                    <span>Guardando...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <UserPlus size={12} />
-                                    <span>Guardar Equipo</span>
-                                </>
-                            )}
-                        </button>
                     </div>
                 )}
             </div>
