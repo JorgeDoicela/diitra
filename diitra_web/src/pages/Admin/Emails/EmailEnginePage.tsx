@@ -115,8 +115,7 @@ const USER_TYPES = [
 ];
 
 const ROLE_OPTIONS = [
-    { value: 'DOCENTE_INV', label: 'Docentes Investigadores' },
-    { value: 'DIR_INV', label: 'Directores de Investigación' },
+    { value: 'DIITRA_DOCENTE', label: 'Docentes Investigadores' },
     { value: 'DIITRA_ADMIN', label: 'Administradores DIITRA' },
     { value: 'DIITRA_REVISOR_EXTERNO', label: 'Árbitros Externos' },
     { value: 'DIITRA_ESTUDIANTE', label: 'Semilleristas (Estudiantes)' }

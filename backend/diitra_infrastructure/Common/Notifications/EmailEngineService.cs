@@ -667,7 +667,7 @@ namespace diitra_infrastructure.Common.Notifications
             var sendRequest = new EmailSendRequest
             {
                 TemplateCodigo = "PROYECTO_INCONCLUSO_DISPONIBLE",
-                TargetRole = "DOCENTE_INV",
+                TargetRole = "DIITRA_DOCENTE",
                 EntityUuid = project.Uuid,
                 EntityType = "Proyecto",
                 TemplateData = new Dictionary<string, string>
@@ -986,7 +986,7 @@ namespace diitra_infrastructure.Common.Notifications
             }
 
             var director = await _context.Users
-                .FirstOrDefaultAsync(u => _context.UserRoles.Any(ur => ur.IdUsuario == u.IdUsuario && ur.Role.CodigoRol == "DIR_INV" && (ur.EsActivo ?? true)));
+                .FirstOrDefaultAsync(u => _context.UserRoles.Any(ur => ur.IdUsuario == u.IdUsuario && ur.Role.CodigoRol == "DIITRA_ADMIN" && (ur.EsActivo ?? true)));
 
             return new Dictionary<string, object?>
             {
