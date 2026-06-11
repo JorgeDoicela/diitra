@@ -68,7 +68,6 @@ interface GroupDetailDrawerProps {
     carreras: Career[];
     lines: ResearchLine[];
     formatCareerName: (name: string) => string;
-    handleOpenModal: (group: Group, readOnly: boolean) => void;
     handleOpenReview: (group: Group) => void;
 }
 
@@ -90,7 +89,6 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     carreras,
     lines,
     formatCareerName,
-    handleOpenModal,
     handleOpenReview
 }) => {
     const [detailMembers, setDetailMembers] = useState<GroupMember[]>([]);
@@ -114,6 +112,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
     const timerRef = useRef<any>(null);
+    const openTimeRef = useRef<number>(0);
 
     // Conexión a SignalR en tiempo real
     const [collabConnection, setCollabConnection] = useState<signalR.HubConnection | null>(null);
@@ -121,6 +120,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     // Fetch detail members and feedback when drawer is open
     useEffect(() => {
         if (!isOpen || !detailGroup) return;
+        openTimeRef.current = Date.now();
 
         const loadDetailData = async () => {
             setDetailTab('info');
@@ -212,6 +212,10 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                 });
             })
             .catch(err => {
+                // Evitar registrar en consola los errores benignos de cancelación/aborto por desmontado rápido
+                if (err.name === 'AbortError' || err.message?.includes('stop() was called')) {
+                    return;
+                }
                 console.error('[GroupsPage] Error de conexión de SignalR:', err);
             });
 
@@ -219,7 +223,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
 
         return () => {
             isSubscribed = false;
-            newConnection.stop();
+            newConnection.stop().catch(() => {});
         };
     }, [isOpen, detailGroup?.uuid]);
 
@@ -461,6 +465,10 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
             <div
                 className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                 onClick={() => {
+                    // Evitar que un doble clic rápido cierre el drawer inmediatamente después de abrirse
+                    if (Date.now() - openTimeRef.current < 300) {
+                        return;
+                    }
                     onClose();
                     setIsFieldModalOpen(false);
                     setActiveFieldKey(null);
@@ -1261,14 +1269,6 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                             className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-bg-deep font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-emerald-500/10 shrink-0"
                         >
                             Evaluar Propuesta
-                        </button>
-                    )}
-                    {(isAdmin || (detailGroup.id_profesor_coordinador === user?.id_referencia && detailGroup.estado !== 'Pendiente' && detailGroup.estado !== 'Aprobado')) && (
-                        <button
-                            onClick={() => handleOpenModal(detailGroup, false)}
-                            className="btn-vercel-brand flex items-center gap-2"
-                        >
-                            <Edit2 size={14} /> Editar
                         </button>
                     )}
                 </div>

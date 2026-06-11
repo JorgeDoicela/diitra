@@ -1249,4 +1249,12 @@ html, body, .overflow-y-auto, .overflow-y-scroll {
   scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
 }
 
+/* Evitar iluminar en azul el título o el ojo al pasar por encima de los botones de editar o desactivar */
+tr:hover:has(.action-btn-exclude:hover) h4 {
+  color: var(--fg) !important;
+}
+tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
+  color: var(--text-dim) !important;
+}
+
 

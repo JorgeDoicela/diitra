@@ -39,6 +39,15 @@ import ResearchProductsList from './components/ResearchProductsList';
 import WorkspaceSidebar from './components/WorkspaceSidebar';
 import ProductRegistrationModal from './components/ProductRegistrationModal';
 import DirectorTransferModal from './components/DirectorTransferModal';
+import { GroupDetailDrawer } from '../../../Admin/components/GroupDetailDrawer';
+
+const formatCareerName = (name: string) => {
+    if (!name) return '';
+    return name
+        .toLowerCase()
+        .replace(/(^\w|\s\w)/g, (m: string) => m.toUpperCase())
+        .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase());
+};
 
 
 
@@ -144,6 +153,41 @@ export const ProjectWorkspace: React.FC = () => {
     const [assignedRevisionStatus, setAssignedRevisionStatus] = useState<string | null>(null);
     const approvedGroups = availableGroups.filter(g => g.activo && g.estado === 'Aprobado');
     const canReviewTeamChanges = isAdmin || roles?.includes('DIITRA_ADMIN');
+
+    // Group detail drawer state and lazy-loaded catalogs
+    const [detailGroup, setDetailGroup] = useState<any>(null);
+    const [isGroupDetailOpen, setIsGroupDetailOpen] = useState(false);
+    const [dominios, setDominios] = useState<any[]>([]);
+    const [carreras, setCarreras] = useState<any[]>([]);
+    const [lines, setLines] = useState<any[]>([]);
+
+    const handleOpenGroupDetail = async (groupUuid: string) => {
+        const group = approvedGroups.find(g => g.uuid === groupUuid);
+        if (!group) return;
+
+        setDetailGroup(group);
+        setIsGroupDetailOpen(true);
+
+        if (dominios.length === 0 || carreras.length === 0 || lines.length === 0) {
+            try {
+                const [domRes, carRes, linRes] = await Promise.all([
+                    api.get('/catalogs/dominios'),
+                    api.get('/catalogs/carreras'),
+                    api.get('/Convocatorias/catalogos/lineas')
+                ]);
+                setDominios(domRes.data || []);
+                setCarreras(carRes.data || []);
+                setLines(linRes.data || []);
+            } catch (e) {
+                console.error("Error loading catalogs for GroupDetailDrawer", e);
+            }
+        }
+    };
+
+    const handleCloseGroupDetail = () => {
+        setIsGroupDetailOpen(false);
+        setDetailGroup(null);
+    };
 
     useEffect(() => {
         const resolveUuid = async () => {
@@ -995,7 +1039,7 @@ export const ProjectWorkspace: React.FC = () => {
                                 onOpenTransferModal={handleOpenTransferModal}
                                 onUpdateMember={handleUpdateMember}
                                 onRemoveMember={handleRemoveMember}
-                                navigate={navigate}
+                                onOpenGroupDetail={handleOpenGroupDetail}
                             />
 
                             <ResearchProductsList
@@ -1041,6 +1085,21 @@ export const ProjectWorkspace: React.FC = () => {
                 transferDescripcion={transferDescripcion}
                 setTransferDescripcion={setTransferDescripcion}
                 isTransferring={isTransferring}
+            />
+
+            <GroupDetailDrawer
+                isOpen={isGroupDetailOpen}
+                onClose={handleCloseGroupDetail}
+                detailGroup={detailGroup}
+                setDetailGroup={setDetailGroup}
+                isAdmin={isAdmin}
+                user={user}
+                dominios={dominios}
+                carreras={carreras}
+                lines={lines}
+                formatCareerName={formatCareerName}
+                handleOpenModal={() => {}}
+                handleOpenReview={() => {}}
             />
         </div>
     );

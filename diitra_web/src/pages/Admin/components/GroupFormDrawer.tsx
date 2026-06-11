@@ -664,7 +664,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
     });
 
     return (
-        <div className="fixed inset-0 z-[9999] flex justify-end">
+        <div className="fixed inset-0 z-[10000] flex justify-end">
             <div
                 className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                 onClick={handleCloseModal}

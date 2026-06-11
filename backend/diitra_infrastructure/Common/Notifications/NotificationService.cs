@@ -44,10 +44,11 @@ namespace diitra_infrastructure.Common.Notifications
             await _context.SaveChangesAsync();
 
             var user = await _context.Users.FindAsync(userId);
-            var recipientContact = user?.EmailInstitucional ?? "";
-            var recipientName = user?.Nombre ?? "Usuario";
-
-            await DispatchToDriversAsync(userId, recipientContact, recipientName, title, body, url, extraData);
+            if (user != null)
+            {
+                var resolved = await ResolveUserEmailAndNameAsync(user);
+                await DispatchToDriversAsync(userId, resolved.Email ?? "", resolved.Name, title, body, url, extraData);
+            }
         }
 
         public async Task BroadcastAsync(string title, string body, string? role = null, string? url = null, Dictionary<string, string>? extraData = null)
@@ -69,14 +70,7 @@ namespace diitra_infrastructure.Common.Notifications
                 }
             }
 
-            var recipients = await query
-                .Select(u => new
-                {
-                    u.IdUsuario,
-                    u.EmailInstitucional,
-                    u.Nombre
-                })
-                .ToListAsync();
+            var recipients = await query.ToListAsync();
 
             if (recipients.Count == 0)
             {
@@ -106,10 +100,11 @@ namespace diitra_infrastructure.Common.Notifications
             {
                 try
                 {
+                    var resolved = await ResolveUserEmailAndNameAsync(user);
                     await DispatchToDriversAsync(
                         user.IdUsuario,
-                        user.EmailInstitucional ?? "",
-                        user.Nombre ?? "Usuario",
+                        resolved.Email ?? "",
+                        resolved.Name,
                         title,
                         body,
                         url,
@@ -142,12 +137,7 @@ namespace diitra_infrastructure.Common.Notifications
                 .Include(ur => ur.Role)
                 .Where(ur => roleCodesList.Contains(ur.Role.CodigoRol) && (ur.EsActivo ?? true))
                 .Where(ur => ur.User != null && ur.User.Activo)
-                .Select(ur => new
-                {
-                    ur.User.IdUsuario,
-                    ur.User.EmailInstitucional,
-                    ur.User.Nombre
-                })
+                .Select(ur => ur.User)
                 .Distinct()
                 .ToListAsync();
 
@@ -178,10 +168,11 @@ namespace diitra_infrastructure.Common.Notifications
             {
                 try
                 {
+                    var resolved = await ResolveUserEmailAndNameAsync(user);
                     await DispatchToDriversAsync(
                         user.IdUsuario,
-                        user.EmailInstitucional ?? "",
-                        user.Nombre ?? "Usuario",
+                        resolved.Email ?? "",
+                        resolved.Name,
                         title,
                         body,
                         url,
@@ -194,6 +185,47 @@ namespace diitra_infrastructure.Common.Notifications
 
                 await Task.Delay(100);
             }
+        }
+
+        private async Task<(string? Email, string Name)> ResolveUserEmailAndNameAsync(User user)
+        {
+            var name = user.Nombre ?? "Usuario";
+            var email = user.EmailInstitucional?.Trim();
+            if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                return (email, name);
+
+            var sigafiId = user.IdSigafi?.Trim() ?? "";
+            if (user.TablaSigafi == "profesor" && !string.IsNullOrEmpty(sigafiId))
+            {
+                var p = await _context.Profesores.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.IdProfesor.Trim() == sigafiId);
+                if (p != null)
+                {
+                    email = (p.EmailInstitucional ?? p.Email)?.Trim();
+                    var profName = $"{p.PrimerNombre} {p.PrimerApellido}".Replace("  ", " ").Trim();
+                    if (!string.IsNullOrWhiteSpace(profName)) name = profName;
+                }
+            }
+            else if (user.TablaSigafi == "alumno" && !string.IsNullOrEmpty(sigafiId))
+            {
+                var a = await _context.Alumnos.AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.IdAlumno.Trim() == sigafiId);
+                if (a != null)
+                {
+                    email = (a.EmailInstitucional ?? a.Email)?.Trim();
+                    var alumName = $"{a.PrimerNombre} {a.ApellidoPaterno}".Replace("  ", " ").Trim();
+                    if (!string.IsNullOrWhiteSpace(alumName)) name = alumName;
+                }
+            }
+            else if (user.TablaSigafi == "otros" && sigafiId.Contains('@'))
+            {
+                email = sigafiId;
+            }
+
+            if (!string.IsNullOrEmpty(email) && email.Contains('@'))
+                return (email, name);
+
+            return (null, name);
         }
 
         private async Task DispatchToDriversAsync(
