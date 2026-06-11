@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext } from '../../core/documents/context/DocumentDataContext';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * DIITRA BUILDER CORE — SHELL UNIVERSAL DE DOCUMENTACIÓN v2.0
@@ -69,6 +70,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     entityUuid,
     children
 }) => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -82,6 +84,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+    const [hasSavedCert, setHasSavedCert] = useState(false);
+    const [useSavedCert, setUseSavedCert] = useState(false);
+    const [aceptoTerminos, setAceptoTerminos] = useState(false);
+    const [isSavingConsent, setIsSavingConsent] = useState(false);
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
     // IMPORTANTE: revocar la URL ANTERIOR solo después de crear la nueva,
@@ -229,6 +236,50 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         };
     }, []);
 
+    useEffect(() => {
+        const checkSavedCertificate = async () => {
+            try {
+                const res = await api.get('/lopdp/perfil');
+                if (res.data?.has_p12_certificate) {
+                    setHasSavedCert(true);
+                    setUseSavedCert(true);
+                } else {
+                    setHasSavedCert(false);
+                    setUseSavedCert(false);
+                }
+                setAceptoTerminos(!!res.data?.acepto_terminos_firma);
+            } catch (err) {
+                console.error('[DIITRA] Error checking saved certificate:', err);
+            }
+        };
+        checkSavedCertificate();
+    }, []);
+
+    const handleConsentToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const checked = e.target.checked;
+        setIsSavingConsent(true);
+        try {
+            await api.post('/lopdp/consentimiento', {
+                version_politica: 'FIRMA_ELECTRONICA'
+            });
+            setAceptoTerminos(checked);
+        } catch (err) {
+            console.error('[DIITRA] Error saving signature consent:', err);
+        } finally {
+            setIsSavingConsent(false);
+        }
+    };
+
+    const handleRedirectToSettings = async () => {
+        console.log("[DIITRA] handleRedirectToSettings: Guardando y redirigiendo a configuración.");
+        if (!readOnly && saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+            await handleSave();
+        }
+        onClose();
+        navigate('/configuracion');
+    };
+
     const handleClose = async () => {
         console.log("[DIITRA] handleClose: Iniciando cierre.");
         if (!readOnly && saveTimeoutRef.current) {
@@ -264,10 +315,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         // if (!signaturePassword) return alert('Ingresa la clave de tu firma (.p12)');
 
         setIsSigning(true);
-        addAudit('Iniciando proceso de firma digital...');
+        addAudit('Iniciando proceso de firma electrónica...');
         try {
             const formDataObj = new FormData();
-            if (signatureFile) {
+            if (signatureFile && !useSavedCert) {
                 formDataObj.append('certificate', signatureFile);
             }
             formDataObj.append('password', signaturePassword || '');
@@ -291,8 +342,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
             addAudit(
                 import.meta.env.DEV
-                    ? 'Firma digital aplicada (modo pruebas: sello de verificación puede estar omitido)'
-                    : 'Firma digital aplicada e integrada',
+                    ? 'Firma electrónica aplicada (modo pruebas: sello de verificación puede estar omitido)'
+                    : 'Firma electrónica aplicada e integrada',
                 'success'
             );
             // MODO PRODUCCIÓN: addAudit('Firma digital aplicada e integrada', 'success');
@@ -583,43 +634,75 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 </div>
                                             </div>
 
-                                            {/* Firma Digital PAdES */}
+                                            {/* Firma Electrónica PAdES */}
                                             <div className="p-8 bg-surface border border-border-thin rounded-2xl shadow-sm border-t-4 border-t-brand-dark">
-                                                <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma digital</h4>
-                                                <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a Ley de Comercio Electrónico.</p>
+                                                <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Electrónica</h4>
+                                                <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a la Ley de Comercio Electrónico, Firmas Electrónicas y Mensajes de Datos.</p>
                                                 <div className="space-y-4">
-                                                    <div>
-                                                        <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Archivo de Firma</label>
-                                                        <input
-                                                            type="file"
-                                                            onChange={(e) => setSignatureFile(e.target.files?.[0] || null)}
-                                                            className="w-full text-xs text-text-dim file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[9px] file:font-black file:uppercase file:tracking-widest file:bg-bg-deep file:text-text-main hover:file:opacity-85 file:cursor-pointer border border-border-thin rounded-xl p-3 bg-bg-deep/30"
-                                                        />
-                                                        {/* MODO PRODUCCIÓN: accept=".p12,.pfx" y label "Archivo de Firma (.p12 / .pfx)" */}
-                                                        {signatureFile && (
-                                                            <p className="text-[8px] text-green-500 font-bold uppercase tracking-widest mt-1.5">
-                                                                ✓ {signatureFile.name} ({(signatureFile.size / 1024).toFixed(1)} KB)
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Contraseña del Certificado</label>
-                                                        {/* MODO PRODUCCIÓN: placeholder="Contraseña Certificado (.p12)" */}
-                                                        <input
-                                                            type="password"
-                                                            placeholder="Contraseña (opcional en pruebas)"
-                                                            value={signaturePassword}
-                                                            onChange={(e) => setSignaturePassword(e.target.value)}
-                                                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        onClick={handleSign}
-                                                        disabled={!pdfBlob || isSigning}
-                                                        className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${!pdfBlob ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-brand-dark text-text-main hover:bg-brand shadow-xl'}`}
-                                                    >
-                                                        {isSigning ? <><Clock size={18} className="animate-spin" /> Firmando...</> : <><Shield size={18} /> Aplicar Firma Digital</>}
-                                                    </button>
+                                                    {hasSavedCert ? (
+                                                        <>
+                                                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-3">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <CheckCircle className="text-emerald-500 shrink-0" size={16} />
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <p className="text-xs font-bold text-text-main">Firma de tu Perfil Lista</p>
+                                                                        <p className="text-[9px] text-text-dim uppercase tracking-wider mt-0.5">Certificado .p12 configurado en tu cuenta.</p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div>
+                                                                <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Contraseña del Certificado</label>
+                                                                <input
+                                                                    type="password"
+                                                                    placeholder="Contraseña (opcional si la guardó en Configuración)"
+                                                                    value={signaturePassword}
+                                                                    onChange={(e) => setSignaturePassword(e.target.value)}
+                                                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"
+                                                                />
+                                                            </div>
+
+                                                            <div className="flex items-start gap-3 p-3.5 bg-bg-deep/40 border border-border-thin rounded-xl select-none">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    id="lopdpSignConsent"
+                                                                    className="mt-0.5 cursor-pointer accent-brand"
+                                                                    checked={aceptoTerminos}
+                                                                    disabled={isSavingConsent}
+                                                                    onChange={handleConsentToggle}
+                                                                />
+                                                                <label htmlFor="lopdpSignConsent" className="text-[10px] text-text-dim leading-relaxed cursor-pointer">
+                                                                    Acepto los términos de la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> y autorizo a DIITRA a custodiar mi firma cifrada para uso exclusivo de documentos académicos.
+                                                                </label>
+                                                            </div>
+
+                                                            <button
+                                                                onClick={handleSign}
+                                                                disabled={!pdfBlob || isSigning || !aceptoTerminos}
+                                                                className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${(!pdfBlob || !aceptoTerminos) ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-brand-dark text-text-main hover:bg-brand shadow-xl'}`}
+                                                            >
+                                                                {isSigning ? <><Clock size={18} className="animate-spin" /> Firmando...</> : <><Shield size={18} /> Aplicar Firma Electrónica</>}
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-xl space-y-4 text-center">
+                                                            <div className="flex justify-center text-red-500">
+                                                                <AlertCircle size={40} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-xs font-bold text-text-main">Firma Electrónica no configurada</p>
+                                                                <p className="text-[10px] text-text-dim leading-relaxed">
+                                                                    Para poder firmar electrónicamente este documento, primero debes configurar tu firma (.p12) en los ajustes de tu cuenta.
+                                                                </p>
+                                                            </div>
+                                                            <button
+                                                                onClick={handleRedirectToSettings}
+                                                                className="w-full bg-text-main text-bg-deep px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] hover:opacity-90 transition-all"
+                                                            >
+                                                                Configurar en Mi Cuenta y Firma
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         </div>

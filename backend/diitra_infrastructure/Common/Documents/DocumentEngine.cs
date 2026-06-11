@@ -138,6 +138,14 @@ namespace Diitra.Infrastructure.Common.Documents
                 //    Cada plantilla puede referenciar {{portada_base64}}, {{logo_base64}}, etc.
                 var extraImageVars = new Dictionary<string, object?>();
 
+                if (request.ExtraVariables != null)
+                {
+                    foreach (var kv in request.ExtraVariables)
+                    {
+                        extraImageVars[kv.Key] = kv.Value;
+                    }
+                }
+
                 // CARGA DE PORTADA DESACOPLADA (Por convención de nombres o fallback histórico)
                 var possibleCoverNames = new[]
                 {

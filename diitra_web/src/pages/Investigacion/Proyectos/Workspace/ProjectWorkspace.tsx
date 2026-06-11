@@ -1085,6 +1085,7 @@ export const ProjectWorkspace: React.FC = () => {
                         <WorkspaceSidebar
                             currentProject={currentProject}
                             resolvedProjectUuid={resolvedProjectUuid}
+                            setActiveDocument={setActiveDocument}
                         />
                     </div>
                 </main>
