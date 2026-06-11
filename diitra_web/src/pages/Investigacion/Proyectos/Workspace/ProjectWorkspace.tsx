@@ -19,7 +19,7 @@
 //
 // ══════════════════════════════════════════════════════════════════════════════
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import api from '../../../../api/axios_config';
@@ -145,6 +145,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [showTransferSearchResults, setShowTransferSearchResults] = useState(false);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
+    const lastSyncedGroupRef = useRef<string | null>(null);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
@@ -551,6 +552,111 @@ export const ProjectWorkspace: React.FC = () => {
         }
     }, [grupoInvestigacion, approvedGroups]);
 
+    const handleSyncGroupMembers = useCallback(async (options?: { groupUuid?: string; silent?: boolean }) => {
+        const targetGroupUuid = options?.groupUuid ?? grupoInvestigacion;
+        const silent = options?.silent ?? false;
+
+        if (!targetGroupUuid) {
+            if (!silent) {
+                addToast("Sincronización", "Por favor seleccione un grupo de investigación adscrito primero.", "warning");
+            }
+            return;
+        }
+
+        const selectedGroup = approvedGroups.find(g => g.uuid === targetGroupUuid);
+        if (!selectedGroup) {
+            if (!silent) {
+                addToast("Sincronización", "Debe seleccionar un grupo aprobado y activo de la lista institucional.", "error");
+            }
+            return;
+        }
+
+        setIsSyncingGroupMembers(true);
+        try {
+            const res = await api.get(`/groups/${selectedGroup.uuid}`);
+            const groupDetail = res.data;
+            const groupMembers = groupDetail.miembros || [];
+
+            if (groupMembers.length === 0) {
+                if (!silent) {
+                    addToast("Sincronización", "El grupo seleccionado no tiene miembros activos registrados.", "warning");
+                }
+                return;
+            }
+
+            let addedCount = 0;
+            setInvestigadores(prev => {
+                const updatedMembers = [...prev];
+
+                groupMembers.forEach((m: any) => {
+                    const isActive = m.activo !== false;
+                    if (!isActive) return;
+
+                    const memberCedula = m.cedula?.trim();
+                    if (!memberCedula) return;
+
+                    const exists = updatedMembers.some(inv => inv.cedula?.trim() === memberCedula);
+                    if (!exists) {
+                        const groupRol = m.rol || "";
+                        let projectRol = "Co-Investigador";
+                        if (groupRol.toLowerCase().includes("coordinador") || groupRol.toLowerCase().includes("director")) {
+                            const hasDirector = updatedMembers.some(inv => inv.rol?.toLowerCase().includes("director"));
+                            projectRol = hasDirector ? "Co-Investigador" : "Director de Proyecto";
+                        } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno") || groupRol.toLowerCase().includes("semillerista")) {
+                            projectRol = "Semillerista";
+                        } else if (groupRol.toLowerCase().includes("tecnico") || groupRol.toLowerCase().includes("técnico")) {
+                            projectRol = "Co-Investigador";
+                        }
+
+                        updatedMembers.push({
+                            nombre: m.nombre_completo || m.nombreCompleto || "Desconocido",
+                            cedula: memberCedula,
+                            rol: projectRol,
+                            nivelAcademico: "Tercer Nivel",
+                            telefono: "",
+                            horasSemanales: 0,
+                            horasDisponibles: 0,
+                            horasAsignadas: 0,
+                            carrera: m.carrera || ""
+                        });
+                        addedCount++;
+                    }
+                });
+
+                return addedCount > 0 ? updatedMembers : prev;
+            });
+
+            if (addedCount > 0) {
+                addToast("Equipo actualizado", `Se importaron ${addedCount} miembro${addedCount !== 1 ? 's' : ''} del grupo automáticamente.`, "success");
+            } else if (!silent) {
+                addToast("Sincronización", "Todos los miembros activos de este grupo ya forman parte del equipo.", "info");
+            }
+        } catch (err) {
+            console.error("[DIITRA] Error al sincronizar miembros del grupo", err);
+            lastSyncedGroupRef.current = null;
+            addToast("Error de Sincronización", "No se pudieron obtener los miembros del grupo de investigación.", "error");
+        } finally {
+            setIsSyncingGroupMembers(false);
+        }
+    }, [grupoInvestigacion, approvedGroups, addToast]);
+
+    useEffect(() => {
+        if (!grupoInvestigacion) {
+            lastSyncedGroupRef.current = null;
+            return;
+        }
+        if (!tieneGrupo || isLoading || currentProject?.puedeEditar === false) return;
+        if (lastSyncedGroupRef.current === grupoInvestigacion) return;
+
+        const selectedGroup = availableGroups.find(
+            g => g.uuid === grupoInvestigacion && g.activo && g.estado === 'Aprobado'
+        );
+        if (!selectedGroup) return;
+
+        lastSyncedGroupRef.current = grupoInvestigacion;
+        handleSyncGroupMembers({ groupUuid: grupoInvestigacion, silent: true });
+    }, [tieneGrupo, grupoInvestigacion, availableGroups, currentProject?.puedeEditar, isLoading, handleSyncGroupMembers]);
+
     const handleOpenTransferModal = (director: any) => {
         setTransferDirector(director);
         setNewDirectorCedula('');
@@ -638,81 +744,6 @@ export const ProjectWorkspace: React.FC = () => {
         }
 
         setInvestigadores(prev => prev.filter(inv => inv.cedula !== cedula));
-    };
-
-    const handleSyncGroupMembers = async () => {
-        if (!grupoInvestigacion) {
-            addToast("Sincronización", "Por favor seleccione un grupo de investigación adscrito primero.", "warning");
-            return;
-        }
-
-        const selectedGroup = approvedGroups.find(g => g.uuid === grupoInvestigacion);
-        if (!selectedGroup) {
-            addToast("Sincronización", "Debe seleccionar un grupo aprobado y activo de la lista institucional.", "error");
-            return;
-        }
-
-        setIsSyncingGroupMembers(true);
-        try {
-            const res = await api.get(`/groups/${selectedGroup.uuid}`);
-            const groupDetail = res.data;
-            const groupMembers = groupDetail.miembros || [];
-
-            if (groupMembers.length === 0) {
-                addToast("Sincronización", "El grupo seleccionado no tiene miembros activos registrados.", "warning");
-                return;
-            }
-
-            let addedCount = 0;
-            const updatedMembers = [...investigadores];
-
-            groupMembers.forEach((m: any) => {
-                const isActive = m.activo !== false;
-                if (!isActive) return;
-                
-                const memberCedula = m.cedula?.trim();
-                if (!memberCedula) return;
-
-                const exists = updatedMembers.some(inv => inv.cedula?.trim() === memberCedula);
-                if (!exists) {
-                    const groupRol = m.rol || "";
-                    let projectRol = "Co-Investigador";
-                    if (groupRol.toLowerCase().includes("coordinador") || groupRol.toLowerCase().includes("director")) {
-                        const hasDirector = updatedMembers.some(inv => inv.rol?.toLowerCase().includes("director"));
-                        projectRol = hasDirector ? "Co-Investigador" : "Director de Proyecto";
-                    } else if (groupRol.toLowerCase().includes("estudiante") || groupRol.toLowerCase().includes("alumno") || groupRol.toLowerCase().includes("semillerista")) {
-                        projectRol = "Semillerista";
-                    } else if (groupRol.toLowerCase().includes("tecnico") || groupRol.toLowerCase().includes("técnico")) {
-                        projectRol = "Co-Investigador";
-                    }
-
-                    updatedMembers.push({
-                        nombre: m.nombre_completo || m.nombreCompleto || "Desconocido",
-                        cedula: memberCedula,
-                        rol: projectRol,
-                        nivelAcademico: "Tercer Nivel",
-                        telefono: "",
-                        horasSemanales: 0,
-                        horasDisponibles: 0,
-                        horasAsignadas: 0,
-                        carrera: m.carrera || ""
-                    });
-                    addedCount++;
-                }
-            });
-
-            if (addedCount > 0) {
-                setInvestigadores(updatedMembers);
-                addToast("Sincronización Exitosa", `Se han importado ${addedCount} miembros del grupo al equipo de trabajo.`, "success");
-            } else {
-                addToast("Sincronización", "Todos los miembros activos de este grupo ya forman parte del equipo.", "info");
-            }
-        } catch (err) {
-            console.error("[DIITRA] Error al sincronizar miembros del grupo", err);
-            addToast("Error de Sincronización", "No se pudieron obtener los miembros del grupo de investigación.", "error");
-        } finally {
-            setIsSyncingGroupMembers(false);
-        }
     };
 
     const handleSaveTeam = async () => {
@@ -841,10 +872,12 @@ export const ProjectWorkspace: React.FC = () => {
                     setInvestigadores(director ? [director] : []);
                     setTieneGrupo(false);
                     setGrupoInvestigacion('');
+                    lastSyncedGroupRef.current = null;
                 }
             } else {
                 setTieneGrupo(false);
                 setGrupoInvestigacion('');
+                lastSyncedGroupRef.current = null;
             }
         } else {
             setTieneGrupo(true);
@@ -1032,7 +1065,6 @@ export const ProjectWorkspace: React.FC = () => {
                                 setIsHistoryExpanded={setIsHistoryExpanded}
                                 onToggleTieneGrupo={handleToggleTieneGrupo}
                                 onSetGrupoInvestigacion={setGrupoInvestigacion}
-                                onSyncGroupMembers={handleSyncGroupMembers}
                                 onSaveTeam={handleSaveTeam}
                                 onCreateTeamChangeRequest={handleCreateTeamChangeRequest}
                                 onReviewTeamChangeRequest={handleReviewTeamChangeRequest}
