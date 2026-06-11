@@ -3,6 +3,7 @@ using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using diitra_infrastructure.data.models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace diitra_infrastructure.Research;
@@ -12,21 +13,37 @@ public class GroupsService : IGroupsService
     private readonly DiitraContext _context;
     private readonly diitra_application.Security.IAuditService _auditService;
     private readonly diitra_application.Security.IAuthService _authService;
-    private readonly INotificationService _notificationService;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<GroupsService> _logger;
 
     public GroupsService(
         DiitraContext context, 
         diitra_application.Security.IAuditService auditService,
         diitra_application.Security.IAuthService authService,
-        INotificationService notificationService,
+        IServiceScopeFactory scopeFactory,
         ILogger<GroupsService> logger)
     {
         _context = context;
         _auditService = auditService;
         _authService = authService;
-        _notificationService = notificationService;
+        _scopeFactory = scopeFactory;
         _logger = logger;
+    }
+
+    private void DispatchNotificationsInBackground(Func<IServiceProvider, Task> work)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                await work(scope.ServiceProvider);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificaciones en segundo plano");
+            }
+        });
     }
 
     public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null, string? userSigafiId = null, bool isAdmin = false)
@@ -326,25 +343,26 @@ public class GroupsService : IGroupsService
                 }
 
                 var remitente = solicitanteNombre ?? coordinadorNombre ?? "No identificado";
-                await _notificationService.NotifyByRoleCodesAsync(
-                    "Nueva Propuesta de Grupo de Investigación",
-                    $"{remitente} ha enviado la solicitud de creación del grupo \"{group.Nombre}\" para su revisión.",
-                    new[] { "DIITRA_ADMIN" },
-                    "/admin/groups",
-                    new Dictionary<string, string>
-                    {
-                        { "Nombre del Grupo", group.Nombre },
-                        { "Siglas", group.Siglas ?? "N/A" },
-                        { "Tipo", group.TipoGrupo },
-                        { "Coordinador Propuesto", coordinadorNombre ?? "No asignado" },
-                        { "Solicitante", remitente },
-                        { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
-                        { "Misión", group.Mision ?? "No especificada" },
-                        { "Visión", group.Vision ?? "No especificada" },
-                        { "Estado", group.Estado },
-                        { "Fecha de Creación", group.FechaCreacion?.ToString("dd/MM/yyyy") ?? DateTime.UtcNow.ToString("dd/MM/yyyy") }
-                    }
-                );
+                var notifTitle = "Nueva Propuesta de Grupo de Investigación";
+                var notifBody = $"{remitente} ha enviado la solicitud de creación del grupo \"{group.Nombre}\" para su revisión.";
+                var notifUrl = $"/grupos?open={group.Uuid}";
+                var notifExtra = new Dictionary<string, string>
+                {
+                    { "Nombre del Grupo", group.Nombre },
+                    { "Siglas", group.Siglas ?? "N/A" },
+                    { "Tipo", group.TipoGrupo },
+                    { "Coordinador Propuesto", coordinadorNombre ?? "No asignado" },
+                    { "Solicitante", remitente },
+                    { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
+                    { "Misión", group.Mision ?? "No especificada" },
+                    { "Visión", group.Vision ?? "No especificada" },
+                    { "Estado", group.Estado },
+                    { "Fecha de Creación", group.FechaCreacion?.ToString("dd/MM/yyyy") ?? DateTime.UtcNow.ToString("dd/MM/yyyy") }
+                };
+
+                DispatchNotificationsInBackground(sp =>
+                    sp.GetRequiredService<INotificationService>()
+                        .NotifyByRoleCodesAsync(notifTitle, notifBody, new[] { "DIITRA_ADMIN" }, notifUrl, notifExtra));
             }
             catch (Exception ex)
             {
@@ -522,22 +540,23 @@ public class GroupsService : IGroupsService
                 }
 
                 var remitente = solicitanteNombre ?? coordinadorNombre ?? "No identificado";
-                await _notificationService.NotifyByRoleCodesAsync(
-                    "Propuesta de Grupo Actualizada",
-                    $"{remitente} ha modificado el grupo \"{group.Nombre}\" y requiere revisión nuevamente.",
-                    new[] { "DIITRA_ADMIN" },
-                    "/admin/groups",
-                    new Dictionary<string, string>
-                    {
-                        { "Nombre del Grupo", group.Nombre },
-                        { "Siglas", group.Siglas ?? "N/A" },
-                        { "Tipo", group.TipoGrupo },
-                        { "Coordinador Propuesto", coordinadorNombre ?? "No asignado" },
-                        { "Solicitante", remitente },
-                        { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
-                        { "Estado", group.Estado ?? "Pendiente" }
-                    }
-                );
+                var notifTitle = "Propuesta de Grupo Actualizada";
+                var notifBody = $"{remitente} ha modificado el grupo \"{group.Nombre}\" y requiere revisión nuevamente.";
+                var notifUrl = $"/grupos?open={group.Uuid}";
+                var notifExtra = new Dictionary<string, string>
+                {
+                    { "Nombre del Grupo", group.Nombre },
+                    { "Siglas", group.Siglas ?? "N/A" },
+                    { "Tipo", group.TipoGrupo },
+                    { "Coordinador Propuesto", coordinadorNombre ?? "No asignado" },
+                    { "Solicitante", remitente },
+                    { "Objetivo General", group.ObjetivoGeneral ?? "No especificado" },
+                    { "Estado", group.Estado ?? "Pendiente" }
+                };
+
+                DispatchNotificationsInBackground(sp =>
+                    sp.GetRequiredService<INotificationService>()
+                        .NotifyByRoleCodesAsync(notifTitle, notifBody, new[] { "DIITRA_ADMIN" }, notifUrl, notifExtra));
             }
             catch (Exception ex)
             {
@@ -790,54 +809,58 @@ public class GroupsService : IGroupsService
 
         await _context.SaveChangesAsync();
 
-        // Enviar notificaciones profesionales a las personas del grupo
-        try
+        var title = aprobado ? "Propuesta de Grupo Aprobada" : "Propuesta de Grupo Rechazada";
+        var body = aprobado
+            ? $"La propuesta del grupo \"{group.Nombre}\" ({group.Siglas}) ha sido APROBADA formalmente bajo la resolución {resolucion}."
+            : $"La propuesta del grupo \"{group.Nombre}\" ({group.Siglas}) ha sido RECHAZADA. Revise el Buzón de Retroalimentación para ver los motivos y audios explicativos.";
+
+        var membersToNotify = new List<int>();
+        if (group.IdCoordinador.HasValue)
         {
-            var title = aprobado ? "Propuesta de Grupo Aprobada" : "Propuesta de Grupo Rechazada";
-            var body = aprobado 
-                ? $"La propuesta del grupo \"{group.Nombre}\" ({group.Siglas}) ha sido APROBADA formalmente bajo la resolución {resolucion}."
-                : $"La propuesta del grupo \"{group.Nombre}\" ({group.Siglas}) ha sido RECHAZADA. Revise el Buzón de Retroalimentación para ver los motivos y audios explicativos.";
+            membersToNotify.Add(group.IdCoordinador.Value);
+        }
 
-            var membersToNotify = new List<int>();
-            if (group.IdCoordinador.HasValue)
+        foreach (var member in group.InvGruposMiembros.Where(m => m.Activo == true))
+        {
+            if (!membersToNotify.Contains(member.IdUsuario))
             {
-                membersToNotify.Add(group.IdCoordinador.Value);
-            }
-
-            foreach (var member in group.InvGruposMiembros.Where(m => m.Activo == true))
-            {
-                if (!membersToNotify.Contains(member.IdUsuario))
-                {
-                    membersToNotify.Add(member.IdUsuario);
-                }
-            }
-
-            foreach (var userId in membersToNotify)
-            {
-                try
-                {
-                    await _notificationService.NotifyUserAsync(
-                        userId, 
-                        title, 
-                        body, 
-                        "INVESTIGACION", 
-                        "/grupos", 
-                        new Dictionary<string, string>
-                        {
-                            { "GrupoUuid", group.Uuid },
-                            { "Nombre del Grupo", group.Nombre },
-                            { "Estado", group.Estado }
-                        });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error al notificar al integrante {UserId} del grupo {GroupUuid}", userId, group.Uuid);
-                }
+                membersToNotify.Add(member.IdUsuario);
             }
         }
-        catch (Exception ex)
+
+        if (membersToNotify.Count > 0)
         {
-            _logger.LogError(ex, "Error general al disparar notificaciones de revisión para grupo {GroupUuid}", group.Uuid);
+            var groupUuid = group.Uuid;
+            var groupNombre = group.Nombre;
+            var groupEstado = group.Estado;
+            var memberIds = membersToNotify.ToList();
+
+            DispatchNotificationsInBackground(async sp =>
+            {
+                var notificationService = sp.GetRequiredService<INotificationService>();
+                foreach (var userId in memberIds)
+                {
+                    try
+                    {
+                        await notificationService.NotifyUserAsync(
+                            userId,
+                            title,
+                            body,
+                            "INVESTIGACION",
+                            $"/grupos?open={groupUuid}",
+                            new Dictionary<string, string>
+                            {
+                                { "GrupoUuid", groupUuid },
+                                { "Nombre del Grupo", groupNombre },
+                                { "Estado", groupEstado }
+                            });
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al notificar al integrante {UserId} del grupo {GroupUuid}", userId, groupUuid);
+                    }
+                }
+            });
         }
 
         return true;

@@ -127,6 +127,7 @@ const GroupsPage = () => {
     const [rejectObservations, setRejectObservations] = useState('');
     const [isReviewRejecting, setIsReviewRejecting] = useState(false);
     const [sendingFeedback, setSendingFeedback] = useState(false);
+    const [isConfirming, setIsConfirming] = useState(false);
 
     // Audio recording state & refs for Admin Rejection Review
     const [isRecording, setIsRecording] = useState(false);
@@ -185,21 +186,37 @@ const GroupsPage = () => {
         fetchData();
     }, [search]);
 
-    // Deep-link from CommandPalette: ?open=GROUP_UUID
-    // When fetchData resolves, find the group by UUID and open its detail drawer.
+    // Deep-link from notifications, emails or CommandPalette: ?open=GROUP_UUID
     useEffect(() => {
-        if (!openUuid || groups.length === 0) return;
-        const target = groups.find(g => g.uuid === openUuid);
-        if (target) {
-            setDetailGroup(target);
-            // Clear param so refresh doesn't reopen
+        if (!openUuid || loading) return;
+
+        const clearOpenParam = () => {
             setSearchParams(prev => {
                 const next = new URLSearchParams(prev);
                 next.delete('open');
                 return next;
             });
-        }
-    }, [openUuid, groups]);
+        };
+
+        const openFromDeepLink = async () => {
+            const target = groups.find(g => g.uuid === openUuid);
+            if (target) {
+                setDetailGroup(target);
+                clearOpenParam();
+                return;
+            }
+
+            try {
+                const res = await api.get(`/Groups/${openUuid}`);
+                setDetailGroup(res.data);
+                clearOpenParam();
+            } catch (err) {
+                console.error('No se pudo abrir el grupo desde el enlace:', openUuid, err);
+            }
+        };
+
+        openFromDeepLink();
+    }, [openUuid, groups, loading]);
 
     useEffect(() => {
         const metaStr = localStorage.getItem('groups_draft_metadata');
@@ -342,18 +359,21 @@ const GroupsPage = () => {
             message: `¿Está seguro de aprobar formalmente el grupo "${reviewingGroup.nombre}" bajo la resolución ${reviewResolution}?`,
             type: 'success',
             onConfirm: async () => {
+                setIsConfirming(true);
                 try {
-                    await api.post(`/Groups/${reviewingGroup.uuid}/review`, {
+                    await api.patch(`/Groups/${reviewingGroup.uuid}/review`, {
                         aprobado: true,
                         resolucion: reviewResolution.trim(),
-                        observaciones: `Aprobado bajo resolución oficial ${reviewResolution.trim()}`
                     });
                     setIsReviewModalOpen(false);
                     setReviewingGroup(null);
+                    setReviewResolution('');
                     fetchData();
                 } catch (err: any) {
                     console.error("Error al aprobar grupo:", err);
                     alert("Error: " + (err.response?.data?.message || err.message));
+                } finally {
+                    setIsConfirming(false);
                 }
             }
         });
@@ -373,6 +393,7 @@ const GroupsPage = () => {
             type: 'danger',
             onConfirm: async () => {
                 setSendingFeedback(true);
+                setIsConfirming(true);
                 try {
                     let contentStr = rejectObservations.trim();
 
@@ -391,10 +412,18 @@ const GroupsPage = () => {
                         contentStr = JSON.stringify(payload);
                     }
 
-                    await api.post(`/Groups/${reviewingGroup.uuid}/review`, {
+                    if (contentStr) {
+                        await api.post('/collaboration/comments', {
+                            documentoUuid: reviewingGroup.uuid,
+                            DocumentoUuid: reviewingGroup.uuid,
+                            documento_uuid: reviewingGroup.uuid,
+                            contenido: contentStr,
+                            Contenido: contentStr,
+                        });
+                    }
+
+                    await api.patch(`/Groups/${reviewingGroup.uuid}/review`, {
                         aprobado: false,
-                        resolucion: '',
-                        observaciones: contentStr
                     });
 
                     setIsReviewModalOpen(false);
@@ -405,6 +434,7 @@ const GroupsPage = () => {
                     alert("Error: " + (err.response?.data?.message || err.message));
                 } finally {
                     setSendingFeedback(false);
+                    setIsConfirming(false);
                 }
             }
         });
@@ -817,9 +847,11 @@ const GroupsPage = () => {
                             {!isReviewRejecting ? (
                                 <button
                                     onClick={handleApprove}
-                                    className="btn-vercel-primary flex items-center gap-2"
+                                    disabled={isConfirming}
+                                    className="btn-vercel-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <CheckCircle size={14} /> Confirmar y Aprobar
+                                    {isConfirming ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                                    {isConfirming ? 'Procesando...' : 'Confirmar y Aprobar'}
                                 </button>
                             ) : (
                                 <button
@@ -866,22 +898,29 @@ const GroupsPage = () => {
                         <div className="modal-footer bg-surface/50 !py-3">
                             <button
                                 onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
-                                className="btn-vercel-secondary !py-2"
+                                disabled={isConfirming}
+                                className="btn-vercel-secondary !py-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Cancelar
                             </button>
                             <button
+                                disabled={isConfirming}
                                 onClick={async () => {
-                                    setConfirmDialog(prev => ({ ...prev, isOpen: false }));
-                                    await confirmDialog.onConfirm();
+                                    try {
+                                        await confirmDialog.onConfirm();
+                                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                                    } catch {
+                                        // onConfirm ya maneja el error
+                                    }
                                 }}
-                                className={`!py-2 ${
+                                className={`!py-2 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                     confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                     'btn-vercel-primary'
                                 }`}
                             >
-                                Confirmar
+                                {isConfirming && <Loader2 size={14} className="animate-spin" />}
+                                {isConfirming ? 'Procesando...' : 'Confirmar'}
                             </button>
                         </div>
                     </div>
