@@ -257,7 +257,7 @@ function App() {
                             <Route path="/parametros-normativos" element={<AdminRoute><ConfiguracionPage /></AdminRoute>} />
                             <Route path="/admin/emails" element={<AdminRoute><EmailEnginePage /></AdminRoute>} />
                             <Route path="/admin" element={<Navigate to="/usuarios" replace />} />
-                            <Route path="/admin/groups" element={<Navigate to="/grupos" replace />} />
+                            <Route path="/admin/groups" element={<RedirectPreserveSearch to="/grupos" />} />
                             <Route path="/admin/audit" element={<Navigate to="/auditoria" replace />} />
                             <Route path="/admin/configuracion" element={<RedirectPreserveSearch to="/parametros-normativos" />} />
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
