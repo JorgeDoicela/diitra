@@ -198,11 +198,11 @@ export const revocarAsignacion = (revisionUuid: string): Promise<{ message: stri
     api.delete(`/PeerReviews/${revisionUuid}/revocar`).then(r => r.data);
 
 export const extenderPlazo = (revisionUuid: string, nuevaFecha: string): Promise<{ message: string }> =>
-    api.put(`/PeerReviews/${revisionUuid}/extender`, { nuevaFecha }).then(r => r.data);
+    api.put(`/PeerReviews/${revisionUuid}/extender`, { nueva_fecha: nuevaFecha }).then(r => r.data);
 
 export interface PeerReviewSettingsDto {
-    autoExtendDeadlines: boolean;
-    autoExtendDays: number;
+    auto_extend_deadlines: boolean;
+    auto_extend_days: number;
 }
 
 export const updateProjectPeerReviewSettings = (
