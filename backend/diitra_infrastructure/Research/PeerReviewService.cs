@@ -131,7 +131,33 @@ public class PeerReviewService : IPeerReviewService
 
         if (revision.Estado == "Pendiente" && revision.FechaLimite < DateTime.Now)
         {
-            throw new InvalidOperationException("El plazo de evaluación para esta revisión ha vencido. Solicite una prórroga al administrador.");
+            var autoExtend = revision.Proyecto != null && revision.Proyecto.AutoExtendDeadlines;
+            if (autoExtend)
+            {
+                var extensionDays = revision.Proyecto.AutoExtendDays > 0 ? revision.Proyecto.AutoExtendDays : 7;
+                revision.FechaLimite = DateTime.Now.AddDays(extensionDays);
+
+                if (revision.EsExterno)
+                {
+                    var magicLinks = await _context.Set<InvMagicLink>()
+                        .Where(l => l.IdUsuario == revision.IdRevisor && !l.Utilizado)
+                        .ToListAsync();
+
+                    foreach (var link in magicLinks)
+                    {
+                        link.FechaExpiracion = revision.FechaLimite;
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                await _auditService.LogActionAsync(0, "AUTO_EXTENDER_PLAZO_ARBITRAJE",
+                    $"Plazo de arbitraje auto-extendido ({extensionDays} días) al expirar para evaluador en proyecto '{revision.Proyecto.Titulo}'", "PEER_REVIEW", null, null);
+            }
+            else
+            {
+                throw new InvalidOperationException("El plazo de evaluación para esta revisión ha vencido. Solicite una prórroga al administrador.");
+            }
         }
 
         var proyecto = revision.Proyecto;

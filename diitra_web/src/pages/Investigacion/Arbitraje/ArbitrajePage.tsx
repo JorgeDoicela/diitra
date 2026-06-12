@@ -369,104 +369,129 @@ const ArbitrajePage: React.FC = () => {
                                 <p className="text-text-dim text-xs mt-2 max-w-sm">Cambia el filtro o asigna árbitros a los proyectos.</p>
                             </div>
                         ) : (
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-border-thin">
-                                        <th className="text-left px-5 py-3.5"><span className="section-label !tracking-[0.12em]">Proyecto</span></th>
-                                        <th className="text-left px-4 py-3.5 hidden md:table-cell"><span className="section-label !tracking-[0.12em]">Convocatoria</span></th>
-                                        <th className="text-center px-4 py-3.5 hidden sm:table-cell"><span className="section-label !tracking-[0.12em]">Progreso</span></th>
-                                        <th className="text-center px-4 py-3.5 hidden lg:table-cell"><span className="section-label !tracking-[0.12em]">Puntaje</span></th>
-                                        <th className="text-left px-4 py-3.5"><span className="section-label !tracking-[0.12em]">Estado</span></th>
-                                        <th className="px-4 py-3.5" />
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtrados.map(p => {
-                                        const cfg = ESTADO_ARBITRAJE_CONFIG[p.estado_arbitraje] ?? ESTADO_ARBITRAJE_CONFIG['Pendiente'];
-                                        const tieneExterno = p.revisiones.some(r => r.es_externo);
-                                        return (
-                                            <tr
-                                                key={p.proyecto_uuid}
-                                                className="group border-b border-border-thin/50 last:border-0 hover:bg-surface/40 transition-colors cursor-pointer"
-                                                onClick={() => navigate(`/arbitraje/proyecto/${p.proyecto_uuid}`)}
-                                            >
-                                                <td className="px-5 py-4">
-                                                    <div className="flex items-start gap-3 min-w-0">
-                                                        <div className="w-8 h-8 rounded-lg border border-border-thin bg-surface flex items-center justify-center shrink-0 mt-0.5">
-                                                            <Gavel size={13} className="text-text-dim" strokeWidth={1.5} />
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <p className="text-sm font-medium text-text-main leading-snug truncate max-w-[160px] sm:max-w-[240px] group-hover:text-brand transition-colors">
-                                                                {p.proyecto_titulo}
-                                                            </p>
-                                                            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
-                                                                {p.codigo_institucional && (
-                                                                    <span className="text-[10px] font-mono text-text-dim">{p.codigo_institucional}</span>
-                                                                )}
-                                                                {!tieneExterno && p.total_arbitros > 0 && (
-                                                                    <span className="text-[10px] text-warning font-medium flex items-center gap-0.5">
-                                                                        <AlertTriangle size={9} />sin externo
-                                                                    </span>
-                                                                )}
-                                                                {tieneExterno && (
-                                                                    <span className="text-[10px] text-success font-medium flex items-center gap-0.5">
-                                                                        <Building size={9} />ext. ✓
-                                                                    </span>
-                                                                )}
+                            <div className="w-full overflow-hidden">
+                                <table className="w-full sm:table-fixed">
+                                    <thead>
+                                        <tr className="border-b border-border-thin">
+                                            <th className="text-left px-5 py-3.5 sm:w-[35%]"><span className="section-label !tracking-[0.12em]">Proyecto</span></th>
+                                            <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[15%]"><span className="section-label !tracking-[0.12em]">Convocatoria</span></th>
+                                            <th className="text-center px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label justify-center !tracking-[0.12em]">Progreso</span></th>
+                                            <th className="text-center px-4 py-3.5 hidden lg:table-cell lg:w-[8%]"><span className="section-label justify-center !tracking-[0.12em]">Puntaje</span></th>
+                                            <th className="text-left px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label !tracking-[0.12em]">Estado</span></th>
+                                            <th className="px-4 py-3.5 sm:w-[18%] w-[90px]" />
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filtrados.map(p => {
+                                            const cfg = ESTADO_ARBITRAJE_CONFIG[p.estado_arbitraje] ?? ESTADO_ARBITRAJE_CONFIG['Pendiente'];
+                                            const tieneExterno = p.revisiones.some(r => r.es_externo);
+                                            return (
+                                                <tr
+                                                    key={p.proyecto_uuid}
+                                                    className="group border-b border-border-thin/50 last:border-0 hover:bg-surface/40 transition-colors cursor-pointer"
+                                                    onClick={() => navigate(`/arbitraje/proyecto/${p.proyecto_uuid}`)}
+                                                >
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-start gap-3 min-w-0">
+                                                            <div className="w-8 h-8 rounded-lg border border-border-thin bg-surface flex items-center justify-center shrink-0 mt-0.5">
+                                                                 <Gavel size={13} className="text-text-dim" strokeWidth={1.5} />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-sm font-medium text-text-main leading-snug truncate max-w-[160px] sm:max-w-[240px] group-hover:text-brand transition-colors">
+                                                                    {p.proyecto_titulo}
+                                                                </p>
+                                                                <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                                                                    {p.codigo_institucional && (
+                                                                        <span className="text-[10px] font-mono text-text-dim">{p.codigo_institucional}</span>
+                                                                    )}
+                                                                    {!tieneExterno && p.total_arbitros > 0 && (
+                                                                        <span className="text-[10px] text-warning font-medium flex items-center gap-0.5">
+                                                                            <AlertTriangle size={9} />sin externo
+                                                                        </span>
+                                                                    )}
+                                                                    {tieneExterno && (
+                                                                        <span className="text-[10px] text-success font-medium flex items-center gap-0.5">
+                                                                            <Building size={9} />ext. ✓
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Detalle apilado para móviles */}
+                                                                <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden text-[9px] font-medium">
+                                                                    {p.convocatoria && (
+                                                                        <span className="text-text-dim bg-surface border border-border-thin rounded px-1.5 py-0.5">
+                                                                            {p.convocatoria}
+                                                                        </span>
+                                                                    )}
+                                                                    {p.total_arbitros > 0 && (
+                                                                        <span className="bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim font-mono">
+                                                                            Progreso: {p.arbitros_completados}/{p.total_arbitros}
+                                                                        </span>
+                                                                    )}
+                                                                    {p.puntaje_promedio != null && (
+                                                                        <span className={`rounded px-1.5 py-0.5 font-mono ${p.puntaje_promedio >= 70 ? 'bg-success/5 border border-success/20 text-success' : 'bg-error/5 border border-error/20 text-error'}`}>
+                                                                            {p.puntaje_promedio.toFixed(1)} pts
+                                                                        </span>
+                                                                    )}
+                                                                    <div className={`scale-90 origin-left badge-vercel ${cfg.badge} !py-0 !px-1.5 !h-auto !text-[8px]`}>
+                                                                        <span className={`dot ${cfg.dot} !w-1 !h-1`} />
+                                                                        {cfg.label}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4 hidden md:table-cell">
-                                                    <span className="text-xs text-text-dim truncate block max-w-[140px]">{p.convocatoria ?? '—'}</span>
-                                                </td>
-                                                <td className="px-4 py-4 hidden sm:table-cell">
-                                                    <MiniProgress completados={p.arbitros_completados} total={p.total_arbitros} />
-                                                </td>
-                                                <td className="px-4 py-4 text-center hidden lg:table-cell">
-                                                    {p.puntaje_promedio != null ? (
-                                                        <span className={`text-sm font-semibold font-mono ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
-                                                            {p.puntaje_promedio.toFixed(1)}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-text-dim/50 text-sm">—</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <div className={`badge-vercel ${cfg.badge}`}>
-                                                        <span className={`dot ${cfg.dot}`} />
-                                                        {cfg.label}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
-                                                        {p.arbitraje_cerrado && (
-                                                            <button
-                                                                onClick={e => handlePdf(e, p.proyecto_uuid)}
-                                                                className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
-                                                                disabled={descargando === p.proyecto_uuid}
-                                                                title="Descargar Acta PDF"
-                                                            >
-                                                                {descargando === p.proyecto_uuid ? <Loader2 size={11} className="animate-spin" /> : <FileDown size={11} />}
-                                                                <span className="hidden xl:inline text-[10px]">Acta</span>
-                                                            </button>
+                                                    </td>
+                                                    <td className="px-4 py-4 hidden md:table-cell">
+                                                        <span className="text-xs text-text-dim truncate block max-w-[140px]">{p.convocatoria ?? '—'}</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 hidden sm:table-cell">
+                                                        <MiniProgress completados={p.arbitros_completados} total={p.total_arbitros} />
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center hidden lg:table-cell">
+                                                        {p.puntaje_promedio != null ? (
+                                                            <span className={`text-sm font-semibold font-mono ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
+                                                                {p.puntaje_promedio.toFixed(1)}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-text-dim/50 text-sm">—</span>
                                                         )}
-                                                        <button
-                                                            onClick={e => { e.stopPropagation(); setAsignarA(p); }}
-                                                            className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
-                                                            title="Asignar árbitro"
-                                                        >
-                                                            <PlusCircle size={11} />
-                                                            <span className="hidden xl:inline text-[10px]">Árbitro</span>
-                                                        </button>
-                                                        <ChevronRight size={14} className="text-text-dim/40 group-hover:text-text-dim transition-colors" />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                                    </td>
+                                                    <td className="px-4 py-4 hidden sm:table-cell">
+                                                        <div className={`badge-vercel ${cfg.badge}`}>
+                                                            <span className={`dot ${cfg.dot}`} />
+                                                            {cfg.label}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-4">
+                                                        <div className="flex items-center justify-end gap-1.5" onClick={e => e.stopPropagation()}>
+                                                            {p.arbitraje_cerrado && (
+                                                                <button
+                                                                    onClick={e => handlePdf(e, p.proyecto_uuid)}
+                                                                    className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
+                                                                    disabled={descargando === p.proyecto_uuid}
+                                                                    title="Descargar Acta PDF"
+                                                                >
+                                                                    {descargando === p.proyecto_uuid ? <Loader2 size={11} className="animate-spin" /> : <FileDown size={11} />}
+                                                                    <span className="hidden xl:inline text-[10px]">Acta</span>
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={e => { e.stopPropagation(); setAsignarA(p); }}
+                                                                className="btn-vercel-secondary !py-1.5 !px-2 flex items-center gap-1.5"
+                                                                title="Asignar árbitro"
+                                                            >
+                                                                <PlusCircle size={11} />
+                                                                <span className="hidden xl:inline text-[10px]">Árbitro</span>
+                                                            </button>
+                                                            <ChevronRight size={14} className="text-text-dim/40 group-hover:text-text-dim transition-colors" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </div>
                 </div>

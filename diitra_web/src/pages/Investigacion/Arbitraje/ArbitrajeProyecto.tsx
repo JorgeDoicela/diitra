@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    ArrowLeft, Gavel, UserCheck, AlertTriangle,
-    CheckCircle2, Clock, PlusCircle, Trash2, Award,
-    Scale, Loader2, Users, Building, GraduationCap, FileDown,
-    CalendarDays, X
+    ArrowLeft, Gavel, AlertTriangle, CheckCircle2,
+    Loader2, Users, Building, GraduationCap, FileDown,
+    CalendarDays, X, PlusCircle, Trash2, Scale, Award
 } from 'lucide-react';
 import {
     getArbitrajeByProject, cerrarArbitraje, revocarAsignacion, iniciarEjecucion,
@@ -14,7 +13,7 @@ import {
 import type { ArbitrajeProyectoDto, PeerReviewDto, DictamenDto } from '../../../services/peerReviewService';
 import AsignarArbitroModal from './AsignarArbitroModal';
 import DictamenModal from './DictamenModal';
-import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
+import { formatNombre } from './arbitrajeUtils';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
 
@@ -58,8 +57,8 @@ const ArbitrajeProyecto: React.FC = () => {
         setSavingSettings(true);
         try {
             await updateProjectPeerReviewSettings(projectUuid, {
-                autoExtendDeadlines: autoExtend,
-                autoExtendDays: days
+                auto_extend_deadlines: autoExtend,
+                auto_extend_days: days
             });
             setProjectAutoExtendDeadlines(autoExtend);
             setProjectAutoExtendDays(days);
@@ -106,7 +105,6 @@ const ArbitrajeProyecto: React.FC = () => {
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            // Clean title for standard safe filename
             const cleanTitle = arbitraje.proyecto_titulo.replace(/[\/\\?%*:|"<>\.]/g, '').replace(/\s+/g, '_');
             a.download = `Acta_Dictamen_${cleanTitle}.pdf`;
             a.click();
@@ -187,43 +185,213 @@ const ArbitrajeProyecto: React.FC = () => {
 
     const estadoCfg = ESTADO_ARBITRAJE_CONFIG[arbitraje.estado_arbitraje] ?? ESTADO_ARBITRAJE_CONFIG['Pendiente'];
 
+    const renderRevisionRow = (rev: PeerReviewDto) => {
+        const cfg = ESTADO_REVISION_CONFIG[rev.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];
+        const diasRestantes = Math.ceil(
+            (new Date(rev.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        );
+        return (
+            <tr
+                key={rev.uuid}
+                className="group border-b border-border-thin/50 last:border-0 hover:bg-surface/40 transition-colors"
+            >
+                <td className="px-5 py-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-full bg-surface border border-border-thin flex items-center justify-center shrink-0 text-text-dim text-[11px] font-mono font-medium">
+                            {rev.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-sm font-medium text-text-main leading-snug truncate max-w-[160px] sm:max-w-[240px]">
+                                {formatNombre(rev.revisor_nombre)}
+                            </p>
+                            <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-0.5 text-[10px] text-text-dim font-medium">
+                                {!rev.es_externo && rev.revisor_carrera && (
+                                    <span className="flex items-center gap-0.5 bg-surface border border-border-thin px-1 py-0.5 rounded text-text-main font-semibold max-w-[100px] xs:max-w-[140px] sm:max-w-none" title={formatNombre(rev.revisor_carrera)}>
+                                        <GraduationCap size={9} className="shrink-0" />
+                                        <span className="truncate">{formatNombre(rev.revisor_carrera)}</span>
+                                    </span>
+                                )}
+                                {rev.revisor_especialidad && (
+                                    <span className="flex items-center gap-0.5 max-w-[110px] xs:max-w-[150px] sm:max-w-none" title={rev.revisor_especialidad}>
+                                        <Award size={9} className="shrink-0" />
+                                        <span className="truncate">{rev.revisor_especialidad}</span>
+                                    </span>
+                                )}
+                                {rev.es_doble_ciego && (
+                                    <span className="status-tag text-text-dim px-1.5 py-0.5 text-[9px] bg-surface/50 border border-border-thin shrink-0">Anónimo</span>
+                                )}
+                            </div>
+
+                            {/* Detalle apilado para móviles (debajo del nombre) */}
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden text-[9px] font-medium">
+                                {rev.es_externo ? (
+                                    <span className="text-brand bg-brand/5 border border-brand/10 rounded px-1.5 py-0.5 flex items-center gap-0.5">
+                                        <Building size={8} /> Ext. CACES
+                                    </span>
+                                ) : (
+                                    <span className="text-text-dim bg-surface border border-border-thin rounded px-1.5 py-0.5 flex items-center gap-0.5">
+                                        <Users size={8} /> Interno
+                                    </span>
+                                )}
+
+                                <span className="bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim font-mono">
+                                    {diasRestantes > 0 ? `${diasRestantes}d` : 'Expirado'}
+                                </span>
+
+                                {rev.puntaje_total != null && (
+                                    <span className={`rounded px-1.5 py-0.5 font-mono ${rev.puntaje_total >= 70 ? 'bg-success/5 border border-success/20 text-success' : 'bg-error/5 border border-error/20 text-error'}`}>
+                                        {rev.puntaje_total.toFixed(1)} pts
+                                    </span>
+                                )}
+
+                                <div className={`scale-90 origin-left badge-vercel ${cfg.badge} !py-0 !px-1.5 !h-auto !text-[8px]`}>
+                                    <span className={`dot ${cfg.dot} !w-1 !h-1`} />
+                                    {cfg.label}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td className="px-4 py-4 hidden md:table-cell">
+                    {rev.es_externo ? (
+                        <span className="text-[11px] text-brand font-medium flex items-center gap-1">
+                            <Building size={10} /> Par Externo (CACES)
+                        </span>
+                    ) : (
+                        <span className="text-[11px] text-text-dim font-medium flex items-center gap-1">
+                            <Users size={10} /> Docente Interno
+                        </span>
+                    )}
+                </td>
+                <td className="px-4 py-4 text-center hidden sm:table-cell">
+                    <span className="text-xs font-mono text-text-dim">
+                        {diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Expirado'}
+                    </span>
+                </td>
+                <td className="px-4 py-4 text-center hidden lg:table-cell">
+                    {rev.puntaje_total != null ? (
+                        <span className={`text-sm font-semibold font-mono ${rev.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
+                            {rev.puntaje_total.toFixed(1)}
+                        </span>
+                    ) : (
+                        <span className="text-text-dim/50 text-sm">—</span>
+                    )}
+                </td>
+                <td className="px-4 py-4 hidden sm:table-cell">
+                    <div className={`badge-vercel ${cfg.badge}`}>
+                        <span className={`dot ${cfg.dot}`} />
+                        {cfg.label}
+                    </div>
+                </td>
+                <td className="px-4 py-4">
+                    <div className="flex items-center justify-end gap-1" onClick={e => e.stopPropagation()}>
+                        {rev.estado === 'Pendiente' && (
+                            <>
+                                <button
+                                    onClick={() => setRevisionParaExtender(rev)}
+                                    className="p-1.5 text-text-dim hover:text-brand transition-colors rounded-md hover:bg-brand/10"
+                                    title="Extender fecha límite"
+                                >
+                                    <CalendarDays size={13} />
+                                </button>
+                                <button
+                                    onClick={() => handleRevocar(rev)}
+                                    className="p-1.5 text-text-dim hover:text-error transition-colors rounded-md hover:bg-error/10"
+                                    title="Revocar asignación"
+                                >
+                                    <Trash2 size={13} />
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </td>
+            </tr>
+        );
+    };
+
+    const renderTable = (title: string, icon: React.ReactNode, list: PeerReviewDto[], isExternal: boolean) => {
+        return (
+            <div className="bento-card static overflow-hidden">
+                <div className="bg-surface/30 border-b border-border-thin px-5 py-3.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        {icon}
+                        <span className={`text-[11px] font-bold uppercase tracking-wider font-mono ${isExternal ? 'text-brand' : 'text-text-main'}`}>
+                            {title}
+                        </span>
+                    </div>
+                    <span className={`text-[10px] font-mono rounded-full px-2 py-0.5 font-bold ${isExternal ? 'bg-brand/10 text-brand border border-brand/20' : 'bg-surface border border-border-thin text-text-dim'}`}>
+                        {list.length}
+                    </span>
+                </div>
+
+                {list.length === 0 ? (
+                    <div className="px-5 py-8 text-center text-text-dim/60 text-xs font-mono">
+                        No hay {isExternal ? 'evaluadores externos' : 'evaluadores internos'} asignados.
+                    </div>
+                ) : (
+                    <div className="w-full overflow-hidden">
+                        <table className="w-full sm:table-fixed">
+                            <thead>
+                                <tr className="border-b border-border-thin">
+                                    <th className="text-left px-5 py-3.5 sm:w-[40%]"><span className="section-label !tracking-[0.12em]">Árbitro / Evaluador</span></th>
+                                    <th className="text-left px-4 py-3.5 hidden md:table-cell md:w-[18%]"><span className="section-label !tracking-[0.12em]">Tipo</span></th>
+                                    <th className="text-center px-4 py-3.5 hidden sm:table-cell sm:w-[15%]"><span className="section-label justify-center !tracking-[0.12em]">Plazo</span></th>
+                                    <th className="text-center px-4 py-3.5 hidden lg:table-cell lg:w-[10%]"><span className="section-label justify-center !tracking-[0.12em]">Puntaje</span></th>
+                                    <th className="text-left px-4 py-3.5 hidden sm:table-cell sm:w-[12%]"><span className="section-label !tracking-[0.12em]">Estado</span></th>
+                                    <th className="px-4 py-3.5 sm:w-[5%] w-[80px]" />
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {list.map(renderRevisionRow)}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     return (
-        <main className="flex-1 bg-bg-deep p-4 md:p-8 lg:p-10">
+        <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
             {/* Header */}
-            <div className="mb-8 animate-fade-up">
+            <header className="mb-10 animate-fade-up relative z-10">
                 <button
                     onClick={() => navigate('/arbitraje')}
-                    className="flex items-center gap-1.5 text-text-dim hover:text-text-main text-xs font-semibold uppercase tracking-widest transition-colors mb-6"
+                    className="flex items-center gap-1 text-text-dim hover:text-text-main text-[11px] font-semibold uppercase tracking-widest transition-colors mb-6"
                 >
-                    <ArrowLeft size={14} /> Volver al Panel de Arbitraje
+                    <ArrowLeft size={12} /> Volver al Panel de Arbitraje
                 </button>
 
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                    <div>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="min-w-0 flex-1">
                         <div className="section-label mb-2">
-                            <Gavel size={12} />
+                            <Gavel size={12} className="text-brand" />
                             <span>Arbitraje · {arbitraje.convocatoria ?? 'Sin convocatoria'}</span>
                         </div>
-                        <h2 className="text-3xl font-semibold text-text-main tracking-tighter leading-tight mb-2 max-w-2xl">
+                        <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-snug mb-3 max-w-4xl">
                             {arbitraje.proyecto_titulo}
                         </h2>
-                        <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-2">
                             {arbitraje.codigo_institucional && (
-                                <span className="status-tag text-text-dim">{arbitraje.codigo_institucional}</span>
+                                <span className="text-[10px] font-mono bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
+                                    {arbitraje.codigo_institucional}
+                                </span>
                             )}
                             <div className={`badge-vercel ${estadoCfg.badge}`}>
                                 <span className={`dot ${estadoCfg.dot}`} />
                                 {estadoCfg.label}
                             </div>
-                            <span className="status-tag text-text-dim">Estado: {arbitraje.estado_proyecto}</span>
+                            <span className="text-[10px] bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim">
+                                Estado: {arbitraje.estado_proyecto}
+                            </span>
                         </div>
                     </div>
 
-                    <div className="flex gap-3 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 md:mt-1">
                         {!arbitraje.arbitraje_cerrado && (
                             <button
                                 onClick={() => setShowAsignar(true)}
-                                className="btn-vercel-secondary flex items-center gap-2"
+                                className="btn-vercel-secondary flex items-center gap-2 shrink-0"
                             >
                                 <PlusCircle size={14} />
                                 Agregar Árbitro
@@ -233,7 +401,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             <button
                                 onClick={handleDescargarPdf}
                                 disabled={descargandoPdf}
-                                className="btn-brand flex items-center gap-2 transition-all duration-300"
+                                className="btn-vercel-primary flex items-center gap-2 shrink-0"
                             >
                                 {descargandoPdf ? <Loader2 size={14} className="animate-spin" /> : <FileDown size={14} />}
                                 Descargar Acta PDF
@@ -242,7 +410,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             <button
                                 onClick={handleCerrar}
                                 disabled={!puedesCerrar || cerrando}
-                                className="btn-vercel-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="btn-vercel-primary flex items-center gap-2 shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 {cerrando ? <Loader2 size={14} className="animate-spin" /> : <Scale size={14} />}
                                 Cerrar Arbitraje
@@ -252,7 +420,7 @@ const ArbitrajeProyecto: React.FC = () => {
                             <button
                                 onClick={handleIniciarEjecucion}
                                 disabled={iniciandoEjecucion}
-                                className="btn-vercel-secondary flex items-center gap-2 border-brand/40 text-brand"
+                                className="btn-vercel-secondary flex items-center gap-2 shrink-0 border-brand/40 text-brand hover:bg-brand/5"
                             >
                                 {iniciandoEjecucion ? <Loader2 size={14} className="animate-spin" /> : <Award size={14} />}
                                 Iniciar Ejecución
@@ -260,14 +428,15 @@ const ArbitrajeProyecto: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </div>
+            </header>
+
             {/* Aviso si hay desempate */}
             {arbitraje.estado_arbitraje === 'Desempate' && (
-                <div className="bento-card static p-4 border-error/40 flex items-start gap-4 animate-fade-up mb-6">
-                    <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
+                <div className="bento-card static p-4 border-error/20 bg-error/5 flex items-start gap-3 animate-fade-up mb-6">
+                    <AlertTriangle size={16} className="text-error shrink-0 mt-0.5" />
                     <div>
-                        <p className="text-sm font-semibold text-text-main">Caso de Desempate Detectado</p>
-                        <p className="text-xs text-text-dim mt-1">
+                        <p className="text-xs font-semibold text-text-main">Caso de Desempate Detectado</p>
+                        <p className="text-[11px] text-text-dim mt-1">
                             Los árbitros presentan dictámenes contradictorios. Puede asignar un tercer árbitro para desempatar
                             o emitir una resolución fundada del Director de Investigación.
                         </p>
@@ -275,229 +444,173 @@ const ArbitrajeProyecto: React.FC = () => {
                 </div>
             )}
 
-            {/* Two-column Vercel Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:50ms]">
-                
-                {/* Main Content: Left Column */}
+            {/* Tabs Bar */}
+            <div className="tabs-vercel animate-fade-up [animation-delay:50ms] relative z-10">
+                <div className="tab-vercel-item active">
+                    Evaluadores Asignados
+                    {!loading && (
+                        <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-1.5">
+                            {arbitraje.revisiones.length}
+                        </span>
+                    )}
+                </div>
+            </div>
+
+            {/* Two-column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:60ms] relative z-10">
+                {/* Main Content Column */}
                 <div className="lg:col-span-3 space-y-6">
-                    {/* Lista de Árbitros */}
-                    <div className="animate-fade-up [animation-delay:100ms] space-y-4">
-                        <div className="section-label mb-2">
-                            <UserCheck size={12} />
-                            <span>Árbitros Asignados</span>
+                    {arbitraje.revisiones.length === 0 ? (
+                        <div className="bento-card static overflow-hidden">
+                            <div className="empty-state py-20">
+                                <div className="icon-circle icon-circle-neutral !p-4 mb-4">
+                                    <Gavel size={28} strokeWidth={1.5} />
+                                </div>
+                                <p className="text-text-main font-bold uppercase tracking-widest text-sm">Sin árbitros asignados</p>
+                                <p className="text-text-dim text-xs mt-2 max-w-sm">Use el botón superior para agregar evaluadores.</p>
+                            </div>
                         </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Columna 1: Árbitros Internos */}
-                    <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
-                        <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
-                            <span className="text-xs font-semibold text-text-main flex items-center gap-2">
-                                <Users size={14} className="text-text-dim" /> Árbitros Internos
-                            </span>
-                            <span className="text-[10px] font-mono bg-bg-deep px-2 py-0.5 rounded-md border border-border-thin text-text-dim">
-                                {internos.length}
-                            </span>
+                    ) : (
+                        <div className="space-y-6">
+                            {renderTable("Evaluadores Internos", <Users size={12} className="text-text-dim/80" />, internos, false)}
+                            {renderTable("Evaluadores Externos", <Building size={12} className="text-brand/80" />, externos, true)}
                         </div>
+                    )}
 
-                        {internos.length === 0 ? (
-                            <div className="text-center py-10 border border-dashed border-border-thin rounded-xl bg-surface/20">
-                                <p className="text-xs text-text-dim italic">Ningún árbitro interno asignado</p>
-                                <button
-                                    onClick={() => setShowAsignar(true)}
-                                    className="mt-3 btn-vercel-secondary !py-1.5 !px-3 !text-xs inline-flex items-center gap-1.5 font-medium transition-all"
-                                >
-                                    <PlusCircle size={13} /> Asignar Interno
-                                </button>
+                    {/* Avisos de Cumplimiento CACES */}
+                    {(arbitraje.total_arbitros < 2 || externos.length === 0) && (
+                        <div className="p-3 rounded-lg bg-warning/5 border border-warning/20 text-warning text-xs flex items-start gap-2.5 mt-4">
+                            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-text-main">Cumplimiento Normativo CACES (Indicador I5):</span>
+                                {' '}
+                                <span className="text-text-dim">
+                                    {arbitraje.total_arbitros < 2 && "Se requiere un mínimo de 2 árbitros evaluadores por propuesta para cumplir con los estándares mínimos. "}
+                                    {externos.length === 0 && "Es obligatorio contar con al menos 1 árbitro externo a la institución para la evaluación de proyectos."}
+                                </span>
                             </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {internos.map((rev) => (
-                                    <ArbitroCard
-                                        key={rev.uuid}
-                                        review={rev}
-                                        onRevocar={() => handleRevocar(rev)}
-                                        onExtender={() => setRevisionParaExtender(rev)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Columna 2: Árbitros Externos */}
-                    <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
-                        <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
-                            <span className="text-xs font-semibold text-text-main flex items-center gap-2">
-                                <Building size={14} className="text-text-dim" /> Árbitros Externos (CACES)
-                            </span>
-                            <span className="text-[10px] font-mono bg-bg-deep px-2 py-0.5 rounded-md border border-border-thin text-text-dim">
-                                {externos.length}
-                            </span>
                         </div>
-
-                        {externos.length === 0 ? (
-                            <div className="text-center py-10 border border-dashed border-border-thin rounded-xl bg-surface/20 space-y-2">
-                                <p className="text-xs text-text-dim italic">Ningún árbitro externo asignado</p>
-                                {arbitraje.total_arbitros > 0 && (
-                                    <p className="text-[10px] text-error font-semibold flex items-center justify-center gap-1">
-                                        CACES exige al menos 1 árbitro externo
-                                    </p>
-                                )}
-                                <button
-                                    onClick={() => setShowAsignar(true)}
-                                    className="mt-2 btn-vercel-secondary !py-1.5 !px-3 !text-xs inline-flex items-center gap-1.5 font-medium transition-all"
-                                >
-                                    <PlusCircle size={13} /> Asignar Externo
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {externos.map((rev) => (
-                                    <ArbitroCard
-                                        key={rev.uuid}
-                                        review={rev}
-                                        onRevocar={() => handleRevocar(rev)}
-                                        onExtender={() => setRevisionParaExtender(rev)}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
 
-                {/* Avisos de Cumplimiento CACES */}
-                {(arbitraje.total_arbitros < 2 || externos.length === 0) && (
-                    <div className="p-4 rounded-xl border border-warning/30 bg-warning/5 flex items-start gap-3 animate-fade-in">
-                        <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                            <p className="text-xs font-semibold text-text-main">Cumplimiento Normativo CACES (Indicador I5)</p>
-                            <p className="text-[11px] text-text-dim">
-                                {arbitraje.total_arbitros < 2 && "• Se recomienda un mínimo de 2 árbitros evaluadores por propuesta académica para un panel completo. "}
-                                {externos.length === 0 && "• Es obligatorio contar con al menos 1 árbitro externo a la institución para la evaluación de proyectos."}
-                            </p>
+                {/* Sidebar Column */}
+                <div className="space-y-6">
+                    <VercelUsageCard
+                        title="Resumen del Tribunal"
+                        buttonLabel="Actualizar"
+                        onButtonClick={loadData}
+                        items={[
+                            {
+                                label: 'Total Árbitros',
+                                value: arbitraje.total_arbitros,
+                                displayValue: `${arbitraje.total_arbitros}`,
+                                max: 5,
+                                color: 'var(--brand)'
+                            },
+                            {
+                                label: 'Completados',
+                                value: arbitraje.arbitros_completados,
+                                displayValue: `${arbitraje.arbitros_completados}`,
+                                max: arbitraje.total_arbitros || 1,
+                                color: '#22c55e'
+                            },
+                            {
+                                label: 'Pendientes',
+                                value: arbitraje.total_arbitros - arbitraje.arbitros_completados,
+                                displayValue: `${arbitraje.total_arbitros - arbitraje.arbitros_completados}`,
+                                max: arbitraje.total_arbitros || 1,
+                                color: '#f0a500'
+                            },
+                            {
+                                label: 'Promedio',
+                                value: arbitraje.puntaje_promedio || 0,
+                                displayValue: arbitraje.puntaje_promedio != null ? `${arbitraje.puntaje_promedio.toFixed(1)}/100` : '—',
+                                max: 100,
+                                color: arbitraje.puntaje_promedio && arbitraje.puntaje_promedio >= 70 ? '#22c55e' : '#ef4444'
+                            }
+                        ]}
+                    />
+
+                    {/* Progress bar */}
+                    {arbitraje.total_arbitros > 0 && (
+                        <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="section-label">
+                                    <CheckCircle2 size={12} className="text-brand" />
+                                    <span className="text-[13px] font-semibold text-text-main">Progreso Evaluaciones</span>
+                                </div>
+                                <span className="font-mono text-[13px] font-semibold text-brand">
+                                    {Math.round((arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100)}%
+                                </span>
+                            </div>
+                            <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full rounded-full bg-brand transition-all duration-700"
+                                    style={{ width: `${(arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100}%` }}
+                                />
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        </div>
+                    )}
 
-            {/* Sidebar: Right Column */}
-            <div className="space-y-6 lg:pt-10">
-                <VercelUsageCard 
-                    title="Resumen del Tribunal"
-                    buttonLabel="Actualizar"
-                    onButtonClick={loadData}
-                    items={[
-                        {
-                            label: 'Total Árbitros',
-                            value: arbitraje.total_arbitros,
-                            displayValue: `${arbitraje.total_arbitros}`,
-                            max: 5,
-                            color: 'var(--brand)'
-                        },
-                        {
-                            label: 'Completados',
-                            value: arbitraje.arbitros_completados,
-                            displayValue: `${arbitraje.arbitros_completados}`,
-                            max: arbitraje.total_arbitros || 1,
-                            color: '#22c55e'
-                        },
-                        {
-                            label: 'Pendientes',
-                            value: arbitraje.total_arbitros - arbitraje.arbitros_completados,
-                            displayValue: `${arbitraje.total_arbitros - arbitraje.arbitros_completados}`,
-                            max: arbitraje.total_arbitros || 1,
-                            color: '#f0a500'
-                        },
-                        {
-                            label: 'Promedio',
-                            value: arbitraje.puntaje_promedio || 0,
-                            displayValue: arbitraje.puntaje_promedio != null ? `${arbitraje.puntaje_promedio.toFixed(1)}/100` : '—',
-                            max: 100,
-                            color: arbitraje.puntaje_promedio && arbitraje.puntaje_promedio >= 70 ? '#22c55e' : '#ef4444'
-                        }
-                    ]}
-                />
-
-                {/* Progress bar */}
-                {arbitraje.total_arbitros > 0 && (
-                    <div className="bento-card static p-5 relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
-                        <div className="flex items-center justify-between mb-3">
+                    {/* Configuración de Prórrogas Automáticas del Proyecto */}
+                    <div className="bento-card static p-5 relative overflow-hidden bg-surface w-full space-y-4">
+                        <div className="flex items-center justify-between pb-2 border-b border-border-thin">
                             <div className="section-label">
-                                <CheckCircle2 size={12} className="text-brand" />
-                                <span className="text-[13px] font-semibold text-text-main">Progreso Evaluaciones</span>
+                                <Scale size={12} className="text-brand" />
+                                <span className="text-[13px] font-semibold text-text-main uppercase tracking-tight">Prórrogas del Proyecto</span>
                             </div>
-                            <span className="font-mono text-[13px] font-semibold text-brand">
-                                {Math.round((arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100)}%
-                            </span>
-                        </div>
-                        <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
-                            <div
-                                className="h-full rounded-full bg-brand transition-all duration-700"
-                                style={{ width: `${(arbitraje.arbitros_completados / arbitraje.total_arbitros) * 100}%` }}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                {/* ── Configuración de Prórrogas Automáticas del Proyecto ──── */}
-                <div className="bento-card static p-5 relative overflow-hidden bg-surface w-full space-y-4 animate-fade-up">
-                    <div className="flex items-center justify-between pb-2 border-b border-border-thin">
-                        <div className="section-label">
-                            <Scale size={12} className="text-brand" />
-                            <span className="text-[13px] font-semibold text-text-main uppercase tracking-tight">Prórrogas del Proyecto</span>
-                        </div>
-                        {savingSettings && <Loader2 size={12} className="animate-spin text-text-dim" />}
-                    </div>
-                    
-                    <div className="space-y-4">
-                        {/* Toggle switch */}
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
-                                <p className="text-[10px] text-text-dim mt-0.5 leading-relaxed">Amplía el plazo automáticamente al expirar.</p>
-                            </div>
-                            <label className="relative inline-flex items-center cursor-pointer select-none">
-                                <input 
-                                    type="checkbox" 
-                                    className="sr-only peer" 
-                                    checked={projectAutoExtendDeadlines}
-                                    onChange={(e) => handleSaveProjectSettings(e.target.checked, projectAutoExtendDays)}
-                                    disabled={savingSettings || arbitraje.arbitraje_cerrado}
-                                />
-                                <div className="w-9 h-5 bg-border-thin rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
-                            </label>
+                            {savingSettings && <Loader2 size={12} className="animate-spin text-text-dim" />}
                         </div>
 
-                        {/* Input number */}
-                        <div className="space-y-2 pt-1">
-                            <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest">
-                                Días de prórroga
-                            </label>
-                            <div className="flex gap-2 items-center">
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={30}
-                                    className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1.5 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
-                                    disabled={!projectAutoExtendDeadlines || savingSettings || arbitraje.arbitraje_cerrado}
-                                    value={projectAutoExtendDays}
-                                    onChange={(e) => setProjectAutoExtendDays(parseInt(e.target.value) || 7)}
-                                />
-                                {projectAutoExtendDeadlines && !arbitraje.arbitraje_cerrado && (
-                                    <button
-                                        onClick={() => handleSaveProjectSettings(projectAutoExtendDeadlines, projectAutoExtendDays)}
-                                        className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-semibold"
-                                        disabled={savingSettings}
-                                    >
-                                        Guardar
-                                    </button>
-                                )}
+                        <div className="space-y-4">
+                            {/* Toggle switch */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xs font-semibold text-text-main">Auto-extender plazos</p>
+                                    <p className="text-[10px] text-text-dim mt-0.5 leading-relaxed">Amplía el plazo automáticamente al expirar.</p>
+                                </div>
+                                <label className="relative inline-flex items-center cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={projectAutoExtendDeadlines}
+                                        onChange={(e) => handleSaveProjectSettings(e.target.checked, projectAutoExtendDays)}
+                                        disabled={savingSettings || arbitraje.arbitraje_cerrado}
+                                    />
+                                    <div className="w-9 h-5 bg-border-thin rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand"></div>
+                                </label>
+                            </div>
+
+                            {/* Input number */}
+                            <div className="space-y-2 pt-1">
+                                <label className="block text-[10px] font-semibold text-text-dim uppercase tracking-widest">
+                                    Días de prórroga
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        className="w-16 bg-bg-deep border border-border-thin rounded-md px-2 py-1.5 text-xs text-text-main focus:outline-none focus:border-text-dim transition-colors font-mono"
+                                        disabled={!projectAutoExtendDeadlines || savingSettings || arbitraje.arbitraje_cerrado}
+                                        value={projectAutoExtendDays}
+                                        onChange={(e) => setProjectAutoExtendDays(parseInt(e.target.value) || 7)}
+                                    />
+                                    {projectAutoExtendDeadlines && !arbitraje.arbitraje_cerrado && (
+                                        <button
+                                            onClick={() => handleSaveProjectSettings(projectAutoExtendDeadlines, projectAutoExtendDays)}
+                                            className="btn-vercel-secondary !py-1.5 !px-3 !text-[11px] font-semibold"
+                                            disabled={savingSettings}
+                                        >
+                                            Guardar
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
 
             {/* Modals */}
             {showAsignar && (
@@ -521,87 +634,6 @@ const ArbitrajeProyecto: React.FC = () => {
                 />
             )}
         </main>
-    );
-};
-
-// ─────────────────────────────────────────────────────────────
-//  Sub-componente: Tarjeta de un árbitro asignado
-// ─────────────────────────────────────────────────────────────
-const ArbitroCard: React.FC<{ review: PeerReviewDto; onRevocar: () => void; onExtender: () => void }> = ({ review, onRevocar, onExtender }) => {
-    const cfg = ESTADO_REVISION_CONFIG[review.estado] ?? ESTADO_REVISION_CONFIG['Pendiente'];
-    const diasRestantes = Math.ceil(
-        (new Date(review.fecha_limite).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-    );
-    const avStyle = getAvatarStyle(review.revisor_nombre);
-
-    return (
-        <div className="bento-card static p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-all duration-200">
-            <div className="flex items-center gap-4 flex-1 min-w-0">
-                <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${avStyle.bg} border text-xs font-semibold flex items-center justify-center shrink-0`}>
-                    {review.revisor_nombre.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <span className="font-semibold text-sm text-text-main">{formatNombre(review.revisor_nombre)}</span>
-                        {review.es_externo && (
-                            <span className="badge-vercel badge-vercel-info text-[9px]">PAR EXTERNO</span>
-                        )}
-                        {review.es_doble_ciego && (
-                            <span className="status-tag text-text-dim">Anónimo</span>
-                        )}
-                        <div className={`badge-vercel ${cfg.badge}`}>
-                            <span className={`dot ${cfg.dot}`} />
-                            {cfg.label}
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 text-[10px] text-text-dim font-medium">
-                        {!review.es_externo && review.revisor_carrera && (
-                            <span className="flex items-center gap-1 bg-surface border border-border-thin px-1 py-0.5 rounded text-text-main font-semibold">
-                                <GraduationCap size={10} /> {formatNombre(review.revisor_carrera)}
-                            </span>
-                        )}
-                        {review.revisor_especialidad && (
-                            <span className="flex items-center gap-1">
-                                <Award size={10} /> {review.revisor_especialidad}
-                            </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                            <Clock size={10} />
-                            {diasRestantes > 0 ? `${diasRestantes}d restantes` : 'Fecha límite vencida'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-                {review.puntaje_total != null && (
-                    <div className="text-center">
-                        <p className={`text-xl font-semibold leading-none ${review.puntaje_total >= 70 ? 'text-success' : 'text-error'}`}>
-                            {review.puntaje_total.toFixed(1)}
-                        </p>
-                        <p className="text-[9px] text-text-dim uppercase tracking-widest font-semibold">/100</p>
-                    </div>
-                )}
-                {review.estado === 'Pendiente' && (
-                    <div className="flex items-center gap-1">
-                        <button
-                            onClick={onExtender}
-                            className="p-2 text-text-dim hover:text-brand transition-colors rounded-md hover:bg-brand/10"
-                            title="Extender fecha límite"
-                        >
-                            <CalendarDays size={14} />
-                        </button>
-                        <button
-                            onClick={onRevocar}
-                            className="p-2 text-text-dim hover:text-error transition-colors rounded-md hover:bg-error/10"
-                            title="Revocar asignación"
-                        >
-                            <Trash2 size={14} />
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div>
     );
 };
 
@@ -648,9 +680,7 @@ const ExtenderPlazoModal: React.FC<ExtenderPlazoModalProps> = ({ review, onClose
                             Extender Plazo de Evaluación
                         </h3>
                     </div>
-                    <button onClick={onClose} className="p-1 text-text-dim hover:text-text-main transition-colors">
-                        <X size={18} />
-                    </button>
+                    <button onClick={onClose} className="p-1 text-text-dim hover:text-text-main transition-colors"><X size={18} /></button>
                 </div>
 
                 <form onSubmit={handleExtender} className="modal-body space-y-4 pt-4">
@@ -718,8 +748,8 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
-                <button 
-                    onClick={onButtonClick} 
+                <button
+                    onClick={onButtonClick}
                     className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
                 >
                     {buttonLabel}
@@ -732,10 +762,10 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                 const radius = 6.5;
                 const circumference = 2 * Math.PI * radius;
                 const strokeDashoffset = circumference - (percentage / 100) * circumference;
-                
+
                 return (
-                    <div 
-                        key={idx} 
+                    <div
+                        key={idx}
                         className="flex items-center justify-between py-1.5 px-2.5 rounded-md transition-all group"
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
@@ -767,11 +797,11 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 <span className="text-xs font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg 
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor" 
+                                <svg
+                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
                                     strokeWidth="2.5"
                                 >
                                     <title>{item.tooltip}</title>
