@@ -10,6 +10,19 @@ interface GeneralSectionProps {
     onUpdate: (field: string, value: any) => void;
 }
 
+const isPastDeadline = (fechaCierre: string) => {
+    if (!fechaCierre) return false;
+    const deadline = new Date(fechaCierre);
+    const now = new Date();
+    if (isNaN(deadline.getTime())) return false;
+    if (fechaCierre.length <= 10) {
+        const [year, month, day] = fechaCierre.split('-').map(Number);
+        const localDeadline = new Date(year, month - 1, day, 23, 59, 59, 999);
+        return now > localDeadline;
+    }
+    return now > deadline;
+};
+
 export const GeneralSection: React.FC<GeneralSectionProps> = ({
     formData,
     cowork,
@@ -166,9 +179,18 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                         className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm text-text-main font-bold outline-none"
                     >
                         <option value={0}>Seleccione una convocatoria...</option>
-                        {convocatorias.map(c => (
-                            <option key={c.id_convocatoria} value={c.id_convocatoria}>{c.codigo_convocatoria} - {c.titulo}</option>
-                        ))}
+                        {convocatorias.map(c => {
+                            const isExpired = isPastDeadline(c.fecha_cierre || c.fechaCierre);
+                            const isCurrent = Number(c.id_convocatoria ?? c.idConvocatoria) === Number(formData.IdConvocatoria);
+                            if (isExpired && !isCurrent) {
+                                return null;
+                            }
+                            return (
+                                <option key={c.id_convocatoria ?? c.idConvocatoria} value={c.id_convocatoria ?? c.idConvocatoria}>
+                                    {c.codigo_convocatoria ?? c.codigoConvocatoria} - {c.titulo} {isExpired ? '(CERRADA)' : ''}
+                                </option>
+                            );
+                        })}
                     </select>
                 </div>
             </div>

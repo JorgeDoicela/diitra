@@ -106,7 +106,7 @@ public class InformesAvanceController : ControllerBase
 
             if (!isSystemAdmin && !isProjectDirector)
             {
-                return Forbid("Solo el Director del Proyecto o el Administrador del Sistema pueden registrar informes de avance.");
+                return StatusCode(403, new { message = "Solo el Director del Proyecto o el Administrador del Sistema pueden registrar informes de avance." });
             }
         }
 
@@ -218,7 +218,7 @@ public class InformesAvanceController : ControllerBase
 
         if (!isSystemAdmin && !isDirectorInv && !isProjectDirector)
         {
-            return Forbid("No tienes permisos para firmar digitalmente este informe.");
+            return StatusCode(403, new { message = "No tienes permisos para firmar digitalmente este informe." });
         }
 
         try

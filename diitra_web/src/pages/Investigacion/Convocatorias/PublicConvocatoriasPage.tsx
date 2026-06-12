@@ -20,6 +20,19 @@ interface Convocatoria {
     codigo_convocatoria: string;
 }
 
+const isPastDeadline = (fechaCierre: string) => {
+    if (!fechaCierre) return false;
+    const deadline = new Date(fechaCierre);
+    const now = new Date();
+    if (isNaN(deadline.getTime())) return false;
+    if (fechaCierre.length <= 10) {
+        const [year, month, day] = fechaCierre.split('-').map(Number);
+        const localDeadline = new Date(year, month - 1, day, 23, 59, 59, 999);
+        return now > localDeadline;
+    }
+    return now > deadline;
+};
+
 const PublicConvocatoriasPage = () => {
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [loading, setLoading] = useState(true);
@@ -116,12 +129,21 @@ const PublicConvocatoriasPage = () => {
                                     <span className="badge-vercel">
                                         {c.codigo_convocatoria}
                                     </span>
-                                    <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest">
-                                        <span className={`dot dot-pulse ${c.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
-                                        <span className={c.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
-                                            {c.estado}
-                                        </span>
-                                    </div>
+                                    {isPastDeadline(c.fecha_cierre) ? (
+                                        <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest">
+                                            <span className="dot dot-error" />
+                                            <span className="text-error">
+                                                Cerrada
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest">
+                                            <span className={`dot dot-pulse ${c.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
+                                            <span className={c.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
+                                                {c.estado}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -155,15 +177,27 @@ const PublicConvocatoriasPage = () => {
                                 </div>
 
                                 <div className="pt-6 flex items-center gap-4">
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handlePostular(c.id_convocatoria);
-                                        }}
-                                        className="btn-vercel-primary flex-1"
-                                    >
-                                        Postular Ahora
-                                    </button>
+                                    {isPastDeadline(c.fecha_cierre) ? (
+                                        <button 
+                                            disabled
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                            }}
+                                            className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"
+                                        >
+                                            Plazo Vencido
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePostular(c.id_convocatoria);
+                                            }}
+                                            className="btn-vercel-primary flex-1"
+                                        >
+                                            Postular Ahora
+                                        </button>
+                                    )}
                                     <a 
                                         href={c.url_bases} 
                                         target="_blank" 
@@ -226,10 +260,21 @@ const PublicConvocatoriasPage = () => {
                                     {selectedConvocatoria.codigo_convocatoria}
                                 </span>
                                 <div className="flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-wider">
-                                    <span className={`dot dot-pulse ${selectedConvocatoria.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
-                                    <span className={selectedConvocatoria.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
-                                        {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
-                                    </span>
+                                    {isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
+                                        <>
+                                            <span className="dot dot-error" />
+                                            <span className="text-error">
+                                                Convocatoria Cerrada (Plazo Vencido)
+                                            </span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className={`dot dot-pulse ${selectedConvocatoria.estado === 'Abierta' ? 'dot-success' : 'dot-warning'}`} />
+                                            <span className={selectedConvocatoria.estado === 'Abierta' ? 'text-success' : 'text-warning'}>
+                                                {selectedConvocatoria.estado === 'Abierta' ? 'Convocatoria Activa' : `Estado: ${selectedConvocatoria.estado}`}
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <button 
@@ -314,15 +359,24 @@ const PublicConvocatoriasPage = () => {
                         </div>
                         
                         <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
-                            <button 
-                                onClick={() => {
-                                    handlePostular(selectedConvocatoria.id_convocatoria);
-                                    setSelectedConvocatoria(null);
-                                }}
-                                className="btn-vercel-primary flex-1"
-                            >
-                                Iniciar Postulación
-                            </button>
+                            {isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
+                                <button 
+                                    disabled
+                                    className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"
+                                >
+                                    Plazo Vencido
+                                </button>
+                            ) : (
+                                <button 
+                                    onClick={() => {
+                                        handlePostular(selectedConvocatoria.id_convocatoria);
+                                        setSelectedConvocatoria(null);
+                                    }}
+                                    className="btn-vercel-primary flex-1"
+                                >
+                                    Iniciar Postulación
+                                </button>
+                            )}
                             <a 
                                 href={selectedConvocatoria.url_bases} 
                                 target="_blank" 

@@ -85,7 +85,7 @@ public class PeerReviewsController : ControllerBase
 
             if (revision.IdRevisor != userId && !isPrivileged)
             {
-                return Forbid("No tienes permisos para visualizar esta rúbrica de evaluación.");
+                return StatusCode(403, new { message = "No tienes permisos para visualizar esta rúbrica de evaluación." });
             }
 
             var rubrica = await _peerReviewService.GetRubricaForRevisionAsync(revisionUuid);
@@ -112,7 +112,7 @@ public class PeerReviewsController : ControllerBase
 
             if (revision.IdRevisor != userId)
             {
-                return Forbid("No tienes permisos para enviar esta evaluación.");
+                return StatusCode(403, new { message = "No tienes permisos para enviar esta evaluación." });
             }
 
             var result = await _peerReviewService.SubmitEvaluationAsync(dto);
@@ -188,7 +188,7 @@ public class PeerReviewsController : ControllerBase
 
         if (!isPrivileged && !isMember && !isReviewer)
         {
-            return Forbid("No tienes permisos para visualizar el arbitraje de este proyecto.");
+            return StatusCode(403, new { message = "No tienes permisos para visualizar el arbitraje de este proyecto." });
         }
 
         if (int.TryParse(projectUuid, out var legacyId))

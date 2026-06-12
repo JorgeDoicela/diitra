@@ -386,7 +386,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserModifyProjectAsync(id))
             {
-                return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos de escritura sobre este proyecto de investigación." });
             }
             return Ok(new { message = "Sección guardada correctamente", projectId = id });
         }
@@ -396,7 +396,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserManageProjectAsync(id))
             {
-                return Forbid("No tienes permisos para transicionar el estado de este proyecto.");
+                return StatusCode(403, new { message = "No tienes permisos para transicionar el estado de este proyecto." });
             }
             try
             {
@@ -416,7 +416,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserViewProjectAsync(id))
             {
-                return Forbid("No tienes permisos para visualizar la trazabilidad de este proyecto.");
+                return StatusCode(403, new { message = "No tienes permisos para visualizar la trazabilidad de este proyecto." });
             }
             var history = await workflowEngine.GetTrazabilidadAsync(id);
             return Ok(history);
@@ -436,7 +436,7 @@ namespace diitra_api.Controllers
 
             if (!await CanCurrentUserModifyProjectAsync(dto.Uuid))
             {
-                return Forbid("No tienes permisos para modificar este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para modificar este proyecto de investigación." });
             }
 
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -485,7 +485,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserViewProjectAsync(uuid))
             {
-                return Forbid("No tienes permisos para visualizar este proyecto de investigación borrador.");
+                return StatusCode(403, new { message = "No tienes permisos para visualizar este proyecto de investigación borrador." });
             }
 
             var detail = await _projectOrchestrator.GetProjectDetailAsync(uuid);
@@ -640,7 +640,7 @@ namespace diitra_api.Controllers
 
             if (!await CanCurrentUserManageProjectAsync(uuid))
             {
-                return Forbid("No tienes permisos de escritura sobre este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos de escritura sobre este proyecto de investigación." });
             }
 
             var result = await _projectOrchestrator.UpdateProjectTeamAsync(uuid, investigadores, grupoInvestigacion, tieneGrupoInvestigacion);
@@ -656,7 +656,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserRequestTeamChangeAsync(uuid))
             {
-                return Forbid("No tienes permisos para solicitar cambios de equipo en este proyecto.");
+                return StatusCode(403, new { message = "No tienes permisos para solicitar cambios de equipo en este proyecto." });
             }
 
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -676,7 +676,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserViewProjectAsync(uuid))
             {
-                return Forbid("No tienes permisos para visualizar solicitudes de cambio de equipo de este proyecto.");
+                return StatusCode(403, new { message = "No tienes permisos para visualizar solicitudes de cambio de equipo de este proyecto." });
             }
 
             var records = await _projectOrchestrator.GetTeamChangeRequestsAsync(uuid);
@@ -721,13 +721,13 @@ namespace diitra_api.Controllers
             {
                 if (!isProjectDirector)
                 {
-                    return Forbid("No tienes permisos para transferir la dirección de este proyecto.");
+                    return StatusCode(403, new { message = "No tienes permisos para transferir la dirección de este proyecto." });
                 }
 
                 var project = await _projectOrchestrator.GetProjectDetailAsync(uuid);
                 if (project == null || (project.Estado != "Borrador" && project.Estado != "En Corrección"))
                 {
-                    return Forbid("Solo se puede transferir la dirección del proyecto durante la fase de formulación.");
+                    return StatusCode(403, new { message = "Solo se puede transferir la dirección del proyecto durante la fase de formulación." });
                 }
             }
 
@@ -749,7 +749,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserManageProjectAsync(uuid))
             {
-                return Forbid("No tienes permisos para eliminar este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para eliminar este proyecto de investigación." });
             }
 
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -771,7 +771,7 @@ namespace diitra_api.Controllers
         {
             if (!await CanCurrentUserViewProjectAsync(uuid))
             {
-                return Forbid("No tienes permisos para visualizar la actividad de este proyecto.");
+                return StatusCode(403, new { message = "No tienes permisos para visualizar la actividad de este proyecto." });
             }
 
             var actividad = await _projectOrchestrator.GetProjectActivityAsync(uuid, maxItems);
@@ -856,9 +856,9 @@ namespace diitra_api.Controllers
             var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(userIdRef);
             var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef);
 
-            if (!isSystemAdmin && !isProjectDirector)
+            if (!await CanCurrentUserManageProjectAsync(uuid))
             {
-                return Forbid("No tienes permisos para registrar gastos en este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para registrar gastos en este proyecto de investigación." });
             }
 
             var project = await _context.InvProyectos
@@ -948,7 +948,7 @@ namespace diitra_api.Controllers
 
             if (!isSystemAdmin && !isProjectDirector)
             {
-                return Forbid("No tienes permisos para eliminar gastos de este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para eliminar gastos de este proyecto de investigación." });
             }
 
             var project = await _context.InvProyectos

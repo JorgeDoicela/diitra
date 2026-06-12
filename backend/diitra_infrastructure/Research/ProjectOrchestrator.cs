@@ -135,7 +135,30 @@ namespace diitra_infrastructure.Research
                     dto.GrupoInvestigacionUuid = null;
                 }
 
-                project.IdConvocatoria = (dto.IdConvocatoria.HasValue && dto.IdConvocatoria.Value > 0) ? dto.IdConvocatoria.Value : null;
+                if (dto.IdConvocatoria.HasValue && dto.IdConvocatoria.Value > 0)
+                {
+                    if (project.IdConvocatoria != dto.IdConvocatoria.Value)
+                    {
+                        var conv = await _context.InvConvocatorias.FirstOrDefaultAsync(c => c.IdConvocatoria == dto.IdConvocatoria.Value);
+                        if (conv != null)
+                        {
+                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            if (conv.FechaCierre < today)
+                            {
+                                return new SyncResult
+                                {
+                                    Success = false,
+                                    Message = $"La convocatoria \"{conv.Titulo}\" cerró el {conv.FechaCierre:dd/MM/yyyy} y no acepta nuevas postulaciones."
+                                };
+                            }
+                        }
+                    }
+                    project.IdConvocatoria = dto.IdConvocatoria.Value;
+                }
+                else
+                {
+                    project.IdConvocatoria = null;
+                }
                 project.IdObjetivoPnd = (dto.IdObjetivoPnd.HasValue && dto.IdObjetivoPnd.Value > 0) ? dto.IdObjetivoPnd.Value : null;
 
                 // Núcleo Innovación & TRL
@@ -1457,6 +1480,31 @@ namespace diitra_infrastructure.Research
 
                 // Regla de gobernanza: el equipo del proyecto asociativo se deriva únicamente del grupo aprobado.
                 effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
+
+                // Preservar al Director de Proyecto activo para que no pierda la autoría y acceso al borrador
+                var activeDirector = await _context.InvProyectosProfesores
+                    .Include(pp => pp.IdUsuarioNavigation)
+                    .FirstOrDefaultAsync(pp => pp.IdProyecto == project.IdProyecto && pp.EsDirector == true && pp.Activo != false);
+
+                if (activeDirector != null && activeDirector.IdUsuarioNavigation != null && !string.IsNullOrEmpty(activeDirector.IdUsuarioNavigation.IdSigafi))
+                {
+                    var directorCedula = activeDirector.IdUsuarioNavigation.IdSigafi.Trim();
+                    var alreadyAdded = effectiveInvestigadores.Any(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim() == directorCedula);
+                    if (!alreadyAdded)
+                    {
+                        effectiveInvestigadores.Add(new InvestigadorDto
+                        {
+                            Nombre = activeDirector.IdUsuarioNavigation.Nombre,
+                            Cedula = directorCedula,
+                            Rol = "Director de Proyecto",
+                            NivelAcademico = activeDirector.NivelAcademico,
+                            Telefono = activeDirector.Telefono ?? string.Empty,
+                            Activo = true,
+                            HorasSemanales = activeDirector.HorasSemanales,
+                            FechaInicio = activeDirector.FechaInicio ?? DateTime.Now
+                        });
+                    }
+                }
             }
 
             // Validación de Carga Horaria para Docentes (CACES Compliance)
@@ -1886,6 +1934,28 @@ namespace diitra_infrastructure.Research
                 .Include(m => m.IdUsuarioNavigation)
                 .Where(m => m.IdGrupo == groupId && m.Activo != false && m.IdUsuarioNavigation != null && !string.IsNullOrEmpty(m.IdUsuarioNavigation.IdSigafi))
                 .ToListAsync();
+
+            var group = await _context.InvGruposInvestigacion
+                .Include(g => g.IdCoordinadorNavigation)
+                .FirstOrDefaultAsync(g => g.IdGrupo == groupId);
+
+            if (group != null && group.IdCoordinadorNavigation != null && !string.IsNullOrEmpty(group.IdCoordinadorNavigation.IdSigafi))
+            {
+                var coordSigafi = group.IdCoordinadorNavigation.IdSigafi.Trim();
+                var containsCoord = groupMembers.Any(m => m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi.Trim() == coordSigafi);
+                if (!containsCoord)
+                {
+                    groupMembers.Add(new InvGrupoMiembro
+                    {
+                        IdGrupo = groupId,
+                        IdUsuario = group.IdCoordinadorNavigation.IdUsuario,
+                        IdUsuarioNavigation = group.IdCoordinadorNavigation,
+                        Rol = "Coordinador",
+                        Activo = true,
+                        FechaInicio = group.FechaCreacion ?? DateOnly.FromDateTime(DateTime.UtcNow)
+                    });
+                }
+            }
 
             var existingInvestigadoresByCedula = await BuildExistingProjectInvestigadoresByCedulaAsync(projectId);
 

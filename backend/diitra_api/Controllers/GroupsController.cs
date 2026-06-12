@@ -75,7 +75,7 @@ public partial class GroupsController : ControllerBase
 
             if (!await CanManageGroupAsync(uuid))
             {
-                return Forbid("No tienes permisos para modificar este grupo de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para modificar este grupo de investigación." });
             }
 
             var solicitanteNombre = User.FindFirst(ClaimTypes.Name)?.Value ?? User.FindFirst("nombre")?.Value;
@@ -108,7 +108,7 @@ public partial class GroupsController : ControllerBase
     {
         if (!await CanManageGroupAsync(uuid))
         {
-            return Forbid("No tienes permisos para desactivar este grupo de investigación.");
+            return StatusCode(403, new { message = "No tienes permisos para desactivar este grupo de investigación." });
         }
 
         var result = await _groupsService.DeactivateAsync(uuid);
@@ -121,7 +121,7 @@ public partial class GroupsController : ControllerBase
     {
         if (!await CanManageGroupAsync(uuid))
         {
-            return Forbid("No tienes permisos para gestionar integrantes de este grupo.");
+            return StatusCode(403, new { message = "No tienes permisos para gestionar integrantes de este grupo." });
         }
 
         var result = await _groupsService.AddMemberAsync(uuid, memberDto);
@@ -144,7 +144,7 @@ public partial class GroupsController : ControllerBase
 
         if (!await CanManageGroupAsync(groupUuid))
         {
-            return Forbid("No tienes permisos para gestionar integrantes de este grupo.");
+            return StatusCode(403, new { message = "No tienes permisos para gestionar integrantes de este grupo." });
         }
 
         var result = await _groupsService.RemoveMemberAsync(memberId, reason);
