@@ -117,8 +117,8 @@ INSERT INTO inv_sublineas (idSublinea, uuid, idLinea, nombre, activo) VALUES
 (5, UUID(), 2, 'Gestión del Talento Humano y Productividad Laboral', 1),
 (6, UUID(), 3, 'Seguridad Informática y Redes de Próxima Generación', 1),
 (7, UUID(), 5, 'Plataformas Educativas y Tecnologías Emergentes en el Aula', 1),
-(8, UUID(), 2, 'Marketing Digital y Comercio Electrónico para MIPYMES', 1),
-(9, UUID(), 2, 'Patrimonio Alimentario y Técnicas Gastronómicas Ancestrales', 1);
+(8, UUID(), 7, 'Marketing Digital y Comercio Electrónico para MIPYMES', 1),
+(9, UUID(), 6, 'Patrimonio Alimentario y Técnicas Gastronómicas Ancestrales', 1);
 
 -- 3. Poblar Entidades Externas (Aliados Corporativos en Quito y Ecuador)
 INSERT INTO inv_entidades_externas (idEntidad, uuid, ruc, razonSocial, tipo, sector, contactoNombre, contactoEmail, activo) VALUES
@@ -134,7 +134,8 @@ INSERT INTO inv_usuarios_metadata (uuid, idUsuario, orcidId, scopusId, googleSch
 (UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), '0000-0003-0914-458X', '57211029400', 'https://scholar.google.com/citations?user=fbano', 'https://www.researchgate.net/profile/Freddy_Bano', 'Energías Renovables y Control de Procesos', 'Magíster en Electrónica e Instrumentación', 'uploads/firmas/1802707511.p12', 'uploads/firmas/firmas_img/1802707511.png', 1, 1, '2025-01-12 10:30:00', 'encrypted_p12_password_bano'),
 (UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), '0000-0001-8845-2147', '57195482600', 'https://scholar.google.com/citations?user=esanchez', 'https://www.researchgate.net/profile/Estefani_Sanchez', 'Sistemas de Información y Gestión Tecnológica', 'Magíster en Gestión de la Tecnología', 'uploads/firmas/0302144159.p12', 'uploads/firmas/firmas_img/0302144159.png', 1, 1, '2025-01-15 11:00:00', 'encrypted_p12_password_sanchez'),
 (UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802989226' LIMIT 1), '0000-0002-1245-0987', NULL, NULL, NULL, 'Eficiencia Energética y Redes Inteligentes', 'Magíster en Energías Renovables', 'uploads/firmas/1802989226.p12', 'uploads/firmas/firmas_img/1802989226.png', 1, 1, '2025-01-15 11:30:00', 'encrypted_p12_password_luz_bano'),
-(UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), '0000-0001-9954-1234', NULL, NULL, NULL, 'Gestión de Talento Humano y Clima Laboral', 'Magíster en Administración de Empresas', 'uploads/firmas/1719134759.p12', 'uploads/firmas/firmas_img/1719134759.png', 1, 1, '2025-02-18 09:00:00', 'encrypted_p12_password_tipantuna');
+(UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1719134759' LIMIT 1), '0000-0001-9954-1234', NULL, NULL, NULL, 'Gestión de Talento Humano y Clima Laboral', 'Magíster en Administración de Empresas', 'uploads/firmas/1719134759.p12', 'uploads/firmas/firmas_img/1719134759.png', 1, 1, '2025-02-18 09:00:00', 'encrypted_p12_password_tipantuna'),
+(UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1720477031' LIMIT 1), '0000-0002-8822-1234', NULL, NULL, NULL, 'Gastronomía Tradicional y Bromatología', 'Magíster en Gastronomía y Alimentos', 'uploads/firmas/1720477031.p12', 'uploads/firmas/firmas_img/1720477031.png', 1, 1, '2025-02-20 09:30:00', 'encrypted_p12_password_mendieta');
 
 -- 5. Poblar Grupos de Investigación
 INSERT INTO inv_grupos_investigacion (idGrupo, uuid, nombre, siglas, tipoGrupo, idDominio, idCoordinador, objetivoGeneral, mision, vision, resolucionAprobacion, fechaCreacion, categoriaConsolidacion, estado, activo) VALUES
@@ -170,7 +171,7 @@ INSERT INTO inv_grupos_lineas (idGrupo, idLinea) VALUES
 (2, 4),         -- GERSA con Energías
 (3, 2), (3, 5), -- SIGE con Gestión y Educación
 (4, 3), (4, 1), -- GIRCA con Redes y Software
-(5, 2), (5, 5); -- GIGPA con Gestión y Educación
+(5, 6), (5, 5); -- GIGPA con Gastronomía y Educación
 
 -- Relaciones de Grupos con Carreras
 INSERT INTO inv_grupos_carreras (idGrupo, idCarrera) VALUES
@@ -210,6 +211,30 @@ INSERT INTO inv_convocatorias (idConvocatoria, uuid, codigoConvocatoria, titulo,
 (1, '84f8846c-c918-406b-a25e-336ff326e632', 'CONV-2025-I', 'Convocatoria Proyectos de Investigación y Desarrollo 2025-I', 'ABD2025', '2025-04-15', '2025-06-15', 2025, 'Convocatoria abierta para el financiamiento de proyectos aplicados de I+D en el IST Traversari', 25000.00, 10000.00, 'https://bases.traversari.edu.ec/2025-I', 'Poseer título de tercer nivel y pertenecer a un grupo de investigación', 1, 9, 1, 70.00, 'Cerrada'),
 (2, '9fb183ea-e522-4828-98e3-841853ad76aa', 'CONV-2026-I', 'Convocatoria Proyectos de Innovación Tecnológica 2026-I', 'ABR2026', '2026-04-10', '2026-06-10', 2026, 'Enfoque en desarrollo de software, prototipos de hardware y transferencia tecnológica', 30000.00, 12000.00, 'https://bases.traversari.edu.ec/2026-I', 'Tener grupo de investigación registrado o semillero activo', 2, 9, 2, 75.00, 'Abierta');
 
+-- 6.1 Relaciones de Convocatorias con Líneas
+INSERT INTO inv_convocatorias_lineas (idConvocatoria, idLinea) VALUES
+(1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7),
+(2, 1), (2, 3), (2, 4), (2, 7);
+
+-- 6.2 Poblar Requisitos de Convocatoria (Documentos Requeridos)
+INSERT INTO inv_convocatorias_documentos_req (idDocReq, uuid, idConvocatoria, nombreDocumento, descripcion, esObligatorio, formatoAceptado) VALUES
+(1, UUID(), 1, 'Protocolo de Investigación Firmado', 'Ficha completa de la propuesta en formato oficial PDF.', 1, 'PDF'),
+(2, UUID(), 1, 'Carta de Aval del Coordinador del Grupo', 'Aval del grupo de investigación que respalda el proyecto.', 1, 'PDF'),
+(3, UUID(), 1, 'Certificado de no adeudar al instituto', 'Documento emitido por tesorería.', 0, 'PDF'),
+(4, UUID(), 2, 'Protocolo de Innovación Tecnológica', 'Propuesta de innovación y transferencia tecnológica.', 1, 'PDF'),
+(5, UUID(), 2, 'Carta de Aval del Aliado Externo / Empresa Co-ejecutora', 'Aval firmado por el representante de la entidad aliada.', 1, 'PDF');
+
+-- 6.3 Poblar Hitos de Convocatorias
+INSERT INTO inv_convocatorias_hitos (idHito, uuid, idConvocatoria, nombreHito, fechaHito, esCritico, descripcion) VALUES
+(1, UUID(), 1, 'Publicación de la Convocatoria', '2025-04-15', 0, 'Lanzamiento de las bases y formularios de postulación.'),
+(2, UUID(), 1, 'Cierre de Postulación', '2025-06-15', 1, 'Límite improrrogable para la carga del protocolo, presupuesto y cronograma.'),
+(3, UUID(), 1, 'Evaluación por Pares', '2025-06-30', 0, 'Período asignado para la revisión doble ciego.'),
+(4, UUID(), 1, 'Publicación de Resultados Finales', '2025-07-05', 0, 'Emisión de resoluciones y códigos institucionales.'),
+(5, UUID(), 2, 'Publicación de la Convocatoria', '2026-04-10', 0, 'Lanzamiento enfocado en innovación y transferencia.'),
+(6, UUID(), 2, 'Cierre de Postulación', '2026-06-10', 1, 'Límite improrrogable de carga digital.'),
+(7, UUID(), 2, 'Evaluación por Pares', '2026-06-20', 0, 'Arbitraje plenario y resolución de discordancias.'),
+(8, UUID(), 2, 'Publicación de Resultados Finales', '2026-06-25', 0, 'Emisión de resoluciones.');
+
 -- 7. Poblar Proyectos (Se cubren todos los estados del ciclo de vida útil del sistema)
 INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional, titulo, descripcionProyecto, antecedentes, justificacion, marcoTeorico, metodologia, metodoEvaluacion, idSublinea, idPrograma, idGrupo, tieneGrupo, idTipo, fechaPresentacion, fechaInicio, fechaFin, tiempoEjecucion, estado, disponibleAdopcion, puntajeEvaluacion, valorEjecucion, idObjetivoPnd, idEntidadAliada, trlInicial, trlActual, trlMeta, hashActaAprobacion, fechaAprobacion, firmadoPor, idDspaceHandle, metadataCacesJson) VALUES
 (1, '11111111-1111-1111-1111-111111111111', 1, 'PROY-SOFT-2025-001', 
@@ -221,7 +246,7 @@ INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional
  'Se implementará una metodología ágil XP. Se utilizarán microcontroladores ESP32, sensores SCT-013 y una arquitectura backend basada en ASP.NET Core y Python...', 
  'Comparación del consumo histórico mensual facturado versus el consumo optimizado post-instalación de alertas tempranas en una muestra piloto de 10 hogares.', 
  1, 1, 1, 1, 2, '2025-05-10', '2025-07-01', '2026-01-01', '6 meses', 'En Ejecución', 0, 85.50, 3200.00, 3, 3, 2, 5, 6,
- 'hash_acta_firmada_aprobacion_proy1_firmado_ec_2025', '2025-06-20 09:30:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), NULL, NULL),
+ '3f78ec90141f22e84c1fbc0d16f8ef190a421b8ff120f269ad3f82163b86029d5', '2025-06-20 09:30:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), '123456789/104', NULL),
 
 (2, '22222222-2222-2222-2222-222222222222', 1, 'PROY-ENE-2025-002', 
  'Implementación de un Sistema Solar Fotovoltaico Autónomo para la Iluminación del Campus Traversari Quito', 
@@ -232,7 +257,7 @@ INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional
  'Metodología experimental: 1. Dimensionamiento de la carga, 2. Selección de módulos monocristalinos e inversor, 3. Instalación física, 4. Pruebas de descarga profunda de baterías.', 
  'Medición diaria del rendimiento del sistema en kWh generados y ahorro porcentual respecto a la red de distribución eléctrica pública.', 
  3, 2, 2, 1, 2, '2025-05-12', '2025-07-05', '2026-01-05', '6 meses', 'Finalizado', 0, 92.00, 6500.00, 2, 2, 3, 7, 7,
- 'hash_acta_firmada_aprobacion_proy2_firmado_ec_2025', '2025-06-22 10:45:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 'handle/123456789/104', NULL),
+ 'f82bbcbff18acb9eef89283f12e840afbc89e81bfafeff093b128afc298ec289', '2025-06-22 10:45:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), '123456789/104', NULL),
 
 (3, '33333333-3333-3333-3333-333333333333', 1, 'PROY-ADM-2025-003', 
  'Estudio del Impacto del Teletrabajo en la Productividad del Claustro Docente en Institutos Tecnológicos de Quito', 
@@ -243,7 +268,7 @@ INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional
  'Investigación no experimental, de corte transversal, utilizando encuestas estructuradas a 120 docentes de 5 institutos tecnológicos de Quito y análisis con SPSS.', 
  'Validación de hipótesis de correlación mediante pruebas de Chi-cuadrado y coeficientes R de Pearson entre variables de clima y metas cumplidas.', 
  5, 3, 3, 1, 1, '2025-05-15', '2025-07-10', '2026-01-10', '6 meses', 'Aprobado', 0, 78.00, 1200.00, 4, NULL, 1, 3, 4,
- 'hash_acta_firmada_aprobacion_proy3_firmado_ec_2025', '2025-06-25 11:15:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), NULL, NULL),
+ 'a12bc90fe838efca839ea12bfaec09e20a9bfedcba91bfadcf928eef920fe1a8', '2025-06-25 11:15:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), NULL, NULL),
 
 (4, '44444444-4444-4444-4444-444444444444', 2, 'PROY-SOFT-2026-004', 
  'Desarrollo de un Asistente Virtual Conversacional basado en IA para la Gestión Académica de Estudiantes en el IST Traversari', 
@@ -320,6 +345,16 @@ INSERT INTO inv_proyectos_alumnos (idProyecto, idUsuario, rol, nivelAcademico, t
 (3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1751325000' LIMIT 1), 'Semillerista', 'Estudiante de Gestión Empresarial', '0988888883', 1),
 (4, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0105057335' LIMIT 1), 'Semillerista', 'Estudiante de Desarrollo de Software', '0988888884', 1),
 (5, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0103057584' LIMIT 1), 'Semillerista', 'Estudiante de Electrónica', '0988888885', 1);
+
+-- Documentos Adjuntos del Proyecto (Checklist de Postulación para demo)
+INSERT INTO inv_proyectos_documentos_adjuntos (idDocAdj, uuid, idProyecto, idDocReq, nombreArchivo, rutaArchivo) VALUES
+(1, UUID(), 1, 1, 'protocolo_iot_proy1_firmado.pdf', 'uploads/proyectos/1/protocolo_iot_proy1_firmado.pdf'),
+(2, UUID(), 1, 2, 'carta_aval_giist_proy1.pdf', 'uploads/proyectos/1/carta_aval_giist_proy1.pdf'),
+(3, UUID(), 1, 3, 'certificado_no_adeudar_naranjo.pdf', 'uploads/proyectos/1/certificado_no_adeudar_naranjo.pdf'),
+(4, UUID(), 2, 1, 'protocolo_fotovoltaico_proy2.pdf', 'uploads/proyectos/2/protocolo_fotovoltaico_proy2.pdf'),
+(5, UUID(), 2, 2, 'carta_aval_gersa_proy2.pdf', 'uploads/proyectos/2/carta_aval_gersa_proy2.pdf'),
+(6, UUID(), 3, 1, 'protocolo_teletrabajo_proy3.pdf', 'uploads/proyectos/3/protocolo_teletrabajo_proy3.pdf'),
+(7, UUID(), 3, 2, 'carta_aval_sige_proy3.pdf', 'uploads/proyectos/3/carta_aval_sige_proy3.pdf');
 
 -- 8. Poblar Objetivos de Proyecto
 INSERT INTO inv_objetivos_proyecto (idObjetivo, idProyecto, esGeneral, descripcion, orden) VALUES
