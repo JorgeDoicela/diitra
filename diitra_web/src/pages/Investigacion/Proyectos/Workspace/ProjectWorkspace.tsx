@@ -49,8 +49,19 @@ const formatCareerName = (name: string) => {
         .replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, (m: string) => m.toLowerCase());
 };
 
-
-
+const mapInvestigador = (inv: any) => {
+    if (!inv) return inv;
+    return {
+        ...inv,
+        nivelAcademico: inv.nivelAcademico ?? inv.nivel_academico ?? null,
+        fechaInicio: inv.fechaInicio ?? inv.fecha_inicio ?? null,
+        fechaFin: inv.fechaFin ?? inv.fecha_fin ?? null,
+        motivoCambio: inv.motivoCambio ?? inv.motivo_cambio ?? null,
+        horasSemanales: inv.horasSemanales ?? inv.horas_semanales ?? null,
+        horasDisponibles: inv.horasDisponibles ?? inv.horas_disponibles ?? null,
+        horasAsignadas: inv.horasAsignadas ?? inv.horas_asignadas ?? null,
+    };
+};
 
 export const ProjectWorkspace: React.FC = () => {
     const { documentUuid, templateCode: templateSlug } = useParams<{ documentUuid: string, templateCode: string }>();
@@ -487,12 +498,15 @@ export const ProjectWorkspace: React.FC = () => {
                     // FIX: fallback seguro — sin datos explícitos, denegamos edición (mínimo privilegio)
                     puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
                                  (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
-                    puedeSolicitarCambioEquipo: res.data.puedeSolicitarCambioEquipo ?? res.data.puede_solicitar_cambio_equipo ?? false,
-                    puntajeEvaluacion: res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
+                    puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
+                    puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
                 });
-                setInvestigadores(res.data.investigadores || []);
-                setTieneGrupo(res.data.tieneGrupoInvestigacion || false);
-                setGrupoInvestigacion(res.data.grupoInvestigacionUuid || res.data.grupoInvestigacion || '');
+                setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
+                
+                const groupUuid = res.data.grupo_investigacion_uuid ?? res.data.grupoInvestigacionUuid ?? res.data.grupo_investigacion ?? res.data.grupoInvestigacion ?? '';
+                const hasGroup = !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
+                setTieneGrupo(hasGroup);
+                setGrupoInvestigacion(groupUuid);
                 await fetchTeamChangeRequests(res.data.uuid);
             } else if (isNotFound) {
                 // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
@@ -683,11 +697,15 @@ export const ProjectWorkspace: React.FC = () => {
                 addToast("Transferencia Exitosa", "¡Transferencia de dirección realizada con éxito!", "success");
                 setShowTransferModal(false);
                 const updatedProjectRes = await api.get(`/projects/${currentProject.uuid}/detail`);
-                setInvestigadores(updatedProjectRes.data.investigadores || []);
-                setTieneGrupo(updatedProjectRes.data.tieneGrupoInvestigacion || false);
+                setInvestigadores((updatedProjectRes.data.investigadores || []).map(mapInvestigador));
+                
+                const groupUuid = updatedProjectRes.data.grupo_investigacion_uuid ?? updatedProjectRes.data.grupoInvestigacionUuid ?? updatedProjectRes.data.grupo_investigacion ?? updatedProjectRes.data.grupoInvestigacion ?? '';
+                const hasGroup = !!(updatedProjectRes.data.tiene_grupo_investigacion ?? updatedProjectRes.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
+                setTieneGrupo(hasGroup);
+                
                 setCurrentProject((prev: any) => ({
                     ...prev,
-                    tieneGrupoInvestigacion: updatedProjectRes.data.tieneGrupoInvestigacion
+                    tieneGrupoInvestigacion: hasGroup
                 }));
             } else {
                 addToast("Error de Transferencia", res.data.message || "Error al realizar la transferencia.", "error");
@@ -730,7 +748,7 @@ export const ProjectWorkspace: React.FC = () => {
     }
 
     const handleUpdateMember = (cedula: string, field: string, value: any) => {
-        if (tieneGrupo) {
+        if (tieneGrupo && field !== 'horasSemanales') {
             addToast("Acción no permitida", "En proyectos asociativos la edición del equipo se realiza únicamente en /grupos.", "warning");
             return;
         }
@@ -772,17 +790,20 @@ export const ProjectWorkspace: React.FC = () => {
             });
             if (res.data.success) {
                 addToast("Equipo de Trabajo", "¡Equipo de trabajo guardado y sincronizado con éxito!", "success");
-                setCurrentProject((prev: any) => ({ ...prev, tieneGrupoInvestigacion: tieneGrupo, grupoInvestigacion: grupoInvestigacion }));
-
+                
                 const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
-                setInvestigadores(refreshed.data.investigadores || []);
-                setTieneGrupo(refreshed.data.tieneGrupoInvestigacion || false);
-                setGrupoInvestigacion(refreshed.data.grupoInvestigacionUuid || refreshed.data.grupoInvestigacion || '');
+                setInvestigadores((refreshed.data.investigadores || []).map(mapInvestigador));
+                
+                const groupUuid = refreshed.data.grupo_investigacion_uuid ?? refreshed.data.grupoInvestigacionUuid ?? refreshed.data.grupo_investigacion ?? refreshed.data.grupoInvestigacion ?? '';
+                const hasGroup = !!(refreshed.data.tiene_grupo_investigacion ?? refreshed.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
+                setTieneGrupo(hasGroup);
+                setGrupoInvestigacion(groupUuid);
+                
                 setCurrentProject((prev: any) => ({
                     ...prev,
-                    tieneGrupoInvestigacion: refreshed.data.tieneGrupoInvestigacion || false,
-                    grupoInvestigacion: refreshed.data.grupoInvestigacion || null,
-                    grupoInvestigacionUuid: refreshed.data.grupoInvestigacionUuid || null
+                    tieneGrupoInvestigacion: hasGroup,
+                    grupoInvestigacion: refreshed.data.grupo_investigacion ?? refreshed.data.grupoInvestigacion ?? null,
+                    grupoInvestigacionUuid: refreshed.data.grupo_investigacion_uuid ?? refreshed.data.grupoInvestigacionUuid ?? null
                 }));
                 await fetchTeamChangeRequests(currentProject.uuid);
             } else {
@@ -848,7 +869,7 @@ export const ProjectWorkspace: React.FC = () => {
                 addToast("Revisión completada", res.data.message || "Solicitud procesada.", "success");
                 await fetchTeamChangeRequests(currentProject.uuid);
                 const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
-                setInvestigadores(refreshed.data.investigadores || []);
+                setInvestigadores((refreshed.data.investigadores || []).map(mapInvestigador));
             } else {
                 addToast("Error de revisión", res.data?.message || "No se pudo revisar la solicitud.", "error");
             }

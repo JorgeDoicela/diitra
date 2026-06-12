@@ -306,44 +306,59 @@ namespace Diitra.Infrastructure.Common.Documents
 
         private async Task SyncFromProjectAsync(DocumentInstance instance, CancellationToken ct)
         {
-            if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION" && string.IsNullOrEmpty(instance.DataSnapshotJson))
+            if (instance.TemplateCode == "PROTOCOLO_INVESTIGACION")
             {
                 Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] Iniciando sincronización relacional para instancia: {instance.Uuid}");
                 var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == instance.EntityUuid, ct);
                 if (project != null)
                 {
-                    if (!string.IsNullOrEmpty(project.MetadataCacesJson))
+                    try
                     {
-                        Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] Usando MetadataCacesJson existente de longitud: {project.MetadataCacesJson.Length}");
-                        instance.UpdateDataSnapshot(project.MetadataCacesJson);
-                        await _context.SaveChangesAsync(ct);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] MetadataCacesJson vacía en proyecto. Reconstruyendo desde base de datos relacional...");
-                        // Si MetadataCacesJson es null/vacío (proyecto sembrado en bd sin metadatos aún),
-                        // lo reconstruimos dinámicamente usando GetProjectDetailAsync del ProjectOrchestrator
-                        try
+                        var orchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Research.IProjectOrchestrator>();
+                        var projectDetail = await orchestrator.GetProjectDetailAsync(project.Uuid);
+                        if (projectDetail != null)
                         {
-                            var orchestrator = _serviceProvider.GetRequiredService<Diitra.Application.Research.IProjectOrchestrator>();
-                            var projectDetail = await orchestrator.GetProjectDetailAsync(project.Uuid);
-                            if (projectDetail != null)
+                            if (string.IsNullOrEmpty(instance.DataSnapshotJson))
                             {
                                 var json = JsonSerializer.Serialize(projectDetail);
-                                Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] Reconstrucción exitosa. Longitud: {json.Length}");
+                                Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] Snapshot vacío. Reconstrucción exitosa. Longitud: {json.Length}");
                                 instance.UpdateDataSnapshot(json);
-                                
-                                // También guardar en MetadataCacesJson para consistencia futura
                                 project.MetadataCacesJson = json;
-                                
                                 await _context.SaveChangesAsync(ct);
                             }
+                            else
+                            {
+                                // Si ya existe, fusionamos campos clave del proyecto relacional (Título, Grupo, Integrantes)
+                                // para evitar que datos viejos del editor de documentos sobrescriban los del Workspace.
+                                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                                var snapshot = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(instance.DataSnapshotJson, options);
+                                if (snapshot != null)
+                                {
+                                    var merged = new Dictionary<string, object>();
+                                    foreach (var kvp in snapshot)
+                                    {
+                                        merged[kvp.Key] = kvp.Value;
+                                    }
+
+                                    merged["Titulo"] = projectDetail.Titulo ?? "";
+                                    merged["GrupoInvestigacionTipo"] = projectDetail.TieneGrupoInvestigacion == true ? "SI" : "NO";
+                                    merged["GrupoInvestigacionNombre"] = projectDetail.GrupoInvestigacion ?? "";
+                                    merged["GrupoInvestigacionUuid"] = projectDetail.GrupoInvestigacionUuid ?? "";
+                                    merged["TieneGrupoInvestigacion"] = projectDetail.TieneGrupoInvestigacion ?? false;
+                                    merged["Investigadores"] = projectDetail.Investigadores ?? new List<Diitra.Application.Research.Dtos.InvestigadorDto>();
+
+                                    var json = JsonSerializer.Serialize(merged);
+                                    instance.UpdateDataSnapshot(json);
+                                    project.MetadataCacesJson = json;
+                                    await _context.SaveChangesAsync(ct);
+                                    Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] Snapshot fusionado y sincronizado con éxito.");
+                                }
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] ERROR al reconstruir desde BD relacional: {ex.Message}");
-                            System.Diagnostics.Debug.WriteLine($"[DIITRA] Error reconstruction ProjectDto from relational database: {ex.Message}");
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] ERROR al sincronizar/fusionar con proyecto: {ex.Message}");
                     }
                 }
                 else
