@@ -116,37 +116,66 @@ public class UnitTest1
     [Fact]
     public async Task TestPrintUserHours()
     {
-        if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
         optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         
-        // Print all projects
-        var projects = await context.InvProyectos.ToListAsync();
-        foreach (var p in projects)
+        var erikaUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == "1722528286");
+        if (erikaUser == null)
         {
-            Console.WriteLine($"[ALL_PROJECTS] Id: {p.IdProyecto}, Title: {p.Titulo}, State: {p.Estado}, Uuid: {p.Uuid}");
+            Console.WriteLine("[DIAG] Erika user not found!");
+            return;
+        }
+        Console.WriteLine($"[DIAG] Erika user: Id={erikaUser.IdUsuario}, Name='{erikaUser.Nombre}', Sigafi={erikaUser.IdSigafi}");
+
+        var targetUuid = "c540e284-de03-409c-8ebe-0bb2d576278b";
+        var project = await context.InvProyectos
+            .Include(p => p.IdGrupoNavigation)
+            .FirstOrDefaultAsync(p => p.Uuid == targetUuid);
+
+        if (project == null)
+        {
+            Console.WriteLine($"[DIAG] Project {targetUuid} not found!");
+            return;
         }
 
-        // Print Erika's assignments
-        var erikaUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == "1722528286");
-        if (erikaUser != null)
+        Console.WriteLine($"[DIAG] Project: Id={project.IdProyecto}, Title='{project.Titulo}', TieneGrupo={project.TieneGrupo}, IdGrupo={project.IdGrupo}, GrupoNombre='{project.IdGrupoNavigation?.Nombre}', Estado='{project.Estado}'");
+
+        // Erika's project assignment
+        var assignment = await context.InvProyectosProfesores
+            .FirstOrDefaultAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == erikaUser.IdUsuario);
+
+        if (assignment != null)
         {
-            Console.WriteLine($"[ERIKA_USER] Id: {erikaUser.IdUsuario}, Name: {erikaUser.Nombre}, Sigafi: {erikaUser.IdSigafi}");
-            var assignments = await context.InvProyectosProfesores
-                .Include(pp => pp.IdProyectoNavigation)
-                .Where(pp => pp.IdUsuario == erikaUser.IdUsuario)
-                .ToListAsync();
-            foreach (var a in assignments)
-            {
-                Console.WriteLine($"[ERIKA_ASSIGN] ProjId: {a.IdProyecto}, ProjTitle: {a.IdProyectoNavigation?.Titulo}, Horas: {a.HorasSemanales}, Activo: {a.Activo}, EsDirector: {a.EsDirector}");
-            }
+            Console.WriteLine($"[DIAG] Current Erika Assignment: Activo={assignment.Activo}, EsDirector={assignment.EsDirector}, Rol='{assignment.Rol}'");
+            
+            // Restore her access
+            assignment.Activo = true;
+            assignment.EsDirector = true;
+            assignment.Rol = "Director de Proyecto";
+            assignment.FechaFin = null;
+            assignment.MotivoCambio = null;
+            
+            await context.SaveChangesAsync();
+            Console.WriteLine("[DIAG] Erika's assignment restored and activated!");
         }
         else
         {
-            Console.WriteLine("[ERIKA_USER] Not found in users table!");
+            Console.WriteLine("[DIAG] Erika assignment not found, creating it!");
+            context.InvProyectosProfesores.Add(new InvProyectoProfesor
+            {
+                IdProyecto = project.IdProyecto,
+                IdUsuario = erikaUser.IdUsuario,
+                EsDirector = true,
+                Rol = "Director de Proyecto",
+                Activo = true,
+                NivelAcademico = "Tercer Nivel",
+                Telefono = ""
+            });
+            await context.SaveChangesAsync();
+            Console.WriteLine("[DIAG] Erika assignment created and activated!");
         }
     }
 

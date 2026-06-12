@@ -56,7 +56,7 @@ namespace diitra_api.Controllers
             if (dto == null) return BadRequest("Datos nulos");
             if (!await CanCurrentUserModifyProjectAsync(dto.ProjectUuid))
             {
-                return Forbid("No tienes permisos para agregar productos a este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para agregar productos a este proyecto de investigación." });
             }
 
             var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == dto.ProjectUuid);
@@ -92,7 +92,7 @@ namespace diitra_api.Controllers
 
             if (!await CanCurrentUserModifyProjectAsync(project.Uuid))
             {
-                return Forbid("No tienes permisos para modificar productos de este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para modificar productos de este proyecto de investigación." });
             }
 
             product.IdTipoProducto = dto.IdTipoProducto;
@@ -119,7 +119,7 @@ namespace diitra_api.Controllers
 
             if (!await CanCurrentUserModifyProjectAsync(project.Uuid))
             {
-                return Forbid("No tienes permisos para eliminar productos de este proyecto de investigación.");
+                return StatusCode(403, new { message = "No tienes permisos para eliminar productos de este proyecto de investigación." });
             }
 
             _context.InvProductos.Remove(product);

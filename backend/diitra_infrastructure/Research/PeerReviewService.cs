@@ -443,6 +443,22 @@ public class PeerReviewService : IPeerReviewService
                     new[] { "DIITRA_ADMIN" },
                     $"/arbitraje/proyecto/{project.Uuid}"
                 );
+
+                // Check if this project has now entered Desempate state
+                var allProjectRevisions = await _context.Set<InvRevisionesPares>()
+                    .Where(r => r.IdProyecto == project.IdProyecto)
+                    .ToListAsync();
+                
+                string currentEstadoArbitraje = DeterminarEstadoArbitraje(allProjectRevisions, umbralAprobacion);
+                if (currentEstadoArbitraje == "Desempate")
+                {
+                    await _notificationService.NotifyByRoleCodesAsync(
+                        "Desempate pendiente",
+                        $"\"{project.Titulo}\" tiene dictámenes divididos. Se requiere un tercer árbitro.",
+                        new[] { "DIITRA_ADMIN" },
+                        $"/arbitraje/proyecto/{project.Uuid}"
+                    );
+                }
             }
             catch (Exception ex)
             {

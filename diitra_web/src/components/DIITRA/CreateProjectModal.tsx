@@ -12,6 +12,19 @@ interface CreateProjectModalProps {
     onClose: () => void;
 }
 
+const isPastDeadline = (fechaCierre: string) => {
+    if (!fechaCierre) return false;
+    const deadline = new Date(fechaCierre);
+    const now = new Date();
+    if (isNaN(deadline.getTime())) return false;
+    if (fechaCierre.length <= 10) {
+        const [year, month, day] = fechaCierre.split('-').map(Number);
+        const localDeadline = new Date(year, month - 1, day, 23, 59, 59, 999);
+        return now > localDeadline;
+    }
+    return now > deadline;
+};
+
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     preselectedConvocatoriaId,
     onClose
@@ -57,7 +70,20 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     api.get('/catalogs/carreras').catch(() => ({ data: [] }))
                 ]);
 
-                setConvocatorias(rConvocatorias.data || []);
+                const allConvs = rConvocatorias.data || [];
+                const activeConvs = allConvs.filter((c: any) => {
+                    const isBorradorOrAbierta = c.estado === 'Abierta' || c.estado === 'Borrador';
+                    return isBorradorOrAbierta && !isPastDeadline(c.fecha_cierre || c.fechaCierre);
+                });
+
+                if (preselectedConvocatoriaId && !activeConvs.some(c => getConvocatoriaId(c) === preselectedConvocatoriaId)) {
+                    const preselected = allConvs.find(c => getConvocatoriaId(c) === preselectedConvocatoriaId);
+                    if (preselected) {
+                        activeConvs.push(preselected);
+                    }
+                }
+
+                setConvocatorias(activeConvs);
 
                 const linkedCareers = Array.isArray(rMiCarrera.data) ? rMiCarrera.data : [];
                 if (isDocente && linkedCareers.length > 0) {
@@ -105,6 +131,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 : "Debe seleccionar una carrera asociada.");
         }
         if (idConvocatoria === 0) return setError("Debe vincular su propuesta a una convocatoria.");
+
+        const selected = convocatorias.find(c => getConvocatoriaId(c) === idConvocatoria);
+        if (selected && isPastDeadline(selected.fecha_cierre || selected.fechaCierre)) {
+            return setError("La convocatoria seleccionada ha cerrado debido a que el plazo límite ha vencido.");
+        }
 
         setIsCreating(true);
         setError(null);
@@ -155,6 +186,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
     const selectedConvocatoria = convocatorias.find(c => getConvocatoriaId(c) === idConvocatoria);
     const selectedConvocatoriaLabel = selectedConvocatoria ? getConvocatoriaName(selectedConvocatoria) : "Seleccione una convocatoria...";
+    const isSelectedExpired = selectedConvocatoria && isPastDeadline(selectedConvocatoria.fecha_cierre || selectedConvocatoria.fechaCierre);
 
     return createPortal(
         <div className="modal-overlay">
@@ -320,9 +352,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn-vercel-primary flex-1 py-3"
+                                    disabled={!!isSelectedExpired}
+                                    className="btn-vercel-primary flex-1 py-3 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Iniciar Formulación
+                                    {isSelectedExpired ? "Convocatoria Cerrada" : "Iniciar Formulación"}
                                 </button>
                             </div>
                         </form>
