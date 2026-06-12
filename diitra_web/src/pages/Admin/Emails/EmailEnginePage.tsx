@@ -252,8 +252,8 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
         selected.length > 0
             ? `${selected.length} persona${selected.length > 1 ? 's' : ''}`
             : (broadcastRole || broadcastCarreraId)
-            ? 'difusión por filtro'
-            : 'ninguno';
+                ? 'difusión por filtro'
+                : 'ninguno';
 
     return (
         <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
@@ -274,11 +274,10 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                         key={m}
                         type="button"
                         onClick={() => setMode(m)}
-                        className={`flex-1 text-[9px] font-semibold uppercase tracking-wider py-1.5 rounded-md transition-all cursor-pointer ${
-                            mode === m
+                        className={`flex-1 text-[9px] font-semibold uppercase tracking-wider py-1.5 rounded-md transition-all cursor-pointer ${mode === m
                                 ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
-                        }`}
+                            }`}
                     >
                         {m === 'personas' ? 'Personas específicas' : 'Difusión por filtro'}
                     </button>
@@ -380,11 +379,10 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                                                     setIsOpen(false);
                                                     setQuery(''); // Limpia el buscador para la siguiente selección
                                                 }}
-                                                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors cursor-pointer ${
-                                                    alreadyAdded || !selectable
+                                                className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors cursor-pointer ${alreadyAdded || !selectable
                                                         ? 'opacity-45 cursor-not-allowed'
                                                         : 'hover:bg-brand/5'
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="w-6 h-6 rounded-full bg-brand/15 flex items-center justify-center text-[9px] font-semibold text-brand shrink-0">
                                                     {p.nombre.charAt(0).toUpperCase()}
@@ -834,10 +832,10 @@ const EmailEnginePage: React.FC = () => {
         const actionUrl = hasLinkedContext
             ? resolveActionUrlForPreview(previewReplacements, innerBody, origin)
             : resolveActionUrlForPreview(
-                  { '[[sistema_url]]': origin },
-                  innerBody,
-                  origin
-              );
+                { '[[sistema_url]]': origin },
+                innerBody,
+                origin
+            );
         const fullHtml = renderMasterLayoutPreview({
             title: subject || 'Notificación DIITRA',
             recipientName,
@@ -1255,10 +1253,10 @@ const EmailEnginePage: React.FC = () => {
                                                             {contextType === 'Proyecto'
                                                                 ? '— Ningún proyecto (sin detalles) —'
                                                                 : contextType === 'Convocatoria'
-                                                                ? '— Ninguna convocatoria —'
-                                                                : contextType === 'PeerReview'
-                                                                ? '— Ninguna evaluación —'
-                                                                : '— Sin instancia —'}
+                                                                    ? '— Ninguna convocatoria —'
+                                                                    : contextType === 'PeerReview'
+                                                                        ? '— Ninguna evaluación —'
+                                                                        : '— Sin instancia —'}
                                                         </option>
                                                         {contextType === 'Proyecto' && projects.map(p => (
                                                             <option key={p.uuid} value={p.uuid}>
@@ -1609,11 +1607,6 @@ const EmailEnginePage: React.FC = () => {
                                                     <span className="text-xs">Seleccione un tipo de comunicación</span>
                                                 </div>
                                             )}
-                                        </div>
-
-                                        <div className="bg-[#fff9e6] border-t border-amber-200/60 px-3 py-2 text-center text-[10px] text-amber-800 font-medium flex items-center justify-center gap-1.5">
-                                            <AlertTriangle size={11} className="shrink-0" />
-                                            Simulación visual — el envío real usa la misma plantilla maestra del servidor.
                                         </div>
                                     </div>
                                 </div>

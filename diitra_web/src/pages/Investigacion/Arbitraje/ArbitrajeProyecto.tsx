@@ -188,7 +188,7 @@ const ArbitrajeProyecto: React.FC = () => {
     const estadoCfg = ESTADO_ARBITRAJE_CONFIG[arbitraje.estado_arbitraje] ?? ESTADO_ARBITRAJE_CONFIG['Pendiente'];
 
     return (
-        <main className="flex-1 bg-bg-deep p-8 lg:p-10 overflow-y-auto">
+        <main className="flex-1 bg-bg-deep p-4 md:p-8 lg:p-10">
             {/* Header */}
             <div className="mb-8 animate-fade-up">
                 <button
@@ -261,34 +261,33 @@ const ArbitrajeProyecto: React.FC = () => {
                     </div>
                 </div>
             </div>
+            {/* Aviso si hay desempate */}
+            {arbitraje.estado_arbitraje === 'Desempate' && (
+                <div className="bento-card static p-4 border-error/40 flex items-start gap-4 animate-fade-up mb-6">
+                    <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
+                    <div>
+                        <p className="text-sm font-semibold text-text-main">Caso de Desempate Detectado</p>
+                        <p className="text-xs text-text-dim mt-1">
+                            Los árbitros presentan dictámenes contradictorios. Puede asignar un tercer árbitro para desempatar
+                            o emitir una resolución fundada del Director de Investigación.
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Two-column Vercel Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:50ms]">
                 
                 {/* Main Content: Left Column */}
                 <div className="lg:col-span-3 space-y-6">
-                    {/* Aviso si hay desempate */}
-                    {arbitraje.estado_arbitraje === 'Desempate' && (
-                        <div className="bento-card static p-4 border-error/40 flex items-start gap-4 animate-fade-up">
-                            <AlertTriangle size={20} className="text-error shrink-0 mt-0.5" />
-                            <div>
-                                <p className="text-sm font-semibold text-text-main">Caso de Desempate Detectado</p>
-                                <p className="text-xs text-text-dim mt-1">
-                                    Los árbitros presentan dictámenes contradictorios. Puede asignar un tercer árbitro para desempatar
-                                    o emitir una resolución fundada del Director de Investigación.
-                                </p>
-                            </div>
+                    {/* Lista de Árbitros */}
+                    <div className="animate-fade-up [animation-delay:100ms] space-y-4">
+                        <div className="section-label mb-2">
+                            <UserCheck size={12} />
+                            <span>Árbitros Asignados</span>
                         </div>
-                    )}
 
-            {/* Lista de Árbitros */}
-            <div className="animate-fade-up [animation-delay:100ms] space-y-4">
-                <div className="section-label mb-2">
-                    <UserCheck size={12} />
-                    <span>Árbitros Asignados</span>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Columna 1: Árbitros Internos */}
                     <div className="p-5 bg-surface/40 rounded-xl border border-border-thin/50 space-y-4">
                         <div className="flex items-center justify-between pb-2 border-b border-border-thin/50">
@@ -382,7 +381,7 @@ const ArbitrajeProyecto: React.FC = () => {
         </div>
 
             {/* Sidebar: Right Column */}
-            <div className="space-y-6">
+            <div className="space-y-6 lg:pt-10">
                 <VercelUsageCard 
                     title="Resumen del Tribunal"
                     buttonLabel="Actualizar"
@@ -391,26 +390,26 @@ const ArbitrajeProyecto: React.FC = () => {
                         {
                             label: 'Total Árbitros',
                             value: arbitraje.total_arbitros,
-                            displayValue: `${arbitraje.total_arbitros} asignados`,
+                            displayValue: `${arbitraje.total_arbitros}`,
                             max: 5,
                             color: 'var(--brand)'
                         },
                         {
                             label: 'Completados',
                             value: arbitraje.arbitros_completados,
-                            displayValue: `${arbitraje.arbitros_completados} dictámenes`,
+                            displayValue: `${arbitraje.arbitros_completados}`,
                             max: arbitraje.total_arbitros || 1,
                             color: '#22c55e'
                         },
                         {
                             label: 'Pendientes',
                             value: arbitraje.total_arbitros - arbitraje.arbitros_completados,
-                            displayValue: `${arbitraje.total_arbitros - arbitraje.arbitros_completados} en espera`,
+                            displayValue: `${arbitraje.total_arbitros - arbitraje.arbitros_completados}`,
                             max: arbitraje.total_arbitros || 1,
                             color: '#f0a500'
                         },
                         {
-                            label: 'Promedio /100',
+                            label: 'Promedio',
                             value: arbitraje.puntaje_promedio || 0,
                             displayValue: arbitraje.puntaje_promedio != null ? `${arbitraje.puntaje_promedio.toFixed(1)}/100` : '—',
                             max: 100,
@@ -737,7 +736,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                 return (
                     <div 
                         key={idx} 
-                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                        className="flex items-center justify-between py-1.5 px-2.5 rounded-md transition-all group"
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -765,7 +764,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 </svg>
                             </div>
                             <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[13px] font-medium text-text-main truncate">
+                                <span className="text-xs font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
                                 <svg 
@@ -775,13 +774,14 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                     stroke="currentColor" 
                                     strokeWidth="2.5"
                                 >
+                                    <title>{item.tooltip}</title>
                                     <circle cx="12" cy="12" r="10" />
                                     <line x1="12" y1="16" x2="12" y2="12" />
                                     <line x1="12" y1="8" x2="12.01" y2="8" />
                                 </svg>
                             </div>
                         </div>
-                        <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
+                        <span className="text-xs font-mono font-medium text-text-main shrink-0 ml-2">
                             {item.displayValue || item.value}
                         </span>
                     </div>

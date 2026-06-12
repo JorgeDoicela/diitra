@@ -1086,6 +1086,9 @@ SET FOREIGN_KEY_CHECKS = 0;
 SET SQL_SAFE_UPDATES = 0;
 
 TRUNCATE TABLE inv_convocatorias_lineas;
+TRUNCATE TABLE inv_convocatorias_hitos;
+TRUNCATE TABLE inv_convocatorias_documentos_req;
+TRUNCATE TABLE inv_rubrica_criterios;
 TRUNCATE TABLE inv_rubricas;
 TRUNCATE TABLE inv_agendas_zonales;
 TRUNCATE TABLE inv_tipos_convocatoria;
@@ -1155,17 +1158,30 @@ INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
 ('Zona 9: Distrito Metropolitano de Quito', 'Quito');
 
 -- 3. Líneas de Investigación (Base IST)
-INSERT INTO inv_lineas_investigacion (uuid, codigoLinea, nombreLinea, descripcion, activo) VALUES
-(UUID(), 'LIN-SOFT', 'Innovación Tecnológica y Desarrollo de Software', 'Desarrollo de aplicaciones, IA y sistemas embebidos.', 1),
-(UUID(), 'LIN-ADM', 'Gestión Administrativa y Productividad', 'Optimización de procesos y modelos de negocio.', 1),
-(UUID(), 'LIN-RED', 'Redes y Telecomunicaciones', 'Infraestructura, seguridad informática y conectividad.', 1),
-(UUID(), 'LIN-ENE', 'Energías Renovables y Eficiencia Energética', 'Sostenibilidad y nuevas matrices energéticas.', 1),
-(UUID(), 'LIN-EDU', 'Educación y Tecnologías de la Información', 'E-learning y herramientas digitales.', 1);
+INSERT INTO inv_lineas_investigacion (idLinea, uuid, codigoLinea, nombreLinea, descripcion, activo) VALUES
+(1, UUID(), 'LIN-SOFT', 'Innovación Tecnológica y Desarrollo de Software', 'Desarrollo de aplicaciones, IA y sistemas embebidos.', 1),
+(2, UUID(), 'LIN-ADM', 'Gestión Administrativa, Comercial y Productividad', 'Optimización de procesos administrativos, financieros y de talento humano.', 1),
+(3, UUID(), 'LIN-RED', 'Redes, Ciberseguridad y Telecomunicaciones', 'Infraestructura, seguridad de la información y conectividad.', 1),
+(4, UUID(), 'LIN-ENE', 'Electrónica, Energías Renovables y Eficiencia Energética', 'Sostenibilidad, matrices energéticas alternativas y automatización de procesos.', 1),
+(5, UUID(), 'LIN-EDU', 'Tecnologías de la Información y Comunicación Aplicadas a la Educación', 'Plataformas de e-learning, recursos didácticos interactivos y tecnologías emergentes.', 1),
+(6, UUID(), 'LIN-GAS', 'Gastronomía, Patrimonio Alimentario e Innovación Culinaria', 'Investigación bromatológica, técnicas culinarias ancestrales y rescate de la soberanía alimentaria.', 1),
+(7, UUID(), 'LIN-MKT', 'Marketing Digital, Comercio Electrónico y Desarrollo Empresarial para MIPYMES', 'Estrategias de posicionamiento digital y reactivación comercial de emprendimientos.', 1);
 
 -- 4. Rúbricas de Evaluación (Base)
-INSERT INTO inv_rubricas (nombre, descripcion, version, activo) VALUES
-('Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1),
-('Rúbrica para Proyectos de Vinculación', 'Enfoque en el impacto social y beneficiarios externos.', '1.0', 1);
+INSERT INTO inv_rubricas (idRubrica, nombre, descripcion, version, activo) VALUES
+(1, 'Rúbrica Estándar de Proyectos 2026', 'Evaluación basada en pertinencia, metodología y resultados esperados.', '1.0', 1),
+(2, 'Rúbrica para Proyectos de Vinculación', 'Enfoque en el impacto social y beneficiarios externos.', '1.0', 1);
+
+-- 4.1 Criterios de Rúbricas
+INSERT INTO inv_rubrica_criterios (idRubrica, nombre, descripcion, pesoPorcentaje, orden) VALUES
+(1, 'Pertinencia Científica y Social', 'Vinculación con las líneas del IST Traversari y necesidades de desarrollo local en Quito.', 25.00, 1),
+(1, 'Metodología y Rigor Científico', 'Claridad metodológica, hipótesis, y coherencia en el diseño de experimentación.', 25.00, 2),
+(1, 'Viabilidad y Presupuesto', 'Coherencia de costos y recursos financieros y cronograma Gantt factible.', 25.00, 3),
+(1, 'Impacto Social y Tecnológico', 'Potencial de transferencia tecnológica, fomento de semilleros y aportes a indicadores CACES.', 25.00, 4),
+(2, 'Impacto Comunitario y Social', 'Beneficio directo a la población vulnerable del Distrito Metropolitano de Quito.', 30.00, 1),
+(2, 'Metodología de Intervención', 'Diseño de la participación estudiantil y talleres de vinculación con la comunidad.', 25.00, 2),
+(2, 'Sustentabilidad y Alianzas', 'Permanencia de la transferencia tecnológica y convenios firmados con aliados externos.', 25.00, 3),
+(2, 'Presupuesto y Eficiencia de Recursos', 'Distribución idónea del presupuesto operativo para impacto social.', 20.00, 4);
 
 -- 5. Tipos de Investigación (Se conservan los definidos al inicio del script para alineación con el Frontend: Básica, Aplicada, Desarrollo Experimental)
 -- 6. ODS (Se conservan los 17 ODS de la ONU y sus 5 ejes definidos al inicio del script)
@@ -1369,71 +1385,298 @@ CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
 -- SEMILLAS: Documentos Base DIITRA Builder
 -- =============================================================================
 
-INSERT INTO inv_document_templates (code, name, description, html_content, category, collaborative_fields_json) VALUES
-('PROTOCOLO_INVESTIGACION', 'Protocolo de Investigación', 'Template oficial para la presentación de proyectos SENESCYT/CACES.', '<h1>Protocolo</h1>', 1, '["antecedentes", "justificacion", "marcoTeorico", "metodologia", "evaluacion"]'),
-('INFORME_FINAL_INVESTIGACION', 'Informe Final de Investigación', 'Template consolidado para el cierre de proyectos CACES 2026.', '<h1>Informe Final</h1>', 1, '["resumen_ejecutivo", "introduccion", "desarrollo_tecnico", "analisis_resultados", "conclusiones_recomendaciones"]');
+-- =============================================================================
 
-INSERT IGNORE INTO inv_document_templates
-    (code, name, description, html_content, category, requires_signature, supports_blind_mode, requires_traceability, requires_lopdp)
+INSERT INTO inv_document_templates 
+    (code, name, description, html_content, category, collaborative_fields_json, requires_signature, supports_blind_mode, requires_traceability, requires_lopdp) 
 VALUES
+    (
+        'PROTOCOLO_INVESTIGACION', 
+        'Protocolo de Investigación', 
+        'Template oficial para la presentación de proyectos SENESCYT/CACES.', 
+        '<div class="protocolo-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
+            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
+                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
+                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
+            </div>
+            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold;">PROTOCOLO DE PROYECTO DE INVESTIGACIÓN</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; width: 30%;">Título del Proyecto:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[proyecto_titulo]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Código Institucional:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[codigo_institucional]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Línea de Investigación:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[linea_investigacion]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Director de Proyecto:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[director_nombre]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Presupuesto Asignado:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">$[[presupuesto_total]]</td>
+                </tr>
+            </table>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">1. Antecedentes</h3>
+                <p style="text-align: justify;">[[antecedentes]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">2. Justificación</h3>
+                <p style="text-align: justify;">[[justificacion]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">3. Marco Teórico</h3>
+                <p style="text-align: justify;">[[marcoTeorico]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">4. Metodología</h3>
+                <p style="text-align: justify;">[[metodologia]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">5. Evaluación y Resultados Esperados</h3>
+                <p style="text-align: justify;">[[evaluacion]]</p>
+            </div>
+            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 50%; text-align: center;">
+                            <div style="height: 60px;">[[firma_director_proyecto]]</div>
+                            <p style="margin: 0; font-weight: bold;">Director de Proyecto</p>
+                            <p style="margin: 0; font-size: 12px; color: #555;">Docente Investigador</p>
+                        </td>
+                        <td style="width: 50%; text-align: center;">
+                            <div style="height: 60px;">[[firma_director_investigacion]]</div>
+                            <p style="margin: 0; font-weight: bold;">Director de Investigación</p>
+                            <p style="margin: 0; font-size: 12px; color: #555;">DIITRA — IST Traversari</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>',
+        1, -- category
+        '["antecedentes", "justificacion", "marcoTeorico", "metodologia", "evaluacion"]',
+        1, -- requires_signature
+        0, -- supports_blind_mode
+        1, -- requires_traceability
+        1  -- requires_lopdp
+    ),
+    (
+        'INFORME_FINAL_INVESTIGACION', 
+        'Informe Final de Investigación', 
+        'Template consolidado para el cierre de proyectos CACES 2026.', 
+        '<div class="informe-final-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
+            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
+                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
+                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
+            </div>
+            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold; text-transform: uppercase;">Informe Final de Cierre de Proyecto</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; width: 30%;">Título del Proyecto:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[proyecto_titulo]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Código Institucional:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[codigo_institucional]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Línea/Sublínea:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[linea_investigacion]] / [[sublinea_nombre]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Director de Proyecto:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[director_nombre]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Repositorio DSpace Handle:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[dspace_handle]]</td>
+                </tr>
+            </table>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Resumen Ejecutivo</h3>
+                <p style="text-align: justify;">[[resumen_ejecutivo]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Introducción</h3>
+                <p style="text-align: justify;">[[introduccion]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Desarrollo Técnico y Metodología Aplicada</h3>
+                <p style="text-align: justify;">[[desarrollo_tecnico]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Análisis de Resultados y Productos Científicos</h3>
+                <p style="text-align: justify;">[[analisis_resultados]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Conclusiones y Recomendaciones</h3>
+                <p style="text-align: justify;">[[conclusiones_recomendaciones]]</p>
+            </div>
+            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 33%; text-align: center;">
+                            <div style="height: 60px;">[[firma_director_proyecto]]</div>
+                            <p style="margin: 0; font-weight: bold;">Director de Proyecto</p>
+                            <p style="margin: 0; font-size: 11px; color: #555;">Docente Investigador</p>
+                        </td>
+                        <td style="width: 33%; text-align: center;">
+                            <div style="height: 60px;">[[firma_director_investigacion]]</div>
+                            <p style="margin: 0; font-weight: bold;">Director de Investigación</p>
+                            <p style="margin: 0; font-size: 11px; color: #555;">DIITRA — IST Traversari</p>
+                        </td>
+                        <td style="width: 33%; text-align: center;">
+                            <div style="height: 60px;">[[firma_rector]]</div>
+                            <p style="margin: 0; font-weight: bold;">Rector / Vicerrector</p>
+                            <p style="margin: 0; font-size: 11px; color: #555;">IST Traversari</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>',
+        1, -- category
+        '["resumen_ejecutivo", "introduccion", "desarrollo_tecnico", "analisis_resultados", "conclusiones_recomendaciones"]',
+        1, -- requires_signature
+        0, -- supports_blind_mode
+        1, -- requires_traceability
+        1  -- requires_lopdp
+    ),
+    (
+        'INFORME_AVANCE', 
+        'Informe de Avance de Investigación', 
+        'Template mensual/trimestral para reportar el avance físico e hitos del proyecto.', 
+        '<div class="informe-avance-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
+            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
+                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
+                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
+            </div>
+            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold;">INFORME DE AVANCE DE PROYECTO</h2>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; width: 30%;">Proyecto:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[proyecto_titulo]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Código Institucional:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[codigo_institucional]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Informe N°:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[numero_informe]]</td>
+                </tr>
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Fecha de Emisión:</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">[[fecha_reporte]]</td>
+                </tr>
+            </table>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Resumen de Actividades Ejecutadas</h3>
+                <p style="text-align: justify;">[[resumenActividades]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Presupuesto Ejecutado en el Periodo</h3>
+                <p style="text-align: justify;">[[gastos_periodo]]</p>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold;">Evidencias Adjuntas</h3>
+                <p style="text-align: justify;">[[evidencias_checklist]]</p>
+            </div>
+            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 50%; text-align: center;">
+                            <div style="height: 60px;">[[firma_director_proyecto]]</div>
+                            <p style="margin: 0; font-weight: bold;">Director de Proyecto</p>
+                            <p style="margin: 0; font-size: 12px; color: #555;">Docente Investigador</p>
+                        </td>
+                        <td style="width: 50%; text-align: center;">
+                            <div style="height: 60px;">[[firma_director_investigacion]]</div>
+                            <p style="margin: 0; font-weight: bold;">Aprobado por Dirección de Investigación</p>
+                            <p style="margin: 0; font-size: 12px; color: #555;">DIITRA — IST Traversari</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>',
+        1, -- category
+        '["resumenActividades"]',
+        1, -- requires_signature
+        0, -- supports_blind_mode
+        1, -- requires_traceability
+        1  -- requires_lopdp
+    ),
     (
         'DICTAMEN_ARBITRAJE',
         'Acta de Dictamen de Arbitraje',
         'Documento oficial CACES del resultado de la evaluación por pares doble ciego. Requiere firma digital del Director de Investigación.',
-        '<div class="dictamen-header">
-            <div class="logo-area">[[institucion_nombre]]</div>
-            <h1>ACTA DE DICTAMEN DE ARBITRAJE</h1>
-            <p class="subtitulo">Departamento de Investigación e Innovación Traversari — DIITRA</p>
-            <p class="codigo-trazabilidad">Código: [[traceability_code]]</p>
-        </div>
-        <section class="datos-proyecto">
-            <h2>1. Datos del Proyecto</h2>
-            <table>
-                <tr><td><strong>Código Institucional:</strong></td><td>[[codigo_institucional]]</td></tr>
-                <tr><td><strong>Título:</strong></td><td>[[proyecto_titulo]]</td></tr>
-                <tr><td><strong>Convocatoria:</strong></td><td>[[convocatoria_titulo]]</td></tr>
-                <tr><td><strong>Línea de Investigación:</strong></td><td>[[linea_investigacion]]</td></tr>
-                <tr><td><strong>Fecha de Postulación:</strong></td><td>[[fecha_postulacion]]</td></tr>
-                <tr><td><strong>Fecha de Cierre del Arbitraje:</strong></td><td>[[fecha_cierre]]</td></tr>
-            </table>
-        </section>
-        <section class="panel-arbitros">
-            <h2>2. Panel de Árbitros Evaluadores</h2>
-            <p><em>La identidad de los árbitros se mantiene bajo reserva de conformidad con el proceso de doble ciego (Reglamento de Régimen Académico, Art. 75).</em></p>
-            [[tabla_arbitros]]
-        </section>
-        <section class="resolucion">
-            <h2>3. Resolución Final</h2>
-            <table>
-                <tr><td><strong>Puntaje Promedio Ponderado:</strong></td><td>[[puntaje_promedio]]/100</td></tr>
-                <tr><td><strong>Puntaje Mínimo de Aprobación:</strong></td><td>[[puntaje_minimo]]/100</td></tr>
-                <tr><td><strong>Dictamen:</strong></td><td class="dictamen-[[dictamen_clase]]"><strong>[[dictamen_resultado]]</strong></td></tr>
-            </table>
-            <div class="observaciones">
-                <h3>Observaciones Generales del Panel:</h3>
-                <p>[[observaciones_generales]]</p>
+        '<div class="dictamen-header" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
+            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
+                <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
+                <p style="font-size: 14px; margin: 5px 0 0 0; text-transform: uppercase; font-weight: bold; color: #555;">Departamento de Investigación e Innovación — DIITRA</p>
+                <p class="codigo-trazabilidad" style="font-size: 11px; color: #777; margin-top: 5px;">Código: [[traceability_code]]</p>
             </div>
-        </section>
-        <section class="firma-digital">
-            <h2>4. Firma y Certificación</h2>
-            <div class="firma-container">
-                <div class="firma-imagen">[[firma_imagen]]</div>
-                <p><strong>Director/a de Investigación e Innovación</strong></p>
-                <p>[[director_nombre]]</p>
-                <p>DIITRA — [[institucion_nombre]]</p>
-                <p>Fecha de Firma: [[fecha_firma]]</p>
-            </div>
-            <div class="qr-container">
-                <p><strong>Verificación de Integridad:</strong></p>
-                [[qr_code]]
-                <p class="qr-url">[[verification_url]]</p>
-            </div>
-        </section>',
-        2,   -- category: 2 = Arbitraje
-        1,   -- requires_signature = TRUE
-        1,   -- supports_blind_mode = TRUE
-        1,   -- requires_traceability = TRUE
-        0    -- requires_lopdp = FALSE (no datos personales sensibles en el acta)
+            <h2 style="text-align: center; font-size: 16px; margin-bottom: 25px; font-weight: bold;">ACTA DE DICTAMEN DE ARBITRAJE</h2>
+            <section class="datos-proyecto" style="margin-bottom: 25px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; margin-bottom: 10px;">1. Datos del Proyecto</h3>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold; width: 30%;">Código Institucional:</td><td style="border: 1px solid #ddd; padding: 6px;">[[codigo_institucional]]</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Título:</td><td style="border: 1px solid #ddd; padding: 6px;">[[proyecto_titulo]]</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Convocatoria:</td><td style="border: 1px solid #ddd; padding: 6px;">[[convocatoria_titulo]]</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Línea de Investigación:</td><td style="border: 1px solid #ddd; padding: 6px;">[[linea_investigacion]]</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Fecha de Postulación:</td><td style="border: 1px solid #ddd; padding: 6px;">[[fecha_postulacion]]</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Fecha de Cierre del Arbitraje:</td><td style="border: 1px solid #ddd; padding: 6px;">[[fecha_cierre]]</td></tr>
+                </table>
+            </section>
+            <section class="panel-arbitros" style="margin-bottom: 25px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; margin-bottom: 10px;">2. Panel de Árbitros Evaluadores</h3>
+                <p style="font-size: 12px; font-style: italic; color: #666; margin-bottom: 10px;">La identidad de los árbitros se mantiene bajo estricta reserva de conformidad con el proceso de doble ciego (Reglamento de Régimen Académico, Art. 75).</p>
+                [[tabla_arbitros]]
+            </section>
+            <section class="resolucion" style="margin-bottom: 25px;">
+                <h3 style="font-size: 14px; border-bottom: 1px solid #000; padding-bottom: 5px; font-weight: bold; margin-bottom: 10px;">3. Resolución Final</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold; width: 40%;">Puntaje Promedio Ponderado:</td><td style="border: 1px solid #ddd; padding: 6px;">[[puntaje_promedio]]/100</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Puntaje Mínimo de Aprobación:</td><td style="border: 1px solid #ddd; padding: 6px;">[[puntaje_minimo]]/100</td></tr>
+                    <tr><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold;">Dictamen:</td><td style="border: 1px solid #ddd; padding: 6px; font-weight: bold; color: [[dictamen_color]];">[[dictamen_resultado]]</td></tr>
+                </table>
+                <div class="observaciones" style="background: #fafafa; border: 1px solid #ddd; padding: 12px; border-radius: 4px;">
+                    <h4 style="margin: 0 0 8px 0; font-size: 13px; font-weight: bold;">Observaciones Generales del Panel:</h4>
+                    <p style="margin: 0; font-size: 12px; line-height: 1.5; text-align: justify;">[[observaciones_generales]]</p>
+                </div>
+            </section>
+            <section class="firma-digital" style="margin-top: 35px; border-top: 1px solid #ddd; padding-top: 20px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 50%; text-align: center; vertical-align: top;">
+                            <div class="firma-imagen" style="height: 60px; margin-bottom: 5px;">[[firma_imagen]]</div>
+                            <p style="margin: 0; font-weight: bold; font-size: 13px;">Director/a de Investigación e Innovación</p>
+                            <p style="margin: 0; font-size: 12px; color: #555;">[[director_nombre]]</p>
+                            <p style="margin: 0; font-size: 11px; color: #777;">DIITRA — IST Traversari</p>
+                            <p style="margin: 0; font-size: 11px; color: #777;">Fecha de Firma: [[fecha_firma]]</p>
+                        </td>
+                        <td style="width: 50%; text-align: center; vertical-align: top;">
+                            <div class="qr-container" style="display: inline-block; padding: 5px; border: 1px solid #ddd; margin-bottom: 5px;">
+                                [[qr_code]]
+                            </div>
+                            <p style="margin: 0; font-weight: bold; font-size: 11px;">Verificación de Integridad</p>
+                            <p class="qr-url" style="margin: 0; font-size: 9px; color: #0066cc;">[[verification_url]]</p>
+                        </td>
+                    </tr>
+                </table>
+            </section>
+        </div>',
+        2,    -- category: 2 = Arbitraje
+        NULL, -- collaborative_fields_json: NULL (no CoWork)
+        1,    -- requires_signature = TRUE
+        1,    -- supports_blind_mode = TRUE
+        1,    -- requires_traceability = TRUE
+        0     -- requires_lopdp = FALSE (no datos personales sensibles en el acta)
     );
 
 -- =============================================================================
