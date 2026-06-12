@@ -209,7 +209,14 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         <div className="space-y-3">
                             {investigadores.filter((member: any) => member.activo !== false).map((member: any, idx: number) => {
                                 const isDirector = member.rol?.toLowerCase().includes('director');
-                                const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || member.nivelAcademico === 'Pregrado';
+                                
+                                // Normalized variables to support both camelCase and snake_case API data
+                                const nivelAcademico = member.nivelAcademico ?? member.nivel_academico ?? 'Tercer Nivel';
+                                const horasSemanales = member.horasSemanales ?? member.horas_semanales ?? null;
+                                const horasDisponibles = member.horasDisponibles ?? member.horas_disponibles;
+                                const horasAsignadas = member.horasAsignadas ?? member.horas_asignadas ?? 0;
+
+                                const isEstudiante = member.rol?.toLowerCase().includes('estudiante') || nivelAcademico === 'Pregrado';
 
                                 return (
                                     <div
@@ -259,16 +266,16 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                         </div>
 
                                         <div className="flex flex-wrap sm:flex-nowrap items-center gap-3.5 w-full xl:w-auto xl:justify-end">
-                                            {member.horasDisponibles !== undefined && member.horasDisponibles !== null && (
-                                                <div className={`text-[9px] px-2 py-1.5 rounded-lg border flex items-center gap-1 w-full sm:w-auto shrink-0 ${(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
+                                            {horasDisponibles !== undefined && horasDisponibles !== null && (
+                                                <div className={`text-[9px] px-2 py-1.5 rounded-lg border flex items-center gap-1 w-full sm:w-auto shrink-0 ${(horasSemanales || 0) > (horasDisponibles - (horasAsignadas || 0))
                                                     ? 'bg-error/10 text-error border-error/20 animate-pulse font-semibold'
                                                     : 'bg-info/5 text-info border-info/10'
                                                     }`}>
                                                     <AlertCircle size={10} />
                                                     <span>
-                                                        {(member.horasSemanales || 0) > (member.horasDisponibles - (member.horasAsignadas || 0))
-                                                            ? `Excede límite! Máx disp: ${Math.max(0, member.horasDisponibles - (member.horasAsignadas || 0))}h`
-                                                            : `Disp: ${member.horasDisponibles - (member.horasAsignadas || 0)}h / ${member.horasDisponibles}h`
+                                                        {(horasSemanales || 0) > (horasDisponibles - (horasAsignadas || 0))
+                                                            ? `Excede límite! Máx disp: ${Math.max(0, horasDisponibles - (horasAsignadas || 0))}h`
+                                                            : `Disp: ${horasDisponibles - (horasAsignadas || 0)}h / ${horasDisponibles}h`
                                                         }
                                                     </span>
                                                 </div>
@@ -292,7 +299,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                 <div className="flex flex-col gap-1">
                                                     <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Nivel</span>
                                                     <select
-                                                        value={member.nivelAcademico}
+                                                        value={nivelAcademico}
                                                         disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                         onChange={(e) => onUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
                                                         className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all min-w-[120px] disabled:opacity-60 disabled:cursor-not-allowed"
@@ -308,8 +315,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                     <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Horas</span>
                                                     <input
                                                         type="number"
-                                                        value={member.horasSemanales ?? ''}
-                                                        disabled={currentProject.puedeEditar === false || tieneGrupo}
+                                                        value={horasSemanales ?? ''}
+                                                        disabled={currentProject.puedeEditar === false}
                                                         onChange={(e) => onUpdateMember(member.cedula, 'horasSemanales', e.target.value ? parseFloat(e.target.value) : null)}
                                                         placeholder="0"
                                                         min="0"

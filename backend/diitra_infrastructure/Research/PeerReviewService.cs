@@ -983,7 +983,8 @@ public class PeerReviewService : IPeerReviewService
                 throw new InvalidOperationException("Conflicto de interés (Evaluación cruzada): Un miembro de este proyecto ya está asignado para evaluar un proyecto del revisor seleccionado.");
             }
 
-            // 10. Validar conflicto de interés por colaboración activa (coautoría vigente)
+            // 10. Validar conflicto de interés por colaboración activa (DESHABILITADO para permitir que docentes internos evalúen otros proyectos)
+            /*
             var activeStates = new[] { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
             var reviewerActiveProjects = await _context.InvProyectos
                 .Where(p => reviewerProjects.Contains(p.IdProyecto) && activeStates.Contains(p.Estado) && p.Activo != false)
@@ -1004,6 +1005,7 @@ public class PeerReviewService : IPeerReviewService
                     throw new InvalidOperationException("Conflicto de interés (Colaboración activa): El revisor seleccionado tiene colaboraciones activas en otros proyectos vigentes con miembros de este proyecto.");
                 }
             }
+            */
         }
 
         // 11. Validar límite máximo de evaluadores por proyecto (máximo 3)

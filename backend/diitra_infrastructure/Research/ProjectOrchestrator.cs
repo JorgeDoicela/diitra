@@ -98,9 +98,13 @@ namespace diitra_infrastructure.Research
                 project.TiempoEjecucion = dto.TiempoEjecucion;
 
                 // Cumplimiento CACES: si es asociativo, la adscripción solo puede ser a un grupo aprobado y activo.
-                if (dto.TieneGrupoInvestigacion == true)
+                bool isAssociative = dto.TieneGrupoInvestigacion == true || 
+                                     dto.GrupoInvestigacionTipo == "SI" || 
+                                     dto.GrupoInvestigacionTipo == "si";
+
+                if (isAssociative)
                 {
-                    var groupUuid = dto.GrupoInvestigacionUuid ?? dto.GrupoInvestigacion;
+                    var groupUuid = dto.GrupoInvestigacionUuid ?? dto.GrupoInvestigacion ?? dto.GrupoInvestigacionNombre;
                     if (string.IsNullOrWhiteSpace(groupUuid))
                     {
                         return new SyncResult
@@ -124,6 +128,9 @@ namespace diitra_infrastructure.Research
                     project.IdGrupo = approvedGroup.IdGrupo;
                     dto.GrupoInvestigacion = approvedGroup.Nombre;
                     dto.GrupoInvestigacionUuid = approvedGroup.Uuid;
+                    dto.TieneGrupoInvestigacion = true;
+                    dto.GrupoInvestigacionTipo = "SI";
+                    dto.GrupoInvestigacionNombre = approvedGroup.Nombre;
 
                     dto.Investigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
                 }
@@ -133,6 +140,9 @@ namespace diitra_infrastructure.Research
                     project.IdGrupo = null;
                     dto.GrupoInvestigacion = null;
                     dto.GrupoInvestigacionUuid = null;
+                    dto.TieneGrupoInvestigacion = false;
+                    dto.GrupoInvestigacionTipo = "NO";
+                    dto.GrupoInvestigacionNombre = null;
                 }
 
                 if (dto.IdConvocatoria.HasValue && dto.IdConvocatoria.Value > 0)
@@ -1919,7 +1929,10 @@ namespace diitra_infrastructure.Research
             var normalized = groupUuid.Trim();
             if (!Guid.TryParse(normalized, out _))
             {
-                return null;
+                return await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g =>
+                    g.Nombre.ToLower() == normalized.ToLower() &&
+                    g.Activo == true &&
+                    g.Estado == "Aprobado");
             }
 
             return await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g =>
