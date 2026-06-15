@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
+using System;
 using System.Linq;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
@@ -64,10 +65,19 @@ public class AdminService : IAdminService
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(a =>
-                    (a.IdAlumno != null && a.IdAlumno.Contains(searchTerm)) ||
-                    (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(searchTerm)) ||
-                    (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(searchTerm)));
+                var terms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var term in terms)
+                {
+                    query = query.Where(a =>
+                        (a.IdAlumno != null && a.IdAlumno.Contains(term)) ||
+                        (a.PrimerNombre != null && a.PrimerNombre.ToLower().Contains(term)) ||
+                        (a.SegundoNombre != null && a.SegundoNombre.ToLower().Contains(term)) ||
+                        (a.ApellidoPaterno != null && a.ApellidoPaterno.ToLower().Contains(term)) ||
+                        (a.ApellidoMaterno != null && a.ApellidoMaterno.ToLower().Contains(term)) ||
+                        (a.EmailInstitucional != null && a.EmailInstitucional.ToLower().Contains(term)) ||
+                        (a.Email != null && a.Email.ToLower().Contains(term))
+                    );
+                }
             }
 
             result.TotalCount = await query.CountAsync();
@@ -152,7 +162,15 @@ public class AdminService : IAdminService
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(u => u.IdSigafi.Contains(searchTerm) || (u.Nombre != null && u.Nombre.ToLower().Contains(searchTerm)));
+                var terms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var term in terms)
+                {
+                    query = query.Where(u =>
+                        (u.IdSigafi != null && u.IdSigafi.Contains(term)) ||
+                        (u.Nombre != null && u.Nombre.ToLower().Contains(term)) ||
+                        (u.EmailInstitucional != null && u.EmailInstitucional.ToLower().Contains(term))
+                    );
+                }
             }
 
             result.TotalCount = await query.CountAsync();
@@ -228,10 +246,19 @@ public class AdminService : IAdminService
 
             if (!string.IsNullOrEmpty(searchTerm))
             {
-                query = query.Where(p =>
-                    (p.IdProfesor != null && p.IdProfesor.Contains(searchTerm)) ||
-                    (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(searchTerm)) ||
-                    (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(searchTerm)));
+                var terms = searchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var term in terms)
+                {
+                    query = query.Where(p =>
+                        (p.IdProfesor != null && p.IdProfesor.Contains(term)) ||
+                        (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(term)) ||
+                        (p.SegundoNombre != null && p.SegundoNombre.ToLower().Contains(term)) ||
+                        (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(term)) ||
+                        (p.SegundoApellido != null && p.SegundoApellido.ToLower().Contains(term)) ||
+                        (p.EmailInstitucional != null && p.EmailInstitucional.ToLower().Contains(term)) ||
+                        (p.Email != null && p.Email.ToLower().Contains(term))
+                    );
+                }
             }
 
             result.TotalCount = await query.CountAsync();

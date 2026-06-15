@@ -4,6 +4,33 @@ import { searchRevisores, asignarArbitro } from '../../../services/peerReviewSer
 import type { RevisorDisponibleDto, ArbitrajeProyectoDto } from '../../../services/peerReviewService';
 import { formatNombre, getAvatarStyle } from './arbitrajeUtils';
 
+const highlightText = (text: string | null | undefined, search: string) => {
+    if (!text) return '';
+    if (!search.trim()) return <>{text}</>;
+    
+    try {
+        const escapedSearch = search.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(${escapedSearch})`, 'gi');
+        const parts = text.split(regex);
+        
+        return (
+            <>
+                {parts.map((part, i) => 
+                    regex.test(part) ? (
+                        <mark key={i} className="bg-brand/20 text-brand font-semibold px-0.5 rounded-sm">
+                            {part}
+                        </mark>
+                    ) : (
+                        part
+                    )
+                )}
+            </>
+        );
+    } catch (e) {
+        return <>{text}</>;
+    }
+};
+
 interface Props {
     proyecto: ArbitrajeProyectoDto;
     onClose: () => void;
@@ -57,6 +84,20 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
             return () => clearTimeout(timer);
         }
     }, [query, buscar]);
+
+    useEffect(() => {
+        setQuery('');
+    }, [filtroTipo]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
 
     const toggleRevisor = (rev: RevisorDisponibleDto) => {
         setRevisoresSeleccionados(prev => {
@@ -199,10 +240,16 @@ const AsignarArbitroModal: React.FC<Props> = ({ proyecto, onClose, onSuccess }) 
                                                         {rev.nombre_completo.split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                                                     </div>
                                                     <div className="truncate">
-                                                        <p className="text-xs font-semibold leading-tight text-text-main">{formatNombre(rev.nombre_completo)}</p>
+                                                        <p className="text-xs font-semibold leading-tight text-text-main">
+                                                            {highlightText(formatNombre(rev.nombre_completo), query)}
+                                                        </p>
                                                         <p className="text-[10px] text-text-dim truncate mt-0.5 font-medium">
-                                                            {rev.es_externo && rev.institucion ? `${formatNombre(rev.institucion)} — ` : rev.carrera ? `${rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase())} — ` : ''}
-                                                            {rev.email}
+                                                            {rev.es_externo && rev.institucion ? (
+                                                                <>{highlightText(formatNombre(rev.institucion), query)} — </>
+                                                            ) : rev.carrera ? (
+                                                                <>{highlightText(rev.carrera.toLowerCase().replace(/(^\w|\s\w)/g, m => m.toUpperCase()).replace(/\b(De|En|Y|La|El|Los|Las|Con|Para)\b/g, m => m.toLowerCase()), query)} — </>
+                                                            ) : ''}
+                                                            {highlightText(rev.email, query)}
                                                         </p>
                                                     </div>
                                                 </div>

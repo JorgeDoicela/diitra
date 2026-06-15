@@ -46,16 +46,45 @@ const formatNombre = (nombre: string | null | undefined) => {
         .replace(/(^\w|\s\w)/g, (m) => m.toUpperCase());
 };
 
+const highlightText = (text: string | null | undefined, search: string) => {
+    if (!text) return '';
+    if (!search.trim()) return <>{text}</>;
+    
+    try {
+        const escapedSearch = search.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(${escapedSearch})`, 'gi');
+        const parts = text.split(regex);
+        
+        return (
+            <>
+                {parts.map((part, i) => 
+                    regex.test(part) ? (
+                        <mark key={i} className="bg-brand/20 text-brand font-semibold px-0.5 rounded-sm">
+                            {part}
+                        </mark>
+                    ) : (
+                        part
+                    )
+                )}
+            </>
+        );
+    } catch (e) {
+        return <>{text}</>;
+    }
+};
+
 const UsersPage = () => {
     const [users, setUsers] = useState<ManagedUser[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
     const [search, setSearch] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
+    const searchInputRef = useRef<HTMLInputElement>(null);
     const typeParam = searchParams.get('type');
     const userType = (typeParam === 'DOCENTE' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
     const openUuid = searchParams.get('open'); // deep-link from CommandPalette
     
     const setUserType = (type: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO') => {
+        setSearch('');
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             next.set('type', type);
@@ -203,6 +232,28 @@ const UsersPage = () => {
                 console.error("Error reading external draft metadata", e);
             }
         }
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const activeEl = document.activeElement;
+            if (activeEl && (
+                activeEl.tagName === 'INPUT' || 
+                activeEl.tagName === 'TEXTAREA' || 
+                activeEl.tagName === 'SELECT' ||
+                activeEl.getAttribute('contenteditable') === 'true'
+            )) {
+                return;
+            }
+            
+            if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+                searchInputRef.current?.select();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
     useEffect(() => {
@@ -484,15 +535,48 @@ const UsersPage = () => {
                         </button>
                     </div>
 
-                    <div className="relative group w-full md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim group-hover:text-text-main transition-colors" size={14} />
+                    <div className="relative group w-full md:w-80">
+                        {loading ? (
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-brand animate-spin">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                            </div>
+                        ) : (
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim group-hover:text-text-main transition-colors" size={14} />
+                        )}
                         <input
+                            ref={searchInputRef}
                             type="text"
                             placeholder={`Buscar en ${userType}...`}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="input-vercel !pl-10 !py-2.5 !text-xs uppercase tracking-wider !font-mono placeholder:!lowercase"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    e.currentTarget.blur();
+                                }
+                            }}
+                            className="input-vercel !pl-10 !pr-16 !py-2.5 !text-xs uppercase tracking-wider !font-mono placeholder:!lowercase w-full"
                         />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
+                            {search && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearch('');
+                                        searchInputRef.current?.focus();
+                                    }}
+                                    className="pointer-events-auto text-text-dim hover:text-text-main p-0.5 rounded hover:bg-surface-hover transition-all"
+                                    title="Limpiar búsqueda"
+                                >
+                                    <X size={12} />
+                                </button>
+                            )}
+                            <span className="hidden sm:inline font-mono text-[10px] text-text-dim select-none">
+                                /
+                            </span>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -613,8 +697,12 @@ const UsersPage = () => {
                                                 <UserIcon size={18} />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-text-main tracking-tight">{formatNombre(u.nombre_completo)}</p>
-                                                <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">{u.id_profesor} &bull; {u.email}</p>
+                                                <p className="text-sm font-semibold text-text-main tracking-tight">
+                                                    {highlightText(formatNombre(u.nombre_completo), search)}
+                                                </p>
+                                                <p className="text-[10px] text-text-dim font-mono uppercase opacity-60 tracking-tighter">
+                                                    {highlightText(u.id_profesor, search)} &bull; {highlightText(u.email, search)}
+                                                </p>
                                             </div>
                                         </div>
                                     </td>
@@ -635,7 +723,7 @@ const UsersPage = () => {
                                                  <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
                                                      <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
                                                      <span className="truncate max-w-[190px]" title={u.carrera}>
-                                                         {formatCarrera(u.carrera)}
+                                                         {highlightText(formatCarrera(u.carrera), search)}
                                                      </span>
                                                  </div>
                                              </div>
@@ -644,7 +732,7 @@ const UsersPage = () => {
                                                  <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide pr-2">
                                                      <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
                                                      <span className="truncate max-w-[190px]" title={u.carrera}>
-                                                         {formatCarrera(u.carrera)}
+                                                         {highlightText(formatCarrera(u.carrera), search)}
                                                      </span>
                                                  </div>
                                                  <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
