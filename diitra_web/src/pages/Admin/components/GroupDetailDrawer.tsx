@@ -117,6 +117,10 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     // Conexión a SignalR en tiempo real
     const [collabConnection, setCollabConnection] = useState<signalR.HubConnection | null>(null);
 
+    const isMember = isAdmin || 
+        (detailGroup && detailGroup.id_profesor_coordinador === user?.id_referencia) || 
+        detailMembers.some(m => m.activo && (m.cedula === user?.id_referencia || m.cedula === user?.cedula || m.id_usuario === user?.id_usuario));
+
     // Fetch detail members and feedback when drawer is open
     useEffect(() => {
         if (!isOpen || !detailGroup) return;
@@ -147,7 +151,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
 
     // SignalR Effect
     useEffect(() => {
-        if (!isOpen || !detailGroup || !detailGroup.uuid) {
+        if (!isOpen || !detailGroup || !detailGroup.uuid || !isMember) {
             if (collabConnection) {
                 collabConnection.stop();
                 setCollabConnection(null);
@@ -225,7 +229,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
             isSubscribed = false;
             newConnection.stop().catch(() => {});
         };
-    }, [isOpen, detailGroup?.uuid]);
+    }, [isOpen, detailGroup?.uuid, isMember]);
 
     const fetchFeedbackComments = async (uuid: string) => {
         setLoadingFeedback(true);
@@ -422,6 +426,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         const comments = getFieldComments(fieldKey);
         const hasComments = comments.length > 0;
         
+        if (!isMember) return null;
         if (!hasComments && !isAdmin) return null;
         
         return (
@@ -698,23 +703,25 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                         <Award size={13} />
                         <span>Información General</span>
                     </button>
-                    <button
-                        onClick={() => setDetailTab('feedback')}
-                        className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 relative ${
-                            detailTab === 'feedback'
-                                ? 'border-text-main text-text-main bg-text-main/5'
-                                : 'border-transparent text-text-dim hover:text-text-main'
-                        }`}
-                    >
-                        <MessageSquare size={13} />
-                        <span>Canal de Retroalimentación</span>
-                        {detailGroup.estado === 'Pendiente' && (
-                            <span className="absolute top-2.5 right-4 w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
-                        )}
-                    </button>
+                    {isMember && (
+                        <button
+                            onClick={() => setDetailTab('feedback')}
+                            className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all border-b-2 flex items-center justify-center gap-2 relative ${
+                                detailTab === 'feedback'
+                                    ? 'border-text-main text-text-main bg-text-main/5'
+                                    : 'border-transparent text-text-dim hover:text-text-main'
+                            }`}
+                        >
+                            <MessageSquare size={13} />
+                            <span>Canal de Retroalimentación</span>
+                            {detailGroup.estado === 'Pendiente' && (
+                                <span className="absolute top-2.5 right-4 w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" />
+                            )}
+                        </button>
+                    )}
                 </div>
 
-                {detailTab === 'info' ? (
+                {detailTab === 'info' || !isMember ? (
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
                         {/* Status & Type & Consolidation */}
                         <div className="grid grid-cols-3 gap-4">

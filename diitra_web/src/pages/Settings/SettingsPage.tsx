@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Key, UploadCloud, CheckCircle2, AlertCircle, Lock, FileSignature, Loader2 } from 'lucide-react';
+import { User, Key, UploadCloud, CheckCircle2, AlertCircle, Lock, FileSignature, Loader2, X } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 import { useConfirm } from '../../api/ConfirmContext';
@@ -161,6 +161,37 @@ const SettingsPage: React.FC = () => {
         }
     };
 
+    const [isDeletingFirma, setIsDeletingFirma] = useState(false);
+
+    const handleDeleteSavedFirma = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!await confirm({
+            title: 'Eliminar Firma Guardada',
+            message: '¿Está seguro de eliminar su firma electrónica guardada? Se borrará el archivo y su contraseña cifrada de forma permanente de nuestros servidores.',
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            variant: 'destructive'
+        })) {
+            return;
+        }
+
+        setIsDeletingFirma(true);
+        try {
+            await api.delete('/lopdp/perfil/firma');
+            addToast('Firma Eliminada', 'El certificado de firma electrónica se ha eliminado correctamente.', 'success');
+            setProfile(prev => ({ ...prev, has_p12_certificate: false }));
+            setP12File(null);
+            setP12Password('');
+        } catch (err) {
+            console.error('Error deleting signature:', err);
+            addToast('Error', 'No se pudo eliminar el certificado de firma electrónica.', 'error');
+        } finally {
+            setIsDeletingFirma(false);
+        }
+    };
+
     return (
         <div className="p-4 md:p-10 space-y-8 animate-fade-up">
             <header className="flex flex-col gap-2">
@@ -311,7 +342,20 @@ const SettingsPage: React.FC = () => {
                                         <h3 className="text-xs font-semibold text-text-main">Certificado Guardado</h3>
                                         <p className="text-[10px] text-text-dim mt-0.5">La contraseña se encuentra cifrada bajo AES-256 en BD.</p>
                                     </div>
-                                    <CheckCircle2 className="text-emerald-500" size={16} />
+                                    <CheckCircle2 className="text-emerald-500 flex-shrink-0" size={16} />
+                                    {isDeletingFirma ? (
+                                        <Loader2 className="animate-spin text-brand flex-shrink-0" size={16} />
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={handleDeleteSavedFirma}
+                                            className="text-[10px] font-semibold text-error hover:underline flex items-center gap-1 cursor-pointer flex-shrink-0 bg-transparent border-0 p-0"
+                                            title="Eliminar certificado guardado"
+                                        >
+                                            <X size={12} />
+                                            Eliminar
+                                        </button>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-3">
@@ -329,19 +373,81 @@ const SettingsPage: React.FC = () => {
                                         <label className="text-[10px] font-semibold uppercase tracking-wider text-text-dim">
                                             {profile.has_p12_certificate ? 'Reemplazar Certificado Guardado' : 'Subir Certificado'}
                                         </label>
-                                        <div className="flex items-center justify-center border border-dashed border-border-thin rounded-lg p-4 bg-surface hover:border-brand/40 transition-colors cursor-pointer relative">
+                                        <div 
+                                            className={`flex flex-col items-center justify-center border rounded-lg p-5 transition-all relative min-h-[120px] cursor-pointer ${
+                                                p12File 
+                                                    ? 'border-dashed border-brand bg-brand/5 hover:border-brand/70'
+                                                    : profile.has_p12_certificate
+                                                        ? 'border-solid border-success/30 bg-success/5 hover:border-success/50'
+                                                        : 'border-dashed border-border-thin bg-surface hover:border-brand/40'
+                                            }`}
+                                        >
                                             <input
                                                 type="file"
                                                 onChange={e => setP12File(e.target.files?.[0] || null)}
-                                                className="absolute inset-0 opacity-0 cursor-pointer"
+                                                className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                             />
-                                            {/* MODO PRODUCCIÓN: accept=".p12,.pfx" y label "Subir Certificado (.p12 / .pfx)" */}
-                                            <div className="text-center space-y-1">
-                                                <UploadCloud className="mx-auto text-text-dim" size={20} />
-                                                <p className="text-xs font-semibold text-text-main">{p12File ? p12File.name : 'Seleccionar Archivo'}</p>
-                                                <p className="text-[10px] text-text-dim">En pruebas acepta cualquier archivo. En producción: .p12 / .pfx</p>
-                                                {/* MODO PRODUCCIÓN: <p className="text-[10px] text-text-dim">Formatos válidos: PKCS#12 (.p12, .pfx)</p> */}
-                                            </div>
+                                            
+                                            {p12File ? (
+                                                <div className="text-center space-y-2 z-20 w-full px-4 pointer-events-none">
+                                                    <div className="relative inline-flex items-center justify-center">
+                                                        <UploadCloud className="text-brand animate-pulse" size={24} />
+                                                        <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand"></span>
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex flex-col items-center justify-center gap-1.5">
+                                                        <div className="flex items-center gap-2 max-w-full justify-center">
+                                                            <span className="text-xs font-semibold text-text-main truncate max-w-[180px]">{p12File.name}</span>
+                                                            <span className="badge-vercel badge-vercel-info text-[9px] px-1.5 py-0.5 whitespace-nowrap">
+                                                                Por guardar
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-text-dim">
+                                                            Archivo seleccionado localmente. Ingrese la contraseña abajo para guardar.
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setP12File(null);
+                                                            setP12Password('');
+                                                        }}
+                                                        className="mt-1 text-[10px] font-semibold text-error hover:underline flex items-center justify-center gap-1 mx-auto relative z-20 pointer-events-auto"
+                                                    >
+                                                        <X size={10} />
+                                                        Quitar archivo
+                                                    </button>
+                                                </div>
+                                            ) : profile.has_p12_certificate ? (
+                                                <div className="text-center space-y-1.5 z-20 w-full px-4 pointer-events-none">
+                                                    <div className="flex items-center justify-center">
+                                                        <div className="bg-success/10 p-1.5 rounded-full border border-success/20">
+                                                            <FileSignature className="text-success animate-fade-in" size={20} />
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-success flex items-center justify-center gap-1">
+                                                            <span className="h-1.5 w-1.5 rounded-full bg-success inline-block animate-pulse"></span>
+                                                            Certificado guardado y activo
+                                                        </p>
+                                                        <p className="text-[10px] text-text-dim mt-0.5">
+                                                            Haga clic o arrastre aquí para reemplazar el certificado guardado
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="text-center space-y-1 z-20 w-full px-4 pointer-events-none">
+                                                    <UploadCloud className="mx-auto text-text-dim" size={20} />
+                                                    <p className="text-xs font-semibold text-text-main">Seleccionar Archivo</p>
+                                                    <p className="text-[10px] text-text-dim">
+                                                        En pruebas acepta cualquier archivo. En producción: .p12 / .pfx
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                         {profile.has_p12_certificate && (
                                             <p className="text-[9px] text-text-dim leading-normal mt-1">
@@ -367,11 +473,14 @@ const SettingsPage: React.FC = () => {
 
                                     <button
                                         type="submit"
-                                        disabled={isUploadingFirma}
-                                        className="btn-vercel-primary text-xs w-full justify-center"
+                                        disabled={isUploadingFirma || !p12File}
+                                        className="btn-vercel-primary text-xs w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {isUploadingFirma && <Loader2 className="animate-spin mr-1.5" size={14} />}
-                                        {profile.has_p12_certificate ? 'Reemplazar y Habilitar Firma' : 'Guardar y Habilitar Firma'}
+                                        {p12File 
+                                            ? (profile.has_p12_certificate ? 'Reemplazar y Habilitar Firma' : 'Guardar y Habilitar Firma')
+                                            : (profile.has_p12_certificate ? 'Seleccione un archivo para reemplazar' : 'Seleccione un archivo para comenzar')
+                                        }
                                     </button>
                                 </form>
                             )}

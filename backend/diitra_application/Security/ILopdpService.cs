@@ -17,5 +17,6 @@ public interface ILopdpService
     Task<PerfilLopdpDto?> GetPerfilAsync(int idUsuario);
     Task UpdatePerfilAsync(int idUsuario, ActualizarPerfilRequest request);
     Task GuardarFirmaElectronicaAsync(int idUsuario, string rutaArchivo, string passwordCifrada);
+    Task EliminarFirmaElectronicaAsync(int idUsuario);
 }
 

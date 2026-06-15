@@ -75,6 +75,31 @@ namespace diitra_api.Controllers
         {
             try 
             {
+                var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.FindFirst("es_admin")?.Value == "true";
+                if (!isAdmin)
+                {
+                    var username = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    if (!string.IsNullOrEmpty(username))
+                    {
+                        var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi == username);
+                        if (user != null)
+                        {
+                            var group = await _db.InvGruposInvestigacion
+                                .Include(g => g.IdCoordinadorNavigation)
+                                .FirstOrDefaultAsync(g => g.Uuid == instanceUuid);
+                            if (group != null)
+                            {
+                                var isGroupMember = (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi == username) ||
+                                                    await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                                if (!isGroupMember)
+                                {
+                                    return StatusCode(403, new { message = "No tienes permisos para acceder a la retroalimentación de este grupo de investigación." });
+                                }
+                            }
+                        }
+                    }
+                }
+
                 var comments = await _db.InvCollaborationComments
                     .Where(c => c.DocumentoUuid == instanceUuid)
                     .OrderByDescending(c => c.CreadoEn)
@@ -126,6 +151,31 @@ namespace diitra_api.Controllers
 
             try
             {
+                var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.FindFirst("es_admin")?.Value == "true";
+                if (!isAdmin)
+                {
+                    var username = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    if (!string.IsNullOrEmpty(username))
+                    {
+                        var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi == username);
+                        if (user != null)
+                        {
+                            var group = await _db.InvGruposInvestigacion
+                                .Include(g => g.IdCoordinadorNavigation)
+                                .FirstOrDefaultAsync(g => g.Uuid == request.DocumentoUuid);
+                            if (group != null)
+                            {
+                                var isGroupMember = (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi == username) ||
+                                                    await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                                if (!isGroupMember)
+                                {
+                                    return StatusCode(403, new { message = "No tienes permisos para enviar retroalimentación a este grupo de investigación." });
+                                }
+                            }
+                        }
+                    }
+                }
+
                 var userUuid = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
                 var userName = User.FindFirst("nombre")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "Usuario";
 

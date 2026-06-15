@@ -111,6 +111,22 @@ namespace diitra_infrastructure.Collaboration
                         }
                     }
                 }
+                else
+                {
+                    var group = await _db.InvGruposInvestigacion
+                        .Include(g => g.IdCoordinadorNavigation)
+                        .FirstOrDefaultAsync(g => g.Uuid == instanceUuid);
+                    if (group != null)
+                    {
+                        var isGroupMember = (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi == username) ||
+                                            await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                        if (!isGroupMember)
+                        {
+                            _logger.LogWarning("[HUB] Access Denied: User {User} has no permissions for group {GroupUuid}", username, instanceUuid);
+                            throw new HubException("No tienes permisos para unirte a esta sesión colaborativa.");
+                        }
+                    }
+                }
             }
 
             // 2. Seguridad Enterprise: Verificar si el documento ya está finalizado/firmado o es Doble Ciego

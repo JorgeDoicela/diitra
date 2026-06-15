@@ -709,15 +709,18 @@ const UsersPage = () => {
                                     <td className="p-4">
                                         {u.type === 'DOCENTE' ? (
                                              <div className="space-y-1.5">
-                                                 <div className="flex flex-wrap items-center gap-1.5">
-                                                     <span className={`badge-vercel ${(u.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`} title="Horas Distributivo (SIGAFI)">
-                                                         SIGAFI: {u.horas_investigacion || 0}h
+                                                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+                                                     <span className="text-text-dim flex items-center gap-1.5" title="Horas Distributivo (SIGAFI)">
+                                                         <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
+                                                         SIGAFI: <span className="font-semibold text-text-main">{u.horas_investigacion || 0}h</span>
                                                      </span>
-                                                     <span className={`badge-vercel ${(u.horas_asignadas || 0) > 0 ? 'badge-vercel-info' : 'badge-vercel-neutral'}`} title="Horas Comprometidas en Proyectos (DIITRA)">
-                                                         Asig: {u.horas_asignadas || 0}h
+                                                     <span className="text-text-dim flex items-center gap-1.5" title="Horas Comprometidas en Proyectos (DIITRA)">
+                                                         <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
+                                                         Asig: <span className="font-semibold text-text-main">{u.horas_asignadas || 0}h</span>
                                                      </span>
-                                                     <span className={`badge-vercel ${((u.horas_investigacion || 0) - (u.horas_asignadas || 0)) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`} title="Horas Disponibles">
-                                                         Disp: {Math.max(0, (u.horas_investigacion || 0) - (u.horas_asignadas || 0))}h
+                                                     <span className="text-text-dim flex items-center gap-1.5" title="Horas Disponibles">
+                                                         <span className={`w-1.5 h-1.5 rounded-full ${((u.horas_investigacion || 0) - (u.horas_asignadas || 0)) > 0 ? 'bg-success' : 'bg-error'}`} />
+                                                         Disp: <span className="font-semibold text-text-main">{Math.max(0, (u.horas_investigacion || 0) - (u.horas_asignadas || 0))}h</span>
                                                      </span>
                                                  </div>
                                                  <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
@@ -747,7 +750,7 @@ const UsersPage = () => {
                                                         style={{ width: u.orcid_id ? '100%' : '33%' }}
                                                     />
                                                 </div>
-                                                <span className="status-tag text-text-dim border-border-thin">
+                                                <span className="text-[10px] text-text-dim font-medium">
                                                     {u.orcid_id ? 'Completado' : 'Perfil Incompleto'}
                                                 </span>
                                             </div>
@@ -1014,22 +1017,22 @@ const UsersPage = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Horas Distributivo (SIGAFI)</p>
-                                            <div className={`badge-vercel ${(detailUser.horas_investigacion || 0) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
-                                                <Activity size={10} />
+                                            <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${(detailUser.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
                                                 {detailUser.horas_investigacion || 0}h
                                             </div>
                                         </div>
                                         <div>
                                             <p className="section-label text-text-dim mb-1">Horas Asignadas (DIITRA)</p>
-                                            <div className={`badge-vercel ${(detailUser.horas_asignadas || 0) > 0 ? 'badge-vercel-info' : 'badge-vercel-neutral'}`}>
-                                                <Briefcase size={10} />
+                                            <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${(detailUser.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
                                                 {detailUser.horas_asignadas || 0}h
                                             </div>
                                         </div>
                                         <div className="col-span-2">
                                             <p className="section-label text-text-dim mb-1">Horas Disponibles</p>
-                                            <div className={`badge-vercel ${((detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0)) > 0 ? 'badge-vercel-success' : 'badge-vercel-error'}`}>
-                                                <TrendingUp size={10} />
+                                            <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${((detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0)) > 0 ? 'bg-success' : 'bg-error'}`} />
                                                 {Math.max(0, (detailUser.horas_investigacion || 0) - (detailUser.horas_asignadas || 0))}h
                                             </div>
                                         </div>
@@ -1091,7 +1094,7 @@ const UsersPage = () => {
                                 <div className="flex flex-wrap gap-2">
                                     {detailUser.role_codes && detailUser.role_codes.length > 0 ? (
                                         detailUser.role_codes.map(code => (
-                                            <span key={code} className="badge-vercel badge-vercel-info">
+                                            <span key={code} className="text-xs font-semibold text-brand-light font-mono">
                                                 {code}
                                             </span>
                                         ))
@@ -1108,10 +1111,10 @@ const UsersPage = () => {
                                 <div className="divider-vercel !my-0" />
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-text-dim">Estado del Certificado</span>
-                                    <span className={`badge-vercel ${detailUser.firma_habilitada ? 'badge-vercel-success' : 'badge-vercel-neutral'}`}>
-                                        <span className={`dot ${detailUser.firma_habilitada ? 'dot-success' : 'dot-neutral'}`} />
-                                        {detailUser.firma_habilitada ? 'Habilitada' : 'No cargada'}
-                                    </span>
+                                    <div className="flex items-center gap-2 text-xs font-medium text-text-main">
+                                         <span className={`dot ${detailUser.firma_habilitada ? 'dot-success' : 'dot-neutral'}`} />
+                                         {detailUser.firma_habilitada ? 'Habilitada' : 'No cargada'}
+                                     </div>
                                 </div>
                             </div>
                         </div>
