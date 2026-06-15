@@ -28,7 +28,6 @@ interface WorkspaceTitleProps {
 
 export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
     currentProject,
-    user,
     templateCode,
     setActiveDocument
 }) => {

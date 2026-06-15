@@ -361,7 +361,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 
             {/* ── Área del Editor ── */}
             <div className="flex-1 overflow-y-auto p-8 bg-bg-deep">
-                <div className="max-w-4xl mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
+                <div className="w-full max-w-[95%] mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
                     {editor && cowork.awareness && (
                         <>
                             <EditorContent

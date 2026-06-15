@@ -43,7 +43,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     return (
         <div className="flex flex-col gap-3">
             {/* Firmas */}
-            <div className="bento-card static p-6 flex flex-col justify-between group relative overflow-hidden">
+            <div className="bento-card static p-5 flex flex-col justify-between group relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-28 h-28 bg-brand/5 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none group-hover:bg-brand/10 transition-colors duration-500"></div>
                 <div>
                     <div className="flex items-center gap-2.5 mb-2">
@@ -137,7 +137,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
             </div>
 
             {/* Metadata */}
-            <div className="bento-card static p-6 flex flex-col justify-between group">
+            <div className="bento-card static p-5 flex flex-col justify-between group">
                 <div>
                     <div className="flex items-center gap-2.5 mb-3">
                         <BarChart size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
