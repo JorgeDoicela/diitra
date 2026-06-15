@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
     MessageSquare,
     CheckCircle,
@@ -27,7 +27,15 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     allSections,
     onClose
 }) => {
-    const [activeTab, setActiveTab] = useState<'comments' | 'status' | 'activity'>('comments');
+    const [activeTab, setActiveTabState] = useState<'comments' | 'status' | 'activity'>(() => {
+        const saved = localStorage.getItem('document_sidebar_tab');
+        return (saved === 'comments' || saved === 'status' || saved === 'activity') ? saved : 'comments';
+    });
+
+    const setActiveTab = useCallback((tab: 'comments' | 'status' | 'activity') => {
+        localStorage.setItem('document_sidebar_tab', tab);
+        setActiveTabState(tab);
+    }, []);
     const [comment, setComment] = useState('');
     const [comments, setComments] = useState<any[]>([]);
     const [activities, setActivities] = useState<any[]>([]);
