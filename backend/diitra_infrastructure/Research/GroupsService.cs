@@ -90,6 +90,7 @@ public class GroupsService : IGroupsService
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var currentPeriod = await _context.Periodos
+            .Where(p => p.EsInstituto == 1)
             .OrderByDescending(p => p.Periodoactivoinstituto == 1)
             .ThenByDescending(p => p.Activo == true)
             .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
@@ -228,6 +229,7 @@ public class GroupsService : IGroupsService
         // Auto-link careers based on selected teachers (coordinator & members) for active period
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var currentPeriod = await _context.Periodos
+            .Where(p => p.EsInstituto == 1)
             .OrderByDescending(p => p.Periodoactivoinstituto == 1)
             .ThenByDescending(p => p.Activo == true)
             .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
@@ -455,6 +457,7 @@ public class GroupsService : IGroupsService
         // Auto-link careers based on selected teachers (coordinator & members) for active period
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         var currentPeriod = await _context.Periodos
+            .Where(p => p.EsInstituto == 1)
             .OrderByDescending(p => p.Periodoactivoinstituto == 1)
             .ThenByDescending(p => p.Activo == true)
             .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
@@ -644,6 +647,7 @@ public class GroupsService : IGroupsService
         {
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.Periodoactivoinstituto == 1)
                 .ThenByDescending(p => p.Activo == true)
                 .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)

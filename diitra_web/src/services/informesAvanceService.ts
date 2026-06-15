@@ -67,7 +67,12 @@ export const firmarInforme = (
     certificadoBase64: string,
     passwordCertificado: string
 ): Promise<{ success: boolean; message: string }> =>
-    api.post(`/informes-avance/${id}/firmar`, { certificadoBase64, passwordCertificado }).then(r => r.data);
+    // NOTA: Se usan claves snake_case (certificado_base64 y password_certificado)
+    // para cumplir con la política global de serialización SnakeCaseLower del backend.
+    api.post(`/informes-avance/${id}/firmar`, {
+        certificado_base64: certificadoBase64,
+        password_certificado: passwordCertificado
+    }).then(r => r.data);
 
 // ─────────────────────────────────────────────────────────────
 //  Helpers de UI

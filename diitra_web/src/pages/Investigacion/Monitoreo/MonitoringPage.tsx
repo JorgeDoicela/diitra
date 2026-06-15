@@ -97,7 +97,9 @@ export const MonitoringPage: React.FC = () => {
                 descripcion: nuevoGasto.descripcion,
                 partida: nuevoGasto.partida,
                 monto: parseFloat(nuevoGasto.monto),
-                referenciaFactura: nuevoGasto.referenciaFactura,
+                // NOTA: Se usa referencia_factura en snake_case para cumplir con la política
+                // global de serialización SnakeCaseLower del backend.
+                referencia_factura: nuevoGasto.referenciaFactura,
                 categoria: nuevoGasto.categoria,
                 fecha: new Date().toISOString().split('T')[0]
             });
