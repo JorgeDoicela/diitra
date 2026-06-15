@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     ArrowLeft, Plus, CheckCircle, AlertCircle, FileText,
     RefreshCw, ChevronDown, ChevronUp, X, FileSignature, Activity,
@@ -43,11 +43,15 @@ const InformesAvancePage: React.FC = () => {
     const [projectTitle, setProjectTitle] = useState('');
     const [expandedId, setExpandedId] = useState<number | null>(null);
 
-    // ── Estado del DocumentEditor (Builder Core CACES) ────────────
-    const [editorInstanceUuid, setEditorInstanceUuid] = useState<string | null>(null);
+    // ── Estado del DocumentEditor (Builder Core CACES de la URL) ──
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const editorInstanceUuid = queryParams.get('edit');
+    const activeInformeIdParam = queryParams.get('informeId');
+    const activeInformeId = activeInformeIdParam ? Number(activeInformeIdParam) : null;
+    const activeInformeUuid = queryParams.get('informeUuid');
+
     const [openingEditor, setOpeningEditor] = useState(false);
-    const [activeInformeId, setActiveInformeId] = useState<number | null>(null);
-    const [activeInformeUuid, setActiveInformeUuid] = useState<string | null>(null);
 
     // Modal: nuevo informe
     const [showCreate, setShowCreate] = useState(false);
@@ -93,14 +97,14 @@ const InformesAvancePage: React.FC = () => {
         }
     }, [projectId]);
 
-    useEffect(() => { load(); }, [load]);
+    useEffect(() => {
+        load();
+    }, [load, editorInstanceUuid]);
 
     // ── Abrir Builder Core (CACES) para un informe específico ─────
     const openBuilderForInforme = async (informe: InformeAvanceDto) => {
         if (!projectId) return;
         setOpeningEditor(true);
-        setActiveInformeId(informe.id_informe);
-        setActiveInformeUuid(informe.uuid);
         try {
             // Resolvemos/creamos la instancia de documento para este informe
             const res = await api.get('/documents/instances/resolve', {
@@ -113,7 +117,11 @@ const InformesAvancePage: React.FC = () => {
             });
             const instanceUuid = res.data?.uuid || res.data?.Uuid;
             if (instanceUuid) {
-                setEditorInstanceUuid(instanceUuid);
+                const searchParams = new URLSearchParams(location.search);
+                searchParams.set('edit', instanceUuid);
+                searchParams.set('informeId', String(informe.id_informe));
+                searchParams.set('informeUuid', informe.uuid);
+                navigate({ search: searchParams.toString() }, { replace: true });
             } else {
                 addToast('Error de Editor', 'No se pudo abrir el editor del informe.', 'error');
             }
@@ -225,10 +233,11 @@ const InformesAvancePage: React.FC = () => {
                 initialData={{ Uuid: editorInstanceUuid }}
                 entityUuid={activeInformeUuid || ''}
                 onClose={() => {
-                    setEditorInstanceUuid(null);
-                    setActiveInformeId(null);
-                    setActiveInformeUuid(null);
-                    load();
+                    const searchParams = new URLSearchParams(location.search);
+                    searchParams.delete('edit');
+                    searchParams.delete('informeId');
+                    searchParams.delete('informeUuid');
+                    navigate({ search: searchParams.toString() }, { replace: true });
                 }}
                 readOnly={isReadOnly}
                 readOnlyReason="state"
