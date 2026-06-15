@@ -52,6 +52,7 @@ interface DIITRABuilderShellProps {
     projectStatus?: string;
     entityUuid?: string;                                 // ← UUID real del proyecto
     children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
+    canSign?: boolean;
 }
 
 const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
@@ -68,7 +69,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     readOnlyReason,
     projectStatus,
     entityUuid,
-    children
+    children,
+    canSign = true
 }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
@@ -639,7 +641,19 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Electrónica</h4>
                                                 <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a la Ley de Comercio Electrónico, Firmas Electrónicas y Mensajes de Datos.</p>
                                                 <div className="space-y-4">
-                                                    {hasSavedCert ? (
+                                                    {!canSign ? (
+                                                        <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center space-y-3">
+                                                            <div className="flex justify-center text-amber-500">
+                                                                <Shield size={32} />
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-xs font-bold text-text-main">Firma Restringida</p>
+                                                                <p className="text-[10px] text-text-dim leading-relaxed">
+                                                                    Solo el Director de Proyecto o un Administrador del Sistema están autorizados para firmar digitalmente este protocolo.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ) : hasSavedCert ? (
                                                         <>
                                                             <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-3">
                                                                 <div className="flex items-center gap-2.5">

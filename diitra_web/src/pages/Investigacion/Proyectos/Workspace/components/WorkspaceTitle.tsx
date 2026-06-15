@@ -42,13 +42,6 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
                             {currentProject.status}
                         </span>
-                        <span className="text-text-dim">·</span>
-                        <span
-                            className="text-text-dim font-mono"
-                            title={currentProject.uuid}
-                        >
-                            {currentProject.uuid.split('-')[0]}
-                        </span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title}</h2>
                     <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>

@@ -124,12 +124,12 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
             <div className="mt-6 space-y-4">
                 {/* Toggle Individual / Asociativo */}
-                <div className="flex bg-surface-hover p-1 rounded-md border border-border-thin">
+                <div className="flex bg-surface-hover rounded-md border border-border-thin overflow-hidden">
                     <button
                         type="button"
                         disabled={currentProject.puedeEditar === false}
                         onClick={() => onToggleTieneGrupo(false)}
-                        className={`flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
+                        className={`flex-1 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${!tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
                     >
                         Individual
                     </button>
@@ -137,7 +137,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         type="button"
                         disabled={currentProject.puedeEditar === false}
                         onClick={() => onToggleTieneGrupo(true)}
-                        className={`flex-1 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest rounded-sm transition-all duration-300 ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep' : 'text-text-dim hover:text-text-main'}`}
+                        className={`flex-1 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 border-l border-border-thin ${currentProject.puedeEditar === false ? 'opacity-50 cursor-not-allowed' : ''} ${tieneGrupo ? 'bg-text-main text-bg-deep border-l-transparent' : 'text-text-dim hover:text-text-main'}`}
                     >
                         Asociativo (Grupo)
                     </button>
@@ -401,7 +401,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
                 {/* Guardar equipo button */}
                 {currentProject.puedeEditar !== false && (
-                    <div className="flex justify-end pt-4 border-t border-border-thin">
+                    <div className="flex justify-end pt-4">
                         <button
                             type="button"
                             disabled={isSavingTeam}
@@ -688,7 +688,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                             </div>
 
                                             {/* Row 4: Submit Button */}
-                                            <div className="flex justify-end pt-2 border-t border-border-thin/40">
+                                            <div className="flex justify-end pt-2">
                                                 <button
                                                     type="button"
                                                     disabled={isSubmittingTeamChangeRequest}

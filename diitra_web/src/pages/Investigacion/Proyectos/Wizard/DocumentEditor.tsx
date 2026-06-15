@@ -65,9 +65,10 @@ interface DocumentEditorProps {
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
     readOnlyReason?: string;
     projectStatus?: string;
+    canSign?: boolean;
 }
 
-const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false, readOnlyReason, projectStatus }) => {
+const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false, readOnlyReason, projectStatus, canSign = true }) => {
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
     const [docInstanceData, setDocInstanceData] = useState<any>(null);
@@ -204,6 +205,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             readOnly={readOnly}
             readOnlyReason={readOnlyReason}
             projectStatus={projectStatus}
+            canSign={canSign}
         />
     );
 };
@@ -226,6 +228,7 @@ interface DocumentEditorCoreProps {
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
     readOnlyReason?: string;
     projectStatus?: string;
+    canSign?: boolean;
 }
 
 const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
@@ -239,7 +242,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     onClose,
     readOnly = false,
     readOnlyReason,
-    projectStatus
+    projectStatus,
+    canSign = true
 }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -418,6 +422,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             readOnlyReason={readOnlyReason}
             projectStatus={projectStatus}
             entityUuid={entityUuid}
+            canSign={canSign}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);

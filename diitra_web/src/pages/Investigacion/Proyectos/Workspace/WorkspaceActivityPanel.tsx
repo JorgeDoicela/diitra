@@ -202,7 +202,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                 <div className="px-4 py-2 border-t border-border-thin/50 flex items-center gap-1">
                     <Clock size={9} className="text-text-dim/40" />
                     <span className="text-[9px] text-text-dim/50">
-                        Actualizado {timeAgo(lastFetch.toISOString())} · Auto-refresco 30s
+                        Actualizado {timeAgo(lastFetch.toISOString())}
                     </span>
                 </div>
             )}

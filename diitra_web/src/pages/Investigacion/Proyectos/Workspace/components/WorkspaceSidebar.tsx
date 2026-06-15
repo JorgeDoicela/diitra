@@ -10,6 +10,7 @@ interface WorkspaceSidebarProps {
         presupuesto: number;
         status: string;
         puedeEditar?: boolean;
+        puedeFirmar?: boolean;
         directorProyecto?: string;
     };
     resolvedProjectUuid: string | null;
@@ -60,12 +61,12 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                             <p className="text-xs font-semibold text-text-main">Director de Proyecto</p>
                             <div className="flex items-center">
                                 {isSigned ? (
-                                    <span className="badge-vercel badge-vercel-success text-[9px] font-semibold py-0 flex items-center gap-1">
-                                        <CheckCircle2 size={10} className="text-emerald-500" />
+                                    <span className="text-[9px] font-semibold text-emerald-500 flex items-center gap-1">
+                                        <CheckCircle2 size={10} />
                                         Firmado
                                     </span>
                                 ) : (
-                                    <span className="badge-vercel badge-vercel-warning text-[9px] font-semibold py-0">
+                                    <span className="text-[9px] font-semibold text-warning flex items-center gap-1">
                                         <span className="dot dot-warning dot-pulse" />
                                         Pendiente
                                     </span>
@@ -80,7 +81,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                     </div>
 
                     {/* Botón de acción principal */}
-                    {!isSigned && currentProject.puedeEditar && setActiveDocument && (
+                    {!isSigned && currentProject.puedeFirmar && setActiveDocument && (
                         <button
                             type="button"
                             onClick={() => setActiveDocument('PROTOCOLO_INVESTIGACION')}
@@ -155,7 +156,7 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                                 ${Number(currentProject.presupuesto).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
                         </div>
-                        <span className="badge-vercel badge-vercel-success text-[8px] font-bold uppercase tracking-wider">USD</span>
+                        <span className="text-[8px] font-bold uppercase tracking-wider text-success">USD</span>
                     </div>
                 </div>
             </div>

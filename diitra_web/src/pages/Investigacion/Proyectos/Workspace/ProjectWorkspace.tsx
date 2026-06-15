@@ -499,6 +499,7 @@ export const ProjectWorkspace: React.FC = () => {
                     puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
                                  (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
                     puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
+                    puedeFirmar: res.data.puede_firmar ?? res.data.puedeFirmar ?? res.data.PuedeFirmar ?? false,
                     puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
                 });
                 setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
@@ -518,7 +519,8 @@ export const ProjectWorkspace: React.FC = () => {
                     presupuesto: 0,
                     linea: 'No definida',
                     puedeEditar: true,
-                    puedeSolicitarCambioEquipo: false
+                    puedeSolicitarCambioEquipo: false,
+                    puedeFirmar: true
                 });
                 setInvestigadores([]);
                 setTieneGrupo(false);
@@ -987,6 +989,7 @@ export const ProjectWorkspace: React.FC = () => {
                 readOnly={isReadOnly}
                 readOnlyReason={readOnlyReason}
                 projectStatus={currentProject.status}
+                canSign={currentProject.puedeFirmar}
             />
         );
     }
