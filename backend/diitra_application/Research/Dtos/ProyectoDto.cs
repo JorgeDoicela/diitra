@@ -177,6 +177,7 @@ namespace Diitra.Application.Research.Dtos
         public string? MetadataCacesJson { get; set; }
         public bool PuedeEditar { get; set; } = true;
         public bool PuedeSolicitarCambioEquipo { get; set; } = false;
+        public bool PuedeFirmar { get; set; } = false;
         public decimal? PuntajeEvaluacion { get; set; }
 
         // --- Compliance Enterprise ---

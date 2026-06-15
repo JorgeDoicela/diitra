@@ -157,6 +157,14 @@ namespace diitra_api.Controllers
                     return NotFound(new { error = "El proyecto de investigación especificado no existe." });
                 }
 
+                // ── CONTROL DE ACCESO: Solo Director de Proyecto o Administrador del Sistema pueden firmar ──
+                var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(idReferencia);
+                var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(projectUuid, idReferencia);
+                if (!isSystemAdmin && !isProjectDirector)
+                {
+                    return StatusCode(403, new { error = "Solo el director del proyecto o el administrador del sistema están autorizados para firmar digitalmente este protocolo." });
+                }
+
                 var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
                 var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
                 var skipCertificateValidation = env.IsDevelopment()
@@ -495,6 +503,10 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             detail.PuedeSolicitarCambioEquipo = !string.IsNullOrEmpty(userIdRef) &&
                 await _projectOrchestrator.UserCanRequestTeamChangeAsync(uuid, userIdRef);
+            detail.PuedeFirmar = !string.IsNullOrEmpty(userIdRef) && (
+                await _projectOrchestrator.IsProjectDirectorAsync(uuid, userIdRef) ||
+                await _projectOrchestrator.IsSystemAdminAsync(userIdRef)
+            );
             return Ok(detail);
         }
 
