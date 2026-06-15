@@ -4,7 +4,7 @@ import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext } from '../../core/documents/context/DocumentDataContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 /**
  * DIITRA BUILDER CORE — SHELL UNIVERSAL DE DOCUMENTACIÓN v2.0
@@ -73,7 +73,27 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     canSign = true
 }) => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState(sections[0]?.id || 'general');
+    const location = useLocation();
+    const queryParams = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
+    
+    const sectionParam = queryParams.get('section');
+    const activeTab = sectionParam || sections[0]?.id || 'general';
+
+    const [isSidebarOpen, setIsSidebarOpenState] = useState<boolean>(() => {
+        return localStorage.getItem('document_sidebar_open') !== 'false';
+    });
+
+    const setActiveTab = useCallback((tabId: string) => {
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('section', tabId);
+        navigate({ search: searchParams.toString() }, { replace: true });
+    }, [location.search, navigate]);
+
+    const setIsSidebarOpen = useCallback((open: boolean) => {
+        localStorage.setItem('document_sidebar_open', String(open));
+        setIsSidebarOpenState(open);
+    }, []);
+
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<string | null>(null);
     const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
@@ -85,7 +105,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const [hasSavedCert, setHasSavedCert] = useState(false);
     const [useSavedCert, setUseSavedCert] = useState(false);
