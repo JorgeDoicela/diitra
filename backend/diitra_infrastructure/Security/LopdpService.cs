@@ -378,5 +378,40 @@ public class LopdpService : ILopdpService
             throw;
         }
     }
+
+    public async Task EliminarFirmaElectronicaAsync(int idUsuario)
+    {
+        try
+        {
+            var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
+            if (meta != null)
+            {
+                // Intentar eliminar el archivo físico
+                if (!string.IsNullOrEmpty(meta.RutaFirmaP12) && System.IO.File.Exists(meta.RutaFirmaP12))
+                {
+                    try
+                    {
+                        System.IO.File.Delete(meta.RutaFirmaP12);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al eliminar archivo físico de firma para Usuario={IdUsuario} en ruta {Ruta}", idUsuario, meta.RutaFirmaP12);
+                    }
+                }
+
+                meta.RutaFirmaP12 = null;
+                meta.P12PasswordEncrypted = null;
+                meta.FirmaHabilitada = false;
+                meta.Version++;
+
+                await _context.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al eliminar firma electrónica para Usuario={IdUsuario}", idUsuario);
+            throw;
+        }
+    }
 }
 

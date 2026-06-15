@@ -1139,6 +1139,7 @@ export const ProjectWorkspace: React.FC = () => {
                 transferDescripcion={transferDescripcion}
                 setTransferDescripcion={setTransferDescripcion}
                 isTransferring={isTransferring}
+                investigadores={investigadores}
             />
 
             <GroupDetailDrawer

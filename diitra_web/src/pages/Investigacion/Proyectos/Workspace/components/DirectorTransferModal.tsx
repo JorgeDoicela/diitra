@@ -26,6 +26,7 @@ interface DirectorTransferModalProps {
     transferDescripcion: string;
     setTransferDescripcion: (val: string) => void;
     isTransferring: boolean;
+    investigadores?: any[];
 }
 
 export const DirectorTransferModal: React.FC<DirectorTransferModalProps> = ({
@@ -45,9 +46,14 @@ export const DirectorTransferModal: React.FC<DirectorTransferModalProps> = ({
     setTransferMotivo,
     transferDescripcion,
     setTransferDescripcion,
-    isTransferring
+    isTransferring,
+    investigadores = []
 }) => {
     if (!isOpen) return null;
+
+    const candidates = investigadores.filter(
+        (m: any) => m.activo !== false && m.cedula !== transferDirector?.cedula
+    );
 
     return (
         <div className="modal-overlay animate-fade-in">
@@ -70,73 +76,21 @@ export const DirectorTransferModal: React.FC<DirectorTransferModalProps> = ({
 
                 <form onSubmit={onSubmit} className="modal-body space-y-4">
                     <div className="relative space-y-1">
-                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Buscar Nuevo Director</label>
-                        <div className="relative">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
-                            <input 
-                                type="text"
-                                value={transferSearchQuery}
-                                onChange={(e) => setTransferSearchQuery(e.target.value)}
-                                onFocus={() => setShowTransferSearchResults(true)}
-                                placeholder="Buscar por nombre o cédula..."
-                                className="input-vercel !text-xs !py-3 !pl-9"
-                            />
-                            {isTransferSearching && (
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                    <div className="animate-spin h-3 w-3 border-2 border-t-transparent border-brand rounded-full"></div>
-                                </div>
-                            )}
-                        </div>
-
-                        {showTransferSearchResults && transferSearchQuery.trim() && (
-                            <>
-                                <div className="fixed inset-0 z-20" onClick={() => setShowTransferSearchResults(false)}></div>
-                                <div className="absolute left-0 right-0 top-full mt-1 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-48 overflow-y-auto z-30">
-                                    {transferSearchResults.length === 0 ? (
-                                        <div className="p-4 text-center text-[10px] text-text-dim uppercase tracking-wider">Sin resultados</div>
-                                    ) : (
-                                        transferSearchResults.map((su: any) => (
-                                            <button 
-                                                key={su.cedula}
-                                                type="button"
-                                                onClick={() => {
-                                                    setNewDirectorCedula(su.cedula);
-                                                    setTransferSearchQuery(formatNombre(su.nombre));
-                                                    setShowTransferSearchResults(false);
-                                                }}
-                                                className="w-full p-3 flex items-center justify-between hover:bg-surface text-left text-xs transition-colors border-b border-border-thin last:border-b-0"
-                                            >
-                                                <div>
-                                                    <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
-                                                    <p className="text-text-dim font-mono text-[10px]">C.I. {su.cedula}</p>
-                                                </div>
-                                                <span className={`badge-vercel text-[8px] font-semibold ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
-                                                    {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
-                                                </span>
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            </>
-                        )}
+                        <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Seleccionar Nuevo Director</label>
+                        <select
+                            value={newDirectorCedula}
+                            onChange={(e) => setNewDirectorCedula(e.target.value)}
+                            className="w-full bg-surface border border-border-thin rounded px-3 py-2.5 text-xs text-text-main outline-none focus:border-text-main transition-all font-sans"
+                            required
+                        >
+                            <option value="">-- Seleccione un integrante del equipo --</option>
+                            {candidates.map((su: any) => (
+                                <option key={su.cedula} value={su.cedula}>
+                                    {formatNombre(su.nombre)} ({su.rol})
+                                </option>
+                            ))}
+                        </select>
                     </div>
-
-                    {newDirectorCedula && (
-                        <div className="badge-vercel badge-vercel-success !rounded-md !p-3 !text-[11px] flex justify-between items-center animate-fade-in w-full">
-                            <div>
-                                <span className="font-semibold block uppercase tracking-wider text-[10px]">Nuevo Director:</span>
-                                <p className="font-semibold text-text-main text-xs">{transferSearchQuery}</p>
-                                <p className="text-text-dim font-mono text-[10px]">C.I. {newDirectorCedula}</p>
-                            </div>
-                            <button 
-                                type="button" 
-                                onClick={() => { setNewDirectorCedula(''); setTransferSearchQuery(''); }}
-                                className="text-[10px] text-error hover:opacity-80 font-semibold uppercase tracking-wider"
-                            >
-                                Quitar
-                            </button>
-                        </div>
-                    )}
 
                     <div className="space-y-1">
                         <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">Motivo</label>

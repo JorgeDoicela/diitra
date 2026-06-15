@@ -311,5 +311,35 @@ public class LopdpController : ControllerBase
         // MODO PRODUCCIÓN:
         // return Ok(new { message = "Firma electrónica configurada y contraseña cifrada exitosamente." });
     }
+
+    /// <summary>
+    /// Elimina el certificado de firma electrónica del usuario y su contraseña guardados.
+    /// </summary>
+    [HttpDelete("perfil/firma")]
+    public async Task<IActionResult> EliminarFirma()
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        await _lopdpService.EliminarFirmaElectronicaAsync(dbUser.IdUsuario);
+
+        // Auditoría de datos sensibles
+        var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
+        var userAgent = Request.Headers["User-Agent"].ToString();
+        await _lopdpService.AuditoriaAccesoDatosAsync(
+            dbUser.IdUsuario,
+            dbUser.IdUsuario,
+            "inv_usuarios_metadata",
+            "RutaFirmaP12, P12PasswordEncrypted, FirmaHabilitada",
+            "ELIMINACION",
+            "Eliminación del certificado digital de firma electrónica y su contraseña asociada por petición del usuario",
+            ip,
+            userAgent);
+
+        return Ok(new { message = "Firma electrónica eliminada exitosamente del sistema." });
+    }
 }
 
