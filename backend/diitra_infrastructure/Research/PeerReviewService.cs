@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using diitra_application.Security;
@@ -720,7 +721,15 @@ public class PeerReviewService : IPeerReviewService
 
             if (!string.IsNullOrEmpty(queryNorm))
             {
-                usuariosQuery = usuariosQuery.Where(u => u.IdSigafi.Contains(queryNorm) || (u.Nombre != null && u.Nombre.ToLower().Contains(queryNorm)));
+                var terms = queryNorm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var term in terms)
+                {
+                    usuariosQuery = usuariosQuery.Where(u =>
+                        (u.IdSigafi != null && u.IdSigafi.Contains(term)) ||
+                        (u.Nombre != null && u.Nombre.ToLower().Contains(term)) ||
+                        (u.EmailInstitucional != null && u.EmailInstitucional.ToLower().Contains(term))
+                    );
+                }
             }
 
             var usuarios = await usuariosQuery
@@ -798,10 +807,19 @@ public class PeerReviewService : IPeerReviewService
 
             if (!string.IsNullOrEmpty(queryNorm))
             {
-                queryDocentes = queryDocentes.Where(p =>
-                    (p.IdProfesor != null && p.IdProfesor.Contains(queryNorm)) ||
-                    (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(queryNorm)) ||
-                    (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(queryNorm)));
+                var terms = queryNorm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var term in terms)
+                {
+                    queryDocentes = queryDocentes.Where(p =>
+                        (p.IdProfesor != null && p.IdProfesor.Contains(term)) ||
+                        (p.PrimerNombre != null && p.PrimerNombre.ToLower().Contains(term)) ||
+                        (p.SegundoNombre != null && p.SegundoNombre.ToLower().Contains(term)) ||
+                        (p.PrimerApellido != null && p.PrimerApellido.ToLower().Contains(term)) ||
+                        (p.SegundoApellido != null && p.SegundoApellido.ToLower().Contains(term)) ||
+                        (p.EmailInstitucional != null && p.EmailInstitucional.ToLower().Contains(term)) ||
+                        (p.Email != null && p.Email.ToLower().Contains(term))
+                    );
+                }
             }
 
             var profesores = await queryDocentes
