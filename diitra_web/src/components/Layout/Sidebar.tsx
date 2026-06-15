@@ -635,8 +635,8 @@ const Sidebar = ({
                                                             <BookOpen size={13} strokeWidth={isSubActive ? 2 : 1.5} className="shrink-0" />
                                                         </div>
                                                         <span className={`text-[12px] tracking-tight truncate ${isSubActive ? 'font-semibold text-text-main' : 'font-medium'
-                                                            }`} title={p.titulo}>
-                                                            {p.titulo}
+                                                            }`} title={p.titulo?.trim() || '(Sin título)'}>
+                                                            {p.titulo?.trim() || '(Sin título)'}
                                                         </span>
                                                     </div>
                                                 </Link>

@@ -866,6 +866,10 @@ namespace diitra_infrastructure.Research
                     .Where(p => misIds.Contains(p.IdProyecto) && p.Estado == "Borrador")
                     .CountAsync();
 
+                stats.MisProyectosEnRevision = await _context.InvProyectos
+                    .Where(p => misIds.Contains(p.IdProyecto) && (p.Estado == "En Revisión" || p.Estado == "Enviado"))
+                    .CountAsync();
+
                 stats.MisProductosRegistrados = await _context.InvProductos
                     .Where(p => misIds.Contains(p.IdProyecto))
                     .CountAsync();

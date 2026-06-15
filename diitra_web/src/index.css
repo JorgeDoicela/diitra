@@ -1,4 +1,4 @@
-/* 
+/*
 =================================================================================
              DIITRA GLOBAL DESIGN SYSTEM (VERCEL GEIST PRESET)
 =================================================================================
@@ -13,7 +13,7 @@ CARACTERÍSTICAS CORE:
 
 DIRECTRICES DE USO:
 Todas las variables CSS están vinculadas directamente al compilador Tailwind CSS v4.
-Para alternar entre temas Claro/Oscuro, el sistema evalúa el atributo [data-theme] 
+Para alternar entre temas Claro/Oscuro, el sistema evalúa el atributo [data-theme]
 en el elemento principal:
   - Dark Mode (Defecto): <html data-theme="dark"> o sin atributo.
   - Light Mode: <html data-theme="light">
@@ -41,96 +41,100 @@ en el elemento principal:
  * (ej: bg-surface, text-text-dim, border-border-thin) en lugar de colores rígidos.
  */
 :root {
-  /* Fondo y color de texto base (Dark Mode por defecto) */
-  --bg: #000000;
-  --fg: #ffffff;
-  
-  /* Superficie base para tarjetas, Bento cards, contenedores y sus hovers */
-  --surface: #0a0a0a;
-  --surface-hover: #171717;
-  
-  /* Bordes ultra finos semitransparentes característicos del look de Vercel */
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
-  
-  /* Textos secundarios / atenuados */
-  --text-dim: #888888;
-  --accent: #ffffff;
-  --radius: 8px;
-  
-  /* Rejilla y mallas decorativas */
-  --grid-color: rgba(255, 255, 255, 0.04);
-  --selection-bg: #ffffff;
-  --selection-fg: #000000;
-  
-  /* Colores de marca / llamadas a la acción (Azul Cobalto de Vercel) */
-  --brand: #0070f3;
-  --brand-dark: #0051c3;
-  --brand-light: #3291ff;
-  
-  /* Colores para escenarios y estados específicos (Alertas / Estados de Proyectos) */
-  --error: #ff3333;     /* Escenario: Cancelaciones, Rechazos, Errores */
-  --success: #00e054;   /* Escenario: Aprobaciones, Procesos Exitosos, Miembros Activos */
-  --warning: #f5a623;   /* Escenario: En Revisión, En Corrección, Pendientes */
-  --info: #3291ff;      /* Escenario: Convocatorias, Novedades, Ayuda */
-  
-  /* Colores de fondo traslúcidos para burbujas e iconos de estado */
-  --success-subtle: rgba(0, 224, 84, 0.06);
-  --error-subtle: rgba(255, 51, 51, 0.06);
-  --warning-subtle: rgba(245, 166, 35, 0.06);
-  --info-subtle: rgba(50, 145, 255, 0.06);
-  --brand-subtle: rgba(0, 112, 243, 0.06);
-  
-  /* Escala de Grises Exclusiva (Geist Grays) para fondos, sombras y líneas finas */
-  --accents-1: #111111;
-  --accents-2: #333333;
-  --accents-3: #444444;
-  --accents-4: #666666;
-  --accents-5: #888888;
-  --accents-6: #999999;
-  --accents-7: #eaeaea;
-  --accents-8: #fafafa;
+    /* Fondo y color de texto base (Dark Mode por defecto) */
+    --bg: #000000;
+    --fg: #ffffff;
+
+    /* Superficie base para tarjetas, Bento cards, contenedores y sus hovers */
+    --surface: #0a0a0a;
+    --surface-hover: #171717;
+
+    /* Bordes ultra finos semitransparentes característicos del look de Vercel */
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.16);
+
+    /* Textos secundarios / atenuados */
+    --text-dim: #888888;
+    --accent: #ffffff;
+    --radius: 8px;
+
+    /* Rejilla y mallas decorativas */
+    --grid-color: rgba(255, 255, 255, 0.04);
+    --selection-bg: #ffffff;
+    --selection-fg: #000000;
+
+    /* Colores de marca / llamadas a la acción (Azul Cobalto de Vercel) */
+    --brand: #0070f3;
+    --brand-dark: #0051c3;
+    --brand-light: #3291ff;
+
+    /* Colores para escenarios y estados específicos (Alertas / Estados de Proyectos) */
+    --error: #ff3333;
+    /* Escenario: Cancelaciones, Rechazos, Errores */
+    --success: #00e054;
+    /* Escenario: Aprobaciones, Procesos Exitosos, Miembros Activos */
+    --warning: #f5a623;
+    /* Escenario: En Revisión, En Corrección, Pendientes */
+    --info: #3291ff;
+    /* Escenario: Convocatorias, Novedades, Ayuda */
+
+    /* Colores de fondo traslúcidos para burbujas e iconos de estado */
+    --success-subtle: rgba(0, 224, 84, 0.06);
+    --error-subtle: rgba(255, 51, 51, 0.06);
+    --warning-subtle: rgba(245, 166, 35, 0.06);
+    --info-subtle: rgba(50, 145, 255, 0.06);
+    --brand-subtle: rgba(0, 112, 243, 0.06);
+
+    /* Escala de Grises Exclusiva (Geist Grays) para fondos, sombras y líneas finas */
+    --accents-1: #111111;
+    --accents-2: #333333;
+    --accents-3: #444444;
+    --accents-4: #666666;
+    --accents-5: #888888;
+    --accents-6: #999999;
+    --accents-7: #eaeaea;
+    --accents-8: #fafafa;
 }
 
 [data-theme="light"] {
-  /* TEMA CLARO: Inversión de tonos de grises y adaptabilidad semántica */
-  --bg: #ffffff;
-  --fg: #000000;
-  --surface: #fafafa;
-  --surface-hover: #eaeaea;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.16);
-  --text-dim: #666666;
-  --accent: #000000;
-  --grid-color: rgba(0, 0, 0, 0.04);
-  --selection-bg: #000000;
-  --selection-fg: #ffffff;
-  
-  /* Marca corporativa */
-  --brand: #0070f3;
-  --brand-dark: #0051c3;
-  --brand-light: #3291ff;
-  
-  /* Feedback adaptativo a fondos claros */
-  --error: #cc0000;
-  --success: #008f37;
-  --warning: #b87200;
-  --info: #0070f3;
-  
-  --success-subtle: rgba(0, 143, 55, 0.04);
-  --error-subtle: rgba(204, 0, 0, 0.04);
-  --warning-subtle: rgba(184, 114, 0, 0.04);
-  --info-subtle: rgba(0, 112, 243, 0.04);
-  --brand-subtle: rgba(0, 112, 243, 0.04);
-  
-  --accents-1: #fafafa;
-  --accents-2: #eaeaea;
-  --accents-3: #999999;
-  --accents-4: #888888;
-  --accents-5: #666666;
-  --accents-6: #444444;
-  --accents-7: #333333;
-  --accents-8: #111111;
+    /* TEMA CLARO: Inversión de tonos de grises y adaptabilidad semántica */
+    --bg: #ffffff;
+    --fg: #000000;
+    --surface: #fafafa;
+    --surface-hover: #eaeaea;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.16);
+    --text-dim: #666666;
+    --accent: #000000;
+    --grid-color: rgba(0, 0, 0, 0.04);
+    --selection-bg: #000000;
+    --selection-fg: #ffffff;
+
+    /* Marca corporativa */
+    --brand: #0070f3;
+    --brand-dark: #0051c3;
+    --brand-light: #3291ff;
+
+    /* Feedback adaptativo a fondos claros */
+    --error: #cc0000;
+    --success: #008f37;
+    --warning: #b87200;
+    --info: #0070f3;
+
+    --success-subtle: rgba(0, 143, 55, 0.04);
+    --error-subtle: rgba(204, 0, 0, 0.04);
+    --warning-subtle: rgba(184, 114, 0, 0.04);
+    --info-subtle: rgba(0, 112, 243, 0.04);
+    --brand-subtle: rgba(0, 112, 243, 0.04);
+
+    --accents-1: #fafafa;
+    --accents-2: #eaeaea;
+    --accents-3: #999999;
+    --accents-4: #888888;
+    --accents-5: #666666;
+    --accents-6: #444444;
+    --accents-7: #333333;
+    --accents-8: #111111;
 }
 
 /**
@@ -154,97 +158,147 @@ en el elemento principal:
  * - className="animate-scale-up"        -> Escalado progresivo de 95% a 100% (para diálogos/modales).
  */
 @theme {
-  --color-bg-deep: var(--bg);
-  --color-surface: var(--surface);
-  --color-surface-hover: var(--surface-hover);
-  --color-accent-vercel: var(--accent);
-  --color-border-thin: var(--border);
-  --color-border-hover: var(--border-hover);
-  --color-text-main: var(--fg);
-  --color-text-dim: var(--text-dim);
-  --color-brand: var(--brand);
-  --color-brand-dark: var(--brand-dark);
-  --color-brand-light: var(--brand-light);
-  --color-success: var(--success);
-  --color-error: var(--error);
-  --color-warning: var(--warning);
-  --color-info: var(--info);
-  
-  /* Fuentes oficiales de Vercel mapeadas a clases Tailwind: font-sans y font-mono */
-  --font-sans: "Geist Sans", "Inter", system-ui, sans-serif;
-  --font-mono: "Geist Mono", "JetBrains Mono", monospace;
-  
-  /* Transiciones y micro-animaciones premium */
-  --animate-fade-up: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-fade-in: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-spin-slow: spinSlow 8s linear infinite;
-  --animate-fade-left: fadeLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-slide-in-right: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-scale-up: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-slide-in-from-right: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-slide-in-from-left: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --color-bg-deep: var(--bg);
+    --color-surface: var(--surface);
+    --color-surface-hover: var(--surface-hover);
+    --color-accent-vercel: var(--accent);
+    --color-border-thin: var(--border);
+    --color-border-hover: var(--border-hover);
+    --color-text-main: var(--fg);
+    --color-text-dim: var(--text-dim);
+    --color-brand: var(--brand);
+    --color-brand-dark: var(--brand-dark);
+    --color-brand-light: var(--brand-light);
+    --color-success: var(--success);
+    --color-error: var(--error);
+    --color-warning: var(--warning);
+    --color-info: var(--info);
+
+    /* Fuentes oficiales de Vercel mapeadas a clases Tailwind: font-sans y font-mono */
+    --font-sans: "Geist Sans", "Inter", system-ui, sans-serif;
+    --font-mono: "Geist Mono", "JetBrains Mono", monospace;
+
+    /* Transiciones y micro-animaciones premium */
+    --animate-fade-up: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-fade-in: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-spin-slow: spinSlow 8s linear infinite;
+    --animate-fade-left: fadeLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-slide-in-right: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-scale-up: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-slide-in-from-right: slideInFromRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+    --animate-slide-in-from-left: slideInFromLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes spinSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes fadeLeft {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 @keyframes slideInFromRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 @keyframes slideInFromLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
 :root {
-  background-color: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg);
-  min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg);
+    min-height: 100vh;
 }
 
 /**
  * 4. MALLAS Y EFECTOS DE FONDO DYNAMIC GRIDS DE VERCEL.COM
  * -----------------------------------------------------------------------------
  * Generan fondos ornamentales interactivos de cuadrícula Geist.
- * 
+ *
  * Clases de fondo:
  * - className="vercel-grid"       -> Rejilla base infinita atenuada (ideal para la base del app).
  * - className="vercel-grid-fade"  -> Rejilla elegante con enmascaramiento radial (perfecto para headers).
@@ -258,52 +312,52 @@ body {
 
 /* Cuadrícula base infinita */
 .vercel-grid {
-  background-image: 
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 32px 32px;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 32px 32px;
 }
 
 /* Cuadrícula premium con máscara degradada (ideal para headers y landing sections) */
 .vercel-grid-fade {
-  position: relative;
-  overflow: hidden;
+    position: relative;
+    overflow: hidden;
 }
 
 .vercel-grid-fade::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: 
-    linear-gradient(var(--grid-color) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
-  -webkit-mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
-  pointer-events: none;
-  z-index: 0;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(var(--grid-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 32px 32px;
+    mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(circle at 50% 30%, black 20%, transparent 80%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 /* Destello superior azul cobalto difuminado en degradado radial */
 .bg-glow {
-  position: relative;
-  overflow: hidden;
+    position: relative;
+    overflow: hidden;
 }
 
 .bg-glow::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.15), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.15), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 [data-theme="light"] .bg-glow::before {
-  background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.05), transparent 70%);
+    background: radial-gradient(circle at 50% -20%, rgba(0, 112, 243, 0.05), transparent 70%);
 }
 
 /**
@@ -330,31 +384,32 @@ body {
  *   </div>
  */
 .bento-card {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .bento-card:hover {
-  border-color: var(--border-hover);
-  background-color: var(--surface-hover);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-  transform: translateY(-1px); /* Elevación sutil al interactuar */
+    border-color: var(--border-hover);
+    background-color: var(--surface-hover);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+    /* Elevación sutil al interactuar */
 }
 
 [data-theme="light"] .bento-card:hover {
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
 }
 
 /* VARIANTE ESTÁTICA: Remueve los efectos interactivos manteniendo toda la estructura Bento */
 .bento-card.static,
 .bento-card-static {
-  transform: none !important;
-  background-color: var(--surface) !important;
-  border-color: var(--border) !important;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01) !important;
-  cursor: default;
+    transform: none !important;
+    background-color: var(--surface) !important;
+    border-color: var(--border) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01) !important;
+    cursor: default;
 }
 
 /**
@@ -377,86 +432,86 @@ body {
  *   </button>
  */
 .btn-vercel-primary {
-  background-color: var(--fg);
-  color: var(--bg);
-  border: 1px solid var(--fg);
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.625rem 1.25rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  white-space: nowrap;
+    background-color: var(--fg);
+    color: var(--bg);
+    border: 1px solid var(--fg);
+    border-radius: var(--radius);
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
 }
 
 .btn-vercel-primary:hover {
-  opacity: 0.9;
+    opacity: 0.9;
 }
 
 .btn-vercel-primary:active {
-  transform: scale(0.97);
+    transform: scale(0.97);
 }
 
 .btn-vercel-secondary {
-  background-color: var(--surface);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.625rem 1.25rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  white-space: nowrap;
+    background-color: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
 }
 
 .btn-vercel-secondary:hover {
-  border-color: var(--fg);
-  background-color: var(--surface-hover);
+    border-color: var(--fg);
+    background-color: var(--surface-hover);
 }
 
 .btn-vercel-secondary:active {
-  transform: scale(0.97);
+    transform: scale(0.97);
 }
 
 /* Botón de marca con sombreado de resplandor azul cobalto */
 .btn-brand {
-  background-color: var(--brand);
-  color: #ffffff;
-  border: 1px solid var(--brand);
-  border-radius: var(--radius);
-  font-weight: 500;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.625rem 1.25rem;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(0, 112, 243, 0.15);
+    background-color: var(--brand);
+    color: #ffffff;
+    border: 1px solid var(--brand);
+    border-radius: var(--radius);
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.625rem 1.25rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(0, 112, 243, 0.15);
 }
 
 .btn-brand:hover {
-  background-color: transparent;
-  color: var(--brand);
-  box-shadow: 0 6px 20px rgba(0, 112, 243, 0.2);
-  transform: translateY(-1px);
+    background-color: transparent;
+    color: var(--brand);
+    box-shadow: 0 6px 20px rgba(0, 112, 243, 0.2);
+    transform: translateY(-1px);
 }
 
 /**
@@ -467,17 +522,17 @@ body {
  * - *:focus-visible: Enfoque de alta visibilidad para navegación asistida por teclado.
  */
 ::selection {
-  background: var(--selection-bg);
-  color: var(--selection-fg);
+    background: var(--selection-bg);
+    color: var(--selection-fg);
 }
 
 *:focus-visible {
-  outline: 2px solid var(--fg);
-  outline-offset: 2px;
+    outline: 2px solid var(--fg);
+    outline-offset: 2px;
 }
 
 *:focus:not(:focus-visible) {
-  outline: none !important;
+    outline: none !important;
 }
 
 /* Evitar outline de color y aplicar sombreado negro/blanco limpio (estilo Vercel) en campos de entrada y texto */
@@ -487,16 +542,16 @@ select:focus,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: none !important;
-  border-color: var(--fg) !important;
-  box-shadow: 0 0 0 1px var(--fg) !important;
+    outline: none !important;
+    border-color: var(--fg) !important;
+    box-shadow: 0 0 0 1px var(--fg) !important;
 }
 
 /* Evitar outline azul en el editor de texto colaborativo */
 .ProseMirror:focus,
 .ProseMirror:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /**
@@ -508,37 +563,37 @@ select:focus-visible {
  * Ejemplo en React:
  *   <div className="flex flex-col gap-2">
  *     <label className="section-label">Nombre del Grupo</label>
- *     <input 
- *       type="text" 
- *       className="input-vercel" 
- *       placeholder="Escribe aquí..." 
+ *     <input
+ *       type="text"
+ *       className="input-vercel"
+ *       placeholder="Escribe aquí..."
  *     />
  *   </div>
  */
 .input-vercel {
-  background-color: var(--bg);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  font-family: var(--font-sans);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  outline: none;
-  width: 100%;
+    background-color: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-family: var(--font-sans);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+    width: 100%;
 }
 
 .input-vercel:hover {
-  border-color: var(--border-hover);
+    border-color: var(--border-hover);
 }
 
 .input-vercel:focus {
-  border-color: var(--fg);
-  box-shadow: 0 0 0 1px var(--fg);
+    border-color: var(--fg);
+    box-shadow: 0 0 0 1px var(--fg);
 }
 
 .input-vercel::placeholder {
-  color: var(--text-dim);
+    color: var(--text-dim);
 }
 
 /**
@@ -561,84 +616,168 @@ select:focus-visible {
  *   </span>
  */
 .badge-vercel {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1rem;
-  border: 1px solid var(--border);
-  background-color: var(--surface);
-  color: var(--fg);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    color: var(--fg);
 }
 
 /* Éxito (Success): Aprobado, Aceptado, Completado */
 .badge-vercel-success {
-  background-color: rgba(0, 224, 84, 0.06);
-  border-color: rgba(0, 224, 84, 0.3);
-  color: #00e054;
+    background-color: rgba(0, 224, 84, 0.06);
+    border-color: rgba(0, 224, 84, 0.3);
+    color: #00e054;
 }
 
 [data-theme="light"] .badge-vercel-success {
-  background-color: rgba(0, 224, 84, 0.04);
-  color: #008f37;
+    background-color: rgba(0, 224, 84, 0.04);
+    color: #008f37;
 }
 
 /* Peligro / Error: Rechazado, Detenido, Error */
 .badge-vercel-error {
-  background-color: rgba(255, 0, 0, 0.06);
-  border-color: rgba(255, 0, 0, 0.3);
-  color: #ff3333;
+    background-color: rgba(255, 0, 0, 0.06);
+    border-color: rgba(255, 0, 0, 0.3);
+    color: #ff3333;
 }
 
 [data-theme="light"] .badge-vercel-error {
-  background-color: rgba(255, 0, 0, 0.04);
-  color: #cc0000;
+    background-color: rgba(255, 0, 0, 0.04);
+    color: #cc0000;
 }
 
 /* Advertencia / En Progreso: En Revisión, En Corrección, Espera */
 .badge-vercel-warning {
-  background-color: rgba(245, 166, 35, 0.06);
-  border-color: rgba(245, 166, 35, 0.3);
-  color: #f5a623;
+    background-color: rgba(245, 166, 35, 0.06);
+    border-color: rgba(245, 166, 35, 0.3);
+    color: #f5a623;
 }
 
 [data-theme="light"] .badge-vercel-warning {
-  background-color: rgba(245, 166, 35, 0.04);
-  color: #b87200;
+    background-color: rgba(245, 166, 35, 0.04);
+    color: #b87200;
 }
 
 /* Informativo: Convocatorias, Novedades, Soporte */
 .badge-vercel-info {
-  background-color: rgba(0, 112, 243, 0.06);
-  border-color: rgba(0, 112, 243, 0.3);
-  color: #3291ff;
+    background-color: rgba(0, 112, 243, 0.06);
+    border-color: rgba(0, 112, 243, 0.3);
+    color: #3291ff;
 }
 
 [data-theme="light"] .badge-vercel-info {
-  background-color: rgba(0, 112, 243, 0.04);
-  color: #0070f3;
+    background-color: rgba(0, 112, 243, 0.04);
+    color: #0070f3;
 }
 
 /* Especial / Roles: Coordinador, Director de Proyecto */
 .badge-vercel-violet {
-  background-color: rgba(139, 92, 246, 0.06);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #a78bfa;
+    background-color: rgba(139, 92, 246, 0.06);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #a78bfa;
 }
 
 [data-theme="light"] .badge-vercel-violet {
-  background-color: rgba(139, 92, 246, 0.04);
-  color: #7c3aed;
+    background-color: rgba(139, 92, 246, 0.04);
+    color: #7c3aed;
 }
 
 /* Neutro: Borradores, Deshabilitado */
 .badge-vercel-neutral {
-  background-color: var(--surface);
-  border-color: var(--border);
-  color: var(--text-dim);
+    background-color: var(--surface);
+    border-color: var(--border);
+    color: var(--text-dim);
+}
+
+/**
+ * 9b. COMPONENTE: CALLOUTS / AVISOS INLINE (VERCEL GEIST STYLE)
+ * -----------------------------------------------------------------------------
+ * Bloques informativos embebidos en formularios y editores. Fondo de superficie,
+ * borde fino y acento lateral de color semántico (sin fondos saturados ni mayúsculas).
+ *
+ * Ejemplo en React:
+ *   <div className="callout-vercel callout-vercel-warning">
+ *     <div className="icon-circle icon-circle-warning !p-2 shrink-0">
+ *       <Shield size={14} />
+ *     </div>
+ *     <div>
+ *       <p className="callout-vercel-title">Vista de solo lectura activa</p>
+ *       <p className="callout-vercel-body">El documento está sellado y no admite cambios.</p>
+ *     </div>
+ *   </div>
+ */
+.callout-vercel {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1.125rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background-color: var(--surface);
+    transition: all 0.15s ease-in-out;
+}
+
+.callout-vercel-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--fg);
+}
+
+.callout-vercel-body {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-dim);
+    margin-top: 0.1875rem;
+}
+
+.callout-vercel-warning {
+    border-color: var(--warning);
+    background-color: var(--warning-subtle);
+}
+
+.callout-vercel-warning .callout-vercel-title {
+    color: var(--warning);
+}
+
+.callout-vercel-info {
+    border-color: var(--info);
+    background-color: var(--info-subtle);
+}
+
+.callout-vercel-info .callout-vercel-title {
+    color: var(--info);
+}
+
+.callout-vercel-success {
+    border-color: var(--success);
+    background-color: var(--success-subtle);
+}
+
+.callout-vercel-success .callout-vercel-title {
+    color: var(--success);
+}
+
+.callout-vercel-error {
+    border-color: var(--error);
+    background-color: var(--error-subtle);
+}
+
+.callout-vercel-error .callout-vercel-title {
+    color: var(--error);
+}
+
+.callout-vercel-neutral {
+    border-color: var(--accents-2);
+    background-color: var(--accents-1);
 }
 
 /**
@@ -660,107 +799,111 @@ select:focus-visible {
 
 /* Contenedor flotante en la esquina inferior izquierda */
 .toast-container-vercel {
-  position: fixed;
-  bottom: 1.5rem;
-  left: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  z-index: 9999;
-  max-width: 380px;
-  width: calc(100% - 3rem);
+    position: fixed;
+    bottom: 1.5rem;
+    left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 9999;
+    max-width: 380px;
+    width: calc(100% - 3rem);
 }
 
 /* Toast flotante con diseño minimalista oficial de Vercel.com */
 .toast-vercel {
-  background-color: var(--surface);
-  color: var(--fg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.75rem 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
+    background-color: var(--surface);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
 }
 
 [data-theme="dark"] .toast-vercel {
-  background-color: #000000;
-  border-color: var(--accents-2);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    background-color: #000000;
+    border-color: var(--accents-2);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="light"] .toast-vercel {
-  background-color: #ffffff;
-  border-color: var(--accents-2);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    background-color: #ffffff;
+    border-color: var(--accents-2);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
 .toast-vercel:hover {
-  transform: translateY(-1px);
-  border-color: var(--accents-3);
+    transform: translateY(-1px);
+    border-color: var(--accents-3);
 }
 
 /* Icon wrapper with soft colored background */
 .toast-icon-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 .toast-icon-success {
-  background-color: rgba(0, 224, 84, 0.1);
-  color: #00e054;
+    background-color: rgba(0, 224, 84, 0.1);
+    color: #00e054;
 }
+
 [data-theme="light"] .toast-icon-success {
-  background-color: rgba(0, 143, 55, 0.1);
-  color: #008f37;
+    background-color: rgba(0, 143, 55, 0.1);
+    color: #008f37;
 }
 
 .toast-icon-error {
-  background-color: rgba(255, 51, 51, 0.1);
-  color: #ff3333;
+    background-color: rgba(255, 51, 51, 0.1);
+    color: #ff3333;
 }
+
 [data-theme="light"] .toast-icon-error {
-  background-color: rgba(204, 0, 0, 0.1);
-  color: #cc0000;
+    background-color: rgba(204, 0, 0, 0.1);
+    color: #cc0000;
 }
 
 .toast-icon-warning {
-  background-color: rgba(245, 166, 35, 0.1);
-  color: #f5a623;
+    background-color: rgba(245, 166, 35, 0.1);
+    color: #f5a623;
 }
+
 [data-theme="light"] .toast-icon-warning {
-  background-color: rgba(184, 114, 0, 0.1);
-  color: #b87200;
+    background-color: rgba(184, 114, 0, 0.1);
+    color: #b87200;
 }
 
 .toast-icon-info {
-  background-color: rgba(0, 112, 243, 0.1);
-  color: #0070f3;
+    background-color: rgba(0, 112, 243, 0.1);
+    color: #0070f3;
 }
 
 .toast-icon-default {
-  background-color: rgba(0, 112, 243, 0.1);
-  color: var(--brand);
+    background-color: rgba(0, 112, 243, 0.1);
+    color: var(--brand);
 }
 
 @keyframes toastSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 /**
@@ -772,13 +915,13 @@ select:focus-visible {
  *   const [activeTab, setActiveTab] = useState("general");
  *
  *   <div className="tabs-vercel">
- *     <button 
+ *     <button
  *       className={`tab-vercel-item ${activeTab === "general" ? "active" : ""}`}
  *       onClick={() => setActiveTab("general")}
  *     >
  *       General
  *     </button>
- *     <button 
+ *     <button
  *       className={`tab-vercel-item ${activeTab === "seguridad" ? "active" : ""}`}
  *       onClick={() => setActiveTab("seguridad")}
  *     >
@@ -789,42 +932,42 @@ select:focus-visible {
 
 /* Contenedor de pestañas alineado en la base con borde sutil */
 .tabs-vercel {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
 }
 
 /* Item de pestaña interactivo con indicador inferior de deslizamiento */
 .tab-vercel-item {
-  color: var(--text-dim);
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: 0.75rem 0;
-  position: relative;
-  cursor: pointer;
-  transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  background: transparent;
-  border: none;
+    color: var(--text-dim);
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.75rem 0;
+    position: relative;
+    cursor: pointer;
+    transition: color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    background: transparent;
+    border: none;
 }
 
 .tab-vercel-item:hover {
-  color: var(--fg);
+    color: var(--fg);
 }
 
 .tab-vercel-item.active {
-  color: var(--fg);
+    color: var(--fg);
 }
 
 .tab-vercel-item.active::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: var(--fg);
-  border-radius: 9999px;
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--fg);
+    border-radius: 9999px;
 }
 
 /**
@@ -834,10 +977,10 @@ select:focus-visible {
  * className="divider-vercel"
  */
 .divider-vercel {
-  height: 1px;
-  background-color: var(--border);
-  width: 100%;
-  margin: 1.5rem 0;
+    height: 1px;
+    background-color: var(--border);
+    width: 100%;
+    margin: 1.5rem 0;
 }
 
 /**
@@ -866,73 +1009,73 @@ select:focus-visible {
 
 /* Fondo oscuro translúcido sutil (estilo Vercel) */
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 110;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  background-color: rgba(0, 0, 0, 0.7);
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background-color: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 [data-theme="light"] .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 /* Cuerpo de la tarjeta modal con bordes definidos y sombra volumétrica */
 .modal-card {
-  background-color: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
-  width: 100%;
-  max-width: 32rem;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 32rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 [data-theme="light"] .modal-card {
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.08);
 }
 
 .modal-card--lg {
-  max-width: 42rem;
+    max-width: 42rem;
 }
 
 .modal-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: var(--surface);
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--surface);
 }
 
 .modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex: 1;
 }
 
 .modal-footer {
-  padding: 1rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  background-color: var(--surface);
+    padding: 1rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    background-color: var(--surface);
 }
 
 /* Dropdown de formulario con icono SVG de flecha integrado */
 select.input-vercel {
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.75rem center;
-  padding-right: 2rem;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
 }
 
 /**
@@ -955,57 +1098,57 @@ select.input-vercel {
 
 /* Etiquetas de sección en mayúsculas pequeñas con tracking ancho */
 .section-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: var(--text-dim);
 }
 
 /* Números y métricas en formato Geist Mono */
 .stat-number {
-  font-size: 3rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: var(--fg);
+    font-size: 3rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--fg);
 }
 
 .stat-number--lg {
-  font-size: 3.75rem;
+    font-size: 3.75rem;
 }
 
 .stat-number--sm {
-  font-size: 1.5rem;
+    font-size: 1.5rem;
 }
 
 /* Etiquetas de estado compactas */
 .status-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: 8px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid;
 }
 
 /* Contenedor de estados vacíos (empty states) con bordes punteados */
 .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 1.5rem;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 1.5rem;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
 }
 
 /**
@@ -1027,59 +1170,85 @@ select.input-vercel {
 
 /* Pequeños círculos de estado (Ideal para tableros) */
 .dot {
-  width: 0.375rem;
-  height: 0.375rem;
-  border-radius: 9999px;
-  flex-shrink: 0;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 9999px;
+    flex-shrink: 0;
 }
 
-.dot-success { background-color: var(--success); }
-.dot-warning { background-color: var(--warning); }
-.dot-error   { background-color: var(--error); }
-.dot-info    { background-color: var(--info); }
-.dot-brand   { background-color: var(--brand); }
-.dot-neutral { background-color: var(--accents-5); }
+.dot-success {
+    background-color: var(--success);
+}
+
+.dot-warning {
+    background-color: var(--warning);
+}
+
+.dot-error {
+    background-color: var(--error);
+}
+
+.dot-info {
+    background-color: var(--info);
+}
+
+.dot-brand {
+    background-color: var(--brand);
+}
+
+.dot-neutral {
+    background-color: var(--accents-5);
+}
 
 /* Animación de latido suave para indicadores activos */
-.dot-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+.dot-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* Contenedores circulares suaves para iconos semánticos */
 .icon-circle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem;
-  border-radius: 9999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    border-radius: 9999px;
 }
 
 .icon-circle-success {
-  background-color: var(--success-subtle);
-  color: var(--success);
+    background-color: var(--success-subtle);
+    color: var(--success);
 }
 
 .icon-circle-info {
-  background-color: var(--info-subtle);
-  color: var(--info);
+    background-color: var(--info-subtle);
+    color: var(--info);
 }
 
 .icon-circle-warning {
-  background-color: var(--warning-subtle);
-  color: var(--warning);
+    background-color: var(--warning-subtle);
+    color: var(--warning);
 }
 
 .icon-circle-error {
-  background-color: var(--error-subtle);
-  color: var(--error);
+    background-color: var(--error-subtle);
+    color: var(--error);
 }
 
 .icon-circle-brand {
-  background-color: var(--brand-subtle);
-  color: var(--brand);
+    background-color: var(--brand-subtle);
+    color: var(--brand);
 }
 
 /**
@@ -1093,17 +1262,17 @@ select.input-vercel {
  *   </div>
  */
 .progress-fill {
-  height: 100%;
-  border-radius: 9999px;
-  transition: width 0.7s ease;
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.7s ease;
 }
 
 .progress-fill--success {
-  background: linear-gradient(to right, var(--success), var(--brand-light));
+    background: linear-gradient(to right, var(--success), var(--brand-light));
 }
 
 .progress-fill--brand {
-  background: linear-gradient(to right, var(--brand), var(--brand-light));
+    background: linear-gradient(to right, var(--brand), var(--brand-light));
 }
 
 /**
@@ -1137,124 +1306,126 @@ select.input-vercel {
 
 /* Scrollbar Personalizado Vercel-Style */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+    width: 6px;
+    height: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 9999px;
-  transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    background: var(--border);
+    border-radius: 9999px;
+    transition: background 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
+    background: var(--border-hover);
 }
 
 /* Soporte de scrollbar para Firefox */
 .custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
 }
 
 /* Placas KBD de Atajo de Teclado Geist-Style */
 .kbd-vercel {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0.15rem 0.4rem;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  box-shadow: 0 1px 0 var(--border);
-  min-width: 1.25rem;
-  user-select: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    box-shadow: 0 1px 0 var(--border);
+    min-width: 1.25rem;
+    user-select: none;
 }
 
 /* Anillo de Enfoque Accesible de Doble Anillo Geist */
 .focus-ring-vercel:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 }
 
 /* Tarjeta Bento con Micro-Glow de Bordes Vercel */
 .vercel-card-glow {
-  position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--surface);
+    position: relative;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), var(--surface);
 }
 
 /* Utilidades de Ajuste de Texto */
 .text-balance {
-  text-wrap: balance;
+    text-wrap: balance;
 }
 
 .text-pretty {
-  text-wrap: pretty;
+    text-wrap: pretty;
 }
 
-/* 
+/*
 =================================================================================
              ESTILOS DE SCROLLBAR MINIMALISTAS (ESTILO VERCEL)
 =================================================================================
 */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+    width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 99px;
-  border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 99px;
+    border: 1px solid transparent;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.32);
 }
 
 [data-theme="light"]::-webkit-scrollbar-thumb,
 [data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.16);
+    background: rgba(0, 0, 0, 0.16);
 }
 
 [data-theme="light"]::-webkit-scrollbar-thumb:hover,
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.32);
+    background: rgba(0, 0, 0, 0.32);
 }
 
 /* Firefox */
 * {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
 
 /* Evitar saltos de diseño (layout shift) cuando el scrollbar aparece o desaparece */
-html, body, .overflow-y-auto, .overflow-y-scroll {
-  scrollbar-gutter: stable;
+html,
+body,
+.overflow-y-auto,
+.overflow-y-scroll {
+    scrollbar-gutter: stable;
 }
 
 [data-theme="light"],
 [data-theme="light"] * {
-  scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.16) transparent;
 }
 
 /* Evitar iluminar en azul el título o el ojo al pasar por encima de los botones de editar o desactivar */
 tr:hover:has(.action-btn-exclude:hover) h4 {
-  color: var(--fg) !important;
+    color: var(--fg) !important;
 }
+
 tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
-  color: var(--text-dim) !important;
+    color: var(--text-dim) !important;
 }
-
-

@@ -51,6 +51,7 @@ namespace Diitra.Application.Research.Dtos
         // ── Métricas del Investigador (Docente/Estudiante) ──
         public int MisProyectosActivos { get; set; }
         public int MisProyectosBorrador { get; set; }
+        public int MisProyectosEnRevision { get; set; }
         public int MisProductosRegistrados { get; set; }
         public int MisInformesPendientes { get; set; }
         public decimal MisHorasInvestigacion { get; set; }

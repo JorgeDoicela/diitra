@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, Award, Clock, X, BookOpen } from 'lucide-react';
+import { PenTool, Calendar, DollarSign, ExternalLink, Filter, Search, Award, X, BookOpen } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -81,22 +81,24 @@ const PublicConvocatoriasPage = () => {
             </header>
 
             {/* Filter & Search Bar */}
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-surface p-4 rounded-lg border border-border-thin">
-                <div className="relative flex-1 w-full group">
-                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim group-focus-within:text-text-main transition-colors" />
+            <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-surface p-4 rounded-lg border border-border-thin">
+                <div className="relative flex-1 min-w-0">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
                     <input 
                         type="text" 
                         placeholder="Buscar por título o código..."
-                        className="input-vercel pl-12"
+                        className="input-vercel !pl-9 !rounded-xl !py-2.5 !text-sm !placeholder:text-text-dim w-full"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <button className="p-3 rounded-lg bg-bg-deep border border-border-thin text-text-dim hover:text-text-main hover:border-text-main transition-all">
-                        <Filter size={18} />
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    className="shrink-0 p-2.5 rounded-xl bg-bg-deep border border-border-thin text-text-dim hover:text-text-main hover:border-text-main transition-all self-end sm:self-auto"
+                    aria-label="Filtros"
+                >
+                    <Filter size={18} />
+                </button>
             </div>
 
             {/* Grid of Convocatorias */}
@@ -213,26 +215,6 @@ const PublicConvocatoriasPage = () => {
                     ))}
                 </div>
             )}
-
-            {/* Info Footer */}
-            <footer className="p-8 rounded-lg bg-surface border border-border-thin flex flex-col md:flex-row items-center gap-8 justify-between">
-                <div className="flex items-center gap-6">
-                    <div className="icon-circle-brand">
-                        <Award size={28} />
-                    </div>
-                    <div className="space-y-1">
-                        <h4 className="text-xs font-semibold text-text-main uppercase tracking-widest">Calidad CACES 2026</h4>
-                        <p className="text-[10px] text-text-dim font-medium uppercase tracking-widest max-w-sm">
-                            Todas las propuestas deben alinearse a las Líneas de Investigación institucionales vigentes.
-                        </p>
-                    </div>
-                </div>
-                <div className="flex gap-4">
-                    <div className="flex items-center gap-2 px-6 py-3 rounded-lg bg-bg-deep border border-border-thin text-[10px] font-semibold text-text-dim uppercase tracking-widest">
-                        <Clock size={12} /> Próximo Corte: 15 Dic
-                    </div>
-                </div>
-            </footer>
 
             {/* Lanzador de nuevo proyecto con Convocatoria preseleccionada */}
             {showNewProject && (
