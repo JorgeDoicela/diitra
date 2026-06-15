@@ -76,7 +76,8 @@ export const ProjectWorkspace: React.FC = () => {
     const urlPrefix = isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion';
 
     const queryParams = new URLSearchParams(location.search);
-    const shouldEdit = queryParams.get('edit') === 'true';
+    const editParam = queryParams.get('edit');
+    const activeDocument = editParam ? (editParam === 'true' ? templateCode : editParam) : null;
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
         return localStorage.getItem('sidebar_collapsed') === 'true';
@@ -100,9 +101,17 @@ export const ProjectWorkspace: React.FC = () => {
 
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeDocument, setActiveDocument] = useState<string | null>(() => {
-        return shouldEdit ? templateCode : null;
-    });
+
+    const setActiveDocument = useCallback((doc: string | null) => {
+        const searchParams = new URLSearchParams(location.search);
+        if (doc) {
+            searchParams.set('edit', doc);
+        } else {
+            searchParams.delete('edit');
+        }
+        navigate({ search: searchParams.toString() }, { replace: true });
+    }, [location.search, navigate]);
+
     const [isPublishingDSpace, setIsPublishingDSpace] = useState(false);
 
     const [products, setProducts] = useState<any[]>([]);
@@ -725,6 +734,44 @@ export const ProjectWorkspace: React.FC = () => {
         }
     };
 
+    const resolveDocumentInstance = useCallback(async (docTemplateCode: string) => {
+        if (subDocumentUuids[docTemplateCode]) {
+            setActiveDocument(docTemplateCode);
+            return;
+        }
+        if (!resolvedProjectUuid) return;
+        setResolvingDocument(docTemplateCode);
+        try {
+            const res = await api.get('/documents/instances/resolve', {
+                params: {
+                    templateCode: docTemplateCode,
+                    entityUuid: resolvedProjectUuid,
+                    title: `${docTemplateCode === 'RUBRICA_EVALUACION' ? 'Rúbrica de Evaluación' : docTemplateCode === 'INFORME_AVANCE' ? 'Informe de Avance' : docTemplateCode} — ${currentProject?.title || ''}`
+                }
+            });
+            const instanceUuid = res.data?.uuid || res.data?.Uuid;
+            if (instanceUuid) {
+                setSubDocumentUuids(prev => ({ ...prev, [docTemplateCode]: instanceUuid }));
+                setActiveDocument(docTemplateCode);
+            }
+        } catch (err) {
+            console.error(`[DIITRA] Error al resolver instancia de documento ${docTemplateCode}:`, err);
+            addToast("Error de Documento", "No se pudo abrir el documento. Inténtelo de nuevo.", "error");
+        } finally {
+            setResolvingDocument(null);
+        }
+    }, [resolvedProjectUuid, subDocumentUuids, currentProject?.title, addToast]);
+
+    // Autoresolver subdocumentos al recargar la página si están especificados en la URL
+    useEffect(() => {
+        if (activeDocument && resolvedProjectUuid) {
+            const isPrimaryDocument = activeDocument.toUpperCase() === templateCode.toUpperCase();
+            if (!isPrimaryDocument && !subDocumentUuids[activeDocument] && !resolvingDocument) {
+                resolveDocumentInstance(activeDocument);
+            }
+        }
+    }, [activeDocument, resolvedProjectUuid, templateCode, subDocumentUuids, resolvingDocument, resolveDocumentInstance]);
+
     if (isLoading || !resolvedProjectUuid) {
         return (
             <div className="flex-1 bg-bg-deep flex items-center justify-center min-h-[60vh]">
@@ -799,7 +846,11 @@ export const ProjectWorkspace: React.FC = () => {
                 }
             });
             if (res.data.success) {
-                addToast("Equipo de Trabajo", "¡Equipo de trabajo guardado y sincronizado con éxito!", "success");
+                addToast(
+                    tieneGrupo ? "Equipo de Trabajo" : "Personal del Proyecto",
+                    tieneGrupo ? "¡Equipo de trabajo guardado y sincronizado con éxito!" : "¡Personal del proyecto guardado con éxito!",
+                    "success"
+                );
                 
                 const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
                 setInvestigadores((refreshed.data.investigadores || []).map(mapInvestigador));
@@ -922,36 +973,9 @@ export const ProjectWorkspace: React.FC = () => {
 
     const handleCloseEditor = () => {
         setActiveDocument(null);
-        navigate(buildWorkspacePath(templateCode, documentUuid!, '', urlPrefix), { replace: true });
     };
 
-    const resolveDocumentInstance = async (docTemplateCode: string) => {
-        if (subDocumentUuids[docTemplateCode]) {
-            setActiveDocument(docTemplateCode);
-            return;
-        }
-        if (!resolvedProjectUuid) return;
-        setResolvingDocument(docTemplateCode);
-        try {
-            const res = await api.get('/documents/instances/resolve', {
-                params: {
-                    templateCode: docTemplateCode,
-                    entityUuid: resolvedProjectUuid,
-                    title: `${docTemplateCode === 'RUBRICA_EVALUACION' ? 'Rúbrica de Evaluación' : docTemplateCode === 'INFORME_AVANCE' ? 'Informe de Avance' : docTemplateCode} — ${currentProject?.title || ''}`
-                }
-            });
-            const instanceUuid = res.data?.uuid || res.data?.Uuid;
-            if (instanceUuid) {
-                setSubDocumentUuids(prev => ({ ...prev, [docTemplateCode]: instanceUuid }));
-                setActiveDocument(docTemplateCode);
-            }
-        } catch (err) {
-            console.error(`[DIITRA] Error al resolver instancia de documento ${docTemplateCode}:`, err);
-            addToast("Error de Documento", "No se pudo abrir el documento. Inténtelo de nuevo.", "error");
-        } finally {
-            setResolvingDocument(null);
-        }
-    };
+
 
     if (activeDocument) {
         const isPrimaryDocument = activeDocument?.toUpperCase() === templateCode?.toUpperCase();

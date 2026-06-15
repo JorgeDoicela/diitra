@@ -117,9 +117,15 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
             <div>
                 <div className="flex items-center gap-2.5 mb-1.5">
                     <Users size={16} className="text-text-dim group-hover:text-text-main transition-colors" />
-                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">Equipo de Trabajo</h3>
+                    <h3 className="text-xs font-semibold tracking-widest text-text-main uppercase opacity-90">
+                        {tieneGrupo ? 'Equipo de Trabajo' : 'Personal del Proyecto'}
+                    </h3>
                 </div>
-                <p className="text-xs text-text-dim font-normal leading-relaxed">Gestión dinámica del talento humano del proyecto</p>
+                <p className="text-xs text-text-dim font-normal leading-relaxed">
+                    {tieneGrupo 
+                        ? 'Gestión dinámica del talento humano del proyecto' 
+                        : 'Dedicación y detalles del investigador principal'}
+                </p>
             </div>
 
             <div className="mt-6 space-y-4">
@@ -198,12 +204,12 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                 {/* Lista de Integrantes */}
                 <div className="space-y-3">
                     <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider block">
-                        Activos ({investigadores.filter((m: any) => m.activo !== false).length})
+                        {tieneGrupo ? 'Integrantes Activos' : 'Investigador Activo'} ({investigadores.filter((m: any) => m.activo !== false).length})
                     </label>
 
                     {investigadores.filter((member: any) => member.activo !== false).length === 0 ? (
                         <div className="p-6 rounded-xl border border-dashed border-border-thin text-center text-[10px] text-text-dim uppercase tracking-wider font-mono">
-                            Sin investigadores activos
+                            {tieneGrupo ? 'Sin investigadores activos' : 'Sin investigador asignado'}
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -356,7 +362,9 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                         >
                             <div className="flex items-center gap-2">
                                 <History size={12} className="text-brand-light" />
-                                <span>Ex-Integrantes ({investigadores.filter((m: any) => m.activo === false).length})</span>
+                                <span>
+                                    {tieneGrupo ? 'Ex-Integrantes' : 'Ex-Investigadores'} ({investigadores.filter((m: any) => m.activo === false).length})
+                                </span>
                             </div>
                             <span className="font-mono text-[10px]">{isHistoryExpanded ? '▲' : '▼'}</span>
                         </button>
@@ -416,7 +424,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                             ) : (
                                 <>
                                     <UserPlus size={12} />
-                                    <span>Guardar Equipo</span>
+                                    <span>{tieneGrupo ? 'Guardar Equipo' : 'Guardar Cambios'}</span>
                                 </>
                             )}
                         </button>
@@ -465,8 +473,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                         }}
                                                         className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
                                                     >
-                                                        <option value="ALTA">Alta de integrante</option>
-                                                        <option value="BAJA">Baja de integrante</option>
+                                                        <option value="ALTA">{tieneGrupo ? 'Alta de integrante' : 'Alta de personal'}</option>
+                                                        <option value="BAJA">{tieneGrupo ? 'Baja de integrante' : 'Baja de personal'}</option>
                                                         <option value="CAMBIO_DIRECTOR">Cambio de director</option>
                                                         <option value="CAMBIO_GRUPO">Cambio de grupo de investigación</option>
                                                     </select>
@@ -506,8 +514,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
                                                 <div className={`flex flex-col gap-1.5 ${teamChangeForm.tipo === 'ALTA' ? '' : 'md:col-span-2'}`}>
                                                     <label className="text-[10px] font-semibold text-text-dim uppercase tracking-wider">
-                                                        {teamChangeForm.tipo === 'ALTA' && 'Integrante a Vincular'}
-                                                        {teamChangeForm.tipo === 'BAJA' && 'Integrante a dar de Baja'}
+                                                        {teamChangeForm.tipo === 'ALTA' && (tieneGrupo ? 'Integrante a Vincular' : 'Personal a Vincular')}
+                                                        {teamChangeForm.tipo === 'BAJA' && (tieneGrupo ? 'Integrante a dar de Baja' : 'Personal a dar de Baja')}
                                                         {teamChangeForm.tipo === 'CAMBIO_DIRECTOR' && 'Nuevo Director Propuesto'}
                                                         {teamChangeForm.tipo === 'CAMBIO_GRUPO' && 'Grupo de Investigación Destino'}
                                                     </label>
@@ -531,7 +539,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                             onChange={(e) => setTeamChangeForm(prev => ({ ...prev, cedulaObjetivo: e.target.value }))}
                                                             className="w-full bg-surface border border-border-thin rounded-md px-3 py-2 text-xs text-text-main outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-all font-sans"
                                                         >
-                                                            <option value="">-- Seleccione Integrante --</option>
+                                                            <option value="">{tieneGrupo ? '-- Seleccione Integrante --' : '-- Seleccione Personal --'}</option>
                                                             {investigadores.filter((m: any) => m.activo !== false).map((m: any) => (
                                                                 <option key={m.cedula} value={m.cedula}>
                                                                     {formatNombre(m.nombre)} ({m.cedula}) - {m.rol}
@@ -598,7 +606,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                                         </div>
                                                                                         {suggestedUsers.length === 0 ? (
                                                                                             <div className="p-3 text-center text-[10px] text-text-dim font-mono">
-                                                                                                No hay integrantes disponibles
+                                                                                                {tieneGrupo ? 'No hay integrantes disponibles' : 'No hay personal disponible'}
                                                                                             </div>
                                                                                         ) : (
                                                                                             suggestedUsers.map((su: any) => (
