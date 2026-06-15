@@ -42,7 +42,7 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                             {currentProject.status}
                         </span>
                     </div>
-                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title}</h2>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title?.trim() || '(Sin título)'}</h2>
                     <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
                 </div>
             </header>

@@ -348,7 +348,7 @@ const ResearchProjectsPage = () => {
                                                 </p>
                                             )}
                                             <h3 className="font-semibold text-text-main text-sm leading-snug line-clamp-2 group-hover:text-brand transition-colors">
-                                                {p.titulo}
+                                                {p.titulo?.trim() || '(Sin título)'}
                                             </h3>
                                             {p.director_nombre && (
                                                 <div className="flex items-center gap-1.5 text-text-dim mt-2">

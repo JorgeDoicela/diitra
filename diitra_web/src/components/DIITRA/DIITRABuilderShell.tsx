@@ -641,11 +641,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 <span className="text-[7px] md:text-[9px] font-bold text-text-dim uppercase tracking-widest mb-1">Sincronización</span>
                                 <div className="flex items-center gap-1.5 md:gap-2 text-[8px] md:text-[10px] text-text-main font-black uppercase">
                                     {readOnly ? (
-                                        <span className="text-amber-500 font-bold">Desactivada</span>
+                                        <span className="text-warning font-medium">Desactivada</span>
                                     ) : isSyncing ? (
                                         <><Clock size={10} className="animate-spin" /> ...</>
                                     ) : (
-                                        <><CheckCircle size={10} className="text-green-500" /> {lastSaved ? lastSaved : 'Listo'}</>
+                                        <><CheckCircle size={10} className="text-success" /> {lastSaved ? lastSaved : 'Listo'}</>
                                     )}
                                 </div>
                             </div>
@@ -653,9 +653,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             {/* Acciones de cabecera */}
                             <div className="flex gap-2 md:gap-3">
                                 {readOnly ? (
-                                    <div className="flex-1 lg:flex-none px-4 md:px-6 py-2 md:py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-md text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-amber-500 flex items-center justify-center gap-2 cursor-default select-none animate-pulse">
-                                        <Shield size={12} className="text-amber-500" /> <span>Sólo Lectura</span>
-                                    </div>
+                                    <span className="badge-vercel badge-vercel-warning flex-1 lg:flex-none px-4 md:px-5 py-2 md:py-2.5 text-[10px] md:text-xs cursor-default select-none justify-center">
+                                        <Shield size={12} /> Solo lectura
+                                    </span>
                                 ) : (
                                     <button
                                         onClick={handleSave}
@@ -784,19 +784,17 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         </div>
 
                                         {readOnly && (
-                                            <div className="mb-8 p-4 bg-amber-500/5 border border-amber-500/10 rounded-2xl flex items-start gap-4 animate-fade-in shadow-inner">
-                                                <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shrink-0">
-                                                    <Shield size={16} />
-                                                </div>
+                                            <div className="callout-vercel callout-vercel-warning mb-8 animate-fade-in">
+                                                <Shield size={16} className="text-warning mt-0.5 shrink-0" />
                                                 <div>
-                                                    <h4 className="text-[10px] md:text-xs font-black uppercase tracking-widest text-amber-500">Vista de Sólo Lectura Activa</h4>
-                                                    <p className="text-[9px] md:text-[10px] text-text-dim font-medium leading-relaxed mt-1">
+                                                    <p className="callout-vercel-title">Vista de solo lectura activa</p>
+                                                    <p className="callout-vercel-body">
                                                         {readOnlyReason === 'state' ? (
                                                             `Este documento ha sido emitido y firmado formalmente (se encuentra en estado "${projectStatus || 'Oficial'}"), por lo que su contenido ha sido sellado para garantizar la integridad institucional. No se admiten modificaciones.`
                                                         ) : readOnlyReason === 'review' ? (
-                                                            "Estás visualizando este documento en modo de sólo lectura para fines de revisión y auditoría académica."
+                                                            "Estás visualizando este documento en modo de solo lectura para fines de revisión y auditoría académica."
                                                         ) : (
-                                                            "Has accedido a este documento en modalidad de sólo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
+                                                            "Has accedido a este documento en modalidad de solo lectura debido a que no figuras como un miembro activo con permisos de escritura en este proyecto. No podrás realizar modificaciones."
                                                         )}
                                                     </p>
                                                 </div>
@@ -852,8 +850,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 <div className="flex flex-col gap-4 mt-2">
                                                     {!canSign ? (
                                                         <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
-                                                            <div className="flex justify-center text-amber-500">
-                                                                <Shield size={20} />
+                                                            <div className="flex justify-center">
+                                                                <div className="icon-circle icon-circle-warning !p-2">
+                                                                    <Shield size={16} />
+                                                                </div>
                                                             </div>
                                                             <div className="space-y-1">
                                                                 <p className="text-sm font-semibold text-text-main">Firma restringida</p>

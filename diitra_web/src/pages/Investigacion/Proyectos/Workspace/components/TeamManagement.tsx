@@ -196,7 +196,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
 
                 {/* Modo Solo Lectura Banner */}
                 {currentProject.puedeEditar === false && !currentProject.puedeSolicitarCambioEquipo && (
-                    <div className="badge-vercel badge-vercel-warning !rounded-xl !p-4 !text-[11px] !font-normal flex gap-2.5 leading-relaxed animate-fade-in mb-4 w-full items-start">
+                    <div className="callout-vercel callout-vercel-warning animate-fade-in mb-4 w-full">
                         <ShieldBanner />
                     </div>
                 )}
@@ -761,21 +761,21 @@ const ShieldBanner = () => {
         <>
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="shrink-0 mt-0.5"
+                className="text-warning mt-0.5 shrink-0"
             >
                 <path d="M20 13c0 5-3.5 7.5-7.66 9.7a1 1 0 0 1-.68 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 .76-.97l8-2a1 1 0 0 1 .48 0l8 2A1 1 0 0 1 20 6z" />
             </svg>
             <div>
-                <span className="font-semibold uppercase tracking-wider text-[10px] block">Modo Sólo Lectura</span>
-                <span className="text-text-dim">No tienes permisos para modificar el equipo de investigadores o transferir la dirección del proyecto.</span>
+                <p className="callout-vercel-title">Modo solo lectura</p>
+                <p className="callout-vercel-body">No tienes permisos para modificar el equipo de investigadores o transferir la dirección del proyecto.</p>
             </div>
         </>
     );

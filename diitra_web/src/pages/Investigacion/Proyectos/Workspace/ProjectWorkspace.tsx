@@ -502,7 +502,7 @@ export const ProjectWorkspace: React.FC = () => {
                 setCurrentProject({
                     id: res.data.uuid.substring(0,8).toUpperCase(),
                     uuid: res.data.uuid,
-                    title: res.data.titulo || 'Proyecto de Investigación (Sin Título)',
+                    title: res.data.titulo?.trim() || '(Sin título)',
                     status: res.data.estado || 'Borrador',
                     presupuesto: res.data.costo_total || 0,
                     linea: res.data.linea_investigacion || 'No definida',

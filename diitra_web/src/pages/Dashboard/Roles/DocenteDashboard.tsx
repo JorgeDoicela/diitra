@@ -11,6 +11,7 @@ import api from '../../../api/axios_config';
 interface DashboardStats {
     mis_proyectos_activos: number;
     mis_proyectos_borrador: number;
+    mis_proyectos_en_revision: number;
     mis_productos_registrados: number;
     mis_informes_pendientes: number;
     mis_horas_investigacion: number;
@@ -103,7 +104,7 @@ export const DocenteDashboard: React.FC = () => {
                                     </div>
                                     <div className="p-4 bg-bg-deep border border-border-thin/40 rounded-lg text-center">
                                         <p className="text-2xl font-semibold text-text-main font-mono">
-                                            {(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0)}
+                                            {(stats?.mis_proyectos_activos ?? 0) + (stats?.mis_proyectos_borrador ?? 0) + (stats?.mis_proyectos_en_revision ?? 0)}
                                         </p>
                                         <p className="text-[10px] text-text-dim uppercase font-semibold tracking-wider mt-1">Total</p>
                                     </div>
@@ -250,6 +251,13 @@ export const DocenteDashboard: React.FC = () => {
                                     displayValue: `${stats?.mis_proyectos_borrador ?? 0} borrador`,
                                     max: 5,
                                     color: 'var(--text-dim)'
+                                },
+                                {
+                                    label: 'En Revisión / Enviados',
+                                    value: stats?.mis_proyectos_en_revision ?? 0,
+                                    displayValue: `${stats?.mis_proyectos_en_revision ?? 0} en revisión`,
+                                    max: 5,
+                                    color: 'var(--warning)'
                                 },
                                 {
                                     label: 'Mis Productos',
