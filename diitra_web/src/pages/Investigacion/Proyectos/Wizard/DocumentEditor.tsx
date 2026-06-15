@@ -120,7 +120,9 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                         console.log(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
                         setResolvedUuid(realUuid);
                     }
-                    const snapshotStr = response.data.dataSnapshotJson || response.data.DataSnapshotJson;
+                    // FALLBACK PATTERN: Se tolera cualquier casing del backend (snake_case, camelCase, PascalCase)
+                    // para evitar roturas si la serialización de snapshots varía o si la propiedad viene de un DTO mapeado.
+                    const snapshotStr = response.data.data_snapshot_json || response.data.dataSnapshotJson || response.data.DataSnapshotJson;
                     if (snapshotStr) {
                         try {
                             const parsed = JSON.parse(snapshotStr);

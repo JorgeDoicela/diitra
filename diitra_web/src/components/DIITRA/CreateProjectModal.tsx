@@ -122,6 +122,23 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape' || isCreating) return;
+            if (isOpenCarrera) {
+                setIsOpenCarrera(false);
+                return;
+            }
+            if (isOpenConvocatoria) {
+                setIsOpenConvocatoria(false);
+                return;
+            }
+            onClose();
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isCreating, isOpenCarrera, isOpenConvocatoria, onClose]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!titulo.trim()) return setError("El título / tema del proyecto es obligatorio.");
