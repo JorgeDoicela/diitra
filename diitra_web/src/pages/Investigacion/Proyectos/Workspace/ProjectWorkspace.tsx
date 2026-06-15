@@ -1079,8 +1079,11 @@ export const ProjectWorkspace: React.FC = () => {
                         setActiveDocument={setActiveDocument}
                     />
 
-                    <div className="px-2 grid grid-cols-1 lg:grid-cols-3 gap-3">
-                        <div className="lg:col-span-2 flex flex-col gap-3">
+                    {/* Layout dos columnas: contenido principal izquierda, panel info derecha */}
+                    <div className="px-2 flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-3 lg:items-start">
+
+                        {/* Columna izquierda */}
+                        <div className="flex flex-col gap-3">
                             <CacesWorkflow
                                 currentProject={currentProject}
                                 templateCode={templateCode}
@@ -1143,11 +1146,14 @@ export const ProjectWorkspace: React.FC = () => {
                             />
                         </div>
 
-                        <WorkspaceSidebar
-                            currentProject={currentProject}
-                            resolvedProjectUuid={resolvedProjectUuid}
-                            setActiveDocument={setActiveDocument}
-                        />
+                        {/* Columna derecha: info del proyecto sticky */}
+                        <div className="lg:sticky lg:top-0 flex flex-col gap-3">
+                            <WorkspaceSidebar
+                                currentProject={currentProject}
+                                resolvedProjectUuid={resolvedProjectUuid}
+                                setActiveDocument={setActiveDocument}
+                            />
+                        </div>
                     </div>
                 </main>
             </div>
@@ -1193,7 +1199,6 @@ export const ProjectWorkspace: React.FC = () => {
                 carreras={carreras}
                 lines={lines}
                 formatCareerName={formatCareerName}
-                handleOpenModal={() => {}}
                 handleOpenReview={() => {}}
             />
         </div>

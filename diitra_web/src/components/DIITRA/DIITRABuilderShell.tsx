@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle, ChevronLeft } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -19,7 +19,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
  *   1. Usar el Shell con colaboración real:
  *      const cowork = useCoWork({ documentId, user });
  *      <DIITRABuilderShell cowork={cowork} ... />
- *
  *   2. Usar el Shell SIN colaboración (documentos del Director, reportes, etc.):
  *      const cowork = createNoOpCoWork();
  *      <DIITRABuilderShell cowork={cowork} ... />
@@ -75,13 +74,54 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const navigate = useNavigate();
     const location = useLocation();
     const queryParams = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
-    
+
     const sectionParam = queryParams.get('section');
     const activeTab = sectionParam || sections[0]?.id || 'general';
+    const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
+        const saved = localStorage.getItem('left_sidebar_width');
+        return saved ? parseInt(saved, 10) : 320;
+    });
+
+    const [rightSidebarWidth, setRightSidebarWidth] = useState<number>(() => {
+        const saved = localStorage.getItem('right_sidebar_width');
+        return saved ? parseInt(saved, 10) : 260;
+    });
+
+    const [isLeftSidebarOpen, setIsLeftSidebarOpenState] = useState<boolean>(() => {
+        return localStorage.getItem('left_sidebar_open') !== 'false';
+    });
+
+    const setIsLeftSidebarOpen = useCallback((open: boolean) => {
+        localStorage.setItem('left_sidebar_open', String(open));
+        if (open) {
+            // Al reabrir, siempre restauramos a un ancho cómodo, no al último valor cercano al límite
+            const comfortableWidth = 260;
+            setLeftSidebarWidth(comfortableWidth);
+            localStorage.setItem('left_sidebar_width', String(comfortableWidth));
+            if (leftSidebarRef.current) {
+                leftSidebarRef.current.style.width = `${comfortableWidth}px`;
+            }
+        }
+        setIsLeftSidebarOpenState(open);
+    }, []);
 
     const [isSidebarOpen, setIsSidebarOpenState] = useState<boolean>(() => {
         return localStorage.getItem('document_sidebar_open') !== 'false';
     });
+
+    const setIsSidebarOpen = useCallback((open: boolean) => {
+        localStorage.setItem('document_sidebar_open', String(open));
+        if (open) {
+            // Al reabrir, siempre restauramos a un ancho cómodo, no al último valor cercano al límite
+            const comfortableWidth = 260;
+            setRightSidebarWidth(comfortableWidth);
+            localStorage.setItem('right_sidebar_width', String(comfortableWidth));
+            if (rightSidebarRef.current) {
+                rightSidebarRef.current.style.width = `${comfortableWidth}px`;
+            }
+        }
+        setIsSidebarOpenState(open);
+    }, []);
 
     const setActiveTab = useCallback((tabId: string) => {
         const searchParams = new URLSearchParams(location.search);
@@ -89,26 +129,144 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         navigate({ search: searchParams.toString() }, { replace: true });
     }, [location.search, navigate]);
 
-    const setIsSidebarOpen = useCallback((open: boolean) => {
-        localStorage.setItem('document_sidebar_open', String(open));
-        setIsSidebarOpenState(open);
-    }, []);
+    const leftSidebarRef = useRef<HTMLDivElement>(null);
+    const rightSidebarRef = useRef<HTMLDivElement>(null);
+    const isDraggingLeft = useRef(false);
+    const isDraggingRight = useRef(false);
 
+    const startDraggingLeft = useCallback((mouseDownEvent: React.MouseEvent) => {
+        mouseDownEvent.preventDefault();
+
+        isDraggingLeft.current = true;
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+
+        if (leftSidebarRef.current) {
+            leftSidebarRef.current.style.transition = 'none';
+        }
+
+        const startWidth = leftSidebarWidth;
+        const startX = mouseDownEvent.clientX;
+        let maxDelta = 0;
+
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const deltaX = mouseMoveEvent.clientX - startX;
+            maxDelta = Math.max(maxDelta, Math.abs(deltaX));
+
+            const newWidth = Math.max(0, Math.min(500, startWidth + deltaX));
+            if (leftSidebarRef.current) {
+                leftSidebarRef.current.style.width = `${newWidth}px`;
+            }
+        };
+
+        const stopDrag = () => {
+            isDraggingLeft.current = false;
+            document.body.style.removeProperty('user-select');
+            document.body.style.removeProperty('cursor');
+            document.removeEventListener('mousemove', doDrag);
+            document.removeEventListener('mouseup', stopDrag);
+
+            const currentWidth = leftSidebarRef.current
+                ? parseInt(leftSidebarRef.current.style.width, 10)
+                : startWidth;
+
+            const clicked = maxDelta <= 4;
+            const releasedInCollapseZone = maxDelta > 4 && currentWidth < 220;
+            const shouldCollapse = clicked || releasedInCollapseZone;
+
+            if (leftSidebarRef.current) {
+                leftSidebarRef.current.style.transition = 'width 300ms ease-in-out';
+            }
+
+            if (shouldCollapse) {
+                setIsLeftSidebarOpen(false);
+            } else {
+                const finalWidth = Math.max(200, Math.min(500, currentWidth));
+                setLeftSidebarWidth(finalWidth);
+                localStorage.setItem('left_sidebar_width', String(finalWidth));
+                if (leftSidebarRef.current) {
+                    leftSidebarRef.current.style.width = `${finalWidth}px`;
+                }
+            }
+        };
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+    }, [leftSidebarWidth, setIsLeftSidebarOpen]);
+
+    const startDraggingRight = useCallback((mouseDownEvent: React.MouseEvent) => {
+        mouseDownEvent.preventDefault();
+
+        isDraggingRight.current = true;
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+
+        if (rightSidebarRef.current) {
+            rightSidebarRef.current.style.transition = 'none';
+        }
+
+        const startWidth = rightSidebarWidth;
+        const startX = mouseDownEvent.clientX;
+        let maxDelta = 0;
+
+        const doDrag = (mouseMoveEvent: MouseEvent) => {
+            const deltaX = startX - mouseMoveEvent.clientX;
+            maxDelta = Math.max(maxDelta, Math.abs(deltaX));
+
+            const newWidth = Math.max(0, Math.min(600, startWidth + deltaX));
+            if (rightSidebarRef.current) {
+                rightSidebarRef.current.style.width = `${newWidth}px`;
+            }
+        };
+
+        const stopDrag = () => {
+            isDraggingRight.current = false;
+            document.body.style.removeProperty('user-select');
+            document.body.style.removeProperty('cursor');
+            document.removeEventListener('mousemove', doDrag);
+            document.removeEventListener('mouseup', stopDrag);
+
+            const currentWidth = rightSidebarRef.current
+                ? parseInt(rightSidebarRef.current.style.width, 10)
+                : startWidth;
+
+            const clicked = maxDelta <= 4;
+            const releasedInCollapseZone = maxDelta > 4 && currentWidth < 250;
+            const shouldCollapse = clicked || releasedInCollapseZone;
+
+            if (rightSidebarRef.current) {
+                rightSidebarRef.current.style.transition = 'width 300ms ease-in-out';
+            }
+
+            if (shouldCollapse) {
+                setIsSidebarOpen(false);
+            } else {
+                const finalWidth = Math.max(240, Math.min(600, currentWidth));
+                setRightSidebarWidth(finalWidth);
+                localStorage.setItem('right_sidebar_width', String(finalWidth));
+                if (rightSidebarRef.current) {
+                    rightSidebarRef.current.style.width = `${finalWidth}px`;
+                }
+            }
+        };
+
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+    }, [rightSidebarWidth, setIsSidebarOpen]);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<string | null>(null);
     const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
     const [isDraftMode, setIsDraftMode] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [signaturePassword, setSignaturePassword] = useState('');
-    const [signatureFile, setSignatureFile] = useState<File | null>(null);
     const [isSigning, setIsSigning] = useState(false);
     const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
 
     const [hasSavedCert, setHasSavedCert] = useState(false);
-    const [useSavedCert, setUseSavedCert] = useState(false);
     const [aceptoTerminos, setAceptoTerminos] = useState(false);
+    const [fechaConsentimientoFirma, setFechaConsentimientoFirma] = useState<string | null>(null);
     const [isSavingConsent, setIsSavingConsent] = useState(false);
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
@@ -263,12 +421,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 const res = await api.get('/lopdp/perfil');
                 if (res.data?.has_p12_certificate) {
                     setHasSavedCert(true);
-                    setUseSavedCert(true);
                 } else {
                     setHasSavedCert(false);
-                    setUseSavedCert(false);
                 }
                 setAceptoTerminos(!!res.data?.acepto_terminos_firma);
+                setFechaConsentimientoFirma(res.data?.fecha_consentimiento_firma ?? null);
             } catch (err) {
                 console.error('[DIITRA] Error checking saved certificate:', err);
             }
@@ -284,6 +441,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 version_politica: 'FIRMA_ELECTRONICA'
             });
             setAceptoTerminos(checked);
+            setFechaConsentimientoFirma(checked ? new Date().toISOString() : null);
         } catch (err) {
             console.error('[DIITRA] Error saving signature consent:', err);
         } finally {
@@ -339,9 +497,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         addAudit('Iniciando proceso de firma electrónica...');
         try {
             const formDataObj = new FormData();
-            if (signatureFile && !useSavedCert) {
-                formDataObj.append('certificate', signatureFile);
-            }
             formDataObj.append('password', signaturePassword || '');
             // MODO PRODUCCIÓN: formDataObj.append('password', signaturePassword);
             formDataObj.append('projectUuid', entityUuid || formData.EntityUuid || formData.entityUuid || formData.Uuid || '');
@@ -387,8 +542,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
             // Detectar la barrera de consentimiento LOPDP
             const isLopdpGate = serverMessage.toLowerCase().includes('términos') ||
-                                 serverMessage.toLowerCase().includes('lopdp') ||
-                                 serverMessage.toLowerCase().includes('consentimiento');
+                serverMessage.toLowerCase().includes('lopdp') ||
+                serverMessage.toLowerCase().includes('consentimiento');
 
             if (isLopdpGate) {
                 addAudit('Firma bloqueada: Acepte los términos de firma en Configuración → Mi Cuenta y Firma', 'warning');
@@ -481,22 +636,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                 )}
                             </div>
 
-                            {/* Botón de alternancia de Chat / Team Pulse */}
-                            {activeTab !== 'output' && (
-                                <button
-                                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                                    className={`p-2 md:p-2.5 rounded-xl border transition-all flex items-center gap-2 ${
-                                        isSidebarOpen 
-                                        ? 'bg-text-main text-bg-deep border-text-main shadow-lg font-black' 
-                                        : 'bg-bg-deep hover:bg-surface border-border-thin text-text-dim hover:text-text-main'
-                                    }`}
-                                    title="Chat y actividad del equipo"
-                                >
-                                    <MessageSquare size={16} className={isOnline ? 'animate-pulse' : ''} />
-                                    <span className="text-[9px] font-black uppercase tracking-widest hidden md:inline">Actividad</span>
-                                </button>
-                            )}
-
                             {/* Estado de sincronización */}
                             <div className="hidden sm:flex flex-col items-end">
                                 <span className="text-[7px] md:text-[9px] font-bold text-text-dim uppercase tracking-widest mb-1">Sincronización</span>
@@ -535,63 +674,109 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         </div>
                     </div>
 
-                    <div className="flex flex-1 overflow-hidden">
-                        {/* ── Sidebar de Navegación ── */}
-                        <div className={`
-                            ${showMobileSections ? 'fixed inset-0 top-[60px] z-[70] bg-surface' : 'hidden lg:flex'}
-                            w-full lg:w-80 border-r border-border-thin bg-surface p-6 md:p-8 flex flex-col gap-6 md:gap-8 overflow-y-auto
-                        `}>
-                            <div className="flex lg:hidden justify-between items-center mb-4">
-                                <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
-                                <button onClick={() => setShowMobileSections(false)} className="text-text-main font-bold">Cerrar Menú</button>
-                            </div>
-                            <div>
-                                <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em] mb-4 lg:ml-2">Navegación del Documento</p>
-                                <div className="space-y-1">
-                                    {sections.map(section => (
-                                        <button
-                                            key={section.id}
-                                            onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
-                                        >
-                                            {section.icon} {section.label}
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
-                                        className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-brand-dark text-text-main border-brand shadow-brand/20' : 'text-brand-light border-brand/20 hover:bg-brand/10'}`}
-                                    >
-                                        <FileText size={18} /> Finalizar y Firmar
-                                    </button>
-                                </div>
-                            </div>
+                    <div className="flex flex-1 overflow-hidden relative">
+                        {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
+                        {!isLeftSidebarOpen && (
+                            <button
+                                onClick={() => setIsLeftSidebarOpen(true)}
+                                className="absolute left-0 top-1/2 -translate-y-1/2 z-[60] bg-surface hover:bg-bg-deep border border-border-thin border-l-0 hover:border-text-main text-text-dim hover:text-text-main py-8 px-2.5 rounded-r-xl shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group"
+                                title="Mostrar navegación del documento"
+                            >
+                                <FileText size={15} />
+                                <span className="[writing-mode:vertical-lr] rotate-180 text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Nav</span>
+                            </button>
+                        )}
 
-                            {/* ── Auditoría de Sesión ── */}
-                            <div className="mt-auto hidden md:block">
-                                <div className="p-5 bg-bg-deep rounded-2xl border border-border-thin">
-                                    <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
-                                        <Clock size={14} className="text-text-dim" /> Auditoría de Sesión
-                                    </p>
-                                    <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                                        {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Sin actividad registrada aún</p>}
-                                        {auditLogs.map((log, i) => (
-                                            <div key={i} className="flex gap-3">
-                                                <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' : log.type === 'error' ? 'bg-red-500' : log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'}`} />
-                                                <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${log.type === 'success' ? 'text-green-500/80' : log.type === 'error' ? 'text-red-500/80' : log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'}`}>
-                                                    {log.msg}
-                                                </p>
-                                            </div>
+                        {/* Pestaña de reabrir Actividad — pegada al borde derecho */}
+                        {!isSidebarOpen && (
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="absolute right-0 top-1/2 -translate-y-1/2 z-[60] bg-surface hover:bg-bg-deep border border-border-thin border-r-0 hover:border-text-main text-text-dim hover:text-text-main py-8 px-2.5 rounded-l-xl shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group"
+                                title="Mostrar actividad del equipo"
+                            >
+                                <MessageSquare size={15} className={isOnline ? 'animate-pulse' : ''} />
+                                <span className="[writing-mode:vertical-lr] text-[8px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100 transition-opacity">Chat</span>
+                            </button>
+                        )}
+                        {/* ── Sidebar de Navegación ── */}
+                        <div
+                            ref={leftSidebarRef}
+                            style={{ width: isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px' }}
+                            className={`
+                                ${showMobileSections ? 'fixed inset-0 top-[60px] z-[70] bg-bg-deep !w-full' : 'hidden lg:flex'}
+                                border-r border-border-thin bg-bg-deep flex flex-col shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden
+                            `}
+                        >
+                            <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
+                                <div className="flex lg:hidden justify-between items-center mb-4">
+                                    <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
+                                    <button onClick={() => setShowMobileSections(false)} className="text-text-main font-bold">Cerrar Menú</button>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between items-center mb-4 lg:ml-2">
+                                        <p className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em]">Navegación del Documento</p>
+                                        <button
+                                            onClick={() => setIsLeftSidebarOpen(false)}
+                                            className="hidden lg:flex p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
+                                            title="Contraer navegación"
+                                        >
+                                            <ChevronLeft size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-1">
+                                        {sections.map(section => (
+                                            <button
+                                                key={section.id}
+                                                onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
+                                                className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
+                                            >
+                                                {section.icon} {section.label}
+                                            </button>
                                         ))}
+                                        <button
+                                            onClick={() => { setActiveTab('output'); setShowMobileSections(false); }}
+                                            className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all mt-8 border ${activeTab === 'output' ? 'bg-text-main text-bg-deep border-text-main shadow-xl' : 'text-text-dim border-border-thin hover:bg-bg-deep hover:text-text-main'}`}
+                                        >
+                                            <FileText size={18} /> Finalizar y Firmar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* ── Auditoría de Sesión ── */}
+                                <div className="mt-auto hidden md:block">
+                                    <div className="p-5 bg-surface rounded-2xl border border-border-thin">
+                                        <p className="text-[10px] font-black text-text-main uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Clock size={14} className="text-text-dim" /> Auditoría de Sesión
+                                        </p>
+                                        <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                            {auditLogs.length === 0 && <p className="text-[9px] italic text-text-dim">Sin actividad registrada aún</p>}
+                                            {auditLogs.map((log, i) => (
+                                                <div key={i} className="flex gap-3">
+                                                    <div className={`w-1 h-auto rounded-full ${log.type === 'success' ? 'bg-green-500' : log.type === 'error' ? 'bg-red-500' : log.type === 'warning' ? 'bg-yellow-500' : 'bg-text-dim/30'}`} />
+                                                    <p className={`text-[9px] font-bold uppercase tracking-tight leading-relaxed ${log.type === 'success' ? 'text-green-500/80' : log.type === 'error' ? 'text-red-500/80' : log.type === 'warning' ? 'text-yellow-500/80' : 'text-text-dim'}`}>
+                                                        {log.msg}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        {/* Drag Handle Left */}
+                        {isLeftSidebarOpen && !showMobileSections && (
+                            <div
+                                onMouseDown={startDraggingLeft}
+                                className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
+                            />
+                        )}
+
                         {/* ── Área Principal: Editor & Visor PDF ── */}
                         <div className="flex-1 bg-bg-deep overflow-hidden flex">
                             {activeTab !== 'output' ? (
                                 <div className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar">
-                                    <div className="max-w-5xl mx-auto">
+                                    <div className="w-full mx-auto transition-all duration-300 max-w-[94%]">
                                         <div className="mb-8 md:mb-12">
                                             <h3 className="text-xl md:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
                                             <p className="text-[10px] md:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
@@ -617,122 +802,134 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 </div>
                                             </div>
                                         )}
-
                                         {/* El cowork se pasa a los children para que los campos colaborativos lo consuman */}
                                         {children(activeTab, cowork)}
                                     </div>
                                 </div>
                             ) : (
                                 /* ── Panel de Finalización y Firma ── */
-                                <div className="flex-1 p-12 flex flex-col gap-8 animate-fade-in">
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 flex-1 overflow-hidden overflow-y-auto lg:overflow-hidden p-2">
-                                        {/* Panel de Controles */}
-                                        <div className="col-span-1 lg:col-span-4 flex flex-col gap-6 overflow-y-auto lg:pr-4 custom-scrollbar">
-                                            {/* Modo Borrador / Emisión */}
-                                            <div className="p-6 md:p-8 bg-surface border border-border-thin rounded-2xl shadow-sm">
-                                                <h4 className="text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-3">
-                                                    <Settings size={18} className="text-text-main" /> Emisión
+                                <div className="flex-1 p-3 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-hidden">
+                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-hidden overflow-y-auto lg:overflow-hidden p-1">
+                                        {/* Panel de Controles Unificado */}
+                                        <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col overflow-hidden lg:h-full">
+                                            {/* Sección 1: Emisión */}
+                                            <div className="p-5 flex flex-col gap-4 shrink-0">
+                                                <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                                                    <Settings size={16} className="text-text-dim" /> Emisión
                                                 </h4>
                                                 <div className="space-y-4">
-                                                    <div className="flex items-center justify-between p-4 bg-bg-deep rounded-xl border border-border-thin">
+                                                    {/* Switch sin tarjeta contenedora - Vercel Style */}
+                                                    <div className="flex items-center justify-between py-1">
                                                         <div>
-                                                            <p className="text-[10px] font-black uppercase tracking-tight text-text-main">Modo Borrador</p>
-                                                            <p className="text-[8px] text-text-dim uppercase tracking-widest mt-1">Marca de agua de seguridad</p>
+                                                            <p className="text-sm font-semibold text-text-main">Modo borrador</p>
+                                                            <p className="text-xs text-text-dim">Marca de agua de seguridad</p>
                                                         </div>
                                                         <label className="relative inline-flex items-center cursor-pointer">
                                                             <input type="checkbox" checked={isDraftMode} onChange={(e) => setIsDraftMode(e.target.checked)} className="sr-only peer" />
-                                                            <div className="w-11 h-6 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-text-main"></div>
+                                                            <div className="w-11 h-6 bg-border-thin peer-focus:outline-none rounded-full peer peer-checked:bg-text-main after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
                                                         </label>
                                                     </div>
-                                                    <div className="grid grid-cols-1 gap-3">
-                                                        <button onClick={() => handleGeneratePdf(false)} className="w-full bg-text-main text-bg-deep px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:opacity-90 flex items-center justify-center gap-3 transition-all">
-                                                            <FileText size={18} /> Generar Vista Previa
+                                                    <div className="grid grid-cols-1 gap-2.5">
+                                                        <button onClick={() => handleGeneratePdf(false)} className="w-full bg-text-main hover:bg-text-main/90 text-bg-deep px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-sm">
+                                                            <FileText size={15} /> Generar vista previa
                                                         </button>
-                                                        <button onClick={() => handleGeneratePdf(true)} className="w-full border border-text-main/30 text-text-main/60 px-6 py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-text-main hover:text-bg-deep transition-all flex items-center justify-center gap-3">
-                                                            <Users size={18} /> Vista sin identidades
+                                                        <button onClick={() => handleGeneratePdf(true)} className="w-full border border-border-thin bg-transparent hover:bg-surface text-text-main/80 hover:text-text-main px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                                                            <Users size={15} /> Vista sin identidades
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            {/* Firma Electrónica PAdES */}
-                                            <div className="p-8 bg-surface border border-border-thin rounded-2xl shadow-sm border-t-4 border-t-brand-dark">
-                                                <h4 className="text-xs font-black uppercase tracking-widest mb-2">Firma Electrónica</h4>
-                                                <p className="text-[9px] text-text-dim uppercase tracking-widest mb-6 leading-relaxed">Sello de integridad institucional conforme a la Ley de Comercio Electrónico, Firmas Electrónicas y Mensajes de Datos.</p>
-                                                <div className="space-y-4">
+                                            <div className="border-t border-border-thin shrink-0" />
+
+                                            {/* Sección 2: Firma Electrónica */}
+                                            <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scrollbar">
+                                                <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
+                                                    <Shield size={16} className="text-text-dim" /> Firma Electrónica
+                                                </h4>
+                                                <p className="text-xs text-text-dim leading-relaxed">Firma digital PAdES con validez legal.</p>
+
+                                                <div className="flex flex-col gap-4 mt-2">
                                                     {!canSign ? (
-                                                        <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center space-y-3">
+                                                        <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
                                                             <div className="flex justify-center text-amber-500">
-                                                                <Shield size={32} />
+                                                                <Shield size={20} />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <p className="text-xs font-bold text-text-main">Firma Restringida</p>
-                                                                <p className="text-[10px] text-text-dim leading-relaxed">
-                                                                    Solo el Director de Proyecto o un Administrador del Sistema están autorizados para firmar digitalmente este protocolo.
+                                                                <p className="text-sm font-semibold text-text-main">Firma restringida</p>
+                                                                <p className="text-xs text-text-dim leading-relaxed">
+                                                                    Solo el Director de Proyecto o un Administrador del sistema están autorizados para firmar.
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     ) : hasSavedCert ? (
-                                                        <>
-                                                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl space-y-3">
-                                                                <div className="flex items-center gap-2.5">
-                                                                    <CheckCircle className="text-emerald-500 shrink-0" size={16} />
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <p className="text-xs font-bold text-text-main">Firma de tu Perfil Lista</p>
-                                                                        <p className="text-[9px] text-text-dim uppercase tracking-wider mt-0.5">Certificado .p12 configurado en tu cuenta.</p>
+                                                        <div className="flex flex-col gap-4">
+                                                            <div className={`p-3.5 border rounded-xl flex items-start gap-3 ${aceptoTerminos ? 'bg-green-500/5 border-green-500/10' : 'bg-surface border-border-thin'}`}>
+                                                                <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
+                                                                <div className="flex-1 min-w-0 space-y-2">
+                                                                    <div>
+                                                                        <p className="text-sm font-semibold text-text-main">Certificado listo</p>
+                                                                        <p className="text-xs text-text-dim mt-0.5">Archivo .p12 cargado en tu cuenta.</p>
                                                                     </div>
+                                                                    {aceptoTerminos ? (
+                                                                        <p className="text-xs text-green-500 select-none">
+                                                                            {fechaConsentimientoFirma
+                                                                                ? `Consentimiento LOPDP otorgado el ${new Date(fechaConsentimientoFirma).toLocaleDateString()}`
+                                                                                : 'Consentimiento LOPDP otorgado'}
+                                                                        </p>
+                                                                    ) : (
+                                                                        <div className="flex items-start gap-2.5 pt-1 select-none">
+                                                                            <input
+                                                                                type="checkbox"
+                                                                                id="lopdpSignConsent"
+                                                                                className="mt-0.5 cursor-pointer accent-text-main h-4 w-4 rounded border-border-thin text-text-main focus:ring-0"
+                                                                                checked={aceptoTerminos}
+                                                                                disabled={isSavingConsent}
+                                                                                onChange={handleConsentToggle}
+                                                                            />
+                                                                            <label htmlFor="lopdpSignConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer font-medium">
+                                                                                Acepto los términos de LOPDP y autorizo la custodia de mi firma para documentos académicos.
+                                                                            </label>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
                                                             </div>
 
-                                                            <div>
-                                                                <label className="text-[9px] text-text-dim uppercase font-bold tracking-widest mb-2 block">Contraseña del Certificado</label>
+                                                            <div className="space-y-1.5">
+                                                                <label className="text-xs font-bold text-text-main block">Contraseña</label>
                                                                 <input
                                                                     type="password"
-                                                                    placeholder="Contraseña (opcional si la guardó en Configuración)"
+                                                                    placeholder="Contraseña (opcional)"
                                                                     value={signaturePassword}
                                                                     onChange={(e) => setSignaturePassword(e.target.value)}
-                                                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm focus:border-text-main outline-none transition-all"
+                                                                    className="w-full bg-surface border border-border-thin rounded-xl px-3.5 py-2.5 text-sm focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
                                                                 />
-                                                            </div>
-
-                                                            <div className="flex items-start gap-3 p-3.5 bg-bg-deep/40 border border-border-thin rounded-xl select-none">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    id="lopdpSignConsent"
-                                                                    className="mt-0.5 cursor-pointer accent-brand"
-                                                                    checked={aceptoTerminos}
-                                                                    disabled={isSavingConsent}
-                                                                    onChange={handleConsentToggle}
-                                                                />
-                                                                <label htmlFor="lopdpSignConsent" className="text-[10px] text-text-dim leading-relaxed cursor-pointer">
-                                                                    Acepto los términos de la <strong>Ley Orgánica de Protección de Datos Personales (LOPDP)</strong> y autorizo a DIITRA a custodiar mi firma cifrada para uso exclusivo de documentos académicos.
-                                                                </label>
                                                             </div>
 
                                                             <button
                                                                 onClick={handleSign}
                                                                 disabled={!pdfBlob || isSigning || !aceptoTerminos}
-                                                                className={`w-full py-4 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${(!pdfBlob || !aceptoTerminos) ? 'bg-bg-deep text-text-dim cursor-not-allowed' : 'bg-brand-dark text-text-main hover:bg-brand shadow-xl'}`}
+                                                                className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${(!pdfBlob || !aceptoTerminos) ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed' : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'}`}
                                                             >
-                                                                {isSigning ? <><Clock size={18} className="animate-spin" /> Firmando...</> : <><Shield size={18} /> Aplicar Firma Electrónica</>}
+                                                                {isSigning ? <><Clock size={15} className="animate-spin" /> Firmando...</> : <><Shield size={15} /> Aplicar firma electrónica</>}
                                                             </button>
-                                                        </>
+                                                        </div>
                                                     ) : (
-                                                        <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-xl space-y-4 text-center">
-                                                            <div className="flex justify-center text-red-500">
-                                                                <AlertCircle size={40} />
+                                                        <div className="p-4 bg-surface border border-border-thin rounded-xl space-y-3.5 text-center flex flex-col items-center justify-center">
+                                                            <div className="text-red-500 shrink-0">
+                                                                <AlertCircle size={24} />
                                                             </div>
                                                             <div className="space-y-1">
-                                                                <p className="text-xs font-bold text-text-main">Firma Electrónica no configurada</p>
-                                                                <p className="text-[10px] text-text-dim leading-relaxed">
-                                                                    Para poder firmar electrónicamente este documento, primero debes configurar tu firma (.p12) en los ajustes de tu cuenta.
+                                                                <p className="text-sm font-semibold text-text-main">Firma no configurada</p>
+                                                                <p className="text-xs text-text-dim leading-relaxed">
+                                                                    Configura tu certificado (.p12) en los ajustes para firmar.
                                                                 </p>
                                                             </div>
                                                             <button
                                                                 onClick={handleRedirectToSettings}
-                                                                className="w-full bg-text-main text-bg-deep px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] hover:opacity-90 transition-all"
+                                                                className="w-full bg-text-main hover:bg-text-main/90 text-bg-deep px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm"
                                                             >
-                                                                Configurar en Mi Cuenta y Firma
+                                                                Configurar firma
                                                             </button>
                                                         </div>
                                                     )}
@@ -741,7 +938,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         </div>
 
                                         {/* Visor de PDF */}
-                                        <div className="col-span-1 lg:col-span-8 bg-bg-deep border border-border-thin rounded-2xl p-2 flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
+                                        <div className="col-span-1 lg:col-span-9 bg-bg-deep border border-border-thin rounded-2xl p-2 flex flex-col shadow-inner relative overflow-hidden min-h-[500px]">
                                             {isGenerating ? (
                                                 <div className="flex-1 flex flex-col items-center justify-center gap-6">
                                                     <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-text-main border-t-transparent rounded-full animate-spin shadow-lg" />
@@ -767,11 +964,31 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             )}
                         </div>
 
+                        {/* Drag Handle Right */}
+                        {isSidebarOpen && (
+                            <div
+                                onMouseDown={startDraggingRight}
+                                className="hidden lg:block w-[6px] -mx-[3px] bg-transparent hover:bg-border-hover/50 active:bg-text-dim cursor-col-resize select-none shrink-0 transition-colors duration-150 z-50 h-full relative"
+                            />
+                        )}
+
                         {/* ── Collaboration Sidebar (Derecha) ── */}
-                        {activeTab !== 'output' && (
-                            <div className={`transition-all duration-300 ease-in-out overflow-hidden flex shrink-0 ${
-                                isSidebarOpen ? 'w-80 border-l border-border-thin' : 'w-0'
-                            }`}>
+                        <div
+                            ref={rightSidebarRef}
+                            style={{
+                                '--right-sidebar-width': `${rightSidebarWidth}px`,
+                                width: isSidebarOpen ? `${rightSidebarWidth}px` : '0px'
+                            } as React.CSSProperties}
+                            className={`
+                                transition-[width] duration-300 ease-in-out overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
+                                ${isSidebarOpen ? 'border-l border-border-thin' : ''}
+                                ${isSidebarOpen
+                                    ? 'fixed inset-y-0 right-0 top-[60px] lg:top-0 lg:relative z-[70] lg:z-40 h-[calc(100vh-60px)] lg:h-full !w-[85vw] sm:!w-[320px] lg:!w-[inherit]'
+                                    : 'w-0'
+                                }
+                            `}
+                        >
+                            <div className="h-full w-full lg:w-[var(--right-sidebar-width)] flex flex-col shrink-0">
                                 <CollaborationSidebar
                                     instanceUuid={cowork.session.documentId}
                                     sectionName={activeTab}
@@ -780,7 +997,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                     onClose={() => setIsSidebarOpen(false)}
                                 />
                             </div>
-                        )}
+                        </div>
                     </div>
                 </div>
             </div>

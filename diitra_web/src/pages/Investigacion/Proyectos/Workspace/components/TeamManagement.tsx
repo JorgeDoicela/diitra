@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-    Users, AlertCircle, Sparkles, ExternalLink, RefreshCw, X,
+    Users, AlertCircle, ExternalLink, RefreshCw, X,
     Search, History, CheckSquare, UserPlus, Trash2, ChevronDown, ChevronUp
 } from 'lucide-react';
 
