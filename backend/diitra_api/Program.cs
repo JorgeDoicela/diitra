@@ -82,6 +82,12 @@ builder.Services.AddAuthentication(options =>
 });
 
 // 2. Configurar JSON en snake_case y FluentValidation
+// ⚠️ ADVERTENCIA DE NOMENCLATURA (API-Frontend Binding):
+// - El backend expone de forma global JSON serializado en `snake_case` (JsonNamingPolicy.SnakeCaseLower).
+// - El frontend (React) consume estas propiedades directamente en `snake_case` (ej: `nombre_completo`).
+// - NO cambie esta política global a camelCase sin realizar un refactor completo de las claves en el frontend.
+// - Nota: Algunas propiedades dinámicas (ej. snapshots, esquemas Scriban) usan fallbacks locales en el
+//   frontend (ej. `data_snapshot_json || dataSnapshotJson`) para tolerar discrepancias de serialización.
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {

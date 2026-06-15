@@ -65,6 +65,13 @@ El backend tiene configurada la política global `JsonNamingPolicy.SnakeCaseLowe
 * **Metadatos Universales (`/documents/instances`)**: El endpoint universal de parches de metadatos recibe un `JsonElement` dinámico, por lo que preserva el casing original. Por convención del motor de plantillas de documentos (Scriban), estos esquemas de formulario se manejan en **`PascalCase`** (ej: `Titulo`, `CostoTotal`, `Investigadores`).
 * **CreateInstanceRequest**: La clase C# que recibe la creación de instancias de documentos usa decoradores explícitos `[property: JsonPropertyName("templateCode")]` y `[property: JsonPropertyName("entityUuid")]`. Por ende, estas propiedades específicas deben enviarse estrictamente en **`camelCase`**.
 
+### 4. Tolerancia a Discrepancias (Local Fallback Pattern)
+* **Principio de robustez**: Para evitar fallos silenciosos en producción por discrepancias de casing en campos dinámicos (como respuestas JSON anidadas, snapshots o DTOs heredados), el frontend debe usar operadores de coalescencia (`||`) al leer campos sensibles que puedan variar.
+* **Ejemplo práctico**: Al leer campos serializados o snapshots de datos, se debe tolerar `snake_case`, `camelCase` y `PascalCase` indistintamente:
+  ```typescript
+  const snapshotStr = response.data.data_snapshot_json || response.data.dataSnapshotJson || response.data.DataSnapshotJson;
+  ```
+
 ---
 
 ## Guía de Despliegue e Instalación

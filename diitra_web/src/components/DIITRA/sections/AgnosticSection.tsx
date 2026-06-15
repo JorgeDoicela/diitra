@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
-import { 
-    Sliders, 
-    Eye, 
-    EyeOff, 
-    HelpCircle, 
-    Lock, 
+import {
+    Sliders,
+    Eye,
+    EyeOff,
+    HelpCircle,
+    Lock,
     Activity,
     BookOpen
 } from 'lucide-react';
@@ -81,10 +81,12 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
             if (refUuid && refUuid !== 'GLOBAL' && config?.referenceTemplateCode) {
                 setIsLoadingRef(true);
                 try {
-                    console.log(`[AgnosticSection] Cargando documento de referencia: ${refUuid}`);
                     const response = await api.get(`/documents/instances/${refUuid}`);
-                    if (response.data?.dataSnapshotJson) {
-                        setReferenceData(JSON.parse(response.data.dataSnapshotJson));
+                    // FALLBACK PATTERN: Se tolera cualquier casing del backend (snake_case, camelCase, PascalCase)
+                    // para evitar roturas si la serialización de snapshots varía o si la propiedad viene de un DTO mapeado.
+                    const snapshotStr = response.data?.data_snapshot_json || response.data?.dataSnapshotJson || response.data?.DataSnapshotJson;
+                    if (snapshotStr) {
+                        setReferenceData(JSON.parse(snapshotStr));
                     } else if (response.data) {
                         setReferenceData(response.data);
                     }
@@ -128,10 +130,10 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                             {label} (Colaborativo)
                         </label>
                         <div className="border border-border-thin rounded-2xl overflow-hidden bg-bg-deep focus-within:ring-2 focus-within:ring-text-main/15 transition-all">
-                            <CoWorkEditor 
-                                field={name} 
-                                cowork={cowork} 
-                                onChange={(html) => onUpdate(name, html)} 
+                            <CoWorkEditor
+                                field={name}
+                                cowork={cowork}
+                                onChange={(html) => onUpdate(name, html)}
                             />
                         </div>
                     </div>
@@ -140,9 +142,9 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
             return (
                 <div key={name} className="p-5 bg-surface border border-border-thin rounded-2xl flex flex-col gap-1.5 relative group hover:border-text-main/10 transition-all">
-                    <CoWorkField 
-                        name={name} 
-                        cowork={cowork} 
+                    <CoWorkField
+                        name={name}
+                        cowork={cowork}
                         type={type === 'number' ? 'text' : type as any}
                         label={`${label} • Colaborativo`}
                         placeholder={placeholder}
@@ -184,27 +186,27 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                 </div>
 
                 {type === 'text' && (
-                    <input 
+                    <input
                         {...commonInputProps}
-                        type="text" 
-                        value={val} 
-                        onChange={(e) => handlePrivateChange(e.target.value)} 
+                        type="text"
+                        value={val}
+                        onChange={(e) => handlePrivateChange(e.target.value)}
                     />
                 )}
 
                 {type === 'textarea' && (
-                    <textarea 
+                    <textarea
                         {...commonInputProps}
                         rows={3}
-                        value={val} 
-                        onChange={(e) => handlePrivateChange(e.target.value)} 
+                        value={val}
+                        onChange={(e) => handlePrivateChange(e.target.value)}
                     />
                 )}
 
                 {type === 'select' && (
-                    <select 
+                    <select
                         {...commonInputProps}
-                        value={val} 
+                        value={val}
                         onChange={(e) => handlePrivateChange(e.target.value)}
                     >
                         <option value="">Seleccione opción...</option>
@@ -216,7 +218,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
                 {type === 'checkbox' && (
                     <div className="flex items-center gap-3">
-                        <input 
+                        <input
                             type="checkbox"
                             checked={!!val}
                             disabled={isDisabled}
@@ -229,7 +231,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
                 {type === 'number' && (
                     <div className="space-y-2">
-                        <input 
+                        <input
                             type="range"
                             min={min}
                             max={max}
@@ -262,7 +264,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                             Evaluación anónima (arbitraje)
                         </span>
                     </div>
-                    <button 
+                    <button
                         onClick={() => setCollapsed(!collapsed)}
                         className="px-3 py-1.5 bg-surface border border-border-thin hover:border-text-main/25 text-text-main rounded-lg text-[9px] font-black uppercase flex items-center gap-1.5 transition-all shadow-sm"
                     >
@@ -273,7 +275,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
             )}
 
             <div className={`grid grid-cols-1 ${showDualPane && !collapsed ? 'lg:grid-cols-2' : 'grid-cols-1'} gap-6 transition-all duration-300`}>
-                
+
                 {/* A) PANEL IZQUIERDO: VISUALIZADOR DE REFERENCIA (DOSSIER CACES) */}
                 {showDualPane && !collapsed && (
                     <div className="bg-surface border border-border-thin rounded-2xl p-6 space-y-6 overflow-y-auto max-h-[70vh] shadow-xl animate-slide-right">
@@ -315,7 +317,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                                 <div className="space-y-4">
                                     <div>
                                         <span className="text-[8px] font-black text-text-dim uppercase block mb-1">Antecedentes y Justificación</span>
-                                        <div 
+                                        <div
                                             className="p-4 bg-bg-deep/50 border border-border-thin rounded-xl prose prose-invert max-w-none text-[11px]"
                                             dangerouslySetInnerHTML={{ __html: sanitize(referenceData.Antecedentes || "<i>No se cargaron antecedentes.</i>") }}
                                         />
@@ -323,7 +325,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
                                     <div>
                                         <span className="text-[8px] font-black text-text-dim uppercase block mb-1">Objetivo General</span>
-                                        <div 
+                                        <div
                                             className="p-4 bg-bg-deep/50 border border-border-thin rounded-xl prose prose-invert max-w-none text-[11px]"
                                             dangerouslySetInnerHTML={{ __html: sanitize(referenceData.ObjetivoGeneral || "<i>No se cargó objetivo general.</i>") }}
                                         />
