@@ -296,35 +296,7 @@ const ArbitrajePage: React.FC = () => {
                 </div>
             </header>
 
-            {/* ── ALERTAS CACES ────────────────────────────────── */}
-            {alertasVisibles.length > 0 && (
-                <div className="mb-6 space-y-1.5 animate-fade-up [animation-delay:60ms]">
-                    {alertasVisibles.map(a => (
-                        <div
-                            key={a.id}
-                            className={`flex items-start gap-3 px-4 py-3 rounded-lg border text-xs ${
-                                a.tipo === 'critico' ? 'bg-error/5 border-error/20' : 'bg-warning/5 border-warning/20'
-                            }`}
-                        >
-                            <AlertCircle size={13} className={`mt-0.5 shrink-0 ${a.tipo === 'critico' ? 'text-error' : 'text-warning'}`} />
-                            <div className="flex-1 min-w-0">
-                                <span className="font-semibold text-text-main">{a.titulo}:</span>
-                                {' '}<span className="text-text-dim">{a.descripcion}</span>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                                {a.proyectoUuid && (
-                                    <button onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)} className="text-brand hover:underline font-medium">
-                                        Ver →
-                                    </button>
-                                )}
-                                <button onClick={() => setDismissed(s => new Set([...s, a.id]))} className="text-text-dim hover:text-text-main transition-colors">
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+
 
             {/* ── TWO-COLUMN LAYOUT — igual que PeerReviewPage ─── */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up [animation-delay:100ms] relative z-10">
@@ -393,8 +365,8 @@ const ArbitrajePage: React.FC = () => {
                                                 >
                                                     <td className="px-5 py-4">
                                                         <div className="flex items-start gap-3 min-w-0">
-                                                            <div className="w-8 h-8 rounded-lg border border-border-thin bg-surface flex items-center justify-center shrink-0 mt-0.5">
-                                                                 <Gavel size={13} className="text-text-dim" strokeWidth={1.5} />
+                                                            <div className="w-8 h-8 flex items-center justify-center shrink-0 mt-0.5 text-text-dim/80">
+                                                                 <Gavel size={16} strokeWidth={1.5} />
                                                             </div>
                                                             <div className="min-w-0">
                                                                 <p className="text-sm font-medium text-text-main leading-snug truncate max-w-[160px] sm:max-w-[240px] group-hover:text-brand transition-colors">
@@ -419,23 +391,23 @@ const ArbitrajePage: React.FC = () => {
                                                                 {/* Detalle apilado para móviles */}
                                                                 <div className="flex flex-wrap items-center gap-1.5 mt-2 sm:hidden text-[9px] font-medium">
                                                                     {p.convocatoria && (
-                                                                        <span className="text-text-dim bg-surface border border-border-thin rounded px-1.5 py-0.5">
+                                                                        <span className="text-text-dim">
                                                                             {p.convocatoria}
                                                                         </span>
                                                                     )}
                                                                     {p.total_arbitros > 0 && (
-                                                                        <span className="bg-surface border border-border-thin rounded px-1.5 py-0.5 text-text-dim font-mono">
+                                                                        <span className="text-text-dim font-mono">
                                                                             Progreso: {p.arbitros_completados}/{p.total_arbitros}
                                                                         </span>
                                                                     )}
                                                                     {p.puntaje_promedio != null && (
-                                                                        <span className={`rounded px-1.5 py-0.5 font-mono ${p.puntaje_promedio >= 70 ? 'bg-success/5 border border-success/20 text-success' : 'bg-error/5 border border-error/20 text-error'}`}>
+                                                                        <span className={`font-mono ${p.puntaje_promedio >= 70 ? 'text-success' : 'text-error'}`}>
                                                                             {p.puntaje_promedio.toFixed(1)} pts
                                                                         </span>
                                                                     )}
-                                                                    <div className={`scale-90 origin-left badge-vercel ${cfg.badge} !py-0 !px-1.5 !h-auto !text-[8px]`}>
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-medium text-text-main">
                                                                         <span className={`dot ${cfg.dot} !w-1 !h-1`} />
-                                                                        {cfg.label}
+                                                                        <span>{cfg.label}</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -457,9 +429,9 @@ const ArbitrajePage: React.FC = () => {
                                                         )}
                                                     </td>
                                                     <td className="px-4 py-4 hidden sm:table-cell">
-                                                        <div className={`badge-vercel ${cfg.badge}`}>
+                                                        <div className="flex items-center gap-2 text-xs font-medium text-text-main">
                                                             <span className={`dot ${cfg.dot}`} />
-                                                            {cfg.label}
+                                                            <span>{cfg.label}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-4">
@@ -513,6 +485,53 @@ const ArbitrajePage: React.FC = () => {
                                 { label: 'Tiempo Promedio', value: completadas.length > 0 ? parseFloat(tiempoPromText) : 0, displayValue: tiempoPromText,                              max: 30,                                           color: '#0070f3',    tooltip: 'Días promedio que tarda un revisor en completar su evaluación.' },
                             ]}
                         />
+                    )}
+
+                    {/* Alertas CACES */}
+                    {alertasVisibles.length > 0 && (
+                        <div className="bento-card static p-4 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+                            <div className="flex items-center justify-between mb-4">
+                                <span className="text-[14px] font-semibold text-text-main tracking-tight">Alertas CACES</span>
+                                <span className="font-mono text-xs font-semibold text-text-dim">
+                                    ({alertasVisibles.length})
+                                </span>
+                            </div>
+                            <div className="divide-y divide-border-thin/50 max-h-[320px] overflow-y-auto pr-1">
+                                {alertasVisibles.map(a => (
+                                    <div key={a.id} className="relative flex items-start gap-3 py-3.5 first:pt-0 last:pb-0 gap-4 group">
+                                        {a.tipo === 'critico' ? (
+                                            <AlertCircle size={14} className="text-error mt-0.5 shrink-0" />
+                                        ) : (
+                                            <AlertTriangle size={14} className="text-warning mt-0.5 shrink-0" />
+                                        )}
+                                        <div className="flex-1 min-w-0 pr-6">
+                                            <p className="text-xs font-semibold text-text-main leading-tight">
+                                                {a.titulo}
+                                            </p>
+                                            <p className="text-[11px] text-text-dim mt-1 leading-snug break-words">
+                                                {a.descripcion}
+                                            </p>
+                                            {a.proyectoUuid && (
+                                                <button
+                                                    onClick={() => navigate(`/arbitraje/proyecto/${a.proyectoUuid}`)}
+                                                    className="text-[10px] font-medium text-brand hover:text-brand-light hover:underline transition-colors mt-2 flex items-center gap-0.5 cursor-pointer"
+                                                >
+                                                    <span>Gestionar</span>
+                                                    <ChevronRight size={10} />
+                                                </button>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={() => setDismissed(s => new Set([...s, a.id]))}
+                                            className="absolute right-0 top-3 text-text-dim hover:text-text-main transition-colors p-1 rounded-md hover:bg-surface-hover cursor-pointer"
+                                            title="Ignorar aviso"
+                                        >
+                                            <X size={11} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     )}
 
                     {/* Avance global */}
