@@ -48,6 +48,25 @@ Para una comprensión profunda de los subsistemas, consulte los siguientes docum
 
 ---
 
+## Políticas de Desarrollo y Nomenclatura (API-Frontend Binding)
+
+Para evitar fallos de enlace de datos (model binding) entre la aplicación frontend (React) y la API backend (.NET Core), se debe respetar rigurosamente la siguiente convención de nomenclatura:
+
+### 1. Política Global de Casing (`lower_snake_case`)
+El backend tiene configurada la política global `JsonNamingPolicy.SnakeCaseLower` para la serialización y deserialización de cuerpos JSON. Por lo tanto:
+* **Cuerpo de Solicitudes (`[FromBody]`)**: Cualquier payload JSON enviado en peticiones `POST`, `PUT` o `PATCH` desde React a un DTO de C# debe utilizar claves en **`lower_snake_case`** (ej: `project_uuid`, `id_tipo_producto`, `cuerpo_html`, `observacion_revision`).
+* **Mapeo a DTOs**: La deserialización automática de .NET transformará estas claves a las propiedades `PascalCase` del DTO (ej: `ProjectUuid`, `IdTipoProducto`, `CuerpoHtml`). Si el frontend envía `camelCase`, las propiedades en el backend quedarán como `null` o vacías.
+
+### 2. Parámetros de Consulta (`[FromQuery]`) y Formularios (`[FromForm]`)
+* **Query Parameters / Query String**: El enlace de parámetros de consulta en el controlador de ASP.NET Core es insensible a mayúsculas/minúsculas y vincula directamente con los nombres de variables del método en C#. Por convención, se envían en **`camelCase`** (ej: `?grupoInvestigacion=123&tieneGrupoInvestigacion=true`).
+* **Form Data (`multipart/form-data`)**: Los datos cargados como archivos y campos de formulario se enlazan de forma insensible a mayúsculas/minúsculas con los nombres de variables del controlador, por lo que se utiliza habitualmente **`camelCase`** o el nombre exacto del parámetro (ej: `projectUuid`).
+
+### 3. Excepciones de Casing Especiales
+* **Metadatos Universales (`/documents/instances`)**: El endpoint universal de parches de metadatos recibe un `JsonElement` dinámico, por lo que preserva el casing original. Por convención del motor de plantillas de documentos (Scriban), estos esquemas de formulario se manejan en **`PascalCase`** (ej: `Titulo`, `CostoTotal`, `Investigadores`).
+* **CreateInstanceRequest**: La clase C# que recibe la creación de instancias de documentos usa decoradores explícitos `[property: JsonPropertyName("templateCode")]` y `[property: JsonPropertyName("entityUuid")]`. Por ende, estas propiedades específicas deben enviarse estrictamente en **`camelCase`**.
+
+---
+
 ## Guía de Despliegue e Instalación
 
 ### Requisitos del Entorno

@@ -1041,16 +1041,34 @@ const EmailEnginePage: React.FC = () => {
         try {
             if (editingTemplate) {
                 // Update
+                // NOTA: Se usan claves snake_case (id_email_template, cuerpo_html) en el payload para cumplir
+                // con la política global de serialización SnakeCaseLower del backend (mapea a EmailTemplateDto).
                 const payload = {
-                    ...editingTemplate,
-                    ...templateForm
+                    id_email_template: editingTemplate.idEmailTemplate,
+                    uuid: editingTemplate.uuid,
+                    codigo: templateForm.codigo.trim(),
+                    nombre: templateForm.nombre.trim(),
+                    descripcion: templateForm.descripcion.trim(),
+                    asunto: templateForm.asunto.trim(),
+                    cuerpo_html: templateForm.cuerpoHtml,
+                    activo: templateForm.activo
                 };
                 const res = await api.put<any>(`/Admin/email-engine/templates/${editingTemplate.idEmailTemplate}`, payload);
                 const saved = mapTemplateToCamelCase(res.data);
                 setTemplates(prev => prev.map(t => t.idEmailTemplate === editingTemplate.idEmailTemplate ? saved : t));
             } else {
                 // Create
-                const res = await api.post<any>('/Admin/email-engine/templates', templateForm);
+                // NOTA: Se usan claves snake_case (cuerpo_html) en el payload para cumplir con la política
+                // global de serialización SnakeCaseLower del backend.
+                const payload = {
+                    codigo: templateForm.codigo.trim(),
+                    nombre: templateForm.nombre.trim(),
+                    descripcion: templateForm.descripcion.trim(),
+                    asunto: templateForm.asunto.trim(),
+                    cuerpo_html: templateForm.cuerpoHtml,
+                    activo: templateForm.activo
+                };
+                const res = await api.post<any>('/Admin/email-engine/templates', payload);
                 const saved = mapTemplateToCamelCase(res.data);
                 setTemplates(prev => [saved, ...prev]);
             }

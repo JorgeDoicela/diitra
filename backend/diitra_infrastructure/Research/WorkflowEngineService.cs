@@ -92,8 +92,13 @@ namespace Diitra.Infrastructure.Research
             // 1.2 Validación de Carga Horaria para Docentes (CACES Compliance)
             if (nuevoEstado == "Enviado")
             {
+                var today = DateOnly.FromDateTime(DateTime.UtcNow);
                 var currentPeriod = await _context.Periodos
+                    .Where(p => p.EsInstituto == 1)
                     .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                    .ThenByDescending(p => p.Activo == true)
+                    .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                    .ThenByDescending(p => p.FechaInicial)
                     .FirstOrDefaultAsync();
 
                 if (currentPeriod == null)
@@ -119,8 +124,9 @@ namespace Diitra.Infrastructure.Research
 
                     decimal proposedHours = prof.HorasSemanales ?? 0;
                     
+                    // NOTA DE NOMENCLATURA & SISTEMA: Se aplica Trim() en los IDs de profesores para evitar desajustes por espacios en la persistencia.
                     var availableHours = await _context.ProfesoresActividades
-                        .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .Where(pa => pa.IdProfesor.Trim() == persona.IdSigafi.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                         .Select(pa => pa.HorasSemana)
                         .FirstOrDefaultAsync() ?? 0;
 

@@ -560,6 +560,7 @@ namespace diitra_infrastructure.Research
             // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.Periodoactivoinstituto == 1)
                 .ThenByDescending(p => p.Activo == true)
                 .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
@@ -846,7 +847,7 @@ namespace diitra_infrastructure.Research
 
             // ── Métricas del Investigador (siempre calculamos para el usuario actual) ──
             var userId = await _context.Users
-                .Where(u => u.IdSigafi == userIdReferencia)
+                .Where(u => u.IdSigafi.Trim() == userIdReferencia.Trim())
                 .Select(u => (int?)u.IdUsuario)
                 .FirstOrDefaultAsync();
 
@@ -879,6 +880,7 @@ namespace diitra_infrastructure.Research
 
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
                 var currentPeriod = await _context.Periodos
+                    .Where(p => p.EsInstituto == 1)
                     .OrderByDescending(p => p.Periodoactivoinstituto == 1)
                     .ThenByDescending(p => p.Activo == true)
                     .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
@@ -894,7 +896,7 @@ namespace diitra_infrastructure.Research
                     if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
 
                     stats.HorasDisponiblesDistributivo = await _context.ProfesoresActividades
-                        .Where(pa => pa.IdProfesor == userIdReferencia && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                        .Where(pa => pa.IdProfesor.Trim() == userIdReferencia.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                         .SumAsync(pa => (decimal?)pa.HorasSemana ?? 0);
                 }
                 else
@@ -1518,8 +1520,15 @@ namespace diitra_infrastructure.Research
             }
 
             // Validación de Carga Horaria para Docentes (CACES Compliance)
+            // NOTA DE NOMENCLATURA & SISTEMA: Usamos la Lógica Resiliente de Descubrimiento de Periodo Académico
+            // filtrando por EsInstituto == 1 y ordenando adecuadamente para asegurar consistencia con el catálogo.
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.Periodoactivoinstituto == 1)
+                .ThenByDescending(p => p.Activo == true)
+                .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
+                .ThenByDescending(p => p.FechaInicial)
                 .FirstOrDefaultAsync();
 
             if (currentPeriod == null)
@@ -1544,8 +1553,9 @@ namespace diitra_infrastructure.Research
 
                 decimal proposedHours = inv.HorasSemanales ?? 0;
 
+                // NOTA: Se aplica Trim() a los IDs para ignorar diferencias en espacios en blanco en la persistencia.
                 var availableHours = await _context.ProfesoresActividades
-                    .Where(pa => pa.IdProfesor == persona.IdSigafi && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
+                    .Where(pa => pa.IdProfesor.Trim() == persona.IdSigafi.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
                     .Select(pa => pa.HorasSemana)
                     .FirstOrDefaultAsync() ?? 0;
 
@@ -1825,6 +1835,7 @@ namespace diitra_infrastructure.Research
                 var profCedulas = updatedProfs.Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "").Where(c => !string.IsNullOrEmpty(c)).ToList();
                 var today = DateOnly.FromDateTime(DateTime.UtcNow);
                 var currentPeriod = await _context.Periodos
+                    .Where(p => p.EsInstituto == 1)
                     .OrderByDescending(p => p.Periodoactivoinstituto == 1)
                     .ThenByDescending(p => p.Activo == true)
                     .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)

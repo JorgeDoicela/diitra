@@ -375,15 +375,17 @@ export const ProjectWorkspace: React.FC = () => {
         e.preventDefault();
         if (!resolvedProjectUuid) return;
         try {
+            // NOTA: Se usan claves snake_case para que coincidan con la política global de 
+            // serialización del backend (SnakeCaseLower) y se enlacen con ProductCreateDto.
             await api.post('/ResearchProducts', {
-                projectUuid: resolvedProjectUuid,
-                idTipoProducto: Number(newProduct.id_tipo_producto),
+                project_uuid: resolvedProjectUuid,
+                id_tipo_producto: Number(newProduct.id_tipo_producto),
                 titulo: newProduct.titulo,
                 cantidad: Number(newProduct.cantidad),
-                urlProducto: newProduct.url_producto || null,
-                esPropiedadIntelectual: newProduct.es_propiedad_intelectual,
-                numeroRegistro: newProduct.es_propiedad_intelectual ? newProduct.numero_registro : null,
-                fechaRegistroSenadi: newProduct.es_propiedad_intelectual && newProduct.fecha_registro_senadi ? newProduct.fecha_registro_senadi : null
+                url_producto: newProduct.url_producto || null,
+                es_propiedad_intelectual: newProduct.es_propiedad_intelectual,
+                numero_registro: newProduct.es_propiedad_intelectual ? newProduct.numero_registro : null,
+                fecha_registro_senadi: newProduct.es_propiedad_intelectual && newProduct.fecha_registro_senadi ? newProduct.fecha_registro_senadi : null
             });
             setShowProductModal(false);
             setNewProduct({
@@ -690,8 +692,10 @@ export const ProjectWorkspace: React.FC = () => {
         }
         setIsTransferring(true);
         try {
+            // NOTA: Se usan claves snake_case (nuevo_director_cedula) para cumplir con la política
+            // global de serialización SnakeCaseLower del backend y mapear a TransferDirectorRequest.
             const res = await api.post(`/projects/${currentProject.uuid}/transfer-director`, {
-                nuevoDirectorCedula: newDirectorCedula,
+                nuevo_director_cedula: newDirectorCedula,
                 motivo: transferMotivo,
                 descripcion: transferDescripcion
             });
@@ -775,14 +779,18 @@ export const ProjectWorkspace: React.FC = () => {
                 return;
             }
 
+            // NOTA: Se usan claves snake_case (nivel_academico, horas_semanales) en el cuerpo de la 
+            // solicitud para cumplir con la política SnakeCaseLower de deserialización a InvestigadorDto.
+            // Los parámetros de consulta (query string) como grupoInvestigacion/tieneGrupoInvestigacion
+            // se mantienen en camelCase ya que se enlazan directamente con los argumentos del controlador en C#.
             const payload = investigadores.map(inv => ({
                 nombre: inv.nombre,
                 cedula: inv.cedula,
                 rol: inv.rol,
-                nivelAcademico: inv.nivelAcademico,
+                nivel_academico: inv.nivelAcademico,
                 telefono: inv.telefono || "",
                 activo: inv.activo !== false,
-                horasSemanales: inv.horasSemanales !== undefined && inv.horasSemanales !== null && inv.horasSemanales !== '' ? parseFloat(inv.horasSemanales) : null
+                horas_semanales: inv.horasSemanales !== undefined && inv.horasSemanales !== null && inv.horasSemanales !== '' ? parseFloat(inv.horasSemanales) : null
             }));
             const res = await api.patch(`/projects/${currentProject.uuid}/team`, payload, {
                 params: {
@@ -829,12 +837,15 @@ export const ProjectWorkspace: React.FC = () => {
 
         setIsSubmittingTeamChangeRequest(true);
         try {
+            // NOTA: Se usan claves snake_case (cedula_objetivo, rol_propuesto, resolucion_referencia)
+            // para cumplir con la política global de serialización del backend (SnakeCaseLower)
+            // al mapear contra la clase TeamChangeRequestDto.
             const payload = {
                 tipo: teamChangeForm.tipo,
-                cedulaObjetivo: teamChangeForm.cedulaObjetivo.trim(),
-                rolPropuesto: teamChangeForm.tipo === 'BAJA' ? null : teamChangeForm.rolPropuesto,
+                cedula_objetivo: teamChangeForm.cedulaObjetivo.trim(),
+                rol_propuesto: teamChangeForm.tipo === 'BAJA' ? null : teamChangeForm.rolPropuesto,
                 motivo: teamChangeForm.motivo.trim(),
-                resolucionReferencia: teamChangeForm.resolucionReferencia.trim() || null
+                resolucion_referencia: teamChangeForm.resolucionReferencia.trim() || null
             };
             const res = await api.post(`/projects/${currentProject.uuid}/team-change-requests`, payload);
             if (res.data?.success) {
@@ -862,10 +873,12 @@ export const ProjectWorkspace: React.FC = () => {
     const handleReviewTeamChangeRequest = async (requestUuid: string, aprobar: boolean) => {
         if (!currentProject?.uuid) return;
         try {
+            // NOTA: Se usan claves snake_case (observacion_revision) para cumplir con la política
+            // global de serialización del backend (SnakeCaseLower) al mapear contra la clase TeamChangeReviewDto.
             const res = await api.patch(`/projects/${currentProject.uuid}/team-change-requests/${requestUuid}/review`, {
                 aprobar,
                 ejecutar: aprobar,
-                observacionRevision: aprobar ? "Aprobado por autoridad competente." : "Rechazado por autoridad competente."
+                observacion_revision: aprobar ? "Aprobado por autoridad competente." : "Rechazado por autoridad competente."
             });
             if (res.data?.success) {
                 addToast("Revisión completada", res.data.message || "Solicitud procesada.", "success");

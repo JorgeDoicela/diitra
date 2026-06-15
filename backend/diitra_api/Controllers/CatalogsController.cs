@@ -211,6 +211,7 @@ namespace diitra_api.Controllers
 
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.Periodoactivoinstituto == 1)
                 .ThenByDescending(p => p.Activo == true)
                 .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today)
@@ -356,6 +357,7 @@ namespace diitra_api.Controllers
             // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
+                .Where(p => p.EsInstituto == 1)
                 .OrderByDescending(p => p.Periodoactivoinstituto == 1) // 1. Marcado explícitamente para el sistema
                 .ThenByDescending(p => p.Activo == true)             // 2. Marcado como activo genérico
                 .ThenByDescending(p => p.FechaInicial <= today && p.FechaFinal >= today) // 3. El que cubre la fecha de hoy
