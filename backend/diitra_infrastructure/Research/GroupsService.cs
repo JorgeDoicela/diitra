@@ -46,7 +46,7 @@ public class GroupsService : IGroupsService
         });
     }
 
-    public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null, string? userSigafiId = null, bool isAdmin = false)
+    public async Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null, string? userSigafiId = null, bool isAdmin = false, string? memberCedula = null)
     {
         var query = _context.InvGruposInvestigacion
             .Include(g => g.IdCoordinadorNavigation)
@@ -65,6 +65,14 @@ public class GroupsService : IGroupsService
             query = query.Where(g => g.Estado == "Aprobado" 
                 || (g.IdCoordinadorNavigation != null && g.IdCoordinadorNavigation.IdSigafi == userSigafiTrim)
                 || g.InvGruposMiembros.Any(m => m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi == userSigafiTrim && m.Activo != false));
+        }
+
+        if (!string.IsNullOrEmpty(memberCedula))
+        {
+            var memberCedulaTrim = memberCedula.Trim();
+            query = query.Where(g => 
+                (g.IdCoordinadorNavigation != null && g.IdCoordinadorNavigation.IdSigafi == memberCedulaTrim)
+                || g.InvGruposMiembros.Any(m => m.IdUsuarioNavigation != null && m.IdUsuarioNavigation.IdSigafi == memberCedulaTrim && m.Activo != false));
         }
 
         var groups = await query.ToListAsync();

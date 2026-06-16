@@ -4,7 +4,7 @@ namespace diitra_application.Research;
 
 public interface IGroupsService
 {
-    Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null, string? userSigafiId = null, bool isAdmin = false);
+    Task<IEnumerable<GroupDto>> GetAllAsync(string? search = null, string? userSigafiId = null, bool isAdmin = false, string? memberCedula = null);
     Task<GroupDto?> GetByUuidAsync(string uuid);
     Task<GroupDto> CreateAsync(CreateGroupDto dto, string? solicitanteNombre = null);
     Task<GroupDto> UpdateAsync(string uuid, CreateGroupDto dto, string? solicitanteNombre = null);
