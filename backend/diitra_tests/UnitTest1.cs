@@ -196,6 +196,7 @@ public class UnitTest1
         var mockConfig = new Mock<IConfiguration>();
         var mockAuth = new Mock<IAuthService>();
         var mockLogger = new Mock<ILogger<PeerReviewService>>();
+        var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
 
         var service = new PeerReviewService(
             context,
@@ -204,7 +205,8 @@ public class UnitTest1
             mockNotification.Object,
             mockConfig.Object,
             mockAuth.Object,
-            mockLogger.Object
+            mockLogger.Object,
+            mockHttpContextAccessor.Object
         );
 
         var uniqueProjUuid = Guid.NewGuid().ToString();

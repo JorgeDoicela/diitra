@@ -39,6 +39,13 @@ namespace Diitra.Infrastructure.Common.Repositories
         {
             _logger.LogInformation("[DSpace] Iniciando publicación de documento...");
 
+            // Guardia temprana: si no hay credenciales configuradas, evitar un error de red confuso
+            if (string.IsNullOrWhiteSpace(_user) || string.IsNullOrWhiteSpace(_password))
+            {
+                _logger.LogWarning("[DSpace] Publicación omitida: credenciales no configuradas en appsettings.json (DSpace:User / DSpace:Password).");
+                return "ERROR: El repositorio DSpace no está configurado. Contacte al administrador del sistema para configurar las credenciales de publicación.";
+            }
+
             try
             {
                 // 1. Autenticación (Obtener Token CSRF y Login)

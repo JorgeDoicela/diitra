@@ -261,8 +261,23 @@ public class PeerReviewsController : ControllerBase
     public async Task<IActionResult> Assign([FromBody] AsignarArbitroDto dto)
     {
         var directorId = GetCurrentUserId();
-        var uuid = await _peerReviewService.AsignarArbitroAsync(dto, directorId);
-        return Ok(new { uuid, message = "Árbitro asignado correctamente." });
+        try
+        {
+            var uuid = await _peerReviewService.AsignarArbitroAsync(dto, directorId);
+            return Ok(new { uuid, message = "Árbitro asignado correctamente." });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Error interno al asignar el árbitro: {ex.Message}" });
+        }
     }
 
     /// <summary>
