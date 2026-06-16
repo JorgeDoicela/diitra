@@ -64,7 +64,7 @@ const MicrosoftCallback = () => {
             <div className="w-full max-w-[420px] space-y-8 relative z-20 animate-fade-up">
                 <div className="flex flex-col items-center space-y-6">
                     <img
-                        src="/logo_blanco.png"
+                        src={`${import.meta.env.BASE_URL}logo_blanco.png`}
                         alt="DIITRA Logo"
                         className="h-16 w-auto object-contain"
                     />

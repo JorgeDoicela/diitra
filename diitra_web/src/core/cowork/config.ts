@@ -3,7 +3,8 @@
 // Constantes y utilidades de configuración del núcleo
 // ═══════════════════════════════════════════════════════════════════
 
-const BASE_URL = (import.meta as any).env?.VITE_API_URL ?? 'http://localhost:5175';
+const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
+const BASE_URL = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
 
 export const COWORK_CONFIG = {
     /** URL del Hub de SignalR para la colaboración */

@@ -76,8 +76,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     return isBorradorOrAbierta && !isPastDeadline(c.fecha_cierre || c.fechaCierre);
                 });
 
-                if (preselectedConvocatoriaId && !activeConvs.some(c => getConvocatoriaId(c) === preselectedConvocatoriaId)) {
-                    const preselected = allConvs.find(c => getConvocatoriaId(c) === preselectedConvocatoriaId);
+                if (preselectedConvocatoriaId && !activeConvs.some((c: any) => getConvocatoriaId(c) === preselectedConvocatoriaId)) {
+                    const preselected = allConvs.find((c: any) => getConvocatoriaId(c) === preselectedConvocatoriaId);
                     if (preselected) {
                         activeConvs.push(preselected);
                     }

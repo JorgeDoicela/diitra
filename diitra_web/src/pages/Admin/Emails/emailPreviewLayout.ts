@@ -149,8 +149,8 @@ export function renderMasterLayoutPreview(params: MasterPreviewParams): string {
         extraData
     } = params;
 
-    const logoIstpet = `${origin}/logo_istpet_negro.png`;
-    const logoDiitra = `${origin}/logo_negro.png`;
+    const logoIstpet = `${origin.replace(/\/$/, '')}${import.meta.env.BASE_URL}logo_istpet_negro.png`;
+    const logoDiitra = `${origin.replace(/\/$/, '')}${import.meta.env.BASE_URL}logo_negro.png`;
     const bodyContent = extractInnerContent(innerBodyHtml);
     const anio = new Date().getFullYear();
 

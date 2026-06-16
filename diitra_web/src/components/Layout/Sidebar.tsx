@@ -1059,7 +1059,7 @@ const Sidebar = ({
                         className="px-4 mb-4 flex items-center gap-2 cursor-pointer select-none no-underline"
                     >
                         <img
-                            src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                            src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                             alt="DIITRA Logo"
                             className="h-6 w-auto object-contain"
                         />

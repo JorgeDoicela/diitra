@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, FileText, Lock, CheckCircle2, Loader2, Paperclip, ChevronRight, X } from 'lucide-react';
+import { ShieldCheck, FileText, Lock, CheckCircle2, Loader2, Paperclip, ChevronRight } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Search, Shield, User as UserIcon, X,
     Settings2, GraduationCap, UserPlus, Globe,
-    Activity, ChevronRight, Mail, Hash, Briefcase, TrendingUp,
+    Activity, ChevronRight, Mail, Hash,
     Fingerprint, XCircle, AlertTriangle, CheckCircle, FileText
 } from 'lucide-react';
 import api from '../../api/axios_config';
