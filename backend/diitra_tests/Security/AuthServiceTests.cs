@@ -8,8 +8,8 @@ using diitra_application.Security.DTOs;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
-
 using diitra_application.Common.Notifications;
+using Microsoft.AspNetCore.Http;
 
 namespace diitra_tests.Security;
 
@@ -19,6 +19,7 @@ public class AuthServiceTests
     private readonly Mock<DiitraContext> _mockContext;
     private readonly Mock<IAuditService> _mockAudit;
     private readonly Mock<INotificationService> _mockNotification;
+    private readonly Mock<IHttpContextAccessor> _mockHttpContextAccessor;
 
     public AuthServiceTests()
     {
@@ -26,6 +27,7 @@ public class AuthServiceTests
         _mockContext = new Mock<DiitraContext>();
         _mockAudit = new Mock<IAuditService>();
         _mockNotification = new Mock<INotificationService>();
+        _mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
 
         // Setup common JWTSettings config for testing
         var mockJwtSection = new Mock<IConfigurationSection>();
@@ -39,7 +41,7 @@ public class AuthServiceTests
     public void GenerateToken_ShouldReturnValidJwtString()
     {
         // Arrange
-        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object, _mockNotification.Object);
+        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object, _mockNotification.Object, _mockHttpContextAccessor.Object);
         var authResponse = new AuthResponse
         {
             IdReferencia = "12345",
@@ -80,7 +82,7 @@ public class AuthServiceTests
         var mockAlumnos = GetMockDbSet(alumnosList);
         _mockContext.Setup(c => c.Alumnos).Returns(mockAlumnos.Object);
 
-        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object, _mockNotification.Object);
+        var service = new AuthService(_mockContext.Object, _mockConfig.Object, _mockAudit.Object, _mockNotification.Object, _mockHttpContextAccessor.Object);
         var request = new LoginRequest { Username = "wrong", Password = "wrong" };
 
         // Act

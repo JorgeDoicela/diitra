@@ -10,6 +10,7 @@ using Diitra.Application.Common;
 using diitra_application.Common.Notifications;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 
 namespace diitra_infrastructure.Research;
 
@@ -22,11 +23,20 @@ public class PeerReviewService : IPeerReviewService
     private readonly IConfiguration _configuration;
     private readonly IAuthService _authService;
     private readonly ILogger<PeerReviewService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     private static bool _tableChecked = false;
     private static readonly object _lock = new object();
 
-    public PeerReviewService(DiitraContext context, IAuditService auditService, IDocumentEngine documentEngine, INotificationService notificationService, IConfiguration configuration, IAuthService authService, ILogger<PeerReviewService> logger)
+    public PeerReviewService(
+        DiitraContext context, 
+        IAuditService auditService, 
+        IDocumentEngine documentEngine, 
+        INotificationService notificationService, 
+        IConfiguration configuration, 
+        IAuthService authService, 
+        ILogger<PeerReviewService> logger,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _auditService = auditService;
@@ -35,6 +45,7 @@ public class PeerReviewService : IPeerReviewService
         _configuration = configuration;
         _authService = authService;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
 
         if (!_tableChecked)
         {
@@ -66,6 +77,33 @@ public class PeerReviewService : IPeerReviewService
                 }
             }
         }
+    }
+
+    private string GetFrontendUrl()
+    {
+        var configuredUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        
+        var httpContext = _httpContextAccessor?.HttpContext;
+        if (httpContext != null)
+        {
+            var request = httpContext.Request;
+            var host = request.Host.Value; // e.g. "localhost:5175" or "192.168.7.237"
+            
+            // Si el host del request contiene localhost o 127.0.0.1, y en la configuración dice localhost:3000 o localhost:5173,
+            // asumimos que estamos en desarrollo y usamos la URL configurada.
+            if ((host.Contains("localhost") || host.Contains("127.0.0.1")) && 
+                (configuredUrl.Contains("localhost:3000") || configuredUrl.Contains("localhost:5173")))
+            {
+                return configuredUrl;
+            }
+            
+            // En producción/despliegue en IIS, el host del request (ej. 192.168.7.237 o 26.184.156.40)
+            // es el mismo para la API (/apiDiitra) y la app web (/appDiitra).
+            var scheme = request.Scheme;
+            return $"{scheme}://{host}/appDiitra";
+        }
+
+        return configuredUrl;
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -1085,10 +1123,9 @@ public class PeerReviewService : IPeerReviewService
                 // Crear el enlace mágico centralizadamente a través del servicio de autenticación
                 var plainToken = await _authService.CreateMagicLinkAsync(revisorUser.IdUsuario, dto.FechaLimite);
 
-                // Obtener URL base de la configuración
-                var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+                // Obtener URL base de la configuración o dinámicamente
+                var baseUrl = GetFrontendUrl();
                 var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
-
                 // Notificar vía correo electrónico (con plantilla corporativa desacoplada)
                 var emailTitle = $"Acceso de Arbitraje Científico - DIITRA";
                 string emailBody;

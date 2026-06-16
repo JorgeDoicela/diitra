@@ -10,6 +10,7 @@ using diitra_domain.Identity.Entities;
 using diitra_infrastructure.data.models;
 using diitra_application.Security;
 using diitra_application.Security.DTOs;
+using Microsoft.AspNetCore.Http;
 
 namespace diitra_infrastructure.Security;
 
@@ -19,18 +20,52 @@ public class AuthService : IAuthService
     private readonly IConfiguration _configuration;
     private readonly IAuditService _auditService;
     private readonly diitra_application.Common.Notifications.INotificationService _notificationService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _masterAdminId;
     private static bool _rbacSeeded = false;
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime LockedUntil)> _ipLockouts = new();
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, (int Attempts, DateTime? LockedUntil)> _userLockouts = new();
 
-    public AuthService(DiitraContext context, IConfiguration configuration, IAuditService auditService, diitra_application.Common.Notifications.INotificationService notificationService)
+    public AuthService(
+        DiitraContext context, 
+        IConfiguration configuration, 
+        IAuditService auditService, 
+        diitra_application.Common.Notifications.INotificationService notificationService,
+        IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _configuration = configuration;
         _auditService = auditService;
         _notificationService = notificationService;
+        _httpContextAccessor = httpContextAccessor;
         _masterAdminId = configuration["Security:MasterAdminId"] ?? "0302144159";
+    }
+
+    private string GetFrontendUrl()
+    {
+        var configuredUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        
+        var httpContext = _httpContextAccessor?.HttpContext;
+        if (httpContext != null)
+        {
+            var request = httpContext.Request;
+            var host = request.Host.Value; // e.g. "localhost:5175" or "192.168.7.237"
+            
+            // Si el host del request contiene localhost o 127.0.0.1, y en la configuración dice localhost:3000 o localhost:5173,
+            // asumimos que estamos en desarrollo y usamos la URL configurada.
+            if ((host.Contains("localhost") || host.Contains("127.0.0.1")) && 
+                (configuredUrl.Contains("localhost:3000") || configuredUrl.Contains("localhost:5173")))
+            {
+                return configuredUrl;
+            }
+            
+            // En producción/despliegue en IIS, el host del request (ej. 192.168.7.237 o 26.184.156.40)
+            // es el mismo para la API (/apiDiitra) y la app web (/appDiitra).
+            var scheme = request.Scheme;
+            return $"{scheme}://{host}/appDiitra";
+        }
+
+        return configuredUrl;
     }
 
     public async Task<(AuthResponse? Auth, LoginBlockedResponse? Blocked)> LoginAsync(LoginRequest request)
@@ -805,7 +840,7 @@ public class AuthService : IAuthService
         var plainToken = await CreateMagicLinkAsync(user.IdUsuario, expirationDate);
 
         // 4. Enviar por correo
-        var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var baseUrl = GetFrontendUrl();
         var magicLinkUrl = $"{baseUrl.TrimEnd('/')}/auth/magic-login?token={plainToken}";
 
         var emailTitle = "Acceso de Arbitraje Científico - DIITRA (Reenvío)";
@@ -1076,7 +1111,7 @@ public class AuthService : IAuthService
         await _context.SaveChangesAsync();
 
         // 6. Construir enlace y enviar email usando el MasterLayout institucional
-        var baseUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
+        var baseUrl = GetFrontendUrl();
         var recoveryUrl = $"{baseUrl.TrimEnd('/')}/auth/ver-contrasenia?token={plainToken}";
 
         // El body se inyecta dentro del MasterLayout — sin repetir cabecera ni pie

@@ -84,14 +84,17 @@ function Check-Dependencies {
     }
 
     # Verificar IIS y App Pool
+    $appcmd = "$env:windir\System32\inetsrv\appcmd.exe"
     if (Get-Command Get-WebAppPool -ErrorAction SilentlyContinue) {
         if (Get-WebAppPool -Name $AppPoolName -ErrorAction SilentlyContinue) {
-            Write-Success "IIS App Pool '$AppPoolName' encontrado."
+            Write-Success "IIS App Pool '$AppPoolName' encontrado (vía cmdlet)."
         } else {
-            Write-Host "  ⚠️ ADVERTENCIA: El App Pool '$AppPoolName' no existe en IIS. Se creará al intentar detenerlo/iniciarlo." -ForegroundColor Yellow
+            Write-Host "  ⚠️ ADVERTENCIA: El App Pool '$AppPoolName' no existe en IIS." -ForegroundColor Yellow
         }
+    } elseif (Test-Path $appcmd) {
+        Write-Success "IIS detectado (vía appcmd.exe)."
     } else {
-        Write-Host "  ⚠️ ADVERTENCIA: Módulos de IIS no cargados. ¿Está habilitado IIS en Windows?" -ForegroundColor Yellow
+        Write-Host "  ⚠️ ADVERTENCIA: Módulos de IIS no cargados y appcmd.exe no encontrado. ¿Está habilitado IIS en Windows?" -ForegroundColor Yellow
     }
 
     if (-not $ok) {
@@ -179,10 +182,72 @@ function Deploy-Backend {
         if ($LASTEXITCODE -ne 0) { throw "Error al compilar y publicar la API." }
         
         # Detener App Pool para evitar archivos bloqueados
+        $stoppedAppPool = $false
         if (Get-Command Stop-WebAppPool -ErrorAction SilentlyContinue) {
-            Write-Step "🔄" "Deteniendo Application Pool '$AppPoolName'..."
+            Write-Step "🔄" "Deteniendo Application Pool '$AppPoolName' (vía cmdlet)..."
             Stop-WebAppPool -Name $AppPoolName -ErrorAction SilentlyContinue | Out-Null
+            $stoppedAppPool = $true
+        } else {
+            $appcmd = "$env:windir\System32\inetsrv\appcmd.exe"
+            if (Test-Path $appcmd) {
+                Write-Step "🔄" "Deteniendo Application Pool '$AppPoolName' (vía appcmd.exe)..."
+                & $appcmd stop apppool /apppool.name:$AppPoolName 2>&1 | Out-Null
+                $stoppedAppPool = $true
+            }
+        }
+
+        # Esperar a que se liberen los archivos de la API
+        $targetDll = Join-Path $IisApiPath "diitra_api.dll"
+        $dllUnlocked = $false
+        Write-Step "⏳" "Verificando si los archivos de la API están liberados..."
+        for ($i = 0; $i -lt 10; $i++) {
+            $isLocked = $false
+            if (Test-Path $targetDll) {
+                try {
+                    $file = [System.IO.File]::Open($targetDll, 'Open', 'Write', 'None')
+                    $file.Close()
+                } catch {
+                    $isLocked = $true
+                }
+            }
+            if (-not $isLocked) {
+                $dllUnlocked = $true
+                break
+            }
+            Start-Sleep -Seconds 1
+        }
+
+        # Si sigue bloqueado tras 10 segundos, forzamos la detención del proceso w3wp.exe para este App Pool
+        if (-not $dllUnlocked) {
+            Write-Step "⚠️" "Los archivos siguen bloqueados por IIS. Forzando cierre de procesos worker de IIS (w3wp)..."
+            $w3wpProcesses = Get-CimInstance Win32_Process -Filter "name='w3wp.exe'" -ErrorAction SilentlyContinue | Where-Object {
+                $_.CommandLine -like "*-ap `"$AppPoolName`"*" -or $_.CommandLine -like "*-ap '$AppPoolName'*"
+            }
+            foreach ($p in $w3wpProcesses) {
+                Stop-Process -Id $p.ProcessId -Force -ErrorAction SilentlyContinue
+            }
             Start-Sleep -Seconds 2
+
+            # Volver a verificar
+            $isLocked = $false
+            if (Test-Path $targetDll) {
+                try {
+                    $file = [System.IO.File]::Open($targetDll, 'Open', 'Write', 'None')
+                    $file.Close()
+                } catch {
+                    $isLocked = $true
+                }
+            }
+            if (-not $isLocked) {
+                $dllUnlocked = $true
+            }
+        }
+
+        # Si de verdad sigue bloqueado, detenemos el servicio W3SVC por completo
+        if (-not $dllUnlocked) {
+            Write-Host "  ⚠️ Los archivos continúan bloqueados. Deteniendo servicio completo de IIS (W3SVC)..." -ForegroundColor Yellow
+            Stop-Service -Name W3SVC -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 3
         }
 
         Write-Step "🚚" "Sincronizando binarios con el directorio de IIS..."
@@ -207,9 +272,25 @@ function Deploy-Backend {
             Remove-Item -Recurse -Force $PublishTemp -ErrorAction SilentlyContinue
         }
         # Asegurar de reactivar el App Pool pase lo que pase
+        # Primero asegurar que el servicio W3SVC está iniciado (en caso de que lo hayamos detenido)
+        if ((Get-Service -Name W3SVC -ErrorAction SilentlyContinue).Status -ne 'Running') {
+            Write-Step "🔄" "Iniciando servicio IIS (W3SVC)..."
+            Start-Service -Name W3SVC -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+        }
+
+        $startedAppPool = $false
         if (Get-Command Start-WebAppPool -ErrorAction SilentlyContinue) {
-            Write-Step "🔄" "Re-iniciando Application Pool '$AppPoolName'..."
+            Write-Step "🔄" "Re-iniciando Application Pool '$AppPoolName' (vía cmdlet)..."
             Start-WebAppPool -Name $AppPoolName -ErrorAction SilentlyContinue | Out-Null
+            $startedAppPool = $true
+        } else {
+            $appcmd = "$env:windir\System32\inetsrv\appcmd.exe"
+            if (Test-Path $appcmd) {
+                Write-Step "🔄" "Re-iniciando Application Pool '$AppPoolName' (vía appcmd.exe)..."
+                & $appcmd start apppool /apppool.name:$AppPoolName 2>&1 | Out-Null
+                $startedAppPool = $true
+            }
         }
         Pop-Location
     }
