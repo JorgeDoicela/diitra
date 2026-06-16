@@ -132,7 +132,7 @@ namespace diitra_infrastructure.Research
                     dto.GrupoInvestigacionTipo = "SI";
                     dto.GrupoInvestigacionNombre = approvedGroup.Nombre;
 
-                    dto.Investigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
+                    dto.Investigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto, dto.Investigadores);
                 }
                 else
                 {
@@ -1496,7 +1496,7 @@ namespace diitra_infrastructure.Research
                 }
 
                 // Regla de gobernanza: el equipo del proyecto asociativo se deriva únicamente del grupo aprobado.
-                effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
+                effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto, investigadores);
 
                 // Preservar al Director de Proyecto activo para que no pierda la autoría y acceso al borrador
                 var activeDirector = await _context.InvProyectosProfesores
@@ -1509,6 +1509,13 @@ namespace diitra_infrastructure.Research
                     var alreadyAdded = effectiveInvestigadores.Any(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim() == directorCedula);
                     if (!alreadyAdded)
                     {
+                        decimal? directorHours = activeDirector.HorasSemanales;
+                        var incomingDirector = investigadores?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim() == directorCedula);
+                        if (incomingDirector != null)
+                        {
+                            directorHours = incomingDirector.HorasSemanales;
+                        }
+
                         effectiveInvestigadores.Add(new InvestigadorDto
                         {
                             Nombre = activeDirector.IdUsuarioNavigation.Nombre,
@@ -1517,7 +1524,7 @@ namespace diitra_infrastructure.Research
                             NivelAcademico = activeDirector.NivelAcademico,
                             Telefono = activeDirector.Telefono ?? string.Empty,
                             Activo = true,
-                            HorasSemanales = activeDirector.HorasSemanales,
+                            HorasSemanales = directorHours,
                             FechaInicio = activeDirector.FechaInicio ?? DateTime.Now
                         });
                     }
@@ -1957,7 +1964,7 @@ namespace diitra_infrastructure.Research
                 g.Estado == "Aprobado");
         }
 
-        private async Task<List<InvestigadorDto>> BuildProjectInvestigadoresFromGroupAsync(int groupId, int projectId)
+        private async Task<List<InvestigadorDto>> BuildProjectInvestigadoresFromGroupAsync(int groupId, int projectId, List<InvestigadorDto>? incomingInvestigadores = null)
         {
             var groupMembers = await _context.InvGruposMiembros
                 .Include(m => m.IdUsuarioNavigation)
@@ -1986,6 +1993,10 @@ namespace diitra_infrastructure.Research
                 }
             }
 
+            var incomingDict = incomingInvestigadores?
+                .Where(i => !string.IsNullOrEmpty(i.Cedula))
+                .ToDictionary(i => i.Cedula!.Trim(), i => i, StringComparer.OrdinalIgnoreCase);
+
             var existingInvestigadoresByCedula = await BuildExistingProjectInvestigadoresByCedulaAsync(projectId);
 
             var normalized = new List<InvestigadorDto>();
@@ -1997,6 +2008,16 @@ namespace diitra_infrastructure.Research
                 var cedula = user.IdSigafi.Trim();
                 existingInvestigadoresByCedula.TryGetValue(cedula, out var existing);
 
+                decimal? hours = null;
+                if (incomingDict != null && incomingDict.TryGetValue(cedula, out var incoming))
+                {
+                    hours = incoming.HorasSemanales;
+                }
+                else
+                {
+                    hours = existing?.HorasSemanales ?? 0;
+                }
+
                 normalized.Add(new InvestigadorDto
                 {
                     Nombre = user.Nombre,
@@ -2005,7 +2026,7 @@ namespace diitra_infrastructure.Research
                     NivelAcademico = existing?.NivelAcademico ?? (user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel"),
                     Telefono = existing?.Telefono ?? string.Empty,
                     Activo = true,
-                    HorasSemanales = existing?.HorasSemanales ?? 0,
+                    HorasSemanales = hours,
                     HorasDisponibles = existing?.HorasDisponibles,
                     HorasAsignadas = existing?.HorasAsignadas,
                     FechaInicio = existing?.FechaInicio ?? DateTime.Now,
