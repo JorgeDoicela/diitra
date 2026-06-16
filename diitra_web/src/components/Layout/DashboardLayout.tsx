@@ -38,7 +38,7 @@ const getPageTitle = (pathname: string): string => {
 };
 
 const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }) => {
-    useAuth();
+    const { isAuthenticated, isLoading, user } = useAuth();
     const location = useLocation();
     const isWorkspace = location.pathname.includes('/workspace/');
     const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -49,6 +49,8 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
     });
 
     useEffect(() => {
+        if (!isAuthenticated || isLoading || !user) return;
+
         const initWebPush = async () => {
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
                 console.log('Este navegador no soporta notificaciones Web Push.');
@@ -131,7 +133,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
         }, 2000);
 
         return () => clearTimeout(timer);
-    }, []);
+    }, [isAuthenticated, isLoading, user]);
 
     const handleSidebarCollapse = () => {
         setIsCollapsed(true);

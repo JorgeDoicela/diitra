@@ -62,6 +62,8 @@ interface TeamManagementProps {
     canReviewTeamChanges: boolean;
     isHistoryExpanded: boolean;
     setIsHistoryExpanded: (val: boolean) => void;
+    isChangeRequestsExpanded: boolean;
+    setIsChangeRequestsExpanded: (val: boolean) => void;
     onToggleTieneGrupo: (val: boolean) => void;
     onSetGrupoInvestigacion: (val: string) => void;
     onSaveTeam: () => void;
@@ -100,6 +102,8 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     canReviewTeamChanges,
     isHistoryExpanded,
     setIsHistoryExpanded,
+    isChangeRequestsExpanded,
+    setIsChangeRequestsExpanded,
     onToggleTieneGrupo,
     onSetGrupoInvestigacion,
     onSaveTeam,
@@ -110,7 +114,6 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
     onRemoveMember,
     onOpenGroupDetail
 }) => {
-    const [isChangeRequestsExpanded, setIsChangeRequestsExpanded] = useState(false);
 
     return (
         <div className="bento-card static p-6 flex flex-col justify-between group">

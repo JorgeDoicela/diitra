@@ -142,10 +142,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         try {
+            // Unsubscribe from Web Push notifications on the server
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    const subJson = subscription.toJSON();
+                    const tokenString = `${subJson.endpoint}|${subJson.keys?.p256dh || ''}|${subJson.keys?.auth || ''}`;
+                    try {
+                        await api.post('/Admin/notifications/unsubscribe', {
+                            device_token: tokenString
+                        });
+                    } catch (e) {
+                        console.error('Error unsubscribing push on server:', e);
+                    }
+                    await subscription.unsubscribe();
+                }
+            }
+        } catch (err) {
+            console.error('Error in push unsubscription:', err);
+        }
+
+        try {
             await api.post('/auth/logout');
         } catch (err) {}
         setUser(null);
         localStorage.removeItem('diitra_logged_in');
+        localStorage.removeItem('web_push_active');
     };
 
     const hasPermission = useCallback((module: string, operation: string): boolean => {

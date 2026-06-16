@@ -538,6 +538,7 @@ namespace diitra_infrastructure.Research
             if (canonicalUuid == null) return null;
 
             var p = await _context.InvProyectos
+                .AsSplitQuery()
                 .Include(p => p.IdSublineaNavigation)
                 .Include(p => p.IdConvocatoriaNavigation)
                 .Include(p => p.IdGrupoNavigation)

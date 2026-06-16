@@ -164,6 +164,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [isTransferSearching, setIsTransferSearching] = useState(false);
     const [showTransferSearchResults, setShowTransferSearchResults] = useState(false);
     const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+    const [isChangeRequestsExpanded, setIsChangeRequestsExpanded] = useState(false);
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const lastSyncedGroupRef = useRef<string | null>(null);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
@@ -301,9 +302,14 @@ export const ProjectWorkspace: React.FC = () => {
 
     useEffect(() => {
         if (resolvedProjectUuid) {
-            fetchProducts(resolvedProjectUuid);
             fetchProductTypes();
             fetchGroups();
+        }
+    }, [resolvedProjectUuid]);
+
+    useEffect(() => {
+        if (resolvedProjectUuid) {
+            fetchProducts(resolvedProjectUuid);
         }
     }, [resolvedProjectUuid, activeDocument]);
 
@@ -320,10 +326,10 @@ export const ProjectWorkspace: React.FC = () => {
                 console.error("[DIITRA] Error fetching available users for request form", err);
             }
         };
-        if (resolvedProjectUuid) {
+        if (resolvedProjectUuid && isChangeRequestsExpanded) {
             fetchAvailableUsers();
         }
-    }, [resolvedProjectUuid]);
+    }, [resolvedProjectUuid, isChangeRequestsExpanded]);
 
     useEffect(() => {
         if (!requestSearchQuery.trim() || requestSearchQuery.length < 2) {
@@ -1127,6 +1133,8 @@ export const ProjectWorkspace: React.FC = () => {
                                 canReviewTeamChanges={canReviewTeamChanges}
                                 isHistoryExpanded={isHistoryExpanded}
                                 setIsHistoryExpanded={setIsHistoryExpanded}
+                                isChangeRequestsExpanded={isChangeRequestsExpanded}
+                                setIsChangeRequestsExpanded={setIsChangeRequestsExpanded}
                                 onToggleTieneGrupo={handleToggleTieneGrupo}
                                 onSetGrupoInvestigacion={setGrupoInvestigacion}
                                 onSaveTeam={handleSaveTeam}

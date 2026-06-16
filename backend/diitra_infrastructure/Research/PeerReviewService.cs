@@ -170,10 +170,10 @@ public class PeerReviewService : IPeerReviewService
 
         if (revision.Estado == "Pendiente" && revision.FechaLimite < DateTime.Now)
         {
-            var autoExtend = revision.Proyecto != null && revision.Proyecto.AutoExtendDeadlines;
-            if (autoExtend)
+            var proj = revision.Proyecto;
+            if (proj != null && proj.AutoExtendDeadlines)
             {
-                var extensionDays = revision.Proyecto.AutoExtendDays > 0 ? revision.Proyecto.AutoExtendDays : 7;
+                var extensionDays = proj.AutoExtendDays > 0 ? proj.AutoExtendDays : 7;
                 revision.FechaLimite = DateTime.Now.AddDays(extensionDays);
 
                 if (revision.EsExterno)
@@ -191,7 +191,7 @@ public class PeerReviewService : IPeerReviewService
                 await _context.SaveChangesAsync();
 
                 await _auditService.LogActionAsync(0, "AUTO_EXTENDER_PLAZO_ARBITRAJE",
-                    $"Plazo de arbitraje auto-extendido ({extensionDays} días) al expirar para evaluador en proyecto '{revision.Proyecto.Titulo}'", "PEER_REVIEW", null, null);
+                    $"Plazo de arbitraje auto-extendido ({extensionDays} días) al expirar para evaluador en proyecto '{proj.Titulo}'", "PEER_REVIEW", null, null);
             }
             else
             {

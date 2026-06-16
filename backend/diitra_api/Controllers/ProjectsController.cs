@@ -208,7 +208,7 @@ namespace diitra_api.Controllers
                 }
 
                 // Extraer metadatos del certificado de firma digital para inyección visual en el PDF
-                string signerName = dbUser.Nombre;
+                string signerName = dbUser.Nombre ?? "Firmante";
                 string signerEntity = "Entidad de Certificación Digital";
                 string signatureDate = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
 
