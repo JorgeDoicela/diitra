@@ -211,6 +211,23 @@ export const ProjectWorkspace: React.FC = () => {
         setDetailGroup(null);
     };
 
+    const fetchGroups = useCallback(async () => {
+        try {
+            const params: any = {};
+            if (!isAdmin && user?.id_referencia) {
+                params.memberCedula = user.id_referencia;
+            }
+            const res = await api.get('/groups', { params });
+            setAvailableGroups(res.data || []);
+        } catch (err) {
+            console.error("[DIITRA] Error al cargar grupos de investigación", err);
+        }
+    }, [isAdmin, user]);
+
+    useEffect(() => {
+        fetchGroups();
+    }, [fetchGroups]);
+
     useEffect(() => {
         const resolveUuid = async () => {
             if (!documentUuid) return;
@@ -235,7 +252,6 @@ export const ProjectWorkspace: React.FC = () => {
         // Catálogos globales: no dependen del resolvedProjectUuid, se cargan en paralelo
         resolveUuid();
         fetchProductTypes();
-        fetchGroups();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [documentUuid, templateCode]);
 
@@ -292,15 +308,6 @@ export const ProjectWorkspace: React.FC = () => {
             console.error("[DIITRA] Error al obtener solicitudes de cambio de equipo", err);
         } finally {
             setIsLoadingTeamChangeRequests(false);
-        }
-    };
-
-    const fetchGroups = async () => {
-        try {
-            const res = await api.get('/groups');
-            setAvailableGroups(res.data || []);
-        } catch (err) {
-            console.error("[DIITRA] Error al cargar grupos de investigación", err);
         }
     };
 
