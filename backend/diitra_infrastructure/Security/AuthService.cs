@@ -60,9 +60,9 @@ public class AuthService : IAuthService
             }
             
             // En producción/despliegue en IIS, el host del request (ej. 192.168.7.237 o 26.184.156.40)
-            // es el mismo para la API (/apiDiitra) y la app web (/appDiitra).
+            // es el mismo para la API (/apiDiitra) y la app web (/diitra).
             var scheme = request.Scheme;
-            return $"{scheme}://{host}/appDiitra";
+            return $"{scheme}://{host}/diitra";
         }
 
         return configuredUrl;
