@@ -352,7 +352,14 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 </div>
             )}
 
-            {(readonly || session.readOnly) && (
+            {session.isOversightObserver && (
+                <div className="px-5 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2 text-indigo-400 text-[10px] font-semibold tracking-wide uppercase select-none">
+                    <Lock size={13} className="shrink-0 text-indigo-400" />
+                    <span>Modo supervisión: estás observando este documento como administrador.</span>
+                </div>
+            )}
+
+            {(readonly || session.readOnly) && !session.isOversightObserver && (
                 <div className="px-5 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2 text-indigo-400 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <Lock size={13} className="shrink-0 text-indigo-400" />
                     <span>Documento bloqueado: ya fue firmado digitalmente y no puede modificarse.</span>
