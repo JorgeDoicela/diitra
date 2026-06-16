@@ -367,7 +367,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             )}
 
             {/* ── Área del Editor ── */}
-            <div className="flex-1 overflow-y-auto p-8 bg-bg-deep">
+            <div className="flex-1 overflow-y-auto p-2 sm:p-8 bg-bg-deep">
                 <div className="w-full max-w-[95%] mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
                     {editor && cowork.awareness && (
                         <>
@@ -388,12 +388,18 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             {/* ── Estilos del editor (separados para no contaminar los estilos globales) ── */}
             <style>{`
                 .cowork-editor-content .ProseMirror {
-                    padding: 2.5cm 2cm;
+                    padding: 1.5cm 1rem;
                     min-height: 600px;
                     font-size: 1rem;
                     line-height: 1.7;
                     color: #111;
                     outline: none;
+                }
+
+                @media (min-width: 640px) {
+                    .cowork-editor-content .ProseMirror {
+                        padding: 2.5cm 2cm;
+                    }
                 }
 
                 .cowork-editor-content .ProseMirror h1 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 0.75rem; }

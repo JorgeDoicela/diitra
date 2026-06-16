@@ -14,7 +14,7 @@
 //
 // 3. PERSISTENCIA FLEXIBLE ORIENTADA A METADATOS (METADATA-DRIVEN):
 //    - Si el CACES añade o cambia un campo en el formulario de un documento, NO crees columnas SQL.
-//    - El sistema está diseñado para que estos campos vivan dinámicamente en el JSON de metadatos 
+//    - El sistema está diseñado para que estos campos vivan dinámicamente en el JSON de metadatos
 //      (MetadataCacesJson y ydoc reactivos) y se rendericen automáticamente vía plantillas.
 //
 // ══════════════════════════════════════════════════════════════════════════════
@@ -117,7 +117,7 @@ export const ProjectWorkspace: React.FC = () => {
     const [products, setProducts] = useState<any[]>([]);
     const [showProductModal, setShowProductModal] = useState(false);
     const [productTypes, setProductTypes] = useState<any[]>([]);
-    
+
     const [newProduct, setNewProduct] = useState({
         id_tipo_producto: 1,
         titulo: '',
@@ -168,8 +168,6 @@ export const ProjectWorkspace: React.FC = () => {
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const lastSyncedGroupRef = useRef<string | null>(null);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
-    // Snapshot precargado de la instancia principal para evitar que DocumentEditor vuelva a pedirla
-    const [primaryInstanceSnapshot, setPrimaryInstanceSnapshot] = useState<any | null>(null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
     const [isUnauthorized, setIsUnauthorized] = useState(false);
@@ -216,13 +214,11 @@ export const ProjectWorkspace: React.FC = () => {
     useEffect(() => {
         const resolveUuid = async () => {
             if (!documentUuid) return;
-            
+
             // Siempre intentamos resolver el EntityUuid real desde la instancia del documento,
             // ya que documentUuid en la URL suele ser el UUID de la instancia y no el del proyecto.
             try {
                 const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
-                // Guardar snapshot completo para que DocumentEditor lo reutilice sin repetir el fetch
-                setPrimaryInstanceSnapshot(instanceRes.data ?? null);
                 const entityUuid = instanceRes.data?.entity_uuid || instanceRes.data?.entityUuid || instanceRes.data?.EntityUuid;
                 if (entityUuid) {
                     setResolvedProjectUuid(entityUuid);
@@ -240,7 +236,7 @@ export const ProjectWorkspace: React.FC = () => {
         resolveUuid();
         fetchProductTypes();
         fetchGroups();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [documentUuid, templateCode]);
 
     const fetchProducts = async (pUuid?: string) => {
@@ -366,15 +362,15 @@ export const ProjectWorkspace: React.FC = () => {
             try {
                 const res = await api.get(`/PeerReviews/project/${resolvedProjectUuid}`);
                 const data = res.data; // ArbitrajeProyectoDto
-                
+
                 // Buscar si el usuario actual es un revisor asignado
                 const currentUserId = user.id_usuario;
                 const userRevision = currentUserId
-                    ? data.revisiones?.find((r: any) => 
+                    ? data.revisiones?.find((r: any) =>
                         (r.id_revisor ?? r.idRevisor ?? r.IdRevisor) === currentUserId
-                      )
+                    )
                     : null;
-                
+
                 if (userRevision) {
                     setAssignedRevisionUuid(userRevision.uuid ?? userRevision.Uuid);
                     setAssignedRevisionStatus(userRevision.estado ?? userRevision.Estado ?? null);
@@ -391,7 +387,7 @@ export const ProjectWorkspace: React.FC = () => {
         e.preventDefault();
         if (!resolvedProjectUuid) return;
         try {
-            // NOTA: Se usan claves snake_case para que coincidan con la política global de 
+            // NOTA: Se usan claves snake_case para que coincidan con la política global de
             // serialización del backend (SnakeCaseLower) y se enlacen con ProductCreateDto.
             await api.post('/ResearchProducts', {
                 project_uuid: resolvedProjectUuid,
@@ -469,7 +465,7 @@ export const ProjectWorkspace: React.FC = () => {
     useEffect(() => {
         const fetchProject = async () => {
             if (!resolvedProjectUuid) return;
-            
+
             let retries = 3;
             let success = false;
             let res: any = null;
@@ -507,7 +503,7 @@ export const ProjectWorkspace: React.FC = () => {
 
             if (success && res) {
                 setCurrentProject({
-                    id: res.data.uuid.substring(0,8).toUpperCase(),
+                    id: res.data.uuid.substring(0, 8).toUpperCase(),
                     uuid: res.data.uuid,
                     title: res.data.titulo?.trim() || '(Sin título)',
                     status: res.data.estado || 'Borrador',
@@ -515,13 +511,13 @@ export const ProjectWorkspace: React.FC = () => {
                     linea: res.data.linea_investigacion || 'No definida',
                     // FIX: fallback seguro — sin datos explícitos, denegamos edición (mínimo privilegio)
                     puedeEditar: (res.data.puede_editar ?? res.data.puedeEditar ?? res.data.PuedeEditar ?? false) &&
-                                 (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
+                        (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
                     puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
                     puedeFirmar: res.data.puede_firmar ?? res.data.puedeFirmar ?? res.data.PuedeFirmar ?? false,
                     puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
                 });
                 setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
-                
+
                 const groupUuid = res.data.grupo_investigacion_uuid ?? res.data.grupoInvestigacionUuid ?? res.data.grupo_investigacion ?? res.data.grupoInvestigacion ?? '';
                 const hasGroup = !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
                 setTieneGrupo(hasGroup);
@@ -530,7 +526,7 @@ export const ProjectWorkspace: React.FC = () => {
             } else if (isNotFound) {
                 // Solo permitimos el fallback si es un 404 real (creando nuevo borrador)
                 setCurrentProject({
-                    id: resolvedProjectUuid?.substring(0,8).toUpperCase() || 'NEW',
+                    id: resolvedProjectUuid?.substring(0, 8).toUpperCase() || 'NEW',
                     uuid: resolvedProjectUuid || '',
                     title: 'Nuevo Proyecto de Investigación',
                     status: 'Borrador',
@@ -550,7 +546,7 @@ export const ProjectWorkspace: React.FC = () => {
             }
             setIsLoading(false);
         };
-        
+
         fetchProject();
     }, [resolvedProjectUuid, activeDocument]);
 
@@ -720,11 +716,11 @@ export const ProjectWorkspace: React.FC = () => {
                 setShowTransferModal(false);
                 const updatedProjectRes = await api.get(`/projects/${currentProject.uuid}/detail`);
                 setInvestigadores((updatedProjectRes.data.investigadores || []).map(mapInvestigador));
-                
+
                 const groupUuid = updatedProjectRes.data.grupo_investigacion_uuid ?? updatedProjectRes.data.grupoInvestigacionUuid ?? updatedProjectRes.data.grupo_investigacion ?? updatedProjectRes.data.grupoInvestigacion ?? '';
                 const hasGroup = !!(updatedProjectRes.data.tiene_grupo_investigacion ?? updatedProjectRes.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
                 setTieneGrupo(hasGroup);
-                
+
                 setCurrentProject((prev: any) => ({
                     ...prev,
                     tieneGrupoInvestigacion: hasGroup
@@ -833,7 +829,7 @@ export const ProjectWorkspace: React.FC = () => {
                 return;
             }
 
-            // NOTA: Se usan claves snake_case (nivel_academico, horas_semanales) en el cuerpo de la 
+            // NOTA: Se usan claves snake_case (nivel_academico, horas_semanales) en el cuerpo de la
             // solicitud para cumplir con la política SnakeCaseLower de deserialización a InvestigadorDto.
             // Los parámetros de consulta (query string) como grupoInvestigacion/tieneGrupoInvestigacion
             // se mantienen en camelCase ya que se enlazan directamente con los argumentos del controlador en C#.
@@ -858,15 +854,15 @@ export const ProjectWorkspace: React.FC = () => {
                     tieneGrupo ? "¡Equipo de trabajo guardado y sincronizado con éxito!" : "¡Personal del proyecto guardado con éxito!",
                     "success"
                 );
-                
+
                 const refreshed = await api.get(`/projects/${currentProject.uuid}/detail`);
                 setInvestigadores((refreshed.data.investigadores || []).map(mapInvestigador));
-                
+
                 const groupUuid = refreshed.data.grupo_investigacion_uuid ?? refreshed.data.grupoInvestigacionUuid ?? refreshed.data.grupo_investigacion ?? refreshed.data.grupoInvestigacion ?? '';
                 const hasGroup = !!(refreshed.data.tiene_grupo_investigacion ?? refreshed.data.tieneGrupoInvestigacion ?? false) || !!groupUuid;
                 setTieneGrupo(hasGroup);
                 setGrupoInvestigacion(groupUuid);
-                
+
                 setCurrentProject((prev: any) => ({
                     ...prev,
                     tieneGrupoInvestigacion: hasGroup,
@@ -1024,22 +1020,14 @@ export const ProjectWorkspace: React.FC = () => {
             readOnlyReason = 'state';
         }
 
-        // Si es el documento principal y ya tenemos el snapshot precargado, pasarlo directamente
-        // para que DocumentEditor no repita el GET /documents/instances/{uuid}.
-        // IMPORTANTE: Normalizar siempre la clave Uuid (PascalCase) con el valor estable
-        // del documentUuid de la URL. Esto evita que el useEffect de DocumentEditor
-        // (que depende de initialData?.Uuid) se re-dispare cuando el servidor devuelve
-        // la propiedad en minúsculas (uuid), lo que causaría un loop de conexión/desconexión.
-        const preloadedData = (isPrimaryDocument && primaryInstanceSnapshot)
-            ? { ...primaryInstanceSnapshot, Uuid: editorUuid }
-            : { Uuid: editorUuid };
+        const preloadedData = { Uuid: editorUuid };
 
         return (
-            <DocumentEditor 
-                templateCode={activeDocument} 
+            <DocumentEditor
+                templateCode={activeDocument}
                 initialData={preloadedData}
                 entityUuid={resolvedProjectUuid || undefined}
-                onClose={handleCloseEditor} 
+                onClose={handleCloseEditor}
                 readOnly={isReadOnly}
                 readOnlyReason={readOnlyReason}
                 projectStatus={currentProject.status}
@@ -1218,7 +1206,7 @@ export const ProjectWorkspace: React.FC = () => {
                 carreras={carreras}
                 lines={lines}
                 formatCareerName={formatCareerName}
-                handleOpenReview={() => {}}
+                handleOpenReview={() => { }}
             />
         </div>
     );

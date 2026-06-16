@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
 import Sidebar from './Sidebar';
 import { CommandPalette } from '../Common/CommandPalette';
@@ -245,11 +245,13 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         >
                             <Menu size={24} />
                         </button>
-                        <img
-                            src={theme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
-                            alt="DIITRA"
-                            className="h-7 w-auto object-contain"
-                        />
+                        <Link to="/dashboard" className="flex items-center justify-center cursor-pointer">
+                            <img
+                                src={theme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
+                                alt="DIITRA"
+                                className="h-7 w-auto object-contain"
+                            />
+                        </Link>
                         <NotificationBell />
                     </header>
                 )}

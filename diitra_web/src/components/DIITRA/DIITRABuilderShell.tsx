@@ -719,7 +719,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
                                 <div className="flex lg:hidden justify-between items-center mb-4">
                                     <p className="text-[10px] font-black text-text-dim uppercase tracking-widest">Navegación</p>
-                                    <button onClick={() => setShowMobileSections(false)} className="text-text-main font-bold">Cerrar Menú</button>
+                                    <button
+                                        onClick={() => setShowMobileSections(false)}
+                                        className="p-1.5 hover:bg-bg-deep rounded-lg text-text-dim hover:text-text-main transition-colors"
+                                        aria-label="Cerrar menú"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
                                 </div>
                                 <div>
                                     <div className="flex justify-between items-center mb-4 lg:ml-2">
@@ -784,8 +790,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         {/* ── Área Principal: Editor & Visor PDF ── */}
                         <div className="flex-1 bg-bg-deep overflow-hidden flex">
                             {activeTab !== 'output' ? (
-                                <div className="flex-1 p-6 md:p-12 overflow-y-auto custom-scrollbar">
-                                    <div className="w-full mx-auto transition-all duration-300 max-w-[94%]">
+                                <div className="flex-1 p-3 sm:p-6 md:p-12 overflow-y-auto custom-scrollbar">
+                                    <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
                                         <div className="mb-8 md:mb-12">
                                             <h3 className="text-xl md:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
                                             <p className="text-[10px] md:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
@@ -816,9 +822,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             ) : (
                                 /* ── Panel de Finalización y Firma ── */
                                 <div className="flex-1 p-3 md:p-5 lg:p-6 flex flex-col gap-3 md:gap-4 animate-fade-in overflow-hidden">
-                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-hidden overflow-y-auto lg:overflow-hidden p-1">
+                                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-5 flex-1 overflow-y-auto lg:overflow-hidden p-1">
                                         {/* Panel de Controles Unificado */}
-                                        <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col overflow-hidden lg:h-full">
+                                        <div className="col-span-1 lg:col-span-3 bg-bg-deep border border-border-thin rounded-2xl shadow-sm flex flex-col lg:overflow-hidden lg:h-full">
                                             {/* Sección 1: Emisión */}
                                             <div className="p-5 flex flex-col gap-4 shrink-0">
                                                 <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
@@ -850,7 +856,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             <div className="border-t border-border-thin shrink-0" />
 
                                             {/* Sección 2: Firma Electrónica */}
-                                            <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto custom-scrollbar">
+                                            <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar">
                                                 <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
                                                     <Shield size={16} className="text-text-dim" /> Firma Electrónica
                                                 </h4>

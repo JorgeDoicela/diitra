@@ -1032,10 +1032,10 @@ const Sidebar = ({
         `}
             >
                 <div
-                    className="flex flex-col h-full pt-4 pb-3"
+                    className="flex flex-col h-full pt-4 pb-3 w-full"
                     style={{
-                        width: contentWidth,
-                        minWidth: contentWidth,
+                        width: isDesktop ? contentWidth : '100%',
+                        minWidth: isDesktop ? contentWidth : '100%',
                         opacity: sidebarReveal,
                         transition: isDesktop && !isDragging
                             ? `opacity ${isClosingAnim ? SIDEBAR_COLLAPSE_MS : SIDEBAR_TRANSITION_MS}ms ${isClosingAnim ? SIDEBAR_COLLAPSE_EASING : SIDEBAR_EASING}`
