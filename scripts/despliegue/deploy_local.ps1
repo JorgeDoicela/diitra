@@ -25,7 +25,7 @@ $ApiDir = Join-Path $ProjectRoot "backend\diitra_api"
 $PublishTemp = Join-Path $ProjectRoot "backend\publish"
 $BackupDir = Join-Path $ProjectRoot "scripts\despliegue\backups"
 
-$IisWebPath = "C:\inetpub\wwwroot\appDiitra"
+$IisWebPath = "C:\inetpub\wwwroot\diitra"
 $IisApiPath = "C:\inetpub\wwwroot\apiDiitra"
 $AppPoolName = "apiDiitra"
 
