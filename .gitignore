@@ -52,3 +52,8 @@ pnpm-debug.log*
 !*.json
 !*.env
 !*.env.*
+
+# Despliegues y Backups Locales
+backend/publish/
+scripts/despliegue/backups/
+
