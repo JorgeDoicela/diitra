@@ -26,6 +26,7 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
         {
             // En este caso, entityUuid es el Uuid del PROYECTO al que pertenece el informe
             var proyecto = await _db.InvProyectos
+                .AsSplitQuery()
                 .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)

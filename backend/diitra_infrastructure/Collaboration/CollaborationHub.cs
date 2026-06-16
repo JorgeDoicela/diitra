@@ -56,7 +56,7 @@ namespace diitra_infrastructure.Collaboration
                     throw new HubException("No autenticado o credenciales inválidas.");
                 }
 
-                var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi == username);
+                var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi.Trim() == username.Trim());
                 if (user == null)
                 {
                     throw new HubException("Usuario no registrado en el sistema.");
@@ -118,8 +118,9 @@ namespace diitra_infrastructure.Collaboration
                         .FirstOrDefaultAsync(g => g.Uuid == instanceUuid);
                     if (group != null)
                     {
-                        var isGroupMember = (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi == username) ||
-                                            await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                        var isGroupMember = (group.IdCoordinador == user.IdUsuario) ||
+                                            (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi.Trim() == username.Trim()) ||
+                                            await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && (m.Activo != false || m.Activo == null));
                         if (!isGroupMember)
                         {
                             _logger.LogWarning("[HUB] Access Denied: User {User} has no permissions for group {GroupUuid}", username, instanceUuid);

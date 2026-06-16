@@ -418,7 +418,7 @@ namespace diitra_api.Controllers
                         tipo = "profesor"
                     });
 
-                 var profsList = await profesoresSelect.ToListAsync();
+                 var profsList = await profesoresSelect.Take(30).ToListAsync();
                 var ids = profsList.Select(p => p.cedula).ToList();
                 var profCareers = await _context.ProfesoresCarrerasPeriodos
                     .Include(pc => pc.IdCarreraNavigation)

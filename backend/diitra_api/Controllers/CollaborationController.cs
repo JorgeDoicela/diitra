@@ -78,10 +78,10 @@ namespace diitra_api.Controllers
                 var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.FindFirst("es_admin")?.Value == "true";
                 if (!isAdmin)
                 {
-                    var username = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    var username = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value?.Trim();
                     if (!string.IsNullOrEmpty(username))
                     {
-                        var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi == username);
+                        var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi.Trim() == username);
                         if (user != null)
                         {
                             var group = await _db.InvGruposInvestigacion
@@ -89,8 +89,9 @@ namespace diitra_api.Controllers
                                 .FirstOrDefaultAsync(g => g.Uuid == instanceUuid);
                             if (group != null)
                             {
-                                var isGroupMember = (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi == username) ||
-                                                    await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                                var isGroupMember = (group.IdCoordinador == user.IdUsuario) ||
+                                                    (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi.Trim() == username) ||
+                                                    await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && (m.Activo != false || m.Activo == null));
                                 if (!isGroupMember)
                                 {
                                     return StatusCode(403, new { message = "No tienes permisos para acceder a la retroalimentación de este grupo de investigación." });
@@ -154,10 +155,10 @@ namespace diitra_api.Controllers
                 var isAdmin = User.IsInRole("DIITRA_ADMIN") || User.FindFirst("es_admin")?.Value == "true";
                 if (!isAdmin)
                 {
-                    var username = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                    var username = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value?.Trim();
                     if (!string.IsNullOrEmpty(username))
                     {
-                        var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi == username);
+                        var user = await _db.Users.FirstOrDefaultAsync(u => u.IdSigafi.Trim() == username);
                         if (user != null)
                         {
                             var group = await _db.InvGruposInvestigacion
@@ -165,8 +166,9 @@ namespace diitra_api.Controllers
                                 .FirstOrDefaultAsync(g => g.Uuid == request.DocumentoUuid);
                             if (group != null)
                             {
-                                var isGroupMember = (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi == username) ||
-                                                    await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && m.Activo != false);
+                                var isGroupMember = (group.IdCoordinador == user.IdUsuario) ||
+                                                    (group.IdCoordinadorNavigation != null && group.IdCoordinadorNavigation.IdSigafi.Trim() == username) ||
+                                                    await _db.InvGruposMiembros.AnyAsync(m => m.IdGrupo == group.IdGrupo && m.IdUsuario == user.IdUsuario && (m.Activo != false || m.Activo == null));
                                 if (!isGroupMember)
                                 {
                                     return StatusCode(403, new { message = "No tienes permisos para enviar retroalimentación a este grupo de investigación." });

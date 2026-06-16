@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle, ChevronLeft } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle, ChevronLeft, X } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -106,6 +106,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     }, []);
 
     const [isSidebarOpen, setIsSidebarOpenState] = useState<boolean>(() => {
+        // En móviles/teléfonos (pantallas < 1024px), no iniciamos el chat abierto por defecto
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            return false;
+        }
         return localStorage.getItem('document_sidebar_open') !== 'false';
     });
 
@@ -590,13 +594,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             {/* Botones móviles */}
                             <div className="lg:hidden flex items-center gap-2">
                                 <button
-                                    onClick={() => setShowMobileSections(!showMobileSections)}
-                                    className={`p-2 rounded-lg border transition-all ${showMobileSections ? 'bg-text-main text-bg-deep border-text-main' : 'bg-surface text-text-dim border-border-thin'}`}
+                                    onClick={handleClose}
+                                    className="p-2 bg-surface border border-border-thin rounded-lg text-text-dim hover:text-text-main hover:border-text-main transition-colors"
+                                    title="Salir del documento"
+                                    aria-label="Salir del documento"
                                 >
-                                    <Settings size={18} />
-                                </button>
-                                <button onClick={handleClose} className="p-2 bg-surface border border-border-thin rounded-lg text-text-dim">
-                                    <Clock size={18} className="rotate-45" />
+                                    <X size={18} />
                                 </button>
                             </div>
                         </div>
@@ -675,10 +678,16 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                     </div>
 
                     <div className="flex flex-1 overflow-hidden relative">
-                        {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
-                        {!isLeftSidebarOpen && (
+                                     {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
+                        {(!isLeftSidebarOpen || (typeof window !== 'undefined' && window.innerWidth < 1024 && !showMobileSections)) && (
                             <button
-                                onClick={() => setIsLeftSidebarOpen(true)}
+                                onClick={() => {
+                                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                                        setShowMobileSections(true);
+                                    } else {
+                                        setIsLeftSidebarOpen(true);
+                                    }
+                                }}
                                 className="absolute left-0 top-1/2 -translate-y-1/2 z-[60] bg-surface hover:bg-bg-deep border border-border-thin border-l-0 hover:border-text-main text-text-dim hover:text-text-main py-8 px-2.5 rounded-r-xl shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group"
                                 title="Mostrar navegación del documento"
                             >

@@ -118,17 +118,16 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     const [collabConnection, setCollabConnection] = useState<signalR.HubConnection | null>(null);
 
     const isMember = isAdmin || 
-        (detailGroup && detailGroup.id_profesor_coordinador === user?.id_referencia) || 
-        detailMembers.some(m => m.activo && (m.cedula === user?.id_referencia || m.cedula === user?.cedula || m.id_usuario === user?.id_usuario));
+        (detailGroup && detailGroup.id_profesor_coordinador?.trim() === user?.id_referencia?.trim()) || 
+        detailMembers.some(m => m.activo && (m.cedula?.trim() === user?.id_referencia?.trim() || m.cedula?.trim() === user?.cedula?.trim() || m.id_usuario === user?.id_usuario));
 
-    // Fetch detail members and feedback when drawer is open
+    // Fetch detail members when drawer is open
     useEffect(() => {
         if (!isOpen || !detailGroup) return;
         openTimeRef.current = Date.now();
 
         const loadDetailData = async () => {
             setDetailTab('info');
-            fetchFeedbackComments(detailGroup.uuid);
             try {
                 const res = await api.get(`/Groups/${detailGroup.uuid}`);
                 const fullGroup = res.data;
@@ -148,6 +147,12 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
 
         loadDetailData();
     }, [isOpen, detailGroup?.uuid]);
+
+    // Fetch feedback comments only when user is a confirmed group member / coordinator / admin
+    useEffect(() => {
+        if (!isOpen || !detailGroup || !detailGroup.uuid || !isMember) return;
+        fetchFeedbackComments(detailGroup.uuid);
+    }, [isOpen, detailGroup?.uuid, isMember]);
 
     // SignalR Effect
     useEffect(() => {
