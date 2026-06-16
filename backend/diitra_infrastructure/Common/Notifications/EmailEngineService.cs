@@ -278,8 +278,9 @@ namespace diitra_infrastructure.Common.Notifications
                             contextReplacements["[[convocatoria_anio]]"] = conv.Anio.ToString();
                             contextReplacements["[[convocatoria_apertura]]"] = conv.FechaApertura.ToString("yyyy-MM-dd");
                             contextReplacements["[[convocatoria_cierre]]"] = conv.FechaCierre.ToString("yyyy-MM-dd");
+                            var topeProyectoEfectivo = conv.MontoMaximoProyecto ?? conv.PresupuestoTotal;
                             contextReplacements["[[convocatoria_presupuesto]]"] = conv.PresupuestoTotal?.ToString("C") ?? "$0.00";
-                            contextReplacements["[[convocatoria_monto_maximo]]"] = conv.MontoMaximoProyecto?.ToString("C") ?? "$0.00";
+                            contextReplacements["[[convocatoria_monto_maximo]]"] = topeProyectoEfectivo?.ToString("C") ?? "$0.00";
                             contextReplacements["[[convocatoria_bases_url]]"] = conv.UrlBases ?? "";
                             contextReplacements["[[convocatoria_estado]]"] = conv.Estado ?? "";
                         }

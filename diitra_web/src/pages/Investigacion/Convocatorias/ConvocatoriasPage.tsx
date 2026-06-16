@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
-import { 
-    Plus, Calendar, DollarSign, FileText, CheckCircle, 
-    Trash2, Edit2, Activity, 
-    AlertCircle, RefreshCw,
+import {
+    Plus, Calendar, DollarSign, FileText, CheckCircle,
+    Trash2, Edit2, Activity,
+    AlertCircle,
     ChevronRight, CalendarDays, X, Save, ShieldCheck,
     BookOpen, Layers
 } from 'lucide-react';
@@ -49,6 +49,78 @@ interface Catalogo {
     nombre: string;
 }
 
+const formatMonto = (value: number) => `$${value.toLocaleString('es-EC')}`;
+
+const formatMontoInputDisplay = (value: number | string) => {
+    if (value === '' || value === null || value === undefined) return '';
+    const num = typeof value === 'number' ? value : parseFloat(String(value));
+    if (Number.isNaN(num)) return '';
+    return num.toLocaleString('es-EC', { maximumFractionDigits: 2 });
+};
+
+const parseMontoInput = (raw: string): number | string => {
+    const trimmed = raw.trim();
+    if (!trimmed) return '';
+    const normalized = trimmed.replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(normalized);
+    return Number.isNaN(num) ? '' : num;
+};
+
+const codigoDuplicadoMessage = (codigo: string) =>
+    `Ya existe una convocatoria con el código "${codigo}". Usa un código diferente.`;
+
+const parseCodigoDuplicadoFromApi = (raw?: string) => {
+    if (!raw) return null;
+    const duplicateMatch = raw.match(/Duplicate entry '([^']+)'/i);
+    if (duplicateMatch) return codigoDuplicadoMessage(duplicateMatch[1]);
+    if (raw.toLowerCase().includes('ya existe') && raw.toLowerCase().includes('código')) return raw;
+    return null;
+};
+
+const getConvocatoriaSaveErrorMessage = (error: unknown, fallback = 'Error al guardar la convocatoria.') => {
+    const data = (error as { response?: { data?: Record<string, string> } })?.response?.data;
+    if (!data) return fallback;
+
+    const dupMessage =
+        parseCodigoDuplicadoFromApi(data.inner_exception)
+        ?? parseCodigoDuplicadoFromApi(data.innerException)
+        ?? parseCodigoDuplicadoFromApi(data.message);
+    if (dupMessage) return dupMessage;
+
+    if (data.message && !data.message.includes('An error occurred while saving')) {
+        return data.message;
+    }
+
+    return fallback;
+};
+
+const getFondoConvocatoria = (c: { presupuesto_total?: number | null }) => c.presupuesto_total ?? 0;
+
+const getTopeProyecto = (c: { monto_maximo_proyecto?: number | null }) =>
+    c.monto_maximo_proyecto != null && c.monto_maximo_proyecto > 0 ? c.monto_maximo_proyecto : null;
+
+const DIAS_PROXIMO_CIERRE = 30;
+
+const getProximasACerrar = (items: Convocatoria[]) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const limite = new Date(hoy);
+    limite.setDate(limite.getDate() + DIAS_PROXIMO_CIERRE);
+
+    return items.filter(c => {
+        if (c.estado !== 'Abierta' || !c.fecha_cierre) return false;
+        const cierre = new Date(c.fecha_cierre);
+        if (Number.isNaN(cierre.getTime())) return false;
+        cierre.setHours(0, 0, 0, 0);
+        return cierre >= hoy && cierre <= limite;
+    }).length;
+};
+
+const canEditConvocatoria = (estado: Convocatoria['estado']) => estado !== 'Cerrada';
+
+const getFondoTotalConvocatorias = (items: Convocatoria[]) =>
+    items.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0);
+
 const ConvocatoriasPage = () => {
     const { addToast } = useNotifications();
     const confirm = useConfirm();
@@ -61,12 +133,13 @@ const ConvocatoriasPage = () => {
     const [rubricas, setRubricas] = useState<Catalogo[]>([]);
     const [lineas, setLineas] = useState<Catalogo[]>([]);
     const [selectedConvocatoria, setSelectedConvocatoria] = useState<Convocatoria | null>(null);
-    
+
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedUuid, setSelectedUuid] = useState<string | null>(null);
+    const [formFieldErrors, setFormFieldErrors] = useState<{ codigo_convocatoria?: string }>({});
 
     // Draft management states
     const [isDraftRestored, setIsDraftRestored] = useState(false);
@@ -77,21 +150,21 @@ const ConvocatoriasPage = () => {
         groupName: string;
         timestamp: number;
     } | null>(null);
-    
+
     const [formData, setFormData] = useState({
         codigo_convocatoria: '',
         titulo: '',
         id_periodo: '',
-        anio: new Date().getFullYear(),
+        anio: new Date().getFullYear() as number | string,
         descripcion: '',
-        presupuesto_total: 0,
-        monto_maximo_proyecto: 0,
+        presupuesto_total: 0 as number | string,
+        monto_maximo_proyecto: 0 as number | string,
         url_bases: '',
         requisitos_minimos: '',
         id_tipo_convocatoria: undefined as number | undefined,
         id_agenda_zonal: undefined as number | undefined,
         id_rubrica: undefined as number | undefined,
-        puntaje_minimo_aprobacion: 70.00,
+        puntaje_minimo_aprobacion: 70.00 as number | string,
         financiamiento_ext: false,
         meta_produccion: '',
         fecha_apertura: '',
@@ -141,7 +214,7 @@ const ConvocatoriasPage = () => {
             setAgendas(aRes.data);
             setRubricas(rRes.data);
             setLineas(lRes.data);
-            
+
             if (pRes.data.length > 0 && !formData.id_periodo) {
                 setFormData(prev => ({ ...prev, id_periodo: pRes.data[0].id_periodo }));
             }
@@ -228,16 +301,16 @@ const ConvocatoriasPage = () => {
                             codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
                             titulo: parsed.formData.titulo || '',
                             id_periodo: parsed.formData.id_periodo || '',
-                            anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                            anio: (typeof parsed.formData.anio === 'number' || typeof parsed.formData.anio === 'string') ? parsed.formData.anio : new Date().getFullYear(),
                             descripcion: parsed.formData.descripcion || '',
-                            presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
-                            monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                            presupuesto_total: (typeof parsed.formData.presupuesto_total === 'number' || typeof parsed.formData.presupuesto_total === 'string') ? parsed.formData.presupuesto_total : 0,
+                            monto_maximo_proyecto: (typeof parsed.formData.monto_maximo_proyecto === 'number' || typeof parsed.formData.monto_maximo_proyecto === 'string') ? parsed.formData.monto_maximo_proyecto : 0,
                             url_bases: parsed.formData.url_bases || '',
                             requisitos_minimos: parsed.formData.requisitos_minimos || '',
                             id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
                             id_agenda_zonal: parsed.formData.id_agenda_zonal,
                             id_rubrica: parsed.formData.id_rubrica,
-                            puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                            puntaje_minimo_aprobacion: (typeof parsed.formData.puntaje_minimo_aprobacion === 'number' || typeof parsed.formData.puntaje_minimo_aprobacion === 'string') ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
                             financiamiento_ext: !!parsed.formData.financiamiento_ext,
                             meta_produccion: parsed.formData.meta_produccion || '',
                             fecha_apertura: parsed.formData.fecha_apertura || '',
@@ -262,6 +335,11 @@ const ConvocatoriasPage = () => {
             setShowModal(true);
         } else if (pendingDraft.type === 'edit' && pendingDraft.uuid) {
             const item = convocatorias.find(c => c.uuid === pendingDraft.uuid);
+            if (item && !canEditConvocatoria(item.estado)) {
+                addToast('Edición no permitida', 'No se puede editar una convocatoria cerrada.', 'error');
+                clearDraft();
+                return;
+            }
             if (item) {
                 setIsEditing(true);
                 setSelectedUuid(item.uuid);
@@ -275,16 +353,16 @@ const ConvocatoriasPage = () => {
                                 codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
                                 titulo: parsed.formData.titulo || '',
                                 id_periodo: parsed.formData.id_periodo || '',
-                                anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                                anio: (typeof parsed.formData.anio === 'number' || typeof parsed.formData.anio === 'string') ? parsed.formData.anio : new Date().getFullYear(),
                                 descripcion: parsed.formData.descripcion || '',
-                                presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
-                                monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                                presupuesto_total: (typeof parsed.formData.presupuesto_total === 'number' || typeof parsed.formData.presupuesto_total === 'string') ? parsed.formData.presupuesto_total : 0,
+                                monto_maximo_proyecto: (typeof parsed.formData.monto_maximo_proyecto === 'number' || typeof parsed.formData.monto_maximo_proyecto === 'string') ? parsed.formData.monto_maximo_proyecto : 0,
                                 url_bases: parsed.formData.url_bases || '',
                                 requisitos_minimos: parsed.formData.requisitos_minimos || '',
                                 id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
                                 id_agenda_zonal: parsed.formData.id_agenda_zonal,
                                 id_rubrica: parsed.formData.id_rubrica,
-                                puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                                puntaje_minimo_aprobacion: (typeof parsed.formData.puntaje_minimo_aprobacion === 'number' || typeof parsed.formData.puntaje_minimo_aprobacion === 'string') ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
                                 financiamiento_ext: !!parsed.formData.financiamiento_ext,
                                 meta_produccion: parsed.formData.meta_produccion || '',
                                 fecha_apertura: parsed.formData.fecha_apertura || '',
@@ -366,16 +444,16 @@ const ConvocatoriasPage = () => {
                         codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
                         titulo: parsed.formData.titulo || '',
                         id_periodo: parsed.formData.id_periodo || '',
-                        anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                        anio: (typeof parsed.formData.anio === 'number' || typeof parsed.formData.anio === 'string') ? parsed.formData.anio : new Date().getFullYear(),
                         descripcion: parsed.formData.descripcion || '',
-                        presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
-                        monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                        presupuesto_total: (typeof parsed.formData.presupuesto_total === 'number' || typeof parsed.formData.presupuesto_total === 'string') ? parsed.formData.presupuesto_total : 0,
+                        monto_maximo_proyecto: (typeof parsed.formData.monto_maximo_proyecto === 'number' || typeof parsed.formData.monto_maximo_proyecto === 'string') ? parsed.formData.monto_maximo_proyecto : 0,
                         url_bases: parsed.formData.url_bases || '',
                         requisitos_minimos: parsed.formData.requisitos_minimos || '',
                         id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
                         id_agenda_zonal: parsed.formData.id_agenda_zonal,
                         id_rubrica: parsed.formData.id_rubrica,
-                        puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                        puntaje_minimo_aprobacion: (typeof parsed.formData.puntaje_minimo_aprobacion === 'number' || typeof parsed.formData.puntaje_minimo_aprobacion === 'string') ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
                         financiamiento_ext: !!parsed.formData.financiamiento_ext,
                         meta_produccion: parsed.formData.meta_produccion || '',
                         fecha_apertura: parsed.formData.fecha_apertura || '',
@@ -406,22 +484,23 @@ const ConvocatoriasPage = () => {
         if (isEditing && selectedUuid) {
             const conv = convocatorias.find(c => c.uuid === selectedUuid);
             if (conv) {
-                hasChanges = 
+                hasChanges =
                     formData.codigo_convocatoria !== conv.codigo_convocatoria ||
                     formData.titulo !== conv.titulo ||
                     formData.id_periodo !== conv.id_periodo ||
-                    formData.anio !== conv.anio ||
+                    Number(formData.anio) !== conv.anio ||
                     formData.descripcion !== (conv.descripcion || '') ||
-                    formData.presupuesto_total !== (conv.presupuesto_total || 0) ||
-                    formData.monto_maximo_proyecto !== (conv.monto_maximo_proyecto || 0) ||
+                    Number(formData.presupuesto_total) !== (conv.presupuesto_total || 0) ||
+                    Number(formData.monto_maximo_proyecto) !== (conv.monto_maximo_proyecto || 0) ||
                     formData.fecha_apertura !== conv.fecha_apertura ||
                     formData.fecha_cierre !== conv.fecha_cierre ||
+                    Number(formData.puntaje_minimo_aprobacion) !== (conv.puntaje_minimo_aprobacion || 70) ||
                     JSON.stringify(formData.lineas_ids.slice().sort()) !== JSON.stringify((conv.lineas_ids || []).slice().sort()) ||
                     JSON.stringify(formData.hitos) !== JSON.stringify(conv.hitos || []) ||
                     JSON.stringify(formData.documentos_req) !== JSON.stringify(conv.documentos_req || []);
             }
         } else {
-            hasChanges = 
+            hasChanges =
                 formData.codigo_convocatoria.trim() !== '' ||
                 formData.titulo.trim() !== '' ||
                 formData.descripcion.trim() !== '' ||
@@ -451,25 +530,64 @@ const ConvocatoriasPage = () => {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isEditing && selectedUuid) {
+            const conv = convocatorias.find(c => c.uuid === selectedUuid);
+            if (conv && !canEditConvocatoria(conv.estado)) {
+                addToast('Edición no permitida', 'No se puede editar una convocatoria cerrada.', 'error');
+                return;
+            }
+        }
         try {
+            const codigo = formData.codigo_convocatoria.trim();
+            if (!codigo) {
+                addToast('Código requerido', 'Ingresa un código único para la convocatoria.', 'error');
+                return;
+            }
+            const codigoDuplicado = convocatorias.some(c =>
+                c.codigo_convocatoria.trim().toLowerCase() === codigo.toLowerCase()
+                && (!isEditing || c.uuid !== selectedUuid)
+            );
+            if (codigoDuplicado) {
+                const msg = codigoDuplicadoMessage(codigo);
+                setFormFieldErrors({ codigo_convocatoria: msg });
+                addToast('Código duplicado', msg, 'error');
+                return;
+            }
+
+            setFormFieldErrors({});
+            const payload = {
+                ...formData,
+                anio: parseInt(formData.anio.toString()) || new Date().getFullYear(),
+                presupuesto_total: formData.presupuesto_total === '' ? 0 : parseFloat(formData.presupuesto_total.toString()),
+                monto_maximo_proyecto: formData.monto_maximo_proyecto === '' ? 0 : parseFloat(formData.monto_maximo_proyecto.toString()),
+                puntaje_minimo_aprobacion: formData.puntaje_minimo_aprobacion === '' ? 70.00 : parseFloat(formData.puntaje_minimo_aprobacion.toString())
+            };
             if (isEditing && selectedUuid) {
-                await api.put(`/Convocatorias/${selectedUuid}`, formData);
+                await api.put(`/Convocatorias/${selectedUuid}`, payload);
             } else {
-                await api.post('/Convocatorias', formData);
+                await api.post('/Convocatorias', payload);
             }
             clearDraft();
             setShowModal(false);
             fetchConvocatorias();
             resetForm();
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Error saving convocatoria:', error);
+            const message = getConvocatoriaSaveErrorMessage(error);
+            const isCodigoDuplicado = message.toLowerCase().includes('código') && message.toLowerCase().includes('existe');
+            setFormFieldErrors(isCodigoDuplicado ? { codigo_convocatoria: message } : {});
+            addToast(isCodigoDuplicado ? 'Código duplicado' : 'Error', message, 'error');
         }
     };
 
     const handleEdit = (conv: Convocatoria) => {
+        if (!canEditConvocatoria(conv.estado)) {
+            addToast('Edición no permitida', 'No se puede editar una convocatoria cerrada.', 'error');
+            return;
+        }
         setIsEditing(true);
         setSelectedUuid(conv.uuid);
-        
+
         const draftKey = `edit_convocatoria_form_draft_${conv.uuid}`;
         const draft = localStorage.getItem(draftKey);
         if (draft) {
@@ -480,16 +598,16 @@ const ConvocatoriasPage = () => {
                         codigo_convocatoria: parsed.formData.codigo_convocatoria || '',
                         titulo: parsed.formData.titulo || '',
                         id_periodo: parsed.formData.id_periodo || '',
-                        anio: typeof parsed.formData.anio === 'number' ? parsed.formData.anio : new Date().getFullYear(),
+                        anio: (typeof parsed.formData.anio === 'number' || typeof parsed.formData.anio === 'string') ? parsed.formData.anio : new Date().getFullYear(),
                         descripcion: parsed.formData.descripcion || '',
-                        presupuesto_total: typeof parsed.formData.presupuesto_total === 'number' ? parsed.formData.presupuesto_total : 0,
-                        monto_maximo_proyecto: typeof parsed.formData.monto_maximo_proyecto === 'number' ? parsed.formData.monto_maximo_proyecto : 0,
+                        presupuesto_total: (typeof parsed.formData.presupuesto_total === 'number' || typeof parsed.formData.presupuesto_total === 'string') ? parsed.formData.presupuesto_total : 0,
+                        monto_maximo_proyecto: (typeof parsed.formData.monto_maximo_proyecto === 'number' || typeof parsed.formData.monto_maximo_proyecto === 'string') ? parsed.formData.monto_maximo_proyecto : 0,
                         url_bases: parsed.formData.url_bases || '',
                         requisitos_minimos: parsed.formData.requisitos_minimos || '',
                         id_tipo_convocatoria: parsed.formData.id_tipo_convocatoria,
                         id_agenda_zonal: parsed.formData.id_agenda_zonal,
                         id_rubrica: parsed.formData.id_rubrica,
-                        puntaje_minimo_aprobacion: typeof parsed.formData.puntaje_minimo_aprobacion === 'number' ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
+                        puntaje_minimo_aprobacion: (typeof parsed.formData.puntaje_minimo_aprobacion === 'number' || typeof parsed.formData.puntaje_minimo_aprobacion === 'string') ? parsed.formData.puntaje_minimo_aprobacion : 70.00,
                         financiamiento_ext: !!parsed.formData.financiamiento_ext,
                         meta_produccion: parsed.formData.meta_produccion || '',
                         fecha_apertura: parsed.formData.fecha_apertura || '',
@@ -555,15 +673,38 @@ const ConvocatoriasPage = () => {
     };
 
     const handleStatusChange = async (uuid: string, newStatus: string) => {
+        if (newStatus === 'Abierta') {
+            if (!await confirm({
+                title: "Publicar Convocatoria",
+                message: "¿Estás seguro de publicar esta convocatoria? Una vez publicada, estará visible para que los docentes inicien sus postulaciones.",
+                confirmText: "Publicar",
+                cancelText: "Cancelar",
+                variant: "warning"
+            })) return;
+        }
+
+        const previousConvocatorias = [...convocatorias];
+        const previousSelected = selectedConvocatoria;
+
+        // Optimistically update lists and selected state
+        setConvocatorias(prev => prev.map(c => c.uuid === uuid ? { ...c, estado: newStatus as any } : c));
+        if (selectedConvocatoria && selectedConvocatoria.uuid === uuid) {
+            setSelectedConvocatoria(prev => prev ? { ...prev, estado: newStatus as any } : null);
+        }
+
         try {
             await api.patch(`/Convocatorias/${uuid}/status?status=${newStatus}`);
             if (newStatus === 'Abierta') {
-                addToast('Publicación Exitosa', 'Convocatoria publicada exitosamente. Se ha notificado a los docentes.', 'success');
+                addToast('Publicación Exitosa', 'Convocatoria publicada exitosamente. Se ha notificado a los docentes en segundo plano.', 'success');
             } else {
                 addToast('Estado Actualizado', `Estado actualizado a ${newStatus}.`, 'success');
             }
             fetchConvocatorias();
         } catch (error: any) {
+            // Revert state on failure
+            setConvocatorias(previousConvocatorias);
+            setSelectedConvocatoria(previousSelected);
+            
             const message = error?.response?.status === 403
                 ? 'No tienes permisos para realizar esta acción.'
                 : `Error al cambiar el estado: ${error?.response?.data?.message || error.message}`;
@@ -572,6 +713,7 @@ const ConvocatoriasPage = () => {
     };
 
     const resetForm = () => {
+        setFormFieldErrors({});
         setFormData({
             codigo_convocatoria: '',
             titulo: '',
@@ -603,21 +745,25 @@ const ConvocatoriasPage = () => {
     const toggleLinea = (id: number) => {
         setFormData(prev => ({
             ...prev,
-            lineas_ids: prev.lineas_ids.includes(id) 
+            lineas_ids: prev.lineas_ids.includes(id)
                 ? prev.lineas_ids.filter(lineaId => lineaId !== id)
                 : [...prev.lineas_ids, id]
         }));
     };
 
-    const getStatusBadgeClass = (estado: string) => {
+    const getStatusTextClass = (estado: string) => {
         switch (estado) {
-            case 'Abierta': return 'badge-vercel-success';
-            case 'Borrador': return 'badge-vercel-neutral';
-            case 'Cerrada': return 'badge-vercel-error';
-            case 'Anulada': return 'badge-vercel-error';
-            default: return 'badge-vercel-neutral';
+            case 'Abierta': return 'text-xs font-semibold text-success';
+            case 'Borrador': return 'text-xs font-semibold text-text-dim';
+            case 'Cerrada': return 'text-xs font-semibold text-error';
+            case 'Anulada': return 'text-xs font-semibold text-error';
+            default: return 'text-xs font-semibold text-text-dim';
         }
     };
+
+    const convocatoriasAbiertas = convocatorias.filter(c => c.estado === 'Abierta').length;
+    const fondoTotalPeriodo = getFondoTotalConvocatorias(convocatorias);
+    const proximasACerrar = getProximasACerrar(convocatorias);
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
@@ -630,24 +776,18 @@ const ConvocatoriasPage = () => {
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight leading-none">Ciclos de Investigación</h2>
                     <p className="text-xs lg:text-sm text-text-dim max-w-lg font-medium leading-relaxed">
-                        Administración de convocatorias anuales para proyectos de investigación. 
+                        Administración de convocatorias anuales para proyectos de investigación.
                         Alineado con estándares CACES y SENESCYT.
                     </p>
                 </div>
 
-                <div className="w-full lg:w-auto flex gap-4">
-                    <button 
+                <div className="w-full lg:w-auto">
+                    <button
                         onClick={handleNewConvocatoria}
-                        className="btn-vercel-primary flex-1 lg:flex-none"
+                        className="btn-vercel-primary w-full lg:w-auto"
                     >
                         <Plus size={14} strokeWidth={3} />
                         Nueva Convocatoria
-                    </button>
-                    <button 
-                        onClick={fetchConvocatorias}
-                        className="p-3 border border-border-thin rounded-md hover:bg-surface-hover text-text-dim hover:text-text-main transition-all"
-                    >
-                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                     </button>
                 </div>
             </header>
@@ -694,45 +834,70 @@ const ConvocatoriasPage = () => {
 
             {/* Two-column Vercel Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-fade-up" style={{ animationDelay: '100ms' }}>
-                
+
                 {/* Main Content: List View (Left Column) */}
-                <div className="lg:col-span-3 space-y-4">
+                <div className="lg:col-span-3 space-y-5 md:space-y-4">
                     {convocatorias.map((conv) => (
-                        <div 
-                            key={conv.uuid} 
+                        <div
+                            key={conv.uuid}
                             onClick={() => setSelectedConvocatoria(conv)}
-                            className="bento-card p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center group cursor-pointer"
+                            className="bento-card px-5 py-6 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 md:gap-0 group cursor-pointer"
                         >
                             <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
-                                <div className="icon-circle-brand shrink-0">
+                                <div className="icon-circle-brand shrink-0 mt-0.5 md:mt-0">
                                     <FileText size={20} strokeWidth={1.5} />
                                 </div>
-                                <div className="space-y-1 min-w-0 flex-1">
+                                <div className="space-y-3 md:space-y-1.5 min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                                        <span className={getStatusBadgeClass(conv.estado)}>
+                                        <span className={getStatusTextClass(conv.estado)}>
                                             {conv.estado}
                                         </span>
                                         <span className="text-[10px] font-mono text-text-dim uppercase tracking-widest">{conv.codigo_convocatoria}</span>
                                     </div>
-                                    <h4 className="text-base md:text-lg font-bold tracking-tight text-text-main group-hover:translate-x-1 transition-transform truncate">{conv.titulo}</h4>
-                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-text-dim font-medium uppercase tracking-tight">
-                                        <span className="flex items-center gap-1"><Calendar size={12} /> {conv.anio}</span>
-                                        <span className="flex items-center gap-1"><ShieldCheck size={12} /> {conv.periodo_nombre || conv.id_periodo}</span>
-                                        <span className="flex items-center gap-1 text-text-main whitespace-nowrap"><DollarSign size={12} /> Max: ${conv.monto_maximo_proyecto?.toLocaleString()}</span>
-                                        {conv.rubrica_nombre && <span className="flex items-center gap-1"><Layers size={12} /> {conv.rubrica_nombre}</span>}
+                                    <h4 className="text-[15px] md:text-lg font-bold tracking-tight text-text-main leading-normal md:leading-snug break-words group-hover:translate-x-0.5 transition-transform">
+                                        {conv.titulo}
+                                    </h4>
+                                    <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center md:gap-x-4 md:gap-y-1.5 text-[10px] text-text-dim font-medium uppercase tracking-tight">
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                            <span className="flex items-center gap-1 shrink-0"><Calendar size={12} /> {conv.anio}</span>
+                                            <span className="flex items-center gap-1 min-w-0 break-words"><ShieldCheck size={12} className="shrink-0" /> {conv.periodo_nombre || conv.id_periodo}</span>
+                                        </div>
+                                        {(getFondoConvocatoria(conv) > 0 || getTopeProyecto(conv) != null) && (
+                                            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 normal-case">
+                                                {getFondoConvocatoria(conv) > 0 && (
+                                                    <span className="flex items-center gap-1.5 text-text-main font-semibold">
+                                                        <DollarSign size={12} className="text-brand shrink-0" />
+                                                        <span className="text-[10px] text-text-dim font-medium uppercase tracking-tight">Fondo</span>
+                                                        {formatMonto(getFondoConvocatoria(conv))}
+                                                    </span>
+                                                )}
+                                                {getTopeProyecto(conv) != null && (
+                                                    <span className="flex items-center gap-1.5 text-text-dim font-medium">
+                                                        <span className="text-[10px] uppercase tracking-tight">Max/proy</span>
+                                                        {formatMonto(getTopeProyecto(conv)!)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                        {conv.rubrica_nombre && (
+                                            <span className="flex items-start gap-1.5 min-w-0 break-words normal-case leading-relaxed">
+                                                <Layers size={12} className="shrink-0 mt-px" />
+                                                {conv.rubrica_nombre}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-border-thin pt-4 md:pt-0">
+                            <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto border-t md:border-t-0 border-border-thin pt-5 mt-1 md:pt-0 md:mt-0 shrink-0">
                                 <div className="text-left md:text-right md:mr-4">
                                     <p className="text-[10px] text-text-dim uppercase font-bold tracking-widest">Cierre</p>
                                     <p className="text-xs font-mono text-text-main">{conv.fecha_cierre}</p>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-1">
                                     {conv.estado === 'Borrador' && (
-                                        <button 
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleStatusChange(conv.uuid, 'Abierta');
@@ -743,19 +908,21 @@ const ConvocatoriasPage = () => {
                                             <CheckCircle size={18} />
                                         </button>
                                     )}
-                                    
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEdit(conv);
-                                        }}
-                                        className="p-2 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors"
-                                        title="Editar"
-                                    >
-                                        <Edit2 size={18} />
-                                    </button>
-                                    
-                                    <button 
+
+                                    {canEditConvocatoria(conv.estado) && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleEdit(conv);
+                                            }}
+                                            className="p-2 text-text-dim hover:text-text-main hover:bg-surface-hover rounded transition-colors"
+                                            title="Editar"
+                                        >
+                                            <Edit2 size={18} />
+                                        </button>
+                                    )}
+
+                                    <button
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             handleDelete(conv.uuid);
@@ -785,38 +952,40 @@ const ConvocatoriasPage = () => {
 
                 {/* Sidebar Metrics (Right Column) */}
                 <div className="space-y-6">
-                    <VercelUsageCard 
+                    <VercelUsageCard
                         title="Resumen del Periodo"
-                        buttonLabel="Actualizar"
-                        onButtonClick={fetchConvocatorias}
                         items={[
                             {
                                 label: 'Total Anual',
                                 value: convocatorias.length,
                                 displayValue: `${convocatorias.length} ciclos`,
                                 max: 10,
-                                color: 'var(--brand)'
+                                color: 'var(--brand)',
+                                hint: 'Cantidad total de convocatorias registradas en el sistema.'
                             },
                             {
                                 label: 'Abiertas',
-                                value: convocatorias.filter(c => c.estado === 'Abierta').length,
-                                displayValue: `${convocatorias.filter(c => c.estado === 'Abierta').length} vigentes`,
+                                value: convocatoriasAbiertas,
+                                displayValue: `${convocatoriasAbiertas} vigentes`,
                                 max: convocatorias.length || 1,
-                                color: 'var(--success)'
+                                color: 'var(--success)',
+                                hint: 'Convocatorias en estado Abierta, disponibles para postulaciones de docentes.'
                             },
                             {
-                                label: 'Presupuesto Total',
-                                value: convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0),
-                                displayValue: `$${(convocatorias.reduce((acc, c) => acc + (c.presupuesto_total || 0), 0) / 1000).toFixed(0)}K`,
-                                max: 150000,
-                                color: 'var(--info)'
+                                label: 'Fondo Total',
+                                value: fondoTotalPeriodo,
+                                displayValue: formatMonto(fondoTotalPeriodo),
+                                max: Math.max(fondoTotalPeriodo, 1),
+                                color: 'var(--info)',
+                                hint: 'Suma del presupuesto institucional (fondo) de cada convocatoria. No es el tope máximo por proyecto.'
                             },
                             {
                                 label: 'Próximas a Cerrar',
-                                value: convocatorias.filter(c => c.estado === 'Abierta').length,
-                                displayValue: `${convocatorias.filter(c => c.estado === 'Abierta').length} activas`,
-                                max: convocatorias.length || 1,
-                                color: 'var(--warning)'
+                                value: proximasACerrar,
+                                displayValue: proximasACerrar === 1 ? '1 en 30 días' : `${proximasACerrar} en 30 días`,
+                                max: convocatoriasAbiertas || 1,
+                                color: 'var(--warning)',
+                                hint: 'Convocatorias abiertas cuya fecha de cierre está dentro de los próximos 30 días.'
                             }
                         ]}
                     />
@@ -824,9 +993,13 @@ const ConvocatoriasPage = () => {
             </div>
 
             {/* Modal - Create/Edit */}
-            {showModal && (
-                <div className="modal-overlay">
-                    <div className="modal-card modal-card--lg flex flex-col h-full md:max-h-[90vh]">
+            {showModal && createPortal(
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
+                        onClick={handleCloseModal}
+                    />
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
                         <div className="modal-header">
                             <div>
                                 <h3 className="text-xl font-bold tracking-tighter text-text-main uppercase">
@@ -918,65 +1091,82 @@ const ConvocatoriasPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Código Identificador</label>
-                                    <input 
+                                    <input
                                         required
-                                        className="input-vercel"
+                                        className={`input-vercel ${formFieldErrors.codigo_convocatoria ? 'border-error focus:border-error' : ''}`}
                                         placeholder="EJ: CONV-2024-TEC"
                                         value={formData.codigo_convocatoria}
-                                        onChange={e => setFormData({...formData, codigo_convocatoria: e.target.value})}
+                                        onChange={e => {
+                                            setFormFieldErrors(prev => ({ ...prev, codigo_convocatoria: undefined }));
+                                            setFormData({ ...formData, codigo_convocatoria: e.target.value });
+                                        }}
+                                        aria-invalid={!!formFieldErrors.codigo_convocatoria}
                                     />
+                                    {formFieldErrors.codigo_convocatoria && (
+                                        <p className="text-[10px] text-error ml-1">{formFieldErrors.codigo_convocatoria}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Año Calendario</label>
-                                    <input 
+                                    <input
                                         type="number"
                                         required
                                         className="input-vercel"
-                                        value={isNaN(formData.anio) ? '' : formData.anio}
-                                        onChange={e => {
-                                            const val = parseInt(e.target.value);
-                                            setFormData({...formData, anio: isNaN(val) ? new Date().getFullYear() : val});
-                                        }}
+                                        value={formData.anio}
+                                        onChange={e => setFormData({ ...formData, anio: e.target.value })}
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
                                 <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Título de la Convocatoria</label>
-                                <input 
+                                <input
                                     required
                                     className="input-vercel"
                                     placeholder="Nombre oficial de la convocatoria..."
                                     value={formData.titulo}
-                                    onChange={e => setFormData({...formData, titulo: e.target.value})}
+                                    onChange={e => setFormData({ ...formData, titulo: e.target.value })}
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
+                                <select
+                                    className="input-vercel"
+                                    value={formData.id_periodo}
+                                    onChange={e => setFormData({ ...formData, id_periodo: e.target.value })}
+                                >
+                                    {periodos.map(p => (
+                                        <option key={p.id_periodo} value={p.id_periodo}>{p.detalle}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Periodo SIGAFI (Inicio)</label>
-                                    <select 
-                                        className="input-vercel"
-                                        value={formData.id_periodo}
-                                        onChange={e => setFormData({...formData, id_periodo: e.target.value})}
-                                    >
-                                        {periodos.map(p => (
-                                            <option key={p.id_periodo} value={p.id_periodo}>{p.detalle}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Presupuesto Total (Fondo)</label>
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fondo Total</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={14} />
-                                        <input 
-                                            type="number"
-                                            className="input-vercel pl-9"
-                                            value={isNaN(formData.presupuesto_total) ? '' : formData.presupuesto_total}
-                                            onChange={e => {
-                                                const val = parseFloat(e.target.value);
-                                                setFormData({...formData, presupuesto_total: isNaN(val) ? 0 : val});
-                                            }}
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            className="input-vercel !pl-10"
+                                            value={formatMontoInputDisplay(formData.presupuesto_total)}
+                                            onChange={e => setFormData({ ...formData, presupuesto_total: parseMontoInput(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tope por Proyecto</label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={14} />
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            className="input-vercel !pl-10"
+                                            placeholder="Tope por propuesta postulada"
+                                            value={formatMontoInputDisplay(formData.monto_maximo_proyecto)}
+                                            onChange={e => setFormData({ ...formData, monto_maximo_proyecto: parseMontoInput(e.target.value) })}
                                         />
                                     </div>
                                 </div>
@@ -985,22 +1175,22 @@ const ConvocatoriasPage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Apertura</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         required
                                         className="input-vercel"
                                         value={formData.fecha_apertura}
-                                        onChange={e => setFormData({...formData, fecha_apertura: e.target.value})}
+                                        onChange={e => setFormData({ ...formData, fecha_apertura: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Fecha Cierre</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         required
                                         className="input-vercel"
                                         value={formData.fecha_cierre}
-                                        onChange={e => setFormData({...formData, fecha_cierre: e.target.value})}
+                                        onChange={e => setFormData({ ...formData, fecha_cierre: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -1016,11 +1206,10 @@ const ConvocatoriasPage = () => {
                                             key={l.id}
                                             type="button"
                                             onClick={() => toggleLinea(l.id)}
-                                            className={`text-left px-3 py-2 rounded border text-[11px] transition-all ${
-                                                formData.lineas_ids.includes(l.id)
+                                            className={`text-left px-3 py-2 rounded border text-[11px] transition-all ${formData.lineas_ids.includes(l.id)
                                                     ? 'bg-text-main/10 border-text-main text-text-main font-bold'
                                                     : 'bg-surface border-border-thin text-text-dim hover:border-text-main'
-                                            }`}
+                                                }`}
                                         >
                                             {l.nombre}
                                         </button>
@@ -1030,7 +1219,7 @@ const ConvocatoriasPage = () => {
 
                             {/* Advanced Section Toggle */}
                             <div className="pt-4 border-t border-border-thin">
-                                <button 
+                                <button
                                     type="button"
                                     onClick={() => setShowAdvanced(!showAdvanced)}
                                     className="flex items-center gap-2 text-[10px] font-bold text-text-dim uppercase tracking-widest hover:text-text-main transition-colors"
@@ -1045,10 +1234,10 @@ const ConvocatoriasPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Rúbrica de Evaluación</label>
-                                            <select 
+                                            <select
                                                 className="input-vercel"
                                                 value={formData.id_rubrica || ''}
-                                                onChange={e => setFormData({...formData, id_rubrica: e.target.value ? parseInt(e.target.value) : undefined})}
+                                                onChange={e => setFormData({ ...formData, id_rubrica: e.target.value ? parseInt(e.target.value) : undefined })}
                                             >
                                                 <option value="">Seleccionar Rúbrica...</option>
                                                 {rubricas.map(r => (
@@ -1058,14 +1247,11 @@ const ConvocatoriasPage = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Puntaje Mínimo (Aprobación)</label>
-                                            <input 
+                                            <input
                                                 type="number"
                                                 className="input-vercel"
-                                                value={isNaN(formData.puntaje_minimo_aprobacion) ? '' : formData.puntaje_minimo_aprobacion}
-                                                onChange={e => {
-                                                    const val = parseFloat(e.target.value);
-                                                    setFormData({...formData, puntaje_minimo_aprobacion: isNaN(val) ? 0 : val});
-                                                }}
+                                                value={formData.puntaje_minimo_aprobacion}
+                                                onChange={e => setFormData({ ...formData, puntaje_minimo_aprobacion: e.target.value })}
                                             />
                                         </div>
                                     </div>
@@ -1073,10 +1259,10 @@ const ConvocatoriasPage = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Tipo de Convocatoria</label>
-                                            <select 
+                                            <select
                                                 className="input-vercel"
                                                 value={formData.id_tipo_convocatoria || ''}
-                                                onChange={e => setFormData({...formData, id_tipo_convocatoria: e.target.value ? parseInt(e.target.value) : undefined})}
+                                                onChange={e => setFormData({ ...formData, id_tipo_convocatoria: e.target.value ? parseInt(e.target.value) : undefined })}
                                             >
                                                 <option value="">Seleccionar Tipo...</option>
                                                 {tiposConv.map(t => (
@@ -1086,10 +1272,10 @@ const ConvocatoriasPage = () => {
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Agenda Zonal Prioritaria</label>
-                                            <select 
+                                            <select
                                                 className="input-vercel"
                                                 value={formData.id_agenda_zonal || ''}
-                                                onChange={e => setFormData({...formData, id_agenda_zonal: e.target.value ? parseInt(e.target.value) : undefined})}
+                                                onChange={e => setFormData({ ...formData, id_agenda_zonal: e.target.value ? parseInt(e.target.value) : undefined })}
                                             >
                                                 <option value="">Seleccionar Agenda...</option>
                                                 {agendas.map(a => (
@@ -1101,21 +1287,21 @@ const ConvocatoriasPage = () => {
 
                                     <div className="space-y-2">
                                         <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1">Meta de Producción Esperada</label>
-                                        <input 
+                                        <input
                                             className="input-vercel"
                                             placeholder="EJ: Artículo Scopus / Patente SENADI"
                                             value={formData.meta_produccion}
-                                            onChange={e => setFormData({...formData, meta_produccion: e.target.value})}
+                                            onChange={e => setFormData({ ...formData, meta_produccion: e.target.value })}
                                         />
                                     </div>
 
                                     <div className="flex items-center gap-3 bg-surface p-4 rounded-md border border-border-thin">
-                                        <input 
+                                        <input
                                             type="checkbox"
                                             id="financiamiento_ext"
                                             className="w-4 h-4 rounded bg-bg-deep border-border-thin text-text-main focus:ring-0"
                                             checked={formData.financiamiento_ext}
-                                            onChange={e => setFormData({...formData, financiamiento_ext: e.target.checked})}
+                                            onChange={e => setFormData({ ...formData, financiamiento_ext: e.target.checked })}
                                         />
                                         <label htmlFor="financiamiento_ext" className="text-xs text-text-main font-medium cursor-pointer">
                                             Requiere Cofinanciamiento Externo (Empresa/ONG)
@@ -1128,9 +1314,9 @@ const ConvocatoriasPage = () => {
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
                                                 <CalendarDays size={12} /> Calendario del Proceso (Hitos)
                                             </label>
-                                            <button 
+                                            <button
                                                 type="button"
-                                                onClick={() => setFormData({...formData, hitos: [...formData.hitos, { nombre_hito: '', fecha_hito: '', es_critico: false }]})}
+                                                onClick={() => setFormData({ ...formData, hitos: [...formData.hitos, { nombre_hito: '', fecha_hito: '', es_critico: false }] })}
                                                 className="btn-vercel-secondary"
                                             >
                                                 + Añadir Hito
@@ -1140,33 +1326,33 @@ const ConvocatoriasPage = () => {
                                             {formData.hitos.map((hito, idx) => (
                                                 <div key={idx} className="grid grid-cols-12 gap-3 bg-surface p-3 rounded border border-border-thin relative group">
                                                     <div className="col-span-6">
-                                                        <input 
+                                                        <input
                                                             className="input-vercel text-xs py-1.5"
                                                             placeholder="Nombre del hito (Ej: Resultados)"
                                                             value={hito.nombre_hito}
                                                             onChange={e => {
                                                                 const newHitos = [...formData.hitos];
                                                                 newHitos[idx].nombre_hito = e.target.value;
-                                                                setFormData({...formData, hitos: newHitos});
+                                                                setFormData({ ...formData, hitos: newHitos });
                                                             }}
                                                         />
                                                     </div>
                                                     <div className="col-span-4">
-                                                        <input 
+                                                        <input
                                                             type="date"
                                                             className="input-vercel text-xs py-1.5"
                                                             value={hito.fecha_hito}
                                                             onChange={e => {
                                                                 const newHitos = [...formData.hitos];
                                                                 newHitos[idx].fecha_hito = e.target.value;
-                                                                setFormData({...formData, hitos: newHitos});
+                                                                setFormData({ ...formData, hitos: newHitos });
                                                             }}
                                                         />
                                                     </div>
                                                     <div className="col-span-2 flex items-center justify-center">
-                                                        <button 
+                                                        <button
                                                             type="button"
-                                                            onClick={() => setFormData({...formData, hitos: formData.hitos.filter((_, i) => i !== idx)})}
+                                                            onClick={() => setFormData({ ...formData, hitos: formData.hitos.filter((_, i) => i !== idx) })}
                                                             className="text-text-dim hover:text-error transition-colors"
                                                         >
                                                             <Trash2 size={14} />
@@ -1183,9 +1369,9 @@ const ConvocatoriasPage = () => {
                                             <label className="text-[10px] font-bold text-text-dim uppercase tracking-widest ml-1 flex items-center gap-2">
                                                 <FileText size={12} /> Documentación Obligatoria (Checklist)
                                             </label>
-                                            <button 
+                                            <button
                                                 type="button"
-                                                onClick={() => setFormData({...formData, documentos_req: [...formData.documentos_req, { nombre_documento: '', es_obligatorio: true }]})}
+                                                onClick={() => setFormData({ ...formData, documentos_req: [...formData.documentos_req, { nombre_documento: '', es_obligatorio: true }] })}
                                                 className="btn-vercel-secondary"
                                             >
                                                 + Añadir Documento
@@ -1194,31 +1380,31 @@ const ConvocatoriasPage = () => {
                                         <div className="space-y-3">
                                             {formData.documentos_req.map((doc, idx) => (
                                                 <div key={idx} className="flex items-center gap-3 bg-surface p-3 rounded border border-border-thin relative group">
-                                                    <input 
+                                                    <input
                                                         className="input-vercel flex-1 text-xs py-1.5"
                                                         placeholder="Nombre del documento (Ej: Certificado de Título)"
                                                         value={doc.nombre_documento}
                                                         onChange={e => {
                                                             const newDocs = [...formData.documentos_req];
                                                             newDocs[idx].nombre_documento = e.target.value;
-                                                            setFormData({...formData, documentos_req: newDocs});
+                                                            setFormData({ ...formData, documentos_req: newDocs });
                                                         }}
                                                     />
                                                     <div className="flex items-center gap-2">
-                                                        <input 
+                                                        <input
                                                             type="checkbox"
                                                             checked={doc.es_obligatorio}
                                                             onChange={e => {
                                                                 const newDocs = [...formData.documentos_req];
                                                                 newDocs[idx].es_obligatorio = e.target.checked;
-                                                                setFormData({...formData, documentos_req: newDocs});
+                                                                setFormData({ ...formData, documentos_req: newDocs });
                                                             }}
                                                         />
                                                         <span className="text-[9px] font-bold text-text-dim uppercase">Obligatorio</span>
                                                     </div>
-                                                    <button 
+                                                    <button
                                                         type="button"
-                                                        onClick={() => setFormData({...formData, documentos_req: formData.documentos_req.filter((_, i) => i !== idx)})}
+                                                        onClick={() => setFormData({ ...formData, documentos_req: formData.documentos_req.filter((_, i) => i !== idx) })}
                                                         className="text-text-dim hover:text-error transition-colors"
                                                     >
                                                         <Trash2 size={14} />
@@ -1231,14 +1417,14 @@ const ConvocatoriasPage = () => {
                             )}
 
                             <div className="modal-footer">
-                                <button 
+                                <button
                                     type="button"
                                     onClick={handleCloseModal}
                                     className="btn-vercel-secondary"
                                 >
                                     Cancelar
                                 </button>
-                                <button 
+                                <button
                                     type="submit"
                                     className="btn-vercel-primary"
                                 >
@@ -1248,17 +1434,18 @@ const ConvocatoriasPage = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Detail Panel */}
             {selectedConvocatoria && createPortal(
                 <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
+                    <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
                         onClick={() => setSelectedConvocatoria(null)}
                     />
-                    
+
                     <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                             <div className="flex items-center gap-3">
@@ -1272,14 +1459,14 @@ const ConvocatoriasPage = () => {
                                     </span>
                                 </div>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setSelectedConvocatoria(null)}
                                 className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
                             >
                                 <X size={18} />
                             </button>
                         </div>
-                        
+
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
                             <div className="space-y-4">
                                 <h2 className="text-3xl font-bold tracking-tight text-text-main leading-tight font-sans">
@@ -1289,9 +1476,9 @@ const ConvocatoriasPage = () => {
                                     {selectedConvocatoria.descripcion || 'Sin descripción detallada.'}
                                 </p>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="bento-card p-5 space-y-1.5">
+                                <div className="bento-card static p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Calendar size={12} /> Fecha de Apertura
                                     </div>
@@ -1299,33 +1486,45 @@ const ConvocatoriasPage = () => {
                                         {selectedConvocatoria.fecha_apertura}
                                     </div>
                                 </div>
-                                <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <Calendar size={12} className="text-error" /> Fecha de Cierre (Límite)
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-error uppercase tracking-widest flex items-center gap-1.5">
+                                        <Calendar size={12} /> Fecha de Cierre (Límite)
                                     </div>
                                     <div className="text-sm font-bold text-error font-mono">
                                         {selectedConvocatoria.fecha_cierre}
                                     </div>
                                 </div>
-                                <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <DollarSign size={12} className="text-success" /> Financiamiento Máximo
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5">
+                                        <DollarSign size={12} /> Fondo Total
                                     </div>
-                                    <div className="text-sm font-bold text-success font-mono">
-                                        ${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
+                                    <div className="text-sm font-bold text-brand font-mono">
+                                        {getFondoConvocatoria(selectedConvocatoria) > 0
+                                            ? formatMonto(getFondoConvocatoria(selectedConvocatoria))
+                                            : 'No configurado'}
                                     </div>
                                 </div>
-                                <div className="bento-card p-5 space-y-1.5">
+                                <div className="bento-card static p-5 space-y-1.5">
+                                    <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                        <DollarSign size={12} /> Tope por Proyecto
+                                    </div>
+                                    <div className="text-sm font-bold text-text-main font-mono">
+                                        {getTopeProyecto(selectedConvocatoria) != null
+                                            ? formatMonto(getTopeProyecto(selectedConvocatoria)!)
+                                            : 'No configurado'}
+                                    </div>
+                                </div>
+                                <div className="bento-card static p-5 space-y-1.5 col-span-2">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Layers size={12} /> Rúbrica Evaluativa
                                     </div>
-                                    <div className="text-sm font-bold text-text-main truncate">
+                                    <div className="text-sm font-bold text-text-main break-words leading-snug">
                                         {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
                                     </div>
                                 </div>
                             </div>
-                            
-                            <div className="bento-card p-6 space-y-4">
+
+                            <div className="bento-card static p-6 space-y-4">
                                 <div className="flex items-center gap-2 text-xs font-bold text-text-main uppercase tracking-wider">
                                     <BookOpen size={14} /> Configuración Académica & Auditoría
                                 </div>
@@ -1333,18 +1532,18 @@ const ConvocatoriasPage = () => {
                                     Esta convocatoria tiene un puntaje mínimo de aprobación de <strong>{selectedConvocatoria.puntaje_minimo_aprobacion}%</strong> para la evaluación anónima por pares. Cualquier cambio de estado a "Abierta" publicará las bases a los docentes inmediatamente.
                                 </p>
                             </div>
-                            
+
                             <div className="space-y-4">
                                 <h4 className="text-xs font-bold text-text-main uppercase tracking-widest">Requisitos & Documentos Exigidos</h4>
                                 <div className="space-y-2">
                                     {selectedConvocatoria.documentos_req && selectedConvocatoria.documentos_req.length > 0 ? (
                                         selectedConvocatoria.documentos_req.map((doc, idx) => (
-                                            <div key={idx} className="flex items-center justify-between p-3 bento-card text-xs">
+                                            <div key={idx} className="flex items-center justify-between p-3 bento-card static text-xs">
                                                 <div className="flex flex-col">
                                                     <span className="font-bold text-text-main">{doc.nombre_documento}</span>
                                                     {doc.descripcion && <span className="text-[10px] text-text-dim">{doc.descripcion}</span>}
                                                 </div>
-                                                <span className={doc.es_obligatorio ? 'badge-vercel-error' : 'badge-vercel-neutral'}>
+                                                <span className={doc.es_obligatorio ? 'text-xs font-semibold text-error' : 'text-xs font-semibold text-text-dim'}>
                                                     {doc.es_obligatorio ? 'Obligatorio' : 'Opcional'}
                                                 </span>
                                             </div>
@@ -1355,19 +1554,21 @@ const ConvocatoriasPage = () => {
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
-                            <button 
-                                onClick={() => {
-                                    handleEdit(selectedConvocatoria);
-                                    setSelectedConvocatoria(null);
-                                }}
-                                className="btn-vercel-primary flex-1"
-                            >
-                                Editar Convocatoria
-                            </button>
+                            {canEditConvocatoria(selectedConvocatoria.estado) && (
+                                <button
+                                    onClick={() => {
+                                        handleEdit(selectedConvocatoria);
+                                        setSelectedConvocatoria(null);
+                                    }}
+                                    className="btn-vercel-primary flex-1"
+                                >
+                                    Editar Convocatoria
+                                </button>
+                            )}
                             {selectedConvocatoria.estado === 'Borrador' && (
-                                <button 
+                                <button
                                     onClick={() => {
                                         handleStatusChange(selectedConvocatoria.uuid, 'Abierta');
                                         setSelectedConvocatoria(null);
@@ -1386,13 +1587,28 @@ const ConvocatoriasPage = () => {
     );
 };
 
-const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
-    <div className="bento-card static p-5 flex flex-col relative overflow-hidden bg-surface border border-border-thin shadow-sm rounded-xl">
+const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: {
+    title: string;
+    buttonLabel?: string;
+    onButtonClick?: () => void;
+    items: {
+        label: string;
+        value: number;
+        displayValue?: string;
+        max?: number;
+        color?: string;
+        hint?: string;
+    }[];
+}) => {
+    const [activeHint, setActiveHint] = useState<number | null>(null);
+
+    return (
+    <div className="bento-card static p-5 flex flex-col relative overflow-visible bg-surface border border-border-thin shadow-sm rounded-xl">
         <div className="flex items-center justify-between mb-5">
             <span className="text-[14px] font-semibold text-text-main tracking-tight">{title}</span>
             {buttonLabel && (
-                <button 
-                    onClick={onButtonClick} 
+                <button
+                    onClick={onButtonClick}
                     className="px-3 py-1 bg-black text-white hover:bg-[#1a1a1a] dark:bg-white dark:text-black dark:hover:bg-[#eaeaea] rounded-md text-[11px] font-medium transition-all cursor-pointer shadow-sm active:scale-98"
                 >
                     {buttonLabel}
@@ -1400,16 +1616,17 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
             )}
         </div>
         <div className="space-y-1">
-            {items.map((item: any, idx: number) => {
+            {items.map((item, idx) => {
                 const percentage = item.max ? Math.min(100, Math.round((item.value / item.max) * 100)) : 0;
                 const radius = 6.5;
                 const circumference = 2 * Math.PI * radius;
                 const strokeDashoffset = circumference - (percentage / 100) * circumference;
-                
+                const isHintOpen = activeHint === idx;
+
                 return (
-                    <div 
-                        key={idx} 
-                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all group"
+                    <div
+                        key={idx}
+                        className="flex items-center justify-between py-2 px-3 rounded-md transition-all"
                         style={{ backgroundColor: idx % 2 === 0 ? 'var(--accents-1)' : 'transparent' }}
                     >
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -1440,17 +1657,44 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
                                 <span className="text-[13px] font-medium text-text-main truncate">
                                     {item.label}
                                 </span>
-                                <svg 
-                                    className="w-3 h-3 text-text-dim/40 hover:text-text-main transition-colors shrink-0 cursor-help" 
-                                    fill="none" 
-                                    viewBox="0 0 24 24" 
-                                    stroke="currentColor" 
-                                    strokeWidth="2.5"
-                                >
-                                    <circle cx="12" cy="12" r="10" />
-                                    <line x1="12" y1="16" x2="12" y2="12" />
-                                    <line x1="12" y1="8" x2="12.01" y2="8" />
-                                </svg>
+                                {item.hint && (
+                                    <span className="relative inline-flex shrink-0 group/hint">
+                                        <button
+                                            type="button"
+                                            aria-label={item.hint}
+                                            aria-expanded={isHintOpen}
+                                            onClick={() => setActiveHint(isHintOpen ? null : idx)}
+                                            className="text-text-dim/40 hover:text-text-main transition-colors cursor-help focus:outline-none focus:text-text-main"
+                                        >
+                                            <svg
+                                                className="w-3 h-3"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                                strokeWidth="2.5"
+                                                aria-hidden="true"
+                                            >
+                                                <circle cx="12" cy="12" r="10" />
+                                                <line x1="12" y1="16" x2="12" y2="12" />
+                                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                                            </svg>
+                                        </button>
+                                        <span
+                                            role="tooltip"
+                                            className={`absolute left-1/2 -translate-x-1/2 bottom-[calc(100%+8px)] z-50 w-52 max-w-[min(13rem,calc(100vw-3rem))] px-3 py-2 rounded-lg text-[10px] font-normal normal-case leading-relaxed tracking-normal text-text-main bg-surface border border-border-thin shadow-lg pointer-events-none transition-opacity duration-150 ${
+                                                isHintOpen
+                                                    ? 'opacity-100 visible'
+                                                    : 'opacity-0 invisible group-hover/hint:opacity-100 group-hover/hint:visible'
+                                            }`}
+                                        >
+                                            {item.hint}
+                                            <span
+                                                className="absolute left-1/2 -translate-x-1/2 top-full -mt-px w-2 h-2 rotate-45 bg-surface border-r border-b border-border-thin"
+                                                aria-hidden="true"
+                                            />
+                                        </span>
+                                    </span>
+                                )}
                             </div>
                         </div>
                         <span className="text-[13px] font-mono font-medium text-text-main shrink-0 ml-2">
@@ -1461,6 +1705,7 @@ const VercelUsageCard = ({ title, buttonLabel, onButtonClick, items }: any) => (
             })}
         </div>
     </div>
-);
+    );
+};
 
 export default ConvocatoriasPage;
