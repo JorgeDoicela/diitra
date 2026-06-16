@@ -168,6 +168,8 @@ export const ProjectWorkspace: React.FC = () => {
     const [iniciandoEjecucion, setIniciandoEjecucion] = useState(false);
     const lastSyncedGroupRef = useRef<string | null>(null);
     const [resolvedProjectUuid, setResolvedProjectUuid] = useState<string | null>(null);
+    // Snapshot precargado de la instancia principal para evitar que DocumentEditor vuelva a pedirla
+    const [primaryInstanceSnapshot, setPrimaryInstanceSnapshot] = useState<any | null>(null);
     const [subDocumentUuids, setSubDocumentUuids] = useState<Record<string, string>>({});
     const [resolvingDocument, setResolvingDocument] = useState<string | null>(null);
     const [isUnauthorized, setIsUnauthorized] = useState(false);
@@ -219,6 +221,8 @@ export const ProjectWorkspace: React.FC = () => {
             // ya que documentUuid en la URL suele ser el UUID de la instancia y no el del proyecto.
             try {
                 const instanceRes = await api.get(`/documents/instances/${documentUuid}`);
+                // Guardar snapshot completo para que DocumentEditor lo reutilice sin repetir el fetch
+                setPrimaryInstanceSnapshot(instanceRes.data ?? null);
                 const entityUuid = instanceRes.data?.entity_uuid || instanceRes.data?.entityUuid || instanceRes.data?.EntityUuid;
                 if (entityUuid) {
                     setResolvedProjectUuid(entityUuid);
@@ -232,7 +236,11 @@ export const ProjectWorkspace: React.FC = () => {
             }
         };
 
+        // Catálogos globales: no dependen del resolvedProjectUuid, se cargan en paralelo
         resolveUuid();
+        fetchProductTypes();
+        fetchGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [documentUuid, templateCode]);
 
     const fetchProducts = async (pUuid?: string) => {
@@ -299,13 +307,6 @@ export const ProjectWorkspace: React.FC = () => {
             console.error("[DIITRA] Error al cargar grupos de investigación", err);
         }
     };
-
-    useEffect(() => {
-        if (resolvedProjectUuid) {
-            fetchProductTypes();
-            fetchGroups();
-        }
-    }, [resolvedProjectUuid]);
 
     useEffect(() => {
         if (resolvedProjectUuid) {
@@ -1023,10 +1024,20 @@ export const ProjectWorkspace: React.FC = () => {
             readOnlyReason = 'state';
         }
 
+        // Si es el documento principal y ya tenemos el snapshot precargado, pasarlo directamente
+        // para que DocumentEditor no repita el GET /documents/instances/{uuid}.
+        // IMPORTANTE: Normalizar siempre la clave Uuid (PascalCase) con el valor estable
+        // del documentUuid de la URL. Esto evita que el useEffect de DocumentEditor
+        // (que depende de initialData?.Uuid) se re-dispare cuando el servidor devuelve
+        // la propiedad en minúsculas (uuid), lo que causaría un loop de conexión/desconexión.
+        const preloadedData = (isPrimaryDocument && primaryInstanceSnapshot)
+            ? { ...primaryInstanceSnapshot, Uuid: editorUuid }
+            : { Uuid: editorUuid };
+
         return (
             <DocumentEditor 
                 templateCode={activeDocument} 
-                initialData={{ Uuid: editorUuid }}
+                initialData={preloadedData}
                 entityUuid={resolvedProjectUuid || undefined}
                 onClose={handleCloseEditor} 
                 readOnly={isReadOnly}

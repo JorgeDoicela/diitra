@@ -1,44 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet, useParams } from 'react-router-dom';
-import DashboardLayout from './components/Layout/DashboardLayout';
-import UsersPage from './pages/Admin/UsersPage';
-import Dashboard from './pages/Dashboard/Dashboard';
-import Landing from './pages/Landing/Landing';
-import Login from './pages/Login/Login';
-import MagicLogin from './pages/Login/MagicLogin';
-import PinHandoff from './pages/Login/PinHandoff';
-import MagicResend from './pages/Login/MagicResend';
-import MicrosoftCallback from './pages/Login/MicrosoftCallback';
-import RecuperarContrasenia from './pages/Login/RecuperarContrasenia';
-import VerContrasenia from './pages/Login/VerContrasenia';
 import { AuthProvider, useAuth } from './api/AuthContext';
 import { NotificationsProvider } from './api/NotificationsContext';
 import { ConfirmProvider } from './api/ConfirmContext';
-import ConvocatoriasPage from './pages/Investigacion/Convocatorias/ConvocatoriasPage';
-import ResearchProjectsPage from './pages/Investigacion/Proyectos/ResearchProjectsPage';
-import MyProjectsPage from './pages/Investigacion/Proyectos/MyProjectsPage';
-import PeerReviewPage from './pages/Investigacion/PeerReview/PeerReviewPage';
-import EvaluacionPage from './pages/Investigacion/PeerReview/EvaluacionPage';
-import ArbitrajePage from './pages/Investigacion/Arbitraje/ArbitrajePage';
-import ArbitrajeProyecto from './pages/Investigacion/Arbitraje/ArbitrajeProyecto';
-import { ProjectWorkspace } from './pages/Investigacion/Proyectos/Workspace/ProjectWorkspace';
-import MonitoringPage from './pages/Investigacion/Monitoreo/MonitoringPage';
-import GroupsPage from './pages/Admin/GroupsPage';
-import AuditPage from './pages/Admin/AuditPage';
-import ConfiguracionPage from './pages/Admin/ConfiguracionPage';
-import PublicConvocatoriasPage from './pages/Investigacion/Convocatorias/PublicConvocatoriasPage';
-import VerifyDocument from './pages/Public/VerifyDocument';
-import AnalyticsPage from './pages/Analytics/AnalyticsPage';
-import NotificationsPage from './pages/Notificaciones/NotificationsPage';
-import EmailEnginePage from './pages/Admin/Emails/EmailEnginePage';
-import ProjectAdoptionPage from './pages/Investigacion/Proyectos/ProjectAdoptionPage';
-import InformesAvancePage from './pages/Investigacion/Proyectos/InformesAvancePage';
-import SettingsPage from './pages/Settings/SettingsPage';
-import LopdpConsentPage from './pages/Lopdp/LopdpConsentPage';
-import ArcoPage from './pages/Lopdp/ArcoPage';
-import LopdpAdminPage from './pages/Lopdp/LopdpAdminPage';
 import { buildWorkspacePath } from './core/documents/templateUrl';
 
+// ─── Lazy imports: cada página se carga solo cuando se necesita ───────────────
+const DashboardLayout        = lazy(() => import('./components/Layout/DashboardLayout'));
+const UsersPage              = lazy(() => import('./pages/Admin/UsersPage'));
+const Dashboard              = lazy(() => import('./pages/Dashboard/Dashboard'));
+const Landing                = lazy(() => import('./pages/Landing/Landing'));
+const Login                  = lazy(() => import('./pages/Login/Login'));
+const MagicLogin             = lazy(() => import('./pages/Login/MagicLogin'));
+const PinHandoff             = lazy(() => import('./pages/Login/PinHandoff'));
+const MagicResend            = lazy(() => import('./pages/Login/MagicResend'));
+const MicrosoftCallback      = lazy(() => import('./pages/Login/MicrosoftCallback'));
+const RecuperarContrasenia   = lazy(() => import('./pages/Login/RecuperarContrasenia'));
+const VerContrasenia         = lazy(() => import('./pages/Login/VerContrasenia'));
+const ConvocatoriasPage      = lazy(() => import('./pages/Investigacion/Convocatorias/ConvocatoriasPage'));
+const ResearchProjectsPage   = lazy(() => import('./pages/Investigacion/Proyectos/ResearchProjectsPage'));
+const MyProjectsPage         = lazy(() => import('./pages/Investigacion/Proyectos/MyProjectsPage'));
+const PeerReviewPage         = lazy(() => import('./pages/Investigacion/PeerReview/PeerReviewPage'));
+const EvaluacionPage         = lazy(() => import('./pages/Investigacion/PeerReview/EvaluacionPage'));
+const ArbitrajePage          = lazy(() => import('./pages/Investigacion/Arbitraje/ArbitrajePage'));
+const ArbitrajeProyecto      = lazy(() => import('./pages/Investigacion/Arbitraje/ArbitrajeProyecto'));
+const ProjectWorkspace       = lazy(() => import('./pages/Investigacion/Proyectos/Workspace/ProjectWorkspace').then(m => ({ default: m.ProjectWorkspace })));
+const MonitoringPage         = lazy(() => import('./pages/Investigacion/Monitoreo/MonitoringPage'));
+const GroupsPage             = lazy(() => import('./pages/Admin/GroupsPage'));
+const AuditPage              = lazy(() => import('./pages/Admin/AuditPage'));
+const ConfiguracionPage      = lazy(() => import('./pages/Admin/ConfiguracionPage'));
+const PublicConvocatoriasPage = lazy(() => import('./pages/Investigacion/Convocatorias/PublicConvocatoriasPage'));
+const VerifyDocument         = lazy(() => import('./pages/Public/VerifyDocument'));
+const AnalyticsPage          = lazy(() => import('./pages/Analytics/AnalyticsPage'));
+const NotificationsPage      = lazy(() => import('./pages/Notificaciones/NotificationsPage'));
+const EmailEnginePage        = lazy(() => import('./pages/Admin/Emails/EmailEnginePage'));
+const ProjectAdoptionPage    = lazy(() => import('./pages/Investigacion/Proyectos/ProjectAdoptionPage'));
+const InformesAvancePage     = lazy(() => import('./pages/Investigacion/Proyectos/InformesAvancePage'));
+const SettingsPage           = lazy(() => import('./pages/Settings/SettingsPage'));
+const LopdpConsentPage       = lazy(() => import('./pages/Lopdp/LopdpConsentPage'));
+const ArcoPage               = lazy(() => import('./pages/Lopdp/ArcoPage'));
+const LopdpAdminPage         = lazy(() => import('./pages/Lopdp/LopdpAdminPage'));
+
+// ─── Fallback de carga ────────────────────────────────────────────────────────
+const PageLoader = () => (
+    <div className="min-h-screen flex items-center justify-center bg-bg-deep transition-colors duration-300">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-border-thin border-t-brand"></div>
+    </div>
+);
+
+// ─── Guards de ruta ───────────────────────────────────────────────────────────
 const RedirectPreserveSearch = ({ to }: { to: string }) => {
     const location = useLocation();
     return <Navigate to={`${to}${location.search}`} replace />;
@@ -182,6 +192,7 @@ const NavigateToResearchProjects = () => {
     return <Navigate to={target} replace />;
 };
 
+// ─── App ──────────────────────────────────────────────────────────────────────
 function App() {
     const [theme, setTheme] = useState<'dark' | 'light'>(() => {
         const savedTheme = localStorage.getItem('theme');
@@ -205,6 +216,7 @@ function App() {
             <BrowserRouter basename={import.meta.env.BASE_URL}>
                 <ConfirmProvider>
                     <NotificationsProvider>
+                    <Suspense fallback={<PageLoader />}>
                     <Routes>
                         {/* Public Landing Page */}
                         <Route path="/" element={
@@ -301,6 +313,7 @@ function App() {
                         {/* Fallback */}
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
+                    </Suspense>
                 </NotificationsProvider>
                </ConfirmProvider>
             </BrowserRouter>

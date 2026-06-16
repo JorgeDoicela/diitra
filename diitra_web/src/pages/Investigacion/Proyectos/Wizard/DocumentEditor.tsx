@@ -70,10 +70,9 @@ interface DocumentEditorProps {
 
 const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false, readOnlyReason, projectStatus, canSign = true }) => {
     const { isAdmin } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
     const [templateConfig, setTemplateConfig] = useState<any>(null);
-    const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
     const [docInstanceData, setDocInstanceData] = useState<any>(null);
-    const [isLoadingData, setIsLoadingData] = useState(true);
     const [resolvedUuid, setResolvedUuid] = useState<string | null>(null);
 
     // Catálogos institucionales (agnóstico por plantilla)
@@ -81,94 +80,82 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [tiposProducto, setTiposProducto] = useState<any[]>([]);
 
-    // 1. Resolución de configuración de la plantilla y carga de datos de la instancia
+    // ── Carga paralela: configuración de plantilla + datos de instancia + catálogos ──
+    // Todo en un solo Promise.all para eliminar el waterfall de requests seriales.
     useEffect(() => {
-        const fetchConfig = async () => {
-            // PRIORIDAD 1: Registry local (esquema puro, sin componentes React)
+        const loadAll = async () => {
+            // 1. Resolver config de plantilla (Registry local tiene prioridad, sin red)
             const localConfig = DocumentTemplateRegistry[templateCode];
-            if (localConfig) {
-                setTemplateConfig(localConfig);
-                setIsLoadingTemplate(false);
-                return;
-            }
 
-            // PRIORIDAD 2: Backend dinámico (plantillas custom creadas en BD)
-            try {
-                const response = await api.get(`/documents/instances/templates/${templateCode}/ui-config`);
-                setTemplateConfig(response.data);
-            } catch (err) {
+            // 2. Lanzar todas las peticiones de red en paralelo
+            //    Si el padre ya precargó el snapshot (initialData incluye la respuesta completa
+            //    del GET /documents/instances/{uuid}), reutilizamos esos datos directamente
+            //    para ahorrar una petición de red duplicada.
+            const hasPreloadedSnapshot = !!(initialData?.data_snapshot_json || initialData?.dataSnapshotJson || initialData?.DataSnapshotJson);
+            const needsInstanceFetch = !hasPreloadedSnapshot && !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
+
+            const [configResult, instanceResult, carrerasRes, convsRes, tiposRes] = await Promise.all([
+                // Config desde backend solo si no está en el registry local
+                localConfig
+                    ? Promise.resolve({ data: localConfig })
+                    : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
+                // Datos de la instancia: reutilizar snapshot precargado si está disponible
+                hasPreloadedSnapshot
+                    ? Promise.resolve({ data: initialData })
+                    : needsInstanceFetch
+                        ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
+                        : Promise.resolve({ data: null }),
+                // Catálogos institucionales
+                api.get('/catalogs/carreras').catch(() => ({ data: [] })),
+                api.get('/Convocatorias').catch(() => ({ data: [] })),
+                api.get('/catalogs/tipo-producto').catch(() => ({ data: [] })),
+            ]);
+
+            // Aplicar config de plantilla
+            setTemplateConfig(configResult.data ?? null);
+            if (!localConfig && !configResult.data) {
                 console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
-                setTemplateConfig(null);
-            } finally {
-                setIsLoadingTemplate(false);
             }
-        };
-        fetchConfig();
-    }, [templateCode]);
 
-    useEffect(() => {
-        const fetchDocData = async () => {
-            if (!initialData?.Uuid || initialData.Uuid.startsWith('temp_')) {
-                setDocInstanceData({});
-                setIsLoadingData(false);
-                return;
-            }
-            try {
-                const response = await api.get(`/documents/instances/${initialData.Uuid}`);
-                if (response.data) {
-                    const realUuid = response.data.uuid || response.data.Uuid;
-                    if (realUuid) {
-                        console.log(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
-                        setResolvedUuid(realUuid);
-                    }
-                    // FALLBACK PATTERN: Se tolera cualquier casing del backend (snake_case, camelCase, PascalCase)
-                    // para evitar roturas si la serialización de snapshots varía o si la propiedad viene de un DTO mapeado.
-                    const snapshotStr = response.data.data_snapshot_json || response.data.dataSnapshotJson || response.data.DataSnapshotJson;
-                    if (snapshotStr) {
-                        try {
-                            const parsed = JSON.parse(snapshotStr);
-                            setDocInstanceData(parsed);
-                        } catch (e) {
-                            console.error('[DIITRA] Error parsing dataSnapshotJson:', e);
-                            setDocInstanceData({});
-                        }
-                    } else {
+            // Aplicar datos de instancia
+            if (instanceResult.data) {
+                const realUuid = instanceResult.data.uuid || instanceResult.data.Uuid;
+                if (realUuid) {
+                    console.log(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
+                    setResolvedUuid(realUuid);
+                }
+                // FALLBACK PATTERN: Se tolera cualquier casing del backend (snake_case, camelCase, PascalCase)
+                // para evitar roturas si la serialización de snapshots varía o si la propiedad viene de un DTO mapeado.
+                const snapshotStr = instanceResult.data.data_snapshot_json || instanceResult.data.dataSnapshotJson || instanceResult.data.DataSnapshotJson;
+                if (snapshotStr) {
+                    try {
+                        setDocInstanceData(JSON.parse(snapshotStr));
+                    } catch (e) {
+                        console.error('[DIITRA] Error parsing dataSnapshotJson:', e);
                         setDocInstanceData({});
                     }
                 } else {
                     setDocInstanceData({});
                 }
-            } catch (err) {
-                console.error('[DIITRA] Error loading document instance data:', err);
+            } else {
                 setDocInstanceData({});
-            } finally {
-                setIsLoadingData(false);
             }
-        };
-        fetchDocData();
-    }, [initialData?.Uuid]);
 
-    // 2. Carga de catálogos institucionales
-    useEffect(() => {
-        const loadMetadata = async () => {
-            try {
-                const [rCarreras, rConvocatorias, rTipos] = await Promise.all([
-                    api.get('/catalogs/carreras').catch(() => ({ data: [] })),
-                    api.get('/Convocatorias').catch(() => ({ data: [] })),
-                    api.get('/catalogs/tipo-producto').catch(() => ({ data: [] }))
-                ]);
-                setCarreras(rCarreras.data || []);
-                const activeConvs = (rConvocatorias.data || []).filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa' || (isAdmin && c.estado === 'Borrador'));
-                setConvocatorias(activeConvs.length > 0 ? activeConvs : (rConvocatorias.data || []).filter((c: any) => c.estado !== 'Borrador' || isAdmin));
-                setTiposProducto(rTipos.data || []);
-            } catch (e) {
-                console.error('[DIITRA] Error al cargar metálogos institucionales:', e);
-            }
-        };
-        loadMetadata();
-    }, [isAdmin]);
+            // Aplicar catálogos
+            setCarreras(carrerasRes.data || []);
+            const allConvs = convsRes.data || [];
+            const activeConvs = allConvs.filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa' || (isAdmin && c.estado === 'Borrador'));
+            setConvocatorias(activeConvs.length > 0 ? activeConvs : allConvs.filter((c: any) => c.estado !== 'Borrador' || isAdmin));
+            setTiposProducto(tiposRes.data || []);
 
-    if (isLoadingTemplate || isLoadingData) {
+            setIsLoading(false);
+        };
+
+        loadAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [templateCode, initialData?.Uuid, isAdmin]);
+
+    if (isLoading) {
         return (
             <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center gap-4">
                 <Loader size={48} className="animate-spin text-primary" />
