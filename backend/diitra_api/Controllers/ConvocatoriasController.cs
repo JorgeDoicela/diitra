@@ -71,26 +71,47 @@ public class ConvocatoriasController : ControllerBase
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Create([FromBody] CreateConvocatoriaDto dto)
     {
-        var uuid = await _convocatoriaService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetByUuid), new { uuid }, new { uuid });
+        try
+        {
+            var uuid = await _convocatoriaService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetByUuid), new { uuid }, new { uuid });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPut("{uuid}")]
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> Update(string uuid, [FromBody] CreateConvocatoriaDto dto)
     {
-        var result = await _convocatoriaService.UpdateAsync(uuid, dto);
-        if (!result) return NotFound();
-        return Ok(new { message = "Convocatoria actualizada" });
+        try
+        {
+            var result = await _convocatoriaService.UpdateAsync(uuid, dto);
+            if (!result) return NotFound();
+            return Ok(new { message = "Convocatoria actualizada" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpPatch("{uuid}/status")]
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> ChangeStatus(string uuid, [FromQuery] string status)
     {
-        var result = await _convocatoriaService.ChangeStatusAsync(uuid, status);
-        if (!result) return NotFound();
-        return Ok(new { message = $"Estado actualizado a {status}" });
+        try
+        {
+            var result = await _convocatoriaService.ChangeStatusAsync(uuid, status);
+            if (!result) return NotFound();
+            return Ok(new { message = $"Estado actualizado a {status}" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpDelete("{uuid}")]

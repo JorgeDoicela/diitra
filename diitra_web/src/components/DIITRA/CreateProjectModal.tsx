@@ -30,7 +30,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
     onClose
 }) => {
     const navigate = useNavigate();
-    const { user, isDocente } = useAuth();
+    const { user, isDocente, isAdmin } = useAuth();
 
     const [titulo, setTitulo] = useState('');
     const [idCarrera, setIdCarrera] = useState<number>(0);
@@ -72,7 +72,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
                 const allConvs = rConvocatorias.data || [];
                 const activeConvs = allConvs.filter((c: any) => {
-                    const isBorradorOrAbierta = c.estado === 'Abierta' || c.estado === 'Borrador';
+                    const isBorradorOrAbierta = c.estado === 'Abierta' || (isAdmin && c.estado === 'Borrador');
                     return isBorradorOrAbierta && !isPastDeadline(c.fecha_cierre || c.fechaCierre);
                 });
 

@@ -5,6 +5,7 @@ import api from '../../../api/axios_config';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
+import { useAuth } from '../../../api/AuthContext';
 
 interface Convocatoria {
     id_convocatoria: number;
@@ -13,12 +14,18 @@ interface Convocatoria {
     descripcion: string;
     fecha_apertura: string;
     fecha_cierre: string;
-    monto_maximo_proyecto: number;
+    monto_maximo_proyecto?: number;
+    presupuesto_total?: number;
     url_bases: string;
     estado: string;
     rubrica_nombre?: string;
     codigo_convocatoria: string;
 }
+
+const getTopeProyectoEfectivo = (c: { monto_maximo_proyecto?: number | null; presupuesto_total?: number | null }) => {
+    if (c.monto_maximo_proyecto != null && c.monto_maximo_proyecto > 0) return c.monto_maximo_proyecto;
+    return c.presupuesto_total ?? 0;
+};
 
 const isPastDeadline = (fechaCierre: string) => {
     if (!fechaCierre) return false;
@@ -34,6 +41,7 @@ const isPastDeadline = (fechaCierre: string) => {
 };
 
 const PublicConvocatoriasPage = () => {
+    const { isAdmin } = useAuth();
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -50,7 +58,7 @@ const PublicConvocatoriasPage = () => {
         const fetchConvocatorias = async () => {
             try {
                 const response = await api.get('/Convocatorias');
-                setConvocatorias(response.data.filter((c: any) => c.estado === 'Abierta' || c.estado === 'Borrador'));
+                setConvocatorias(response.data.filter((c: any) => c.estado === 'Abierta' || (isAdmin && c.estado === 'Borrador')));
             } catch (error) {
                 console.error('Error fetching convocatorias:', error);
             } finally {
@@ -58,10 +66,10 @@ const PublicConvocatoriasPage = () => {
             }
         };
         fetchConvocatorias();
-    }, []);
+    }, [isAdmin]);
 
-    const filtered = convocatorias.filter(c => 
-        c.titulo.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const filtered = convocatorias.filter(c =>
+        c.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.codigo_convocatoria.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -84,8 +92,8 @@ const PublicConvocatoriasPage = () => {
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center bg-surface p-4 rounded-lg border border-border-thin">
                 <div className="relative flex-1 min-w-0">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder="Buscar por título o código..."
                         className="input-vercel !pl-9 !rounded-xl !py-2.5 !text-sm !placeholder:text-text-dim w-full"
                         value={searchTerm}
@@ -121,8 +129,8 @@ const PublicConvocatoriasPage = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filtered.map((c) => (
-                        <div 
-                            key={c.uuid} 
+                        <div
+                            key={c.uuid}
                             onClick={() => setSelectedConvocatoria(c)}
                             className="bento-card p-6 group cursor-pointer overflow-hidden"
                         >
@@ -170,17 +178,17 @@ const PublicConvocatoriasPage = () => {
                                     <div className="space-y-1">
                                         <div className="section-label">
                                             <DollarSign size={10} />
-                                            <span>Max. Proyecto</span>
+                                            <span>Tope por Proyecto</span>
                                         </div>
                                         <p className="text-xs font-semibold text-text-main font-mono">
-                                            ${c.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
+                                            ${getTopeProyectoEfectivo(c).toLocaleString()}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="pt-6 flex items-center gap-4">
                                     {isPastDeadline(c.fecha_cierre) ? (
-                                        <button 
+                                        <button
                                             disabled
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -190,7 +198,7 @@ const PublicConvocatoriasPage = () => {
                                             Plazo Vencido
                                         </button>
                                     ) : (
-                                        <button 
+                                        <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handlePostular(c.id_convocatoria);
@@ -200,9 +208,9 @@ const PublicConvocatoriasPage = () => {
                                             Postular Ahora
                                         </button>
                                     )}
-                                    <a 
-                                        href={c.url_bases} 
-                                        target="_blank" 
+                                    <a
+                                        href={c.url_bases}
+                                        target="_blank"
                                         rel="noopener noreferrer"
                                         onClick={(e) => e.stopPropagation()}
                                         className="btn-vercel-secondary"
@@ -230,11 +238,11 @@ const PublicConvocatoriasPage = () => {
             {/* Detail Panel */}
             {selectedConvocatoria && createPortal(
                 <div className="fixed inset-0 z-[9999] flex justify-end animate-fade-up">
-                    <div 
+                    <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
                         onClick={() => setSelectedConvocatoria(null)}
                     />
-                    
+
                     <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                             <div className="flex items-center gap-3">
@@ -259,14 +267,14 @@ const PublicConvocatoriasPage = () => {
                                     )}
                                 </div>
                             </div>
-                            <button 
+                            <button
                                 onClick={() => setSelectedConvocatoria(null)}
                                 className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
                             >
                                 <X size={18} />
                             </button>
                         </div>
-                        
+
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 bg-surface">
                             <div className="space-y-4">
                                 <h2 className="text-3xl font-semibold tracking-tight text-text-main leading-tight font-sans">
@@ -276,7 +284,7 @@ const PublicConvocatoriasPage = () => {
                                     {selectedConvocatoria.descripcion}
                                 </p>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bento-card p-5 space-y-1.5">
                                     <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
@@ -287,31 +295,31 @@ const PublicConvocatoriasPage = () => {
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <Calendar size={12} className="text-error" /> Fecha de Cierre (Límite)
+                                    <div className="text-[10px] font-semibold text-error uppercase tracking-widest flex items-center gap-1.5">
+                                        <Calendar size={12} /> Fecha de Cierre (Límite)
                                     </div>
                                     <div className="text-sm font-semibold text-error font-mono">
                                         {selectedConvocatoria.fecha_cierre ? format(new Date(selectedConvocatoria.fecha_cierre), 'dd MMM, yyyy', { locale: es }) : 'N/A'}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
-                                    <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
-                                        <DollarSign size={12} className="text-success" /> Financiamiento Máximo
+                                    <div className="text-[10px] font-semibold text-brand uppercase tracking-widest flex items-center gap-1.5">
+                                        <DollarSign size={12} /> Tope por Proyecto
                                     </div>
-                                    <div className="text-sm font-semibold text-success font-mono">
-                                        ${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString() ?? '0.00'}
+                                    <div className="text-sm font-semibold text-brand font-mono">
+                                        ${getTopeProyectoEfectivo(selectedConvocatoria).toLocaleString()}
                                     </div>
                                 </div>
                                 <div className="bento-card p-5 space-y-1.5">
                                     <div className="text-[10px] font-semibold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                                         <Award size={12} /> Rúbrica Evaluativa
                                     </div>
-                                    <div className="text-sm font-semibold text-text-main truncate">
+                                    <div className="text-sm font-semibold text-text-main break-words leading-snug">
                                         {selectedConvocatoria.rubrica_nombre || 'Rúbrica Estándar ISTPET'}
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div className="bento-card p-6 space-y-4">
                                 <div className="flex items-center gap-2 text-xs font-semibold text-text-main uppercase tracking-wider">
                                     <BookOpen size={14} /> Alineación Académica CACES
@@ -320,7 +328,7 @@ const PublicConvocatoriasPage = () => {
                                     Esta convocatoria opera bajo el Reglamento de Régimen Académico del <strong>CES</strong> y de la <strong>SENESCYT</strong>. Todos los proyectos presentados pasarán por revisión por pares anónima y registro permanente de cambios.
                                 </p>
                             </div>
-                            
+
                             <div className="space-y-4">
                                 <h4 className="text-xs font-semibold text-text-main uppercase tracking-widest">Requisitos Clave para Postulación</h4>
                                 <ul className="space-y-2.5 text-xs text-text-dim">
@@ -330,7 +338,7 @@ const PublicConvocatoriasPage = () => {
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />
-                                        <span>El presupuesto total agregado del proyecto no debe exceder el tope establecido de <strong>${selectedConvocatoria.monto_maximo_proyecto?.toLocaleString()}</strong>.</span>
+                                        <span>El presupuesto total agregado del proyecto no debe exceder el tope por proyecto de <strong>${getTopeProyectoEfectivo(selectedConvocatoria).toLocaleString()}</strong>.</span>
                                     </li>
                                     <li className="flex items-start gap-2.5">
                                         <span className="w-1.5 h-1.5 bg-text-main rounded-full mt-1.5 shrink-0" />
@@ -339,17 +347,17 @@ const PublicConvocatoriasPage = () => {
                                 </ul>
                             </div>
                         </div>
-                        
+
                         <div className="p-8 border-t border-border-thin bg-surface flex gap-4">
                             {isPastDeadline(selectedConvocatoria.fecha_cierre) ? (
-                                <button 
+                                <button
                                     disabled
                                     className="btn-vercel-secondary flex-1 cursor-not-allowed opacity-50"
                                 >
                                     Plazo Vencido
                                 </button>
                             ) : (
-                                <button 
+                                <button
                                     onClick={() => {
                                         handlePostular(selectedConvocatoria.id_convocatoria);
                                         setSelectedConvocatoria(null);
@@ -359,9 +367,9 @@ const PublicConvocatoriasPage = () => {
                                     Iniciar Postulación
                                 </button>
                             )}
-                            <a 
-                                href={selectedConvocatoria.url_bases} 
-                                target="_blank" 
+                            <a
+                                href={selectedConvocatoria.url_bases}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="btn-vercel-secondary"
                             >

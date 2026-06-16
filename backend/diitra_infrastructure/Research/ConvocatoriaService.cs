@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using diitra_application.Research;
 using diitra_application.Research.Dtos;
 using diitra_application.Security;
@@ -14,17 +15,36 @@ public class ConvocatoriaService : IConvocatoriaService
     private readonly INotificationService _notificationService;
     private readonly IAuditService _auditService;
     private readonly ILogger<ConvocatoriaService> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public ConvocatoriaService(
         DiitraContext context,
         INotificationService notificationService,
         IAuditService auditService,
-        ILogger<ConvocatoriaService> logger)
+        ILogger<ConvocatoriaService> logger,
+        IServiceScopeFactory scopeFactory)
     {
         _context = context;
         _notificationService = notificationService;
         _auditService = auditService;
         _logger = logger;
+        _scopeFactory = scopeFactory;
+    }
+
+    private void DispatchNotificationsInBackground(Func<IServiceProvider, Task> work)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var scope = _scopeFactory.CreateScope();
+                await work(scope.ServiceProvider);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar notificaciones en segundo plano");
+            }
+        });
     }
 
     public async Task<IEnumerable<ConvocatoriaDto>> GetAllAsync()
@@ -134,12 +154,27 @@ public class ConvocatoriaService : IConvocatoriaService
             .FirstOrDefaultAsync();
     }
 
+    private async Task EnsureCodigoConvocatoriaUniqueAsync(string codigo, string? excludeUuid = null)
+    {
+        var normalized = codigo?.Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+            throw new InvalidOperationException("El código de convocatoria es obligatorio.");
+
+        var exists = await _context.InvConvocatorias
+            .AnyAsync(c => c.CodigoConvocatoria == normalized && (excludeUuid == null || c.Uuid != excludeUuid));
+
+        if (exists)
+            throw new InvalidOperationException($"Ya existe una convocatoria con el código \"{normalized}\". Usa un código diferente.");
+    }
+
     public async Task<string> CreateAsync(CreateConvocatoriaDto dto)
     {
+        await EnsureCodigoConvocatoriaUniqueAsync(dto.CodigoConvocatoria);
+
         var convocatoria = new InvConvocatoria
         {
             Uuid = Guid.NewGuid().ToString(),
-            CodigoConvocatoria = dto.CodigoConvocatoria,
+            CodigoConvocatoria = dto.CodigoConvocatoria.Trim(),
             Titulo = dto.Titulo,
             IdPeriodo = dto.IdPeriodo,
             Anio = dto.Anio,
@@ -228,6 +263,11 @@ public class ConvocatoriaService : IConvocatoriaService
             .FirstOrDefaultAsync(c => c.Uuid == uuid);
         if (conv == null) return false;
 
+        if (conv.Estado == "Cerrada")
+            throw new InvalidOperationException("No se puede editar una convocatoria cerrada.");
+
+        await EnsureCodigoConvocatoriaUniqueAsync(dto.CodigoConvocatoria, uuid);
+
         var beforeState = new
         {
             conv.CodigoConvocatoria,
@@ -250,7 +290,7 @@ public class ConvocatoriaService : IConvocatoriaService
         };
         string beforeJson = System.Text.Json.JsonSerializer.Serialize(beforeState);
 
-        conv.CodigoConvocatoria = dto.CodigoConvocatoria;
+        conv.CodigoConvocatoria = dto.CodigoConvocatoria.Trim();
         conv.Titulo = dto.Titulo;
         conv.IdPeriodo = dto.IdPeriodo;
         conv.Anio = dto.Anio;
@@ -372,22 +412,31 @@ public class ConvocatoriaService : IConvocatoriaService
         {
             try
             {
-                await _notificationService.BroadcastAsync(
-                    "Nueva Convocatoria Abierta",
-                    $"Se ha publicado la convocatoria: {conv.Titulo}. Ya puedes empezar a postular tus proyectos.",
-                    "DOCENTE",
-                    "/convocatorias",
-                    new Dictionary<string, string>
-                    {
-                        { "Año", conv.Anio.ToString() },
-                        { "Código", conv.CodigoConvocatoria ?? "N/A" },
-                        { "Fecha Cierre", conv.FechaCierre.ToString("dd/MM/yyyy") }
-                    }
-                );
+                var titulo = conv.Titulo;
+                var anio = conv.Anio.ToString();
+                var codigo = conv.CodigoConvocatoria ?? "N/A";
+                var fechaCierreStr = conv.FechaCierre.ToString("dd/MM/yyyy");
+
+                DispatchNotificationsInBackground(async sp =>
+                {
+                    var notificationService = sp.GetRequiredService<INotificationService>();
+                    await notificationService.BroadcastAsync(
+                        "Nueva Convocatoria Abierta",
+                        $"Se ha publicado la convocatoria: {titulo}. Ya puedes empezar a postular tus proyectos.",
+                        "DOCENTE",
+                        "/convocatorias",
+                        new Dictionary<string, string>
+                        {
+                            { "Año", anio },
+                            { "Código", codigo },
+                            { "Fecha Cierre", fechaCierreStr }
+                        }
+                    );
+                });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al enviar notificaciones de publicacion para convocatoria {Uuid}", uuid);
+                _logger.LogError(ex, "Error al encolar notificaciones de publicación para convocatoria {Uuid}", uuid);
             }
         }
 

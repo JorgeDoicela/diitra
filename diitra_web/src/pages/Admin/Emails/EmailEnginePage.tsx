@@ -768,7 +768,7 @@ const EmailEnginePage: React.FC = () => {
                     '[[convocatoria_apertura]]': c.fechaApertura ? c.fechaApertura.split('T')[0] : '',
                     '[[convocatoria_cierre]]': c.fechaCierre ? c.fechaCierre.split('T')[0] : '',
                     '[[convocatoria_presupuesto]]': c.presupuestoTotal ? `$${c.presupuestoTotal.toLocaleString()}` : '$0.00',
-                    '[[convocatoria_monto_maximo]]': c.montoMaximoProyecto ? `$${c.montoMaximoProyecto.toLocaleString()}` : '$0.00',
+                    '[[convocatoria_monto_maximo]]': (c.montoMaximoProyecto ?? c.presupuestoTotal) ? `$${(c.montoMaximoProyecto ?? c.presupuestoTotal).toLocaleString()}` : '$0.00',
                     '[[convocatoria_bases_url]]': c.urlBases || '',
                     '[[convocatoria_estado]]': c.estado || 'Borrador'
                 }));

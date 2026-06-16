@@ -395,7 +395,7 @@ export const CommandPalette = () => {
                 api.get('/Convocatorias', { signal: ctrl.signal }).then(res => {
                     const data: any[] = Array.isArray(res.data) ? res.data : [];
                     data
-                        .filter(c => matches(c.titulo || '') || matches(c.codigo_convocatoria || '') || matches(c.periodo_nombre || c.periodo || ''))
+                        .filter(c => (c.estado !== 'Borrador' || isAdmin) && (matches(c.titulo || '') || matches(c.codigo_convocatoria || '') || matches(c.periodo_nombre || c.periodo || '')))
                         .slice(0, 4)
                         .forEach(c => results.push(convocatoriaToItem(c)));
                 }).catch(() => {})

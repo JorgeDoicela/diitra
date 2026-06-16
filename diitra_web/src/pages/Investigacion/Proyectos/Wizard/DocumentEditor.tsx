@@ -69,6 +69,7 @@ interface DocumentEditorProps {
 }
 
 const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialData, entityUuid, onClose, readOnly = false, readOnlyReason, projectStatus, canSign = true }) => {
+    const { isAdmin } = useAuth();
     const [templateConfig, setTemplateConfig] = useState<any>(null);
     const [isLoadingTemplate, setIsLoadingTemplate] = useState(true);
     const [docInstanceData, setDocInstanceData] = useState<any>(null);
@@ -157,15 +158,15 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                     api.get('/catalogs/tipo-producto').catch(() => ({ data: [] }))
                 ]);
                 setCarreras(rCarreras.data || []);
-                const activeConvs = (rConvocatorias.data || []).filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa');
-                setConvocatorias(activeConvs.length > 0 ? activeConvs : (rConvocatorias.data || []));
+                const activeConvs = (rConvocatorias.data || []).filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa' || (isAdmin && c.estado === 'Borrador'));
+                setConvocatorias(activeConvs.length > 0 ? activeConvs : (rConvocatorias.data || []).filter((c: any) => c.estado !== 'Borrador' || isAdmin));
                 setTiposProducto(rTipos.data || []);
             } catch (e) {
                 console.error('[DIITRA] Error al cargar metálogos institucionales:', e);
             }
         };
         loadMetadata();
-    }, []);
+    }, [isAdmin]);
 
     if (isLoadingTemplate || isLoadingData) {
         return (

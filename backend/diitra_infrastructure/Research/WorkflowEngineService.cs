@@ -74,9 +74,10 @@ namespace Diitra.Infrastructure.Research
                         .Where(i => i.IdProyecto == proyecto.IdProyecto)
                         .SumAsync(i => (decimal?)(i.ValorUnitario * i.Cantidad)) ?? 0;
 
-                    if (convocatoria.MontoMaximoProyecto.HasValue && totalPresupuesto > convocatoria.MontoMaximoProyecto.Value)
+                    var topeProyectoEfectivo = convocatoria.MontoMaximoProyecto ?? convocatoria.PresupuestoTotal;
+                    if (topeProyectoEfectivo.HasValue && topeProyectoEfectivo.Value > 0 && totalPresupuesto > topeProyectoEfectivo.Value)
                     {
-                        throw new InvalidOperationException($"El presupuesto total del proyecto (${totalPresupuesto:N2}) excede el monto máximo permitido para esta convocatoria (${convocatoria.MontoMaximoProyecto.Value:N2}).");
+                        throw new InvalidOperationException($"El presupuesto total del proyecto (${totalPresupuesto:N2}) excede el tope por proyecto permitido para esta convocatoria (${topeProyectoEfectivo.Value:N2}).");
                     }
 
                     // C. Validación de al menos un Investigador
