@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Loader2, Eye, EyeOff, AlertTriangle, ArrowLeft, ShieldCheck, Copy, CheckCheck, Sun, Moon } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:5175';
+const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
 
 type Estado = 'validando' | 'valido' | 'hash_inaccesible' | 'invalido';
 
@@ -86,7 +87,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
                 {/* Brand */}
                 <div className="flex flex-col items-center space-y-6">
                     <img
-                        src={theme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                        src={theme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                         alt="DIITRA Logo"
                         className="h-16 w-auto object-contain"
                     />

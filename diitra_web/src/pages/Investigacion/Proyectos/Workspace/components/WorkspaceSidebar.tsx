@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, BarChart, FileSignature, CheckCircle2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Shield, BarChart, FileSignature, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../../../../../api/axios_config';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';

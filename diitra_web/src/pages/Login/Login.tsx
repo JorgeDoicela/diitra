@@ -182,7 +182,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                 {/* Brand Logo & Header */}
                 <div className="flex flex-col items-center space-y-6">
                     <img
-                        src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                        src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                         alt="DIITRA Logo"
                         className="h-16 w-auto object-contain"
                     />

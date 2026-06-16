@@ -244,7 +244,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                             <Menu size={24} />
                         </button>
                         <img
-                            src={theme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'}
+                            src={theme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                             alt="DIITRA"
                             className="h-7 w-auto object-contain"
                         />

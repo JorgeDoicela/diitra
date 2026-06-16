@@ -202,7 +202,7 @@ function App() {
 
     return (
         <AuthProvider>
-            <BrowserRouter>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
                 <ConfirmProvider>
                     <NotificationsProvider>
                     <Routes>

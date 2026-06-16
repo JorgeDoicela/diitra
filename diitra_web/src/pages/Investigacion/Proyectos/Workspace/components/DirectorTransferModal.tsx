@@ -1,5 +1,4 @@
-import React from 'react';
-import { RefreshCw, Search } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 const formatNombre = (nombre: string | null | undefined) => {
     if (!nombre) return '';
@@ -34,12 +33,6 @@ export const DirectorTransferModal: React.FC<DirectorTransferModalProps> = ({
     onClose,
     onSubmit,
     transferDirector,
-    transferSearchQuery,
-    setTransferSearchQuery,
-    showTransferSearchResults,
-    setShowTransferSearchResults,
-    transferSearchResults,
-    isTransferSearching,
     newDirectorCedula,
     setNewDirectorCedula,
     transferMotivo,

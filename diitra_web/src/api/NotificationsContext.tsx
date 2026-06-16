@@ -139,8 +139,11 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         requestNotificationPermission();
         fetchNotifications();
 
+        const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
+
         const newConnection = new signalR.HubConnectionBuilder()
-            .withUrl(`${import.meta.env.VITE_API_URL || 'http://localhost:5175'}/hubs/notifications`, {
+            .withUrl(`${apiRoot}/hubs/notifications`, {
                 withCredentials: true
             })
             .withAutomaticReconnect()

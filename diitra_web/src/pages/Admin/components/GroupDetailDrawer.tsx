@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as signalR from '@microsoft/signalr';
 import {
-    Users, Shield, Award, Calendar, CheckCircle, XCircle, AlertTriangle, BookOpen, GraduationCap, User, MessageSquare, Send, Mic, Loader2, Edit2, ChevronRight
+    Users, Shield, Award, Calendar, CheckCircle, XCircle, AlertTriangle, BookOpen, GraduationCap, User, MessageSquare, Send, Mic, Loader2, ChevronRight
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { AudioBubblePlayer } from './AudioBubblePlayer';
@@ -159,7 +159,9 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
             return;
         }
 
-        const hubUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5175'}/hubs/collaboration`;
+        const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
+        const hubUrl = `${apiRoot}/hubs/collaboration`;
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl, {
                 skipNegotiation: true,

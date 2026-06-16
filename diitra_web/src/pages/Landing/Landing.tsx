@@ -24,7 +24,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                 <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <img 
-                            src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
+                            src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`} 
                             alt="DIITRA Logo" 
                             className="h-8 w-auto object-contain"
                         />
@@ -253,7 +253,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                     <div className="space-y-6">
                         <div className="flex items-center gap-3">
                             <img 
-                                src={currentTheme === 'dark' ? '/logo_blanco.png' : '/logo_negro.png'} 
+                                src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`} 
                                 alt="DIITRA Logo" 
                                 className="h-10 w-auto object-contain"
                             />
