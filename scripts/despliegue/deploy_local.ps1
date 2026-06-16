@@ -263,10 +263,22 @@ do {
         }
         '4' {
             Write-Header "Respaldos Disponibles"
-            Get-ChildItem -Path $BackupDir -Filter "*.zip" | 
-                Select-Object Name, @{Name="Tamaño (MB)";Expression={[Math]::Round($_.Length / 1MB, 2)}}, LastWriteTime | 
-                Out-String | Write-Host -ForegroundColor Yellow
-            Read-Host "Presiona Enter para volver..."
+            $backups = Get-ChildItem -Path $BackupDir -Filter "*.zip"
+            if ($backups.Count -eq 0 -or $null -eq $backups) {
+                Write-Host "No hay respaldos disponibles en este momento." -ForegroundColor Yellow
+                Read-Host "`nPresiona Enter para volver..."
+            } else {
+                $backups | Select-Object Name, @{Name="Tamaño (MB)";Expression={[Math]::Round($_.Length / 1MB, 2)}}, LastWriteTime | 
+                    Out-String | Write-Host -ForegroundColor Yellow
+                
+                $cleanChoice = Read-Host "¿Deseas eliminar todos estos respaldos? [S/N]"
+                if ($cleanChoice -eq 's' -or $cleanChoice -eq 'S' -or $cleanChoice -eq 'y' -or $cleanChoice -eq 'Y') {
+                    Write-Host "`nEliminando respaldos..." -ForegroundColor Yellow
+                    Remove-Item -Path "$BackupDir\*.zip" -Force -ErrorAction SilentlyContinue
+                    Write-Success "¡Todos los respaldos han sido eliminados con éxito!"
+                    Read-Host "`nPresiona Enter para volver..."
+                }
+            }
         }
         '5' {
             Write-Host "`nSaliendo. ¡Que tengas un excelente día de desarrollo! 🚀`n" -ForegroundColor Cyan
