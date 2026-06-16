@@ -23,6 +23,7 @@ export interface CoWorkUser {
 export interface HandshakeResponse {
     isBlindMode: boolean;        // ¿Debe anonimizarse a los usuarios? (CACES Double Blind)
     readOnly: boolean;           // ¿El documento ya está firmado o es lectura?
+    isOversightObserver: boolean; // ¿El admin está en modo supervisión (no miembro del equipo)?
     serverTimestamp: string;     // Para sincronización horaria
     deltaCount: number;          // Cantidad de deltas cargados (para telemetría)
 }
@@ -40,6 +41,7 @@ export interface CoWorkSession {
     error: string | null;
     readOnly?: boolean;
     isBlindMode?: boolean;
+    isOversightObserver?: boolean; // Admin observando sin ser miembro del equipo
 }
 
 /**

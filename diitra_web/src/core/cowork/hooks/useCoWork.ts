@@ -229,12 +229,14 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
                 const isReadOnly = config.readonly || (handshake as any).readOnly || (handshake as any).ReadOnly || false;
                 const isBlindMode = (handshake as any).isBlindMode ?? (handshake as any).IsBlindMode ?? false;
+                const isOversightObserver = (handshake as any).isOversightObserver ?? (handshake as any).IsOversightObserver ?? false;
 
                 setSession(s => ({
                     ...s,
                     isConnected: true,
                     readOnly: isReadOnly,
                     isBlindMode: isBlindMode,
+                    isOversightObserver: isOversightObserver,
                     error: null
                 }));
 

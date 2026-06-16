@@ -163,8 +163,16 @@ namespace diitra_infrastructure.Collaboration
 
                             if (!isTeamMember)
                             {
+                                // El admin no es miembro del equipo: modo supervisión (solo lectura).
+                                // NOTA: No forzamos isReadOnly=true aquí porque el banner del editor
+                                // mostraría incorrectamente "ya fue firmado". En su lugar marcamos
+                                // isOversightObserver=true y el cliente recibe ReadOnly=true solo
+                                // cuando el documento realmente ya está firmado (State >= 3).
+                                // Para documentos en BORRADOR, el admin-observador puede leer
+                                // sin el banner de firma falso.
                                 isOversightObserver = true;
-                                isReadOnly = true;
+                                // isReadOnly permanece con el valor calculado por State (línea 138):
+                                // true si State >= 3 (firmado), false si está en borrador.
                                 userName = $"{userName} (Supervisión)";
                                 userRole = "Observador";
                             }
@@ -238,6 +246,7 @@ namespace diitra_infrastructure.Collaboration
             return new HandshakeResponse(
                 IsBlindMode: isBlindMode,
                 ReadOnly: isReadOnly,
+                IsOversightObserver: isOversightObserver,
                 ServerTimestamp: DateTime.UtcNow.ToString("O"),
                 DeltaCount: deltas.Count
             );
@@ -477,6 +486,7 @@ namespace diitra_infrastructure.Collaboration
     public record HandshakeResponse(
         bool IsBlindMode,
         bool ReadOnly,
+        bool IsOversightObserver,
         string ServerTimestamp,
         int DeltaCount
     );
