@@ -88,23 +88,17 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             const localConfig = DocumentTemplateRegistry[templateCode];
 
             // 2. Lanzar todas las peticiones de red en paralelo
-            //    Si el padre ya precargó el snapshot (initialData incluye la respuesta completa
-            //    del GET /documents/instances/{uuid}), reutilizamos esos datos directamente
-            //    para ahorrar una petición de red duplicada.
-            const hasPreloadedSnapshot = !!(initialData?.data_snapshot_json || initialData?.dataSnapshotJson || initialData?.DataSnapshotJson);
-            const needsInstanceFetch = !hasPreloadedSnapshot && !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
+            const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
 
             const [configResult, instanceResult, carrerasRes, convsRes, tiposRes] = await Promise.all([
                 // Config desde backend solo si no está en el registry local
                 localConfig
                     ? Promise.resolve({ data: localConfig })
                     : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
-                // Datos de la instancia: reutilizar snapshot precargado si está disponible
-                hasPreloadedSnapshot
-                    ? Promise.resolve({ data: initialData })
-                    : needsInstanceFetch
-                        ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
-                        : Promise.resolve({ data: null }),
+                // Datos de la instancia: siempre fresco desde backend si existe
+                needsInstanceFetch
+                    ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
+                    : Promise.resolve({ data: null }),
                 // Catálogos institucionales
                 api.get('/catalogs/carreras').catch(() => ({ data: [] })),
                 api.get('/Convocatorias').catch(() => ({ data: [] })),
@@ -152,7 +146,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         };
 
         loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [templateCode, initialData?.Uuid, isAdmin]);
 
     if (isLoading) {
@@ -186,7 +180,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
         <DocumentEditorCore
             templateCode={templateCode}
             templateConfig={templateConfig}
-            initialData={{ ...docInstanceData, ...initialData, Uuid: resolvedUuid || initialData?.Uuid }}
+            initialData={{ ...docInstanceData, Uuid: resolvedUuid || initialData?.Uuid }}
             entityUuid={entityUuid}
             carreras={carreras}
             convocatorias={convocatorias}
