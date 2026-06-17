@@ -49,7 +49,10 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         const fetchInitialPulse = async () => {
             setIsLoadingPulse(true);
             try {
-                const res = await api.get(`/collaboration/${instanceUuid}/pulse`);
+                const normalizedUuid = instanceUuid?.toLowerCase().trim();
+                console.log('[TeamPulse] Fetching pulse for:', normalizedUuid);
+                const res = await api.get(`/collaboration/${normalizedUuid}/pulse`);
+                console.log('[TeamPulse] Response activities:', res.data.activities?.length, res.data.activities);
                 if (res.data.comments) setComments(res.data.comments);
                 if (res.data.statuses) {
                     const mappedStatuses: Record<string, string> = {};
@@ -82,7 +85,18 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         });
 
         cowork.onSectionActivity((data) => {
-            setActivities(prev => [data, ...prev].slice(0, 20));
+            setActivities(prev => {
+                // Deduplicar: no añadir si el mismo usuario+acción+sección llegó en los últimos 2 min
+                const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
+                const isDuplicate = prev.some((a: any) =>
+                    a.userName === data.userName &&
+                    a.action === data.action &&
+                    a.sectionName === data.sectionName &&
+                    new Date(a.timestamp).getTime() > twoMinutesAgo
+                );
+                if (isDuplicate) return prev;
+                return [data, ...prev].slice(0, 20);
+            });
         });
 
         cowork.onSectionStatusUpdated((data) => {
@@ -292,7 +306,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-[11px] text-text-main leading-relaxed">
-                                                    <span className="font-black text-text-main text-[10px] uppercase tracking-wider">{a.userName}</span> {a.action}
+                                                    <span className="font-black text-text-main text-[10px] uppercase tracking-wider">{a.userName || 'Usuario'}</span> {a.action}
                                                 </p>
                                                 <p className="text-[9px] text-text-dim/80 font-bold uppercase tracking-wider mt-0.5">
                                                     {(a.sectionName || '').replace(/_/g, ' ')}

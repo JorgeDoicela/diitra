@@ -2837,31 +2837,41 @@ namespace diitra_infrastructure.Research
                     var list = await _context.InvCoworkSesiones.AsNoTracking()
                         .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern))
                         .OrderByDescending(s => s.ConectadoEn)
-                        .Take(10)
+                        .Take(30) // traer más para poder filtrar el ruido de React
                         .ToListAsync();
                     sesiones.AddRange(list);
                 }
 
-                // Mantener las 10 sesiones más recientes globalmente
+                // Filtrar sesiones < 5 segundos (ruido de React Strict Mode unmount/remount ~1-2s)
+                // Sesiones activas (sin DesconectadoEn) siempre se incluyen
                 sesiones = sesiones
+                    .Where(s => !s.DesconectadoEn.HasValue ||
+                                (s.DesconectadoEn.Value - s.ConectadoEn).TotalSeconds >= 5)
                     .OrderByDescending(s => s.ConectadoEn)
                     .Take(10)
                     .ToList();
 
                 foreach (var s in sesiones)
                 {
+                    var parts = s.DocumentoUuid.Split('_');
+                    var seccion = parts.Length > 1 ? parts[1].Replace("_", " ") : "el documento";
+                    var durMin = s.DesconectadoEn.HasValue
+                        ? (int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes
+                        : -1;
+
                     actividades.Add(new ProyectoActividadDto
                     {
                         Tipo = "acceso",
-                        NombreUsuario = s.NombreUsuario,
+                        NombreUsuario = string.IsNullOrWhiteSpace(s.NombreUsuario) ? "Usuario" : s.NombreUsuario,
                         RolUsuario = s.RolUsuario,
-                        Descripcion = s.DesconectadoEn.HasValue
-                            ? $"Sesión de edición ({(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes:0} min)"
-                            : "Sesión activa",
+                        Descripcion = durMin >= 0
+                            ? $"Editó '{seccion}' durante {durMin} min"
+                            : $"Está editando '{seccion}'",
                         Fecha = s.ConectadoEn,
                         Icono = "edit"
                     });
                 }
+
 
                 // 2. Cambios de estado de secciones (quién aprobó qué)
                 // DocumentoUuid en metadata = instanceUuid (sin sufijo de sección, corregido en CollaborationHub)

@@ -1771,9 +1771,9 @@ public partial class DiitraContext : DbContext
         {
             entity.HasKey(e => e.IdDocumento);
             entity.ToTable("inv_cowork_documentos");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired();
+            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(100).IsRequired();
             entity.Property(e => e.EntidadTipo).HasColumnName("entidadTipo").HasMaxLength(50).IsRequired();
-            entity.Property(e => e.EntidadUuid).HasColumnName("entidadUuid").HasMaxLength(36).IsRequired();
+            entity.Property(e => e.EntidadUuid).HasColumnName("entidadUuid").HasMaxLength(100).IsRequired();
             entity.Property(e => e.CampoNombre).HasColumnName("campoNombre").HasMaxLength(100).IsRequired();
             entity.Property(e => e.YjsState).HasColumnName("yjsState");
             entity.Property(e => e.ContentHtml).HasColumnName("contentHtml");

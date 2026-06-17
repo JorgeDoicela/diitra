@@ -133,8 +133,16 @@ namespace diitra_api.Controllers
                 var sesiones = await _db.InvCoworkSesiones.AsNoTracking()
                     .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern))
                     .OrderByDescending(s => s.ConectadoEn)
-                    .Take(15)
+                    .Take(50) // traer más para poder filtrar el ruido de React
                     .ToListAsync();
+
+                // Filtrar sesiones de menos de 30 segundos (ruido de React unmount/remount)
+                // Mantener las sesiones activas (sin DesconectadoEn) siempre
+                sesiones = sesiones
+                    .Where(s => !s.DesconectadoEn.HasValue ||
+                                (s.DesconectadoEn.Value - s.ConectadoEn).TotalSeconds >= 5)
+                    .Take(15)
+                    .ToList();
 
                 var metaSecciones = await _db.InvDocumentosSeccionesMetadata
                     .AsNoTracking()
@@ -148,14 +156,19 @@ namespace diitra_api.Controllers
                 foreach (var s in sesiones)
                 {
                     var parts = s.DocumentoUuid.Split('_');
-                    var sectionName = parts.Length > 1 ? parts[1] : "General";
+                    var sectionName = parts.Length > 1 ? parts[1].Replace("_", " ") : "General";
+                    var durMin = s.DesconectadoEn.HasValue
+                        ? (int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes
+                        : -1;
 
                     activitiesList.Add(new CollaborationActivityItem
                     {
-                        UserName = s.NombreUsuario,
-                        Action = s.DesconectadoEn.HasValue
-                            ? $"terminó sesión de edición ({(int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes} min)"
-                            : "inició sesión de edición",
+                        UserName = string.IsNullOrWhiteSpace(s.NombreUsuario) ? "Usuario" : s.NombreUsuario,
+                        Action = parts.Length > 1
+                            ? "ha entrado a redactar"
+                            : (durMin >= 0
+                                ? $"editó 'General' durante {durMin} min"
+                                : "está editando 'General'"),
                         SectionName = sectionName,
                         Timestamp = s.ConectadoEn
                     });

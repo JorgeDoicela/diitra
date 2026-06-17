@@ -1294,9 +1294,9 @@ CREATE TABLE inv_document_audit (
 
 CREATE TABLE inv_cowork_documentos (
     idDocumento       INT           AUTO_INCREMENT PRIMARY KEY,
-    uuid              VARCHAR(36)   NOT NULL UNIQUE COMMENT 'UUID público del documento',
+    uuid              VARCHAR(100)  NOT NULL UNIQUE COMMENT 'UUID público del documento (puede incluir sufijo de sección: {uuid}_{CAMPO})',
     entidadTipo       VARCHAR(50)   NOT NULL DEFAULT 'PROYECTO',
-    entidadUuid       VARCHAR(36)   NOT NULL        COMMENT 'UUID de la entidad a la que pertenece este documento',
+    entidadUuid       VARCHAR(100)  NOT NULL        COMMENT 'UUID de la entidad a la que pertenece este documento',
     campoNombre       VARCHAR(100)  NOT NULL        COMMENT 'Campo específico del formulario: antecedentes, metodologia, etc.',
     yjsState          LONGBLOB      NULL            COMMENT 'Snapshot binario del Yjs Doc (Base64). NULL si nunca fue editado.',
     contentHtml       LONGTEXT      NULL            COMMENT 'Snapshot en HTML para el motor de PDFs',
