@@ -395,16 +395,15 @@ namespace diitra_infrastructure.Collaboration
             });
 
             // 2. PERSISTENCIA: guardar visita a sección para que sobreviva recargas.
-            //    documentoUuid = instanceUuid_SECCION → GetPulse lo recupera con LIKE '{uuid}%'
             try
             {
-                var docId = $"{instanceUuid}_{sectionName.ToUpper()}";
                 var ahora = DateTime.UtcNow;
 
-                // Cerrar visitas anteriores abiertas del mismo usuario en esta sección
+                // Cerrar visitas anteriores abiertas del mismo usuario en esta sección / documento
                 var anteriores = await _db.InvCoworkSesiones
-                    .Where(s => s.DocumentoUuid == docId &&
+                    .Where(s => s.DocumentoUuid == instanceUuid &&
                                 s.NombreUsuario == userName &&
+                                s.SeccionNombre != null &&
                                 !s.DesconectadoEn.HasValue)
                     .ToListAsync();
                 foreach (var ant in anteriores)
@@ -413,11 +412,13 @@ namespace diitra_infrastructure.Collaboration
                 // Registrar nueva visita
                 _db.InvCoworkSesiones.Add(new InvCoworkSesion
                 {
-                    DocumentoUuid = docId,
+                    DocumentoUuid = instanceUuid,
                     UsuarioUuid   = Context.UserIdentifier ?? "anon",
                     NombreUsuario = userName,
                     RolUsuario    = "Investigador",
                     SignalrConId  = Context.ConnectionId,
+                    SeccionNombre = sectionName.ToUpper(),
+                    Accion        = action,
                     ConectadoEn   = ahora
                 });
 

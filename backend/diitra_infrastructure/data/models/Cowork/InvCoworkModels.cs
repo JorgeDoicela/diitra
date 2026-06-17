@@ -105,6 +105,14 @@ namespace diitra_infrastructure.data.models.Cowork
         [MaxLength(255)]
         public string? SignalrConId { get; set; }
 
+        [Column("seccionNombre", TypeName = "varchar(100)")]
+        [MaxLength(100)]
+        public string? SeccionNombre { get; set; }
+
+        [Column("accion", TypeName = "varchar(255)")]
+        [MaxLength(255)]
+        public string? Accion { get; set; }
+
         [Column("conectadoEn")]
         public DateTime ConectadoEn { get; set; } = DateTime.UtcNow;
 

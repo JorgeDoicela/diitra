@@ -1801,6 +1801,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.NombreUsuario).HasColumnName("nombreUsuario").HasMaxLength(255).IsRequired();
             entity.Property(e => e.RolUsuario).HasColumnName("rolUsuario").HasMaxLength(100).IsRequired();
             entity.Property(e => e.SignalrConId).HasColumnName("signalrConId").HasMaxLength(255);
+            entity.Property(e => e.SeccionNombre).HasColumnName("seccionNombre").HasMaxLength(100);
+            entity.Property(e => e.Accion).HasColumnName("accion").HasMaxLength(255);
             entity.Property(e => e.ConectadoEn).HasColumnName("conectadoEn");
             entity.Property(e => e.DesconectadoEn).HasColumnName("desconectadoEn");
         });
