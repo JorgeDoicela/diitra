@@ -53,7 +53,17 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 console.log('[TeamPulse] Fetching pulse for:', normalizedUuid);
                 const res = await api.get(`/collaboration/${normalizedUuid}/pulse`);
                 console.log('[TeamPulse] Response activities:', res.data.activities?.length, res.data.activities);
-                if (res.data.comments) setComments(res.data.comments);
+                if (res.data.comments) {
+                    const mappedComments = res.data.comments.map((c: any) => ({
+                        idComentario: c.idComentario ?? c.id_comentario ?? c.idComentario,
+                        usuarioUuid: c.usuarioUuid ?? c.usuario_uuid ?? '',
+                        nombreUsuario: c.nombreUsuario ?? c.nombre_usuario ?? 'Usuario',
+                        contenido: c.contenido ?? '',
+                        idPadre: c.idPadre ?? c.id_padre ?? null,
+                        creadoEn: c.creadoEn ?? c.creado_en ?? new Date().toISOString()
+                    }));
+                    setComments(mappedComments);
+                }
                 if (res.data.statuses) {
                     const mappedStatuses: Record<string, string> = {};
                     Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
@@ -62,7 +72,13 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                     setSectionStatuses(mappedStatuses);
                 }
                 if (res.data.activities) {
-                    setActivities(res.data.activities);
+                    const mappedActivities = res.data.activities.map((a: any) => ({
+                        userName: a.userName ?? a.user_name ?? 'Usuario',
+                        action: a.action ?? '',
+                        sectionName: a.sectionName ?? a.section_name ?? '',
+                        timestamp: a.timestamp ?? ''
+                    }));
+                    setActivities(mappedActivities);
                 }
             } catch (err) {
                 console.error("[Team Pulse] Error al cargar pulso inicial:", err);
@@ -81,21 +97,41 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
         if (!cowork) return;
 
         cowork.onNewCommentReceived((data) => {
-            setComments(prev => [data, ...prev].slice(0, 50));
+            const normalized = {
+                idComentario: data.idComentario ?? data.id_comentario ?? data.idComentario,
+                usuarioUuid: data.usuarioUuid ?? data.usuario_uuid ?? '',
+                nombreUsuario: data.nombreUsuario ?? data.nombre_usuario ?? 'Usuario',
+                contenido: data.contenido ?? '',
+                idPadre: data.idPadre ?? data.id_padre ?? null,
+                creadoEn: data.creadoEn ?? data.creado_en ?? new Date().toISOString()
+            };
+            setComments(prev => [normalized, ...prev].slice(0, 50));
         });
 
         cowork.onSectionActivity((data) => {
+            const userName = data.userName ?? data.user_name ?? 'Usuario';
+            const action = data.action ?? '';
+            const sectionName = data.sectionName ?? data.section_name ?? '';
+            const timestamp = data.timestamp ?? '';
+
             setActivities(prev => {
                 // Deduplicar: no añadir si el mismo usuario+acción+sección llegó en los últimos 2 min
                 const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
                 const isDuplicate = prev.some((a: any) =>
-                    a.userName === data.userName &&
-                    a.action === data.action &&
-                    a.sectionName === data.sectionName &&
+                    a.userName === userName &&
+                    a.action === action &&
+                    a.sectionName === sectionName &&
                     new Date(a.timestamp).getTime() > twoMinutesAgo
                 );
                 if (isDuplicate) return prev;
-                return [data, ...prev].slice(0, 20);
+                
+                const normalized = {
+                    userName,
+                    action,
+                    sectionName,
+                    timestamp
+                };
+                return [normalized, ...prev].slice(0, 20);
             });
         });
 

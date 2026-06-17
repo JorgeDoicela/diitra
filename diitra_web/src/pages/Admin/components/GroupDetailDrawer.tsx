@@ -243,7 +243,15 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         try {
             const res = await api.get(`/collaboration/${uuid}/pulse`);
             if (res.data && res.data.comments) {
-                const sorted = [...res.data.comments].reverse();
+                const mappedComments = res.data.comments.map((c: any) => ({
+                    idComentario: c.idComentario ?? c.id_comentario ?? c.idComentario,
+                    usuarioUuid: c.usuarioUuid ?? c.usuario_uuid ?? '',
+                    nombreUsuario: c.nombreUsuario ?? c.nombre_usuario ?? 'Usuario',
+                    contenido: c.contenido ?? '',
+                    idPadre: c.idPadre ?? c.id_padre ?? null,
+                    creadoEn: c.creadoEn ?? c.creado_en ?? new Date().toISOString()
+                }));
+                const sorted = [...mappedComments].reverse();
                 setFeedbackComments(sorted);
             } else {
                 setFeedbackComments([]);

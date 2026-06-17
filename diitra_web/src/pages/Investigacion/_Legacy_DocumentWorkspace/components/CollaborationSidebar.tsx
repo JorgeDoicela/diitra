@@ -33,7 +33,17 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({ instanceUui
         const fetchInitialPulse = async () => {
             try {
                 const res = await api.get(`/collaboration/${instanceUuid}/pulse`);
-                if (res.data.comments) setComments(res.data.comments);
+                if (res.data.comments) {
+                    const mappedComments = res.data.comments.map((c: any) => ({
+                        idComentario: c.idComentario ?? c.id_comentario ?? c.idComentario,
+                        usuarioUuid: c.usuarioUuid ?? c.usuario_uuid ?? '',
+                        nombreUsuario: c.nombreUsuario ?? c.nombre_usuario ?? 'Usuario',
+                        contenido: c.contenido ?? '',
+                        idPadre: c.idPadre ?? c.id_padre ?? null,
+                        creadoEn: c.creadoEn ?? c.creado_en ?? new Date().toISOString()
+                    }));
+                    setComments(mappedComments);
+                }
                 if (res.data.statuses) {
                     const mappedStatuses: Record<string, string> = {};
                     Object.entries(res.data.statuses).forEach(([key, val]: [string, any]) => {
@@ -52,11 +62,30 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({ instanceUui
     useEffect(() => {
         // Suscribirse a eventos de tiempo real
         cowork.onNewCommentReceived((data) => {
-            setComments(prev => [data, ...prev].slice(0, 50));
+            const normalized = {
+                idComentario: data.idComentario ?? data.id_comentario ?? data.idComentario,
+                usuarioUuid: data.usuarioUuid ?? data.usuario_uuid ?? '',
+                nombreUsuario: data.nombreUsuario ?? data.nombre_usuario ?? 'Usuario',
+                contenido: data.contenido ?? '',
+                idPadre: data.idPadre ?? data.id_padre ?? null,
+                creadoEn: data.creadoEn ?? data.creado_en ?? new Date().toISOString()
+            };
+            setComments(prev => [normalized, ...prev].slice(0, 50));
         });
 
         cowork.onSectionActivity((data) => {
-            setActivities(prev => [data, ...prev].slice(0, 10));
+            const userName = data.userName ?? data.user_name ?? 'Usuario';
+            const action = data.action ?? '';
+            const sectionName = data.sectionName ?? data.section_name ?? '';
+            const timestamp = data.timestamp ?? '';
+
+            const normalized = {
+                userName,
+                action,
+                sectionName,
+                timestamp
+            };
+            setActivities(prev => [normalized, ...prev].slice(0, 10));
         });
 
         cowork.onSectionStatusUpdated((data) => {
