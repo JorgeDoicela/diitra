@@ -2917,6 +2917,51 @@ namespace diitra_infrastructure.Research
                         Icono = sec.Estado == "Aprobado" ? "check" : sec.Estado == "En Revisión" ? "eye" : "edit"
                     });
                 }
+
+                // 2.5 Comentarios de retroalimentación en tiempo real (Chat / Anotaciones)
+                var comentarios = await _context.InvCollaborationComments
+                    .AsNoTracking()
+                    .Where(c => instanceUuids.Contains(c.DocumentoUuid))
+                    .OrderByDescending(c => c.CreadoEn)
+                    .Take(10)
+                    .ToListAsync();
+
+                foreach (var c in comentarios)
+                {
+                    string textDesc = c.Contenido;
+                    if (textDesc.Trim().StartsWith("{"))
+                    {
+                        try 
+                        {
+                            using var doc = System.Text.Json.JsonDocument.Parse(textDesc);
+                            var root = doc.RootElement;
+                            if (root.TryGetProperty("text", out var textProp))
+                            {
+                                var textVal = textProp.GetString();
+                                if (root.TryGetProperty("fieldName", out var fieldProp))
+                                {
+                                    var fieldVal = fieldProp.GetString();
+                                    textDesc = $"Observó '{fieldVal}': {textVal}";
+                                }
+                                else
+                                {
+                                    textDesc = textVal ?? c.Contenido;
+                                }
+                            }
+                        }
+                        catch {}
+                    }
+
+                    actividades.Add(new ProyectoActividadDto
+                    {
+                        Tipo = "comentario",
+                        NombreUsuario = string.IsNullOrWhiteSpace(c.NombreUsuario) ? "Usuario" : c.NombreUsuario,
+                        RolUsuario = "",
+                        Descripcion = textDesc,
+                        Fecha = c.CreadoEn,
+                        Icono = "comment"
+                    });
+                }
             }
 
             // 3. Trazabilidad del workflow (transiciones de estado del proyecto — siempre disponibles)

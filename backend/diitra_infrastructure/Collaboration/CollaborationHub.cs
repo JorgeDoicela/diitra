@@ -409,13 +409,21 @@ namespace diitra_infrastructure.Collaboration
                 foreach (var ant in anteriores)
                     ant.DesconectadoEn = ahora;
 
+                // Recuperar la sesión base de esta conexión para heredar el Rol y UUID de usuario real
+                var baseSesion = await _db.InvCoworkSesiones
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.SignalrConId == Context.ConnectionId && s.SeccionNombre == null);
+
+                var userUuid = baseSesion?.UsuarioUuid ?? Context.UserIdentifier ?? "anon";
+                var rol = baseSesion?.RolUsuario ?? "Investigador";
+
                 // Registrar nueva visita
                 _db.InvCoworkSesiones.Add(new InvCoworkSesion
                 {
                     DocumentoUuid = instanceUuid,
-                    UsuarioUuid   = Context.UserIdentifier ?? "anon",
+                    UsuarioUuid   = userUuid,
                     NombreUsuario = userName,
-                    RolUsuario    = "Investigador",
+                    RolUsuario    = rol,
                     SignalrConId  = Context.ConnectionId,
                     SeccionNombre = sectionName.ToUpper(),
                     Accion        = action,
