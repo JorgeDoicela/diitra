@@ -84,7 +84,15 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
             const res = await api.get(`/projects/${projectUuid}/activity`, {
                 params: { maxItems: 20 }
             });
-            setActividad(res.data || []);
+            const mapped = (res.data || []).map((item: any) => ({
+                tipo: item.tipo,
+                nombreUsuario: item.nombreUsuario ?? item.nombre_usuario ?? 'Usuario',
+                rolUsuario: item.rolUsuario ?? item.rol_usuario ?? '',
+                descripcion: item.descripcion ?? '',
+                fecha: item.fecha ?? '',
+                icono: item.icono ?? ''
+            }));
+            setActividad(mapped);
             setLastFetch(new Date());
             setError(null);
         } catch (err: any) {
