@@ -2853,20 +2853,36 @@ namespace diitra_infrastructure.Research
 
                 foreach (var s in sesiones)
                 {
-                    var parts = s.DocumentoUuid.Split('_');
-                    var seccion = parts.Length > 1 ? parts[1].Replace("_", " ") : "el documento";
-                    var durMin = s.DesconectadoEn.HasValue
-                        ? (int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes
-                        : -1;
+                    string seccion;
+                    string descripcion;
+
+                    if (!string.IsNullOrEmpty(s.SeccionNombre))
+                    {
+                        seccion = s.SeccionNombre.Replace("_", " ");
+                        descripcion = !string.IsNullOrEmpty(s.Accion)
+                            ? $"{s.Accion} '{seccion}'"
+                            : "ha entrado a redactar";
+                    }
+                    else
+                    {
+                        // Fallback para registros antiguos (retrocompatibilidad)
+                        var parts = s.DocumentoUuid.Split('_');
+                        seccion = parts.Length > 1 ? parts[1].Replace("_", " ") : "el documento";
+                        var durMin = s.DesconectadoEn.HasValue
+                            ? (int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes
+                            : -1;
+
+                        descripcion = durMin >= 0
+                            ? $"Editó '{seccion}' durante {durMin} min"
+                            : $"Está editando '{seccion}'";
+                    }
 
                     actividades.Add(new ProyectoActividadDto
                     {
                         Tipo = "acceso",
                         NombreUsuario = string.IsNullOrWhiteSpace(s.NombreUsuario) ? "Usuario" : s.NombreUsuario,
                         RolUsuario = s.RolUsuario,
-                        Descripcion = durMin >= 0
-                            ? $"Editó '{seccion}' durante {durMin} min"
-                            : $"Está editando '{seccion}'",
+                        Descripcion = descripcion,
                         Fecha = s.ConectadoEn,
                         Icono = "edit"
                     });

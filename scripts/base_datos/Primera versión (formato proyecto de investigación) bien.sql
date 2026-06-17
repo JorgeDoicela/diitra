@@ -1316,6 +1316,8 @@ CREATE TABLE inv_cowork_sesiones (
     nombreUsuario     VARCHAR(255)  NOT NULL        COMMENT 'Nombre completo del colaborador (snapshot para auditoría)',
     rolUsuario        VARCHAR(100)  NOT NULL        COMMENT 'Rol en el momento de la sesión (Investigador, Director, etc.)',
     signalrConId      VARCHAR(255)  NULL            COMMENT 'ID de conexión SignalR (para debug)',
+    seccionNombre     VARCHAR(100)  NULL            COMMENT 'Nombre de la sección visitada (NULL para sesión base)',
+    accion            VARCHAR(255)  NULL            COMMENT 'Acción realizada (NULL para sesión base)',
     conectadoEn       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     desconectadoEn    TIMESTAMP     NULL            COMMENT 'NULL si la sesión sigue activa',
     INDEX idx_documento (documentoUuid),

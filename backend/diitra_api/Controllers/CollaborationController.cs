@@ -155,20 +155,34 @@ namespace diitra_api.Controllers
 
                 foreach (var s in sesiones)
                 {
-                    var parts = s.DocumentoUuid.Split('_');
-                    var sectionName = parts.Length > 1 ? parts[1].Replace("_", " ") : "General";
-                    var durMin = s.DesconectadoEn.HasValue
-                        ? (int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes
-                        : -1;
+                    string sectionName;
+                    string action;
+
+                    if (!string.IsNullOrEmpty(s.SeccionNombre))
+                    {
+                        sectionName = s.SeccionNombre.Replace("_", " ");
+                        action = s.Accion ?? "ha entrado a redactar";
+                    }
+                    else
+                    {
+                        // Fallback para registros antiguos (retrocompatibilidad)
+                        var parts = s.DocumentoUuid.Split('_');
+                        sectionName = parts.Length > 1 ? parts[1].Replace("_", " ") : "General";
+                        var durMin = s.DesconectadoEn.HasValue
+                            ? (int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes
+                            : -1;
+
+                        action = parts.Length > 1
+                            ? "ha entrado a redactar"
+                            : (durMin >= 0
+                                ? $"editó 'General' durante {durMin} min"
+                                : "está editando 'General'");
+                    }
 
                     activitiesList.Add(new CollaborationActivityItem
                     {
                         UserName = string.IsNullOrWhiteSpace(s.NombreUsuario) ? "Usuario" : s.NombreUsuario,
-                        Action = parts.Length > 1
-                            ? "ha entrado a redactar"
-                            : (durMin >= 0
-                                ? $"editó 'General' durante {durMin} min"
-                                : "está editando 'General'"),
+                        Action = action,
                         SectionName = sectionName,
                         Timestamp = s.ConectadoEn
                     });
