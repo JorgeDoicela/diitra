@@ -77,7 +77,10 @@ export const ProjectWorkspace: React.FC = () => {
 
     const queryParams = new URLSearchParams(location.search);
     const editParam = queryParams.get('edit');
-    const activeDocument = editParam ? (editParam === 'true' ? templateCode : editParam) : null;
+    const sectionParam = queryParams.get('section');
+    const activeDocument = editParam 
+        ? (editParam === 'true' ? templateCode : editParam) 
+        : (sectionParam ? templateCode : null);
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
         return localStorage.getItem('sidebar_collapsed') === 'true';
@@ -108,6 +111,7 @@ export const ProjectWorkspace: React.FC = () => {
             searchParams.set('edit', doc);
         } else {
             searchParams.delete('edit');
+            searchParams.delete('section');
         }
         navigate({ search: searchParams.toString() }, { replace: true });
     }, [location.search, navigate]);

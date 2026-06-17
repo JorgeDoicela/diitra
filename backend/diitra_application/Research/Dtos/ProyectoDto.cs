@@ -45,6 +45,10 @@ namespace Diitra.Application.Research.Dtos
         public string? FechaInicioEstimada { get; set; }
         public string? FechaFinEstimada { get; set; }
 
+        public string? Periodo { get; set; }
+        public string? FechaInicio { get; set; }
+        public string? FechaFin { get; set; }
+
         // ─────────────────────────────────────────────────────────────────────────
         // SECCIÓN 2: INVESTIGADORES
         // ─────────────────────────────────────────────────────────────────────────

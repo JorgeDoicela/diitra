@@ -96,6 +96,9 @@ namespace diitra_infrastructure.Research
                 project.Metodologia = dto.Metodologia;
                 project.MetodoEvaluacion = dto.Evaluacion;
                 project.TiempoEjecucion = dto.TiempoEjecucion;
+                project.FechaPresentacion = ParseDateOnly(dto.FechaPresentacion);
+                project.FechaInicio = ParseDateOnly(dto.FechaInicio ?? dto.FechaInicioEstimada);
+                project.FechaFin = ParseDateOnly(dto.FechaFin ?? dto.FechaFinEstimada);
 
                 // Cumplimiento CACES: si es asociativo, la adscripción solo puede ser a un grupo aprobado y activo.
                 bool isAssociative = dto.TieneGrupoInvestigacion == true || 
@@ -540,7 +543,7 @@ namespace diitra_infrastructure.Research
             var p = await _context.InvProyectos
                 .AsSplitQuery()
                 .Include(p => p.IdSublineaNavigation)
-                .Include(p => p.IdConvocatoriaNavigation)
+                .Include(p => p.IdConvocatoriaNavigation).ThenInclude(c => c.IdPeriodoNavigation)
                 .Include(p => p.IdGrupoNavigation)
                 .Include(p => p.InvProyectosCarreras)
                 .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
@@ -730,6 +733,16 @@ namespace diitra_infrastructure.Research
             dto.GrupoInvestigacionUuid = p.IdGrupoNavigation?.Uuid;
             dto.CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad);
             dto.Investigadores = investigadoresList;
+
+            dto.FechaPresentacion = p.FechaPresentacion?.ToString("dd/MM/yyyy");
+            dto.FechaInicio = p.FechaInicio?.ToString("dd/MM/yyyy");
+            dto.FechaFin = p.FechaFin?.ToString("dd/MM/yyyy");
+            dto.FechaInicioEstimada = p.FechaInicio?.ToString("dd/MM/yyyy");
+            dto.FechaFinEstimada = p.FechaFin?.ToString("dd/MM/yyyy");
+            dto.Periodo = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle 
+                          ?? p.IdConvocatoriaNavigation?.IdPeriodo 
+                          ?? dto.Periodo 
+                          ?? currentPeriod?.Detalle;
             dto.ObjetivosEspecificos = p.InvObjetivosProyecto
                 .Where(o => !o.EsGeneral)
                 .OrderBy(o => o.Orden)
@@ -1006,6 +1019,8 @@ namespace diitra_infrastructure.Research
                 }
             }
 
+            var investigatorsToNotify = new List<InvestigadorDto>();
+
             // 4. Procesar la lista entrante (Agregar nuevos o Reactivar/Actualizar/Desactivar existentes)
             foreach (var inv in investigadores)
             {
@@ -1022,13 +1037,20 @@ namespace diitra_infrastructure.Research
                     var existingAlum = currentAlums.FirstOrDefault(pa => pa.IdUsuario == persona.IdUsuario);
                     if (existingAlum != null)
                     {
+                        bool wasActive = existingAlum.Activo != false;
+                        string oldRol = existingAlum.Rol ?? "";
+                        string newRol = NormalizeRole(inv.Rol);
+
                         // Reactivar o actualizar
-                        existingAlum.Rol = NormalizeRole(inv.Rol);
+                        existingAlum.Rol = newRol;
                         existingAlum.NivelAcademico = inv.NivelAcademico;
                         existingAlum.Telefono = inv.Telefono;
                         existingAlum.HorasSemanales = inv.HorasSemanales;
+
+                        bool nowActive = true;
                         if (inv.Activo == false)
                         {
+                            nowActive = false;
                             if (existingAlum.Activo != false)
                             {
                                 existingAlum.Activo = false;
@@ -1045,6 +1067,12 @@ namespace diitra_infrastructure.Research
                                 existingAlum.FechaFin = null;
                                 existingAlum.MotivoCambio = null;
                             }
+                        }
+
+                        // Notificar si se reactivó o si cambió de rol (mientras esté activo)
+                        if (nowActive && (!wasActive || !string.Equals(oldRol, newRol, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            investigatorsToNotify.Add(inv);
                         }
                     }
                     else
@@ -1063,6 +1091,11 @@ namespace diitra_infrastructure.Research
                             FechaFin = inv.Activo == false ? DateTime.Now : null,
                             MotivoCambio = inv.Activo == false ? "Retirado del equipo" : null
                         });
+
+                        if (inv.Activo != false)
+                        {
+                            investigatorsToNotify.Add(inv);
+                        }
                     }
                 }
                 else
@@ -1070,14 +1103,21 @@ namespace diitra_infrastructure.Research
                     var existingProf = currentProfs.FirstOrDefault(pp => pp.IdUsuario == persona.IdUsuario);
                     if (existingProf != null)
                     {
+                        bool wasActive = existingProf.Activo != false;
+                        string oldRol = existingProf.Rol ?? "";
+                        string newRol = NormalizeRole(inv.Rol);
+
                         // Reactivar o actualizar
-                        existingProf.Rol = NormalizeRole(inv.Rol);
+                        existingProf.Rol = newRol;
                         existingProf.NivelAcademico = inv.NivelAcademico;
                         existingProf.Telefono = inv.Telefono;
                         existingProf.EsDirector = esDirector;
                         existingProf.HorasSemanales = inv.HorasSemanales;
+
+                        bool nowActive = true;
                         if (inv.Activo == false)
                         {
+                            nowActive = false;
                             if (existingProf.Activo != false)
                             {
                                 existingProf.Activo = false;
@@ -1095,6 +1135,12 @@ namespace diitra_infrastructure.Research
                                 existingProf.FechaFin = null;
                                 existingProf.MotivoCambio = null;
                             }
+                        }
+
+                        // Notificar si se reactivó o si cambió de rol (mientras esté activo)
+                        if (nowActive && (!wasActive || !string.Equals(oldRol, newRol, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            investigatorsToNotify.Add(inv);
                         }
                     }
                     else
@@ -1114,10 +1160,19 @@ namespace diitra_infrastructure.Research
                             FechaFin = inv.Activo == false ? DateTime.Now : null,
                             MotivoCambio = inv.Activo == false ? "Retirado del equipo" : null
                         });
+
+                        if (inv.Activo != false)
+                        {
+                            investigatorsToNotify.Add(inv);
+                        }
                     }
                 }
             }
-            await NotifyInvestigadoresAsync(projectId, investigadores);
+
+            if (investigatorsToNotify.Count > 0)
+            {
+                await NotifyInvestigadoresAsync(projectId, investigatorsToNotify);
+            }
         }
 
         // Notificar a cada investigador fuera del loop — un solo FindAsync y una sola query de usuarios (fix N+1 query)
@@ -2905,6 +2960,28 @@ namespace diitra_infrastructure.Research
                 .AnyAsync(ur => ur.IdUsuario == idUsuario
                     && (ur.EsActivo ?? true)
                     && OversightRoleCodes.Contains(ur.Role.CodigoRol));
+        }
+
+        private DateOnly? ParseDateOnly(string? dateStr)
+        {
+            if (string.IsNullOrWhiteSpace(dateStr)) return null;
+
+            if (dateStr.Contains("T"))
+            {
+                dateStr = dateStr.Split('T')[0];
+            }
+
+            if (DateOnly.TryParseExact(dateStr, new[] { "dd/MM/yyyy", "yyyy-MM-dd", "d/M/yyyy" }, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var result))
+            {
+                return result;
+            }
+
+            if (DateOnly.TryParse(dateStr, out result))
+            {
+                return result;
+            }
+
+            return null;
         }
 
         private string NormalizeRole(string? role)

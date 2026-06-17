@@ -128,9 +128,65 @@ namespace diitra_api.Controllers
                         actualizadoEn = g.First().ActualizadoEn
                     });
 
+                // Cargar actividad reciente para esta instancia documental
+                var pattern = instanceUuid + "%";
+                var sesiones = await _db.InvCoworkSesiones.AsNoTracking()
+                    .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern))
+                    .OrderByDescending(s => s.ConectadoEn)
+                    .Take(15)
+                    .ToListAsync();
+
+                var metaSecciones = await _db.InvDocumentosSeccionesMetadata
+                    .AsNoTracking()
+                    .Where(m => m.DocumentoUuid == instanceUuid)
+                    .OrderByDescending(m => m.ActualizadoEn)
+                    .Take(15)
+                    .ToListAsync();
+
+                var activitiesList = new List<CollaborationActivityItem>();
+
+                foreach (var s in sesiones)
+                {
+                    var parts = s.DocumentoUuid.Split('_');
+                    var sectionName = parts.Length > 1 ? parts[1] : "General";
+
+                    activitiesList.Add(new CollaborationActivityItem
+                    {
+                        UserName = s.NombreUsuario,
+                        Action = s.DesconectadoEn.HasValue
+                            ? $"terminó sesión de edición ({(int)(s.DesconectadoEn.Value - s.ConectadoEn).TotalMinutes} min)"
+                            : "inició sesión de edición",
+                        SectionName = sectionName,
+                        Timestamp = s.ConectadoEn
+                    });
+                }
+
+                foreach (var sec in metaSecciones)
+                {
+                    activitiesList.Add(new CollaborationActivityItem
+                    {
+                        UserName = sec.UltimoNombreUsuario ?? "Sistema",
+                        Action = $"marcó sección como {sec.Estado}",
+                        SectionName = sec.SeccionNombre,
+                        Timestamp = sec.ActualizadoEn
+                    });
+                }
+
+                var orderedActivities = activitiesList
+                    .OrderByDescending(a => a.Timestamp)
+                    .Take(20)
+                    .Select(a => new {
+                        userName = a.UserName,
+                        action = a.Action,
+                        sectionName = a.SectionName,
+                        timestamp = a.Timestamp
+                    })
+                    .ToList();
+
                 return Ok(new { 
                     comments = comments, 
-                    statuses = statusesDict 
+                    statuses = statusesDict,
+                    activities = orderedActivities
                 });
             }
             catch (System.Exception ex)
@@ -220,5 +276,13 @@ namespace diitra_api.Controllers
         public string DocumentoUuid { get; set; } = null!;
         public string Contenido { get; set; } = null!;
         public int? IdPadre { get; set; }
+    }
+
+    public class CollaborationActivityItem
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Action { get; set; } = string.Empty;
+        public string SectionName { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
     }
 }

@@ -102,7 +102,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
     if (!config?.fields) {
         return (
-            <div className="p-8 bg-surface border border-border-thin rounded-2xl text-center">
+            <div className="p-8 bg-bg-deep border border-border-thin rounded-2xl text-center">
                 <HelpCircle size={32} className="mx-auto text-text-dim mb-2 opacity-50" />
                 <p className="text-xs font-bold text-text-dim uppercase tracking-wider">
                     Sección sin esquema configurado
@@ -141,7 +141,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
             }
 
             return (
-                <div key={name} className="p-5 bg-surface border border-border-thin rounded-2xl flex flex-col gap-1.5 relative group hover:border-text-main/10 transition-all">
+                <div key={name} className="p-5 bg-bg-deep border border-border-thin rounded-2xl flex flex-col gap-1.5 relative group hover:border-text-main/10 transition-all">
                     <CoWorkField
                         name={name}
                         cowork={cowork}
@@ -173,7 +173,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
         };
 
         return (
-            <div key={name} className="p-5 bg-surface/50 border border-border-thin rounded-2xl space-y-3 relative group hover:border-text-main/10 transition-all">
+            <div key={name} className="p-5 bg-bg-deep/50 border border-border-thin rounded-2xl space-y-3 relative group hover:border-text-main/10 transition-all">
                 <div className="flex justify-between items-center px-1">
                     <label htmlFor={name} className="text-[9px] font-black text-text-dim uppercase tracking-widest flex items-center gap-1.5">
                         <Lock size={10} className="text-text-dim opacity-70" /> {label} (Privado)
@@ -266,7 +266,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                     </div>
                     <button
                         onClick={() => setCollapsed(!collapsed)}
-                        className="px-3 py-1.5 bg-surface border border-border-thin hover:border-text-main/25 text-text-main rounded-lg text-[9px] font-black uppercase flex items-center gap-1.5 transition-all shadow-sm"
+                        className="px-3 py-1.5 bg-bg-deep border border-border-thin hover:border-text-main/25 text-text-main rounded-lg text-[9px] font-black uppercase flex items-center gap-1.5 transition-all shadow-sm"
                     >
                         {collapsed ? <Eye size={12} /> : <EyeOff size={12} />}
                         {collapsed ? "Mostrar Propuesta" : "Maximizar Calificación"}
@@ -278,7 +278,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
 
                 {/* A) PANEL IZQUIERDO: VISUALIZADOR DE REFERENCIA (DOSSIER CACES) */}
                 {showDualPane && !collapsed && (
-                    <div className="bg-surface border border-border-thin rounded-2xl p-6 space-y-6 overflow-y-auto max-h-[70vh] shadow-xl animate-slide-right">
+                    <div className="bg-bg-deep border border-border-thin rounded-2xl p-6 space-y-6 overflow-y-auto max-h-[70vh] shadow-xl animate-slide-right">
                         <div className="flex items-center gap-2 border-b border-border-thin pb-4">
                             <BookOpen size={18} className="text-text-main" />
                             <div>

@@ -43,7 +43,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {productosEsperados.map((_p, i) => (
-                        <div key={_p.id || i} className="p-4 bg-surface border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
+                        <div key={_p.id || i} className="p-4 bg-bg-deep border border-border-thin rounded-xl flex gap-4 items-center animate-fade-in">
                             <div className="flex-1">
                                 <label className="text-[9px] font-black uppercase text-text-dim mb-1 block ml-1">Tipo de Producto</label>
                                 <select 
@@ -82,7 +82,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                 <h4 className="text-xs font-black uppercase tracking-widest px-2">6. Matriz de Impacto</h4>
                 <div className="grid grid-cols-1 gap-3">
                     {['Social', 'Cientifico', 'Economico', 'Politico', 'Ambiental', 'Otro'].map((tipo) => (
-                        <div key={tipo} className="p-5 bg-surface border border-border-thin rounded-2xl flex gap-6 items-center shadow-sm">
+                        <div key={tipo} className="p-5 bg-bg-deep border border-border-thin rounded-2xl flex gap-6 items-center shadow-sm">
                             <div className="w-32 text-[10px] font-black uppercase text-text-main">{tipo}</div>
                             <CoWorkField 
                                 name={`Impacto_${tipo}`} 
@@ -97,7 +97,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
             </div>
 
             {/* 9. Firmas de Responsabilidad */}
-            <div className="p-6 bg-surface border border-border-thin rounded-2xl space-y-6 shadow-sm">
+            <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-6 shadow-sm">
                 <h4 className="text-xs font-black uppercase tracking-widest px-2">9. Firmas de Responsabilidad</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Director */}
@@ -108,7 +108,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             cowork={cowork} 
                             label="Título abreviado, Apellidos y Nombres Completos" 
                             onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, DirectorNombre: v })}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
+                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
                             placeholder="Ej: Mgs. Juan Pérez"
                         />
                         <CoWorkField 
@@ -116,7 +116,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             cowork={cowork} 
                             label="Cargo del Elaborador" 
                             onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, DirectorCargo: v })}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
+                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
                             placeholder="Director del Proyecto"
                         />
                     </div>
@@ -129,7 +129,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             cowork={cowork} 
                             label="Título abreviado, Apellidos y Nombres Completos" 
                             onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, CoordinadorNombre: v })}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
+                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
                             placeholder="Ej: Mgs. Carlos Gómez"
                         />
                         <CoWorkField 
@@ -137,7 +137,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             cowork={cowork} 
                             label="Cargo del Aprobador" 
                             onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, CoordinadorCargo: v })}
-                            className="w-full bg-surface border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
+                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
                             placeholder="Coordinador de Carrera"
                         />
                     </div>

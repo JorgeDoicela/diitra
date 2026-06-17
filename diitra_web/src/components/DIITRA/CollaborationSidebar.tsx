@@ -58,6 +58,9 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                     });
                     setSectionStatuses(mappedStatuses);
                 }
+                if (res.data.activities) {
+                    setActivities(res.data.activities);
+                }
             } catch (err) {
                 console.error("[Team Pulse] Error al cargar pulso inicial:", err);
             } finally {
@@ -234,7 +237,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                 {sectionName !== 'output' && (
                                     <div className="bg-text-main/5 border border-text-main/20 rounded-2xl p-5 shadow-sm">
                                         <h4 className="text-[9px] font-black uppercase text-text-main mb-2.5 tracking-widest">Mi Sección Actual</h4>
-                                        <p className="text-xs font-bold text-text-main mb-4 capitalize">{sectionName.replace(/_/g, ' ')}</p>
+                                        <p className="text-xs font-bold text-text-main mb-4 capitalize">{(sectionName || '').replace(/_/g, ' ')}</p>
                                         <div className="grid grid-cols-1 gap-2">
                                             {['Borrador', 'Revisión', 'Aprobado'].map(s => (
                                                 <button
@@ -292,7 +295,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                                     <span className="font-black text-text-main text-[10px] uppercase tracking-wider">{a.userName}</span> {a.action}
                                                 </p>
                                                 <p className="text-[9px] text-text-dim/80 font-bold uppercase tracking-wider mt-0.5">
-                                                    {a.sectionName.replace(/_/g, ' ')}
+                                                    {(a.sectionName || '').replace(/_/g, ' ')}
                                                 </p>
                                                 <p className="text-[8px] text-text-dim font-mono mt-1">
                                                     {formatTime(a.timestamp)}

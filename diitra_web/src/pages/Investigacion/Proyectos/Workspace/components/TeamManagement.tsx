@@ -230,7 +230,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                 return (
                                     <div
                                         key={member.cedula || idx}
-                                        className="p-4 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover hover:bg-surface-hover/20 transition-all flex flex-col xl:flex-row xl:items-center justify-between gap-4"
+                                        className="p-4 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover hover:bg-surface-hover/20 transition-all flex flex-col 2xl:flex-row 2xl:items-center justify-between gap-4"
                                     >
                                         <div className="flex items-start sm:items-center gap-3.5 min-w-0">
                                             <div className={`w-9 h-9 shrink-0 flex items-center justify-center text-xs font-bold transition-colors ${isDirector
@@ -274,7 +274,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col xl:flex-row xl:items-center gap-4 w-full xl:w-auto xl:justify-end">
+                                        <div className="flex flex-col 2xl:flex-row 2xl:items-center gap-4 w-full 2xl:w-auto 2xl:justify-end">
                                             {horasDisponibles !== undefined && horasDisponibles !== null && (
                                                 <div className={`text-[10px] flex items-center gap-1 w-full sm:w-auto shrink-0 ${(horasSemanales || 0) > (horasDisponibles - (horasAsignadas || 0))
                                                     ? 'text-error animate-pulse font-bold'
@@ -290,15 +290,15 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                 </div>
                                             )}
 
-                                            <div className="flex flex-col md:flex-row md:items-end gap-3 w-full lg:w-auto">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full lg:w-auto">
-                                                    <div className="flex flex-col gap-1 w-full lg:w-36">
+                                            <div className="flex flex-col md:flex-row md:items-end gap-3 w-full 2xl:w-auto">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full 2xl:w-auto">
+                                                    <div className="flex flex-col gap-1 w-full 2xl:w-36 min-w-0">
                                                         <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Rol</span>
                                                         <select
                                                             value={normalizeRole(member.rol)}
                                                             disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                             onChange={(e) => onUpdateMember(member.cedula, 'rol', e.target.value)}
-                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full max-w-full min-w-0 disabled:opacity-60 disabled:cursor-not-allowed"
                                                         >
                                                             <option value="Director de Proyecto">Director de Proyecto</option>
                                                             <option value="Co-Investigador">Co-Investigador</option>
@@ -306,13 +306,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                         </select>
                                                     </div>
 
-                                                    <div className="flex flex-col gap-1 w-full lg:w-36">
+                                                    <div className="flex flex-col gap-1 w-full 2xl:w-36 min-w-0">
                                                         <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Nivel</span>
                                                         <select
                                                             value={nivelAcademico}
                                                             disabled={currentProject.puedeEditar === false || tieneGrupo}
                                                             onChange={(e) => onUpdateMember(member.cedula, 'nivelAcademico', e.target.value)}
-                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full max-w-full min-w-0 disabled:opacity-60 disabled:cursor-not-allowed"
                                                         >
                                                             <option value="Tercer Nivel">Tercer Nivel</option>
                                                             <option value="Cuarto Nivel (Maestría)">Maestría</option>
@@ -321,7 +321,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                         </select>
                                                     </div>
 
-                                                    <div className="flex flex-col gap-1 w-full lg:w-20">
+                                                    <div className="flex flex-col gap-1 w-full 2xl:w-20 min-w-0">
                                                         <span className="text-[9px] font-bold text-text-dim uppercase tracking-wider">Horas</span>
                                                         <input
                                                             type="number"
@@ -331,7 +331,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                             placeholder="0"
                                                             min="0"
                                                             max="40"
-                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full disabled:opacity-60 disabled:cursor-not-allowed"
+                                                            className="bg-surface border border-border-thin rounded-lg p-2 text-xs text-text-main outline-none focus:border-text-main transition-all w-full max-w-full min-w-0 disabled:opacity-60 disabled:cursor-not-allowed"
                                                         />
                                                     </div>
                                                 </div>

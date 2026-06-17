@@ -1388,13 +1388,13 @@ CREATE TABLE IF NOT EXISTS inv_collaboration_comments (
 
 -- =============================================================================
 
-INSERT INTO inv_document_templates 
-    (code, name, description, html_content, category, collaborative_fields_json, requires_signature, supports_blind_mode, requires_traceability, requires_lopdp) 
+INSERT INTO inv_document_templates
+    (code, name, description, html_content, category, collaborative_fields_json, requires_signature, supports_blind_mode, requires_traceability, requires_lopdp)
 VALUES
     (
-        'PROTOCOLO_INVESTIGACION', 
-        'Protocolo de Investigación', 
-        'Template oficial para la presentación de proyectos SENESCYT/CACES.', 
+        'PROTOCOLO_INVESTIGACION',
+        'Protocolo de Investigación',
+        'Template oficial para la presentación de proyectos SENESCYT/CACES.',
         '<div class="protocolo-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
             <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
                 <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
@@ -1468,9 +1468,9 @@ VALUES
         1  -- requires_lopdp
     ),
     (
-        'INFORME_FINAL_INVESTIGACION', 
-        'Informe Final de Investigación', 
-        'Template consolidado para el cierre de proyectos CACES 2026.', 
+        'INFORME_FINAL_INVESTIGACION',
+        'Informe Final de Investigación',
+        'Template consolidado para el cierre de proyectos CACES 2026.',
         '<div class="informe-final-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
             <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
                 <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
@@ -1549,9 +1549,9 @@ VALUES
         1  -- requires_lopdp
     ),
     (
-        'INFORME_AVANCE', 
-        'Informe de Avance de Investigación', 
-        'Template mensual/trimestral para reportar el avance físico e hitos del proyecto.', 
+        'INFORME_AVANCE',
+        'Informe de Avance de Investigación',
+        'Template mensual/trimestral para reportar el avance físico e hitos del proyecto.',
         '<div class="informe-avance-container" style="font-family: Arial, sans-serif; padding: 30px; line-height: 1.6;">
             <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
                 <h1 style="font-size: 20px; font-weight: bold; margin: 0; text-transform: uppercase;">Instituto Superior Tecnológico Traversari</h1>
@@ -1729,9 +1729,9 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
             <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
-        
+
         <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Docente Investigador/a,</h2>
-        
+
         <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
             El Administrador del sistema DIITRA ha marcado un proyecto de investigación institucional como <strong>Inconcluso y Disponible para Adopción</strong>. Esta es una excelente oportunidad para asumir la dirección y continuar con su desarrollo bajo el marco normativo de la SENESCYT y el CACES.
         </p>
@@ -1776,9 +1776,9 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
             <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
-        
+
         <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Docente Investigador/a,</h2>
-        
+
         <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
             Nos complace informar que el Departamento de Investigación e Innovación ha abierto oficialmente la convocatoria <strong>[[convocatoria_titulo]]</strong> para el periodo académico vigente. Le invitamos a postular sus propuestas de investigación aplicada e innovación tecnológica.
         </p>
@@ -1824,9 +1824,9 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
             <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
-        
+
         <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a [[proyecto_director]],</h2>
-        
+
         <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
             Confirmamos que su propuesta titulada <strong>[[proyecto_titulo]]</strong> ha sido postulada exitosamente en el sistema DIITRA. El proyecto ha sido registrado con el estado <strong>[[proyecto_estado]]</strong> y entra formalmente al flujo de evaluación por pares.
         </p>
@@ -1871,9 +1871,9 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
             <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
-        
+
         <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Revisor/a [[revisor_nombre]],</h2>
-        
+
         <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
             De conformidad con el Reglamento de Régimen Académico y los procesos de aseguramiento de calidad institucional, el Departamento de Investigación le ha designado como **Evaluador/a Par** del proyecto de investigación adjunto.
         </p>
@@ -1918,9 +1918,9 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
             <h1 style="color: #000000; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
-        
+
         <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a [[proyecto_director]],</h2>
-        
+
         <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
             El proceso de evaluación por pares ciegos para su proyecto **[[proyecto_titulo]]** ha concluido oficialmente. Nos complace comunicarle el dictamen final emitido por la comisión académica.
         </p>
@@ -1961,9 +1961,9 @@ INSERT INTO inv_email_templates (uuid, codigo, nombre, descripcion, asunto, cuer
             <h1 style="color: #d9534f; font-size: 20px; font-weight: 700; margin: 0; text-transform: uppercase; letter-spacing: -0.05em;">DIITRA ALERTA</h1>
             <p style="color: #666666; font-size: 11px; font-weight: 500; margin: 4px 0 0 0; text-transform: uppercase; letter-spacing: 0.15em;">Departamento de Investigación e Innovación Traversari</p>
         </div>
-        
+
         <h2 style="color: #111111; font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 0;">Estimado/a Docente Director/a,</h2>
-        
+
         <p style="color: #444444; font-size: 14px; line-height: 1.6; margin-bottom: 20px;">
             Le recordamos que de acuerdo al cronograma Gantt aprobado para su proyecto, se aproxima el vencimiento de una actividad crítica que requiere la entrega de evidencias documentales (CACES Compliance).
         </p>
