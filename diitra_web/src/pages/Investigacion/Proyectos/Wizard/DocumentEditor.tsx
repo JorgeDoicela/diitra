@@ -341,21 +341,52 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateCode]);
 
     // ── 7. Persistencia en el backend ──
+    const cleanDocumentData = (data: any) => {
+        if (!data) return data;
+        const cloned = JSON.parse(JSON.stringify(data));
+        if (Array.isArray(cloned.RecursosDisponibles)) {
+            cloned.RecursosDisponibles.forEach((r: any) => {
+                if (r.Cantidad !== undefined && r.Cantidad !== null) {
+                    r.Cantidad = String(r.Cantidad);
+                }
+            });
+        }
+        if (Array.isArray(cloned.RecursosNecesarios)) {
+            cloned.RecursosNecesarios.forEach((r: any) => {
+                if (r.Cantidad !== undefined && r.Cantidad !== null) {
+                    r.Cantidad = String(r.Cantidad);
+                }
+            });
+        }
+        if (Array.isArray(cloned.ProductosEsperados)) {
+            cloned.ProductosEsperados.forEach((p: any) => {
+                if (p.cantidad !== undefined && p.cantidad !== null) {
+                    p.cantidad = String(p.cantidad);
+                }
+                if (p.Cantidad !== undefined && p.Cantidad !== null) {
+                    p.Cantidad = String(p.Cantidad);
+                }
+            });
+        }
+        return cloned;
+    };
+
     const handleSave = async (data: any) => {
         try {
-            if (data.Uuid) {
-                await api.patch(`/documents/instances/${data.Uuid}/metadata`, data);
+            const cleanedData = cleanDocumentData(data);
+            if (cleanedData.Uuid) {
+                await api.patch(`/documents/instances/${cleanedData.Uuid}/metadata`, cleanedData);
             } else {
                 const response = await api.post('/documents/instances', {
                     templateCode,
                     entityUuid: entityUuid || 'GLOBAL',
-                    title: data.Titulo || data.title || `Documento ${templateCode}`
+                    title: cleanedData.Titulo || cleanedData.title || `Documento ${templateCode}`
                 });
                 if (response.data?.uuid) {
                     const newUuid = response.data.uuid;
                     setFormData((prev: any) => ({ ...prev, Uuid: newUuid }));
                     if (!window.location.pathname.includes('/workspace/')) {
-                        await api.patch(`/documents/instances/${newUuid}/metadata`, { ...data, Uuid: newUuid });
+                        await api.patch(`/documents/instances/${newUuid}/metadata`, { ...cleanedData, Uuid: newUuid });
                         const isMisProyectos = window.location.pathname.startsWith('/investigacion/mis-proyectos');
                         const prefix = isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion';
                         navigate(buildWorkspacePath(templateCode, newUuid, '?edit=true', prefix), { replace: true });
@@ -458,13 +489,13 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             onUpdateItem={(list: string, i: number, f: string, v: any) => updateItem(list, i, f, v)}
 
                             // Handlers específicos para retrocompatibilidad
-                            onAddDisponible={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: 1 })}
+                            onAddDisponible={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: '1' })}
                             onRemoveDisponible={(i: number) => removeItem('RecursosDisponibles', i)}
                             onUpdateDisponible={(i: number, f: string, v: any) => updateItem('RecursosDisponibles', i, f, v)}
-                            onAddNecesario={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: 1, CostoUnitario: 0, CostoTotal: 0 })}
+                            onAddNecesario={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: '1', CostoUnitario: 0, CostoTotal: 0 })}
                             onRemoveNecesario={(i: number) => removeItem('RecursosNecesarios', i)}
                             onUpdateNecesario={(i: number, f: string, v: any) => updateItem('RecursosNecesarios', i, f, v)}
-                            onAddProducto={() => addItem('ProductosEsperados', { tipo: '', cantidad: 1 })}
+                            onAddProducto={() => addItem('ProductosEsperados', { tipo: '', cantidad: '1' })}
                             onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
                             onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
                             onUpdateImpacto={(t: string, v: any) => updateField('Impacto', { ...(formData?.Impacto || {}), [t.toLowerCase()]: v })}

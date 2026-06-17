@@ -40,7 +40,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Recursos Disponibles */}
-                    <div className="p-6 bg-surface border border-border-thin rounded-2xl shadow-sm">
+                    <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-[10px] font-black uppercase text-text-dim">4.1 Recursos Disponibles</p>
                             <button 
@@ -81,7 +81,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                     </div>
 
                     {/* Recursos Necesarios */}
-                    <div className="p-6 bg-surface border border-border-thin rounded-2xl shadow-sm">
+                    <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl shadow-sm">
                         <div className="flex justify-between items-center mb-6">
                             <p className="text-[10px] font-black uppercase text-text-dim">4.2 Recursos Necesarios (Gasto)</p>
                             <button 
@@ -145,7 +145,7 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
             </div>
 
             {/* 4.3 Financiamiento (X) */}
-            <div className="p-6 bg-surface border border-border-thin rounded-2xl space-y-4 shadow-sm">
+            <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-4 shadow-sm">
                 <p className="text-[10px] font-black uppercase text-text-dim">4.3 Fuentes de Financiamiento</p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                     <label className="flex items-center gap-3 p-4 bg-bg-deep border border-border-thin rounded-xl cursor-pointer hover:bg-surface-hover transition-colors">

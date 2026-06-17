@@ -183,7 +183,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             {label && (
                 <label className={type === 'checkbox' 
                     ? "text-[10px] font-bold text-text-main uppercase tracking-tight cursor-pointer order-2" 
-                    : "block text-[9px] font-black text-text-dim uppercase mb-2 tracking-widest"}>
+                    : "block text-[9px] font-black text-text-dim uppercase mt-1 ml-2 mb-2 tracking-widest"}>
                     {label}
                 </label>
             )}

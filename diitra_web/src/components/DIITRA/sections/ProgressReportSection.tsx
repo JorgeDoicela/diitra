@@ -55,7 +55,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
         <div className="space-y-12 animate-fade-in pb-10 text-white">
             
             {/* 1. SECCIÓN DE BITÁCORA COLABORATIVA */}
-            <div className="bg-surface border border-border-thin p-6 md:p-8 rounded-3xl space-y-6 bg-glow">
+            <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6 bg-glow">
                 <div className="flex items-center gap-3 border-b border-border-thin pb-4">
                     <div className="p-2 bg-text-main/10 rounded-xl text-text-main">
                         <Activity size={20} />
@@ -81,7 +81,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
             </div>
 
             {/* 2. CRONOGRAMA DE GANTT: % DE AVANCE */}
-            <div className="bg-surface border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
+            <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
                 <div className="flex justify-between items-center border-b border-border-thin pb-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-500/10 rounded-xl text-blue-400">
@@ -174,7 +174,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
             </div>
 
             {/* 3. EVIDENCIAS FÍSICAS */}
-            <div className="bg-surface border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
+            <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
                 <div className="flex justify-between items-center border-b border-border-thin pb-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400">
@@ -264,7 +264,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
             </div>
 
             {/* 4. EJECUCIÓN PRESUPUESTARIA */}
-            <div className="bg-surface border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
+            <div className="bg-bg-deep border border-border-thin p-6 md:p-8 rounded-3xl space-y-6">
                 <div className="flex justify-between items-center border-b border-border-thin pb-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-yellow-500/10 rounded-xl text-yellow-400">

@@ -347,6 +347,27 @@ namespace Diitra.Infrastructure.Common.Documents
                                     merged["TieneGrupoInvestigacion"] = projectDetail.TieneGrupoInvestigacion ?? false;
                                     merged["Investigadores"] = projectDetail.Investigadores ?? new List<Diitra.Application.Research.Dtos.InvestigadorDto>();
 
+                                    MergeField(merged, "Periodo", projectDetail.Periodo);
+                                    MergeField(merged, "FechaPresentacion", projectDetail.FechaPresentacion);
+                                    MergeField(merged, "FechaInicio", projectDetail.FechaInicio);
+                                    MergeField(merged, "FechaFin", projectDetail.FechaFin);
+                                    MergeField(merged, "FechaInicioEstimada", projectDetail.FechaInicioEstimada);
+                                    MergeField(merged, "FechaFinEstimada", projectDetail.FechaFinEstimada);
+                                    MergeField(merged, "LineaInvestigacion", projectDetail.LineaInvestigacion);
+                                    MergeField(merged, "Dominio", projectDetail.Dominio);
+                                    MergeField(merged, "Carrera", projectDetail.Carrera);
+                                    MergeField(merged, "IdCarrera", projectDetail.IdCarrera);
+                                    MergeField(merged, "IdConvocatoria", projectDetail.IdConvocatoria);
+                                    MergeField(merged, "IdObjetivoPnd", projectDetail.IdObjetivoPnd);
+                                    MergeField(merged, "Programa", projectDetail.Programa);
+                                    MergeField(merged, "DirectorProyecto", projectDetail.DirectorProyecto);
+                                    MergeField(merged, "TipoInvestigacion", projectDetail.TipoInvestigacion);
+                                    MergeField(merged, "CampoAmplio", projectDetail.CampoAmplio);
+                                    MergeField(merged, "CampoEspecifico", projectDetail.CampoEspecifico);
+                                    MergeField(merged, "CampoDetallado", projectDetail.CampoDetallado);
+                                    MergeField(merged, "SublineaInvestigacion", projectDetail.SublineaInvestigacion);
+                                    MergeField(merged, "TiempoEjecucion", projectDetail.TiempoEjecucion);
+
                                     var json = JsonSerializer.Serialize(merged);
                                     instance.UpdateDataSnapshot(json);
                                     project.MetadataCacesJson = json;
@@ -366,6 +387,15 @@ namespace Diitra.Infrastructure.Common.Documents
                     Console.WriteLine($"[DIITRA] [SyncFromProjectAsync] No se encontró el proyecto con EntityUuid: {instance.EntityUuid}");
                 }
             }
+        }
+
+        private static void MergeField(Dictionary<string, object> target, string key, object? newValue)
+        {
+            if (newValue == null) return;
+            if (newValue is string str && string.IsNullOrWhiteSpace(str)) return;
+
+            var existingKey = target.Keys.FirstOrDefault(k => string.Equals(k, key, StringComparison.OrdinalIgnoreCase)) ?? key;
+            target[existingKey] = newValue;
         }
     }
 }

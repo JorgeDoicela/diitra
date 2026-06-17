@@ -33,7 +33,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
             </div>
             <div className="space-y-4">
                 {investigadores.map((_inv, idx) => (
-                    <div key={_inv.id || idx} className="p-8 bg-surface border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
+                    <div key={_inv.id || idx} className="p-8 bg-bg-deep border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
                         <button 
                             onClick={() => onRemove(idx)} 
                             className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full"

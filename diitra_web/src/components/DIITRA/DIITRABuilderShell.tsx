@@ -133,10 +133,33 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         navigate({ search: searchParams.toString() }, { replace: true });
     }, [location.search, navigate]);
 
+    useEffect(() => {
+        if (cowork && cowork.notifySectionActivity && activeTab && !readOnly) {
+            cowork.notifySectionActivity(cowork.session.documentId, activeTab, "ha entrado a redactar");
+        }
+    }, [cowork, activeTab, readOnly]);
+
     const leftSidebarRef = useRef<HTMLDivElement>(null);
     const rightSidebarRef = useRef<HTMLDivElement>(null);
     const isDraggingLeft = useRef(false);
     const isDraggingRight = useRef(false);
+
+    const [navTopPercent, setNavTopPercent] = useState<number>(50);
+    const [chatTopPercent, setChatTopPercent] = useState<number>(50);
+    const [navXOffset, setNavXOffset] = useState<number>(0);
+    const [chatXOffset, setChatXOffset] = useState<number>(0);
+    const [isDraggingNav, setIsDraggingNav] = useState(false);
+    const [isDraggingChat, setIsDraggingChat] = useState(false);
+    const bodyContainerRef = useRef<HTMLDivElement>(null);
+
+    const navTopPercentRef = useRef(50);
+    const chatTopPercentRef = useRef(50);
+    const navXOffsetRef = useRef(0);
+    const chatXOffsetRef = useRef(0);
+    useEffect(() => { navTopPercentRef.current = navTopPercent; }, [navTopPercent]);
+    useEffect(() => { chatTopPercentRef.current = chatTopPercent; }, [chatTopPercent]);
+    useEffect(() => { navXOffsetRef.current = navXOffset; }, [navXOffset]);
+    useEffect(() => { chatXOffsetRef.current = chatXOffset; }, [chatXOffset]);
 
     const startDraggingLeft = useCallback((mouseDownEvent: React.MouseEvent) => {
         mouseDownEvent.preventDefault();
@@ -257,6 +280,132 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         document.addEventListener('mousemove', doDrag);
         document.addEventListener('mouseup', stopDrag);
     }, [rightSidebarWidth, setIsSidebarOpen]);
+
+    const startDraggingNav = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+        setIsDraggingNav(true);
+
+        const isTouch = 'touches' in e;
+        const startClientY = isTouch ? e.touches[0].clientY : e.clientY;
+        const startClientX = isTouch ? e.touches[0].clientX : e.clientX;
+        const rect = bodyContainerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const initialTopPx = (navTopPercentRef.current / 100) * rect.height;
+        const initialLeftPx = navXOffsetRef.current;
+        let hasMoved = false;
+
+        const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+            if ('touches' in moveEvent && moveEvent.cancelable) {
+                moveEvent.preventDefault();
+            }
+
+            const currentTouch = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
+            const deltaY = currentTouch.clientY - startClientY;
+            const deltaX = currentTouch.clientX - startClientX;
+
+            if (Math.abs(deltaY) > 5 || Math.abs(deltaX) > 5) {
+                hasMoved = true;
+            }
+
+            const newTopPx = initialTopPx + deltaY;
+            const newPercent = Math.max(10, Math.min(90, (newTopPx / rect.height) * 100));
+            setNavTopPercent(newPercent);
+
+            // Pull to the right (positive offset for Left nav tab)
+            const newX = Math.max(0, Math.min(120, initialLeftPx + deltaX));
+            setNavXOffset(newX);
+        };
+
+        const handleEnd = () => {
+            setIsDraggingNav(false);
+            setNavXOffset(0); // Snap back to edge!
+
+            if (isTouch) {
+                document.removeEventListener('touchmove', handleMove);
+                document.removeEventListener('touchend', handleEnd);
+            } else {
+                document.removeEventListener('mousemove', handleMove);
+                document.removeEventListener('mouseup', handleEnd);
+            }
+
+            if (!hasMoved) {
+                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    setShowMobileSections(true);
+                } else {
+                    setIsLeftSidebarOpen(true);
+                }
+            }
+        };
+
+        if (isTouch) {
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('touchend', handleEnd);
+        } else {
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+        }
+    }, [setIsLeftSidebarOpen]);
+
+    const startDraggingChat = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+        setIsDraggingChat(true);
+
+        const isTouch = 'touches' in e;
+        const startClientY = isTouch ? e.touches[0].clientY : e.clientY;
+        const startClientX = isTouch ? e.touches[0].clientX : e.clientX;
+        const rect = bodyContainerRef.current?.getBoundingClientRect();
+        if (!rect) return;
+
+        const initialTopPx = (chatTopPercentRef.current / 100) * rect.height;
+        const initialRightPx = chatXOffsetRef.current;
+        let hasMoved = false;
+
+        const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
+            if ('touches' in moveEvent && moveEvent.cancelable) {
+                moveEvent.preventDefault();
+            }
+
+            const currentTouch = 'touches' in moveEvent ? moveEvent.touches[0] : moveEvent;
+            const deltaY = currentTouch.clientY - startClientY;
+            const deltaX = startClientX - currentTouch.clientX; // Pull to the left (positive X value when dragging left)
+
+            if (Math.abs(deltaY) > 5 || Math.abs(deltaX) > 5) {
+                hasMoved = true;
+            }
+
+            const newTopPx = initialTopPx + deltaY;
+            const newPercent = Math.max(10, Math.min(90, (newTopPx / rect.height) * 100));
+            setChatTopPercent(newPercent);
+
+            const newX = Math.max(0, Math.min(120, initialRightPx + deltaX));
+            setChatXOffset(newX);
+        };
+
+        const handleEnd = () => {
+            setIsDraggingChat(false);
+            setChatXOffset(0); // Snap back to edge!
+
+            if (isTouch) {
+                document.removeEventListener('touchmove', handleMove);
+                document.removeEventListener('touchend', handleEnd);
+            } else {
+                document.removeEventListener('mousemove', handleMove);
+                document.removeEventListener('mouseup', handleEnd);
+            }
+
+            if (!hasMoved) {
+                setIsSidebarOpen(true);
+            }
+        };
+
+        if (isTouch) {
+            document.addEventListener('touchmove', handleMove, { passive: false });
+            document.addEventListener('touchend', handleEnd);
+        } else {
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+        }
+    }, [setIsSidebarOpen]);
+
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<string | null>(null);
     const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
@@ -677,18 +826,22 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         </div>
                     </div>
 
-                    <div className="flex flex-1 overflow-hidden relative">
+                    <div className="flex flex-1 overflow-hidden relative" ref={bodyContainerRef}>
                                      {/* Pestaña de reabrir Navegación — pegada al borde izquierdo */}
                         {(!isLeftSidebarOpen || (typeof window !== 'undefined' && window.innerWidth < 1024 && !showMobileSections)) && (
                             <button
-                                onClick={() => {
-                                    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                                        setShowMobileSections(true);
-                                    } else {
-                                        setIsLeftSidebarOpen(true);
-                                    }
+                                onMouseDown={startDraggingNav}
+                                onTouchStart={startDraggingNav}
+                                style={{
+                                    top: `${navTopPercent}%`,
+                                    transform: `translateY(-50%) translateX(${navXOffset}px)`,
+                                    transition: isDraggingNav ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                                 }}
-                                className="absolute left-0 top-1/2 -translate-y-1/2 z-[60] bg-surface hover:bg-bg-deep border border-border-thin border-l-0 hover:border-text-main text-text-dim hover:text-text-main py-8 px-2.5 rounded-r-xl shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group"
+                                className={`absolute left-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${
+                                    isDraggingNav || navXOffset > 5
+                                        ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
+                                        : 'rounded-r-xl border-l-0'
+                                }`}
                                 title="Mostrar navegación del documento"
                             >
                                 <FileText size={15} />
@@ -699,8 +852,18 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         {/* Pestaña de reabrir Actividad — pegada al borde derecho */}
                         {!isSidebarOpen && (
                             <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="absolute right-0 top-1/2 -translate-y-1/2 z-[60] bg-surface hover:bg-bg-deep border border-border-thin border-r-0 hover:border-text-main text-text-dim hover:text-text-main py-8 px-2.5 rounded-l-xl shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group"
+                                onMouseDown={startDraggingChat}
+                                onTouchStart={startDraggingChat}
+                                style={{
+                                    top: `${chatTopPercent}%`,
+                                    transform: `translateY(-50%) translateX(-${chatXOffset}px)`,
+                                    transition: isDraggingChat ? 'none' : 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                                }}
+                                className={`absolute right-0 z-[60] bg-surface hover:bg-bg-deep border border-border-thin text-text-dim hover:text-text-main py-8 px-2.5 shadow-xl flex flex-col items-center gap-2.5 transition-all duration-200 animate-fade-in group cursor-grab active:cursor-grabbing ${
+                                    isDraggingChat || chatXOffset > 5
+                                        ? 'rounded-full scale-[1.05] shadow-2xl border-text-main text-text-main bg-bg-deep'
+                                        : 'rounded-l-xl border-r-0'
+                                }`}
                                 title="Mostrar actividad del equipo"
                             >
                                 <MessageSquare size={15} className={isOnline ? 'animate-pulse' : ''} />
@@ -710,10 +873,26 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                         {/* ── Sidebar de Navegación ── */}
                         <div
                             ref={leftSidebarRef}
-                            style={{ width: isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px' }}
+                            style={{
+                                width: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? undefined
+                                    : (isLeftSidebarOpen ? `${leftSidebarWidth}px` : '0px'),
+                                transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? (showMobileSections ? 'translateX(0)' : 'translateX(-100%)')
+                                    : undefined,
+                                transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
+                                    : 'width 300ms ease-in-out',
+                                visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? (showMobileSections ? 'visible' : 'hidden')
+                                    : 'visible'
+                            }}
                             className={`
-                                ${showMobileSections ? 'fixed inset-0 top-[60px] z-[70] bg-bg-deep !w-full' : 'hidden lg:flex'}
-                                border-r border-border-thin bg-bg-deep flex flex-col shrink-0 transition-[width] duration-300 ease-in-out overflow-hidden
+                                overflow-hidden flex flex-col shrink-0 bg-bg-deep shadow-2xl lg:shadow-none
+                                ${typeof window !== 'undefined' && window.innerWidth < 1024
+                                    ? 'fixed inset-y-0 left-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-r border-border-thin !w-[85vw] sm:!w-[320px]'
+                                    : (isLeftSidebarOpen ? 'border-r border-border-thin lg:flex' : 'hidden lg:flex')
+                                }
                             `}
                         >
                             <div style={{ width: showMobileSections ? '100%' : `${leftSidebarWidth}px` }} className="p-6 md:p-8 flex flex-col gap-6 md:gap-8 h-full overflow-y-auto overflow-x-hidden shrink-0">
@@ -792,10 +971,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             {activeTab !== 'output' ? (
                                 <div className="flex-1 p-3 sm:p-6 md:p-12 overflow-y-auto custom-scrollbar">
                                     <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
-                                        <div className="mb-8 md:mb-12">
-                                            <h3 className="text-xl md:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
-                                            <p className="text-[10px] md:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
-                                            <div className="w-16 md:w-20 h-1 md:h-1.5 bg-text-main mt-4 md:mt-6 rounded-full" />
+                                        <div className="mb-6 md:mb-12">
+                                            <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
+                                            <p className="text-[8px] sm:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
+                                            <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-3 md:mt-6 rounded-full" />
                                         </div>
 
                                         {readOnly && (
@@ -992,14 +1171,24 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             ref={rightSidebarRef}
                             style={{
                                 '--right-sidebar-width': `${rightSidebarWidth}px`,
-                                width: isSidebarOpen ? `${rightSidebarWidth}px` : '0px'
+                                width: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? undefined
+                                    : (isSidebarOpen ? `${rightSidebarWidth}px` : '0px'),
+                                transform: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? (isSidebarOpen ? 'translateX(0)' : 'translateX(100%)')
+                                    : undefined,
+                                transition: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? 'transform 300ms ease-in-out, visibility 300ms ease-in-out'
+                                    : 'width 300ms ease-in-out',
+                                visibility: (typeof window !== 'undefined' && window.innerWidth < 1024)
+                                    ? (isSidebarOpen ? 'visible' : 'hidden')
+                                    : 'visible'
                             } as React.CSSProperties}
                             className={`
-                                transition-[width] duration-300 ease-in-out overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
-                                ${isSidebarOpen ? 'border-l border-border-thin' : ''}
-                                ${isSidebarOpen
-                                    ? 'fixed inset-y-0 right-0 top-[60px] lg:top-0 lg:relative z-[70] lg:z-40 h-[calc(100vh-60px)] lg:h-full !w-[85vw] sm:!w-[320px] lg:!w-[inherit]'
-                                    : 'w-0'
+                                overflow-hidden flex shrink-0 bg-bg-deep shadow-2xl lg:shadow-none z-40
+                                ${typeof window !== 'undefined' && window.innerWidth < 1024
+                                    ? 'fixed inset-y-0 right-0 top-[60px] z-[70] h-[calc(100vh-60px)] border-l border-border-thin !w-[85vw] sm:!w-[320px]'
+                                    : (isSidebarOpen ? 'border-l border-border-thin lg:flex' : 'hidden lg:flex')
                                 }
                             `}
                         >

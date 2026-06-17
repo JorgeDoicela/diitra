@@ -37,7 +37,7 @@ export const TimelineSection: React.FC<TimelineSectionProps> = ({
             </div>
             <div className="space-y-6">
                 {cronograma.map((_c, i) => (
-                    <div key={_c.id || _c.uuid || i} className="p-6 bg-surface border border-border-thin rounded-2xl flex flex-col gap-6 shadow-sm">
+                    <div key={_c.id || _c.uuid || i} className="p-6 bg-bg-deep border border-border-thin rounded-2xl flex flex-col gap-6 shadow-sm">
                         <div className="flex flex-col sm:flex-row gap-6 items-end">
                             <div className="flex-1 w-full">
                                 <CoWorkField 
