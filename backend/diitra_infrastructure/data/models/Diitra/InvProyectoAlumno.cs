@@ -12,6 +12,7 @@ public partial class InvProyectoAlumno
     public string? Rol { get; set; }
     public string? NivelAcademico { get; set; }
     public string? Telefono { get; set; }
+    public decimal? HorasSemanales { get; set; }
     public bool? Activo { get; set; } = true;
     public DateTime? FechaInicio { get; set; }
     public DateTime? FechaFin { get; set; }

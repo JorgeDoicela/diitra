@@ -511,6 +511,7 @@ CREATE TABLE inv_proyectos_alumnos (
     rol              VARCHAR(100),
     nivelAcademico   VARCHAR(150),
     telefono         VARCHAR(20),
+    horasSemanales   DECIMAL(4,1),
     activo           TINYINT(1)    DEFAULT 1,
     fecha_inicio     DATETIME      NULL,
     fecha_fin        DATETIME      NULL,
