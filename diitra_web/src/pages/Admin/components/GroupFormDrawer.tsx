@@ -881,7 +881,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                     {showCoordResults && (
                                         <>
                                             <div className="fixed inset-0 z-20" onClick={() => setShowCoordResults(false)}></div>
-                                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-56 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                            <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
                                                 {isCoordSearching && coordSearchResults.length === 0 ? (
                                                     <div className="p-5 text-center text-xs text-text-dim font-mono">
                                                         <div className="animate-spin h-5 w-5 border-2 border-t-transparent border-text-main rounded-full mx-auto mb-2"></div>
@@ -900,24 +900,24 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                 handleSelectCoordinator(selectedUser);
                                                                 setShowCoordResults(false);
                                                             }}
-                                                            className="w-full p-3 flex items-center justify-between hover:bg-surface-hover text-left transition-colors"
+                                                            className="popover-item-vercel transition-colors"
                                                         >
                                                             <div className="space-y-1 truncate pr-2">
-                                                                <p className="font-bold text-text-main text-xs truncate flex items-center gap-2">
+                                                                <p className="font-medium text-text-main text-xs truncate flex items-center gap-2">
                                                                     <span>{formatNombre(selectedUser.nombre)}</span>
                                                                     {selectedUser.horas_disponibles !== undefined && (
-                                                                        <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                                                                        <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
                                                                             (selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)) > 0 
-                                                                                ? 'bg-success/15 text-success border border-success/30' 
-                                                                                : 'bg-error/15 text-error border border-error/30'
+                                                                                ? 'badge-vercel-success' 
+                                                                                : 'badge-vercel-error'
                                                                         }`}>
                                                                             Disp: {selectedUser.horas_disponibles - (selectedUser.horas_asignadas || 0)}h / {selectedUser.horas_disponibles}h
                                                                         </span>
                                                                     )}
                                                                 </p>
-                                                                <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(selectedUser)}</p>
+                                                                <p className="text-text-dim font-mono text-[10px] mt-0.5">{formatUserDetails(selectedUser)}</p>
                                                             </div>
-                                                            <span className="px-2 py-0.5 rounded text-[8px] shrink-0 font-extrabold tracking-wider uppercase border bg-text-main/10 border-text-main/20 text-text-main">
+                                                            <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
                                                                 Docente
                                                             </span>
                                                         </button>
@@ -1017,7 +1017,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                 {showTeacherResults && (
                                                     <>
                                                         <div className="fixed inset-0 z-20" onClick={() => setShowTeacherResults(false)}></div>
-                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                        <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
                                                             {teacherSearchResults.length === 0 ? (
                                                                 <div className="p-3 text-center text-[10px] text-text-dim font-mono">
                                                                     No se encontraron docentes con horas vigentes.
@@ -1028,24 +1028,24 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         key={teacher.cedula}
                                                                         type="button"
                                                                         onClick={() => handleSelectTeacher(teacher)}
-                                                                        className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                                        className="popover-item-vercel transition-colors"
                                                                     >
                                                                         <div className="space-y-0.5">
-                                                                            <p className="font-bold text-text-main text-xs flex items-center gap-2">
+                                                                            <p className="font-medium text-text-main text-xs flex items-center gap-2">
                                                                                 <span>{formatNombre(teacher.nombre)}</span>
                                                                                 {teacher.horas_disponibles !== undefined && (
-                                                                                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${
+                                                                                    <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${
                                                                                         (teacher.horas_disponibles - (teacher.horas_asignadas || 0)) > 0 
-                                                                                            ? 'bg-success/15 text-success border border-success/30' 
-                                                                                            : 'bg-error/15 text-error border border-error/30'
+                                                                                            ? 'badge-vercel-success' 
+                                                                                            : 'badge-vercel-error'
                                                                                     }`}>
                                                                                         Disp: {teacher.horas_disponibles - (teacher.horas_asignadas || 0)}h / {teacher.horas_disponibles}h
                                                                                     </span>
                                                                                 )}
                                                                             </p>
-                                                                            <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(teacher)}</p>
+                                                                            <p className="text-text-dim font-mono text-[10px] mt-0.5">{formatUserDetails(teacher)}</p>
                                                                         </div>
-                                                                        <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-emerald-500/15 border-emerald-500/25 text-emerald-400">
+                                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
                                                                             Docente
                                                                         </span>
                                                                     </button>
@@ -1188,7 +1188,7 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                 {showStudentResults && (
                                                     <>
                                                         <div className="fixed inset-0 z-20" onClick={() => setShowStudentResults(false)}></div>
-                                                        <div className="absolute left-0 right-0 top-full mt-1 bg-surface border border-border-thin rounded-xl shadow-2xl max-h-40 overflow-y-auto z-30 divide-y divide-[#222] backdrop-blur-md">
+                                                        <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
                                                             {studentSearchResults.length === 0 ? (
                                                                 <div className="p-3 text-center text-[10px] text-text-dim font-mono">
                                                                     No se encontraron estudiantes matriculados.
@@ -1199,13 +1199,13 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                                         key={student.cedula}
                                                                         type="button"
                                                                         onClick={() => handleSelectStudent(student)}
-                                                                        className="w-full p-2.5 flex items-center justify-between hover:bg-surface-hover text-left text-xs transition-colors"
+                                                                        className="popover-item-vercel transition-colors"
                                                                     >
                                                                         <div className="space-y-0.5">
-                                                                            <p className="font-bold text-text-main text-xs">{formatNombre(student.nombre)}</p>
-                                                                            <p className="text-text-dim font-mono text-[9px]">{formatUserDetails(student)}</p>
+                                                                            <p className="font-medium text-text-main text-xs">{formatNombre(student.nombre)}</p>
+                                                                            <p className="text-text-dim font-mono text-[10px] mt-0.5">{formatUserDetails(student)}</p>
                                                                         </div>
-                                                                        <span className="px-2 py-0.5 rounded text-[8px] font-black tracking-wider uppercase border bg-blue-500/15 border-blue-500/25 text-blue-400">
+                                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-success">
                                                                             Estudiante
                                                                         </span>
                                                                     </button>
