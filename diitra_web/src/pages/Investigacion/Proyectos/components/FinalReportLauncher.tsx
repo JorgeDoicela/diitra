@@ -10,7 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../../../../api/axios_config';
 import { useNotifications } from '../../../../api/NotificationsContext';
-import { buildWorkspacePath } from '../../../../core/documents/templateUrl';
+import { buildWorkspacePath, templateCodeToEditParam } from '../../../../core/documents/templateUrl';
 
 interface Project {
     uuid: string;
@@ -84,7 +84,7 @@ const FinalReportLauncher: React.FC<FinalReportLauncherProps> = ({ onClose }) =>
                 title: `Informe Final - ${projects.find(p => p.uuid === projectUuid)?.titulo}`
             });
 
-            navigate(buildWorkspacePath('INFORME_FINAL_INVESTIGACION', response.data.uuid, '?edit=true'));
+            navigate(buildWorkspacePath('INFORME_FINAL_INVESTIGACION', response.data.uuid, `?edit=${templateCodeToEditParam('INFORME_FINAL_INVESTIGACION')}`));
             onClose();
         } catch (err: any) {
             console.error("[DIITRA] Error al lanzar informe:", err.response?.data || err.message);

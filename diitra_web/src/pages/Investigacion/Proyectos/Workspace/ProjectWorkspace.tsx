@@ -28,7 +28,14 @@ import { useNotifications } from '../../../../api/NotificationsContext';
 import { useConfirm } from '../../../../api/ConfirmContext';
 import { iniciarEjecucion } from '../../../../services/peerReviewService';
 import DocumentEditor from '../Wizard/DocumentEditor';
-import { buildWorkspacePath, isLegacyTemplateUrlSegment, slugToTemplateCode } from '../../../../core/documents/templateUrl';
+import {
+    buildWorkspacePath,
+    editParamToTemplateCode,
+    isLegacyEditParam,
+    isLegacyTemplateUrlSegment,
+    slugToTemplateCode,
+    templateCodeToEditParam,
+} from '../../../../core/documents/templateUrl';
 
 // Subcomponentes refactorizados
 import WorkspaceHeader from './components/WorkspaceHeader';
@@ -78,8 +85,8 @@ export const ProjectWorkspace: React.FC = () => {
     const queryParams = new URLSearchParams(location.search);
     const editParam = queryParams.get('edit');
     const sectionParam = queryParams.get('section');
-    const activeDocument = editParam 
-        ? (editParam === 'true' ? templateCode : editParam) 
+    const activeDocument = editParam
+        ? editParamToTemplateCode(editParam, templateCode)
         : (sectionParam ? templateCode : null);
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
@@ -102,13 +109,20 @@ export const ProjectWorkspace: React.FC = () => {
         navigate(buildWorkspacePath(templateCode, documentUuid, location.search, urlPrefix), { replace: true });
     }, [templateSlug, templateCode, documentUuid, location.search, navigate, urlPrefix]);
 
+    useEffect(() => {
+        if (!editParam || !isLegacyEditParam(editParam)) return;
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('edit', templateCodeToEditParam(editParamToTemplateCode(editParam, templateCode)));
+        navigate({ search: searchParams.toString() }, { replace: true });
+    }, [editParam, templateCode, location.search, navigate]);
+
     const [currentProject, setCurrentProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     const setActiveDocument = useCallback((doc: string | null) => {
         const searchParams = new URLSearchParams(location.search);
         if (doc) {
-            searchParams.set('edit', doc);
+            searchParams.set('edit', templateCodeToEditParam(doc));
         } else {
             searchParams.delete('edit');
             searchParams.delete('section');
