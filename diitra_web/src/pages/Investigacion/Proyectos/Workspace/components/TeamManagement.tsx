@@ -597,20 +597,19 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                             <div className="animate-spin h-3.5 w-3.5 border-2 border-brand border-t-transparent rounded-full"></div>
                                                                         </div>
                                                                     )}
-
                                                                     {showRequestSearchResults && (
                                                                         <>
                                                                             <div className="fixed inset-0 z-20" onClick={() => setShowRequestSearchResults(false)}></div>
-                                                                            <div className="absolute left-0 right-0 top-full mt-1.5 bg-bg-deep border border-border-thin rounded-lg shadow-2xl max-h-48 overflow-y-auto z-30 divide-y divide-border-thin/40">
+                                                                            <div className="absolute left-0 right-0 top-full mt-1.5 popover-vercel z-30 custom-scrollbar">
                                                                                 {(!requestSearchQuery.trim() || requestSearchQuery.length < 2) ? (
                                                                                     <>
-                                                                                        <div className="px-3 py-1.5 text-[8.5px] font-bold text-text-dim uppercase tracking-wider bg-surface-hover/30">
+                                                                                        <div className="popover-header-vercel">
                                                                                             Sugerencias disponibles ({suggestedUsers.length})
                                                                                         </div>
                                                                                         {suggestedUsers.length === 0 ? (
                                                                                             <div className="p-3 text-center text-[10px] text-text-dim font-mono">
                                                                                                 {tieneGrupo ? 'No hay integrantes disponibles' : 'No hay personal disponible'}
-                                                                                            </div>
+                                                                                                </div>
                                                                                         ) : (
                                                                                             suggestedUsers.map((su: any) => (
                                                                                                 <button
@@ -621,13 +620,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                                                         setRequestSearchQuery(formatNombre(su.nombre));
                                                                                                         setShowRequestSearchResults(false);
                                                                                                     }}
-                                                                                                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-surface text-left text-[11px] transition-colors"
+                                                                                                    className="popover-item-vercel transition-colors"
                                                                                                 >
                                                                                                     <div>
-                                                                                                        <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
-                                                                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {su.cedula}</p>
+                                                                                                        <p className="font-medium text-text-main text-xs">{formatNombre(su.nombre)}</p>
+                                                                                                        <p className="text-text-dim font-mono text-[10px] mt-0.5">C.I. {su.cedula}</p>
                                                                                                     </div>
-                                                                                                    <span className="badge-vercel text-[8px] font-bold px-1.5 py-0.5 badge-vercel-violet">
+                                                                                                    <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
                                                                                                         Docente
                                                                                                     </span>
                                                                                                 </button>
@@ -636,7 +635,7 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                                     </>
                                                                                 ) : (
                                                                                     <>
-                                                                                        <div className="px-3 py-1.5 text-[8.5px] font-bold text-text-dim uppercase tracking-wider bg-surface-hover/30">
+                                                                                        <div className="popover-header-vercel">
                                                                                             Resultados de búsqueda
                                                                                         </div>
                                                                                         {requestSearchResults.length === 0 ? (
@@ -664,13 +663,13 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                                                                             }
                                                                                                         }
                                                                                                     }}
-                                                                                                    className="w-full px-3 py-2 flex items-center justify-between hover:bg-surface text-left text-[11px] transition-colors"
+                                                                                                    className="popover-item-vercel transition-colors"
                                                                                                 >
                                                                                                     <div>
-                                                                                                        <p className="font-semibold text-text-main">{formatNombre(su.nombre)}</p>
-                                                                                                        <p className="text-text-dim font-mono text-[9px] mt-0.5">C.I. {su.cedula}</p>
+                                                                                                        <p className="font-medium text-text-main text-xs">{formatNombre(su.nombre)}</p>
+                                                                                                        <p className="text-text-dim font-mono text-[10px] mt-0.5">C.I. {su.cedula}</p>
                                                                                                     </div>
-                                                                                                    <span className={`badge-vercel text-[8px] font-bold px-1.5 py-0.5 ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
+                                                                                                    <span className={`badge-vercel text-[10px] font-medium px-2 py-0.5 ${su.tipo === 'profesor' ? 'badge-vercel-violet' : 'badge-vercel-success'}`}>
                                                                                                         {su.tipo === 'profesor' ? 'Docente' : 'Estudiante'}
                                                                                                     </span>
                                                                                                 </button>

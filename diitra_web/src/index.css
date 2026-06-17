@@ -631,61 +631,66 @@ select:focus-visible {
 
 /* Éxito (Success): Aprobado, Aceptado, Completado */
 .badge-vercel-success {
-    background-color: rgba(0, 224, 84, 0.06);
-    border-color: rgba(0, 224, 84, 0.3);
+    background-color: rgba(0, 224, 84, 0.08);
+    border-color: rgba(0, 224, 84, 0.2);
     color: #00e054;
 }
 
 [data-theme="light"] .badge-vercel-success {
-    background-color: rgba(0, 224, 84, 0.04);
+    background-color: rgba(0, 224, 84, 0.06);
+    border-color: rgba(0, 224, 84, 0.15);
     color: #008f37;
 }
 
 /* Peligro / Error: Rechazado, Detenido, Error */
 .badge-vercel-error {
-    background-color: rgba(255, 0, 0, 0.06);
-    border-color: rgba(255, 0, 0, 0.3);
+    background-color: rgba(255, 0, 0, 0.08);
+    border-color: rgba(255, 0, 0, 0.2);
     color: #ff3333;
 }
 
 [data-theme="light"] .badge-vercel-error {
-    background-color: rgba(255, 0, 0, 0.04);
+    background-color: rgba(255, 0, 0, 0.06);
+    border-color: rgba(255, 0, 0, 0.15);
     color: #cc0000;
 }
 
 /* Advertencia / En Progreso: En Revisión, En Corrección, Espera */
 .badge-vercel-warning {
-    background-color: rgba(245, 166, 35, 0.06);
-    border-color: rgba(245, 166, 35, 0.3);
+    background-color: rgba(245, 166, 35, 0.08);
+    border-color: rgba(245, 166, 35, 0.2);
     color: #f5a623;
 }
 
 [data-theme="light"] .badge-vercel-warning {
-    background-color: rgba(245, 166, 35, 0.04);
+    background-color: rgba(245, 166, 35, 0.06);
+    border-color: rgba(245, 166, 35, 0.15);
     color: #b87200;
 }
 
 /* Informativo: Convocatorias, Novedades, Soporte */
 .badge-vercel-info {
-    background-color: rgba(0, 112, 243, 0.06);
-    border-color: rgba(0, 112, 243, 0.3);
+    background-color: rgba(0, 112, 243, 0.08);
+    border-color: rgba(0, 112, 243, 0.2);
     color: #3291ff;
 }
 
 [data-theme="light"] .badge-vercel-info {
-    background-color: rgba(0, 112, 243, 0.04);
+    background-color: rgba(0, 112, 243, 0.06);
+    border-color: rgba(0, 112, 243, 0.15);
     color: #0070f3;
 }
 
 /* Especial / Roles: Coordinador, Director de Proyecto */
 .badge-vercel-violet {
-    background-color: rgba(139, 92, 246, 0.06);
-    border-color: rgba(139, 92, 246, 0.3);
-    color: #a78bfa;
+    background-color: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.2);
+    color: #c084fc;
 }
 
 [data-theme="light"] .badge-vercel-violet {
-    background-color: rgba(139, 92, 246, 0.04);
+    background-color: rgba(139, 92, 246, 0.06);
+    border-color: rgba(139, 92, 246, 0.15);
     color: #7c3aed;
 }
 
@@ -694,6 +699,74 @@ select:focus-visible {
     background-color: var(--surface);
     border-color: var(--border);
     color: var(--text-dim);
+}
+
+/* Autocomplete Popover (Vercel Style) */
+.popover-vercel {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    max-height: 12rem; /* 192px max-height */
+    overflow-y: auto;
+    z-index: 50;
+    padding: 0.375rem; /* 6px internal padding */
+    backdrop-filter: blur(8px);
+}
+
+[data-theme="dark"] .popover-vercel {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    background-color: rgba(10, 10, 10, 0.95);
+    border-color: var(--accents-2);
+}
+
+[data-theme="light"] .popover-vercel {
+    background-color: rgba(255, 255, 255, 0.98);
+    border-color: var(--border);
+}
+
+/* Popover Header/Label (Vercel Style) */
+.popover-header-vercel {
+    padding: 0.5rem 0.625rem 0.25rem 0.625rem;
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    user-select: none;
+}
+
+/* Popover Item Button (Vercel Style) */
+.popover-item-vercel {
+    width: 100%;
+    padding: 0.5rem 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    color: var(--fg);
+    outline: none;
+}
+
+.popover-item-vercel:hover,
+.popover-item-vercel:focus {
+    background-color: var(--surface-hover);
+}
+
+[data-theme="light"] .popover-item-vercel:hover,
+[data-theme="light"] .popover-item-vercel:focus {
+    background-color: rgba(0, 0, 0, 0.035);
+}
+
+[data-theme="dark"] .popover-item-vercel:hover,
+[data-theme="dark"] .popover-item-vercel:focus {
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 /**
