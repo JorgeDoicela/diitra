@@ -2835,7 +2835,8 @@ namespace diitra_infrastructure.Research
                 {
                     var pattern = uuid + "%";
                     var list = await _context.InvCoworkSesiones.AsNoTracking()
-                        .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern) && (s.SeccionNombre != null || s.DocumentoUuid.Contains("_")))
+                        .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern) &&
+                                    (s.SeccionNombre != null || s.Accion != null))
                         .OrderByDescending(s => s.ConectadoEn)
                         .Take(30) // traer más para poder filtrar el ruido de React
                         .ToListAsync();
@@ -2853,13 +2854,19 @@ namespace diitra_infrastructure.Research
 
                 foreach (var s in sesiones)
                 {
+                    // Ignorar eventos técnicos de conexión base sin actividad real.
+                    if (string.IsNullOrWhiteSpace(s.SeccionNombre) && string.IsNullOrWhiteSpace(s.Accion))
+                    {
+                        continue;
+                    }
+
                     string seccion;
                     string descripcion;
 
-                    if (!string.IsNullOrEmpty(s.SeccionNombre))
+                    if (!string.IsNullOrWhiteSpace(s.SeccionNombre))
                     {
                         seccion = s.SeccionNombre.Replace("_", " ");
-                        descripcion = !string.IsNullOrEmpty(s.Accion)
+                        descripcion = !string.IsNullOrWhiteSpace(s.Accion)
                             ? $"{s.Accion} '{seccion}'"
                             : "ha entrado a redactar";
                     }

@@ -6,6 +6,7 @@ import * as signalR from '@microsoft/signalr';
 import type { ICoWorkTransport } from './ICoWorkTransport';
 import type { CoWorkUser } from '../types';
 import { COWORK_CONFIG } from '../config';
+import { coworkLog } from '../utils/log';
 
 export class SignalRTransport implements ICoWorkTransport {
     private connection: signalR.HubConnection;
@@ -79,7 +80,7 @@ export class SignalRTransport implements ICoWorkTransport {
     async connect(documentId: string, user: CoWorkUser): Promise<import('../types').HandshakeResponse> {
         return this.enqueueOperation(async () => {
             const normalizedId = documentId.toLowerCase().trim();
-            console.log(`[SignalR] Iniciando ciclo de conexión para: ${normalizedId}`);
+            coworkLog(`[SignalR] Connect cycle for: ${normalizedId}`);
 
             try {
                 // 1. Esperar a que el estado sea estable (no transicional)
@@ -92,13 +93,13 @@ export class SignalRTransport implements ICoWorkTransport {
 
                 // 2. Si ya está conectado a una sala, no hacemos nada (o podríamos desconectar, pero connect es agnóstico a sala a nivel físico)
                 if (this.connection.state === signalR.HubConnectionState.Disconnected) {
-                    console.log("[SignalR] Ejecutando physical start()...");
+                    coworkLog("[SignalR] Physical start()...");
                     await this.connection.start();
                 }
 
                 // 3. Unirse al documento (Handshake)
                 if (this.connection.state === signalR.HubConnectionState.Connected) {
-                    console.log(`[SignalR] Invocando JoinDocument para: ${normalizedId}`);
+                    coworkLog(`[SignalR] JoinDocument: ${normalizedId}`);
                     const response = await this.connection.invoke<import('../types').HandshakeResponse>(
                         'JoinDocument', 
                         normalizedId, 
@@ -134,9 +135,8 @@ export class SignalRTransport implements ICoWorkTransport {
             try {
                 if (this.connection.state !== signalR.HubConnectionState.Disconnected && 
                     this.connection.state !== signalR.HubConnectionState.Disconnecting) {
-                    console.log("[SignalR] Ejecutando physical stop()...");
+                    coworkLog("[SignalR] Physical stop()...");
                     await this.connection.stop();
-                    console.log("[SignalR] Physical stop() completado.");
                 }
             } catch (err) {
                 console.warn("[SignalR] Error en disconnect():", err);

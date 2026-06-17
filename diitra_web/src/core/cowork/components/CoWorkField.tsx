@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useContext } from 'react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
 import { DocumentDataContext } from '../../documents/context/DocumentDataContext';
+import { coworkLog } from '../utils/log';
 
 interface CoWorkFieldProps {
     name: string;
@@ -10,15 +11,41 @@ interface CoWorkFieldProps {
     className?: string;
     label?: string;
     type?: 'text' | 'textarea' | 'select' | 'checkbox';
-    onValueChange?: (value: any) => void;
+    onValueChange?: (value: any, meta?: { source?: 'local' | 'remote' }) => void;
     children?: React.ReactNode;
     readOnly?: boolean;
 }
 
+function applyMinimalDiff(ytext: Y.Text, oldVal: string, newVal: string): void {
+    if (oldVal === newVal) return;
+
+    let prefixLen = 0;
+    const minLen = Math.min(oldVal.length, newVal.length);
+    while (prefixLen < minLen && oldVal[prefixLen] === newVal[prefixLen]) {
+        prefixLen++;
+    }
+
+    let suffixLen = 0;
+    while (
+        suffixLen < (minLen - prefixLen) &&
+        oldVal[oldVal.length - 1 - suffixLen] === newVal[newVal.length - 1 - suffixLen]
+    ) {
+        suffixLen++;
+    }
+
+    const deleteCount = oldVal.length - prefixLen - suffixLen;
+    const insertStr = newVal.slice(prefixLen, newVal.length - suffixLen);
+
+    if (deleteCount > 0) ytext.delete(prefixLen, deleteCount);
+    if (insertStr.length > 0) ytext.insert(prefixLen, insertStr);
+}
+
 /**
- * DIITRA CoWork Field
- * -------------------
- * Un campo de entrada que sincroniza su contenido en tiempo real.
+ * DIITRA CoWork Field (v2.0 — Yjs as single source of truth)
+ *
+ * The displayed value is always derived from Yjs (after history loads).
+ * The parent's DB value via DocumentDataContext is used ONLY as a one-time
+ * seed when Yjs is empty and history has been fully loaded.
  */
 export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     name,
@@ -32,97 +59,75 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     readOnly
 }) => {
     const parentFormData = useContext(DocumentDataContext);
-    const value = parentFormData ? parentFormData[name] : undefined;
+    const dbValue = parentFormData ? parentFormData[name] : undefined;
 
-    const [localValue, setLocalValue] = useState<any>(() => {
-        if (value !== undefined && value !== null && value !== '') {
-            return type === 'checkbox' ? value === 'true' || value === true : value;
+    const { ydoc } = cowork;
+    const historyLoaded = cowork.session.lastSyncedAt !== null;
+
+    const [displayValue, setDisplayValue] = useState<any>(() => {
+        if (dbValue !== undefined && dbValue !== null && dbValue !== '') {
+            return type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
         }
         return type === 'checkbox' ? false : '';
     });
-    const { ydoc } = cowork;
-    const isRemoteChange = useRef(false);
 
-    // Estabilizar onValueChange para que useEffect no se re-dispare cada render
     const onValueChangeRef = useRef(onValueChange);
     useEffect(() => {
         onValueChangeRef.current = onValueChange;
     }, [onValueChange]);
 
-    // Sincronizar el valor local cuando el valor del padre cambie (ej: carga asíncrona de base de datos)
-    useEffect(() => {
-        if (value !== undefined && value !== null && value !== '' && value !== localValue) {
-            const isReadOnlyMode = readOnly || cowork.session.readOnly;
-            if (isReadOnlyMode) {
-                setLocalValue(type === 'checkbox' ? value === 'true' || value === true : value);
-            } else {
-                // Si estamos en modo de escritura y Yjs está vacío, podemos poblar Yjs
-                const ytext = ydoc?.getText(name);
-                const currentYVal = ytext?.toString();
-                if (!currentYVal || currentYVal === 'undefined') {
-                    const parsed = type === 'checkbox' ? value === 'true' || value === true : value;
-                    setLocalValue(parsed);
-                    ydoc?.transact(() => {
-                        ytext?.delete(0, ytext.length);
-                        ytext?.insert(0, String(value));
-                    }, 'local-initializer-effect');
-                }
-            }
-        }
-    }, [value, ydoc, name, cowork.session.readOnly, readOnly, localValue, type]);
+    const seededRef = useRef(false);
 
     useEffect(() => {
         if (!ydoc) return;
 
         const ytext = ydoc.getText(name);
 
-        // Sincronización Inicial: solo actualizamos local si Yjs tiene algo diferente
-        const initialVal = ytext.toString();
-        if (initialVal && initialVal !== 'undefined') {
-            const parsed = type === 'checkbox' ? initialVal === 'true' : initialVal;
-            // Solo sincronizamos si el valor local inicial (vacío) es diferente al del ydoc
-            if (localValue !== parsed) {
-                console.log(`[CoWorkField:${name}] Sincronización inicial detectada desde Yjs:`, parsed);
-                setLocalValue(parsed);
-                const callback = onValueChangeRef.current;
-                if (callback) {
-                    setTimeout(() => callback(parsed), 0);
-                }
+        const readYjs = (): any => {
+            const raw = ytext.toString();
+            if (!raw || raw === 'undefined') return null;
+            return type === 'checkbox' ? raw === 'true' : raw;
+        };
+
+        const syncDisplayFromYjs = () => {
+            const val = readYjs();
+            if (val !== null) {
+                setDisplayValue(val);
             }
-        } else if (value !== undefined && value !== null && value !== '') {
-            // Yjs está vacío, pero el padre tiene un valor de base de datos.
+        };
+
+        const currentYjsVal = readYjs();
+        if (currentYjsVal !== null) {
+            setDisplayValue(currentYjsVal);
+        } else if (
+            historyLoaded &&
+            !seededRef.current &&
+            dbValue !== undefined &&
+            dbValue !== null &&
+            dbValue !== ''
+        ) {
+            seededRef.current = true;
             const isReadOnlyMode = readOnly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
-                console.log(`[CoWorkField:${name}] Yjs vacío. Poblando Yjs con el valor de la BD del padre:`, value);
-                const stringVal = String(value);
+                coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time):`, dbValue);
+                const stringVal = String(dbValue);
                 ydoc.transact(() => {
                     ytext.delete(0, ytext.length);
                     ytext.insert(0, stringVal);
-                }, 'local-initializer');
+                }, 'local-seed');
             } else {
-                console.log(`[CoWorkField:${name}] Yjs vacío (modo sólo lectura). Usando valor de la BD:`, value);
-                const parsed = type === 'checkbox' ? value === 'true' || value === true : value;
-                setLocalValue(parsed);
+                const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
+                setDisplayValue(parsed);
             }
         }
 
         const observer = (event: Y.YTextEvent) => {
-            console.log(`[CoWorkField:${name}] Yjs observer fired, origin=`, event.transaction.origin);
-            if (event.transaction.origin === 'remote') {
-                isRemoteChange.current = true;
-                const raw = ytext.toString();
-                const newVal = type === 'checkbox' ? raw === 'true' : raw;
-                
-                // 1. Actualizar el valor local síncronamente
-                setLocalValue(newVal);
-                
-                // 2. Disparar el callback del padre de forma asíncrona para no contaminar la fase de render
-                const callback = onValueChangeRef.current;
-                if (callback) {
-                    setTimeout(() => callback(newVal), 0);
-                }
-                
-                setTimeout(() => { isRemoteChange.current = false; }, 0);
+            if (event.transaction.origin !== 'remote') return;
+            syncDisplayFromYjs();
+            const val = readYjs();
+            if (val !== null) {
+                const cb = onValueChangeRef.current;
+                if (cb) setTimeout(() => cb(val, { source: 'remote' }), 0);
             }
         };
 
@@ -130,23 +135,22 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         return () => {
             ytext.unobserve(observer);
         };
-    }, [ydoc, name, type, value, readOnly, cowork.session.readOnly]); // <-- onValueChange removido de deps, value y readOnly añadidos
+    }, [ydoc, name, type, historyLoaded, dbValue, readOnly, cowork.session.readOnly]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
-        setLocalValue(newValue);
-        onValueChange?.(newValue);
+        setDisplayValue(newValue);
+        onValueChange?.(newValue, { source: 'local' });
 
-        if (!isRemoteChange.current && ydoc) {
+        if (ydoc) {
             const ytext = ydoc.getText(name);
             const stringVal = String(newValue);
-            ydoc.transact(() => {
-                const current = ytext.toString();
-                if (current !== stringVal) {
-                    ytext.delete(0, current.length);
-                    ytext.insert(0, stringVal);
-                }
-            });
+            const current = ytext.toString();
+            if (current !== stringVal) {
+                ydoc.transact(() => {
+                    applyMinimalDiff(ytext, current, stringVal);
+                }, 'local-input');
+            }
         }
     };
 
@@ -163,15 +167,15 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     return (
         <div className={type === 'checkbox' ? "flex items-center gap-3" : "w-full"}>
             <div className="relative order-1">
-                {type === 'text' && <input {...commonProps} type="text" value={localValue} onChange={handleChange} />}
-                {type === 'textarea' && <textarea {...commonProps} value={localValue} onChange={handleChange} />}
+                {type === 'text' && <input {...commonProps} type="text" value={displayValue} onChange={handleChange} />}
+                {type === 'textarea' && <textarea {...commonProps} value={displayValue} onChange={handleChange} />}
                 {type === 'select' && (
-                    <select {...commonProps} value={localValue} onChange={handleChange}>
+                    <select {...commonProps} value={displayValue} onChange={handleChange}>
                         {children}
                     </select>
                 )}
                 {type === 'checkbox' && (
-                    <input {...commonProps} type="checkbox" checked={localValue} onChange={handleChange} />
+                    <input {...commonProps} type="checkbox" checked={displayValue} onChange={handleChange} />
                 )}
                 
                 {type !== 'checkbox' && (
