@@ -133,9 +133,16 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         navigate({ search: searchParams.toString() }, { replace: true });
     }, [location.search, navigate]);
 
+    // Ref para evitar notificar la misma sección múltiples veces
+    const lastNotifiedTabRef = useRef<string | null>(null);
+
     useEffect(() => {
         if (cowork && cowork.notifySectionActivity && activeTab && !readOnly) {
-            cowork.notifySectionActivity(cowork.session.documentId, activeTab, "ha entrado a redactar");
+            // Solo notificar cuando la sección realmente cambia (no en cada re-render)
+            if (lastNotifiedTabRef.current !== activeTab) {
+                lastNotifiedTabRef.current = activeTab;
+                cowork.notifySectionActivity(cowork.session.documentId, activeTab, "ha entrado a redactar");
+            }
         }
     }, [cowork, activeTab, readOnly]);
 

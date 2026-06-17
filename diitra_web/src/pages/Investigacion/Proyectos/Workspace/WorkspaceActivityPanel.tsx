@@ -168,7 +168,7 @@ const WorkspaceActivityPanel: React.FC<WorkspaceActivityPanelProps> = ({ project
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                                         <span className="text-[11px] font-semibold text-text-main truncate">
-                                            {item.nombreUsuario}
+                                            {item.nombreUsuario || 'Usuario'}
                                         </span>
                                         <span className={`text-[8px] font-semibold uppercase px-1.5 py-0.5 rounded border ${getBadgeStyle(item.tipo)}`}>
                                             {getTypoLabel(item.tipo)}

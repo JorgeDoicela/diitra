@@ -385,6 +385,7 @@ namespace diitra_infrastructure.Collaboration
         /// </summary>
         public async Task NotifySectionActivity(string instanceUuid, string sectionName, string action, string userName)
         {
+            // 1. Broadcast en tiempo real
             await Clients.Group(instanceUuid).SendAsync("SectionActivity", new {
                 instanceUuid,
                 sectionName,
@@ -392,6 +393,41 @@ namespace diitra_infrastructure.Collaboration
                 userName,
                 timestamp = DateTime.UtcNow
             });
+
+            // 2. PERSISTENCIA: guardar visita a sección para que sobreviva recargas.
+            //    documentoUuid = instanceUuid_SECCION → GetPulse lo recupera con LIKE '{uuid}%'
+            try
+            {
+                var docId = $"{instanceUuid}_{sectionName.ToUpper()}";
+                var ahora = DateTime.UtcNow;
+
+                // Cerrar visitas anteriores abiertas del mismo usuario en esta sección
+                var anteriores = await _db.InvCoworkSesiones
+                    .Where(s => s.DocumentoUuid == docId &&
+                                s.NombreUsuario == userName &&
+                                !s.DesconectadoEn.HasValue)
+                    .ToListAsync();
+                foreach (var ant in anteriores)
+                    ant.DesconectadoEn = ahora;
+
+                // Registrar nueva visita
+                _db.InvCoworkSesiones.Add(new InvCoworkSesion
+                {
+                    DocumentoUuid = docId,
+                    UsuarioUuid   = Context.UserIdentifier ?? "anon",
+                    NombreUsuario = userName,
+                    RolUsuario    = "Investigador",
+                    SignalrConId  = Context.ConnectionId,
+                    ConectadoEn   = ahora
+                });
+
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("[DIITRA CoWork] No se pudo persistir SectionActivity: {Msg}", ex.Message);
+                // Best-effort: el broadcast ya se realizó
+            }
         }
 
         /// <summary>
@@ -464,18 +500,60 @@ namespace diitra_infrastructure.Collaboration
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            // Cerrar la sesión de auditoría
-            var sesion = await _db.InvCoworkSesiones
+            // Cerrar TODAS las sesiones abiertas para esta conexión (sesión base + sesiones de sección)
+            var sesiones = await _db.InvCoworkSesiones
                 .Where(s => s.SignalrConId == Context.ConnectionId && s.DesconectadoEn == null)
-                .FirstOrDefaultAsync();
+                .ToListAsync();
 
-            if (sesion != null)
+            if (sesiones.Any())
             {
-                sesion.DesconectadoEn = DateTime.UtcNow;
+                var ahora = DateTime.UtcNow;
+                string? baseUuid = null;
+
+                foreach (var sesion in sesiones)
+                {
+                    var duracion = (ahora - sesion.ConectadoEn).TotalSeconds;
+
+                    if (duracion < 5)
+                    {
+                        // Ruido de React Strict Mode (~1-2s) → eliminar
+                        _db.InvCoworkSesiones.Remove(sesion);
+                        _logger.LogDebug(
+                            "[DIITRA CoWork] Sesión efímera ({Sec:F0}s) de {User} eliminada (ruido React).",
+                            duracion, sesion.NombreUsuario);
+                    }
+                    else
+                    {
+                        // Sesión real → cerrar con timestamp
+                        sesion.DesconectadoEn = ahora;
+                        baseUuid ??= sesion.DocumentoUuid.Split('_')[0];
+                        _logger.LogInformation(
+                            "[DIITRA CoWork] {User} se desconectó de {Doc} ({Sec:F0}s).",
+                            sesion.NombreUsuario, sesion.DocumentoUuid, duracion);
+                    }
+                }
+
                 await _db.SaveChangesAsync();
-                _logger.LogInformation(
-                    "[DIITRA CoWork] {User} se desconectó del documento.",
-                    sesion.NombreUsuario);
+
+                // Auto-poda: mantener solo los últimos 100 registros por documento
+                if (baseUuid != null)
+                {
+                    var pattern = baseUuid + "%";
+                    var totalSesiones = await _db.InvCoworkSesiones
+                        .CountAsync(s => EF.Functions.Like(s.DocumentoUuid, pattern));
+
+                    if (totalSesiones > 100)
+                    {
+                        var exceso = await _db.InvCoworkSesiones
+                            .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern)
+                                     && s.DesconectadoEn.HasValue)
+                            .OrderBy(s => s.ConectadoEn)
+                            .Take(totalSesiones - 100)
+                            .ToListAsync();
+                        _db.InvCoworkSesiones.RemoveRange(exceso);
+                        await _db.SaveChangesAsync();
+                    }
+                }
             }
 
             await base.OnDisconnectedAsync(exception);
