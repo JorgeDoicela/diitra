@@ -16,6 +16,12 @@ export const COWORK_CONFIG = {
     /** Tamaño máximo de un update de Yjs antes de fragmentarlo */
     MAX_UPDATE_SIZE_BYTES: 50_000,
 
+    /** Umbral de deltas para compactación reactiva */
+    COMPACTION_DELTA_THRESHOLD: 150,
+
+    /** Gracia antes de cerrar transporte compartido (StrictMode) */
+    TRANSPORT_RELEASE_GRACE_MS: 1500,
+
     /**
      * Paleta de colores de cursores para colaboradores.
      * El mismo usuario SIEMPRE obtendrá el mismo color en todas las sesiones

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA CoWork — Main Hook: useCoWork (v3.9 - Isolation & Stability)
+// DIITRA CoWork — Main Hook: useCoWork (v4.0 — no ghost transport, conditional logs)
 // ═══════════════════════════════════════════════════════════════════
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
@@ -8,11 +8,64 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import type { CoWorkConfig, CoWorkHandle, CoWorkSession, CoWorkUser } from '../types';
 import type { ICoWorkTransport } from '../transport/ICoWorkTransport';
 import { SignalRTransport } from '../transport/SignalRTransport';
-import { getUserColor, getUserInitials } from '../config';
+import { COWORK_CONFIG, getUserColor, getUserInitials } from '../config';
 import { uint8ArrayToBase64, base64ToUint8Array } from '../utils/binary';
+import { coworkLog } from '../utils/log';
+
+type SharedTransportEntry = {
+    transport: ICoWorkTransport;
+    refs: number;
+    releaseTimer: ReturnType<typeof setTimeout> | null;
+};
+
+const sharedTransportByDocument = new Map<string, SharedTransportEntry>();
+
+function normalizeDocumentId(documentId: string): string {
+    return (documentId || '').toLowerCase().trim();
+}
+
+function acquireSharedTransport(documentId: string): ICoWorkTransport {
+    const key = normalizeDocumentId(documentId);
+    let entry = sharedTransportByDocument.get(key);
+
+    if (!entry) {
+        entry = {
+            transport: new SignalRTransport(),
+            refs: 0,
+            releaseTimer: null
+        };
+        sharedTransportByDocument.set(key, entry);
+    }
+
+    if (entry.releaseTimer) {
+        clearTimeout(entry.releaseTimer);
+        entry.releaseTimer = null;
+    }
+
+    entry.refs += 1;
+    return entry.transport;
+}
+
+function releaseSharedTransport(documentId: string, transport: ICoWorkTransport) {
+    const key = normalizeDocumentId(documentId);
+    const entry = sharedTransportByDocument.get(key);
+    if (!entry || entry.transport !== transport) return;
+
+    entry.refs = Math.max(0, entry.refs - 1);
+    if (entry.refs > 0) return;
+
+    entry.releaseTimer = setTimeout(async () => {
+        const current = sharedTransportByDocument.get(key);
+        if (!current || current.transport !== transport || current.refs > 0) return;
+        try {
+            await transport.disconnect();
+        } finally {
+            sharedTransportByDocument.delete(key);
+        }
+    }, COWORK_CONFIG.TRANSPORT_RELEASE_GRACE_MS);
+}
 
 export function useCoWork(config: CoWorkConfig): CoWorkHandle {
-    // 1. Estado de la sesión
     const [session, setSession] = useState<CoWorkSession>({
         documentId: config.documentId,
         isConnected: false,
@@ -22,13 +75,9 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         error: null,
     });
 
-    // 2. Estado reactivo del Yjs Doc y Awareness (CORRECCIÓN: no son simples refs)
-    // Deben ser estado para que el useMemo del return y los consumers (useDIITRADocument)
-    // reciban el nuevo ydoc cuando SignalR reconecta y crea nuevas instancias.
     const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
     const [awareness, setAwareness] = useState<awarenessProtocol.Awareness | null>(null);
 
-    // Referencias internas para uso dentro del efecto (sin causar loops)
     const ydocRef = useRef<Y.Doc | null>(null);
     const awarenessRef = useRef<awarenessProtocol.Awareness | null>(null);
     const activeTransportRef = useRef<ICoWorkTransport | null>(null);
@@ -36,24 +85,15 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     const lastContentRef = useRef<{ html: string; json: string; fieldName?: string } | null>(null);
     const hasUnsavedContentRef = useRef<boolean>(false);
 
-    // Getters seguros para el handle
-    const getTransport = () => {
-        if (!activeTransportRef.current) {
-            activeTransportRef.current = new SignalRTransport();
-        }
-        return activeTransportRef.current;
-    };
-
-    // 3. Acciones del Handle
     const compact = useCallback(async () => {
-        if (!ydocRef.current) return;
+        const transport = activeTransportRef.current;
+        if (!ydocRef.current || !transport) return;
         const update = Y.encodeStateAsUpdate(ydocRef.current);
         const base64 = uint8ArrayToBase64(update);
-        await getTransport().submitFullSnapshot(config.documentId, base64);
+        await transport.submitFullSnapshot(config.documentId, base64);
     }, [config.documentId]);
 
     const submitFinalContent = useCallback((html: string, json: string, fieldName?: string) => {
-        // Build the per-field storage key: {documentId}_{fieldName} or just {documentId}
         const storageKey = fieldName ? `${config.documentId}_${fieldName}` : config.documentId;
 
         lastContentRef.current = { html, json, fieldName };
@@ -62,11 +102,12 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         if (submitTimerRef.current) clearTimeout(submitTimerRef.current);
 
         submitTimerRef.current = setTimeout(async () => {
+            const transport = activeTransportRef.current;
+            if (!transport) return;
             try {
-                console.log(`[useCoWork] Guardando snapshot en servidor para: ${storageKey}...`);
+                coworkLog(`[useCoWork] Saving snapshot: ${storageKey}`);
                 setSession(s => ({ ...s, isSyncing: true }));
-                await getTransport().submitFinalContent(storageKey, html, json);
-                console.info(`[useCoWork] Snapshot guardado exitosamente.`);
+                await transport.submitFinalContent(storageKey, html, json);
                 hasUnsavedContentRef.current = false;
                 setSession(s => ({ ...s, isSyncing: false, lastSyncedAt: new Date() }));
             } catch (err) {
@@ -81,47 +122,66 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
     }, []);
 
     const notifySectionActivity = useCallback((instanceUuid: string, sectionName: string, action: string) => {
-        return getTransport().notifySectionActivity(instanceUuid, sectionName, action, config.user.name);
+        const transport = activeTransportRef.current;
+        if (!transport) return Promise.resolve();
+        return transport.notifySectionActivity(instanceUuid, sectionName, action, config.user.name);
     }, [config.user.name]);
 
     const updateSectionStatus = useCallback((instanceUuid: string, sectionName: string, status: string) => {
-        return getTransport().updateSectionStatus(instanceUuid, sectionName, status, config.user.id, config.user.name);
+        const transport = activeTransportRef.current;
+        if (!transport) return Promise.resolve();
+        return transport.updateSectionStatus(instanceUuid, sectionName, status, config.user.id, config.user.name);
     }, [config.user.id, config.user.name]);
 
     const postComment = useCallback((instanceUuid: string, content: string, parentId?: number) => {
-        return getTransport().postComment(instanceUuid, config.user.id, config.user.name, content, parentId);
+        const transport = activeTransportRef.current;
+        if (!transport) return Promise.resolve();
+        return transport.postComment(instanceUuid, config.user.id, config.user.name, content, parentId);
     }, [config.user.id, config.user.name]);
 
     const onSectionActivity = useCallback((handler: (data: any) => void) => {
-        getTransport().onSectionActivity(handler);
+        const transport = activeTransportRef.current;
+        if (!transport) return;
+        transport.onSectionActivity(handler);
     }, []);
 
     const onSectionStatusUpdated = useCallback((handler: (data: any) => void) => {
-        getTransport().onSectionStatusUpdated(handler);
+        const transport = activeTransportRef.current;
+        if (!transport) return;
+        transport.onSectionStatusUpdated(handler);
     }, []);
 
     const onNewCommentReceived = useCallback((handler: (data: any) => void) => {
-        getTransport().onNewCommentReceived(handler);
+        const transport = activeTransportRef.current;
+        if (!transport) return;
+        transport.onNewCommentReceived(handler);
     }, []);
 
-    // 4. Ciclo de vida de la colaboración (Efecto Principal Aislado)
     useEffect(() => {
         let isMounted = true;
 
         if (!config.enabled) return;
 
-        console.log(`[useCoWork] Activando motor para sala: ${config.documentId}`);
+        coworkLog(`[useCoWork] Starting engine for room: ${config.documentId}`);
 
-        // A) CREACIÓN: Instancias aisladas exclusivas de este ciclo de efecto
-        const transport = new SignalRTransport();
+        const transport = acquireSharedTransport(config.documentId);
         activeTransportRef.current = transport;
+        let transportReleased = false;
+
+        const releaseTransportSafely = () => {
+            if (transportReleased) return;
+            transportReleased = true;
+            releaseSharedTransport(config.documentId, transport);
+            if (activeTransportRef.current === transport) {
+                activeTransportRef.current = null;
+            }
+        };
 
         const newYdoc = new Y.Doc();
         const newAwareness = new awarenessProtocol.Awareness(newYdoc);
         ydocRef.current = newYdoc;
         awarenessRef.current = newAwareness;
 
-        // Notificar a React que tenemos nuevas instancias reactivas
         setYdoc(newYdoc);
         setAwareness(newAwareness);
 
@@ -143,10 +203,9 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 setSession(s => ({ ...s, connectedUsers: Array.from(usersMap.values()) }));
             };
 
-            // B) EVENTOS DE ENTRADA
             statusCleanup = transport.onStatusChange((isConnected) => {
                 if (isMounted) {
-                    console.log(`[useCoWork] Telemetría Real-Time: ${isConnected ? 'ONLINE' : 'OFFLINE'}`);
+                    coworkLog(`[useCoWork] Real-Time: ${isConnected ? 'ONLINE' : 'OFFLINE'}`);
                     setSession(s => (s.isConnected === isConnected ? s : { ...s, isConnected }));
                 }
             });
@@ -163,7 +222,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
             transport.onUpdateHistory((updates) => {
                 if (!isMounted || ydocRef.current !== newYdoc) return;
-                console.log(`[useCoWork] Sincronizando historial (${updates.length} deltas)`);
+                coworkLog(`[useCoWork] Syncing history (${updates.length} deltas)`);
                 newYdoc.transact(() => {
                     updates.forEach(base64 => {
                         const update = base64ToUint8Array(base64);
@@ -182,7 +241,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
             transport.onUserJoined?.((name) => {
                 if (!isMounted || awarenessRef.current !== newAwareness) return;
-                console.log(`[useCoWork] Nuevo usuario detectado (${name}), re-anunciando presencia local...`);
+                coworkLog(`[useCoWork] User joined (${name}), re-announcing presence`);
                 const localState = newAwareness.getLocalState();
                 if (localState) {
                     newAwareness.setLocalState(localState);
@@ -195,7 +254,6 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }
             }, 5000);
 
-            // C) EVENTOS DE SALIDA
             newYdoc.on('update', (update, origin) => {
                 if (origin !== 'remote' && isMounted) {
                     const base64 = uint8ArrayToBase64(update);
@@ -216,12 +274,10 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 }
             });
 
-            // D) CONEXIÓN (Handshake)
             try {
                 const handshake = await transport.connect(config.documentId, config.user);
 
                 if (!isMounted) {
-                    transport.disconnect();
                     return;
                 }
 
@@ -266,11 +322,11 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                     if (isMounted) syncUserList();
                 }, 1000);
 
-                if (handshake.deltaCount > 500) compact();
+                if (handshake.deltaCount > COWORK_CONFIG.COMPACTION_DELTA_THRESHOLD) compact();
 
                 transport.onCompactionTrigger?.(() => {
                     if (isMounted) {
-                        console.log("[useCoWork] Servidor solicitó compactación reactiva automática por acumulación de deltas.");
+                        coworkLog("[useCoWork] Server requested reactive compaction");
                         compact();
                     }
                 });
@@ -285,9 +341,8 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
 
         init();
 
-        // E) LIMPIEZA EXTREMA: Desconectar y destruir SOLO los recursos de este efecto
         return () => {
-            console.log(`[useCoWork] Cleanup sala: ${config.documentId}`);
+            coworkLog(`[useCoWork] Cleanup room: ${config.documentId}`);
             isMounted = false;
             clearInterval(cleanupInterval);
             if (statusCleanup) statusCleanup();
@@ -296,7 +351,6 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
             newYdoc.destroy();
             newAwareness.destroy();
 
-            // Nullificar referencias internas y estado reactivo
             if (ydocRef.current === newYdoc) {
                 ydocRef.current = null;
                 setYdoc(null);
@@ -306,30 +360,26 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
                 setAwareness(null);
             }
 
-            // Guardar cambios pendientes de CoWork antes de cerrar físicamente la conexión
             (async () => {
                 if (hasUnsavedContentRef.current && lastContentRef.current) {
                     const { html, json, fieldName } = lastContentRef.current;
                     const storageKey = fieldName ? `${config.documentId}_${fieldName}` : config.documentId;
-                    console.log(`[useCoWork] Desmontando: Forzando guardado de snapshot antes de desconectar para: ${storageKey}...`);
+                    coworkLog(`[useCoWork] Unmounting: force-saving snapshot for: ${storageKey}`);
                     try {
                         await transport.submitFinalContent(storageKey, html, json);
-                        console.log(`[useCoWork] Desmontado: Snapshot guardado forzadamente.`);
                     } catch (err) {
                         console.error("[useCoWork] Error al forzar guardado de snapshot:", err);
                     }
                 }
-                console.log(`[useCoWork] Desconectando transporte para sala: ${config.documentId}`);
-                await transport.disconnect();
-                if (activeTransportRef.current === transport) activeTransportRef.current = null;
+                releaseTransportSafely();
             })();
         };
     }, [config.documentId, config.enabled]);
 
     return useMemo(() => ({
         session,
-        ydoc,        // ← Estado reactivo: React re-renderiza cuando cambia
-        awareness,   // ← Estado reactivo: React re-renderiza cuando cambia
+        ydoc,
+        awareness,
         compact,
         submitFinalContent,
         disconnect,
@@ -340,7 +390,7 @@ export function useCoWork(config: CoWorkConfig): CoWorkHandle {
         onSectionStatusUpdated,
         onNewCommentReceived
     }), [
-        session, ydoc, awareness,   // ← ydoc y awareness son dependencias reactivas
+        session, ydoc, awareness,
         compact, submitFinalContent, disconnect,
         notifySectionActivity, updateSectionStatus, postComment,
         onSectionActivity, onSectionStatusUpdated, onNewCommentReceived

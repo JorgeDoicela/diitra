@@ -13,7 +13,7 @@ import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 interface ProgressReportSectionProps {
     formData: any;
     cowork: any;
-    onUpdate: (field: string, value: any) => void;
+    onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' }) => void;
     onAdd: (list: string, template: any) => void;
     onRemove: (list: string, index: number) => void;
     onUpdateItem: (list: string, index: number, field: string, value: any) => void;
@@ -74,7 +74,7 @@ export const ProgressReportSection: React.FC<ProgressReportSectionProps> = ({
                         <CoWorkEditor 
                             field="ConclusionesParciales" 
                             cowork={cowork} 
-                            onChange={(html) => onUpdate('ConclusionesParciales', html)} 
+                            onChange={(html, meta) => onUpdate('ConclusionesParciales', html, meta)} 
                         />
                     </div>
                 </div>

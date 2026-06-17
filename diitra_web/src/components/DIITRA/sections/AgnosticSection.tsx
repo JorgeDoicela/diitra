@@ -35,7 +35,7 @@ interface FieldConfig {
 interface AgnosticSectionProps {
     formData: any;
     cowork: any;
-    onUpdate: (field: string, value: any) => void;
+    onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' }) => void;
     activeTab: string;
     templateCode: string;
     label?: string;           // Label de la sección (prop directo, opcional)
@@ -133,7 +133,7 @@ export const AgnosticSection: React.FC<AgnosticSectionProps> = ({
                             <CoWorkEditor
                                 field={name}
                                 cowork={cowork}
-                                onChange={(html) => onUpdate(name, html)}
+                                onChange={(html, meta) => onUpdate(name, html, meta)}
                             />
                         </div>
                     </div>

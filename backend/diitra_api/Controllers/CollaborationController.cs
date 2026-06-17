@@ -131,7 +131,8 @@ namespace diitra_api.Controllers
                 // Cargar actividad reciente para esta instancia documental
                 var pattern = instanceUuid + "%";
                 var sesiones = await _db.InvCoworkSesiones.AsNoTracking()
-                    .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern) && (s.SeccionNombre != null || s.DocumentoUuid.Contains("_")))
+                    .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern) &&
+                                (s.SeccionNombre != null || s.Accion != null))
                     .OrderByDescending(s => s.ConectadoEn)
                     .Take(50) // traer más para poder filtrar el ruido de React
                     .ToListAsync();
@@ -155,13 +156,19 @@ namespace diitra_api.Controllers
 
                 foreach (var s in sesiones)
                 {
+                    // Ignorar eventos técnicos sin sección/acción útil.
+                    if (string.IsNullOrWhiteSpace(s.SeccionNombre) && string.IsNullOrWhiteSpace(s.Accion))
+                    {
+                        continue;
+                    }
+
                     string sectionName;
                     string action;
 
-                    if (!string.IsNullOrEmpty(s.SeccionNombre))
+                    if (!string.IsNullOrWhiteSpace(s.SeccionNombre))
                     {
                         sectionName = s.SeccionNombre.Replace("_", " ");
-                        action = s.Accion ?? "ha entrado a redactar";
+                        action = string.IsNullOrWhiteSpace(s.Accion) ? "ha entrado a redactar" : s.Accion;
                     }
                     else
                     {

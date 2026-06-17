@@ -1,14 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// DIITRA CoWork — Editor Component
-//
-// Componente de React que renderiza el editor Tiptap colaborativo.
-// Consume un CoWorkHandle (del hook useCoWork) para conectarse
-// al estado compartido del documento.
-//
-// Uso:
-// ────
-// const cowork = useCoWork({ documentId, user });
-// <CoWorkEditor cowork={cowork} placeholder="Escribe tu metodología..." />
+// DIITRA CoWork — Editor Component (v2.0 — correct origin detection)
 // ═══════════════════════════════════════════════════════════════════
 
 import React, { useContext } from 'react';
@@ -19,6 +10,7 @@ import type { CoWorkHandle, CoWorkUser } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
 import { DocumentDataContext } from '../../documents/context/DocumentDataContext';
+import { coworkLog } from '../utils/log';
 import { 
     CheckCircle2, 
     Loader2, 
@@ -30,17 +22,11 @@ import {
 } from 'lucide-react';
 
 interface CoWorkEditorProps {
-    /** Handle retornado por useCoWork — contiene ydoc, awareness y sesión */
     cowork: CoWorkHandle;
-    /** Llave de fragmento Yjs a la cual se unirá este editor (ej. 'Antecedentes') */
     field?: string;
-    /** Callback para extraer el HTML puro generado por Tiptap (para guardado agnóstico) */
-    onChange?: (html: string) => void;
-    /** Texto de guía visible cuando el editor está vacío */
+    onChange?: (html: string, meta?: { source?: 'local' | 'remote' }) => void;
     placeholder?: string;
-    /** Modo solo lectura (para revisores en evaluación doble ciego) */
     readonly?: boolean;
-    /** Clase CSS adicional para el contenedor del editor */
     className?: string;
 }
 
@@ -94,10 +80,16 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const ydoc = cowork.ydoc!;
     const awareness = cowork.awareness!;
 
-    // Guardar referencias a callbacks e inputs volátiles para evitar la destrucción/re-creación de Tiptap
     const onChangeRef = React.useRef(onChange);
     const coworkRef = React.useRef(cowork);
     const fieldRef = React.useRef(field);
+
+    /**
+     * Track whether the last ProseMirror transaction was triggered by y-prosemirror
+     * (i.e. a remote change). We inspect the `y-sync$` meta that the Collaboration
+     * extension stamps on every remote transaction.
+     */
+    const lastTrWasRemoteRef = React.useRef(false);
 
     React.useEffect(() => {
         onChangeRef.current = onChange;
@@ -105,7 +97,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
         fieldRef.current = field;
     });
 
-    // Memorizar las extensiones para evitar re-creaciones del editor innecesarias
     const extensions = React.useMemo(() => {
         return buildCoWorkExtensions({
             ydoc: useCollaboration ? ydoc : null,
@@ -135,7 +126,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                             const formData = new FormData();
                             formData.append('file', file);
                             
-                            // Subida asíncrona (Upload-on-Paste)
                             api.post('/collaboration/upload', formData, {
                                 headers: { 'Content-Type': 'multipart/form-data' }
                             }).then(res => {
@@ -163,7 +153,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                         const formData = new FormData();
                         formData.append('file', file);
                         
-                        // Evitar que el navegador abra la imagen
                         event.preventDefault();
                         
                         api.post('/collaboration/upload', formData, {
@@ -185,11 +174,9 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 return handled;
             }
         },
-        // Sincronizar selección completa (posición y resaltado) aislada por campo
         onSelectionUpdate: ({ editor }) => {
             const { anchor, head } = editor.state.selection;
             const currentField = fieldRef.current;
-            // Usar setTimeout para evitar el error "Cannot update a component while rendering"
             setTimeout(() => {
                 if (coworkRef.current.awareness) {
                     coworkRef.current.awareness.setLocalStateField(`anchor_${currentField}`, anchor);
@@ -197,7 +184,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 }
             }, 0);
         },
-        // Registrar qué campo está enfocado activamente por este cliente
         onFocus: () => {
             const currentField = fieldRef.current;
             setTimeout(() => {
@@ -206,7 +192,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 }
             }, 0);
         },
-        // Limpiar el campo enfocado al perder foco
         onBlur: () => {
             const currentField = fieldRef.current;
             setTimeout(() => {
@@ -218,26 +203,25 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 }
             }, 0);
         },
-        // Notificar cambios al formulario contenedor o usar fallback de SignalR (retrocompatibilidad)
+        onTransaction: ({ transaction }) => {
+            lastTrWasRemoteRef.current = transaction.getMeta('y-sync$') != null;
+        },
         onUpdate: ({ editor }) => {
             const html = editor.getHTML();
-            console.log(`[DIITRA] CoWorkEditor: onUpdate en campo '${fieldRef.current}'. Longitud HTML: ${html.length}`);
+            const source: 'local' | 'remote' = lastTrWasRemoteRef.current ? 'remote' : 'local';
+            coworkLog(`[CoWorkEditor] onUpdate field='${fieldRef.current}' source=${source} len=${html.length}`);
             const currentOnChange = onChangeRef.current;
             if (currentOnChange) {
-                // Modo Moderno: Delegar al formulario centralizador de React
-                setTimeout(() => currentOnChange(html), 0);
+                setTimeout(() => currentOnChange(html, { source }), 0);
             }
             
-            // SIEMPRE registrar en el snapshot de SignalR (retrocompatibilidad y soporte PDF/Rubrica)
-            // Pasamos el nombre del campo para que se almacene bajo {docId}_{fieldName}
-            // en inv_cowork_documentos, permitiendo que PeerReviewService recupere
-            // justificacion y metodologia de forma independiente.
-            const json = JSON.stringify(editor.getJSON());
-            coworkRef.current.submitFinalContent(html, json, fieldRef.current);
+            if (source === 'local') {
+                const json = JSON.stringify(editor.getJSON());
+                coworkRef.current.submitFinalContent(html, json, fieldRef.current);
+            }
         }
-    }, [extensions]); // El editor se instancia UNA SOLA VEZ y permanece estable en memoria
+    }, [extensions]);
 
-    // Auto-poblar Yjs con el contenido de la base de datos si Yjs está vacío
     React.useEffect(() => {
         if (!editor || !useCollaboration) return;
 
@@ -247,13 +231,12 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
         if (isYjsEmpty && dbValue && dbValue.trim() !== '') {
             const isReadOnlyMode = readonly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
-                console.log(`[DIITRA] CoWorkEditor: Yjs para '${field}' está vacío. Inicializando Yjs con valor de BD:`, dbValue.substring(0, 100));
+                coworkLog(`[CoWorkEditor] Seeding Yjs '${field}' from DB`);
                 editor.commands.setContent(dbValue, { emitUpdate: false });
             }
         }
     }, [editor, useCollaboration, ydoc, field, dbValue, readonly, cowork.session.readOnly]);
 
-    // Sincronizar estado de Edición/Solo Lectura de forma dinámica sin destruir el editor
     const isEditable = !readonly && !cowork.session.readOnly;
     React.useEffect(() => {
         if (editor) {
@@ -265,9 +248,8 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 
     return (
         <div className={`flex flex-col w-full h-full bg-surface rounded-lg border border-border-thin overflow-hidden ${className}`}>
-            {/* ── Barra de Estado de Colaboración ── */}
+            {/* Status bar */}
             <div className="px-5 py-3 border-b border-border-thin bg-bg-deep flex items-center justify-between">
-                {/* Estado de conexión */}
                 <div className="flex items-center gap-2">
                     {session.isConnected ? (
                         <>
@@ -294,7 +276,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                     )}
                 </div>
 
-                {/* Colaboradores activos */}
                 <div className="flex items-center gap-4">
                     {session.isSyncing && (
                         <div className="flex items-center gap-1.5">
@@ -338,13 +319,11 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 </div>
             </div>
 
-            {/* ── Barra de Herramientas CoWork (Word/Google Docs style) ── */}
             <CoWorkToolbar 
                 editor={editor} 
                 readonly={readonly || session.readOnly} 
             />
 
-            {/* ── Banners CACES / SENESCYT de Cumplimiento ── */}
             {session.isBlindMode && (
                 <div className="px-5 py-2.5 bg-amber-500/10 border-b border-amber-500/20 flex items-center gap-2 text-amber-500 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <EyeOff size={13} className="shrink-0 animate-pulse text-amber-400" />
@@ -366,7 +345,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 </div>
             )}
 
-            {/* ── Área del Editor ── */}
             <div className="flex-1 overflow-y-auto p-2 sm:p-8 bg-bg-deep">
                 <div className="w-full max-w-[95%] mx-auto bg-white rounded-sm shadow-sm min-h-[600px] border border-border-thin relative">
                     {editor && cowork.awareness && (
@@ -385,7 +363,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 </div>
             </div>
 
-            {/* ── Estilos del editor (separados para no contaminar los estilos globales) ── */}
             <style>{`
                 .cowork-editor-content .ProseMirror {
                     padding: 1.5cm 1rem;
@@ -411,7 +388,6 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 .cowork-editor-content .ProseMirror strong { font-weight: 700; }
                 .cowork-editor-content .ProseMirror em { font-style: italic; }
 
-                /* Placeholder text */
                 .cowork-editor-content .ProseMirror.is-editor-empty:first-child::before,
                 .cowork-editor-content .ProseMirror p.is-editor-empty:first-child::before {
                     content: attr(data-placeholder);

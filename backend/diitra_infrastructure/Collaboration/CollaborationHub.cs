@@ -285,7 +285,7 @@ namespace diitra_infrastructure.Collaboration
 
             // 3. Compactación reactiva automática asistida por el cliente
             var deltaCount = await _db.InvCoworkUpdates.CountAsync(u => u.DocumentoUuid == documentId);
-            if (deltaCount > 500)
+            if (deltaCount > 150)
             {
                 await Clients.Caller.SendAsync("TriggerCompaction");
             }
@@ -514,10 +514,12 @@ namespace diitra_infrastructure.Collaboration
                 foreach (var sesion in sesiones)
                 {
                     var duracion = (ahora - sesion.ConectadoEn).TotalSeconds;
+                    var esSesionTecnica = string.IsNullOrWhiteSpace(sesion.SeccionNombre)
+                                          && string.IsNullOrWhiteSpace(sesion.Accion);
 
-                    if (duracion < 5)
+                    if (esSesionTecnica && duracion < 5)
                     {
-                        // Ruido de React Strict Mode (~1-2s) → eliminar
+                        // Ruido técnico de React Strict Mode (~1-2s) → eliminar
                         _db.InvCoworkSesiones.Remove(sesion);
                         _logger.LogDebug(
                             "[DIITRA CoWork] Sesión efímera ({Sec:F0}s) de {User} eliminada (ruido React).",

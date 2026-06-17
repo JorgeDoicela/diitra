@@ -7,7 +7,7 @@ interface GeneralSectionProps {
     cowork: CoWorkHandle;
     convocatorias: any[];
     carreras: any[];
-    onUpdate: (field: string, value: any) => void;
+    onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
 }
 
 const isPastDeadline = (fechaCierre: string) => {
@@ -38,7 +38,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="Titulo" 
                     cowork={cowork} 
                     label="TEMA / NOMBRE DEL PROYECTO (ESCRIBIR EN MAYÚSCULAS)" 
-                    onValueChange={(v) => onUpdate('Titulo', v)}
+                    onValueChange={(v, meta) => onUpdate('Titulo', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-5 text-sm sm:text-lg font-black text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
                 />
             </div>
@@ -49,14 +49,14 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="DirectorProyecto" 
                     cowork={cowork} 
                     label="Director del Proyecto (Título abreviado, Apellidos y Nombres)" 
-                    onValueChange={(v) => onUpdate('DirectorProyecto', v)}
+                    onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
                 <CoWorkField 
                     name="Programa" 
                     cowork={cowork} 
                     label="Programa" 
-                    onValueChange={(v) => onUpdate('Programa', v)}
+                    onValueChange={(v, meta) => onUpdate('Programa', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
             </div>
@@ -67,7 +67,17 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">¿Grupo de Investigación?</label>
                     <select 
                         value={formData.GrupoInvestigacionTipo || 'NO'}
-                        onChange={(e) => onUpdate('GrupoInvestigacionTipo', e.target.value)}
+                        onChange={(e) => {
+                            const tipo = e.target.value;
+                            onUpdate('GrupoInvestigacionTipo', tipo);
+                            if (tipo === 'NO') {
+                                onUpdate('GrupoInvestigacionNombre', '', { source: 'system' });
+                                onUpdate('GrupoInvestigacionUuid', '', { source: 'system' });
+                                onUpdate('TieneGrupoInvestigacion', false, { source: 'system' });
+                            } else {
+                                onUpdate('TieneGrupoInvestigacion', true, { source: 'system' });
+                            }
+                        }}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
                     >
                         <option value="NO">NO</option>
@@ -80,7 +90,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             name="GrupoInvestigacionNombre" 
                             cowork={cowork} 
                             label="Nombre del Grupo de Investigación" 
-                            onValueChange={(v) => onUpdate('GrupoInvestigacionNombre', v)}
+                            onValueChange={(v, meta) => onUpdate('GrupoInvestigacionNombre', v, meta)}
                             className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                         />
                     </div>
@@ -93,21 +103,21 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="Dominio" 
                     cowork={cowork} 
                     label="Dominio Académico" 
-                    onValueChange={(v) => onUpdate('Dominio', v)}
+                    onValueChange={(v, meta) => onUpdate('Dominio', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
                 <CoWorkField 
                     name="LineaInvestigacion" 
                     cowork={cowork} 
                     label="Línea de Investigación" 
-                    onValueChange={(v) => onUpdate('LineaInvestigacion', v)}
+                    onValueChange={(v, meta) => onUpdate('LineaInvestigacion', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
                 <CoWorkField 
                     name="SublineaInvestigacion" 
                     cowork={cowork} 
                     label="Sublínea de Investigación" 
-                    onValueChange={(v) => onUpdate('SublineaInvestigacion', v)}
+                    onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
             </div>
@@ -131,7 +141,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                         name="CampoAmplio" 
                         cowork={cowork} 
                         label="Campo Amplio" 
-                        onValueChange={(v) => onUpdate('CampoAmplio', v)}
+                        onValueChange={(v, meta) => onUpdate('CampoAmplio', v, meta)}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                     />
                 </div>
@@ -143,14 +153,14 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="CampoEspecifico" 
                     cowork={cowork} 
                     label="Campo Específico" 
-                    onValueChange={(v) => onUpdate('CampoEspecifico', v)}
+                    onValueChange={(v, meta) => onUpdate('CampoEspecifico', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
                 <CoWorkField 
                     name="CampoDetallado" 
                     cowork={cowork} 
                     label="Campo Detallado" 
-                    onValueChange={(v) => onUpdate('CampoDetallado', v)}
+                    onValueChange={(v, meta) => onUpdate('CampoDetallado', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
             </div>
@@ -200,14 +210,14 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="Periodo" 
                     cowork={cowork} 
                     label="Periodo Académico (Ej: MARZO 2025 - SEPTIEMBRE 2025)" 
-                    onValueChange={(v) => onUpdate('Periodo', v)}
+                    onValueChange={(v, meta) => onUpdate('Periodo', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                 />
                 <CoWorkField 
                     name="TiempoEjecucion" 
                     cowork={cowork} 
                     label="Tiempo Estimado de Ejecución (Meses / Semanas)" 
-                    onValueChange={(v) => onUpdate('TiempoEjecucion', v)}
+                    onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                 />
             </div>
@@ -218,7 +228,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="FechaPresentacion" 
                     cowork={cowork} 
                     label="Fecha Presentación (día/mes/año)" 
-                    onValueChange={(v) => onUpdate('FechaPresentacion', v)}
+                    onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                     placeholder="dd/mm/aaaa"
                 />
@@ -226,7 +236,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="FechaInicio" 
                     cowork={cowork} 
                     label="Fecha Prevista Inicio (día/mes/año)" 
-                    onValueChange={(v) => onUpdate('FechaInicio', v)}
+                    onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                     placeholder="dd/mm/aaaa"
                 />
@@ -234,7 +244,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     name="FechaFin" 
                     cowork={cowork} 
                     label="Fecha Prevista Fin (día/mes/año)" 
-                    onValueChange={(v) => onUpdate('FechaFin', v)}
+                    onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                     placeholder="dd/mm/aaaa"
                 />

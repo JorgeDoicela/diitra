@@ -17,7 +17,7 @@ import {
 
 interface TechnicalSectionProps {
     cowork: CoWorkHandle;
-    onUpdate: (field: string, value: any) => void;
+    onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' }) => void;
 }
 
 export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
@@ -83,7 +83,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="Antecedentes" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('Antecedentes', html)}
+                                onChange={(html, meta) => onUpdate('Antecedentes', html, meta)}
                                 placeholder="Escriba los antecedentes del proyecto..."
                                 className="min-h-[400px] border-none" 
                             />
@@ -110,7 +110,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="DescripcionProyecto" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('DescripcionProyecto', html)}
+                                onChange={(html, meta) => onUpdate('DescripcionProyecto', html, meta)}
                                 placeholder="Describa el propósito y el alcance de la investigación..."
                                 className="min-h-[400px] border-none" 
                             />
@@ -137,7 +137,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="Justificacion" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('Justificacion', html)}
+                                onChange={(html, meta) => onUpdate('Justificacion', html, meta)}
                                 placeholder="Escriba la justificación del proyecto aquí..."
                                 className="min-h-[400px] border-none" 
                             />
@@ -163,7 +163,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 <CoWorkEditor 
                                     field="ObjetivoGeneral" 
                                     cowork={cowork} 
-                                    onChange={(html) => onUpdate('ObjetivoGeneral', html)}
+                                    onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                     placeholder="El objetivo general del proyecto de investigación consiste en..."
                                     className="min-h-[180px] border-none" 
                                 />
@@ -185,7 +185,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 <CoWorkEditor 
                                     field="ObjetivosEspecificos" 
                                     cowork={cowork} 
-                                    onChange={(html) => onUpdate('ObjetivosEspecificos', html)}
+                                    onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                     placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
                                     className="min-h-[220px] border-none" 
                                 />
@@ -237,7 +237,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="MarcoTeorico" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('MarcoTeorico', html)}
+                                onChange={(html, meta) => onUpdate('MarcoTeorico', html, meta)}
                                 placeholder="Escriba el fundamento teórico del proyecto..."
                                 className="min-h-[400px] border-none" 
                             />
@@ -264,7 +264,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="Metodologia" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('Metodologia', html)}
+                                onChange={(html, meta) => onUpdate('Metodologia', html, meta)}
                                 placeholder="Describa la metodología científica, fases del estudio e instrumentación técnica..."
                                 className="min-h-[400px] border-none" 
                             />
@@ -291,7 +291,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="Evaluacion" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('Evaluacion', html)}
+                                onChange={(html, meta) => onUpdate('Evaluacion', html, meta)}
                                 placeholder="Escriba los criterios, métricas e instrumentos de evaluación..."
                                 className="min-h-[400px] border-none" 
                             />
@@ -318,7 +318,7 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                             <CoWorkEditor 
                                 field="Bibliografia" 
                                 cowork={cowork} 
-                                onChange={(html) => onUpdate('Bibliografia', html)}
+                                onChange={(html, meta) => onUpdate('Bibliografia', html, meta)}
                                 placeholder="1. Apellidos, A. A. (Año). Título del artículo. Título de la publicación, volumen(número), páginas.&#10;2. ..."
                                 className="min-h-[400px] border-none" 
                             />

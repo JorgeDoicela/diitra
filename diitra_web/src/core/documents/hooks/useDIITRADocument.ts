@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as Y from 'yjs';
+import { coworkLog } from '../../cowork/utils/log';
 
 /**
- * Helper to deduplicate a Y.Array by item `id` / `uuid` / `Uuid`
+ * Shallow-equal check: O(1) for primitives, falls back to JSON only for objects.
  */
+function isEqualValue(a: any, b: any): boolean {
+    if (a === b) return true;
+    if (a == null || b == null) return a == b;
+    if (typeof a !== 'object' || typeof b !== 'object') return false;
+    return JSON.stringify(a) === JSON.stringify(b);
+}
+
 function deduplicateYArray(yarray: Y.Array<any>, ydoc: Y.Doc, listName: string) {
     const arr = yarray.toArray();
     const seenIds = new Set<string>();
@@ -24,11 +32,8 @@ function deduplicateYArray(yarray: Y.Array<any>, ydoc: Y.Doc, listName: string) 
     }
     
     if (indicesToDelete.length > 0) {
-        console.warn(`[DIITRA] Encontrados ${indicesToDelete.length} duplicados en Y.Array para '${listName}'.`, 
-            "Duplicados:", indicesToDelete.map(idx => arr[idx]), 
-            "Array completo:", arr);
+        console.warn(`[DIITRA] Found ${indicesToDelete.length} duplicates in Y.Array '${listName}'.`);
         ydoc.transact(() => {
-            // Delete from highest index to lowest to avoid index shifting
             for (let i = indicesToDelete.length - 1; i >= 0; i--) {
                 yarray.delete(indicesToDelete[i], 1);
             }
@@ -36,45 +41,18 @@ function deduplicateYArray(yarray: Y.Array<any>, ydoc: Y.Doc, listName: string) 
     }
 }
 
-/**
- * useDIITRADocument V1.0 (Reactive ydoc — Arquitectura Correcta)
- * ---------------------------------------------------------------
- * Hook maestro para la gestión de documentos colaborativos DIITRA.
- *
- * CAMBIO ARQUITECTÓNICO V1.0:
- * ─────────────────────────────────────────────────────────────────
- * En v2.0, el ydoc se accedía via `coworkRef.current?.ydoc`, una referencia
- * mutable que React no observa. Esto causaba un bug crítico: si SignalR
- * caía y se reconectaba (generando un nuevo ydoc), los observadores de Yjs
- * NO se re-registraban y los cambios remotos dejaban de sincronizarse.
- *
- * En V1.0, el ydoc es un PARÁMETRO REACTIVO. El padre (DocumentEditor) lo
- * obtiene de `cowork.ydoc` (estado de React), lo pasa como prop, y React
- * re-ejecuta correctamente el efecto cuando ydoc cambia (reconexión, etc.).
- *
- * Uso:
- * ─────────────────────────────────────────────────────────────────
- * // En el componente padre:
- * const cowork = useCoWork({ documentId, user });
- * const { formData, updateField, ... } = useDIITRADocument(
- *     initialData,
- *     cowork.ydoc,     // <-- parámetro reactivo
- *     { lists: ['Investigadores', 'Cronograma'] }
- * );
- */
 export function useDIITRADocument<T extends Record<string, any>>(
     initialData: T,
-    ydoc: Y.Doc | null,             // ← Parámetro reactivo (V1.0)
+    ydoc: Y.Doc | null,
     options: {
         lists?: string[];
         richTexts?: string[];
-        nonCollaborative?: string[]; // ← Campos excluidos de CoWork por privacidad (cierre, doble ciego, etc.)
-        isHistoryLoaded?: boolean;   // ← Indica si SignalR cargó la historia inicial de Yjs
+        nonCollaborative?: string[];
+        isHistoryLoaded?: boolean;
     } = {}
 ) {
     const [localChangeCount, setLocalChangeCount] = useState(0);
 
-    // Inicializar el estado enriqueciendo los arrays con IDs únicos estables si no existen
     const [formData, setFormData] = useState<T>(() => {
         const enriched: any = { ...initialData };
         options.lists?.forEach(listName => {
@@ -97,12 +75,16 @@ export function useDIITRADocument<T extends Record<string, any>>(
         return enriched;
     });
 
-    // Función estable para actualizar el estado de React e Yjs de forma bidireccional e idempotente
-    const updateField = useCallback((name: string, value: any) => {
-        console.log(`[DIITRA] useDIITRADocument: updateField llamado para '${name}' con valor:`, value);
-        // Sincronizar en Yjs si existe ydoc y no es una lista trackeada, ni un rich-text, ni un campo no colaborativo
-        // Excluimos 'Uuid'/'uuid' y 'EntityUuid'/'entityuuid' de Yjs para proteger los identificadores estáticos de persistencia relacional
-        if (ydoc && !options.lists?.includes(name) && !options.richTexts?.includes(name) && !options.nonCollaborative?.includes(name) && name.toLowerCase() !== 'uuid' && name.toLowerCase() !== 'entityuuid') {
+    const updateField = useCallback((name: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => {
+        const source = meta?.source ?? 'local';
+
+        if (source !== 'remote' &&
+            ydoc &&
+            !options.lists?.includes(name) &&
+            !options.richTexts?.includes(name) &&
+            !options.nonCollaborative?.includes(name) &&
+            name.toLowerCase() !== 'uuid' &&
+            name.toLowerCase() !== 'entityuuid') {
             const ytext = ydoc.getText(name);
             const stringVal = String(value);
             if (ytext.toString() !== stringVal) {
@@ -114,15 +96,15 @@ export function useDIITRADocument<T extends Record<string, any>>(
         }
 
         setFormData(prev => {
-            // Evitar re-renders si el valor es idéntico (deep check para objetos/arrays)
-            if (JSON.stringify(prev[name]) === JSON.stringify(value)) return prev;
+            if (isEqualValue(prev[name], value)) return prev;
             return { ...prev, [name]: value };
         });
-        setLocalChangeCount(c => c + 1);
+        if (source !== 'remote' && source !== 'system') {
+            setLocalChangeCount(c => c + 1);
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ydoc, options.lists, options.richTexts, options.nonCollaborative]);
 
-    // --- LÓGICA DE LISTAS (Y.Array) ---
     const addItem = useCallback((listName: string, template: any) => {
         const enrichedTemplate = {
             ...template,
@@ -162,10 +144,9 @@ export function useDIITRADocument<T extends Record<string, any>>(
             const yarray = ydoc.getArray(listName);
             const currentItem = yarray.get(index) as any;
             if (currentItem) {
+                if (currentItem[field] === value) return;
                 const updatedItem = { ...currentItem, [field]: value };
-                if (JSON.stringify(currentItem) === JSON.stringify(updatedItem)) {
-                    return; // Sin cambios, no mutamos Yjs
-                }
+                if (isEqualValue(currentItem, updatedItem)) return;
                 ydoc.transact(() => {
                     yarray.delete(index, 1);
                     yarray.insert(index, [updatedItem]);
@@ -180,39 +161,29 @@ export function useDIITRADocument<T extends Record<string, any>>(
         setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
-    // ─── MOTOR DE SINCRONIZACIÓN OMNISCIENTE (Re-ejecuta cuando ydoc cambia) ───
-    //
-    // CORRECCIÓN V1.0: Como `ydoc` es un parámetro de React (no una ref mutable),
-    // este efecto se re-ejecuta correctamente cuando:
-    //   1. CoWork se conecta por primera vez (ydoc: null → Y.Doc)
-    //   2. SignalR pierde la conexión y se reconecta (ydoc anterior destruido → nuevo Y.Doc)
-    //   3. El componente se desmonta (cleanup limpia los observadores)
     useEffect(() => {
-        if (!ydoc) return; // Sin ydoc, no hay nada que sincronizar
+        if (!ydoc) return;
 
         const cleanups: (() => void)[] = [];
 
-        // 1. Vincular Primitivos (Campos de texto, select, etc)
         Object.keys(initialData).forEach(key => {
-            if (options.lists?.includes(key)) return; // Se maneja como array
-            if (options.richTexts?.includes(key)) return; // Se maneja como XMLFragment en Tiptap
-            if (options.nonCollaborative?.includes(key)) return; // Se maneja de forma local/privada (no colaborativo)
-            if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return; // El UUID y EntityUuid son inmutables y no se sincronizan via Yjs
+            if (options.lists?.includes(key)) return;
+            if (options.richTexts?.includes(key)) return;
+            if (options.nonCollaborative?.includes(key)) return;
+            if (key.toLowerCase() === 'uuid' || key.toLowerCase() === 'entityuuid') return;
 
             const ytext = ydoc.getText(key);
             const observer = (event: Y.YTextEvent) => {
-                // Solo actualizamos el estado local si el cambio viene de OTRO usuario
                 if (event.transaction.origin === 'remote') {
                     const rawValue = ytext.toString();
                     let parsedValue: any = rawValue;
 
-                    // Auto-detección de tipos básicos
                     if (rawValue === 'true') parsedValue = true;
                     else if (rawValue === 'false') parsedValue = false;
                     else if (!isNaN(Number(rawValue)) && rawValue !== '') parsedValue = Number(rawValue);
 
                     setFormData(prev => {
-                        if (JSON.stringify(prev[key]) === JSON.stringify(parsedValue)) return prev;
+                        if (isEqualValue(prev[key], parsedValue)) return prev;
                         return { ...prev, [key]: parsedValue };
                     });
                 }
@@ -220,22 +191,19 @@ export function useDIITRADocument<T extends Record<string, any>>(
             ytext.observe(observer);
             cleanups.push(() => ytext.unobserve(observer));
 
-            // Sincronización Inicial: Si el documento ya tiene datos en Yjs, traerlos a React
             const currentYVal = ytext.toString();
             if (currentYVal && currentYVal !== 'undefined') {
                 let parsedInitial: any = currentYVal;
                 if (currentYVal === 'true') parsedInitial = true;
                 else if (currentYVal === 'false') parsedInitial = false;
                 else if (!isNaN(Number(currentYVal)) && currentYVal !== '') parsedInitial = Number(currentYVal);
-                // Actualizar solo si es diferente al valor actual
                 setFormData(prev => {
-                    if (JSON.stringify(prev[key]) === JSON.stringify(parsedInitial)) return prev;
+                    if (isEqualValue(prev[key], parsedInitial)) return prev;
                     return { ...prev, [key]: parsedInitial };
                 });
             }
         });
 
-        // 2. Vincular Listas (Arrays colaborativos)
         options.lists?.forEach(listName => {
             const yarray = ydoc.getArray(listName);
             const observer = (event: any) => {
@@ -248,7 +216,6 @@ export function useDIITRADocument<T extends Record<string, any>>(
                         return item;
                     });
                     
-                    // Deduplicar del lado del cliente (React state) para evitar warning de keys
                     const seen = new Set();
                     const uniqueEnriched = enriched.filter((item: any) => {
                         const id = item?.id || item?.uuid || item?.Uuid;
@@ -260,7 +227,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
                     });
 
                     setFormData(prev => {
-                        if (JSON.stringify(prev[listName]) === JSON.stringify(uniqueEnriched)) return prev;
+                        if (isEqualValue(prev[listName], uniqueEnriched)) return prev;
                         return { ...prev, [listName]: uniqueEnriched };
                     });
                 }
@@ -268,8 +235,6 @@ export function useDIITRADocument<T extends Record<string, any>>(
             yarray.observe(observer);
             cleanups.push(() => yarray.unobserve(observer));
 
-            // Sincronización Inicial de listas
-            // Deduplicar en Yjs una única vez al iniciar/conectar
             deduplicateYArray(yarray, ydoc, listName);
 
             const currentArray = yarray.toArray();
@@ -281,7 +246,6 @@ export function useDIITRADocument<T extends Record<string, any>>(
                     return item;
                 });
                 
-                // Deduplicar del lado del cliente (React state)
                 const seen = new Set();
                 const uniqueEnriched = enriched.filter((item: any) => {
                     const id = item?.id || item?.uuid || item?.Uuid;
@@ -293,7 +257,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
                 });
 
                 setFormData(prev => {
-                    if (JSON.stringify(prev[listName]) === JSON.stringify(uniqueEnriched)) return prev;
+                    if (isEqualValue(prev[listName], uniqueEnriched)) return prev;
                     return { ...prev, [listName]: uniqueEnriched };
                 });
             } else if (options.isHistoryLoaded && Array.isArray(initialData[listName]) && initialData[listName].length > 0) {
@@ -310,7 +274,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
                     }
                     return item;
                 });
-                console.log(`[DIITRA] Inicializando lista Yjs '${listName}' con datos de base de datos enriquecidos:`, enriched);
+                coworkLog(`[DIITRA] Initializing Yjs list '${listName}' from DB`);
                 ydoc.transact(() => {
                     yarray.push(enriched);
                 }, 'local-hook');
@@ -318,7 +282,6 @@ export function useDIITRADocument<T extends Record<string, any>>(
         });
 
         return () => cleanups.forEach(c => c());
-        // options.lists se puede serializar de forma estable; initialData es estable por useMemo en el padre
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ydoc, options.isHistoryLoaded]);
 

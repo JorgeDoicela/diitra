@@ -335,7 +335,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 0
             );
             if (total !== formData.CostoTotal) {
-                updateField('CostoTotal', total);
+                updateField('CostoTotal', total, { source: 'system' });
             }
         }
     }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateCode]);
@@ -368,6 +368,15 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                 }
             });
         }
+
+        if (cloned.GrupoInvestigacionTipo === 'SI' || cloned.GrupoInvestigacionTipo === 'si') {
+            cloned.TieneGrupoInvestigacion = true;
+        } else if (cloned.GrupoInvestigacionTipo === 'NO' || cloned.GrupoInvestigacionTipo === 'no') {
+            cloned.TieneGrupoInvestigacion = false;
+            cloned.GrupoInvestigacionUuid = null;
+            cloned.GrupoInvestigacionNombre = '';
+        }
+
         return cloned;
     };
 

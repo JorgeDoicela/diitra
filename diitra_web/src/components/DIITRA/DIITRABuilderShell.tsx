@@ -35,6 +35,29 @@ interface BuilderSection {
     icon: React.ReactNode;
 }
 
+/** Evita PATCH 400 cuando el proyecto es asociativo pero aún no tiene grupo válido. */
+function getMetadataSaveBlockReason(data: any, templateCode: string): string | null {
+    if (templateCode !== 'PROTOCOLO_INVESTIGACION') return null;
+
+    const isAssociative =
+        data.TieneGrupoInvestigacion === true ||
+        data.GrupoInvestigacionTipo === 'SI' ||
+        data.GrupoInvestigacionTipo === 'si';
+
+    if (!isAssociative) return null;
+
+    const groupRef =
+        data.GrupoInvestigacionUuid ||
+        data.GrupoInvestigacion ||
+        data.GrupoInvestigacionNombre;
+
+    if (!groupRef || String(groupRef).trim() === '') {
+        return 'Para proyectos asociativos debes seleccionar un grupo de investigación aprobado antes de guardar.';
+    }
+
+    return null;
+}
+
 interface DIITRABuilderShellProps {
     title: string;
     subtitle: string;
@@ -490,6 +513,15 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             return;
         }
 
+        const saveBlockReason = getMetadataSaveBlockReason(data, templateCode);
+        if (saveBlockReason) {
+            console.warn(`[DIITRA] saveDirtyData: Guardado omitido — ${saveBlockReason}`);
+            if (!isUnmounting) {
+                addAudit(saveBlockReason, 'warning');
+            }
+            return;
+        }
+
         isSavingRef.current = true;
         if (!isUnmounting) {
             setIsSaving(true);
@@ -514,7 +546,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 setIsSaving(false);
             }
         }
-    }, [addAudit, readOnly]);
+    }, [addAudit, readOnly, templateCode]);
 
     const handleSave = useCallback(async () => {
         if (saveTimeoutRef.current) {
