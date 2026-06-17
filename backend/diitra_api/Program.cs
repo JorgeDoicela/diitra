@@ -248,5 +248,36 @@ var app = builder.Build();
     app.MapHub<CollaborationHub>("/hubs/collaboration");
     app.MapHub<diitra_infrastructure.Common.Notifications.Hubs.NotificationHub>("/hubs/notifications");
 
+    // Asegurar que la columna horasSemanales existe en inv_proyectos_alumnos para guardar horas de estudiantes
+    try
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
+            context.Database.ExecuteSqlRaw(@"
+                ALTER TABLE inv_proyectos_alumnos 
+                ADD COLUMN IF NOT EXISTS horasSemanales DECIMAL(4,1) NULL DEFAULT NULL AFTER telefono;
+            ");
+        }
+    }
+    catch (Exception)
+    {
+        try
+        {
+            using (var scope = app.Services.CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<diitra_infrastructure.data.models.DiitraContext>();
+                context.Database.ExecuteSqlRaw(@"
+                    ALTER TABLE inv_proyectos_alumnos 
+                    ADD COLUMN horasSemanales DECIMAL(4,1) NULL DEFAULT NULL AFTER telefono;
+                ");
+            }
+        }
+        catch (Exception)
+        {
+            // La columna ya existe o la base de datos está offline/incompatible, omitir de forma segura.
+        }
+    }
+
 app.Run();
 

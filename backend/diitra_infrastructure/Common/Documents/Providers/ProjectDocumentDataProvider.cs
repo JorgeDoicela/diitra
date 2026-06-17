@@ -49,7 +49,8 @@ namespace Diitra.Infrastructure.Common.Documents.Providers
                 }),
                 EquipoEstudiantes = proyecto.InvProyectosAlumnos.Where(a => a.Activo != false).Select(a => new {
                     Nombre = a.IdUsuarioNavigation?.Nombre ?? "Desconocido",
-                    a.Rol
+                    a.Rol,
+                    a.HorasSemanales
                 }),
                 Objetivos = proyecto.InvObjetivosProyecto.OrderBy(o => o.Orden).Select(o => new {
                     o.Descripcion,

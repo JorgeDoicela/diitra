@@ -49,15 +49,15 @@ const formatNombre = (nombre: string | null | undefined) => {
 const highlightText = (text: string | null | undefined, search: string) => {
     if (!text) return '';
     if (!search.trim()) return <>{text}</>;
-    
+
     try {
         const escapedSearch = search.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
         const regex = new RegExp(`(${escapedSearch})`, 'gi');
         const parts = text.split(regex);
-        
+
         return (
             <>
-                {parts.map((part, i) => 
+                {parts.map((part, i) =>
                     regex.test(part) ? (
                         <mark key={i} className="bg-brand/20 text-brand font-semibold px-0.5 rounded-sm">
                             {part}
@@ -82,7 +82,7 @@ const UsersPage = () => {
     const typeParam = searchParams.get('type');
     const userType = (typeParam === 'DOCENTE' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
     const openUuid = searchParams.get('open'); // deep-link from CommandPalette
-    
+
     const setUserType = (type: 'DOCENTE' | 'ESTUDIANTE' | 'EXTERNO') => {
         setSearch('');
         setSearchParams(prev => {
@@ -91,7 +91,7 @@ const UsersPage = () => {
             return next;
         });
     };
-    
+
     const [page, setPage] = useState(1);
     const [totalCount, setTotalCount] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
@@ -130,7 +130,7 @@ const UsersPage = () => {
         isOpen: false,
         title: '',
         message: '',
-        onConfirm: () => {},
+        onConfirm: () => { },
         type: 'warning'
     });
 
@@ -198,7 +198,7 @@ const UsersPage = () => {
 
         resolveOpenUser();
         return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [openUuid]);
 
     const fetchRoles = async () => {
@@ -238,14 +238,14 @@ const UsersPage = () => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const activeEl = document.activeElement;
             if (activeEl && (
-                activeEl.tagName === 'INPUT' || 
-                activeEl.tagName === 'TEXTAREA' || 
+                activeEl.tagName === 'INPUT' ||
+                activeEl.tagName === 'TEXTAREA' ||
                 activeEl.tagName === 'SELECT' ||
                 activeEl.getAttribute('contenteditable') === 'true'
             )) {
                 return;
             }
-            
+
             if (e.key === '/' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
                 e.preventDefault();
                 searchInputRef.current?.focus();
@@ -476,12 +476,12 @@ const UsersPage = () => {
                 isOpen: true,
                 title: 'Evaluador Registrado con Éxito',
                 message: `El evaluador externo "${registeredNombre}" ha sido registrado en el sistema.\n\n` +
-                         `Credenciales de acceso convencional por defecto:\n` +
-                         `• Usuario: ${registeredCedula}\n` +
-                         `• Contraseña temporal: Diitra2026*\n\n` +
-                         `Nota: Por favor comparta estas credenciales con el evaluador por si prefiere acceder utilizando el inicio de sesión convencional con contraseña.`,
+                    `Credenciales de acceso convencional por defecto:\n` +
+                    `• Usuario: ${registeredCedula}\n` +
+                    `• Contraseña temporal: Diitra2026*\n\n` +
+                    `Nota: Por favor comparta estas credenciales con el evaluador por si prefiere acceder utilizando el inicio de sesión convencional con contraseña.`,
                 type: 'success',
-                onConfirm: () => {}
+                onConfirm: () => { }
             });
         } catch (err: any) {
             console.error('Error registering external:', err);
@@ -663,7 +663,7 @@ const UsersPage = () => {
 
             <div className="bento-card static overflow-hidden animate-fade-up">
                 <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[800px]">
+                    <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-surface/50 border-b border-border-thin text-[10px] font-mono text-text-dim uppercase">
                                 <th className="p-4 font-bold tracking-widest">Actor</th>
@@ -708,40 +708,40 @@ const UsersPage = () => {
                                     </td>
                                     <td className="p-4">
                                         {u.type === 'DOCENTE' ? (
-                                             <div className="space-y-1.5">
-                                                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
-                                                     <span className="text-text-dim flex items-center gap-1.5" title="Horas Distributivo (SIGAFI)">
-                                                         <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
-                                                         SIGAFI: <span className="font-semibold text-text-main">{u.horas_investigacion || 0}h</span>
-                                                     </span>
-                                                     <span className="text-text-dim flex items-center gap-1.5" title="Horas Comprometidas en Proyectos (DIITRA)">
-                                                         <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
-                                                         Asig: <span className="font-semibold text-text-main">{u.horas_asignadas || 0}h</span>
-                                                     </span>
-                                                     <span className="text-text-dim flex items-center gap-1.5" title="Horas Disponibles">
-                                                         <span className={`w-1.5 h-1.5 rounded-full ${((u.horas_investigacion || 0) - (u.horas_asignadas || 0)) > 0 ? 'bg-success' : 'bg-error'}`} />
-                                                         Disp: <span className="font-semibold text-text-main">{Math.max(0, (u.horas_investigacion || 0) - (u.horas_asignadas || 0))}h</span>
-                                                     </span>
-                                                 </div>
-                                                 <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
-                                                     <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
-                                                     <span className="truncate max-w-[190px]" title={u.carrera}>
-                                                         {highlightText(formatCarrera(u.carrera), search)}
-                                                     </span>
-                                                 </div>
-                                             </div>
+                                            <div className="space-y-1.5">
+                                                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+                                                    <span className="text-text-dim flex items-center gap-1.5" title="Horas Distributivo">
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
+                                                        SIGAFI: <span className="font-semibold text-text-main">{u.horas_investigacion || 0}h</span>
+                                                    </span>
+                                                    <span className="text-text-dim flex items-center gap-1.5" title="Horas Comprometidas en Proyectos (DIITRA)">
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${(u.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
+                                                        Asig: <span className="font-semibold text-text-main">{u.horas_asignadas || 0}h</span>
+                                                    </span>
+                                                    <span className="text-text-dim flex items-center gap-1.5" title="Horas Disponibles">
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${((u.horas_investigacion || 0) - (u.horas_asignadas || 0)) > 0 ? 'bg-success' : 'bg-error'}`} />
+                                                        Disp: <span className="font-semibold text-text-main">{Math.max(0, (u.horas_investigacion || 0) - (u.horas_asignadas || 0))}h</span>
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide mt-1 pr-2">
+                                                    <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
+                                                    <span className="truncate max-w-[190px]" title={u.carrera}>
+                                                        {highlightText(formatCarrera(u.carrera), search)}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         ) : u.type === 'ESTUDIANTE' ? (
-                                             <div className="space-y-1">
-                                                 <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide pr-2">
-                                                     <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
-                                                     <span className="truncate max-w-[190px]" title={u.carrera}>
-                                                         {highlightText(formatCarrera(u.carrera), search)}
-                                                     </span>
-                                                 </div>
-                                                 <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
-                                                     {u.nivel || 'Nivel no definido'}
-                                                 </p>
-                                             </div>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-1.5 text-[10px] text-text-dim/80 font-semibold tracking-wide pr-2">
+                                                    <GraduationCap size={11} className="text-text-dim/50 shrink-0" />
+                                                    <span className="truncate max-w-[190px]" title={u.carrera}>
+                                                        {highlightText(formatCarrera(u.carrera), search)}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[9px] text-text-dim font-bold uppercase tracking-widest opacity-70">
+                                                    {u.nivel || 'Nivel no definido'}
+                                                </p>
+                                            </div>
                                         ) : (
                                             <div className="flex flex-col items-center gap-2">
                                                 <div className="w-24 h-1.5 bg-bg-deep rounded-full overflow-hidden border border-border-thin">
@@ -788,50 +788,49 @@ const UsersPage = () => {
                     </table>
                 </div>
 
-                    <footer className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
-                        <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest text-center md:text-left">
-                            Mostrando <span className="text-text-main">{(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)}</span> de <span className="text-text-main">{totalCount}</span> {userType.toLowerCase()}s
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <span className="hidden md:inline">Anterior</span>
-                                <span className="md:hidden">{"<"}</span>
-                            </button>
-                            
-                            <div className="flex items-center gap-1">
-                                {[...Array(totalPages)].map((_, i) => {
-                                    const p = i + 1;
-                                    if (totalPages > 7 && Math.abs(p - page) > 2 && p !== 1 && p !== totalPages) return null;
-                                    return (
-                                        <button
-                                            key={p}
-                                            onClick={() => setPage(p)}
-                                            className={`w-8 h-8 rounded-md text-[10px] font-bold transition-all flex items-center justify-center ${
-                                                page === p ? 'btn-vercel-primary' : 'text-text-dim hover:text-text-main hover:bg-surface'
-                                            }`}
-                                        >
-                                            {p}
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                <footer className="p-4 bg-surface/30 border-t border-border-thin flex flex-col md:flex-row items-center justify-between gap-4 md:gap-0">
+                    <div className="text-[10px] text-text-dim font-bold uppercase tracking-widest text-center md:text-left">
+                        Mostrando <span className="text-text-main">{(page - 1) * pageSize + 1} - {Math.min(page * pageSize, totalCount)}</span> de <span className="text-text-main">{totalCount}</span> {userType.toLowerCase()}s
+                    </div>
 
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages || totalPages === 0}
-                                className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
-                            >
-                                <span className="hidden md:inline">Siguiente</span>
-                                <span className="md:hidden">{">"}</span>
-                            </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <span className="hidden md:inline">Anterior</span>
+                            <span className="md:hidden">{"<"}</span>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                            {[...Array(totalPages)].map((_, i) => {
+                                const p = i + 1;
+                                if (totalPages > 7 && Math.abs(p - page) > 2 && p !== 1 && p !== totalPages) return null;
+                                return (
+                                    <button
+                                        key={p}
+                                        onClick={() => setPage(p)}
+                                        className={`w-8 h-8 rounded-md text-[10px] font-bold transition-all flex items-center justify-center ${page === p ? 'btn-vercel-primary' : 'text-text-dim hover:text-text-main hover:bg-surface'
+                                            }`}
+                                    >
+                                        {p}
+                                    </button>
+                                );
+                            })}
                         </div>
-                    </footer>
-                </div>
+
+                        <button
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages || totalPages === 0}
+                            className="btn-vercel-secondary px-2 md:px-3 disabled:opacity-30 disabled:cursor-not-allowed"
+                        >
+                            <span className="hidden md:inline">Siguiente</span>
+                            <span className="md:hidden">{">"}</span>
+                        </button>
+                    </div>
+                </footer>
+            </div>
 
             {showExternalForm && (
                 <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) handleCloseExternalModal(); }}>
@@ -846,14 +845,14 @@ const UsersPage = () => {
                             </div>
                             <button type="button" onClick={handleCloseExternalModal} className="text-text-dim hover:text-text-main transition-colors"><X size={20} /></button>
                         </div>
-                        
+
                         {error && (
                             <div className="flex items-center gap-2.5 p-3.5 mx-6 mt-4 rounded-lg bg-error/15 border border-error/30 text-error text-xs font-semibold animate-fade-up">
                                 <AlertTriangle size={14} className="shrink-0" />
                                 {error}
                             </div>
                         )}
-                        
+
                         <form id="external-register-form" onSubmit={handleRegisterExternal} className="modal-body">
                             {isExternalDraftRestored && (
                                 <div className="col-span-2 border border-border-thin bg-surface-hover rounded-lg p-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 animate-fade-in mb-6">
@@ -917,8 +916,8 @@ const UsersPage = () => {
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <label className="section-label text-text-dim">Grado Máximo</label>
-                                            <select 
-                                                value={externalForm.grado_academico} 
+                                            <select
+                                                value={externalForm.grado_academico}
                                                 onChange={e => setExternalForm({ ...externalForm, grado_academico: e.target.value })}
                                                 className="input-vercel"
                                             >
@@ -970,7 +969,7 @@ const UsersPage = () => {
 
             {detailUser && (
                 <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div 
+                    <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                         onClick={() => setDetailUser(null)}
                     />
@@ -1016,14 +1015,14 @@ const UsersPage = () => {
                                     <div className="divider-vercel !my-0" />
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <p className="section-label text-text-dim mb-1">Horas Distributivo (SIGAFI)</p>
+                                            <p className="section-label text-text-dim mb-1">Horas Distributivo</p>
                                             <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${(detailUser.horas_investigacion || 0) > 0 ? 'bg-success' : 'bg-error'}`} />
                                                 {detailUser.horas_investigacion || 0}h
                                             </div>
                                         </div>
                                         <div>
-                                            <p className="section-label text-text-dim mb-1">Horas Asignadas (DIITRA)</p>
+                                            <p className="section-label text-text-dim mb-1">Horas Asignadas</p>
                                             <div className="flex items-center gap-1.5 text-sm font-semibold text-text-main">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${(detailUser.horas_asignadas || 0) > 0 ? 'bg-info' : 'bg-text-dim/40'}`} />
                                                 {detailUser.horas_asignadas || 0}h
@@ -1112,16 +1111,16 @@ const UsersPage = () => {
                                 <div className="flex items-center justify-between">
                                     <span className="text-sm text-text-dim">Estado del Certificado</span>
                                     <div className="flex items-center gap-2 text-xs font-medium text-text-main">
-                                         <span className={`dot ${detailUser.firma_habilitada ? 'dot-success' : 'dot-neutral'}`} />
-                                         {detailUser.firma_habilitada ? 'Habilitada' : 'No cargada'}
-                                     </div>
+                                        <span className={`dot ${detailUser.firma_habilitada ? 'dot-success' : 'dot-neutral'}`} />
+                                        {detailUser.firma_habilitada ? 'Habilitada' : 'No cargada'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="modal-footer">
                             <button onClick={() => setDetailUser(null)} className="btn-vercel-secondary">Cerrar</button>
-                            <button 
+                            <button
                                 onClick={() => { setSelectedUser(detailUser); setDetailUser(null); }}
                                 className="btn-vercel-primary flex items-center gap-2"
                             >
@@ -1137,12 +1136,11 @@ const UsersPage = () => {
                     <div className="modal-card animate-scale-up max-w-md">
                         <div className="modal-header !py-4">
                             <div className="flex items-center gap-3">
-                                <div className={`icon-circle ${
-                                    confirmDialog.type === 'danger' ? 'icon-circle-error' :
+                                <div className={`icon-circle ${confirmDialog.type === 'danger' ? 'icon-circle-error' :
                                     confirmDialog.type === 'warning' ? 'icon-circle-warning' :
-                                    confirmDialog.type === 'success' ? 'icon-circle-success' :
-                                    'icon-circle-info'
-                                }`}>
+                                        confirmDialog.type === 'success' ? 'icon-circle-success' :
+                                            'icon-circle-info'
+                                    }`}>
                                     {confirmDialog.type === 'danger' && <XCircle size={18} />}
                                     {confirmDialog.type === 'warning' && <AlertTriangle size={18} />}
                                     {confirmDialog.type === 'success' && <CheckCircle size={18} />}
@@ -1179,11 +1177,10 @@ const UsersPage = () => {
                                             setConfirmDialog(prev => ({ ...prev, isOpen: false }));
                                             await confirmDialog.onConfirm();
                                         }}
-                                        className={`!py-2 ${
-                                            confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
+                                        className={`!py-2 ${confirmDialog.type === 'danger' ? 'bg-error hover:opacity-90 border border-error text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
                                             confirmDialog.type === 'warning' ? 'bg-warning hover:opacity-90 border border-warning text-white font-bold text-[10px] uppercase tracking-widest px-5 rounded-md transition-all' :
-                                            'btn-vercel-primary'
-                                        }`}
+                                                'btn-vercel-primary'
+                                            }`}
                                     >
                                         Confirmar
                                     </button>

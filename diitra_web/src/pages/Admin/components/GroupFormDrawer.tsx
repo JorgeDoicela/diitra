@@ -1100,10 +1100,10 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         {formatNombre(member.nombre_completo)}
                                                     </p>
                                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                        <span className="text-[10px] font-mono text-text-dim bg-surface border border-border-thin px-1.5 py-0.5 rounded">
                                                             C.I. {member.cedula || 'S/D'}
                                                         </span>
-                                                        <span className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-violet">
                                                             {member.rol}
                                                         </span>
                                                     </div>
@@ -1259,10 +1259,10 @@ export const GroupFormDrawer: React.FC<GroupFormDrawerProps> = ({
                                                         {formatNombre(member.nombre_completo)}
                                                     </p>
                                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-[8px] font-mono text-text-dim font-bold uppercase tracking-wider bg-bg-deep px-1.5 py-0.5 rounded border border-border-thin">
+                                                        <span className="text-[10px] font-mono text-text-dim bg-surface border border-border-thin px-1.5 py-0.5 rounded">
                                                             C.I. {member.cedula || 'S/D'}
                                                         </span>
-                                                        <span className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
+                                                        <span className="badge-vercel text-[10px] font-medium px-2 py-0.5 badge-vercel-success">
                                                             {member.rol}
                                                         </span>
                                                     </div>

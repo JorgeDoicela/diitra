@@ -1037,6 +1037,7 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Rol).HasColumnName("rol").HasMaxLength(100);
             entity.Property(e => e.NivelAcademico).HasColumnName("nivelAcademico").HasMaxLength(150);
             entity.Property(e => e.Telefono).HasColumnName("telefono").HasMaxLength(20);
+            entity.Property(e => e.HorasSemanales).HasColumnName("horasSemanales").HasPrecision(4, 1);
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'").HasSentinel(false);
             entity.Property(e => e.FechaInicio).HasColumnName("fecha_inicio").HasColumnType("datetime");
             entity.Property(e => e.FechaFin).HasColumnName("fecha_fin").HasColumnType("datetime");

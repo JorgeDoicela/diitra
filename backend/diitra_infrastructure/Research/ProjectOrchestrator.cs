@@ -685,7 +685,8 @@ namespace diitra_infrastructure.Research
                     FechaInicio = pa.FechaInicio,
                     FechaFin = pa.FechaFin,
                     MotivoCambio = pa.MotivoCambio,
-                    Carrera = carreraNom
+                    Carrera = carreraNom,
+                    HorasSemanales = pa.HorasSemanales
                 });
             }
 
@@ -1025,6 +1026,7 @@ namespace diitra_infrastructure.Research
                         existingAlum.Rol = NormalizeRole(inv.Rol);
                         existingAlum.NivelAcademico = inv.NivelAcademico;
                         existingAlum.Telefono = inv.Telefono;
+                        existingAlum.HorasSemanales = inv.HorasSemanales;
                         if (inv.Activo == false)
                         {
                             if (existingAlum.Activo != false)
@@ -1055,6 +1057,7 @@ namespace diitra_infrastructure.Research
                             Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
                             Telefono = inv.Telefono,
+                            HorasSemanales = inv.HorasSemanales,
                             Activo = inv.Activo ?? true,
                             FechaInicio = DateTime.Now,
                             FechaFin = inv.Activo == false ? DateTime.Now : null,
@@ -1911,7 +1914,8 @@ namespace diitra_infrastructure.Research
                     Activo = pa.Activo ?? true,
                     FechaInicio = pa.FechaInicio,
                     FechaFin = pa.FechaFin,
-                    MotivoCambio = pa.MotivoCambio
+                    MotivoCambio = pa.MotivoCambio,
+                    HorasSemanales = pa.HorasSemanales
                 })).ToList();
 
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
@@ -2077,7 +2081,7 @@ namespace diitra_infrastructure.Research
                     NivelAcademico = a.NivelAcademico,
                     Telefono = a.Telefono,
                     Activo = a.Activo,
-                    HorasSemanales = 0,
+                    HorasSemanales = a.HorasSemanales,
                     FechaInicio = a.FechaInicio,
                     FechaFin = a.FechaFin,
                     MotivoCambio = a.MotivoCambio
