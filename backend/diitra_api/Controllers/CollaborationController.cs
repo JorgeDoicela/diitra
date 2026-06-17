@@ -131,7 +131,7 @@ namespace diitra_api.Controllers
                 // Cargar actividad reciente para esta instancia documental
                 var pattern = instanceUuid + "%";
                 var sesiones = await _db.InvCoworkSesiones.AsNoTracking()
-                    .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern))
+                    .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern) && (s.SeccionNombre != null || s.DocumentoUuid.Contains("_")))
                     .OrderByDescending(s => s.ConectadoEn)
                     .Take(50) // traer más para poder filtrar el ruido de React
                     .ToListAsync();

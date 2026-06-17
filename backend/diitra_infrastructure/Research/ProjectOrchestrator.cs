@@ -2835,7 +2835,7 @@ namespace diitra_infrastructure.Research
                 {
                     var pattern = uuid + "%";
                     var list = await _context.InvCoworkSesiones.AsNoTracking()
-                        .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern))
+                        .Where(s => EF.Functions.Like(s.DocumentoUuid, pattern) && (s.SeccionNombre != null || s.DocumentoUuid.Contains("_")))
                         .OrderByDescending(s => s.ConectadoEn)
                         .Take(30) // traer más para poder filtrar el ruido de React
                         .ToListAsync();
