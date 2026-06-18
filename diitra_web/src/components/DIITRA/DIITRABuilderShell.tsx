@@ -174,16 +174,16 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const isDraggingLeft = useRef(false);
     const isDraggingRight = useRef(false);
 
-    const [navTopPercent, setNavTopPercent] = useState<number>(50);
-    const [chatTopPercent, setChatTopPercent] = useState<number>(50);
+    const [navTopPercent, setNavTopPercent] = useState<number>(12);
+    const [chatTopPercent, setChatTopPercent] = useState<number>(12);
     const [navXOffset, setNavXOffset] = useState<number>(0);
     const [chatXOffset, setChatXOffset] = useState<number>(0);
     const [isDraggingNav, setIsDraggingNav] = useState(false);
     const [isDraggingChat, setIsDraggingChat] = useState(false);
     const bodyContainerRef = useRef<HTMLDivElement>(null);
 
-    const navTopPercentRef = useRef(50);
-    const chatTopPercentRef = useRef(50);
+    const navTopPercentRef = useRef(12);
+    const chatTopPercentRef = useRef(12);
     const navXOffsetRef = useRef(0);
     const chatXOffsetRef = useRef(0);
     useEffect(() => { navTopPercentRef.current = navTopPercent; }, [navTopPercent]);
