@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
+import { useAuth } from '../../api/AuthContext';
 
 interface CollaborationSidebarProps {
     instanceUuid: string;
@@ -27,6 +28,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     allSections,
     onClose
 }) => {
+    const { user } = useAuth();
     const [activeTab, setActiveTabState] = useState<'comments' | 'status' | 'activity'>(() => {
         const saved = localStorage.getItem('document_sidebar_tab');
         return (saved === 'comments' || saved === 'status' || saved === 'activity') ? saved : 'comments';
@@ -43,6 +45,20 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
     const [isLoadingPulse, setIsLoadingPulse] = useState(true);
 
     const commentsEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+        requestAnimationFrame(() => {
+            commentsEndRef.current?.scrollIntoView({ behavior, block: 'end' });
+        });
+    }, []);
+
+    useEffect(() => {
+        if (activeTab === 'comments' && comments.length > 0) {
+            scrollToBottom('auto');
+            const timer = setTimeout(() => scrollToBottom('smooth'), 100);
+            return () => clearTimeout(timer);
+        }
+    }, [comments.length, activeTab, scrollToBottom]);
 
     // Cargar Pulso Inicial (Historial de comentarios y estados)
     useEffect(() => {
@@ -62,7 +78,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                         idPadre: c.idPadre ?? c.id_padre ?? null,
                         creadoEn: c.creadoEn ?? c.creado_en ?? new Date().toISOString()
                     }));
-                    setComments(mappedComments);
+                    setComments(mappedComments.reverse());
                 }
                 if (res.data.statuses) {
                     const mappedStatuses: Record<string, string> = {};
@@ -105,7 +121,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 idPadre: data.idPadre ?? data.id_padre ?? null,
                 creadoEn: data.creadoEn ?? data.creado_en ?? new Date().toISOString()
             };
-            setComments(prev => [normalized, ...prev].slice(0, 50));
+            setComments(prev => [...prev, normalized].slice(-50));
         });
 
         cowork.onSectionActivity((data) => {
@@ -226,7 +242,7 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             </div>
 
             {/* Content Container */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-bg-deep/10 flex flex-col">
+            <div className={`flex-1 ${activeTab === 'comments' ? 'overflow-hidden' : 'overflow-y-auto'} p-4 custom-scrollbar bg-bg-deep/10 flex flex-col`}>
                 {isLoadingPulse ? (
                     <div className="flex-1 flex flex-col items-center justify-center gap-2 py-10 opacity-70">
                         <Loader size={24} className="animate-spin text-text-main" />
@@ -235,8 +251,8 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                 ) : (
                     <>
                         {activeTab === 'comments' && (
-                            <div className="flex flex-col h-full flex-1">
-                                <div className="flex-1 space-y-3 mb-4">
+                            <div className="flex flex-col h-full flex-1 overflow-hidden">
+                                <div className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 custom-scrollbar">
                                     {comments.length === 0 ? (
                                         <div className="text-center py-12 opacity-50 flex flex-col items-center justify-center">
                                             <div className="p-3 bg-surface rounded-full border border-border-thin mb-3">
@@ -246,19 +262,46 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
                                             <p className="text-[8px] text-text-dim mt-1 max-w-[150px] leading-relaxed">Escribe un mensaje para coordinar la redacción.</p>
                                         </div>
                                     ) : (
-                                        comments.map((c, i) => (
-                                            <div key={c.uuid || i} className="bg-surface rounded-xl p-3.5 border border-border-thin shadow-sm hover:border-border-normal transition-all">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-[9px] font-black text-text-main uppercase tracking-wider">{c.nombreUsuario}</span>
-                                                    <span className="text-[8px] text-text-dim font-mono">{formatTime(c.creadoEn)}</span>
-                                                </div>
-                                                <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
-                                            </div>
-                                        ))
+                                        <div className="space-y-3 flex flex-col">
+                                            {comments.map((c, i) => {
+                                                const isMsgFromAdmin = c.usuarioUuid === 'admin' || c.nombreUsuario.toLowerCase().includes('admin') || c.nombreUsuario.toLowerCase().includes('director');
+                                                const isMe = c.usuarioUuid === user?.id_referencia;
+
+                                                return (
+                                                    <div
+                                                        key={c.idComentario || c.uuid || i}
+                                                        className={`flex flex-col w-full max-w-[90%] ${
+                                                            isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                                                        } animate-fade-up`}
+                                                    >
+                                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                                            <span className={`text-[8px] font-black uppercase tracking-wider ${
+                                                                isMe ? 'text-emerald-400' : isMsgFromAdmin ? 'text-amber-400' : 'text-brand'
+                                                            }`}>
+                                                                {isMe ? 'Tú' : c.nombreUsuario}
+                                                            </span>
+                                                            <span className="text-[7px] text-text-dim font-mono">
+                                                                {formatTime(c.creadoEn)}
+                                                            </span>
+                                                        </div>
+
+                                                        <div className={`rounded-xl p-3 border shadow-sm select-text transition-all duration-300 ${
+                                                            isMe
+                                                                ? 'bg-emerald-500/5 border-emerald-500/20 text-text-main rounded-tr-none hover:border-emerald-500/40 shadow-emerald-500/5'
+                                                                : isMsgFromAdmin
+                                                                    ? 'bg-amber-500/5 border-amber-500/20 text-text-main rounded-tl-none hover:border-amber-500/40 shadow-amber-500/5'
+                                                                    : 'bg-surface border-border-thin text-text-main rounded-tl-none hover:border-border-hover'
+                                                        }`}>
+                                                            <p className="text-xs text-text-main leading-relaxed select-text">{c.contenido}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                     <div ref={commentsEndRef} />
                                 </div>
-                                <div className="mt-auto relative pt-2">
+                                <div className="mt-auto relative pt-2 shrink-0">
                                     <textarea
                                         value={comment}
                                         onChange={(e) => setComment(e.target.value)}
