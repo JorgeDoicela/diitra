@@ -117,6 +117,17 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
     // Conexión a SignalR en tiempo real
     const [collabConnection, setCollabConnection] = useState<signalR.HubConnection | null>(null);
 
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+    // Auto-grow textarea as user types
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = '48px'; // Reset to default height
+            const scrollHeight = textareaRef.current.scrollHeight;
+            textareaRef.current.style.height = `${Math.min(150, Math.max(48, scrollHeight))}px`;
+        }
+    }, [newFeedbackText, activeFieldKey]);
+
     const isMember = isAdmin || 
         (detailGroup && detailGroup.id_profesor_coordinador?.trim() === user?.id_referencia?.trim()) || 
         detailMembers.some(m => m.activo && (m.cedula?.trim() === user?.id_referencia?.trim() || m.cedula?.trim() === user?.cedula?.trim() || m.id_usuario === user?.id_usuario));
@@ -495,9 +506,10 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                 }}
             />
 
-            {/* Docked Side Panel for Field Feedback */}
-            {isFieldModalOpen && activeFieldKey && (
-                <div className="relative w-full max-w-[340px] h-full bg-surface border-r border-border-thin flex flex-col z-20 animate-fade-in shadow-[0_0_20px_rgba(0,0,0,0.3)] overflow-hidden">
+            <div className="relative h-full flex items-center">
+                {/* Floating Side Panel for Field Feedback */}
+                {isFieldModalOpen && activeFieldKey && (
+                    <div className="absolute md:right-[calc(100%+16px)] right-4 left-4 md:left-auto md:top-[40%] md:-translate-y-1/2 bottom-6 md:bottom-auto w-auto md:w-[340px] max-h-[calc(100vh-48px)] h-fit bg-surface border border-border-thin rounded-2xl flex flex-col z-20 animate-fade-in shadow-xl overflow-hidden">
                     <div className="modal-header shrink-0 !py-3 !px-4 bg-bg-deep/40 border-b border-border-thin">
                         <div className="flex items-center gap-2">
                             <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.05)] shrink-0">
@@ -639,6 +651,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
 
                         <div className="flex items-end gap-1.5 relative">
                             <textarea
+                                ref={textareaRef}
                                 value={newFeedbackText}
                                 onChange={(e) => setNewFeedbackText(e.target.value)}
                                 onKeyDown={(e) => {
@@ -648,7 +661,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                                     }
                                 }}
                                 placeholder={isAdmin ? "Observación..." : "Responder..."}
-                                className="flex-1 bg-bg-deep border border-border-thin rounded-xl p-2 pr-12 text-xs focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-all custom-scrollbar placeholder:text-text-dim/60 font-medium"
+                                className="flex-1 bg-bg-deep border border-border-thin rounded-xl p-2 pr-12 text-xs focus:outline-none focus:border-text-main outline-none resize-none h-12 transition-colors custom-scrollbar placeholder:text-text-dim/60 font-medium"
                             />
 
                             <div className="absolute right-1.5 bottom-1.5 flex gap-0.5">
@@ -1296,5 +1309,6 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                 </div>
             </div>
         </div>
-    );
+    </div>
+);
 };
