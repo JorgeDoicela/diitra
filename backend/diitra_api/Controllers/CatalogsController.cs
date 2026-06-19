@@ -266,6 +266,16 @@ namespace diitra_api.Controllers
             return Ok(data);
         }
 
+        [HttpGet("sublineas-investigacion")]
+        public async Task<IActionResult> GetSublineasInvestigacion()
+        {
+            var data = await _context.InvSublineas
+                .Where(s => s.Activo == true)
+                .OrderBy(s => s.Nombre)
+                .ToListAsync();
+            return Ok(data);
+        }
+
         [HttpPost("lineas-investigacion")]
         public async Task<IActionResult> CreateLineaInvestigacion([FromBody] InvLineaInvestigacion model)
         {

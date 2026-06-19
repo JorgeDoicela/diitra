@@ -539,7 +539,11 @@ export const ProjectWorkspace: React.FC = () => {
                         (res.data.estado === 'Borrador' || res.data.estado === 'En Corrección'),
                     puedeSolicitarCambioEquipo: res.data.puede_solicitar_cambio_equipo ?? res.data.puedeSolicitarCambioEquipo ?? false,
                     puedeFirmar: res.data.puede_firmar ?? res.data.puedeFirmar ?? res.data.PuedeFirmar ?? false,
-                    puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null
+                    puntajeEvaluacion: res.data.puntaje_evaluacion ?? res.data.puntajeEvaluacion ?? res.data.PuntajeEvaluacion ?? null,
+                    grupoInvestigacion: res.data.grupo_investigacion || res.data.grupoInvestigacion || '',
+                    grupoInvestigacionUuid: res.data.grupo_investigacion_uuid || res.data.grupoInvestigacionUuid || '',
+                    tieneGrupoInvestigacion: !!(res.data.tiene_grupo_investigacion ?? res.data.tieneGrupoInvestigacion ?? false) || !!(res.data.grupo_investigacion_uuid || res.data.grupoInvestigacionUuid),
+                    dominio: res.data.dominio || ''
                 });
                 setInvestigadores((res.data.investigadores || []).map(mapInvestigador));
 
@@ -559,7 +563,11 @@ export const ProjectWorkspace: React.FC = () => {
                     linea: 'No definida',
                     puedeEditar: true,
                     puedeSolicitarCambioEquipo: false,
-                    puedeFirmar: true
+                    puedeFirmar: true,
+                    grupoInvestigacion: '',
+                    grupoInvestigacionUuid: '',
+                    tieneGrupoInvestigacion: false,
+                    dominio: ''
                 });
                 setInvestigadores([]);
                 setTieneGrupo(false);

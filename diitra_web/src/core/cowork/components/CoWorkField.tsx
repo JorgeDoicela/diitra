@@ -160,7 +160,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
             : `${className} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
-        disabled: cowork.session.readOnly,
+        disabled: cowork.session.readOnly || readOnly,
         readOnly
     };
 

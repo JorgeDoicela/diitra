@@ -179,6 +179,48 @@ namespace diitra_infrastructure.Research
                 }
                 project.IdObjetivoPnd = (dto.IdObjetivoPnd.HasValue && dto.IdObjetivoPnd.Value > 0) ? dto.IdObjetivoPnd.Value : null;
 
+                // Sincronización de Programa
+                if (!string.IsNullOrEmpty(dto.Programa))
+                {
+                    var prog = await _context.InvProgramas.FirstOrDefaultAsync(pr => pr.Nombre == dto.Programa && pr.Activo == true);
+                    if (prog != null)
+                    {
+                        project.IdPrograma = prog.IdPrograma;
+                    }
+                }
+                else
+                {
+                    project.IdPrograma = null;
+                }
+
+                // Sincronización de Tipo de Investigación
+                if (!string.IsNullOrEmpty(dto.TipoInvestigacion))
+                {
+                    var tip = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => t.Nombre == dto.TipoInvestigacion && t.Activo == true);
+                    if (tip != null)
+                    {
+                        project.IdTipo = tip.IdTipo;
+                    }
+                }
+                else
+                {
+                    project.IdTipo = null;
+                }
+
+                // Sincronización de Sublínea (Línea de Investigación)
+                if (!string.IsNullOrEmpty(dto.SublineaInvestigacion))
+                {
+                    var sub = await _context.InvSublineas.FirstOrDefaultAsync(s => s.Nombre == dto.SublineaInvestigacion && s.Activo == true);
+                    if (sub != null)
+                    {
+                        project.IdSublinea = sub.IdSublinea;
+                    }
+                }
+                else
+                {
+                    project.IdSublinea = null;
+                }
+
                 // Núcleo Innovación & TRL
                 project.IdEntidadAliada = (dto.IdEntidadAliada.HasValue && dto.IdEntidadAliada.Value > 0) ? dto.IdEntidadAliada.Value : null;
                 project.TrlInicial = (sbyte?)(dto.TrlInicial ?? 1);
@@ -190,6 +232,23 @@ namespace diitra_infrastructure.Research
                 project.FechaModificacion = DateTime.Now;
 
                 await SaveChangesWithConcurrencyResolutionAsync(); // Aseguramos ID del proyecto
+
+                // Sincronización de Dominio Académico
+                var oldDominios = _context.InvProyectosDominios.Where(pd => pd.IdProyecto == project.IdProyecto);
+                _context.InvProyectosDominios.RemoveRange(oldDominios);
+
+                if (!string.IsNullOrEmpty(dto.Dominio))
+                {
+                    var dom = await _context.InvDominios.FirstOrDefaultAsync(d => d.Nombre == dto.Dominio && d.Activo == true);
+                    if (dom != null)
+                    {
+                        _context.InvProyectosDominios.Add(new InvProyectoDominio
+                        {
+                            IdProyecto = project.IdProyecto,
+                            IdDominio = dom.IdDominio
+                        });
+                    }
+                }
 
                 // Sincronización de Carreras
                 if (dto.IdCarrera.HasValue && dto.IdCarrera.Value > 0)
@@ -547,9 +606,11 @@ namespace diitra_infrastructure.Research
 
             var p = await _context.InvProyectos
                 .AsSplitQuery()
-                .Include(p => p.IdSublineaNavigation)
-                .Include(p => p.IdConvocatoriaNavigation).ThenInclude(c => c.IdPeriodoNavigation)
+                .Include(p => p.IdSublineaNavigation).ThenInclude(s => s!.IdLineaNavigation)
+                .Include(p => p.IdConvocatoriaNavigation).ThenInclude(c => c!.IdPeriodoNavigation)
                 .Include(p => p.IdGrupoNavigation)
+                .Include(p => p.IdProgramaNavigation)
+                .Include(p => p.IdTipoNavigation)
                 .Include(p => p.InvProyectosCarreras)
                 .Include(p => p.InvProyectosProfesores).ThenInclude(pp => pp.IdUsuarioNavigation)
                 .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
@@ -658,7 +719,8 @@ namespace diitra_infrastructure.Research
                     Carrera = carreraNom,
                     HorasSemanales = pp.HorasSemanales,
                     HorasDisponibles = availableHours,
-                    HorasAsignadas = assignedHours
+                    HorasAsignadas = assignedHours,
+                    EsDirector = pp.EsDirector
                 });
             }
 
@@ -714,6 +776,14 @@ namespace diitra_infrastructure.Research
             dto.Estado = p.Estado;
             dto.IdConvocatoria = p.IdConvocatoria;
             dto.IdCarrera = p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
+            if (dto.IdCarrera.HasValue)
+            {
+                var carreraObj = allCarrerasList.FirstOrDefault(c => c.IdCarrera == dto.IdCarrera.Value);
+                if (carreraObj != null)
+                {
+                    dto.Carrera = carreraObj.Carrera1;
+                }
+            }
             dto.IdObjetivoPnd = p.IdObjetivoPnd;
             dto.Titulo = p.Titulo;
             dto.DescripcionProyecto = p.DescripcionProyecto;
@@ -727,9 +797,48 @@ namespace diitra_infrastructure.Research
             dto.TrlActual = (int?)p.TrlActual;
             dto.TrlMeta = (int?)p.TrlMeta;
             dto.PuntajeEvaluacion = p.PuntajeEvaluacion;
-            dto.LineaInvestigacion = p.IdSublineaNavigation != null ? p.IdSublineaNavigation.Nombre : null;
-            dto.GrupoInvestigacion = p.IdGrupoNavigation != null ? p.IdGrupoNavigation.Nombre : null;
-            dto.GrupoInvestigacionUuid = p.IdGrupoNavigation?.Uuid;
+            
+            dto.LineaInvestigacion = p.IdSublineaNavigation?.IdLineaNavigation != null 
+                                     ? p.IdSublineaNavigation.IdLineaNavigation.NombreLinea 
+                                     : dto.LineaInvestigacion;
+            dto.SublineaInvestigacion = p.IdSublineaNavigation != null 
+                                        ? p.IdSublineaNavigation.Nombre 
+                                        : dto.SublineaInvestigacion;
+            
+            dto.Programa = p.IdProgramaNavigation?.Nombre ?? dto.Programa;
+            dto.TipoInvestigacion = p.IdTipoNavigation?.Nombre ?? dto.TipoInvestigacion;
+            
+            dto.DirectorProyecto = p.InvProyectosProfesores
+                .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
+                .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                .FirstOrDefault()
+                ?? p.InvProyectosProfesores
+                .Where(pp => pp.IdUsuarioNavigation != null)
+                .Select(pp => pp.IdUsuarioNavigation.Nombre)
+                .FirstOrDefault()
+                ?? dto.DirectorProyecto;
+            if (p.IdGrupoNavigation != null)
+            {
+                dto.GrupoInvestigacion = p.IdGrupoNavigation.Nombre;
+                dto.GrupoInvestigacionUuid = p.IdGrupoNavigation.Uuid;
+                dto.TieneGrupoInvestigacion = true;
+                dto.GrupoInvestigacionTipo = "SI";
+                dto.GrupoInvestigacionNombre = p.IdGrupoNavigation.Nombre;
+
+                if (p.IdGrupoNavigation.IdDominio.HasValue)
+                {
+                    var dom = await _context.InvDominios.FirstOrDefaultAsync(d => d.IdDominio == p.IdGrupoNavigation.IdDominio.Value);
+                    if (dom != null)
+                    {
+                        dto.Dominio = dom.Nombre;
+                    }
+                }
+            }
+            else
+            {
+                dto.TieneGrupoInvestigacion = dto.TieneGrupoInvestigacion ?? false;
+                dto.GrupoInvestigacionTipo = dto.GrupoInvestigacionTipo ?? "NO";
+            }
             dto.CostoTotal = p.InvPresupuestoItems.Sum(i => i.ValorUnitario * i.Cantidad);
             dto.Investigadores = investigadoresList;
 
@@ -742,6 +851,10 @@ namespace diitra_infrastructure.Research
                           ?? p.IdConvocatoriaNavigation?.IdPeriodo 
                           ?? dto.Periodo 
                           ?? currentPeriod?.Detalle;
+            dto.PeriodoConvocatoria = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle 
+                                      ?? p.IdConvocatoriaNavigation?.IdPeriodo 
+                                      ?? dto.PeriodoConvocatoria 
+                                      ?? dto.Periodo;
             dto.ObjetivosEspecificos = p.InvObjetivosProyecto
                 .Where(o => !o.EsGeneral)
                 .OrderBy(o => o.Orden)

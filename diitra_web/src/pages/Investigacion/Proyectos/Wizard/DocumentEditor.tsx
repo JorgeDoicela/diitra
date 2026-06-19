@@ -79,6 +79,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     const [carreras, setCarreras] = useState<any[]>([]);
     const [convocatorias, setConvocatorias] = useState<any[]>([]);
     const [tiposProducto, setTiposProducto] = useState<any[]>([]);
+    const [groups, setGroups] = useState<any[]>([]);
+    const [dominios, setDominios] = useState<any[]>([]);
+    const [lineas, setLineas] = useState<any[]>([]);
+    const [sublineas, setSublineas] = useState<any[]>([]);
 
     // ── Carga paralela: configuración de plantilla + datos de instancia + catálogos ──
     // Todo en un solo Promise.all para eliminar el waterfall de requests seriales.
@@ -90,7 +94,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             // 2. Lanzar todas las peticiones de red en paralelo
             const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
 
-            const [configResult, instanceResult, carrerasRes, convsRes, tiposRes] = await Promise.all([
+            const [configResult, instanceResult, carrerasRes, convsRes, tiposRes, groupsRes, dominiosRes, lineasRes, sublineasRes] = await Promise.all([
                 // Intentar cargar la configuración dinámica desde la API
                 api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
                 // Datos de la instancia: siempre fresco desde backend si existe
@@ -101,6 +105,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 api.get('/catalogs/carreras').catch(() => ({ data: [] })),
                 api.get('/Convocatorias').catch(() => ({ data: [] })),
                 api.get('/catalogs/tipo-producto').catch(() => ({ data: [] })),
+                api.get('/groups').catch(() => ({ data: [] })),
+                api.get('/catalogs/dominios').catch(() => ({ data: [] })),
+                api.get('/Convocatorias/catalogos/lineas').catch(() => ({ data: [] })),
+                api.get('/catalogs/sublineas-investigacion').catch(() => ({ data: [] })),
             ]);
 
             // Aplicar config de plantilla (prioriza la API, cae en la localConfig si la API no retorna nada o falla)
@@ -140,6 +148,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             const activeConvs = allConvs.filter((c: any) => c.estado === 'Abierta' || c.estado === 'Activa' || (isAdmin && c.estado === 'Borrador'));
             setConvocatorias(activeConvs.length > 0 ? activeConvs : allConvs.filter((c: any) => c.estado !== 'Borrador' || isAdmin));
             setTiposProducto(tiposRes.data || []);
+            setGroups(groupsRes.data || []);
+            setDominios(dominiosRes.data || []);
+            setLineas(lineasRes.data || []);
+            setSublineas(sublineasRes.data || []);
 
             setIsLoading(false);
         };
@@ -184,6 +196,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             carreras={carreras}
             convocatorias={convocatorias}
             tiposProducto={tiposProducto}
+            groups={groups}
+            dominios={dominios}
+            lineas={lineas}
+            sublineas={sublineas}
             onClose={onClose}
             readOnly={readOnly}
             readOnlyReason={readOnlyReason}
@@ -207,6 +223,10 @@ interface DocumentEditorCoreProps {
     carreras: any[];
     convocatorias: any[];
     tiposProducto: any[];
+    groups: any[];
+    dominios: any[];
+    lineas: any[];
+    sublineas: any[];
     onClose: () => void;
     readOnly?: boolean;                                  // ← Bandera de sólo lectura
     readOnlyReason?: string;
@@ -222,6 +242,10 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     carreras,
     convocatorias,
     tiposProducto,
+    groups,
+    dominios,
+    lineas,
+    sublineas,
     onClose,
     readOnly = false,
     readOnlyReason,
@@ -370,10 +394,12 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
         if (cloned.GrupoInvestigacionTipo === 'SI' || cloned.GrupoInvestigacionTipo === 'si') {
             cloned.TieneGrupoInvestigacion = true;
+            cloned.GrupoInvestigacion = cloned.GrupoInvestigacionNombre;
         } else if (cloned.GrupoInvestigacionTipo === 'NO' || cloned.GrupoInvestigacionTipo === 'no') {
             cloned.TieneGrupoInvestigacion = false;
             cloned.GrupoInvestigacionUuid = null;
             cloned.GrupoInvestigacionNombre = '';
+            cloned.GrupoInvestigacion = '';
         }
 
         return cloned;
@@ -481,6 +507,10 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             carreras={carreras}
                             convocatorias={convocatorias}
                             tiposProducto={tiposProducto}
+                            groups={groups}
+                            dominios={dominios}
+                            lineas={lineas}
+                            sublineas={sublineas}
                             config={activeSectionConfig.config}
 
                             // Props de listas para compatibilidad con secciones existentes

@@ -226,6 +226,7 @@ namespace Diitra.Application.Research.Dtos
         public decimal? HorasSemanales { get; set; }
         public decimal? HorasDisponibles { get; set; }
         public decimal? HorasAsignadas { get; set; }
+        public bool? EsDirector { get; set; }
     }
 
     public class RecursoDisponibleDto

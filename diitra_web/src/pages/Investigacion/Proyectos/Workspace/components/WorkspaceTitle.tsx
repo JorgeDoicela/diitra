@@ -8,6 +8,8 @@ interface WorkspaceTitleProps {
         status: string;
         uuid: string;
         id: string;
+        tieneGrupoInvestigacion?: boolean;
+        grupoInvestigacion?: string;
     };
     user: any;
     templateCode: string;
@@ -33,7 +35,14 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                         </span>
                     </div>
                     <h2 className="text-2xl md:text-3xl font-semibold text-text-main tracking-tight">{currentProject.title?.trim() || '(Sin título)'}</h2>
-                    <p className="text-sm text-text-dim max-w-lg font-medium">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
+                    {currentProject.tieneGrupoInvestigacion && currentProject.grupoInvestigacion && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                            <span className="badge-vercel bg-brand/5 border border-brand/20 text-brand text-[10px] font-semibold py-1 px-2.5 rounded-full flex items-center gap-1 animate-fade-in">
+                                👥 Grupo: {currentProject.grupoInvestigacion}
+                            </span>
+                        </div>
+                    )}
+                    <p className="text-sm text-text-dim max-w-lg font-medium mt-1">Gestión del ciclo de vida institucional del proyecto de investigación.</p>
                 </div>
             </header>
 
