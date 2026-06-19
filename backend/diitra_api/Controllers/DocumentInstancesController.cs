@@ -63,6 +63,182 @@ namespace diitra_api.Controllers
             }
 
             // 1. Esquema Premium Pre-Mapeado (Caso de Plantillas Oficiales)
+            if (code == "PROTOCOLO_INVESTIGACION")
+            {
+                return Ok(new
+                {
+                    title = "Proyecto de Investigación",
+                    subtitle = "Formulación del Proyecto de Investigación - ISTPET",
+                    schema = new Dictionary<string, object>
+                    {
+                        { "Titulo", "" },
+                        { "IdCarrera", 0 },
+                        { "IdConvocatoria", 0 },
+                        { "Periodo", "" },
+                        { "TiempoEjecucion", "" },
+                        { "Programa", "" },
+                        { "GrupoInvestigacionTipo", "NO" },
+                        { "GrupoInvestigacionNombre", "" },
+                        { "Dominio", "" },
+                        { "LineaInvestigacion", "" },
+                        { "SublineaInvestigacion", "" },
+                        { "TipoInvestigacion", "APLICADA" },
+                        { "CampoAmplio", "" },
+                        { "CampoEspecifico", "" },
+                        { "CampoDetallado", "" },
+                        { "DirectorProyecto", "" },
+                        { "FechaPresentacion", "" },
+                        { "FechaInicio", "" },
+                        { "FechaFin", "" },
+                        { "Investigadores", new object[] { } },
+                        { "Antecedentes", "" },
+                        { "DescripcionProyecto", "" },
+                        { "Justificacion", "" },
+                        { "ObjetivoGeneral", "" },
+                        { "ObjetivosEspecificos", "" },
+                        { "ObjetivosDesarrolloSostenible", "" },
+                        { "MarcoTeorico", "" },
+                        { "Metodologia", "" },
+                        { "Evaluacion", "" },
+                        { "RecursosDisponibles", new object[] { } },
+                        { "RecursosNecesarios", new object[] { } },
+                        { "CostoTotal", 0 },
+                        { "FinanciamientoIstpet", false },
+                        { "FinanciamientoOtrasFuentes", false },
+                        { "NombresOtrasFuentes", "" },
+                        { "ProductosEsperados", new object[] { } },
+                        { "Impacto", new Dictionary<string, string> { { "social", "" }, { "cientifico", "" }, { "economico", "" }, { "politico", "" }, { "ambiental", "" }, { "otro", "" } } },
+                        { "Cronograma", new object[] { } },
+                        { "Bibliografia", "" },
+                        { "FirmasResponsabilidad", new Dictionary<string, string> { { "DirectorNombre", "" }, { "DirectorCargo", "Director del Proyecto" }, { "CoordinadorNombre", "" }, { "CoordinadorCargo", "Coordinador de Carrera" } } }
+                    },
+                    lists = new[] { "Investigadores", "RecursosDisponibles", "RecursosNecesarios", "Cronograma", "ProductosEsperados" },
+                    sections = new[]
+                    {
+                        new { id = "identificacion", label = "Identificación", iconName = "BookOpen", config = (object?)null },
+                        new { id = "tecnico", label = "Plan Técnico", iconName = "FileText", config = (object?)null },
+                        new { id = "equipo", label = "Equipo Humano", iconName = "Users", config = (object?)null },
+                        new { id = "recursos", label = "Recursos & Financiamiento", iconName = "DollarSign", config = (object?)null },
+                        new { id = "cronograma", label = "Cronograma (Gantt)", iconName = "Calendar", config = (object?)null },
+                        new { id = "impactos", label = "Impacto & Productos", iconName = "Target", config = (object?)null }
+                    }
+                });
+            }
+
+            if (code == "RUBRICA_EVALUACION")
+            {
+                return Ok(new
+                {
+                    title = "Rúbrica de Evaluación por Pares",
+                    subtitle = "Evaluación anónima (Fase 2) — Normativa CACES",
+                    schema = new Dictionary<string, object>
+                    {
+                        { "Pertinencia", 0 },
+                        { "Metodologia", 0 },
+                        { "Viabilidad", 0 },
+                        { "Impacto", 0 },
+                        { "ComentariosGenerales", "" },
+                        { "RecomendacionFinal", "" }
+                    },
+                    lists = new string[] { },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "evaluacion",
+                            label = "Evaluación Técnica",
+                            iconName = "CheckSquare",
+                            config = new
+                            {
+                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
+                                fields = new[]
+                                {
+                                    new { name = "Pertinencia", label = "Pertinencia Social (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                                    new { name = "Metodologia", label = "Metodología Científica (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                                    new { name = "Viabilidad", label = "Viabilidad y Presupuesto (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                                    new { name = "Impacto", label = "Impacto y Transferencia (0-25)", type = "number", collaborative = false, min = (int?)0, max = (int?)25, options = (string[]?)null, placeholder = (string?)null },
+                                    new { name = "ComentariosGenerales", label = "Observaciones y comentarios institucionales", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Escriba un informe cualitativo para fundamentar las puntuaciones..." },
+                                    new { name = "RecomendacionFinal", label = "Recomendación Final de Comisión", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = new[] { "Aprobado sin modificaciones", "Aprobado con observaciones menores", "Requiere re-estructuración mayor", "Rechazado" }, placeholder = (string?)null }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (code == "INFORME_AVANCE")
+            {
+                return Ok(new
+                {
+                    title = "Informe de Avance de Proyecto",
+                    subtitle = "Ejecución y Monitoreo (Fase 3)",
+                    schema = new Dictionary<string, object>
+                    {
+                        { "ConclusionesParciales", "" },
+                        { "HitosCompletados", new object[] { } },
+                        { "Evidencias", new object[] { } },
+                        { "PresupuestoEjecutado", new object[] { } }
+                    },
+                    lists = new[] { "HitosCompletados", "Evidencias", "PresupuestoEjecutado" },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "ejecucion",
+                            label = "Avance de Ejecución",
+                            iconName = "BarChart",
+                            config = new
+                            {
+                                fields = new[]
+                                {
+                                    new { name = "ConclusionesParciales", label = "Bitácora Científica & Conclusiones Parciales", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Documenta el progreso experimental, hallazgos y avances teórico-prácticos del período..." }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            if (code == "ACTA_COMITE_ETICA")
+            {
+                return Ok(new
+                {
+                    title = "Acta del Comité de Ética de Investigación",
+                    subtitle = "Evaluación de Pertinencia Ética y Bioética - IST Traversari",
+                    schema = new Dictionary<string, object>
+                    {
+                        { "JustificacionEtica", "" },
+                        { "RiesgosIdentificados", "" },
+                        { "MetodoConsentimiento", "" },
+                        { "DictamenComite", "Aprobado sin observaciones" },
+                        { "ObservacionesEspecificas", "" },
+                        { "MiembrosFirmantes", new object[] { } }
+                    },
+                    lists = new[] { "MiembrosFirmantes" },
+                    sections = new[]
+                    {
+                        new
+                        {
+                            id = "evaluacion_comite",
+                            label = "Evaluación de Ética",
+                            iconName = "CheckSquare",
+                            config = new
+                            {
+                                referenceTemplateCode = "PROTOCOLO_INVESTIGACION",
+                                fields = new[]
+                                {
+                                    new { name = "JustificacionEtica", label = "Justificación Ética de la Investigación", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Describa el impacto ético sobre seres humanos, datos sensibles o animales..." },
+                                    new { name = "RiesgosIdentificados", label = "Identificación y Mitigación de Riesgos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Especifique cualquier riesgo biológico, digital o social y cómo se resolverá..." },
+                                    new { name = "MetodoConsentimiento", label = "Mecanismo de Consentimiento Informado", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Detalle cómo se obtendrá el consentimiento firmado de los participantes..." },
+                                    new { name = "DictamenComite", label = "Dictamen Final de Comisión de Ética", type = "select", collaborative = false, min = (int?)null, max = (int?)null, options = new[] { "Aprobado sin observaciones", "Aprobado con sugerencias", "Rechazado" }, placeholder = (string?)null },
+                                    new { name = "ObservacionesEspecificas", label = "Observaciones y Requerimientos de Enmienda", type = "textarea", collaborative = false, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Escriba cualquier directriz obligatoria que el equipo de investigadores deba aplicar..." }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
             if (code == "INFORME_FINAL_INVESTIGACION")
             {
                 return Ok(new
@@ -89,10 +265,13 @@ namespace diitra_api.Controllers
                             id = "resumen",
                             label = "Resumen & Objetivos",
                             iconName = "FileText",
-                            fields = new[]
+                            config = new
                             {
-                                new { name = "resumen_ejecutivo", label = "Resumen Ejecutivo", type = "rich-text", collaborative = true, placeholder = "Redacte el resumen ejecutivo de la investigación..." },
-                                new { name = "cumplimiento_objetivos", label = "Análisis de Cumplimiento de Objetivos", type = "rich-text", collaborative = true, placeholder = "Detalle cómo se cumplieron cada uno de los objetivos planteados..." }
+                                fields = new[]
+                                {
+                                    new { name = "resumen_ejecutivo", label = "Resumen Ejecutivo", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Redacte el resumen ejecutivo de la investigación..." },
+                                    new { name = "cumplimiento_objetivos", label = "Análisis de Cumplimiento de Objetivos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Detalle cómo se cumplieron cada uno de los objetivos planteados..." }
+                                }
                             }
                         },
                         new
@@ -100,10 +279,13 @@ namespace diitra_api.Controllers
                             id = "resultados",
                             label = "Resultados & Discusión",
                             iconName = "BarChart",
-                            fields = new[]
+                            config = new
                             {
-                                new { name = "resultados", label = "Resultados Obtenidos", type = "rich-text", collaborative = true, placeholder = "Descripción técnica de los hallazgos y resultados..." },
-                                new { name = "discusion", label = "Discusión de Hallazgos", type = "rich-text", collaborative = true, placeholder = "Análisis crítico de los resultados frente al marco teórico inicial..." }
+                                fields = new[]
+                                {
+                                    new { name = "resultados", label = "Resultados Obtenidos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Descripción técnica de los hallazgos y resultados..." },
+                                    new { name = "discusion", label = "Discusión de Hallazgos", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Análisis crítico de los resultados frente al marco teórico inicial..." }
+                                }
                             }
                         },
                         new
@@ -111,13 +293,16 @@ namespace diitra_api.Controllers
                             id = "impacto",
                             label = "Impacto & Cierre",
                             iconName = "Target",
-                            fields = new[]
+                            config = new
                             {
-                                new { name = "impacto_final", label = "Impacto en la Sociedad / Sector Productivo", type = "rich-text", collaborative = true, placeholder = "Describir el impacto real observado tras la ejecución..." },
-                                new { name = "transferencia_conocimiento", label = "Transferencia de Tecnología / Conocimiento", type = "rich-text", collaborative = true, placeholder = "Convenios, prototipos o publicaciones derivadas..." },
-                                new { name = "conclusiones", label = "Conclusiones Generales", type = "rich-text", collaborative = true, placeholder = "Conclusiones finales del proyecto..." },
-                                new { name = "recomendaciones", label = "Recomendaciones", type = "rich-text", collaborative = true, placeholder = "Sugerencias para futuros desarrollos o líneas de investigación..." },
-                                new { name = "bibliografia_final", label = "Bibliografía Actualizada (APA)", type = "rich-text", collaborative = true, placeholder = "Listado completo de fuentes bibliográficas utilizadas..." }
+                                fields = new[]
+                                {
+                                    new { name = "impacto_final", label = "Impacto en la Sociedad / Sector Productivo", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Describir el impacto real observado tras la ejecución..." },
+                                    new { name = "transferencia_conocimiento", label = "Transferencia de Tecnología / Conocimiento", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Convenios, prototipos o publicaciones derivadas..." },
+                                    new { name = "conclusiones", label = "Conclusiones Generales", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Conclusiones finales del proyecto..." },
+                                    new { name = "recomendaciones", label = "Recomendaciones", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Sugerencias para futuros desarrollos o líneas de investigación..." },
+                                    new { name = "bibliografia_final", label = "Bibliografía Actualizada (APA)", type = "rich-text", collaborative = true, min = (int?)null, max = (int?)null, options = (string[]?)null, placeholder = "Listado completo de fuentes bibliográficas utilizadas..." }
+                                }
                             }
                         }
                     }

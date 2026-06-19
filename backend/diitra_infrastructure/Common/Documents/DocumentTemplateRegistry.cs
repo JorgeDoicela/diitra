@@ -118,6 +118,19 @@ namespace Diitra.Infrastructure.Common.Documents
                 requiresSignature: true,
                 version: 1);
 
+            yield return DocumentTemplate.Create(
+                code: "ACTA_COMITE_ETICA",
+                name: "Acta del Comité de Ética de Investigación",
+                description: "Evaluación de Pertinencia Ética y Bioética - IST Traversari.",
+                category: DocumentCategory.ProtocoloBioetico,
+                htmlContent: "<!-- Cargado desde Templates/Investigacion/ActaComiteEtica.html -->",
+                requiresLopdp: true,
+                supportsBlind: false,
+                requiresTraceability: true,
+                requiresSignature: true,
+                collaborativeFields: "[\"JustificacionEtica\", \"RiesgosIdentificados\", \"MetodoConsentimiento\", \"DictamenComite\", \"ObservacionesEspecificas\"]",
+                version: 1);
+
             // Nota: Para agregar una nueva plantilla:
             //   1. Crear el .html en Templates/{Categoria}/{NombreArchivo}.html
             //   2. Agregar el CODE al TemplateFileLoader.ResolveFilePath()
