@@ -18,6 +18,12 @@ import { useNotifications } from '../../../api/NotificationsContext';
 const sanitize = (html: string): string =>
     DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
 
+const DEFAULT_RANGES = [
+    { label: 'Insatisfactorio', max: 50, badgeClass: 'text-error bg-error/10 border-error/20' },
+    { label: 'Poco Satisfactorio', max: 70, badgeClass: 'text-warning bg-warning/10 border-warning/20' },
+    { label: 'Satisfactorio', max: 90, badgeClass: 'text-info bg-info/10 border-info/20' },
+    { label: 'Excelente', max: 100, badgeClass: 'text-success bg-success/10 border-success/20' }
+];
 
 // ─────────────────────────────────────────────────────────────
 //  Tipos internos del formulario
@@ -93,6 +99,27 @@ const EvaluacionPage: React.FC = () => {
 
     const [detalles, setDetalles] = useState<EvaluacionDetalle[]>([]);
     const [activeTab, setActiveTab] = useState<'document' | 'rubric'>('document');
+    const [cacesRanges, setCacesRanges] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchCacesRanges = async () => {
+            try {
+                const res = await api.get('/catalogs/config-general?prefix=Caces.RangosEvaluacion');
+                const rangeConfig = res.data?.find((c: any) => c.clave === 'Caces.RangosEvaluacion');
+                if (rangeConfig && rangeConfig.valor) {
+                    const parsed = JSON.parse(rangeConfig.valor);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        setCacesRanges(parsed);
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn('[DIITRA] No se pudieron cargar los rangos cualitativos del CACES de la BD. Usando fallbacks.', e);
+            }
+            setCacesRanges(DEFAULT_RANGES);
+        };
+        fetchCacesRanges();
+    }, []);
 
     useEffect(() => {
         if (!revisionUuid) return;
@@ -660,6 +687,7 @@ const EvaluacionPage: React.FC = () => {
                                         onPuntajeChange={(v) => handlePuntajeChange(idx, v)}
                                         onObsChange={(v) => handleObsChange(idx, v)}
                                         disabled={isReadOnly}
+                                        cacesRanges={cacesRanges}
                                     />
                                 );
                             })}
@@ -774,27 +802,32 @@ interface CriterioCardProps {
     onPuntajeChange: (v: number) => void;
     onObsChange: (v: string) => void;
     disabled?: boolean;
+    cacesRanges: any[];
 }
 
 const CriterioCard: React.FC<CriterioCardProps> = ({
-    numero, detalle, criterioInfo, porcentaje, onPuntajeChange, onObsChange, disabled
+    numero, detalle, criterioInfo, porcentaje, onPuntajeChange, onObsChange, disabled, cacesRanges
 }) => {
-    const color = porcentaje >= 90
-        ? 'var(--color-success)'
-        : porcentaje >= 70
-            ? 'var(--color-info)'
-            : porcentaje >= 50
-                ? 'var(--color-warning)'
-                : 'var(--color-error)';
-
     const getCacesRango = (pct: number) => {
-        if (pct < 50) return { label: 'Insatisfactorio', badgeClass: 'text-error bg-error/10 border-error/20' };
-        if (pct < 70) return { label: 'Poco Satisfactorio', badgeClass: 'text-warning bg-warning/10 border-warning/20' };
-        if (pct < 90) return { label: 'Satisfactorio', badgeClass: 'text-info bg-info/10 border-info/20' };
-        return { label: 'Excelente', badgeClass: 'text-success bg-success/10 border-success/20' };
+        const ranges = Array.isArray(cacesRanges) && cacesRanges.length > 0 ? cacesRanges : DEFAULT_RANGES;
+        const sorted = [...ranges].sort((a, b) => a.max - b.max);
+        for (const r of sorted) {
+            if (pct < r.max) {
+                return r;
+            }
+        }
+        return sorted[sorted.length - 1] || { label: 'Excelente', badgeClass: 'text-success bg-success/10 border-success/20' };
     };
 
     const cacesInfo = getCacesRango(porcentaje);
+
+    const color = cacesInfo.label.toLowerCase().includes('excelente') || cacesInfo.label.toLowerCase().includes('cumplido')
+        ? 'var(--color-success)'
+        : cacesInfo.label.toLowerCase().includes('satisfactorio')
+            ? 'var(--color-info)'
+            : cacesInfo.label.toLowerCase().includes('poco') || cacesInfo.label.toLowerCase().includes('proceso')
+                ? 'var(--color-warning)'
+                : 'var(--color-error)';
 
     const presets = [
         { label: 'Deficiente (25%)', pct: 0.25 },
