@@ -83,9 +83,20 @@ public class InformeAvanceService : IInformeAvanceService
         var project = await _context.InvProyectos.FindAsync(dto.IdProyecto)
             ?? throw new ArgumentException($"Proyecto {dto.IdProyecto} no encontrado.");
 
-        if (project.Estado != "En Ejecución")
+        var estadosPermitidos = await _context.InvConfigWorkflows
+            .Where(w => w.Activo && w.PermiteInformesAvance)
+            .Select(w => w.EstadoDestino)
+            .Distinct()
+            .ToListAsync();
+
+        if (estadosPermitidos == null || !estadosPermitidos.Any())
+        {
+            estadosPermitidos = new List<string> { "En Ejecución" };
+        }
+
+        if (!estadosPermitidos.Contains(project.Estado))
             throw new InvalidOperationException(
-                $"Solo se pueden crear informes de avance en proyectos 'En Ejecución'. Estado actual: '{project.Estado}'.");
+                $"Solo se pueden crear informes de avance cuando el proyecto está en un estado activo de ejecución. Estado actual: '{project.Estado}'. Estados permitidos: {string.Join(", ", estadosPermitidos)}.");
 
         // Número de informe: siguiente correlativo dentro del proyecto
         var ultimoNumero = await _context.InvInformesAvance

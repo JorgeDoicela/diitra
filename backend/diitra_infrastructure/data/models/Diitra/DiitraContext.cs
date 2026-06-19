@@ -932,7 +932,9 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio");
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
             entity.Property(e => e.TiempoEjecucion).HasColumnName("tiempoEjecucion").HasMaxLength(100);
-            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado','Inconcluso')").HasDefaultValueSql("'Borrador'");
+            // ⚙️ ADAPTABILIDAD CACES: VARCHAR(50) permite agregar nuevos estados del CACES
+            // solo insertando en inv_config_workflow, sin migración de esquema ni redespliegue.
+            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("varchar(50)").HasMaxLength(50).HasDefaultValueSql("'Borrador'");
             entity.Property(e => e.DisponibleAdopcion).HasColumnName("disponibleAdopcion").HasColumnType("tinyint(1)").HasDefaultValue(false);
             entity.Property(e => e.PuntajeEvaluacion).HasColumnName("puntajeEvaluacion").HasPrecision(5, 2);
             entity.Property(e => e.ValorEjecucion).HasColumnName("valorEjecucion").HasPrecision(12, 2).HasDefaultValueSql("'0.00'");
@@ -1944,6 +1946,10 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ValorReferencia).HasColumnName("valorReferencia").HasPrecision(12, 2);
             entity.Property(e => e.AñoNormativa).HasColumnName("añoNormativa").IsRequired();
             entity.Property(e => e.Activo).HasColumnName("activo").HasColumnType("tinyint(1)").HasDefaultValueSql("'1'");
+            entity.Property(e => e.UmbralCumplido).HasColumnName("umbralCumplido").HasPrecision(12, 2);
+            entity.Property(e => e.UmbralEnProceso).HasColumnName("umbralEnProceso").HasPrecision(12, 2);
+            entity.Property(e => e.FormulaCalculo).HasColumnName("formulaCalculo").HasMaxLength(50);
+            entity.Property(e => e.UnidadMedida).HasColumnName("unidadMedida").HasMaxLength(50);
         });
 
         modelBuilder.Entity<InvRubricaCriterio>(entity =>
@@ -1966,6 +1972,13 @@ public partial class DiitraContext : DbContext
             entity.ToTable("inv_config_workflow");
             entity.Property(e => e.EstadoOrigen).HasMaxLength(50).IsRequired();
             entity.Property(e => e.EstadoDestino).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.ContabilizaCargaHoraria).HasColumnName("contabilizaCargaHoraria").HasColumnType("tinyint(1)").HasDefaultValue(false);
+            entity.Property(e => e.PermiteInformesAvance).HasColumnName("permiteInformesAvance").HasColumnType("tinyint(1)").HasDefaultValue(false);
+            entity.Property(e => e.PermiteRegistroEgresos).HasColumnName("permiteRegistroEgresos").HasColumnType("tinyint(1)").HasDefaultValue(false);
+            entity.Property(e => e.PermiteGastosCapital).HasColumnName("permiteGastosCapital").HasColumnType("tinyint(1)").HasDefaultValue(false);
+            entity.Property(e => e.EsEstadoFinal).HasColumnName("esEstadoFinal").HasColumnType("tinyint(1)").HasDefaultValue(false);
+            entity.Property(e => e.EtiquetaUi).HasColumnName("etiquetaUi").HasMaxLength(80);
+            entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7);
         });
 
         // --- Colaboración y Metadatos ---

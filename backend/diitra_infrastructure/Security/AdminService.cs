@@ -42,7 +42,14 @@ public class AdminService : IAdminService
             .Where(s => s.Subcategoria == "INVESTIGACION")
             .Select(s => s.IdSubcategoria)
             .FirstOrDefaultAsync();
-        if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+        if (researchSubcatId == 0)
+        {
+            var fallbackConfig = await _context.InvConfigsGenerales
+                .Where(c => c.Clave == "Sigafi.InvestigacionSubcategoriaId")
+                .Select(c => c.Valor)
+                .FirstOrDefaultAsync();
+            researchSubcatId = int.TryParse(fallbackConfig, out var fallbackId) ? fallbackId : 7;
+        }
 
         var result = new PagedResult<UserManagementDto>
         {
@@ -284,13 +291,20 @@ public class AdminService : IAdminService
 
             // Obtener horas comprometidas en proyectos activos/enviados
             var linkedUserIdsQuery = linkedUsers.Select(u => u.IdUsuario).ToList();
+            var estadosConCarga = await _context.InvConfigWorkflows
+                .Where(w => w.Activo && w.ContabilizaCargaHoraria)
+                .Select(w => w.EstadoDestino)
+                .Distinct()
+                .ToListAsync();
+            if (estadosConCarga == null || !estadosConCarga.Any())
+            {
+                estadosConCarga = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
+            }
+
             var assignedHoursList = await _context.InvProyectosProfesores
                 .Include(pp => pp.IdProyectoNavigation)
                 .Where(pp => linkedUserIdsQuery.Contains(pp.IdUsuario) && pp.Activo != false &&
-                             (pp.IdProyectoNavigation.Estado == "Enviado" ||
-                              pp.IdProyectoNavigation.Estado == "En Revisión" ||
-                              pp.IdProyectoNavigation.Estado == "Aprobado" ||
-                              pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                             estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                 .Select(pp => new { pp.IdUsuario, pp.HorasSemanales })
                 .ToListAsync();
 

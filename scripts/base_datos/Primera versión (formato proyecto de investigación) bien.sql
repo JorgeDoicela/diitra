@@ -376,7 +376,10 @@ CREATE TABLE inv_proyectos (
     fechaInicio           DATE,
     fechaFin              DATE,
     tiempoEjecucion       VARCHAR(100),
-    estado                ENUM('Borrador','Enviado','En Revisión','Aprobado','En Ejecución','Finalizado','Rechazado','Anulado','Inconcluso') DEFAULT 'Borrador',
+    -- ⚙️ ADAPTABILIDAD CACES: VARCHAR en lugar de ENUM.
+    -- Agregar nuevos estados solo requiere insertar en inv_config_workflow,
+    -- NO requiere alterar esta tabla ni redesplegar el backend.
+    estado                VARCHAR(50)   NOT NULL DEFAULT 'Borrador' COMMENT 'Estado del ciclo de vida. Valores válidos definidos en inv_config_workflow.',
     disponibleAdopcion    TINYINT(1)    DEFAULT 0 COMMENT 'Indica si el proyecto inconcluso esta disponible para adopcion por otros profesores',
     puntajeEvaluacion     DECIMAL(5,2)  NULL,
     valorEjecucion        DECIMAL(12,2) DEFAULT 0.00,
@@ -1063,16 +1066,25 @@ CREATE TABLE inv_config_general (
 
 
 -- NÚCLEO PROFESIONAL: CONFIGURACIÓN DE INDICADORES (CACES/SENESCYT)
+-- ⚙️ ADAPTABILIDAD CACES: Los umbrales de cada indicador son ahora campos propios.
+-- El ReportsController debe leer umbralCumplido/umbralEnProceso desde aquí,
+-- evitando valores quemados en C# que fallan cuando el CACES actualiza sus metas.
 CREATE TABLE inv_config_indicadores (
-    idConfig         INT           AUTO_INCREMENT PRIMARY KEY,
-    idInstitucion    INT           DEFAULT 1,
-    codigoIndicador  VARCHAR(20)   NOT NULL COMMENT 'Ej: I+D-1, PUB-3',
-    nombreIndicador  VARCHAR(255)  NOT NULL,
-    descripcion      TEXT,
-    tipoDato         ENUM('Cantidad', 'Monto', 'Booleano', 'Porcentaje') DEFAULT 'Cantidad',
-    valorReferencia  DECIMAL(12,2),
-    añoNormativa     INT           NOT NULL COMMENT 'Año del modelo de evaluación (ej: 2024)',
-    activo           TINYINT(1)    DEFAULT 1
+    idConfig            INT           AUTO_INCREMENT PRIMARY KEY,
+    idInstitucion       INT           DEFAULT 1,
+    codigoIndicador     VARCHAR(20)   NOT NULL COMMENT 'Ej: E1.PLAN, E2.PROD, PUB-1',
+    nombreIndicador     VARCHAR(255)  NOT NULL,
+    descripcion         TEXT,
+    tipoDato            ENUM('Cantidad', 'Monto', 'Booleano', 'Porcentaje') DEFAULT 'Cantidad',
+    valorReferencia     DECIMAL(12,2) COMMENT 'Meta cuantitativa (ej: 0.5 publicaciones/investigador)',
+    -- ⚙️ UMBRALES DINÁMICOS: Permiten cambiar las metas del CACES sin tocar código C#
+    umbralCumplido      DECIMAL(12,2) NULL COMMENT 'Porcentaje mínimo para estado CUMPLIDO (ej: 80.00)',
+    umbralEnProceso     DECIMAL(12,2) NULL COMMENT 'Porcentaje mínimo para estado EN PROCESO (ej: 50.00)',
+    -- ⚙️ FÓRMULA: Identificador de la función de cálculo en el motor de reportes
+    formulaCalculo      VARCHAR(50)   NULL COMMENT 'Clave de la fórmula de cálculo: PND_ALIGNMENT, PROD_RATE, INNOVATION_PCT, STUDENT_LINK, BUDGET_EXEC',
+    unidadMedida        VARCHAR(50)   NULL COMMENT 'Ej: publicaciones/investigador, % proyectos, $',
+    añoNormativa        INT           NOT NULL COMMENT 'Año del modelo de evaluación (ej: 2024)',
+    activo              TINYINT(1)    DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- CIERRE DE SEGURIDAD PARA EL NÚCLEO V3
@@ -1131,20 +1143,39 @@ INSERT INTO inv_cat_tipo_evidencia (uuid, nombre, descripcion) VALUES
 
 -- Configuración General Semilla
 INSERT INTO inv_config_general (Clave, Valor, Descripcion) VALUES
-('PeerReview.AutoExtendDeadlines', 'false', 'Indica si se deben extender los plazos de manera automática'),
-('PeerReview.AutoExtendDays', '7', 'Días de prórroga automática al expirar plazo'),
-('Backup.AutoSchedule', '0 2 * * *', 'Frecuencia en formato CRON para el respaldo automático (Ej: todos los días a las 2:00 AM)'),
-('Backup.RetentionDays', '30', 'Cantidad de días que se conservarán las copias de seguridad locales'),
-('Backup.CloudBackupEnabled', 'false', 'Indica si se deben subir los respaldos a la nube configurada'),
-('Backup.DestinationPath', 'C:\\diitra_backups\\', 'Ruta local donde se almacenarán temporal o permanentemente los respaldos');
+('PeerReview.AutoExtendDeadlines',    'false',              'Indica si se deben extender los plazos de manera automática'),
+('PeerReview.AutoExtendDays',         '7',                  'Días de prórroga automática al expirar plazo'),
+('Backup.AutoSchedule',               '0 2 * * *',          'Frecuencia en formato CRON para el respaldo automático (Ej: todos los días a las 2:00 AM)'),
+('Backup.RetentionDays',              '30',                 'Cantidad de días que se conservarán las copias de seguridad locales'),
+('Backup.CloudBackupEnabled',         'false',              'Indica si se deben subir los respaldos a la nube configurada'),
+('Backup.DestinationPath',            'C:\\diitra_backups\\', 'Ruta local donde se almacenarán temporal o permanentemente los respaldos'),
+-- ⚙️ ADAPTABILIDAD SIGAFI: Cambia el id de subcategoría sin recompilar el backend.
+-- Si SIGAFI actualiza su estructura, solo actualizar este valor aquí.
+-- WorkflowEngineService y CatalogsController deben leer esta clave en lugar del fallback = 7.
+('Sigafi.InvestigacionSubcategoriaId', '7',                 'ID de la subcategoría de INVESTIGACIÓN en la tabla subcategorias_actividades de SIGAFI. Actualizar si SIGAFI reorganiza su catálogo.'),
+('Sigafi.InvestigacionSubcategoriaNombre', 'INVESTIGACION', 'Nombre de búsqueda alternativo de la subcategoría de investigación en SIGAFI (usado si el ID cambia)'),
+('Caces.TrlMinimoInnovacion',          '5',                 'TRL mínimo para que un proyecto cuente como innovación en los indicadores CACES (E3.INNO). Cambiar si el CACES actualiza el umbral.'),
+('Caces.AñoModelo',                    '2024',              'Año del modelo de evaluación CACES vigente. Afecta qué indicadores en inv_config_indicadores se usan en el reporte.');
 
 -- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
-INSERT INTO inv_config_indicadores (codigoIndicador, nombreIndicador, tipoDato, añoNormativa) VALUES
-('I+D-1', 'Proyectos de I+D ejecutados por docentes', 'Cantidad', 2024),
-('I+D-2', 'Participación de estudiantes en proyectos', 'Porcentaje', 2024),
-('PUB-1', 'Artículos en revistas indexadas', 'Cantidad', 2024),
-('INN-1', 'Prototipos y transferencia tecnológica', 'Cantidad', 2024),
-('IP-1', 'Registros de Propiedad Intelectual', 'Cantidad', 2024);
+-- ⚙️ ADAPTABILIDAD: umbralCumplido y umbralEnProceso son ahora campos de BD.
+-- El ReportsController debe leer estos valores en lugar de los hardcodeados en C#.
+-- Para actualizar metas del CACES: solo hacer UPDATE aquí y reiniciar caché.
+INSERT INTO inv_config_indicadores
+    (codigoIndicador, nombreIndicador,                            tipoDato,      valorReferencia, umbralCumplido, umbralEnProceso, formulaCalculo,    unidadMedida,                    añoNormativa)
+VALUES
+-- Indicadores del Reporte de Analíticas (corresponden a los del ReportsController)
+('E1.PLAN',  'Alineación con el Plan Nacional de Desarrollo',    'Porcentaje',   80.00,           80.00,          50.00,           'PND_ALIGNMENT',  '% proyectos alineados',         2024),
+('E2.PROD',  'Producción Científica del Claustro',               'Porcentaje',   0.50,            100.00,         50.00,           'PROD_RATE',      'publicaciones/investigador',    2024),
+('E3.INNO',  'Innovación y Transferencia Tecnológica',           'Porcentaje',   15.00,           15.00,          7.50,            'INNOVATION_PCT', '% proyectos con TRL>=5',        2024),
+('E4.STUD',  'Vinculación Formativa (Semilleros)',               'Porcentaje',   30.00,           30.00,          15.00,           'STUDENT_LINK',   '% proyectos con estudiantes',   2024),
+('E5.BUDG',  'Ejecución Presupuestaria',                         'Porcentaje',   75.00,           75.00,          40.00,           'BUDGET_EXEC',    '% presupuesto ejecutado',       2024),
+-- Indicadores operativos de catálogo
+('I+D-1',   'Proyectos de I+D ejecutados por docentes',          'Cantidad',      NULL,            NULL,           NULL,            NULL,             'proyectos',                     2024),
+('I+D-2',   'Participación de estudiantes en proyectos',         'Porcentaje',    NULL,            NULL,           NULL,            NULL,             '% proyectos',                   2024),
+('PUB-1',   'Artículos en revistas indexadas',                   'Cantidad',      NULL,            NULL,           NULL,            NULL,             'artículos',                     2024),
+('INN-1',   'Prototipos y transferencia tecnológica',            'Cantidad',      NULL,            NULL,           NULL,            NULL,             'prototipos',                    2024),
+('IP-1',    'Registros de Propiedad Intelectual',                'Cantidad',      NULL,            NULL,           NULL,            NULL,             'registros SENADI',              2024);
 
 -- 2. Agendas Zonales (Planificación Nacional)
 INSERT INTO inv_agendas_zonales (nombre, descripcion) VALUES
@@ -1336,24 +1367,73 @@ CREATE TABLE inv_cowork_updates (
 -- SECCIÓN: DIITRA Workflow Engine — Configuración de Estados
 -- =============================================================================
 
+-- =============================================================================
+-- ⚙️ MOTOR DE FLUJOS ADAPTABLE AL CACES
+-- Esta tabla es la ÚNICA fuente de verdad para el comportamiento de cada estado.
+-- Para agregar un nuevo estado normativo (ej: 'Pre-aprobado'), solo insertar aquí.
+-- Para cambiar qué estados cuentan para carga horaria o informes, solo hacer
+-- UPDATE aquí — sin redesplegar el backend.
+-- =============================================================================
 CREATE TABLE inv_config_workflow (
-    idWorkflow           INT           AUTO_INCREMENT PRIMARY KEY,
-    idTipoProyecto       INT           NULL,
-    estadoOrigen         VARCHAR(50)   NOT NULL,
-    estadoDestino        VARCHAR(50)   NOT NULL,
-    rolRequerido         VARCHAR(100)  NULL,
-    requiereObservacion  TINYINT(1)    NOT NULL DEFAULT 1,
-    activo               TINYINT(1)    NOT NULL DEFAULT 1,
-    CONSTRAINT fk_workflow_tipo FOREIGN KEY (idTipoProyecto) REFERENCES inv_tipos_investigacion(idTipo)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    idWorkflow              INT           AUTO_INCREMENT PRIMARY KEY,
+    idTipoProyecto          INT           NULL         COMMENT 'NULL = aplica a todos los tipos de proyecto',
+    estadoOrigen            VARCHAR(50)   NOT NULL     COMMENT 'Estado desde el que se puede ejecutar la transición',
+    estadoDestino           VARCHAR(50)   NOT NULL     COMMENT 'Estado al que se pasa tras la transición',
+    rolRequerido            VARCHAR(100)  NULL         COMMENT 'Rol que puede ejecutar esta transición (NULL = cualquier rol con acceso al proyecto)',
+    requiereObservacion     TINYINT(1)    NOT NULL DEFAULT 1 COMMENT '1 si el usuario debe escribir una justificación',
+    activo                  TINYINT(1)    NOT NULL DEFAULT 1,
 
-INSERT INTO inv_config_workflow (estadoOrigen, estadoDestino, requiereObservacion) VALUES
-('Borrador',      'Enviado',      0),
-('Enviado',       'En Revisión',  1),
-('En Revisión',   'Aprobado',     1),
-('En Revisión',   'Rechazado',    1),
-('En Revisión',   'En Corrección', 1),
-('En Corrección', 'Enviado',      0);
+    -- ⚙️ ATRIBUTOS DE NEGOCIO DEL ESTADO DESTINO
+    -- Estas columnas centralizan la lógica que antes estaba quemada en 7+ archivos C#.
+    -- El WorkflowEngineService debe consultarlas en lugar de usar arrays hardcodeados.
+    contabilizaCargaHoraria TINYINT(1)    NOT NULL DEFAULT 0
+        COMMENT '1 si los proyectos en estadoDestino consumen horas del distributivo docente SIGAFI',
+    permiteInformesAvance   TINYINT(1)    NOT NULL DEFAULT 0
+        COMMENT '1 si se pueden crear Informes de Avance cuando el proyecto está en estadoDestino',
+    permiteRegistroEgresos  TINYINT(1)    NOT NULL DEFAULT 0
+        COMMENT '1 si se pueden registrar gastos/egresos cuando el proyecto está en estadoDestino',
+    permiteGastosCapital    TINYINT(1)    NOT NULL DEFAULT 0
+        COMMENT '1 si se permiten gastos de capital (bienes) en estadoDestino',
+    esEstadoFinal           TINYINT(1)    NOT NULL DEFAULT 0
+        COMMENT '1 si estadoDestino es un estado terminal (sin más transiciones salvo excepción)',
+
+    -- ⚙️ APARIENCIA EN LA INTERFAZ
+    -- Evita que el frontend tenga colores de estado quemados en TypeScript.
+    etiquetaUi              VARCHAR(80)   NULL         COMMENT 'Etiqueta legible para el usuario final en la UI',
+    colorHex                VARCHAR(7)    NULL         COMMENT 'Color hexadecimal para badges y filtros de la UI (ej: #3B82F6)',
+
+    UNIQUE KEY uk_origen_destino_tipo (estadoOrigen, estadoDestino, idTipoProyecto),
+    CONSTRAINT fk_workflow_tipo FOREIGN KEY (idTipoProyecto) REFERENCES inv_tipos_investigacion(idTipo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    COMMENT 'Motor de Flujos CACES — Única fuente de verdad para estados y sus atributos de negocio';
+
+-- =============================================================================
+-- SEED: Ciclo de vida completo del proyecto CACES
+-- contabilizaCargaHoraria: 1 para estados activos (bloquea horas en SIGAFI)
+-- permiteInformesAvance:   1 solo en 'En Ejecución'
+-- permiteRegistroEgresos:  1 solo en 'En Ejecución'
+-- esEstadoFinal:           1 para Finalizado, Rechazado, Anulado, Inconcluso
+-- =============================================================================
+--                                                                          contabiliza  permiteInf  permiteEgr  permCap  esFinal   etiqueta              color
+INSERT INTO inv_config_workflow
+    (estadoOrigen,    estadoDestino,    rolRequerido,   requiereObservacion, contabilizaCargaHoraria, permiteInformesAvance, permiteRegistroEgresos, permiteGastosCapital, esEstadoFinal, etiquetaUi,      colorHex, activo)
+VALUES
+-- Flujo principal de postulación
+('Borrador',         'Enviado',         NULL,             0,                   0,                       0,                     0,                      0,                    0,             'Enviado',        '#3B82F6', 1),
+('Enviado',          'En Revisión',     'DIITRA_ADMIN',   0,                   1,                       0,                     0,                      0,                    0,             'En Revisión',    '#F59E0B', 1),
+('En Revisión',      'Aprobado',        'DIITRA_ADMIN',   1,                   1,                       0,                     0,                      0,                    0,             'Aprobado',       '#10B981', 1),
+('En Revisión',      'Rechazado',       'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Rechazado',      '#EF4444', 1),
+('En Revisión',      'En Corrección',   'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    0,             'En Corrección',  '#F97316', 1),
+('En Corrección',    'Enviado',         NULL,             0,                   0,                       0,                     0,                      0,                    0,             'Enviado',        '#3B82F6', 1),
+-- Paso a ejecución (transición post-arbitraje)
+('Aprobado',         'En Ejecución',    'DIITRA_ADMIN',   0,                   1,                       1,                     1,                      1,                    0,             'En Ejecución',   '#8B5CF6', 1),
+-- Cierre del proyecto
+('En Ejecución',     'Finalizado',      'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Finalizado',     '#059669', 1),
+('En Ejecución',     'Inconcluso',      'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Inconcluso',     '#6B7280', 1),
+-- Anulación desde cualquier estado pre-ejecución
+('Borrador',         'Anulado',         'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Anulado',        '#94A3B8', 1),
+('Enviado',          'Anulado',         'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Anulado',        '#94A3B8', 1),
+('En Revisión',      'Anulado',         'DIITRA_ADMIN',   1,                   0,                       0,                     0,                      0,                    1,             'Anulado',        '#94A3B8', 1);
 
 -- ═══════════════════════════════════════════════════════════════════
 -- DIITRA CoWork — Coordinación Team Pulse & Colaboración Premium
