@@ -9,6 +9,7 @@ import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModa
 import DocumentTray from '../../../components/DIITRA/DocumentTray';
 import FinalReportLauncher from './components/FinalReportLauncher';
 import { buildWorkspacePath } from '../../../core/documents/templateUrl';
+import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 
 export interface ProyectoResumen {
     uuid: string;
@@ -37,21 +38,9 @@ export interface ProyectoResumen {
     carrera?: string;
 }
 
-const ESTADO_CONFIG: Record<string, { label: string; badge: string; dot: string }> = {
-    'Borrador':     { label: 'Borrador',      badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
-    'Enviado':      { label: 'Enviado',        badge: 'badge-vercel-info',    dot: 'dot-info' },
-    'En Revisión':  { label: 'En Revisión',    badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
-    'Aprobado':     { label: 'Aprobado',       badge: 'badge-vercel-success', dot: 'dot-success' },
-    'En Ejecución': { label: 'En Ejecución',   badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
-    'Finalizado':   { label: 'Finalizado',     badge: 'badge-vercel-success', dot: 'dot-success' },
-    'Rechazado':    { label: 'Rechazado',      badge: 'badge-vercel-error',   dot: 'dot-error' },
-};
-
-const estadoConfig = (estado: string) =>
-    ESTADO_CONFIG[estado] ?? { label: estado, badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
-
 const ResearchProjectsPage = () => {
     const navigate = useNavigate();
+    const { states, getEstadoConfig } = useWorkflowStates();
     const [showWizard, setShowWizard] = useState(false);
     const [showReportLauncher, setShowReportLauncher] = useState(false);
     
@@ -267,8 +256,8 @@ const ResearchProjectsPage = () => {
                                 className="input-vercel !rounded-xl !py-2 !text-xs w-full cursor-pointer"
                             >
                                 <option value="todos">Todos los estados</option>
-                                {Object.keys(ESTADO_CONFIG).map(e => (
-                                    <option key={e} value={e}>{ESTADO_CONFIG[e].label}</option>
+                                {states.map(s => (
+                                    <option key={s.estado} value={s.estado}>{s.etiqueta}</option>
                                 ))}
                             </select>
                         </div>
@@ -326,7 +315,7 @@ const ResearchProjectsPage = () => {
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5 animate-fade-up [animation-delay:100ms]">
                     {filteredProjects.map((p) => {
-                        const cfg = estadoConfig(p.estado);
+                        const cfg = getEstadoConfig(p.estado);
                         const presupuestoPorc = p.presupuesto_total && p.presupuesto_ejecutado
                             ? Math.min(100, (p.presupuesto_ejecutado / p.presupuesto_total) * 100)
                             : 0;
@@ -379,8 +368,8 @@ const ResearchProjectsPage = () => {
                                         </div>
                                     </div>
 
-                                    <div className={`badge-vercel ${cfg.badge} self-start`}>
-                                        <span className={`dot ${cfg.dot}`} />
+                                    <div className={`badge-vercel ${cfg.badge} self-start`} style={cfg.style}>
+                                        <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                                         {cfg.label}
                                         {p.rol_en_proyecto && (
                                             <span className="opacity-60 ml-1">· {p.rol_en_proyecto}</span>

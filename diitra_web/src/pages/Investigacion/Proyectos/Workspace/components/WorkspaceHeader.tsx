@@ -1,19 +1,6 @@
 import React from 'react';
 import { ChevronRight, FileText, UploadCloud, ArrowLeft, Activity } from 'lucide-react';
-
-const ESTADO_CONFIG: Record<string, { badge: string; dot: string }> = {
-    'Borrador':     { badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
-    'Enviado':      { badge: 'badge-vercel-info',    dot: 'dot-info' },
-    'En Revisión':  { badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
-    'Aprobado':     { badge: 'badge-vercel-success', dot: 'dot-success' },
-    'En Ejecución': { badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
-    'Finalizado':   { badge: 'badge-vercel-success', dot: 'dot-success' },
-    'Rechazado':    { badge: 'badge-vercel-error',   dot: 'dot-error' },
-};
-
-const estadoConfig = (estado: string) =>
-    ESTADO_CONFIG[estado] ?? { badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
-
+import { useWorkflowStates } from '../../../../../hooks/useWorkflowStates';
 interface WorkspaceHeaderProps {
     currentProject: {
         id: string;
@@ -40,6 +27,8 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
     onExportCaces,
     onPublishDSpace
 }) => {
+    const { getEstadoConfig } = useWorkflowStates();
+    const cfg = getEstadoConfig(currentProject.status);
     return (
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 sm:px-10 py-4 bg-bg-deep border-b border-border-thin z-50 gap-4 sm:gap-0">
             <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
@@ -91,9 +80,9 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
                 </div>
                 {/* Badge de estado en dispositivos móviles */}
                 <div className="sm:hidden">
-                    <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-semibold`}>
-                        <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
-                        {currentProject.status}
+                    <span className={`badge-vercel ${cfg.badge} text-[9px] font-semibold`} style={cfg.style}>
+                        <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
+                        {cfg.label}
                     </span>
                 </div>
             </div>
@@ -101,9 +90,9 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({
             <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 w-full sm:w-auto justify-end">
                 {/* Badge de estado en pantallas medianas y grandes */}
                 <div className="hidden sm:block mr-1">
-                    <span className={`badge-vercel ${estadoConfig(currentProject.status).badge} text-[9px] font-semibold`}>
-                        <span className={`dot ${estadoConfig(currentProject.status).dot}`} />
-                        {currentProject.status}
+                    <span className={`badge-vercel ${cfg.badge} text-[9px] font-semibold`} style={cfg.style}>
+                        <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
+                        {cfg.label}
                     </span>
                 </div>
                 
