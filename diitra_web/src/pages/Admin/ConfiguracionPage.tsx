@@ -51,6 +51,8 @@ interface ConfigIndicador {
     descripcion?: string;
     tipoDato?: string;
     valorReferencia?: number;
+    umbralCumplido?: number;
+    umbralEnProceso?: number;
     añoNormativa: number;
     activo?: boolean;
 }
@@ -121,6 +123,8 @@ const ConfiguracionPage = () => {
         descripcion: '',
         tipoDato: 'Cantidad',
         valorReferencia: 0,
+        umbralCumplido: 0,
+        umbralEnProceso: 0,
         añoNormativa: new Date().getFullYear()
     });
 
@@ -185,6 +189,8 @@ const ConfiguracionPage = () => {
                     descripcion: i.descripcion || '',
                     tipoDato: i.tipo_dato || 'Cantidad',
                     valorReferencia: i.valor_referencia || 0,
+                    umbralCumplido: i.umbral_cumplido ?? 0,
+                    umbralEnProceso: i.umbral_en_proceso ?? 0,
                     añoNormativa: i.año_normativa || new Date().getFullYear(),
                     activo: i.activo
                 }));
@@ -466,6 +472,8 @@ const ConfiguracionPage = () => {
                 descripcion: item.descripcion || '',
                 tipoDato: item.tipoDato || 'Cantidad',
                 valorReferencia: item.valorReferencia || 0,
+                umbralCumplido: item.umbralCumplido || 0,
+                umbralEnProceso: item.umbralEnProceso || 0,
                 añoNormativa: item.añoNormativa || new Date().getFullYear()
             });
         } else {
@@ -476,6 +484,8 @@ const ConfiguracionPage = () => {
                 descripcion: '',
                 tipoDato: 'Cantidad',
                 valorReferencia: 0,
+                umbralCumplido: 0,
+                umbralEnProceso: 0,
                 añoNormativa: new Date().getFullYear()
             });
         }
@@ -491,6 +501,8 @@ const ConfiguracionPage = () => {
                 descripcion: indicadorForm.descripcion,
                 tipo_dato: indicadorForm.tipoDato,
                 valor_referencia: Number(indicadorForm.valorReferencia),
+                umbral_cumplido: Number(indicadorForm.umbralCumplido),
+                umbral_en_proceso: Number(indicadorForm.umbralEnProceso),
                 año_normativa: Number(indicadorForm.añoNormativa),
                 activo: editingIndicador ? editingIndicador.activo : true
             };
@@ -1441,6 +1453,36 @@ const ConfiguracionPage = () => {
                                             onChange={(e) => setIndicadorForm({...indicadorForm, valorReferencia: Number(e.target.value)})}
                                             className="input-vercel font-mono"
                                             placeholder="Ej: 0.50 o 80.00"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Umbral Cumplido (%)
+                                        </label>
+                                        <input 
+                                            required
+                                            type="number" 
+                                            step="0.01"
+                                            value={indicadorForm.umbralCumplido}
+                                            onChange={(e) => setIndicadorForm({...indicadorForm, umbralCumplido: Number(e.target.value)})}
+                                            className="input-vercel font-mono"
+                                            placeholder="Ej: 80.00"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="section-label text-text-dim">
+                                            Umbral En Proceso (%)
+                                        </label>
+                                        <input 
+                                            required
+                                            type="number" 
+                                            step="0.01"
+                                            value={indicadorForm.umbralEnProceso}
+                                            onChange={(e) => setIndicadorForm({...indicadorForm, umbralEnProceso: Number(e.target.value)})}
+                                            className="input-vercel font-mono"
+                                            placeholder="Ej: 50.00"
                                         />
                                     </div>
                                 </div>

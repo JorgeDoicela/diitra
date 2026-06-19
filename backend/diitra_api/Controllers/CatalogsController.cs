@@ -119,6 +119,8 @@ namespace diitra_api.Controllers
             existing.TipoDato = model.TipoDato;
             existing.ValorReferencia = model.ValorReferencia;
             existing.AñoNormativa = model.AñoNormativa;
+            existing.UmbralCumplido = model.UmbralCumplido;
+            existing.UmbralEnProceso = model.UmbralEnProceso;
             existing.Activo = model.Activo;
 
             await _context.SaveChangesAsync();
@@ -134,6 +136,18 @@ namespace diitra_api.Controllers
             existing.Activo = !(existing.Activo ?? true);
             await _context.SaveChangesAsync();
             return Ok(existing);
+        }
+
+        [HttpGet("config-general")]
+        public async Task<IActionResult> GetConfigGeneral([FromQuery] string? prefix = null)
+        {
+            var query = _context.InvConfigsGenerales.AsQueryable();
+            if (!string.IsNullOrEmpty(prefix))
+            {
+                query = query.Where(c => c.Clave.StartsWith(prefix));
+            }
+            var data = await query.ToListAsync();
+            return Ok(data);
         }
 
         [HttpGet("dominios")]

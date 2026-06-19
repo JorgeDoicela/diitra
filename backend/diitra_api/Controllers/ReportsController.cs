@@ -125,13 +125,25 @@ namespace diitra_api.Controllers
                     .Where(i => i.Activo == true)
                     .ToDictionaryAsync(i => i.CodigoIndicador, StringComparer.OrdinalIgnoreCase);
 
-                decimal GetUmbralC(string codigo, decimal fallback) =>
-                    configIndicadores.TryGetValue(codigo, out var cfg) && cfg.UmbralCumplido.HasValue
-                        ? cfg.UmbralCumplido.Value : fallback;
+                decimal GetUmbralC(string codigo, decimal fallback)
+                {
+                    if (configIndicadores.TryGetValue(codigo, out var cfg) && cfg.UmbralCumplido.HasValue)
+                    {
+                        return cfg.UmbralCumplido.Value;
+                    }
+                    _logger.LogWarning("[DIITRA Reports] Indicador CACES {Codigo} no está configurado en la base de datos (o no tiene UmbralCumplido). Usando fallback por defecto de {Fallback}.", codigo, fallback);
+                    return fallback;
+                }
 
-                decimal GetUmbralP(string codigo, decimal fallback) =>
-                    configIndicadores.TryGetValue(codigo, out var cfg) && cfg.UmbralEnProceso.HasValue
-                        ? cfg.UmbralEnProceso.Value : fallback;
+                decimal GetUmbralP(string codigo, decimal fallback)
+                {
+                    if (configIndicadores.TryGetValue(codigo, out var cfg) && cfg.UmbralEnProceso.HasValue)
+                    {
+                        return cfg.UmbralEnProceso.Value;
+                    }
+                    _logger.LogWarning("[DIITRA Reports] Indicador CACES {Codigo} no está configurado en la base de datos (o no tiene UmbralEnProceso). Usando fallback por defecto de {Fallback}.", codigo, fallback);
+                    return fallback;
+                }
 
                 var pndAligned = filteredList.Count(p => !string.IsNullOrEmpty(p.ObjetivoPnd));
                 var pndPct = filteredList.Count > 0 ? Math.Round((double)pndAligned / filteredList.Count * 100, 1) : 0;

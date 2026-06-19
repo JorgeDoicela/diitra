@@ -1156,10 +1156,11 @@ INSERT INTO inv_config_general (Clave, Valor, Descripcion) VALUES
 ('Sigafi.InvestigacionSubcategoriaNombre', 'INVESTIGACION', 'Nombre de búsqueda alternativo de la subcategoría de investigación en SIGAFI (usado si el ID cambia)'),
 ('Caces.TrlMinimoInnovacion',          '5',                 'TRL mínimo para que un proyecto cuente como innovación en los indicadores CACES (E3.INNO). Cambiar si el CACES actualiza el umbral.'),
 ('Caces.AñoModelo',                    '2024',              'Año del modelo de evaluación CACES vigente. Afecta qué indicadores en inv_config_indicadores se usan en el reporte.'),
-('Workflow.EstadosEditables',          'Borrador,En Corrección', 'Lista CSV de estados en los que un proyecto puede ser editado por su director.');
+('Workflow.EstadosEditables',          'Borrador,En Corrección', 'Lista CSV de estados en los que un proyecto puede ser editado por su director.'),
+('Caces.RangosEvaluacion',           '[{"label":"Insatisfactorio","max":50,"badgeClass":"text-error bg-error/10 border-error/20"},{"label":"Poco Satisfactorio","max":70,"badgeClass":"text-warning bg-warning/10 border-warning/20"},{"label":"Satisfactorio","max":90,"badgeClass":"text-info bg-info/10 border-info/20"},{"label":"Excelente","max":100,"badgeClass":"text-success bg-success/10 border-success/20"}]', 'Rangos cualitativos y estilos visuales de calificación del CACES.');
 
 -- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
--- ⚙️ ADAPTABILIDAD: umbralCumplido y umbralEnProceso son ahora campos de BD.
+-- ADAPTABILIDAD: umbralCumplido y umbralEnProceso son ahora campos de BD.
 -- El ReportsController debe leer estos valores en lugar de los hardcodeados en C#.
 -- Para actualizar metas del CACES: solo hacer UPDATE aquí y reiniciar caché.
 INSERT INTO inv_config_indicadores
