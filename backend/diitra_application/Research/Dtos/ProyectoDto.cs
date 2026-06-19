@@ -188,6 +188,9 @@ namespace Diitra.Application.Research.Dtos
         public List<MmlRowDto>? MatrizMarcoLogico { get; set; }
         public List<DocumentoAdjuntoDto>? DocumentosAdjuntos { get; set; }
         public List<GastoDto>? Gastos { get; set; }
+
+        [System.Text.Json.Serialization.JsonExtensionData]
+        public Dictionary<string, object>? ExtensionData { get; set; }
     }
 
     public class MmlRowDto

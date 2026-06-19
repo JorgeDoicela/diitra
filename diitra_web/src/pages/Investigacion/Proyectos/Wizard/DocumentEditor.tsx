@@ -84,17 +84,15 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
     // Todo en un solo Promise.all para eliminar el waterfall de requests seriales.
     useEffect(() => {
         const loadAll = async () => {
-            // 1. Resolver config de plantilla (Registry local tiene prioridad, sin red)
+            // 1. Obtener la configuración local de respaldo (fallback)
             const localConfig = DocumentTemplateRegistry[templateCode];
 
             // 2. Lanzar todas las peticiones de red en paralelo
             const needsInstanceFetch = !!(initialData?.Uuid && !initialData.Uuid.startsWith('temp_'));
 
             const [configResult, instanceResult, carrerasRes, convsRes, tiposRes] = await Promise.all([
-                // Config desde backend solo si no está en el registry local
-                localConfig
-                    ? Promise.resolve({ data: localConfig })
-                    : api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
+                // Intentar cargar la configuración dinámica desde la API
+                api.get(`/documents/instances/templates/${templateCode}/ui-config`).catch(() => ({ data: null })),
                 // Datos de la instancia: siempre fresco desde backend si existe
                 needsInstanceFetch
                     ? api.get(`/documents/instances/${initialData.Uuid}`).catch(() => ({ data: null }))
@@ -105,9 +103,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 api.get('/catalogs/tipo-producto').catch(() => ({ data: [] })),
             ]);
 
-            // Aplicar config de plantilla
-            setTemplateConfig(configResult.data ?? null);
-            if (!localConfig && !configResult.data) {
+            // Aplicar config de plantilla (prioriza la API, cae en la localConfig si la API no retorna nada o falla)
+            const finalConfig = configResult?.data ?? localConfig;
+            setTemplateConfig(finalConfig);
+            if (!finalConfig) {
                 console.warn(`[DIITRA] No se encontró config para: ${templateCode}`);
             }
 
