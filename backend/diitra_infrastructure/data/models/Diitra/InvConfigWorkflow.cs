@@ -27,6 +27,22 @@ namespace diitra_infrastructure.data.models
 
         public bool Activo { get; set; } = true;
 
+        public bool ContabilizaCargaHoraria { get; set; } = false;
+
+        public bool PermiteInformesAvance { get; set; } = false;
+
+        public bool PermiteRegistroEgresos { get; set; } = false;
+
+        public bool PermiteGastosCapital { get; set; } = false;
+
+        public bool EsEstadoFinal { get; set; } = false;
+
+        [MaxLength(80)]
+        public string? EtiquetaUi { get; set; }
+
+        [MaxLength(7)]
+        public string? ColorHex { get; set; }
+
         [ForeignKey("IdTipoProyecto")]
         public virtual InvTipoInvestigacion? TipoProyecto { get; set; }
     }

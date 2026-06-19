@@ -881,9 +881,20 @@ namespace diitra_api.Controllers
                 return NotFound(new { success = false, message = "Proyecto no encontrado." });
             }
 
-            if (project.Estado != "En Ejecución")
+            var estadosEgresos = await _context.InvConfigWorkflows
+                .Where(w => w.Activo && w.PermiteRegistroEgresos)
+                .Select(w => w.EstadoDestino)
+                .Distinct()
+                .ToListAsync();
+
+            if (estadosEgresos == null || !estadosEgresos.Any())
             {
-                return BadRequest(new { success = false, message = "Solo se pueden registrar egresos en la fase de En Ejecución del proyecto." });
+                estadosEgresos = new List<string> { "En Ejecución" };
+            }
+
+            if (!estadosEgresos.Contains(project.Estado))
+            {
+                return BadRequest(new { success = false, message = $"Solo se pueden registrar egresos cuando el proyecto está en un estado activo de ejecución. Estado actual: '{project.Estado}'. Estados permitidos: {string.Join(", ", estadosEgresos)}." });
             }
 
             // Buscar o crear la partida presupuestaria correspondientes
@@ -971,9 +982,20 @@ namespace diitra_api.Controllers
                 return NotFound(new { success = false, message = "Proyecto no encontrado." });
             }
 
-            if (project.Estado != "En Ejecución")
+            var estadosEgresos = await _context.InvConfigWorkflows
+                .Where(w => w.Activo && w.PermiteRegistroEgresos)
+                .Select(w => w.EstadoDestino)
+                .Distinct()
+                .ToListAsync();
+
+            if (estadosEgresos == null || !estadosEgresos.Any())
             {
-                return BadRequest(new { success = false, message = "Solo se pueden modificar egresos en la fase de En Ejecución del proyecto." });
+                estadosEgresos = new List<string> { "En Ejecución" };
+            }
+
+            if (!estadosEgresos.Contains(project.Estado))
+            {
+                return BadRequest(new { success = false, message = $"Solo se pueden modificar egresos cuando el proyecto está en un estado activo de ejecución. Estado actual: '{project.Estado}'. Estados permitidos: {string.Join(", ", estadosEgresos)}." });
             }
 
             if (!Guid.TryParse(gastoUuid, out var parsedGastoUuid))

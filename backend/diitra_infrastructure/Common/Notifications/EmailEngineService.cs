@@ -750,8 +750,13 @@ namespace diitra_infrastructure.Common.Notifications
                     });
                 }
 
+                var estadoDestinoAdopcion = await _context.InvConfigWorkflows
+                    .Where(w => w.Activo && w.EstadoOrigen == "Inconcluso")
+                    .Select(w => w.EstadoDestino)
+                    .FirstOrDefaultAsync() ?? "En Ejecución";
+
                 project.DisponibleAdopcion = false;
-                project.Estado = "En Ejecución"; 
+                project.Estado = estadoDestinoAdopcion; 
                 project.FechaModificacion = DateTime.Now;
 
                 var trazabilidad = new InvTrazabilidadProyecto
@@ -760,7 +765,7 @@ namespace diitra_infrastructure.Common.Notifications
                     IdProyecto = project.IdProyecto,
                     IdUsuario = newDirectorUserId,
                     EstadoAnterior = "Inconcluso",
-                    EstadoNuevo = "En Ejecución",
+                    EstadoNuevo = estadoDestinoAdopcion,
                     Observacion = $"Proyecto adoptado y reanudado por el docente director: {newDirectorUser.Nombre}",
                     FechaTransicion = DateTime.Now
                 };
@@ -788,7 +793,7 @@ namespace diitra_infrastructure.Common.Notifications
                         var dto = JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         if (dto != null)
                         {
-                            dto.Estado = "En Ejecución";
+                            dto.Estado = estadoDestinoAdopcion;
                             
                             var updatedProfs = await _context.InvProyectosProfesores
                                 .Include(pp => pp.IdUsuarioNavigation)

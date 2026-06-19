@@ -47,7 +47,12 @@ namespace diitra_infrastructure.Research
                 if (project != null)
                 {
                     // 1.1 Bloqueo de Integridad por Estado
-                    if (project.Estado != "Borrador" && project.Estado != "En Corrección")
+                    var estadosEditablesRaw = await _context.InvConfigsGenerales
+                        .Where(c => c.Clave == "Workflow.EstadosEditables")
+                        .Select(c => c.Valor)
+                        .FirstOrDefaultAsync() ?? "Borrador,En Corrección";
+                    var estadosEditables = estadosEditablesRaw.Split(',').Select(s => s.Trim()).ToList();
+                    if (!estadosEditables.Contains(project.Estado))
                     {
                         return new SyncResult { Success = false, Message = $"El proyecto [{project.Estado}] está blindado y no permite modificaciones." };
                     }
@@ -572,11 +577,7 @@ namespace diitra_infrastructure.Research
                 .FirstOrDefaultAsync();
             var periodId = currentPeriod?.IdPeriodo;
 
-            var researchSubcatId = await _context.SubcategoriasActividades
-                .Where(s => s.Subcategoria == "INVESTIGACION")
-                .Select(s => s.IdSubcategoria)
-                .FirstOrDefaultAsync();
-            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+            var researchSubcatId = await GetResearchSubcatIdAsync();
 
             var profCedulas = p.InvProyectosProfesores
                 .Select(pp => pp.IdUsuarioNavigation?.IdSigafi?.Trim())
@@ -617,15 +618,13 @@ namespace diitra_infrastructure.Research
                     .ToListAsync();
 
                 var profUserIds = p.InvProyectosProfesores.Select(pp => pp.IdUsuario).Distinct().ToList();
+                var estadosConCarga = await GetEstadosConCargaHorariaAsync();
                 otherAssignedHours = await _context.InvProyectosProfesores
                     .Include(pp => pp.IdProyectoNavigation)
                     .Where(pp => profUserIds.Contains(pp.IdUsuario) &&
                                  pp.IdProyecto != p.IdProyecto &&
                                  pp.Activo != false &&
-                                 (pp.IdProyectoNavigation.Estado == "Enviado" ||
-                                  pp.IdProyectoNavigation.Estado == "En Revisión" ||
-                                  pp.IdProyectoNavigation.Estado == "Aprobado" ||
-                                  pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                                 estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                     .ToListAsync();
             }
 
@@ -908,11 +907,7 @@ namespace diitra_infrastructure.Research
 
                 if (currentPeriod != null)
                 {
-                    var researchSubcatId = await _context.SubcategoriasActividades
-                        .Where(s => s.Subcategoria == "INVESTIGACION")
-                        .Select(s => s.IdSubcategoria)
-                        .FirstOrDefaultAsync();
-                    if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+                    var researchSubcatId = await GetResearchSubcatIdAsync();
 
                     stats.HorasDisponiblesDistributivo = await _context.ProfesoresActividades
                         .Where(pa => pa.IdProfesor.Trim() == userIdReferencia.Trim() && pa.IdSubcategoria == researchSubcatId && pa.IdPeriodo == currentPeriod.IdPeriodo)
@@ -1606,11 +1601,8 @@ namespace diitra_infrastructure.Research
                 return new SyncResult { Success = false, Message = "No se ha configurado un período académico activo en el sistema." };
             }
 
-            var researchSubcatId = await _context.SubcategoriasActividades
-                .Where(s => s.Subcategoria == "INVESTIGACION")
-                .Select(s => s.IdSubcategoria)
-                .FirstOrDefaultAsync();
-            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+            var researchSubcatId = await GetResearchSubcatIdAsync();
+            var estadosConCarga = await GetEstadosConCargaHorariaAsync();
 
             foreach (var inv in effectiveInvestigadores)
             {
@@ -1634,10 +1626,7 @@ namespace diitra_infrastructure.Research
                                  pp.IdProyecto != project.IdProyecto && 
                                  pp.Activo != false && 
                                  pp.IdProyectoNavigation.Activo != false &&
-                                 (pp.IdProyectoNavigation.Estado == "Enviado" || 
-                                  pp.IdProyectoNavigation.Estado == "En Revisión" || 
-                                  pp.IdProyectoNavigation.Estado == "Aprobado" || 
-                                  pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                                 estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                     .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
 
                 var totalProposedHours = otherProjectsHours + proposedHours;
@@ -1913,11 +1902,8 @@ namespace diitra_infrastructure.Research
                     .FirstOrDefaultAsync();
                 var periodId = currentPeriod?.IdPeriodo;
 
-                var researchSubcatId = await _context.SubcategoriasActividades
-                     .Where(s => s.Subcategoria == "INVESTIGACION")
-                     .Select(s => s.IdSubcategoria)
-                     .FirstOrDefaultAsync();
-                if (researchSubcatId == 0) researchSubcatId = 7;
+                var researchSubcatId = await GetResearchSubcatIdAsync();
+                var estadosConCarga = await GetEstadosConCargaHorariaAsync();
 
                 var researchHours = new List<ProfesoresActividade>();
                 var otherAssignedHours = new List<InvProyectoProfesor>();
@@ -1933,10 +1919,7 @@ namespace diitra_infrastructure.Research
                         .Where(pp => profUserIds.Contains(pp.IdUsuario) &&
                                      pp.IdProyecto != project.IdProyecto &&
                                      pp.Activo != false &&
-                                     (pp.IdProyectoNavigation.Estado == "Enviado" ||
-                                      pp.IdProyectoNavigation.Estado == "En Revisión" ||
-                                      pp.IdProyectoNavigation.Estado == "Aprobado" ||
-                                      pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                                     estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                         .ToListAsync();
                 }
 
@@ -3072,6 +3055,37 @@ namespace diitra_infrastructure.Research
             if (r.Contains("semillerista") || r.Contains("estudiante") || r.Contains("alumno")) return "Semillerista";
             
             return "Co-Investigador";
+        }
+
+        private async Task<List<string>> GetEstadosConCargaHorariaAsync()
+        {
+            var list = await _context.InvConfigWorkflows
+                .Where(w => w.Activo && w.ContabilizaCargaHoraria)
+                .Select(w => w.EstadoDestino)
+                .Distinct()
+                .ToListAsync();
+            if (list == null || !list.Any())
+            {
+                list = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
+            }
+            return list;
+        }
+
+        private async Task<int> GetResearchSubcatIdAsync()
+        {
+            var researchSubcatId = await _context.SubcategoriasActividades
+                .Where(s => s.Subcategoria == "INVESTIGACION")
+                .Select(s => s.IdSubcategoria)
+                .FirstOrDefaultAsync();
+            if (researchSubcatId == 0)
+            {
+                var fallbackConfig = await _context.InvConfigsGenerales
+                    .Where(c => c.Clave == "Sigafi.InvestigacionSubcategoriaId")
+                    .Select(c => c.Valor)
+                    .FirstOrDefaultAsync();
+                researchSubcatId = int.TryParse(fallbackConfig, out var fallbackId) ? fallbackId : 7;
+            }
+            return researchSubcatId;
         }
 
         private sealed class TeamChangeTracePayload

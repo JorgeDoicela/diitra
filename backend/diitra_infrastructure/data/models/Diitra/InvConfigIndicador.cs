@@ -14,4 +14,8 @@ public partial class InvConfigIndicador
     public decimal? ValorReferencia { get; set; }
     public int AñoNormativa { get; set; }
     public bool? Activo { get; set; }
+    public decimal? UmbralCumplido { get; set; }
+    public decimal? UmbralEnProceso { get; set; }
+    public string? FormulaCalculo { get; set; }
+    public string? UnidadMedida { get; set; }
 }

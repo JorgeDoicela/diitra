@@ -370,7 +370,14 @@ namespace diitra_api.Controllers
                 .Where(s => s.Subcategoria == "INVESTIGACION")
                 .Select(s => s.IdSubcategoria)
                 .FirstOrDefaultAsync();
-            if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+            if (researchSubcatId == 0)
+            {
+                var fallbackConfig = await _context.InvConfigsGenerales
+                    .Where(c => c.Clave == "Sigafi.InvestigacionSubcategoriaId")
+                    .Select(c => c.Valor)
+                    .FirstOrDefaultAsync();
+                researchSubcatId = int.TryParse(fallbackConfig, out var fallbackId) ? fallbackId : 7;
+            }
 
             var profs = new List<object>();
             var alums = new List<object>();
@@ -428,6 +435,16 @@ namespace diitra_api.Controllers
                 var researchHours = new List<ProfesoresActividade>();
                 var assignedHoursList = new List<InvProyectoProfesor>();
                 var linkedUsersList = new List<User>();
+                var estadosConCarga = await _context.InvConfigWorkflows
+                    .Where(w => w.Activo && w.ContabilizaCargaHoraria)
+                    .Select(w => w.EstadoDestino)
+                    .Distinct()
+                    .ToListAsync();
+                if (estadosConCarga == null || !estadosConCarga.Any())
+                {
+                    estadosConCarga = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
+                }
+
                 if (ids.Any() && !string.IsNullOrEmpty(periodId))
                 {
                     researchHours = await _context.ProfesoresActividades
@@ -442,10 +459,7 @@ namespace diitra_api.Controllers
                     assignedHoursList = await _context.InvProyectosProfesores
                         .Include(pp => pp.IdProyectoNavigation)
                         .Where(pp => linkedUserIds.Contains(pp.IdUsuario) && pp.Activo != false &&
-                                     (pp.IdProyectoNavigation.Estado == "Enviado" ||
-                                      pp.IdProyectoNavigation.Estado == "En Revisión" ||
-                                      pp.IdProyectoNavigation.Estado == "Aprobado" ||
-                                      pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                                     estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                         .ToListAsync();
                 }
 
@@ -555,6 +569,25 @@ namespace diitra_api.Controllers
             var results = profs.Concat(alums);
 
             return Ok(results.ToList());
+        }
+
+        [HttpGet("workflow/estados")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetEstadosConfig()
+        {
+            var estados = await _context.InvConfigWorkflows
+                .Where(w => w.Activo)
+                .Select(w => new {
+                    estado = w.EstadoDestino,
+                    etiqueta = w.EtiquetaUi ?? w.EstadoDestino,
+                    color = w.ColorHex ?? "#94A3B8",
+                    esFinal = w.EsEstadoFinal,
+                    permiteInformes = w.PermiteInformesAvance,
+                    permiteEgresos = w.PermiteRegistroEgresos
+                })
+                .Distinct()
+                .ToListAsync();
+            return Ok(estados);
         }
     }
 }

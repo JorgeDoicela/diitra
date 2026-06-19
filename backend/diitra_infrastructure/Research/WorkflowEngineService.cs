@@ -111,7 +111,26 @@ namespace Diitra.Infrastructure.Research
                     .Where(s => s.Subcategoria == "INVESTIGACION")
                     .Select(s => s.IdSubcategoria)
                     .FirstOrDefaultAsync();
-                if (researchSubcatId == 0) researchSubcatId = 7; // Fallback seguro
+                if (researchSubcatId == 0)
+                {
+                    var fallbackConfig = await _context.InvConfigsGenerales
+                        .Where(c => c.Clave == "Sigafi.InvestigacionSubcategoriaId")
+                        .Select(c => c.Valor)
+                        .FirstOrDefaultAsync();
+                    researchSubcatId = int.TryParse(fallbackConfig, out var fallbackId) ? fallbackId : 7;
+                }
+
+                // ⚙️ CACES-READY: Estados activos leídos desde BD, no hardcodeados
+                var estadosConCargaHoraria = await _context.InvConfigWorkflows
+                    .Where(w => w.Activo && w.ContabilizaCargaHoraria)
+                    .Select(w => w.EstadoDestino)
+                    .Distinct()
+                    .ToListAsync();
+
+                if (estadosConCargaHoraria == null || !estadosConCargaHoraria.Any())
+                {
+                    estadosConCargaHoraria = new List<string> { "Enviado", "En Revisión", "Aprobado", "En Ejecución" };
+                }
 
                 var activeProfs = await _context.InvProyectosProfesores
                     .Include(pp => pp.IdUsuarioNavigation)
@@ -136,10 +155,7 @@ namespace Diitra.Infrastructure.Research
                                      pp.IdProyecto != proyecto.IdProyecto && 
                                      pp.Activo != false && 
                                      pp.IdProyectoNavigation.Activo != false &&
-                                     (pp.IdProyectoNavigation.Estado == "Enviado" || 
-                                      pp.IdProyectoNavigation.Estado == "En Revisión" || 
-                                      pp.IdProyectoNavigation.Estado == "Aprobado" || 
-                                      pp.IdProyectoNavigation.Estado == "En Ejecución"))
+                                     estadosConCargaHoraria.Contains(pp.IdProyectoNavigation.Estado))
                         .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
 
                     var totalProposedHours = otherProjectsHours + proposedHours;

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using diitra_application.Research;
+using Diitra.Application.Research;
 using diitra_application.Research.Dtos;
 using diitra_application.Security;
 using diitra_domain.Identity.Entities;
@@ -22,6 +23,7 @@ public class PeerReviewService : IPeerReviewService
     private readonly INotificationService _notificationService;
     private readonly IConfiguration _configuration;
     private readonly IAuthService _authService;
+    private readonly IWorkflowEngineService _workflowEngineService;
     private readonly ILogger<PeerReviewService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -35,6 +37,7 @@ public class PeerReviewService : IPeerReviewService
         INotificationService notificationService, 
         IConfiguration configuration, 
         IAuthService authService, 
+        IWorkflowEngineService workflowEngineService,
         ILogger<PeerReviewService> logger,
         IHttpContextAccessor httpContextAccessor)
     {
@@ -44,6 +47,7 @@ public class PeerReviewService : IPeerReviewService
         _notificationService = notificationService;
         _configuration = configuration;
         _authService = authService;
+        _workflowEngineService = workflowEngineService;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
 
@@ -1411,8 +1415,21 @@ public class PeerReviewService : IPeerReviewService
                 $"Solo los proyectos en estado 'Aprobado' pueden iniciar ejecución. Estado actual: '{project.Estado}'.");
 
         string estadoAnterior = project.Estado;
-        project.Estado = "En Ejecución";
-        project.FechaModificacion = DateTime.Now;
+        var transitionSuccess = await _workflowEngineService.TransicionarEstadoAsync(
+            projectUuid,
+            "En Ejecución",
+            directorId,
+            "Inicio de la fase de ejecución operativa tras la aprobación de arbitraje científico."
+        );
+        
+        if (!transitionSuccess)
+        {
+            throw new InvalidOperationException("No se pudo realizar la transición de estado reglamentaria del proyecto.");
+        }
+
+        // Volver a cargar el proyecto para actualizar FechaInicio
+        project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid)
+            ?? throw new ArgumentException($"Proyecto '{projectUuid}' no encontrado tras la transición.");
 
         if (!project.FechaInicio.HasValue)
             project.FechaInicio = DateOnly.FromDateTime(DateTime.Now);

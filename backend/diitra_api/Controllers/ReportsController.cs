@@ -5,6 +5,8 @@ using Diitra.Application.Common.Documents;
 using Diitra.Application.Research;
 using diitra_application.Research;
 using System.Security.Claims;
+using diitra_infrastructure.data.models;
+using Microsoft.EntityFrameworkCore;
 
 namespace diitra_api.Controllers
 {
@@ -16,17 +18,20 @@ namespace diitra_api.Controllers
         private readonly IDocumentEngine _documentEngine;
         private readonly IProjectOrchestrator _projectOrchestrator;
         private readonly IGroupsService _groupsService;
+        private readonly DiitraContext _context;
         private readonly ILogger<ReportsController> _logger;
 
         public ReportsController(
             IDocumentEngine documentEngine,
             IProjectOrchestrator projectOrchestrator,
             IGroupsService groupsService,
+            DiitraContext context,
             ILogger<ReportsController> logger)
         {
             _documentEngine = documentEngine;
             _projectOrchestrator = projectOrchestrator;
             _groupsService = groupsService;
+            _context = context;
             _logger = logger;
         }
 
@@ -65,6 +70,12 @@ namespace diitra_api.Controllers
 
                 var filteredList = filteredProjects.ToList();
 
+                var stateColorsFromDb = await _context.InvConfigWorkflows
+                    .Where(w => w.Activo && w.ColorHex != null)
+                    .Select(w => new { w.EstadoDestino, w.ColorHex })
+                    .Distinct()
+                    .ToListAsync();
+
                 var stateColors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
                 {
                     ["Borrador"] = "#6B7280",
@@ -77,6 +88,11 @@ namespace diitra_api.Controllers
                     ["Finalizado"] = "#059669",
                     ["Rechazado"] = "#EF4444"
                 };
+
+                foreach (var dbColor in stateColorsFromDb)
+                {
+                    stateColors[dbColor.EstadoDestino] = dbColor.ColorHex;
+                }
 
                 var estadosDistribucion = filteredList
                     .GroupBy(p => p.Estado ?? "Sin Estado")
@@ -105,39 +121,70 @@ namespace diitra_api.Controllers
                 var totalBudget = filteredList.Sum(p => p.PresupuestoTotal ?? 0);
                 var executedBudget = filteredList.Sum(p => p.PresupuestoEjecutado ?? 0);
                 var executionPct = totalBudget > 0 ? Math.Round(executedBudget / totalBudget * 100, 1) : 0;
+                var configIndicadores = await _context.InvConfigIndicadores
+                    .Where(i => i.Activo == true)
+                    .ToDictionaryAsync(i => i.CodigoIndicador, StringComparer.OrdinalIgnoreCase);
+
+                decimal GetUmbralC(string codigo, decimal fallback) =>
+                    configIndicadores.TryGetValue(codigo, out var cfg) && cfg.UmbralCumplido.HasValue
+                        ? cfg.UmbralCumplido.Value : fallback;
+
+                decimal GetUmbralP(string codigo, decimal fallback) =>
+                    configIndicadores.TryGetValue(codigo, out var cfg) && cfg.UmbralEnProceso.HasValue
+                        ? cfg.UmbralEnProceso.Value : fallback;
 
                 var pndAligned = filteredList.Count(p => !string.IsNullOrEmpty(p.ObjetivoPnd));
                 var pndPct = filteredList.Count > 0 ? Math.Round((double)pndAligned / filteredList.Count * 100, 1) : 0;
-                var pndStatus = pndPct >= 80 ? "CUMPLIDO" : pndPct >= 50 ? "EN PROCESO" : "ALERTA";
+                var pndUmbralC = (double)GetUmbralC("E1.PLAN", 80);
+                var pndUmbralP = (double)GetUmbralP("E1.PLAN", 50);
+                var pndStatus = pndPct >= pndUmbralC ? "CUMPLIDO" : pndPct >= pndUmbralP ? "EN PROCESO" : "ALERTA";
 
                 var totalProd = filteredList.Sum(p => p.TotalProductos);
                 var researchers = stats.TotalInvestigadoresActivos > 0 ? stats.TotalInvestigadoresActivos : stats.MisProyectosActivos;
                 var prodRate = researchers > 0 ? (double)totalProd / researchers : 0;
-                var prodPct = Math.Round(prodRate / 0.5 * 100, 1);
+                var prodReferencia = configIndicadores.TryGetValue("E2.PROD", out var prodCfg) && prodCfg.ValorReferencia.HasValue ? (double)prodCfg.ValorReferencia.Value : 0.5;
+                var prodPct = Math.Round(prodRate / (prodReferencia > 0 ? prodReferencia : 0.5) * 100, 1);
                 prodPct = Math.Min(prodPct, 100);
-                var prodStatus = prodPct >= 100 ? "CUMPLIDO" : prodPct >= 50 ? "EN PROCESO" : "ALERTA";
+                var prodUmbralC = (double)GetUmbralC("E2.PROD", 100);
+                var prodUmbralP = (double)GetUmbralP("E2.PROD", 50);
+                var prodStatus = prodPct >= prodUmbralC ? "CUMPLIDO" : prodPct >= prodUmbralP ? "EN PROCESO" : "ALERTA";
 
-                var withTrlOrPartner = filteredList.Count(p => (p.TrlActual.HasValue && p.TrlActual >= 5) || !string.IsNullOrEmpty(p.EntidadAliada));
+                var trlMinimo = 5;
+                var trlConfigRaw = await _context.InvConfigsGenerales
+                    .Where(c => c.Clave == "Caces.TrlMinimoInnovacion")
+                    .Select(c => c.Valor)
+                    .FirstOrDefaultAsync();
+                if (int.TryParse(trlConfigRaw, out var trlVal))
+                {
+                    trlMinimo = trlVal;
+                }
+                var withTrlOrPartner = filteredList.Count(p => (p.TrlActual.HasValue && p.TrlActual >= trlMinimo) || !string.IsNullOrEmpty(p.EntidadAliada));
                 var innovPct = filteredList.Count > 0 ? Math.Round((double)withTrlOrPartner / filteredList.Count * 100, 1) : 0;
-                var innovStatus = innovPct >= 15 ? "CUMPLIDO" : innovPct >= 7.5 ? "EN PROCESO" : "ALERTA";
+                var innovUmbralC = (double)GetUmbralC("E3.INNO", 15);
+                var innovUmbralP = (double)GetUmbralP("E3.INNO", 7.5m);
+                var innovStatus = innovPct >= innovUmbralC ? "CUMPLIDO" : innovPct >= innovUmbralP ? "EN PROCESO" : "ALERTA";
                 innovPct = Math.Min(innovPct, 100);
 
                 var withStudents = filteredList.Count(p => p.TotalEstudiantes > 0);
                 var studPct = filteredList.Count > 0 ? Math.Round((double)withStudents / filteredList.Count * 100, 1) : 0;
-                var studStatus = studPct >= 30 ? "CUMPLIDO" : studPct >= 15 ? "EN PROCESO" : "ALERTA";
+                var studUmbralC = (double)GetUmbralC("E4.STUD", 30);
+                var studUmbralP = (double)GetUmbralP("E4.STUD", 15);
+                var studStatus = studPct >= studUmbralC ? "CUMPLIDO" : studPct >= studUmbralP ? "EN PROCESO" : "ALERTA";
                 studPct = Math.Min(studPct, 100);
 
-                var budgetPct = executionPct;
-                var budgetStatus = budgetPct >= 75 ? "CUMPLIDO" : budgetPct >= 40 ? "EN PROCESO" : "ALERTA";
+                var budgetPct = (double)executionPct;
+                var budgetUmbralC = (double)GetUmbralC("E5.BUDG", 75);
+                var budgetUmbralP = (double)GetUmbralP("E5.BUDG", 40);
+                var budgetStatus = budgetPct >= budgetUmbralC ? "CUMPLIDO" : budgetPct >= budgetUmbralP ? "EN PROCESO" : "ALERTA";
                 budgetPct = Math.Min(budgetPct, 100);
 
                 var indicadoresCaces = new List<object>
                 {
-                    new { codigo = "E1.PLAN", nombre = "Alineación PND y POA", descripcion = "Proyectos alineados al Plan Nacional de Desarrollo", progreso = (double)pndPct, meta = "≥80%", estado = pndStatus, badge_class = pndStatus == "CUMPLIDO" ? "badge-success" : pndStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = pndStatus == "CUMPLIDO" ? "green" : pndStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{pndAligned} de {filteredList.Count} proyectos alineados" },
-                    new { codigo = "E2.PROD", nombre = "Producción Científica del Claustro", descripcion = $"Tasa de publicaciones: {prodRate:F1}/investigador (meta: 0.5)", progreso = (double)prodPct, meta = "≥0.5 pub/invest.", estado = prodStatus, badge_class = prodStatus == "CUMPLIDO" ? "badge-success" : prodStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = prodStatus == "CUMPLIDO" ? "green" : prodStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{totalProd} productos de {researchers} investigadores" },
-                    new { codigo = "E3.INNO", nombre = "Innovación y Transferencia Tecnológica", descripcion = "Proyectos con TRL≥5 o entidad aliada", progreso = (double)innovPct, meta = "≥15%", estado = innovStatus, badge_class = innovStatus == "CUMPLIDO" ? "badge-success" : innovStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = innovStatus == "CUMPLIDO" ? "green" : innovStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{withTrlOrPartner} de {filteredList.Count} proyectos innovadores" },
-                    new { codigo = "E4.STUD", nombre = "Vinculación Formativa (Semilleros)", descripcion = "Proyectos con participación estudiantil", progreso = (double)studPct, meta = "≥30%", estado = studStatus, badge_class = studStatus == "CUMPLIDO" ? "badge-success" : studStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = studStatus == "CUMPLIDO" ? "green" : studStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{withStudents} de {filteredList.Count} proyectos con estudiantes" },
-                    new { codigo = "E5.BUDG", nombre = "Ejecución Presupuestaria", descripcion = "Eficiencia en el uso de recursos asignados", progreso = (double)budgetPct, meta = "≥75%", estado = budgetStatus, badge_class = budgetStatus == "CUMPLIDO" ? "badge-success" : budgetStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = budgetStatus == "CUMPLIDO" ? "green" : budgetStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"${executedBudget:N0} de ${totalBudget:N0} ejecutados" }
+                    new { codigo = "E1.PLAN", nombre = "Alineación PND y POA", descripcion = "Proyectos alineados al Plan Nacional de Desarrollo", progreso = (double)pndPct, meta = $"≥{pndUmbralC}%", estado = pndStatus, badge_class = pndStatus == "CUMPLIDO" ? "badge-success" : pndStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = pndStatus == "CUMPLIDO" ? "green" : pndStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{pndAligned} de {filteredList.Count} proyectos alineados" },
+                    new { codigo = "E2.PROD", nombre = "Producción Científica del Claustro", descripcion = $"Tasa de publicaciones: {prodRate:F1}/investigador (meta: {prodReferencia:F1})", progreso = (double)prodPct, meta = $"≥{prodReferencia:F1} pub/invest.", estado = prodStatus, badge_class = prodStatus == "CUMPLIDO" ? "badge-success" : prodStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = prodStatus == "CUMPLIDO" ? "green" : prodStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{totalProd} productos de {researchers} investigadores" },
+                    new { codigo = "E3.INNO", nombre = "Innovación y Transferencia Tecnológica", descripcion = $"Proyectos con TRL≥{trlMinimo} o entidad aliada", progreso = (double)innovPct, meta = $"≥{innovUmbralC}%", estado = innovStatus, badge_class = innovStatus == "CUMPLIDO" ? "badge-success" : innovStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = innovStatus == "CUMPLIDO" ? "green" : innovStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{withTrlOrPartner} de {filteredList.Count} proyectos innovadores" },
+                    new { codigo = "E4.STUD", nombre = "Vinculación Formativa (Semilleros)", descripcion = "Proyectos con participación estudiantil", progreso = (double)studPct, meta = $"≥{studUmbralC}%", estado = studStatus, badge_class = studStatus == "CUMPLIDO" ? "badge-success" : studStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = studStatus == "CUMPLIDO" ? "green" : studStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"{withStudents} de {filteredList.Count} proyectos con estudiantes" },
+                    new { codigo = "E5.BUDG", nombre = "Ejecución Presupuestaria", descripcion = "Eficiencia en el uso de recursos asignados", progreso = (double)budgetPct, meta = $"≥{budgetUmbralC}%", estado = budgetStatus, badge_class = budgetStatus == "CUMPLIDO" ? "badge-success" : budgetStatus == "EN PROCESO" ? "badge-warning" : "badge-danger", bar_color = budgetStatus == "CUMPLIDO" ? "green" : budgetStatus == "EN PROCESO" ? "amber" : "red", valor_actual = $"${executedBudget:N0} de ${totalBudget:N0} ejecutados" }
                 };
 
                 var proyectosTabla = filteredList.Select(p =>
