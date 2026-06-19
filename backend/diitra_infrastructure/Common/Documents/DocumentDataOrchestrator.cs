@@ -11,7 +11,7 @@ using Diitra.Domain.Common.Documents;
 namespace Diitra.Infrastructure.Common.Documents
 {
     /// <summary>
-    /// Implementación Realista y Enterprise del Orquestador de Datos.
+    /// Implementación Realista del Orquestador de Datos.
     /// Resuelve el problema de la "Ceguera de Datos" del Builder.
     /// </summary>
     public class DocumentDataOrchestrator : IDocumentDataOrchestrator
@@ -32,7 +32,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 .FirstOrDefaultAsync(i => i.Uuid == documentInstanceUuid, ct)
                 ?? throw new KeyNotFoundException($"No se encontró la instancia: {documentInstanceUuid}");
 
-            // 2. Identificar el tipo de entidad desde la instancia (Resiliencia Enterprise)
+            // 2. Identificar el tipo de entidad desde la instancia (Resiliencia)
             string entityType = instance.EntityType;
 
             // 3. Buscar el proveedor adecuado
@@ -48,7 +48,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 .ToListAsync(ct);
 
             var collaborativeContent = coworkDocs.ToDictionary(
-                d => d.CampoNombre, 
+                d => d.CampoNombre,
                 d => d.ContentHtml ?? string.Empty
             );
 
@@ -72,7 +72,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 Data = masterData,
                 RequestedBy = requestedBy,
                 IsDraftMode = instance.State != DocumentState.Signed,
-                IsBlindMode = false 
+                IsBlindMode = false
             };
         }
     }

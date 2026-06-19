@@ -21,7 +21,7 @@ namespace diitra_api.Controllers
         private readonly IDocumentDataOrchestrator _orchestrator;
 
         public DocumentInstancesController(
-            IDocumentInstanceService instanceService, 
+            IDocumentInstanceService instanceService,
             IDocumentEngine documentEngine,
             IDocumentDataOrchestrator orchestrator)
         {
@@ -35,10 +35,10 @@ namespace diitra_api.Controllers
         {
             var userUuid = User.Identity?.Name ?? "anon";
             var instance = await _instanceService.CreateAsync(
-                request.TemplateCode, 
-                request.EntityUuid, 
-                userUuid, 
-                request.Title, 
+                request.TemplateCode,
+                request.EntityUuid,
+                userUuid,
+                request.Title,
                 request.EntityType ?? "Proyecto",
                 ct);
 
@@ -231,7 +231,7 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
-        /// PROCESO ENTERPRISE: Finaliza un documento orquestando el Builder y CoWork.
+        /// PROCESO: Finaliza un documento orquestando el Builder y CoWork.
         /// No recibe el PDF del cliente (evita manipulación). El servidor lo genera
         /// usando los datos oficiales y el contenido colaborativo auditado.
         /// </summary>
@@ -250,13 +250,13 @@ namespace diitra_api.Controllers
 
                 // 3. Persistir y cerrar el ciclo de vida del documento
                 var hash = "SHA256-" + Guid.NewGuid().ToString("N").Substring(0, 10).ToUpper(); // En producción sería el hash real del PDF
-                
+
                 var instance = await _instanceService.FinalizeAsync(
-                    uuid, 
+                    uuid,
                     buildResult.PdfBytes,
                     buildResult.FileName,
-                    hash, 
-                    buildResult.TraceabilityCode, 
+                    hash,
+                    buildResult.TraceabilityCode,
                     ct);
 
                 return Ok(new {
@@ -273,13 +273,13 @@ namespace diitra_api.Controllers
 
         /// <summary>
         /// ENDPOINT UNIVERSAL: Permite a DIITRA Builder (Frontend) autoguardar
-        /// cualquier estructura de datos JSON (Rúbricas, Actas, Proyectos) sin 
+        /// cualquier estructura de datos JSON (Rúbricas, Actas, Proyectos) sin
         /// depender de modelos rígidos como ProyectoDto.
         /// </summary>
         [HttpPatch("{uuid}/metadata")]
         public async Task<IActionResult> UpdateMetadata(
-            string uuid, 
-            [FromBody] System.Text.Json.JsonElement metadata, 
+            string uuid,
+            [FromBody] System.Text.Json.JsonElement metadata,
             [FromServices] IProjectOrchestrator projectOrchestrator,
             CancellationToken ct)
         {
@@ -322,7 +322,7 @@ namespace diitra_api.Controllers
                             }
 
                             var result = await projectOrchestrator.SyncProjectWizardDataAsync(dto, userIdRef);
-                            
+
                             if (!result.Success)
                             {
                                 Console.WriteLine($"[DIITRA ERROR] Sync failed: {result.Message}");
@@ -367,13 +367,13 @@ namespace diitra_api.Controllers
     }
 
     public record CreateInstanceRequest(
-        [property: JsonPropertyName("templateCode")] string TemplateCode, 
-        [property: JsonPropertyName("entityUuid")] string EntityUuid, 
-        [property: JsonPropertyName("entityType")] string? EntityType = null, 
+        [property: JsonPropertyName("templateCode")] string TemplateCode,
+        [property: JsonPropertyName("entityUuid")] string EntityUuid,
+        [property: JsonPropertyName("entityType")] string? EntityType = null,
         [property: JsonPropertyName("title")] string? Title = null);
-    
+
     public record FinalizeRequest(
-        [property: JsonPropertyName("pdfBase64")] string? PdfBase64, 
-        [property: JsonPropertyName("hash")] string Hash, 
+        [property: JsonPropertyName("pdfBase64")] string? PdfBase64,
+        [property: JsonPropertyName("hash")] string Hash,
         [property: JsonPropertyName("traceabilityCode")] string TraceabilityCode);
 }

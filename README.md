@@ -18,7 +18,7 @@ La plataforma utiliza un stack tecnológico moderno y escalable:
 
 - **Frontend Web**: Aplicación React SPA con arquitectura de componentes modular.
 - **Backend Core**: API Gateway desarrollado en .NET 8.0 utilizando Clean Architecture.
-- **Persistencia**: Base de datos MariaDB/MySQL Enterprise con segregación de esquemas.
+- **Persistencia**: Base de datos MariaDB/MySQL con segregación de esquemas.
 - **Integridad Documental**: Motor de generación PDF basado en iText9 y plantillas dinámicas.
 
 ## Cumplimiento Normativo (CACES 2026)

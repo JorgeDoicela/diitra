@@ -106,7 +106,7 @@ FROM (
     SELECT '1725555376', 'otros',    'Revisor Externo A',       'revisor.externo.a@demo.ec' UNION ALL
     SELECT '1725555355', 'otros',    'Revisor Externo B',       'revisor.externo.b@demo.ec'
 ) AS v
-WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE u.idSigafi = v.idSigafi);
+WHERE NOT EXISTS (SELECT 1 FROM usuarios u WHERE CONVERT(u.idSigafi USING utf8mb4) = v.idSigafi);
 
 -- 2. Poblar Sublíneas de Investigación
 INSERT INTO inv_sublineas (idSublinea, uuid, idLinea, nombre, activo) VALUES
@@ -139,20 +139,20 @@ INSERT INTO inv_usuarios_metadata (uuid, idUsuario, orcidId, scopusId, googleSch
 
 -- 5. Poblar Grupos de Investigación
 INSERT INTO inv_grupos_investigacion (idGrupo, uuid, nombre, siglas, tipoGrupo, idDominio, idCoordinador, objetivoGeneral, mision, vision, resolucionAprobacion, fechaCreacion, categoriaConsolidacion, estado, activo) VALUES
-(1, 'a241b625-56b8-4160-a4ba-1f67865dded0', 'Grupo de Investigación en Ingeniería de Software y TI', 'GIIST', 'Investigación', 1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 
- 'Fomentar el desarrollo tecnológico y la innovación en software en la región', 
- 'Desarrollar soluciones de software con alto estándar de calidad', 
- 'Ser referentes nacionales en desarrollo de software aplicado', 
+(1, 'a241b625-56b8-4160-a4ba-1f67865dded0', 'Grupo de Investigación en Ingeniería de Software y TI', 'GIIST', 'Investigación', 1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1),
+ 'Fomentar el desarrollo tecnológico y la innovación en software en la región',
+ 'Desarrollar soluciones de software con alto estándar de calidad',
+ 'Ser referentes nacionales en desarrollo de software aplicado',
  'RES-GIIST-2025-01', '2025-01-10', 'Consolidado', 'Aprobado', 1),
-(2, 'b11b1111-2222-3333-4444-555555555555', 'Grupo de Energías Renovables y Sostenibilidad Ambiental', 'GERSA', 'Investigación', 2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 
- 'Desarrollar prototipos y soluciones tecnológicas en el ámbito energético', 
- 'Investigar y aplicar fuentes de energía limpia en beneficio social', 
- 'Liderar la transición energética desde la academia', 
+(2, 'b11b1111-2222-3333-4444-555555555555', 'Grupo de Energías Renovables y Sostenibilidad Ambiental', 'GERSA', 'Investigación', 2, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1),
+ 'Desarrollar prototipos y soluciones tecnológicas en el ámbito energético',
+ 'Investigar y aplicar fuentes de energía limpia en beneficio social',
+ 'Liderar la transición energética desde la academia',
  'RES-GERSA-2025-02', '2025-01-12', 'Consolidado', 'Aprobado', 1),
-(3, 'c11c1111-2222-3333-4444-555555555555', 'Semillero de Investigación en Innovación y Gestión Empresarial', 'SIGE', 'Semillero', 3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 
- 'Capacitar a estudiantes en metodologías de investigación en el ámbito de negocios', 
- 'Formar semilleristas con visión crítica y emprendedora', 
- 'Ser el principal semillero de ideas de negocio tecnológicas del IST', 
+(3, 'c11c1111-2222-3333-4444-555555555555', 'Semillero de Investigación en Innovación y Gestión Empresarial', 'SIGE', 'Semillero', 3, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1),
+ 'Capacitar a estudiantes en metodologías de investigación en el ámbito de negocios',
+ 'Formar semilleristas con visión crítica y emprendedora',
+ 'Ser el principal semillero de ideas de negocio tecnológicas del IST',
  'RES-SIGE-2025-03', '2025-02-15', 'En Formación', 'Aprobado', 1),
 (4, 'd11d1111-2222-3333-4444-555555555555', 'Grupo de Investigación en Redes y Ciberseguridad Aplicada', 'GIRCA', 'Investigación', 1, (SELECT idUsuario FROM usuarios WHERE idSigafi = '1724649338' LIMIT 1),
  'Investigar e implementar soluciones de ciberseguridad para infraestructuras críticas',
@@ -237,58 +237,58 @@ INSERT INTO inv_convocatorias_hitos (idHito, uuid, idConvocatoria, nombreHito, f
 
 -- 7. Poblar Proyectos (Se cubren todos los estados del ciclo de vida útil del sistema)
 INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional, titulo, descripcionProyecto, antecedentes, justificacion, marcoTeorico, metodologia, metodoEvaluacion, idSublinea, idPrograma, idGrupo, tieneGrupo, idTipo, fechaPresentacion, fechaInicio, fechaFin, tiempoEjecucion, estado, disponibleAdopcion, puntajeEvaluacion, valorEjecucion, idObjetivoPnd, idEntidadAliada, trlInicial, trlActual, trlMeta, hashActaAprobacion, fechaAprobacion, firmadoPor, idDspaceHandle, metadataCacesJson) VALUES
-(1, '11111111-1111-1111-1111-111111111111', 1, 'PROY-SOFT-2025-001', 
- 'Desarrollo de una Plataforma IoT con Inteligencia Artificial para el Monitoreo del Consumo Eléctrico Doméstico en el IST Traversari', 
- 'Desarrollo de hardware de sensado y una plataforma web con modelos de redes neuronales recursivas para la clasificación automática de cargas y predicción de consumo eléctrico domiciliar.', 
- 'El desperdicio de energía eléctrica en hogares de Quito asciende al 15% debido a la falta de información desagregada sobre el consumo de electrodomésticos en tiempo real...', 
- 'Este proyecto permite reducir la facturación eléctrica de las familias y ayuda al instituto a acreditar en los estándares de vinculación tecnológica del CACES...', 
- 'Estudios previos muestran que las redes neuronales LSTM alcanzan un 92% de precisión en la desagregación de carga no intrusiva (NILM)...', 
- 'Se implementará una metodología ágil XP. Se utilizarán microcontroladores ESP32, sensores SCT-013 y una arquitectura backend basada en ASP.NET Core y Python...', 
- 'Comparación del consumo histórico mensual facturado versus el consumo optimizado post-instalación de alertas tempranas en una muestra piloto de 10 hogares.', 
+(1, '11111111-1111-1111-1111-111111111111', 1, 'PROY-SOFT-2025-001',
+ 'Desarrollo de una Plataforma IoT con Inteligencia Artificial para el Monitoreo del Consumo Eléctrico Doméstico en el IST Traversari',
+ 'Desarrollo de hardware de sensado y una plataforma web con modelos de redes neuronales recursivas para la clasificación automática de cargas y predicción de consumo eléctrico domiciliar.',
+ 'El desperdicio de energía eléctrica en hogares de Quito asciende al 15% debido a la falta de información desagregada sobre el consumo de electrodomésticos en tiempo real...',
+ 'Este proyecto permite reducir la facturación eléctrica de las familias y ayuda al instituto a acreditar en los estándares de vinculación tecnológica del CACES...',
+ 'Estudios previos muestran que las redes neuronales LSTM alcanzan un 92% de precisión en la desagregación de carga no intrusiva (NILM)...',
+ 'Se implementará una metodología ágil XP. Se utilizarán microcontroladores ESP32, sensores SCT-013 y una arquitectura backend basada en ASP.NET Core y Python...',
+ 'Comparación del consumo histórico mensual facturado versus el consumo optimizado post-instalación de alertas tempranas en una muestra piloto de 10 hogares.',
  1, 1, 1, 1, 2, '2025-05-10', '2025-07-01', '2026-01-01', '6 meses', 'En Ejecución', 0, 85.50, 3200.00, 3, 3, 2, 5, 6,
  '3f78ec90141f22e84c1fbc0d16f8ef190a421b8ff120f269ad3f82163b86029d5', '2025-06-20 09:30:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), '123456789/104', NULL),
 
-(2, '22222222-2222-2222-2222-222222222222', 1, 'PROY-ENE-2025-002', 
- 'Implementación de un Sistema Solar Fotovoltaico Autónomo para la Iluminación del Campus Traversari Quito', 
- 'Diseño, cálculo y puesta en marcha de un sistema de paneles solares fotovoltaicos con banco de baterías para alimentar la iluminación perimetral del campus Traversari, reduciendo la huella de carbono institucional.', 
- 'El campus de Quito del IST Traversari experimenta cortes intermitentes de energía y una alta facturación en iluminación externa...', 
- 'Garantiza la continuidad operativa de la iluminación externa de seguridad y sirve como laboratorio vivo para los estudiantes de la carrera de Electrónica...', 
- 'La radiación solar media en Quito es de 4.8 kWh/m²/día, lo cual hace altamente viable la generación distribuida autónoma...', 
- 'Metodología experimental: 1. Dimensionamiento de la carga, 2. Selección de módulos monocristalinos e inversor, 3. Instalación física, 4. Pruebas de descarga profunda de baterías.', 
- 'Medición diaria del rendimiento del sistema en kWh generados y ahorro porcentual respecto a la red de distribución eléctrica pública.', 
+(2, '22222222-2222-2222-2222-222222222222', 1, 'PROY-ENE-2025-002',
+ 'Implementación de un Sistema Solar Fotovoltaico Autónomo para la Iluminación del Campus Traversari Quito',
+ 'Diseño, cálculo y puesta en marcha de un sistema de paneles solares fotovoltaicos con banco de baterías para alimentar la iluminación perimetral del campus Traversari, reduciendo la huella de carbono institucional.',
+ 'El campus de Quito del IST Traversari experimenta cortes intermitentes de energía y una alta facturación en iluminación externa...',
+ 'Garantiza la continuidad operativa de la iluminación externa de seguridad y sirve como laboratorio vivo para los estudiantes de la carrera de Electrónica...',
+ 'La radiación solar media en Quito es de 4.8 kWh/m²/día, lo cual hace altamente viable la generación distribuida autónoma...',
+ 'Metodología experimental: 1. Dimensionamiento de la carga, 2. Selección de módulos monocristalinos e inversor, 3. Instalación física, 4. Pruebas de descarga profunda de baterías.',
+ 'Medición diaria del rendimiento del sistema en kWh generados y ahorro porcentual respecto a la red de distribución eléctrica pública.',
  3, 2, 2, 1, 2, '2025-05-12', '2025-07-05', '2026-01-05', '6 meses', 'Finalizado', 0, 92.00, 6500.00, 2, 2, 3, 7, 7,
  'f82bbcbff18acb9eef89283f12e840afbc89e81bfafeff093b128afc298ec289', '2025-06-22 10:45:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), '123456789/104', NULL),
 
-(3, '33333333-3333-3333-3333-333333333333', 1, 'PROY-ADM-2025-003', 
- 'Estudio del Impacto del Teletrabajo en la Productividad del Claustro Docente en Institutos Tecnológicos de Quito', 
- 'Investigación empírica y análisis correlacional del desempeño laboral docente bajo esquemas mixtos de teletrabajo en institutos de Pichincha.', 
- 'La transición abrupta al teletrabajo generó cambios significativos en el clima organizacional y la productividad de los docentes universitarios y tecnológicos...', 
- 'Permite diseñar políticas internas de bienestar y optimización de distributivos horarios conforme a la normativa vigente del CES...', 
- 'Se revisarán los modelos de balance vida-trabajo de Greenhaus y las escalas de productividad de Koopmans aplicados al sector educativo...', 
- 'Investigación no experimental, de corte transversal, utilizando encuestas estructuradas a 120 docentes de 5 institutos tecnológicos de Quito y análisis con SPSS.', 
- 'Validación de hipótesis de correlación mediante pruebas de Chi-cuadrado y coeficientes R de Pearson entre variables de clima y metas cumplidas.', 
+(3, '33333333-3333-3333-3333-333333333333', 1, 'PROY-ADM-2025-003',
+ 'Estudio del Impacto del Teletrabajo en la Productividad del Claustro Docente en Institutos Tecnológicos de Quito',
+ 'Investigación empírica y análisis correlacional del desempeño laboral docente bajo esquemas mixtos de teletrabajo en institutos de Pichincha.',
+ 'La transición abrupta al teletrabajo generó cambios significativos en el clima organizacional y la productividad de los docentes universitarios y tecnológicos...',
+ 'Permite diseñar políticas internas de bienestar y optimización de distributivos horarios conforme a la normativa vigente del CES...',
+ 'Se revisarán los modelos de balance vida-trabajo de Greenhaus y las escalas de productividad de Koopmans aplicados al sector educativo...',
+ 'Investigación no experimental, de corte transversal, utilizando encuestas estructuradas a 120 docentes de 5 institutos tecnológicos de Quito y análisis con SPSS.',
+ 'Validación de hipótesis de correlación mediante pruebas de Chi-cuadrado y coeficientes R de Pearson entre variables de clima y metas cumplidas.',
  5, 3, 3, 1, 1, '2025-05-15', '2025-07-10', '2026-01-10', '6 meses', 'Aprobado', 0, 78.00, 1200.00, 4, NULL, 1, 3, 4,
  'a12bc90fe838efca839ea12bfaec09e20a9bfedcba91bfadcf928eef920fe1a8', '2025-06-25 11:15:00', (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), NULL, NULL),
 
-(4, '44444444-4444-4444-4444-444444444444', 2, 'PROY-SOFT-2026-004', 
- 'Desarrollo de un Asistente Virtual Conversacional basado en IA para la Gestión Académica de Estudiantes en el IST Traversari', 
- 'Diseño de un asistente virtual inteligente basado en modelos de lenguaje (LLM) y técnicas de generación aumentada por recuperación (RAG) para automatizar la atención a estudiantes sobre trámites académicos, calendarios y reglamentos institucionales.', 
- 'El departamento de bienestar estudiantil y secretaría del IST Traversari registra saturación en canales de consulta rutinaria...', 
- 'Mejora los tiempos de respuesta estudiantil de horas a segundos, liberando tiempo administrativo para casos de atención compleja...', 
- 'La arquitectura RAG permite mitigar alucinaciones de modelos de lenguaje mediante inyección de contexto de bases de conocimiento oficiales...', 
- 'Desarrollo incremental bajo metodología SCRUM: 1. Curación de reglamentos institucionales, 2. Embeddings y base de datos vectorial, 3. Orquestación con LangChain y API de chat, 4. Frontend web interactivo.', 
- 'Evaluación de precisión conversacional utilizando el framework Ragas y encuestas de usabilidad y satisfacción de estudiantes.', 
+(4, '44444444-4444-4444-4444-444444444444', 2, 'PROY-SOFT-2026-004',
+ 'Desarrollo de un Asistente Virtual Conversacional basado en IA para la Gestión Académica de Estudiantes en el IST Traversari',
+ 'Diseño de un asistente virtual inteligente basado en modelos de lenguaje (LLM) y técnicas de generación aumentada por recuperación (RAG) para automatizar la atención a estudiantes sobre trámites académicos, calendarios y reglamentos institucionales.',
+ 'El departamento de bienestar estudiantil y secretaría del IST Traversari registra saturación en canales de consulta rutinaria...',
+ 'Mejora los tiempos de respuesta estudiantil de horas a segundos, liberando tiempo administrativo para casos de atención compleja...',
+ 'La arquitectura RAG permite mitigar alucinaciones de modelos de lenguaje mediante inyección de contexto de bases de conocimiento oficiales...',
+ 'Desarrollo incremental bajo metodología SCRUM: 1. Curación de reglamentos institucionales, 2. Embeddings y base de datos vectorial, 3. Orquestación con LangChain y API de chat, 4. Frontend web interactivo.',
+ 'Evaluación de precisión conversacional utilizando el framework Ragas y encuestas de usabilidad y satisfacción de estudiantes.',
  2, 1, 1, 1, 2, '2026-04-15', '2026-07-01', '2027-01-01', '6 meses', 'Borrador', 0, NULL, 0.00, 3, NULL, 2, 2, 5,
  NULL, NULL, NULL, NULL, NULL),
 
-(5, '55555555-5555-5555-5555-555555555555', 2, 'PROY-RED-2026-005', 
- 'Diseño y Construcción de un Prototipo para la Detección Temprana de Fallas Eléctricas en Laboratorios de Electrónica del IST Traversari', 
- 'Construcción de hardware detector con microcontrolador y análisis de señales de corriente para la desconexión preventiva de mesas de trabajo en laboratorios ante transitorios y cortocircuitos.', 
- 'Los laboratorios de electrónica sufren constantes daños en sus osciloscopios y fuentes debido a cortocircuitos accidentales cometidos por estudiantes en prácticas...', 
- 'Protege los activos tecnológicos del instituto y reduce costos de mantenimiento correctivo de laboratorios...', 
- 'Los transitorios de corriente y sobretensiones en microsegundos pueden detectarse mediante comparadores analógicos rápidos y optoacopladores de aislamiento...', 
- 'Diseño del PCB en Altium, fabricación del prototipo, integración de relevadores de estado sólido de disparo rápido y pruebas controladas con cargas inductivas.', 
- 'Tiempo promedio de respuesta en milisegundos desde la detección del corto hasta la apertura del circuito.', 
+(5, '55555555-5555-5555-5555-555555555555', 2, 'PROY-RED-2026-005',
+ 'Diseño y Construcción de un Prototipo para la Detección Temprana de Fallas Eléctricas en Laboratorios de Electrónica del IST Traversari',
+ 'Construcción de hardware detector con microcontrolador y análisis de señales de corriente para la desconexión preventiva de mesas de trabajo en laboratorios ante transitorios y cortocircuitos.',
+ 'Los laboratorios de electrónica sufren constantes daños en sus osciloscopios y fuentes debido a cortocircuitos accidentales cometidos por estudiantes en prácticas...',
+ 'Protege los activos tecnológicos del instituto y reduce costos de mantenimiento correctivo de laboratorios...',
+ 'Los transitorios de corriente y sobretensiones en microsegundos pueden detectarse mediante comparadores analógicos rápidos y optoacopladores de aislamiento...',
+ 'Diseño del PCB en Altium, fabricación del prototipo, integración de relevadores de estado sólido de disparo rápido y pruebas controladas con cargas inductivas.',
+ 'Tiempo promedio de respuesta en milisegundos desde la detección del corto hasta la apertura del circuito.',
  6, 1, 1, 1, 2, '2026-04-20', '2026-07-05', '2027-01-05', '6 meses', 'En Revisión', 0, NULL, 500.00, 2, 1, 2, 3, 6,
  NULL, NULL, NULL, NULL, NULL),
 
@@ -607,7 +607,7 @@ INSERT INTO inv_lopdp_auditoria_datos (uuid, idUsuarioActor, idUsuarioAfectado, 
 (UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1718161126' LIMIT 1), 'inv_usuarios_metadata', 'rutaFirmaP12', 'LECTURA', 'Validación del certificado digital para firma del acta de inicio.', '192.168.1.60', 'Mozilla/5.0', '2025-07-01 09:20:00'),
 (UUID(), (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), (SELECT idUsuario FROM usuarios WHERE idSigafi = '1802707511' LIMIT 1), 'inv_usuarios_metadata', 'rutaFirmaP12', 'LECTURA', 'Verificación de firma electrónica en informe final de proyecto.', '192.168.1.60', 'Mozilla/5.0', '2026-01-05 16:10:00');
 
--- 24. Bitácora de Copias de Respaldo de Base de Datos (Seguridad Enterprise)
+-- 24. Bitácora de Copias de Respaldo de Base de Datos (Seguridad)
 INSERT INTO inv_backup_logs (uuid, fechaBackup, tipo, destino, nombreArchivo, tamanioBytes, estado, hashVerificacion, errorMensaje, ejecutadoPor) VALUES
 (UUID(), '2026-06-01 02:00:00', 'BaseDatos', 'Local', 'sigafi_es_backup_20260601.sql', 15480000, 'Exitoso', 'sha256_hash_backup_20260601_xyz', NULL, NULL),
 (UUID(), '2026-06-02 02:00:00', 'BaseDatos', 'Local', 'sigafi_es_backup_20260602.sql', 15495000, 'Exitoso', 'sha256_hash_backup_20260602_abc', NULL, NULL);
@@ -615,6 +615,34 @@ INSERT INTO inv_backup_logs (uuid, fechaBackup, tipo, destino, nombreArchivo, ta
 -- 25. Poblar Transferencias Tecnológicas (Vinculación e Innovación)
 INSERT INTO inv_transferencias (idProyecto, entidadReceptora, numeroConvenio, fechaConvenio, descripcion) VALUES
 (2, 'Corporación Eléctrica del Ecuador CELEC EP', 'CONV-TRAV-CELEC-2026-01', '2026-01-10', 'Transferencia tecnológica y cesión de uso del Manual de Operación Energética y software de control fotovoltaico para iluminación autónoma.');
+
+-- 26. Datos adicionales de prueba para adaptabilidad CACES (Nuevos Estados y Umbrales)
+-- Agregamos un nuevo estado en el flujo de trabajo dinamico para probar que el sistema lo adopta sin recompilar el backend.
+INSERT INTO inv_config_workflow 
+    (estadoOrigen, estadoDestino, rolRequerido, requiereObservacion, contabilizaCargaHoraria, permiteInformesAvance, permiteRegistroEgresos, permiteGastosCapital, esEstadoFinal, etiquetaUi, colorHex, activo)
+VALUES 
+    ('En Ejecución', 'En Acreditación CACES', 'DIITRA_ADMIN', 1, 1, 1, 0, 0, 0, 'Evaluación Acreditación CACES', '#D97706', 1);
+
+-- Agregamos el proyecto 8 en el nuevo estado 'En Acreditación CACES'
+INSERT INTO inv_proyectos (idProyecto, uuid, idConvocatoria, codigoInstitucional, titulo, descripcionProyecto, antecedentes, justificacion, marcoTeorico, metodologia, metodoEvaluacion, idSublinea, idPrograma, idGrupo, tieneGrupo, idTipo, fechaPresentacion, fechaInicio, fechaFin, tiempoEjecucion, estado, disponibleAdopcion, puntajeEvaluacion, valorEjecucion, idObjetivoPnd, idEntidadAliada, trlInicial, trlActual, trlMeta, hashActaAprobacion, fechaAprobacion, firmadoPor, idDspaceHandle, metadataCacesJson) VALUES
+(8, '88888888-8888-8888-8888-888888888888', 1, 'PROY-CACES-2026-008',
+ 'Proyecto Piloto de Adaptabilidad para Acreditación de Calidad Educativa CACES',
+ 'Monitoreo experimental y levantamiento de evidencias en tiempo real bajo el nuevo modelo CACES para institutos tecnologicos.',
+ 'La evaluacion del CACES requiere que los proyectos de investigacion presenten evidencias estructuradas...',
+ 'Demostrar la capacidad de adaptacion inmediata ante los cambios normativos del CACES en el IST Traversari...',
+ 'Modelos de aseguramiento de la calidad en la educacion superior en America Latina...',
+ 'Investigacion-accion y desarrollo agil sobre los modulos de auditoria y reportes dinamicos...',
+ 'Medicion del tiempo de respuesta del sistema ante actualizaciones de umbrales normativos.',
+ 1, 1, 1, 1, 2, '2026-06-10', '2026-07-01', '2027-01-01', '6 meses', 'En Acreditación CACES', 0, 95.00, 1500.00, 3, NULL, 4, 5, 8,
+ NULL, NULL, NULL, NULL, NULL);
+
+-- Relacionamos el proyecto 8 con la carrera de Software
+INSERT INTO inv_proyectos_carreras (idProyecto, idCarrera, modalidad) VALUES
+(8, (SELECT idCarrera FROM carreras WHERE aliasCarrera = 'SOF' LIMIT 1), 'Presencial');
+
+-- Asignamos un docente al proyecto con 15 horas semanales para probar la contabilizacion de carga horaria
+INSERT INTO inv_proyectos_profesores (idProyecto, idUsuario, esDirector, rol, nivelAcademico, telefono, horasSemanales, activo) VALUES
+(8, (SELECT idUsuario FROM usuarios WHERE idSigafi = '0302144159' LIMIT 1), 1, 'Director de Proyecto', 'Magíster en Software', '0999999992', 15.0, 1);
 
 -- Re-activar verificación de llaves foráneas
 SET FOREIGN_KEY_CHECKS = 1;

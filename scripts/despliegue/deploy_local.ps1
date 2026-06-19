@@ -5,7 +5,7 @@
 # Debe ejecutarse como Administrador.
 
 $ErrorActionPreference = "Stop"
-$Host.UI.RawUI.WindowTitle = "DIITRA Enterprise Deployment Utility"
+$Host.UI.RawUI.WindowTitle = "DIITRA Deployment Utility"
 
 # 1. Verificar si se ejecuta como Administrador y Auto-elevar
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -62,7 +62,7 @@ function Write-Failure ($text) {
 # 2. Verificar dependencias del sistema
 function Check-Dependencies {
     Write-Header "Chequeo de Requisitos y Entorno"
-    
+
     $ok = $true
 
     # Verificar Node.js y NPM
@@ -113,21 +113,21 @@ function Backup-Folder ($sourcePath, $name) {
 
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $archivePath = Join-Path $BackupDir "Backup_${name}_${timestamp}.zip"
-        
+
         Write-Step "📁" "Creando respaldo de seguridad para $name..."
-        
+
         # Comprimir usando utilidades de PowerShell
         Compress-Archive -Path "$sourcePath\*" -DestinationPath $archivePath -Force
-        
+
         # Limpieza de backups antiguos (Mantener solo los últimos 3 de cada tipo)
-        $oldBackups = Get-ChildItem -Path $BackupDir -Filter "Backup_${name}_*" | 
-                       Sort-Object LastWriteTime -Descending | 
+        $oldBackups = Get-ChildItem -Path $BackupDir -Filter "Backup_${name}_*" |
+                       Sort-Object LastWriteTime -Descending |
                        Select-Object -Skip 3
-        
+
         foreach ($old in $oldBackups) {
             Remove-Item $old.FullName -Force
         }
-        
+
         Write-Success "Respaldo creado en: $(Split-Path $archivePath -Leaf)"
     }
 }
@@ -144,13 +144,13 @@ function Deploy-Frontend {
         Write-Step "⚡" "Compilando activos de producción con Vite..."
         cmd.exe /c "npm run build" | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Error de compilación en React." }
-        
+
         Write-Step "🚚" "Sincronizando archivos con el directorio de IIS..."
         $exitCode = 0
         robocopy "dist" $IisWebPath /MIR /R:3 /W:5 /NP /NDL /NFL /NJH /NJS | Out-Host
         $exitCode = $LASTEXITCODE
         if ($exitCode -ge 8) { throw "Robocopy falló con código $exitCode." }
-        
+
         $elapsed = [Math]::Round(([DateTime]::Now - $startTime).TotalSeconds, 2)
         Write-Success "Frontend desplegado con éxito en $elapsed segundos."
         return $elapsed
@@ -180,7 +180,7 @@ function Deploy-Backend {
         Write-Step "⚡" "Compilando y publicando API..."
         dotnet publish -c Release -o $PublishTemp --no-self-contained /p:PublishSingleFile=false | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "Error al compilar y publicar la API." }
-        
+
         # Detener App Pool para evitar archivos bloqueados
         $stoppedAppPool = $false
         if (Get-Command Stop-WebAppPool -ErrorAction SilentlyContinue) {
@@ -307,17 +307,17 @@ do {
     Write-Host " [2] Desplegar Backend (.NET)"
     Write-Host " [3] Desplegar TODO (Frontend + Backend)"
     Write-Host " [4] Ver Respaldos Recientes"
-    
+
     $status = if ($DeployState.EnableBackup) { "ACTIVADO" } else { "DESACTIVADO" }
     $color = if ($DeployState.EnableBackup) { "Green" } else { "Gray" }
     Write-Host " [B] Respaldos automáticos antes de copiar: " -NoNewline
     Write-Host "[$status]" -ForegroundColor $color
-    
+
     Write-Host " [5] Salir de la Utilidad"
     Write-Host "==================================================" -ForegroundColor Cyan
-    
+
     $choice = Read-Host "Selecciona una opción [1-5 o B]"
-    
+
     switch ($choice) {
         'b' {
             $DeployState.EnableBackup = -not $DeployState.EnableBackup
@@ -349,9 +349,9 @@ do {
                 Write-Host "No hay respaldos disponibles en este momento." -ForegroundColor Yellow
                 Read-Host "`nPresiona Enter para volver..."
             } else {
-                $backups | Select-Object Name, @{Name="Tamaño (MB)";Expression={[Math]::Round($_.Length / 1MB, 2)}}, LastWriteTime | 
+                $backups | Select-Object Name, @{Name="Tamaño (MB)";Expression={[Math]::Round($_.Length / 1MB, 2)}}, LastWriteTime |
                     Out-String | Write-Host -ForegroundColor Yellow
-                
+
                 $cleanChoice = Read-Host "¿Deseas eliminar todos estos respaldos? [S/N]"
                 if ($cleanChoice -eq 's' -or $cleanChoice -eq 'S' -or $cleanChoice -eq 'y' -or $cleanChoice -eq 'Y') {
                     Write-Host "`nEliminando respaldos..." -ForegroundColor Yellow

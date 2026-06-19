@@ -36,7 +36,7 @@ namespace diitra_api.Controllers
         }
 
         /// <summary>
-        /// Genera el PDF del protocolo de investigación usando el motor Enterprise DIITRA.
+        /// Genera el PDF del protocolo de investigación usando el motor DIITRA.
         /// El template "PROTOCOLO_INVESTIGACION" vive en BD y puede editarse sin redespliegue.
         /// </summary>
         [HttpPost("generate-pdf")]
@@ -133,7 +133,7 @@ namespace diitra_api.Controllers
             [FromServices] diitra_infrastructure.data.models.DiitraContext context,
             [FromServices] diitra_application.Security.ILopdpService lopdpService)
         {
-            try 
+            try
             {
                 logger.LogInformation("[DIITRA CORE] Solicitud de firma avanzada PAdES para proyecto {Uuid}", projectUuid);
 

@@ -405,7 +405,7 @@ CREATE TABLE inv_proyectos (
     FOREIGN KEY (idObjetivoPnd)  REFERENCES inv_pnd_objetivos(idObjetivoPnd),
     FOREIGN KEY (idEntidadAliada) REFERENCES inv_entidades_externas(idEntidad),
 
-    -- Extensiones Enterprise CACES / SENESCYT
+    -- Extensiones CACES / SENESCYT
     hashActaAprobacion   TEXT NULL,
     fechaAprobacion      TIMESTAMP NULL,
     firmadoPor           INT(11) NULL,
@@ -1149,13 +1149,14 @@ INSERT INTO inv_config_general (Clave, Valor, Descripcion) VALUES
 ('Backup.RetentionDays',              '30',                 'Cantidad de días que se conservarán las copias de seguridad locales'),
 ('Backup.CloudBackupEnabled',         'false',              'Indica si se deben subir los respaldos a la nube configurada'),
 ('Backup.DestinationPath',            'C:\\diitra_backups\\', 'Ruta local donde se almacenarán temporal o permanentemente los respaldos'),
--- ⚙️ ADAPTABILIDAD SIGAFI: Cambia el id de subcategoría sin recompilar el backend.
+-- ADAPTABILIDAD SIGAFI: Cambia el id de subcategoría sin recompilar el backend.
 -- Si SIGAFI actualiza su estructura, solo actualizar este valor aquí.
 -- WorkflowEngineService y CatalogsController deben leer esta clave en lugar del fallback = 7.
 ('Sigafi.InvestigacionSubcategoriaId', '7',                 'ID de la subcategoría de INVESTIGACIÓN en la tabla subcategorias_actividades de SIGAFI. Actualizar si SIGAFI reorganiza su catálogo.'),
 ('Sigafi.InvestigacionSubcategoriaNombre', 'INVESTIGACION', 'Nombre de búsqueda alternativo de la subcategoría de investigación en SIGAFI (usado si el ID cambia)'),
 ('Caces.TrlMinimoInnovacion',          '5',                 'TRL mínimo para que un proyecto cuente como innovación en los indicadores CACES (E3.INNO). Cambiar si el CACES actualiza el umbral.'),
-('Caces.AñoModelo',                    '2024',              'Año del modelo de evaluación CACES vigente. Afecta qué indicadores en inv_config_indicadores se usan en el reporte.');
+('Caces.AñoModelo',                    '2024',              'Año del modelo de evaluación CACES vigente. Afecta qué indicadores en inv_config_indicadores se usan en el reporte.'),
+('Workflow.EstadosEditables',          'Borrador,En Corrección', 'Lista CSV de estados en los que un proyecto puede ser editado por su director.');
 
 -- 12. Configuración de Indicadores CACES (Modelo 2024-2025)
 -- ⚙️ ADAPTABILIDAD: umbralCumplido y umbralEnProceso son ahora campos de BD.
