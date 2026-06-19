@@ -8,11 +8,11 @@ public class InvestigacionProyecto : ProyectoBase
     public string CodigoInstitucional { get; set; } = string.Empty;
     public bool AnonimizadoParaRevision { get; set; }
     public decimal PuntajeEvaluacion { get; set; }
-    
-    // Extensiones Enterprise Core
+
+    // Extensiones Core
     public string? IdDspaceHandle { get; set; }
     public string? MetadataCacesJson { get; set; }
-    
+
     // Peer review details
     public List<string> RevisoresAsignados { get; set; } = new();
 }

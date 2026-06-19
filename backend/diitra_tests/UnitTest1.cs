@@ -195,6 +195,7 @@ public class UnitTest1
         var mockNotification = new Mock<INotificationService>();
         var mockConfig = new Mock<IConfiguration>();
         var mockAuth = new Mock<IAuthService>();
+        var mockWorkflow = new Mock<IWorkflowEngineService>();
         var mockLogger = new Mock<ILogger<PeerReviewService>>();
         var mockHttpContextAccessor = new Mock<IHttpContextAccessor>();
 
@@ -205,6 +206,7 @@ public class UnitTest1
             mockNotification.Object,
             mockConfig.Object,
             mockAuth.Object,
+            mockWorkflow.Object,
             mockLogger.Object,
             mockHttpContextAccessor.Object
         );

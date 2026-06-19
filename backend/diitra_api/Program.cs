@@ -22,7 +22,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 
 // 1. Configurar CORS (Para que React y la APK entren)
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
                      ?? new[] { "http://localhost:5173", "http://localhost:3000" };
 
 builder.Services.AddCors(options =>
@@ -61,7 +61,7 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ClockSkew = TimeSpan.Zero
     };
-    
+
     // Configuración para leer el JWT tanto desde cookie (DIITRA Local) como de Authorization Header (SSO Global)
     options.Events = new JwtBearerEvents
     {
@@ -131,13 +131,13 @@ builder.Services.AddAuthorization(options =>
         var permissionValue = field.GetValue(null)?.ToString();
         if (permissionValue != null)
         {
-            options.AddPolicy(permissionValue, policy => 
+            options.AddPolicy(permissionValue, policy =>
                 policy.Requirements.Add(new PermissionRequirement(permissionValue)));
         }
     }
 });
 
-// ── DIITRA Enterprise Document Engine ──────────────────────────────────────
+// ── DIITRA Document Engine ──────────────────────────────────────
 // Motor principal: genera, combina y audita todos los documentos institucionales
 builder.Services.AddScoped<IDocumentEngine, DocumentEngine>();
 builder.Services.AddScoped<IDocumentTemplateRepository, DocumentTemplateRepository>();
@@ -181,7 +181,7 @@ var connectionString = builder.Configuration.GetConnectionString("default_connec
 if (!string.IsNullOrEmpty(connectionString))
 {
     // Usamos una versión fija para evitar que AutoDetect falle si la red parpadea
-    var serverVersion = new MySqlServerVersion(new Version(8, 0, 31)); 
+    var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
     builder.Services.AddDbContext<diitra_infrastructure.data.models.DiitraContext>(options =>
         options.UseMySql(connectionString, serverVersion));
 }
@@ -240,7 +240,7 @@ var app = builder.Build();
         app.UseSwaggerUI();
     }
 
-    app.UseAuthentication(); 
+    app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
 

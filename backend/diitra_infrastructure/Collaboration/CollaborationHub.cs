@@ -130,7 +130,7 @@ namespace diitra_infrastructure.Collaboration
                 }
             }
 
-            // 2. Seguridad Enterprise: Verificar si el documento ya está finalizado/firmado o es Doble Ciego
+            // 2. Seguridad: Verificar si el documento ya está finalizado/firmado o es Doble Ciego
             var instance = await _db.DocumentInstances
                 .AsNoTracking()
                 .FirstOrDefaultAsync(i => i.Uuid == instanceUuid);
@@ -215,7 +215,7 @@ namespace diitra_infrastructure.Collaboration
                 await Clients.OthersInGroup(documentId).SendAsync("UserJoined", userName, userRole);
             }
 
-            // 4. ESTRATEGIA ENTERPRISE: Enviar Snapshot (Estado Base) + Deltas
+            // 4. ESTRATEGIA: Enviar Snapshot (Estado Base) + Deltas
             var updatesToSend = new List<byte[]>();
 
             var docSnapshot = await _db.InvCoworkDocumentos

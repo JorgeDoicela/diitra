@@ -176,7 +176,7 @@ namespace Diitra.Application.Research.Dtos
         public string? CargoCoordinadorFirma { get; set; }
         public FirmasResponsabilidadDto? FirmasResponsabilidad { get; set; }
 
-        // --- Extensiones Core Enterprise ---
+        // --- Extensiones Core ---
         public string? IdDspaceHandle { get; set; }
         public string? MetadataCacesJson { get; set; }
         public bool PuedeEditar { get; set; } = true;
@@ -184,7 +184,7 @@ namespace Diitra.Application.Research.Dtos
         public bool PuedeFirmar { get; set; } = false;
         public decimal? PuntajeEvaluacion { get; set; }
 
-        // --- Compliance Enterprise ---
+        // --- Compliance ---
         public List<MmlRowDto>? MatrizMarcoLogico { get; set; }
         public List<DocumentoAdjuntoDto>? DocumentosAdjuntos { get; set; }
         public List<GastoDto>? Gastos { get; set; }
