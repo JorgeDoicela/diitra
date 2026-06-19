@@ -8,6 +8,7 @@ import {
 import api from '../../../api/axios_config';
 import { useNotifications } from '../../../api/NotificationsContext';
 import { useConfirm } from '../../../api/ConfirmContext';
+import { useWorkflowStates } from '../../../hooks/useWorkflowStates';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════
@@ -25,21 +26,12 @@ interface GastoRegistrado {
     categoria: string;
 }
 
-const ESTADO_CONFIG: Record<string, { label: string, badge: string, dot: string }> = {
-    'Borrador':     { label: 'Borrador',      badge: 'badge-vercel-neutral', dot: 'dot-neutral' },
-    'Enviado':      { label: 'Enviado',        badge: 'badge-vercel-info',    dot: 'dot-info' },
-    'En Revisión':  { label: 'En Revisión',    badge: 'badge-vercel-warning', dot: 'dot-warning dot-pulse' },
-    'Aprobado':     { label: 'Aprobado',       badge: 'badge-vercel-success', dot: 'dot-success' },
-    'En Ejecución': { label: 'En Ejecución',   badge: 'badge-vercel-violet',  dot: 'dot-brand dot-pulse' },
-    'Finalizado':   { label: 'Finalizado',     badge: 'badge-vercel-success', dot: 'dot-success' },
-    'Rechazado':    { label: 'Rechazado',      badge: 'badge-vercel-error',   dot: 'dot-error' },
-};
-
 export const MonitoringPage: React.FC = () => {
     const { projectUuid } = useParams<{ projectUuid: string }>();
     const navigate = useNavigate();
     const { addToast } = useNotifications();
     const confirm = useConfirm();
+    const { getEstadoConfig } = useWorkflowStates();
 
     const [activeTab, setActiveTab] = useState<'cronograma' | 'presupuesto'>('cronograma');
     const [projectDetail, setProjectDetail] = useState<any>(null);
@@ -47,7 +39,7 @@ export const MonitoringPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const estado = projectDetail?.estado || 'Borrador';
-    const cfg = ESTADO_CONFIG[estado] ?? { label: estado, badge: 'badge-vercel-neutral', dot: 'dot-neutral' };
+    const cfg = getEstadoConfig(estado);
     const esSoloLectura = estado !== 'En Ejecución';
 
     // Estado para el Libro Diario (Gastos Ejecutados reales en la Fase C)
@@ -224,8 +216,8 @@ export const MonitoringPage: React.FC = () => {
                 </div>
                 <div className="bento-card static p-5 space-y-1">
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">Estado de Ciclo de Vida</span>
-                    <span className={`badge-vercel ${cfg.badge} text-[9px] font-bold w-fit mt-1`}>
-                        <span className={`dot ${cfg.dot}`} />
+                    <span className={`badge-vercel ${cfg.badge} text-[9px] font-bold w-fit mt-1`} style={cfg.style}>
+                        <span className={`dot ${cfg.dot}`} style={cfg.dotStyle} />
                         {cfg.label}
                     </span>
                 </div>
