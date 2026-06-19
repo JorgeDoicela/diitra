@@ -3077,14 +3077,7 @@ namespace diitra_infrastructure.Research
                 .Where(s => s.Subcategoria == "INVESTIGACION")
                 .Select(s => s.IdSubcategoria)
                 .FirstOrDefaultAsync();
-            if (researchSubcatId == 0)
-            {
-                var fallbackConfig = await _context.InvConfigsGenerales
-                    .Where(c => c.Clave == "Sigafi.InvestigacionSubcategoriaId")
-                    .Select(c => c.Valor)
-                    .FirstOrDefaultAsync();
-                researchSubcatId = int.TryParse(fallbackConfig, out var fallbackId) ? fallbackId : 7;
-            }
+            if (researchSubcatId == 0) researchSubcatId = 7;
             return researchSubcatId;
         }
 
