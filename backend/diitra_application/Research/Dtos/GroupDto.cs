@@ -27,6 +27,16 @@ public class GroupDto
     public List<int> LineasIds { get; set; } = new();
     public List<int> CarrerasIds { get; set; } = new();
     public List<GroupMemberDto> Miembros { get; set; } = new();
+    public List<GroupAssociatedProjectDto> Proyectos { get; set; } = new();
+}
+
+public class GroupAssociatedProjectDto
+{
+    public string Uuid { get; set; } = null!;
+    public string Titulo { get; set; } = null!;
+    public string Estado { get; set; } = null!;
+    public string? CodigoInstitucional { get; set; }
+    public string? DirectorNombre { get; set; }
 }
 
 public class GroupMemberDto

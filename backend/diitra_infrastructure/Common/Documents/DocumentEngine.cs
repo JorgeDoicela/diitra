@@ -193,7 +193,8 @@ namespace Diitra.Infrastructure.Common.Documents
 
                     if (projectDto != null)
                     {
-                        var director = projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
+                        var director = projectDto.Investigadores?.FirstOrDefault(i => i.EsDirector == true)
+                                       ?? projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
                         
                         var docentes = projectDto.Investigadores?.Where(i => i != director && 
                             (i.Rol?.Contains("Docente", StringComparison.OrdinalIgnoreCase) == true || 

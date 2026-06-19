@@ -192,6 +192,49 @@ public class GroupsService : IGroupsService
             };
         }).ToList();
 
+        var projects = await _context.InvProyectos
+            .Include(p => p.InvProyectosProfesores)
+                .ThenInclude(pp => pp.IdUsuarioNavigation)
+            .Include(p => p.InvProyectosAlumnos)
+                .ThenInclude(pa => pa.IdUsuarioNavigation)
+            .Where(p => p.IdGrupo == group.IdGrupo && p.Activo == true)
+            .ToListAsync();
+
+        dto.Proyectos = projects.Select(p =>
+        {
+            string? directorName = null;
+            var directorProf = p.InvProyectosProfesores.FirstOrDefault(pp => pp.EsDirector == true);
+            if (directorProf != null)
+            {
+                directorName = directorProf.IdUsuarioNavigation?.Nombre;
+            }
+            else
+            {
+                var firstProf = p.InvProyectosProfesores.FirstOrDefault();
+                if (firstProf != null)
+                {
+                    directorName = firstProf.IdUsuarioNavigation?.Nombre;
+                }
+                else
+                {
+                    var firstStud = p.InvProyectosAlumnos.FirstOrDefault();
+                    if (firstStud != null)
+                    {
+                        directorName = firstStud.IdUsuarioNavigation?.Nombre;
+                    }
+                }
+            }
+
+            return new GroupAssociatedProjectDto
+            {
+                Uuid = p.Uuid,
+                Titulo = p.Titulo,
+                Estado = p.Estado,
+                CodigoInstitucional = p.CodigoInstitucional,
+                DirectorNombre = directorName ?? "No asignado"
+            };
+        }).ToList();
+
         return dto;
     }
 

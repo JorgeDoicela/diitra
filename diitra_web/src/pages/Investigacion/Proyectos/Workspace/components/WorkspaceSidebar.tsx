@@ -12,6 +12,7 @@ interface WorkspaceSidebarProps {
         puedeEditar?: boolean;
         puedeFirmar?: boolean;
         directorProyecto?: string;
+        dominio?: string;
     };
     resolvedProjectUuid: string | null;
     setActiveDocument?: (doc: string) => void;
@@ -145,6 +146,12 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                     </div>
                 </div>
                 <div className="space-y-2.5 mt-2">
+                    {currentProject.dominio && (
+                        <div className="p-3.5 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover transition-all space-y-1">
+                            <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Dominio Académico</span>
+                            <span className="text-xs font-medium text-text-main leading-relaxed">{currentProject.dominio}</span>
+                        </div>
+                    )}
                     <div className="p-3.5 rounded-xl bg-bg-deep border border-border-thin hover:border-border-hover transition-all space-y-1">
                         <span className="text-[9px] font-bold text-text-dim uppercase tracking-widest block">Línea de Investigación</span>
                         <span className="text-xs font-medium text-text-main leading-relaxed">{currentProject.linea || 'No definida'}</span>

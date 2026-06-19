@@ -7,6 +7,10 @@ interface GeneralSectionProps {
     cowork: CoWorkHandle;
     convocatorias: any[];
     carreras: any[];
+    groups?: any[];
+    dominios?: any[];
+    lineas?: any[];
+    sublineas?: any[];
     onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
 }
 
@@ -28,8 +32,128 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     cowork,
     convocatorias,
     carreras,
+    groups = [],
+    dominios = [],
+    lineas = [],
+    sublineas = [],
     onUpdate
 }) => {
+    // Filter active and approved research groups
+    const approvedGroups = React.useMemo(() => {
+        return groups.filter((g: any) => g.activo && g.estado === 'Aprobado');
+    }, [groups]);
+
+    // Find the currently selected group object in the list
+    const selectedGroup = React.useMemo(() => {
+        if (formData.GrupoInvestigacionTipo !== 'SI') return null;
+        return approvedGroups.find((g: any) => 
+            (g.uuid && g.uuid === formData.GrupoInvestigacionUuid) ||
+            (g.nombre && g.nombre === formData.GrupoInvestigacionNombre)
+        ) || null;
+    }, [formData.GrupoInvestigacionUuid, formData.GrupoInvestigacionNombre, formData.GrupoInvestigacionTipo, approvedGroups]);
+
+    // Available lines of investigation based on selected group or global lines
+    const availableLines = React.useMemo(() => {
+        if (formData.GrupoInvestigacionTipo === 'SI' && selectedGroup) {
+            const groupLineIds = selectedGroup.lineas_ids || selectedGroup.lineasIds || [];
+            return lineas.filter((l: any) => groupLineIds.includes(l.id ?? l.idLinea));
+        }
+        return lineas;
+    }, [formData.GrupoInvestigacionTipo, selectedGroup, lineas]);
+
+    // Find currently selected research line object in the list
+    const selectedLine = React.useMemo(() => {
+        return lineas.find((l: any) => 
+            l.nombre === formData.LineaInvestigacion || 
+            l.nombreLinea === formData.LineaInvestigacion
+        ) || null;
+    }, [formData.LineaInvestigacion, lineas]);
+
+    // Available sublines of investigation based on the selected research line
+    const availableSublines = React.useMemo(() => {
+        if (!selectedLine) return [];
+        const lineId = selectedLine.id ?? selectedLine.idLinea;
+        return sublineas.filter((s: any) => (s.id_linea ?? s.idLinea) === lineId);
+    }, [selectedLine, sublineas]);
+
+    // Handler when the selected research group changes
+    const handleGroupChange = (groupName: string, meta?: { source?: 'local' | 'remote' }) => {
+        onUpdate('GrupoInvestigacionNombre', groupName, meta);
+        onUpdate('GrupoInvestigacion', groupName, { source: 'system' });
+        
+        // Only run auto-population for local user interactions
+        if (meta?.source !== 'local') return;
+
+        if (!groupName) {
+            onUpdate('GrupoInvestigacionUuid', '', { source: 'system' });
+            onUpdate('GrupoInvestigacion', '', { source: 'system' });
+            // Clear auto-populated fields
+            onUpdate('Dominio', '', { source: 'system' });
+            onUpdate('LineaInvestigacion', '', { source: 'system' });
+            onUpdate('SublineaInvestigacion', '', { source: 'system' });
+            return;
+        }
+
+        const group = approvedGroups.find((g: any) => g.nombre === groupName);
+        if (group) {
+            onUpdate('GrupoInvestigacionUuid', group.uuid, { source: 'system' });
+
+            // Auto-populate academic domain
+            const domId = group.id_dominio ?? group.idDominio;
+            if (domId && dominios.length > 0) {
+                const dom = dominios.find((d: any) => (d.id_dominio ?? d.idDominio) === domId);
+                if (dom) {
+                    onUpdate('Dominio', dom.nombre, { source: 'system' });
+                }
+            }
+
+            // Auto-populate lines of investigation
+            const groupLineIds = group.lineas_ids || group.lineasIds || [];
+            if (groupLineIds.length === 1 && lineas.length > 0) {
+                const matchedLine = lineas.find((l: any) => (l.id ?? l.idLinea) === groupLineIds[0]);
+                if (matchedLine) {
+                    const lineName = matchedLine.nombre ?? matchedLine.nombreLinea;
+                    onUpdate('LineaInvestigacion', lineName, { source: 'system' });
+
+                    // Auto-populate subline
+                    const subId = matchedLine.id ?? matchedLine.idLinea;
+                    const matchedSublines = sublineas.filter((s: any) => (s.id_linea ?? s.idLinea) === subId);
+                    if (matchedSublines.length === 1) {
+                        onUpdate('SublineaInvestigacion', matchedSublines[0].nombre, { source: 'system' });
+                    } else {
+                        onUpdate('SublineaInvestigacion', '', { source: 'system' });
+                    }
+                }
+            } else {
+                onUpdate('LineaInvestigacion', '', { source: 'system' });
+                onUpdate('SublineaInvestigacion', '', { source: 'system' });
+            }
+        }
+    };
+
+    // Handler when the selected research line changes
+    const handleLineChange = (lineName: string, meta?: { source?: 'local' | 'remote' }) => {
+        onUpdate('LineaInvestigacion', lineName, meta);
+
+        if (meta?.source !== 'local') return;
+
+        if (!lineName) {
+            onUpdate('SublineaInvestigacion', '', { source: 'system' });
+            return;
+        }
+
+        const line = lineas.find((l: any) => (l.nombre ?? l.nombreLinea) === lineName);
+        if (line) {
+            const lineId = line.id ?? line.idLinea;
+            const matchedSublines = sublineas.filter((s: any) => (s.id_linea ?? s.idLinea) === lineId);
+            if (matchedSublines.length === 1) {
+                onUpdate('SublineaInvestigacion', matchedSublines[0].nombre, { source: 'system' });
+            } else {
+                onUpdate('SublineaInvestigacion', '', { source: 'system' });
+            }
+        }
+    };
+
     return (
         <div className="space-y-5 sm:space-y-8 animate-fade-in pb-6 sm:pb-10">
             {/* Título del Proyecto */}
@@ -66,60 +190,102 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 <div className="md:col-span-4 space-y-1.5 sm:space-y-3">
                     <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">¿Grupo de Investigación?</label>
                     <select 
+                        disabled={true}
                         value={formData.GrupoInvestigacionTipo || 'NO'}
-                        onChange={(e) => {
-                            const tipo = e.target.value;
-                            onUpdate('GrupoInvestigacionTipo', tipo);
-                            if (tipo === 'NO') {
-                                onUpdate('GrupoInvestigacionNombre', '', { source: 'system' });
-                                onUpdate('GrupoInvestigacionUuid', '', { source: 'system' });
-                                onUpdate('TieneGrupoInvestigacion', false, { source: 'system' });
-                            } else {
-                                onUpdate('TieneGrupoInvestigacion', true, { source: 'system' });
-                            }
-                        }}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
+                        className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none animate-fade-in"
                     >
                         <option value="NO">NO</option>
                         <option value="SI">SI</option>
                     </select>
                 </div>
                 {formData.GrupoInvestigacionTipo === 'SI' && (
-                    <div className="md:col-span-8">
+                    <div className="md:col-span-8 animate-fade-in">
                         <CoWorkField 
                             name="GrupoInvestigacionNombre" 
                             cowork={cowork} 
+                            type="select"
                             label="Nombre del Grupo de Investigación" 
-                            onValueChange={(v, meta) => onUpdate('GrupoInvestigacionNombre', v, meta)}
-                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                        />
+                            onValueChange={handleGroupChange}
+                            readOnly={true}
+                            className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-dim font-bold cursor-not-allowed outline-none transition-all" 
+                        >
+                            <option value="">-- Seleccione un Grupo Aprobado --</option>
+                            {approvedGroups.map((g: any) => (
+                                <option key={g.uuid} value={g.nombre}>
+                                    {g.nombre} ({g.siglas})
+                                </option>
+                            ))}
+                        </CoWorkField>
                     </div>
                 )}
             </div>
 
             {/* Fila 3: Dominio, Línea y Sublínea */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="Dominio" 
-                    cowork={cowork} 
-                    label="Dominio Académico" 
-                    onValueChange={(v, meta) => onUpdate('Dominio', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
-                <CoWorkField 
-                    name="LineaInvestigacion" 
-                    cowork={cowork} 
-                    label="Línea de Investigación" 
-                    onValueChange={(v, meta) => onUpdate('LineaInvestigacion', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
-                <CoWorkField 
-                    name="SublineaInvestigacion" 
-                    cowork={cowork} 
-                    label="Sublínea de Investigación" 
-                    onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 animate-fade-in">
+                <div>
+                    {formData.GrupoInvestigacionTipo === 'SI' ? (
+                        <CoWorkField 
+                            name="Dominio" 
+                            cowork={cowork} 
+                            label="Dominio Académico" 
+                            readOnly={true}
+                            className="w-full bg-bg-deep/50 border border-border-thin/80 rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-dim cursor-not-allowed outline-none" 
+                        />
+                    ) : (
+                        <CoWorkField 
+                            name="Dominio" 
+                            cowork={cowork} 
+                            type="select"
+                            label="Dominio Académico" 
+                            onValueChange={(v, meta) => onUpdate('Dominio', v, meta)}
+                            className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                        >
+                            <option value="">Seleccione Dominio...</option>
+                            {dominios.map((d: any) => (
+                                <option key={d.id_dominio ?? d.idDominio} value={d.nombre}>{d.nombre}</option>
+                            ))}
+                        </CoWorkField>
+                    )}
+                </div>
+                
+                <div>
+                    <CoWorkField 
+                        name="LineaInvestigacion" 
+                        cowork={cowork} 
+                        type="select"
+                        label="Línea de Investigación" 
+                        onValueChange={handleLineChange}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                    >
+                        <option value="">Seleccione Línea...</option>
+                        {availableLines.map((l: any) => {
+                            const lineName = l.nombre ?? l.nombreLinea;
+                            return (
+                                <option key={l.id ?? l.idLinea} value={lineName}>
+                                    {lineName}
+                                </option>
+                            );
+                        })}
+                    </CoWorkField>
+                </div>
+                
+                <div>
+                    <CoWorkField 
+                        name="SublineaInvestigacion" 
+                        cowork={cowork} 
+                        type="select"
+                        label="Sublínea de Investigación" 
+                        onValueChange={(v, meta) => onUpdate('SublineaInvestigacion', v, meta)}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
+                    >
+                        <option value="">Seleccione Sublínea...</option>
+                        {availableSublines.map((s: any) => (
+                            <option key={s.idSublinea ?? s.id_sublinea} value={s.nombre}>
+                                {s.nombre}
+                            </option>
+                        ))}
+                    </CoWorkField>
+                </div>
             </div>
 
             {/* Fila 4: Tipo de Investigación */}
@@ -170,14 +336,28 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 <div className="space-y-1.5 sm:space-y-3">
                     <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Carrera / Unidad</label>
                     <select 
-                        value={formData.IdCarrera || 0}
-                        onChange={(e) => onUpdate('IdCarrera', Number(e.target.value))}
+                        value={Number(formData.IdCarrera) || 0}
+                        onChange={(e) => {
+                            const val = Number(e.target.value);
+                            onUpdate('IdCarrera', val);
+                            const selectedCarrera = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === val);
+                            if (selectedCarrera) {
+                                const cname = selectedCarrera.nombre_carrera ?? selectedCarrera.carrera1 ?? selectedCarrera.carrera ?? '';
+                                onUpdate('Carrera', cname, { source: 'system' });
+                            } else {
+                                onUpdate('Carrera', '', { source: 'system' });
+                            }
+                        }}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
                     >
                         <option value={0}>Seleccione una carrera...</option>
-                        {carreras.map(c => (
-                            <option key={c.id_carrera} value={c.id_carrera}>{c.nombre_carrera}</option>
-                        ))}
+                        {carreras.map(c => {
+                            const cid = c.id_carrera ?? c.idCarrera ?? 0;
+                            const cname = c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? 'Sin Nombre';
+                            return (
+                                <option key={cid} value={cid}>{cname}</option>
+                            );
+                        })}
                     </select>
                 </div>
 
