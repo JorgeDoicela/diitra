@@ -47,6 +47,8 @@ export interface Group {
     lineas_ids: number[];
     carreras_ids: number[];
     miembros?: GroupMember[];
+    proyectos?: any[];
+    Proyectos?: any[];
 }
 
 export interface ResearchLine {
