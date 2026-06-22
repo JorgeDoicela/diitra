@@ -297,6 +297,27 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             var dict = ToNativeType(doc.RootElement) as Dictionary<string, object?> 
                        ?? new Dictionary<string, object?>();
 
+            // 3. Fusionar datos y contenidos colaborativos en la raíz del contexto (resiliencia para campos dinámicos y directo en plantillas)
+            if (dict.TryGetValue("data", out var dataVal) && dataVal is Dictionary<string, object?> nestedData)
+            {
+                foreach (var kv in nestedData)
+                {
+                    if (!dict.ContainsKey(kv.Key))
+                    {
+                        dict[kv.Key] = kv.Value;
+                    }
+                }
+            }
+
+            if (dict.TryGetValue("contenidocolaborativo", out var coworkVal) && coworkVal is Dictionary<string, object?> nestedCowork)
+            {
+                foreach (var kv in nestedCowork)
+                {
+                    // El contenido colaborativo editado puede sobrescribir datos base si coexisten
+                    dict[kv.Key] = kv.Value;
+                }
+            }
+
             // Enmascarar datos personales en modo doble ciego (LOPDP + Peer Review)
             if (isBlindMode)
                 ApplyBlindMask(dict);

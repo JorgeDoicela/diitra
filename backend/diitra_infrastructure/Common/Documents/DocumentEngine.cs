@@ -180,10 +180,26 @@ namespace Diitra.Infrastructure.Common.Documents
                             var rawText = request.Data is System.Text.Json.JsonElement je 
                                 ? je.GetRawText() 
                                 : System.Text.Json.JsonSerializer.Serialize(request.Data);
-                            projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(rawText, new System.Text.Json.JsonSerializerOptions 
-                            { 
-                                PropertyNameCaseInsensitive = true 
-                            });
+
+                            // Desempaquetar la envoltura "Data" / "data" si existe en el JSON
+                            using var doc = System.Text.Json.JsonDocument.Parse(rawText);
+                            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                                (doc.RootElement.TryGetProperty("Data", out var dataProp) || 
+                                 doc.RootElement.TryGetProperty("data", out dataProp)))
+                            {
+                                var nestedRaw = dataProp.GetRawText();
+                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(nestedRaw, new System.Text.Json.JsonSerializerOptions 
+                                { 
+                                    PropertyNameCaseInsensitive = true 
+                                });
+                            }
+                            else
+                            {
+                                projectDto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(rawText, new System.Text.Json.JsonSerializerOptions 
+                                { 
+                                    PropertyNameCaseInsensitive = true 
+                                });
+                            }
                         }
                         catch (Exception ex)
                         {
