@@ -115,8 +115,8 @@ namespace diitra_infrastructure.Common.Notifications
             var host = _configuration["Email:Host"];
             var isMock = string.IsNullOrEmpty(host);
 
-            var logoIstpetVal = isMock ? $"{frontendUrl}/logo_istpet_negro.png" : "cid:logo_istpet";
-            var logoDiitraVal = isMock ? $"{frontendUrl}/logo_negro.png" : "cid:logo_diitra";
+            var logoIstpetVal = $"{frontendUrl.TrimEnd('/')}/logo_istpet_negro.png";
+            var logoDiitraVal = $"{frontendUrl.TrimEnd('/')}/logo_negro.png";
 
             var bodyContent = ExtractInnerContent(innerBodyHtml);
 
@@ -168,40 +168,12 @@ namespace diitra_infrastructure.Common.Notifications
         }
 
         /// <summary>
-        /// Asigna el HTML al mensaje con logos embebidos (CID) para clientes de correo reales.
+        /// Asigna el HTML al mensaje con imágenes referenciadas por URL absoluta.
         /// </summary>
         public void SetHtmlBodyWithBranding(MailMessage mailMessage, string htmlBody)
         {
             mailMessage.Body = htmlBody;
             mailMessage.IsBodyHtml = true;
-
-            var host = _configuration["Email:Host"];
-            if (string.IsNullOrEmpty(host)) return;
-
-            mailMessage.AlternateViews.Clear();
-            var htmlView = AlternateView.CreateAlternateViewFromString(
-                htmlBody, null, System.Net.Mime.MediaTypeNames.Text.Html);
-
-            var logoIstpetPath = Path.Combine(TemplateDirectory, "logo_istpet_negro.png");
-            if (File.Exists(logoIstpetPath))
-            {
-                htmlView.LinkedResources.Add(new LinkedResource(logoIstpetPath, "image/png")
-                {
-                    ContentId = "logo_istpet"
-                });
-            }
-
-            var logoDiitraPath = Path.Combine(TemplateDirectory, "logo_negro.png");
-            if (File.Exists(logoDiitraPath))
-            {
-                htmlView.LinkedResources.Add(new LinkedResource(logoDiitraPath, "image/png")
-                {
-                    ContentId = "logo_diitra"
-                });
-            }
-
-            mailMessage.AlternateViews.Add(htmlView);
-            mailMessage.Body = string.Empty;
         }
     }
 }

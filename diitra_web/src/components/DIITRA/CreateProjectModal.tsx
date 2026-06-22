@@ -188,6 +188,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             
             setTimeout(() => {
                 navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', newUuid, '', prefix), { replace: true });
+                window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                 onClose();
             }, 800);
 

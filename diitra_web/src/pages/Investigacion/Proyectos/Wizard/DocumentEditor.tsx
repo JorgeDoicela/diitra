@@ -424,6 +424,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                         const isMisProyectos = window.location.pathname.startsWith('/investigacion/mis-proyectos');
                         const prefix = isMisProyectos ? '/investigacion/mis-proyectos' : '/investigacion';
                         navigate(buildWorkspacePath(templateCode, newUuid, `?edit=${templateCodeToEditParam(templateCode)}`, prefix), { replace: true });
+                        window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
                     }
                 }
             }

@@ -409,7 +409,7 @@ const ProjectAdoptionPage: React.FC = () => {
 
             {/* DIALOG: CONFIRM ADOPTION (TEACHER FLOW) */}
             {adoptingProject && (
-                <div className="modal-overlay !z-50 animate-fade-in">
+                <div className="modal-overlay animate-fade-in">
                     <div className="modal-card animate-fade-up max-w-md w-full">
                         <header className="modal-header">
                             <h4 className="font-bold text-text-main text-sm uppercase tracking-wider flex items-center gap-2">
@@ -493,7 +493,7 @@ const ProjectAdoptionPage: React.FC = () => {
 
             {/* DIALOG: DECLARE UNFINISHED (ADMIN FLOW) */}
             {declaringProject && (
-                <div className="modal-overlay !z-50 animate-fade-in">
+                <div className="modal-overlay animate-fade-in">
                     <div className="modal-card animate-fade-up max-w-md w-full">
                         <header className="modal-header">
                             <h4 className="font-bold text-text-main text-sm uppercase tracking-wider flex items-center gap-2 text-error">

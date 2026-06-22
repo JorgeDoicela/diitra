@@ -67,6 +67,7 @@ const DocumentTray: React.FC<DocumentTrayProps> = ({ entityUuid, title = "Docume
                 title: `Protocolo - ${new Date().toLocaleDateString()}`
             });
             navigate(buildWorkspacePath('PROTOCOLO_INVESTIGACION', response.data.uuid));
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (error) {
             alert("No se pudo crear el documento.");
         }

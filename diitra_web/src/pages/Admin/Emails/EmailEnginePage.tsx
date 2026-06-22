@@ -1839,7 +1839,7 @@ const EmailEnginePage: React.FC = () => {
 
             {/* MODAL: CREAR/EDITAR PLANTILLA */}
             {isTemplateModalOpen && (
-                <div className="modal-overlay !z-50 animate-fade-in">
+                <div className="modal-overlay animate-fade-in">
                     <div className="modal-card animate-fade-up max-w-3xl w-full">
                         <header className="modal-header">
                             <h4 className="font-bold text-text-main text-base uppercase tracking-wider">
