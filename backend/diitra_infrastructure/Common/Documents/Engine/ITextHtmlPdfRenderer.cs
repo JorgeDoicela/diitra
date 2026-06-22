@@ -325,6 +325,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             string? customCss,
             int pageOffset)
         {
+            if (pageOffset > 0)
+            {
+                // Eliminar la regla @page:first de la portada para evitar que las partes 2 y 3 (Gantt y Bibliografía) se rendericen sin márgenes (pegados al borde)
+                customCss = System.Text.RegularExpressions.Regex.Replace(
+                    customCss ?? "",
+                    @"@page\s*:\s*first\s*\{[^}]*\}",
+                    string.Empty,
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.Singleline
+                );
+            }
+
             var fullHtml = WrapInFullHtmlDocument(htmlPart, customCss);
 
             using var outputStream = new MemoryStream();

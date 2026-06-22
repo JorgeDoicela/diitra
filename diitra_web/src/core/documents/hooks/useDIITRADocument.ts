@@ -86,7 +86,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
             name.toLowerCase() !== 'uuid' &&
             name.toLowerCase() !== 'entityuuid') {
             const ytext = ydoc.getText(name);
-            const stringVal = String(value);
+            const stringVal = typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
             if (ytext.toString() !== stringVal) {
                 ydoc.transact(() => {
                     ytext.delete(0, ytext.length);
@@ -180,6 +180,11 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
                     if (rawValue === 'true') parsedValue = true;
                     else if (rawValue === 'false') parsedValue = false;
+                    else if (rawValue.startsWith('{') || rawValue.startsWith('[')) {
+                        try {
+                            parsedValue = JSON.parse(rawValue);
+                        } catch (e) {}
+                    }
                     else if (!isNaN(Number(rawValue)) && rawValue !== '') parsedValue = Number(rawValue);
 
                     setFormData(prev => {
@@ -196,6 +201,11 @@ export function useDIITRADocument<T extends Record<string, any>>(
                 let parsedInitial: any = currentYVal;
                 if (currentYVal === 'true') parsedInitial = true;
                 else if (currentYVal === 'false') parsedInitial = false;
+                else if (currentYVal.startsWith('{') || currentYVal.startsWith('[')) {
+                    try {
+                        parsedInitial = JSON.parse(currentYVal);
+                    } catch (e) {}
+                }
                 else if (!isNaN(Number(currentYVal)) && currentYVal !== '') parsedInitial = Number(currentYVal);
                 setFormData(prev => {
                     if (isEqualValue(prev[key], parsedInitial)) return prev;
