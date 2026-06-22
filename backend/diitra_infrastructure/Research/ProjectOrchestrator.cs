@@ -304,7 +304,7 @@ namespace diitra_infrastructure.Research
                 // 3. Sincronización de Equipo (Anti-Corruption Layer de los Investigadores)
                 if (dto.Investigadores != null && dto.Investigadores.Count > 0)
                 {
-                    await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores);
+                    await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores, isFromWizard: true);
                 }
 
                 // Auto-vincular al creador como Director (nunca para roles de supervisión institucional)
@@ -1095,7 +1095,7 @@ namespace diitra_infrastructure.Research
             return stats;
         }
 
-        private async Task SyncInvestigadoresAsync(int projectId, System.Collections.Generic.List<InvestigadorDto>? investigadores)
+        private async Task SyncInvestigadoresAsync(int projectId, System.Collections.Generic.List<InvestigadorDto>? investigadores, bool isFromWizard = false)
         {
             if (investigadores == null) return;
 
@@ -1117,27 +1117,33 @@ namespace diitra_infrastructure.Research
                 .ToHashSet();
 
             // 2. Procesar Profesores Existentes: Desactivar los que ya no vienen en la lista
-            foreach (var prof in currentProfs)
+            if (!isFromWizard)
             {
-                var cedula = prof.IdUsuarioNavigation?.IdSigafi?.Trim();
-                if (cedula != null && prof.Activo != false && !activeCedulas.Contains(cedula))
+                foreach (var prof in currentProfs)
                 {
-                    prof.Activo = false;
-                    prof.FechaFin = DateTime.Now;
-                    prof.MotivoCambio = "Retirado del equipo";
-                    prof.EsDirector = false; // Al desactivarlo deja de ser director activo
+                    var cedula = prof.IdUsuarioNavigation?.IdSigafi?.Trim();
+                    if (cedula != null && prof.Activo != false && !activeCedulas.Contains(cedula))
+                    {
+                        prof.Activo = false;
+                        prof.FechaFin = DateTime.Now;
+                        prof.MotivoCambio = "Retirado del equipo";
+                        prof.EsDirector = false; // Al desactivarlo deja de ser director activo
+                    }
                 }
             }
 
             // 3. Procesar Alumnos Existentes: Desactivar los que ya no vienen en la lista
-            foreach (var alum in currentAlums)
+            if (!isFromWizard)
             {
-                var cedula = alum.IdUsuarioNavigation?.IdSigafi?.Trim();
-                if (cedula != null && alum.Activo != false && !activeCedulas.Contains(cedula))
+                foreach (var alum in currentAlums)
                 {
-                    alum.Activo = false;
-                    alum.FechaFin = DateTime.Now;
-                    alum.MotivoCambio = "Retirado del equipo";
+                    var cedula = alum.IdUsuarioNavigation?.IdSigafi?.Trim();
+                    if (cedula != null && alum.Activo != false && !activeCedulas.Contains(cedula))
+                    {
+                        alum.Activo = false;
+                        alum.FechaFin = DateTime.Now;
+                        alum.MotivoCambio = "Retirado del equipo";
+                    }
                 }
             }
 
@@ -1159,45 +1165,53 @@ namespace diitra_infrastructure.Research
                     var existingAlum = currentAlums.FirstOrDefault(pa => pa.IdUsuario == persona.IdUsuario);
                     if (existingAlum != null)
                     {
-                        bool wasActive = existingAlum.Activo != false;
-                        string oldRol = existingAlum.Rol ?? "";
-                        string newRol = NormalizeRole(inv.Rol);
-
-                        // Reactivar o actualizar
-                        existingAlum.Rol = newRol;
-                        existingAlum.NivelAcademico = inv.NivelAcademico;
-                        existingAlum.Telefono = inv.Telefono;
-                        existingAlum.HorasSemanales = inv.HorasSemanales;
-
-                        bool nowActive = true;
-                        if (inv.Activo == false)
+                        if (isFromWizard)
                         {
-                            nowActive = false;
-                            if (existingAlum.Activo != false)
-                            {
-                                existingAlum.Activo = false;
-                                existingAlum.FechaFin = DateTime.Now;
-                                existingAlum.MotivoCambio = "Retirado del equipo";
-                            }
+                            existingAlum.Telefono = inv.Telefono;
+                            existingAlum.HorasSemanales = inv.HorasSemanales;
                         }
                         else
                         {
-                            if (existingAlum.Activo == false)
+                            bool wasActive = existingAlum.Activo != false;
+                            string oldRol = existingAlum.Rol ?? "";
+                            string newRol = NormalizeRole(inv.Rol);
+
+                            // Reactivar o actualizar
+                            existingAlum.Rol = newRol;
+                            existingAlum.NivelAcademico = inv.NivelAcademico;
+                            existingAlum.Telefono = inv.Telefono;
+                            existingAlum.HorasSemanales = inv.HorasSemanales;
+
+                            bool nowActive = true;
+                            if (inv.Activo == false)
                             {
-                                existingAlum.Activo = true;
-                                existingAlum.FechaInicio = DateTime.Now;
-                                existingAlum.FechaFin = null;
-                                existingAlum.MotivoCambio = null;
+                                nowActive = false;
+                                if (existingAlum.Activo != false)
+                                {
+                                    existingAlum.Activo = false;
+                                    existingAlum.FechaFin = DateTime.Now;
+                                    existingAlum.MotivoCambio = "Retirado del equipo";
+                                }
+                            }
+                            else
+                            {
+                                if (existingAlum.Activo == false)
+                                {
+                                    existingAlum.Activo = true;
+                                    existingAlum.FechaInicio = DateTime.Now;
+                                    existingAlum.FechaFin = null;
+                                    existingAlum.MotivoCambio = null;
+                                }
+                            }
+
+                            // Notificar si se reactivó o si cambió de rol (mientras esté activo)
+                            if (nowActive && (!wasActive || !string.Equals(oldRol, newRol, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                investigatorsToNotify.Add(inv);
                             }
                         }
-
-                        // Notificar si se reactivó o si cambió de rol (mientras esté activo)
-                        if (nowActive && (!wasActive || !string.Equals(oldRol, newRol, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            investigatorsToNotify.Add(inv);
-                        }
                     }
-                    else
+                    else if (!isFromWizard)
                     {
                         // Agregar nuevo
                         _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
@@ -1225,47 +1239,55 @@ namespace diitra_infrastructure.Research
                     var existingProf = currentProfs.FirstOrDefault(pp => pp.IdUsuario == persona.IdUsuario);
                     if (existingProf != null)
                     {
-                        bool wasActive = existingProf.Activo != false;
-                        string oldRol = existingProf.Rol ?? "";
-                        string newRol = NormalizeRole(inv.Rol);
-
-                        // Reactivar o actualizar
-                        existingProf.Rol = newRol;
-                        existingProf.NivelAcademico = inv.NivelAcademico;
-                        existingProf.Telefono = inv.Telefono;
-                        existingProf.EsDirector = esDirector;
-                        existingProf.HorasSemanales = inv.HorasSemanales;
-
-                        bool nowActive = true;
-                        if (inv.Activo == false)
+                        if (isFromWizard)
                         {
-                            nowActive = false;
-                            if (existingProf.Activo != false)
-                            {
-                                existingProf.Activo = false;
-                                existingProf.FechaFin = DateTime.Now;
-                                existingProf.MotivoCambio = "Retirado del equipo";
-                                existingProf.EsDirector = false; // Al desactivarlo deja de ser director activo
-                            }
+                            existingProf.Telefono = inv.Telefono;
+                            existingProf.HorasSemanales = inv.HorasSemanales;
                         }
                         else
                         {
-                            if (existingProf.Activo == false)
+                            bool wasActive = existingProf.Activo != false;
+                            string oldRol = existingProf.Rol ?? "";
+                            string newRol = NormalizeRole(inv.Rol);
+
+                            // Reactivar o actualizar
+                            existingProf.Rol = newRol;
+                            existingProf.NivelAcademico = inv.NivelAcademico;
+                            existingProf.Telefono = inv.Telefono;
+                            existingProf.EsDirector = esDirector;
+                            existingProf.HorasSemanales = inv.HorasSemanales;
+
+                            bool nowActive = true;
+                            if (inv.Activo == false)
                             {
-                                existingProf.Activo = true;
-                                existingProf.FechaInicio = DateTime.Now;
-                                existingProf.FechaFin = null;
-                                existingProf.MotivoCambio = null;
+                                nowActive = false;
+                                if (existingProf.Activo != false)
+                                {
+                                    existingProf.Activo = false;
+                                    existingProf.FechaFin = DateTime.Now;
+                                    existingProf.MotivoCambio = "Retirado del equipo";
+                                    existingProf.EsDirector = false; // Al desactivarlo deja de ser director activo
+                                }
+                            }
+                            else
+                            {
+                                if (existingProf.Activo == false)
+                                {
+                                    existingProf.Activo = true;
+                                    existingProf.FechaInicio = DateTime.Now;
+                                    existingProf.FechaFin = null;
+                                    existingProf.MotivoCambio = null;
+                                }
+                            }
+
+                            // Notificar si se reactivó o si cambió de rol (mientras esté activo)
+                            if (nowActive && (!wasActive || !string.Equals(oldRol, newRol, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                investigatorsToNotify.Add(inv);
                             }
                         }
-
-                        // Notificar si se reactivó o si cambió de rol (mientras esté activo)
-                        if (nowActive && (!wasActive || !string.Equals(oldRol, newRol, StringComparison.OrdinalIgnoreCase)))
-                        {
-                            investigatorsToNotify.Add(inv);
-                        }
                     }
-                    else
+                    else if (!isFromWizard)
                     {
                         // Agregar nuevo
                         _context.InvProyectosProfesores.Add(new InvProyectoProfesor
@@ -1820,10 +1842,42 @@ namespace diitra_infrastructure.Research
                 }
 
                 // 2. Sincronizar en Tablas Relacionales (Profesores / Alumnos)
-                await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores ?? new List<InvestigadorDto>());
+                await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores ?? new List<InvestigadorDto>(), isFromWizard: false);
 
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
+
+                // 3. Sincronizar también con la instantánea del documento PROTOCOLO_INVESTIGACION si existe
+                var docInstance = await _context.DocumentInstances
+                    .FirstOrDefaultAsync(di => di.EntityUuid == project.Uuid && di.TemplateCode == "PROTOCOLO_INVESTIGACION");
+                if (docInstance != null && !string.IsNullOrEmpty(docInstance.DataSnapshotJson))
+                {
+                    try
+                    {
+                        var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var snapshot = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, System.Text.Json.JsonElement>>(docInstance.DataSnapshotJson, options);
+                        if (snapshot != null)
+                        {
+                            var merged = new Dictionary<string, object>();
+                            foreach (var kvp in snapshot)
+                            {
+                                merged[kvp.Key] = kvp.Value;
+                            }
+                            merged["Investigadores"] = dto.Investigadores ?? new List<InvestigadorDto>();
+                            merged["GrupoInvestigacionTipo"] = project.TieneGrupo == true ? "SI" : "NO";
+                            merged["GrupoInvestigacionNombre"] = dto.GrupoInvestigacion ?? "";
+                            merged["GrupoInvestigacionUuid"] = dto.GrupoInvestigacionUuid ?? "";
+                            merged["TieneGrupoInvestigacion"] = project.TieneGrupo == true;
+
+                            var newSnapshot = System.Text.Json.JsonSerializer.Serialize(merged);
+                            docInstance.UpdateDataSnapshot(newSnapshot);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al sincronizar instantánea de documento desde UpdateProjectTeamAsync para proyecto UUID: {Uuid}", uuid);
+                    }
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -2534,7 +2588,7 @@ namespace diitra_infrastructure.Research
                 project.IdGrupo = approvedGroup.IdGrupo;
 
                 var effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(approvedGroup.IdGrupo, project.IdProyecto);
-                await SyncInvestigadoresAsync(project.IdProyecto, effectiveInvestigadores);
+                await SyncInvestigadoresAsync(project.IdProyecto, effectiveInvestigadores, isFromWizard: false);
 
                 var dto = DeserializeProyectoMetadata(project.MetadataCacesJson);
                 dto.TieneGrupoInvestigacion = true;
@@ -2630,7 +2684,7 @@ namespace diitra_infrastructure.Research
                 }
 
                 var effectiveInvestigadores = await BuildProjectInvestigadoresFromGroupAsync(groupId, project.IdProyecto);
-                await SyncInvestigadoresAsync(project.IdProyecto, effectiveInvestigadores);
+                await SyncInvestigadoresAsync(project.IdProyecto, effectiveInvestigadores, isFromWizard: false);
 
                 var dto = DeserializeProyectoMetadata(project.MetadataCacesJson);
                 dto.TieneGrupoInvestigacion = true;
@@ -2721,7 +2775,7 @@ namespace diitra_infrastructure.Research
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
 
-                await SyncInvestigadoresAsync(project.IdProyecto, currentTeam);
+                await SyncInvestigadoresAsync(project.IdProyecto, currentTeam, isFromWizard: false);
                 return new SyncResult { Success = true, Uuid = project.Uuid };
             }
         }

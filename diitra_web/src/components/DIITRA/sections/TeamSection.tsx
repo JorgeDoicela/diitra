@@ -44,26 +44,10 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                 <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
                     <Users size={18}/> 2. Investigadores (Docentes y Estudiantes)
                 </h4>
-                {!readOnly && !isAssociative && (
-                    <button 
-                        onClick={onAdd} 
-                        className="px-5 py-2.5 bg-text-main text-bg-deep rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:opacity-90 shadow-lg"
-                    >
-                        <Plus size={16}/> Añadir Investigador
-                    </button>
-                )}
             </div>
             <div className="space-y-4">
                 {investigadores.map((_inv, idx) => (
                     <div key={_inv.id || idx} className="p-8 bg-bg-deep border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
-                        {!readOnly && !isAssociative && (
-                            <button 
-                                onClick={() => onRemove(idx)} 
-                                className="absolute top-4 right-4 p-2 text-red-500 hover:bg-red-500/10 rounded-full"
-                            >
-                                <Trash2 size={18}/>
-                            </button>
-                        )}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
                             <div className="md:col-span-5">
                                 <CoWorkField 
@@ -72,7 +56,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     label="Nombre y Apellidos"
                                     onValueChange={(v) => onUpdate(idx, 'Nombre', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold"
-                                    readOnly={readOnly || isAssociative}
+                                    readOnly={true}
                                 />
                             </div>
                             <div className="md:col-span-3">
@@ -82,7 +66,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     label="Cédula"
                                     onValueChange={(v) => onUpdate(idx, 'Cedula', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    readOnly={readOnly || isAssociative}
+                                    readOnly={true}
                                 />
                             </div>
                             <div className="md:col-span-4">
@@ -92,7 +76,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     label="Email"
                                     onValueChange={(v) => onUpdate(idx, 'Email', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    readOnly={readOnly || isAssociative}
+                                    readOnly={true}
                                 />
                             </div>
                             <div className="md:col-span-3">
@@ -102,7 +86,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     label="Teléfono"
                                     onValueChange={(v) => onUpdate(idx, 'Telefono', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    readOnly={readOnly || isAssociative}
+                                    readOnly={readOnly}
                                 />
                             </div>
                             <div className="md:col-span-3">
@@ -113,7 +97,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     onValueChange={(v) => onUpdate(idx, 'NivelAcademico', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
                                     placeholder="Ej: Magíster en..."
-                                    readOnly={readOnly || isAssociative}
+                                    readOnly={true}
                                 />
                             </div>
                             <div className="md:col-span-3">
@@ -123,7 +107,7 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                                     label="Rol"
                                     onValueChange={(v) => onUpdate(idx, 'Rol', v)}
                                     className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    readOnly={readOnly || isAssociative}
+                                    readOnly={true}
                                 />
                             </div>
                             <div className="md:col-span-3">
