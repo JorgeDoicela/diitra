@@ -410,6 +410,13 @@ public class UnitTest1
             Console.WriteLine($"Titulo: {project.Titulo}");
             Console.WriteLine($"Metadata: {project.MetadataCacesJson}");
 
+            var objectives = await context.InvObjetivosProyecto.Where(o => o.IdProyecto == project.IdProyecto).ToListAsync();
+            Console.WriteLine($"Found {objectives.Count} InvObjetivosProyecto records for project Id {project.IdProyecto}:");
+            foreach (var obj in objectives)
+            {
+                Console.WriteLine($"- Objective: Id={obj.IdObjetivo}, EsGeneral={obj.EsGeneral}, Orden={obj.Orden}, Descripcion='{obj.Descripcion}'");
+            }
+
             var instances = await context.DocumentInstances.Where(i => i.EntityUuid == project.Uuid).ToListAsync();
             Console.WriteLine($"Found {instances.Count} DocumentInstances for project Uuid {project.Uuid}:");
             foreach (var instance in instances)
@@ -426,10 +433,22 @@ public class UnitTest1
                 }
             }
         }
-        else
+    }
+
+    [Fact]
+    public void TestHandlebarsStringEach()
+    {
+        var handlebars = HandlebarsDotNet.Handlebars.Create();
+        var template = "{{#each objetivos_especificos}}<li>{{this}}</li>{{/each}}";
+        var compiled = handlebars.Compile(template);
+
+        var data = new Dictionary<string, object>
         {
-            Console.WriteLine("DIAG: PROJECT NOT FOUND WITH 0b0601fb");
-        }
+            { "objetivos_especificos", "<p>Prueba</p>" }
+        };
+
+        var result = compiled(data);
+        Console.WriteLine($"RENDER RESULT FOR STRING: '{result}'");
     }
 }
 
