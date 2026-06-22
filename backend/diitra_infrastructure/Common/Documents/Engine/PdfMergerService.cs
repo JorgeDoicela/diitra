@@ -39,6 +39,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 merger.Merge(sourcePdf, 1, sourcePdf.GetNumberOfPages());
             }
 
+            mergedPdf.Close();
+
             return await Task.FromResult(outputStream.ToArray());
         }
     }
