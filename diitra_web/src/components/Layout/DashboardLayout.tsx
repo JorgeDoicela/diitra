@@ -61,7 +61,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
             try {
                 // 1. Registrar Service Worker de forma explícita
                 const registration = await navigator.serviceWorker.register('/sw.js');
-                
+
                 // 2. Esperar a que el service worker esté completamente listo
                 await navigator.serviceWorker.ready;
 
@@ -81,7 +81,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
                 // 4. Suscribirse al servidor de Push con la llave VAPID pública generada
                 const VAPID_PUBLIC_KEY = 'BD70Tf6OvtNDv7woB_utltQMF-NeJnLXqKyQ9UuEOC5YlDVfZgEKrsE1Fgkut8dPzQrPWhRGZXZeWZeTHahIhRc';
-                
+
                 const urlBase64ToUint8Array = (base64String: string) => {
                     const padding = '='.repeat((4 - base64String.length % 4) % 4);
                     const base64 = (base64String + padding)
@@ -98,7 +98,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 };
 
                 let subscription = await registration.pushManager.getSubscription();
-                
+
                 if (!subscription) {
                     subscription = await registration.pushManager.subscribe({
                         userVisibleOnly: true,
@@ -115,7 +115,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     device_token: tokenString,
                     plataforma: 'web_push'
                 });
-                if (import.meta.env.DEV) console.log('Suscripción Web Push sincronizada profesionalmente con el servidor.');
+                if (import.meta.env.DEV) console.log('Suscripción Web Push sincronizada.');
                 localStorage.setItem('web_push_active', 'true');
             } catch (error) {
                 if (import.meta.env.DEV) {
@@ -220,7 +220,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                                 )}
                                 <span className="section-label !text-text-main">Tecnológico Traversari</span>
                             </div>
-                            
+
                             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-widest text-text-main pointer-events-none select-none">
                                 {getPageTitle(location.pathname)}
                             </div>

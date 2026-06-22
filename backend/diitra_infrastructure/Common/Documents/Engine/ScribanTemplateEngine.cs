@@ -318,6 +318,12 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
             }
 
+            // Mapear alias de Objetivos de Desarrollo Sostenible (ods) para plantillas oficiales
+            if (dict.TryGetValue("objetivos_desarrollo_sostenible", out var odsVal) && !dict.ContainsKey("ods"))
+            {
+                dict["ods"] = odsVal;
+            }
+
             // Enmascarar datos personales en modo doble ciego (LOPDP + Peer Review)
             if (isBlindMode)
                 ApplyBlindMask(dict);
@@ -342,6 +348,31 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         }
 
         /// <summary>
+        /// Convierte una cadena en PascalCase o camelCase a snake_case (ej: LineaInvestigacion -> linea_investigacion).
+        /// Esto es fundamental porque la UI del Frontend utiliza nombres de propiedades en PascalCase
+        /// para el guardado de metadata, mientras que los archivos de plantilla HTML oficiales (como ProyectoInvestigacion.html)
+        /// esperan variables en formato snake_case según el estándar Handlebars.
+        /// </summary>
+        private static string ToSnakeCase(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < text.Length; i++)
+            {
+                char c = text[i];
+                if (i > 0 && char.IsUpper(c))
+                {
+                    if (text[i - 1] != '_')
+                    {
+                        sb.Append('_');
+                    }
+                }
+                sb.Append(char.ToLower(c));
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
         /// Convierte recursivamente un JsonElement a tipos nativos de C# (Dictionary, List, string, etc.)
         /// Esto es CRÍTICO porque Handlebars.Net no sabe navegar objetos JsonElement directamente.
         /// </summary>
@@ -353,8 +384,19 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     var dict = new Dictionary<string, object?>();
                     foreach (var prop in element.EnumerateObject())
                     {
-                        // Normalizamos a minúsculas para que coincida con la plantilla Handlebars
-                        dict[prop.Name.ToLower()] = ToNativeType(prop.Value);
+                        var value = ToNativeType(prop.Value);
+                        
+                        // 1. Guardar la versión en minúsculas (ej: lineainvestigacion) para retrocompatibilidad
+                        //    con plantillas antiguas o dinámicas que accedan a la propiedad sin guiones bajos.
+                        dict[prop.Name.ToLower()] = value;
+
+                        // 2. Guardar la versión en snake_case (ej: linea_investigacion) para que coincida con las
+                        //    etiquetas de las plantillas oficiales y los bucles/iteradores (como {{#each recursos_necesarios}}).
+                        var snakeKey = ToSnakeCase(prop.Name);
+                        if (!dict.ContainsKey(snakeKey))
+                        {
+                            dict[snakeKey] = value;
+                        }
                     }
                     return dict;
 
