@@ -40,6 +40,8 @@ interface Group {
     lineas_ids: number[];
     carreras_ids: number[];
     miembros?: GroupMember[];
+    proyectos?: any[];
+    Proyectos?: any[];
 }
 
 interface Domain {
@@ -491,6 +493,9 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         return rolLower.includes('semillerista') || rolLower.includes('estudiante');
     });
 
+    const projectsList = detailGroup.proyectos || detailGroup.Proyectos || [];
+    const projectsCount = projectsList.length;
+
     return (
         <div className="fixed inset-0 z-[9999] flex justify-end">
             <div
@@ -741,9 +746,9 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                     >
                         <BookOpen size={13} />
                         <span>Proyectos Adscritos</span>
-                        {((detailGroup.proyectos || detailGroup.Proyectos)?.length > 0) && (
+                        {projectsCount > 0 && (
                             <span className="text-[9px] font-mono font-bold bg-brand text-bg-deep px-1.5 py-0.5 rounded-full ml-1 animate-fade-in">
-                                {(detailGroup.proyectos || detailGroup.Proyectos).length}
+                                {projectsCount}
                             </span>
                         )}
                     </button>
@@ -1068,7 +1073,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                 {detailTab === 'proyectos' && (
                     <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-bg-deep/5 custom-scrollbar">
                         {(() => {
-                            const projectList = detailGroup.proyectos || detailGroup.Proyectos || [];
+                            const projectList = projectsList;
                             if (projectList.length === 0) {
                                 return (
                                     <div className="text-center py-20 opacity-50 flex flex-col items-center justify-center h-full">
