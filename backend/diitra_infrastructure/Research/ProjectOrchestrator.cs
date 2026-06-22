@@ -288,11 +288,13 @@ namespace diitra_infrastructure.Research
                             {
                                 Nombre = user.Nombre,
                                 Cedula = user.IdSigafi,
+                                Email = user.EmailInstitucional ?? user.IdSigafi ?? "",
                                 Rol = member.Rol ?? "Co-Investigador",
                                 NivelAcademico = user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
                                 Telefono = "",
                                 Activo = true,
-                                FechaInicio = DateTime.Now
+                                FechaInicio = DateTime.Now,
+                                EsDirector = member.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true
                             });
                         }
                     }
@@ -1722,12 +1724,14 @@ namespace diitra_infrastructure.Research
                         {
                             Nombre = activeDirector.IdUsuarioNavigation.Nombre,
                             Cedula = directorCedula,
+                            Email = activeDirector.IdUsuarioNavigation.EmailInstitucional ?? activeDirector.IdUsuarioNavigation.IdSigafi ?? "",
                             Rol = "Director de Proyecto",
                             NivelAcademico = activeDirector.NivelAcademico,
                             Telefono = activeDirector.Telefono ?? string.Empty,
                             Activo = true,
                             HorasSemanales = directorHours,
-                            FechaInicio = activeDirector.FechaInicio ?? DateTime.Now
+                            FechaInicio = activeDirector.FechaInicio ?? DateTime.Now,
+                            EsDirector = true
                         });
                     }
                 }
@@ -2112,6 +2116,7 @@ namespace diitra_infrastructure.Research
                     {
                         Nombre = pp.IdUsuarioNavigation?.Nombre,
                         Cedula = pp.IdUsuarioNavigation?.IdSigafi,
+                        Email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "",
                         Rol = pp.Rol,
                         NivelAcademico = pp.NivelAcademico,
                         Telefono = pp.Telefono,
@@ -2121,12 +2126,14 @@ namespace diitra_infrastructure.Research
                         MotivoCambio = pp.MotivoCambio,
                         HorasSemanales = pp.HorasSemanales,
                         HorasDisponibles = availableHours,
-                        HorasAsignadas = assignedHours
+                        HorasAsignadas = assignedHours,
+                        EsDirector = pp.EsDirector
                     };
                 }).Concat(updatedAlums.Select(pa => new InvestigadorDto
                 {
                     Nombre = pa.IdUsuarioNavigation?.Nombre,
                     Cedula = pa.IdUsuarioNavigation?.IdSigafi,
+                    Email = pa.IdUsuarioNavigation?.EmailInstitucional ?? pa.IdUsuarioNavigation?.IdSigafi ?? "",
                     Rol = pa.Rol,
                     NivelAcademico = pa.NivelAcademico,
                     Telefono = pa.Telefono,
@@ -2134,7 +2141,8 @@ namespace diitra_infrastructure.Research
                     FechaInicio = pa.FechaInicio,
                     FechaFin = pa.FechaFin,
                     MotivoCambio = pa.MotivoCambio,
-                    HorasSemanales = pa.HorasSemanales
+                    HorasSemanales = pa.HorasSemanales,
+                    EsDirector = false
                 })).ToList();
 
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
@@ -2245,6 +2253,7 @@ namespace diitra_infrastructure.Research
                 {
                     Nombre = user.Nombre,
                     Cedula = cedula,
+                    Email = user.EmailInstitucional ?? user.IdSigafi ?? "",
                     Rol = NormalizeRole(existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Semillerista" : "Co-Investigador")),
                     NivelAcademico = existing?.NivelAcademico ?? (user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel"),
                     Telefono = existing?.Telefono ?? string.Empty,
@@ -2255,7 +2264,8 @@ namespace diitra_infrastructure.Research
                     FechaInicio = existing?.FechaInicio ?? DateTime.Now,
                     FechaFin = null,
                     MotivoCambio = null,
-                    Carrera = existing?.Carrera
+                    Carrera = existing?.Carrera,
+                    EsDirector = existing?.EsDirector ?? (member.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true)
                 });
             }
 
@@ -2271,6 +2281,7 @@ namespace diitra_infrastructure.Research
                 {
                     Cedula = p.IdUsuarioNavigation!.IdSigafi,
                     Nombre = p.IdUsuarioNavigation.Nombre,
+                    Email = p.IdUsuarioNavigation.EmailInstitucional ?? p.IdUsuarioNavigation.IdSigafi ?? "",
                     Rol = p.Rol,
                     NivelAcademico = p.NivelAcademico,
                     Telefono = p.Telefono,
@@ -2280,7 +2291,8 @@ namespace diitra_infrastructure.Research
                     HorasAsignadas = null,
                     FechaInicio = p.FechaInicio,
                     FechaFin = p.FechaFin,
-                    MotivoCambio = p.MotivoCambio
+                    MotivoCambio = p.MotivoCambio,
+                    EsDirector = p.EsDirector
                 })
                 .ToListAsync();
 
@@ -2296,6 +2308,7 @@ namespace diitra_infrastructure.Research
                 {
                     Cedula = a.IdUsuarioNavigation!.IdSigafi,
                     Nombre = a.IdUsuarioNavigation.Nombre,
+                    Email = a.IdUsuarioNavigation.EmailInstitucional ?? a.IdUsuarioNavigation.IdSigafi ?? "",
                     Rol = a.Rol,
                     NivelAcademico = a.NivelAcademico,
                     Telefono = a.Telefono,
@@ -2303,7 +2316,8 @@ namespace diitra_infrastructure.Research
                     HorasSemanales = a.HorasSemanales,
                     FechaInicio = a.FechaInicio,
                     FechaFin = a.FechaFin,
-                    MotivoCambio = a.MotivoCambio
+                    MotivoCambio = a.MotivoCambio,
+                    EsDirector = false
                 })
                 .ToListAsync();
 
@@ -2710,11 +2724,13 @@ namespace diitra_infrastructure.Research
                             {
                                 Nombre = targetUser.Nombre,
                                 Cedula = targetCedula,
+                                Email = targetUser.EmailInstitucional ?? targetUser.IdSigafi ?? "",
                                 Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? "Co-Investigador" : NormalizeRole(payload.RolPropuesto),
                                 NivelAcademico = targetUser.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
                                 Telefono = string.Empty,
                                 Activo = true,
-                                HorasSemanales = 0
+                                HorasSemanales = 0,
+                                EsDirector = false
                             });
                         }
                         else
@@ -2722,6 +2738,7 @@ namespace diitra_infrastructure.Research
                             var existing = currentTeam.First(i => i.Cedula?.Trim() == targetCedula);
                             existing.Activo = true;
                             existing.Rol = string.IsNullOrWhiteSpace(payload.RolPropuesto) ? existing.Rol : NormalizeRole(payload.RolPropuesto);
+                            existing.EsDirector = false;
                         }
                         break;
 
@@ -2742,6 +2759,7 @@ namespace diitra_infrastructure.Research
                             if (member.Rol?.ToLower().Contains("director") == true)
                             {
                                 member.Rol = "Co-Investigador";
+                                member.EsDirector = false;
                             }
                         }
 
@@ -2750,6 +2768,7 @@ namespace diitra_infrastructure.Research
                         {
                             existingDir.Activo = true;
                             existingDir.Rol = "Director de Proyecto";
+                            existingDir.EsDirector = true;
                         }
                         else
                         {
@@ -2757,11 +2776,13 @@ namespace diitra_infrastructure.Research
                             {
                                 Nombre = targetUser.Nombre,
                                 Cedula = targetCedula,
+                                Email = targetUser.EmailInstitucional ?? targetUser.IdSigafi ?? "",
                                 Rol = "Director de Proyecto",
                                 NivelAcademico = targetUser.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
                                 Telefono = string.Empty,
                                 Activo = true,
-                                HorasSemanales = 0
+                                HorasSemanales = 0,
+                                EsDirector = true
                             });
                         }
                         break;
