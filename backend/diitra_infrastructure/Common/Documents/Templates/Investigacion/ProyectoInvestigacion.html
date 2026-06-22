@@ -469,11 +469,7 @@
 
             <!-- No empty rows -->
         </tbody>
-    </table>
-
-    <div style="page-break-before: always;"></div>
-
-    <div class="section-title">3. ESPECIFICACIÓN DEL PROYECTO</div>
+       <div class="section-title">3. ESPECIFICACIÓN DEL PROYECTO</div>
     <table class="identificacion-table" style="margin-bottom: 0px;">
         <colgroup>
             <col style="width: 32%;" />
@@ -482,20 +478,20 @@
         <tr>
             <td class="label">ANTECEDENTES ESPECÍFICOS DE LA PROBLEMÁTICA</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
-                {{#if antecedentes}}{{antecedentes}}{{else}}[Identificar y analizar estudios previos, datos relevantes y casos similares que evidencien la existencia y magnitud del problema abordado en el proyecto. Se debe incluir información contextual que respalde la necesidad de la propuesta, citando fuentes en formato APA 7ª edición. DETALLAR EN DOS PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO]{{/if}}
+                {{#if antecedentes}}{{{antecedentes}}}{{else}}[Identificar y analizar estudios previos, datos relevantes y casos similares que evidencien la existencia y magnitud del problema abordado en el proyecto. Se debe incluir información contextual que respalde la necesidad de la propuesta, citando fuentes en formato APA 7ª edición. DETALLAR EN DOS PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO]{{/if}}
             </td>
         </tr>
         <tr>
             <td class="label">DESCRIPCIÓN DEL PROYECTO</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
-                {{#if descripcion_proyecto}}{{descripcion_proyecto}}{{else}}[Definir el propósito del proyecto, detallando qué se pretende lograr y cuál es su impacto esperado. Además, delimitar el alcance, especificando los límites, las áreas involucradas y los aspectos que serán abordados dentro de la ejecución del proyecto. DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO]{{/if}}
+                {{#if descripcion_proyecto}}{{{descripcion_proyecto}}}{{else}}[Definir el propósito del proyecto, detallando qué se pretende lograr y cuál es su impacto esperado. Además, delimitar el alcance, especificando los límites, las áreas involucradas y los aspectos que serán abordados dentro de la ejecución del proyecto. DETALLAR EN UN PÁRRAFO DE 8 A 12 LÍNEAS MÍNIMO]{{/if}}
             </td>
         </tr>
         <tr>
             <td class="label">JUSTIFICACIÓN</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
                 {{#if justificacion}}
-                    {{justificacion}}
+                    {{{justificacion}}}
                 {{else}}
                     <p style="margin: 0 0 8px 0;">[Especificar en <strong>DOS PÁRRAFOS DE 5 A 9 LÍNEAS</strong>, de manera fluida y coherente, lo siguiente:</p>
                     <ol style="margin: 0 0 8px 0; padding-left: 20px;">
@@ -525,23 +521,17 @@
             <td style="background: #222c57; color: #ffffff; font-weight: bold; padding: 6px; border: 1px solid #000000; text-align: center; text-transform: uppercase; font-size: 9.5pt;">ESPECÍFICOS</td>
         </tr>
         <tr>
-            <td style="padding: 4px 8px; border: 1px solid #000000; vertical-align: middle; text-align: justify;">
+            <td style="padding: 4px 8px; border: 1px solid #000000; vertical-align: top; text-align: justify;">
                 {{#if objetivo_general}}
-                    <ul style="margin: 0; padding-left: 15px;">
-                        <li>{{objetivo_general}}</li>
-                    </ul>
+                    {{{objetivo_general}}}
                 {{else}}
                     <p style="text-align: center; margin: 0 0 10px 0;">• &nbsp; [Oraciones cortas, coherentes y concisas]</p>
                     <p style="text-align: center; margin: 0; font-weight: bold; font-size: 8.5pt;">VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ? (+ PLAZO OPCIONAL)</p>
                 {{/if}}
             </td>
-            <td style="padding: 4px 8px; border: 1px solid #000000; vertical-align: top;">
+            <td style="padding: 4px 8px; border: 1px solid #000000; vertical-align: top; text-align: justify;">
                 {{#if objetivos_especificos}}
-                    <ul style="margin: 0; padding-left: 15px; text-align: justify;">
-                        {{#each objetivos_especificos}}
-                        <li>{{this}}</li>
-                        {{/each}}
-                    </ul>
+                    {{{objetivos_especificos}}}
                 {{else}}
                     <ul style="margin: 0 0 10px 0; padding-left: 15px; text-align: justify;">
                         <li>[Oraciones cortas, coherentes y concisas]</li>
@@ -563,7 +553,7 @@
             <td class="label-white">OBJETIVOS DE DESARROLLO SOSTENIBLE</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
                 {{#if ods}}
-                    {{ods}}
+                    {{{ods}}}
                 {{else}}
                     <p style="margin: 0 0 8px 0;">[Los objetivos de desarrollo sostenible son 17 el proyecto de investigación debe estar alineado a algunos de los objetivos.]</p>
                     <p style="margin: 0 0 8px 0;"><a href="https://www.un.org/sustainabledevelopment/es/objetivos-de-desarrollo-sostenible/" style="color: blue; text-decoration: underline;">https://www.un.org/sustainabledevelopment/es/objetivos-de-desarrollo-sostenible/</a></p>
@@ -574,19 +564,19 @@
         <tr>
             <td class="label-white">MARCO TEÓRICO</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
-                {{#if marco_teorico}}{{marco_teorico}}{{else}}[Describir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto, incluyendo referencias a estudios previos, normativas o metodologías relacionadas. <strong>EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN</strong>]{{/if}}
+                {{#if marco_teorico}}{{{marco_teorico}}}{{else}}[Describir los conceptos clave, antecedentes y fundamentos teóricos que respaldan el proyecto, incluyendo referencias a estudios previos, normativas o metodologías relacionadas. <strong>EL TEXTO MÁXIMO DEBE ABARCAR DOS PÁGINAS, CITAR USANDO NORMAS APA 7MA EDICIÓN</strong>]{{/if}}
             </td>
         </tr>
         <tr>
             <td class="label-white">METODOLOGÍA</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
-                {{#if metodologia}}{{metodologia}}{{else}}[Describir el enfoque metodológico, las etapas del proyecto si este las tuviera, detalle de los procedimientos <strong>DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS</strong>, recursos y el tiempo estimado para alcanzar los objetivos <strong>DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS</strong>]{{/if}}
+                {{#if metodologia}}{{{metodologia}}}{{else}}[Describir el enfoque metodológico, las etapas del proyecto si este las tuviera, detalle de los procedimientos <strong>DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS</strong>, recursos y el tiempo estimado para alcanzar los objetivos <strong>DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LÍNEAS</strong>]{{/if}}
             </td>
         </tr>
         <tr>
             <td class="label-white">EVALUACIÓN</td>
             <td style="padding: 4px 8px; vertical-align: top; text-align: justify;">
-                {{#if evaluacion}}{{evaluacion}}{{else}}[Describir los criterios e indicadores que se utilizarán para medir el cumplimiento de los objetivos, así como los métodos e instrumentos de evaluación. <strong>DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LINEAS, PARA PROFUNDIZAR LOS ASPECTOS RELACIONADOS CON INTRUMENTOS Y</strong>{{/if}}
+                {{#if evaluacion}}{{{evaluacion}}}{{else}}[Describir los criterios e indicadores que se utilizarán para medir el cumplimiento de los objetivos, así como los métodos e instrumentos de evaluación. <strong>DETALLAR EN MÍNIMO 2 PÁRRAFOS DE 5 LINEAS, PARA PROFUNDIZAR LOS ASPECTOS RELACIONADOS CON INTRUMENTOS Y</strong>{{/if}}
             </td>
         </tr>
     </table>

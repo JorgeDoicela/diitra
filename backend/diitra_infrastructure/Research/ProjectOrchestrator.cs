@@ -1386,7 +1386,7 @@ namespace diitra_infrastructure.Research
                 };
                 _context.InvObjetivosProyecto.Add(generalOpt);
             }
-            await _context.SaveChangesAsync();
+            await SaveChangesWithConcurrencyResolutionAsync();
             int generalId = generalOpt.IdObjetivo;
 
             // Sincronizar Objetivos Específicos
