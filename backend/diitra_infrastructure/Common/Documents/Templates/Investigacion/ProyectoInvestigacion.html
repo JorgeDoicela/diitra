@@ -286,14 +286,14 @@
             <td class="label">GRUPO DE INVESTIGACIÓN:</td>
             <td style="text-align: center; font-weight: bold;">NO</td>
             <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if grupo_investigacion}}&nbsp;{{else}}X{{/if}}
+                {{#if (eq grupo_investigacion_tipo 'SI')}}&nbsp;{{else}}X{{/if}}
             </td>
             <td style="text-align: center; font-weight: bold;">SI</td>
             <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if grupo_investigacion}}X{{else}}&nbsp;{{/if}}
+                {{#if (eq grupo_investigacion_tipo 'SI')}}X{{else}}&nbsp;{{/if}}
             </td>
             <td colspan="2">
-                {{#if grupo_investigacion}}{{grupo_investigacion}}{{else}}[Escriba el Nombre o borrar este título]{{/if}}
+                {{#if (eq grupo_investigacion_tipo 'SI')}}{{grupo_investigacion}}{{else}}&nbsp;{{/if}}
             </td>
         </tr>
         <tr>
@@ -373,12 +373,13 @@
     <div class="section-title">2. INVESTIGADORES</div>
     <table class="data-table">
         <colgroup>
-            <col style="width: 20%;" />
-            <col style="width: 12%;" />
+            <col style="width: 18%;" />
+            <col style="width: 11%;" />
             <col style="width: 15%;" />
-            <col style="width: 12%;" />
-            <col style="width: 26%;" />
-            <col style="width: 15%;" />
+            <col style="width: 10%;" />
+            <col style="width: 22%;" />
+            <col style="width: 14%;" />
+            <col style="width: 10%;" />
         </colgroup>
         <thead>
             <tr>
@@ -388,6 +389,7 @@
                 <th>TELEFONO</th>
                 <th>NIVEL ACADÉMICO</th>
                 <th>ROL</th>
+                <th>HORAS SEMANALES</th>
             </tr>
         </thead>
         <tbody>
@@ -399,6 +401,7 @@
                 <td style="text-align: center;">{{default investigador_director.telefono '...'}}</td>
                 <td style="text-align: center;">{{default investigador_director.nivel_academico '...'}}</td>
                 <td style="text-align: center;">{{default investigador_director.rol '...'}}</td>
+                <td style="text-align: center;">{{default investigador_director.horas_semanales '0'}} hs</td>
             </tr>
             {{else}}
             <tr>
@@ -408,6 +411,7 @@
                 <td style="text-align: center;">[Indicar su número de contacto]</td>
                 <td style="text-align: center;">[Especificar el título más alto que está debidamente registrado en la Senescyt]</td>
                 <td style="text-align: center;">[Indicar rol dentro del ISTPET]</td>
+                <td style="text-align: center;">&nbsp;</td>
             </tr>
             {{/if}}
 
@@ -422,11 +426,13 @@
                     <td style="text-align: center;">{{default this.telefono '...'}}</td>
                     <td style="text-align: center;">{{default this.nivel_academico (default this.nivel '...')}}</td>
                     <td style="text-align: center;">{{default this.rol '...'}}</td>
+                    <td style="text-align: center;">{{default this.horas_semanales '0'}} hs</td>
                 </tr>
                 {{/each}}
             {{else}}
             <tr>
                 <td style="text-align: left;"><strong>Docentes</strong><br/>[Indicar Título abreviado, nombres y apellidos completos]</td>
+                <td style="text-align: center;">&nbsp;</td>
                 <td style="text-align: center;">&nbsp;</td>
                 <td style="text-align: center;">&nbsp;</td>
                 <td style="text-align: center;">&nbsp;</td>
@@ -446,11 +452,13 @@
                     <td style="text-align: center;">{{default this.telefono '...'}}</td>
                     <td style="text-align: center;">{{default this.nivel_academico (default this.nivel '...')}}</td>
                     <td style="text-align: center;">{{default this.rol '...'}}</td>
+                    <td style="text-align: center;">{{default this.horas_semanales '0'}} hs</td>
                 </tr>
                 {{/each}}
             {{else}}
             <tr>
                 <td style="text-align: left;"><strong>Estudiantes</strong><br/>[Indicar nombres y apellidos completos]</td>
+                <td style="text-align: center;">&nbsp;</td>
                 <td style="text-align: center;">&nbsp;</td>
                 <td style="text-align: center;">&nbsp;</td>
                 <td style="text-align: center;">&nbsp;</td>
