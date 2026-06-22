@@ -211,6 +211,16 @@ const Sidebar = ({
     }, [location.pathname, fetchSidebarProjects]);
 
     useEffect(() => {
+        const handleProjectsChanged = () => {
+            fetchSidebarProjects();
+        };
+        window.addEventListener('diitra-projects-changed', handleProjectsChanged);
+        return () => {
+            window.removeEventListener('diitra-projects-changed', handleProjectsChanged);
+        };
+    }, [fetchSidebarProjects]);
+
+    useEffect(() => {
         if (location.pathname.startsWith('/analiticas')) {
             setIsAnalyticsOpen(true);
         }

@@ -420,7 +420,7 @@ export const MonitoringPage: React.FC = () => {
 
             {/* Modal para registrar egresos */}
             {showGastoModal && (
-                <div className="modal-overlay z-50" onClick={(e) => { if (e.target === e.currentTarget) setShowGastoModal(false); }}>
+                <div className="modal-overlay" onClick={(e) => { if (e.target === e.currentTarget) setShowGastoModal(false); }}>
                     <div className="modal-card modal-card--sm animate-fade-up max-h-[85vh] overflow-y-auto">
                         <div className="modal-header border-b border-border-thin pb-4">
                             <div>

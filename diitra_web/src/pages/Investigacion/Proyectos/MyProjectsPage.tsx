@@ -68,6 +68,7 @@ const MyProjectsPage: React.FC = () => {
             setProyectos(prev => prev.filter(p => p.uuid !== deletingUuid));
             setDeletingUuid(null);
             setDeletingTitle('');
+            window.dispatchEvent(new CustomEvent('diitra-projects-changed'));
         } catch (err: any) {
             console.error('[DIITRA] Error al eliminar borrador:', err);
             setDeletionError(err.response?.data?.message || 'No se pudo eliminar el borrador de investigación debido a un error del servidor.');
@@ -432,7 +433,7 @@ const MyProjectsPage: React.FC = () => {
             )}
 
             {deletingUuid && (
-                <div className="modal-overlay !z-50 animate-fade-in">
+                <div className="modal-overlay animate-fade-in">
                     <div className="modal-card animate-fade-up">
                         <div className="modal-body">
                             <div className="flex items-start gap-4">

@@ -91,7 +91,10 @@ namespace diitra_api.Controllers
 
                 foreach (var dbColor in stateColorsFromDb)
                 {
-                    stateColors[dbColor.EstadoDestino] = dbColor.ColorHex;
+                    if (dbColor.EstadoDestino != null)
+                    {
+                        stateColors[dbColor.EstadoDestino] = dbColor.ColorHex!;
+                    }
                 }
 
                 var estadosDistribucion = filteredList
