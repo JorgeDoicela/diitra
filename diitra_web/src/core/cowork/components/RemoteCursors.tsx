@@ -20,9 +20,36 @@ interface CursorState {
     selectionRects: Array<{ x: number, y: number, width: number, height: number }>;
 }
 
+// Comparador para evitar re-renders innecesarios en React
+const cursorsAreEqual = (a: CursorState[], b: CursorState[]) => {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        const ca = a[i];
+        const cb = b[i];
+        if (ca.clientId !== cb.clientId ||
+            ca.x !== cb.x ||
+            ca.y !== cb.y ||
+            ca.height !== cb.height ||
+            ca.user.color !== cb.user.color ||
+            ca.user.name !== cb.user.name ||
+            ca.selectionRects.length !== cb.selectionRects.length) {
+            return false;
+        }
+        for (let j = 0; j < ca.selectionRects.length; j++) {
+            const ra = ca.selectionRects[j];
+            const rb = cb.selectionRects[j];
+            if (ra.x !== rb.x || ra.y !== rb.y || ra.width !== rb.width || ra.height !== rb.height) {
+                return false;
+            }
+        }
+    }
+    return true;
+};
+
 export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness, field = 'default' }) => {
     const [cursors, setCursors] = useState<CursorState[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
+    const rafIdRef = useRef<number | null>(null);
 
     const updateCursors = () => {
         if (!editor || !editor.view || !containerRef.current || !awareness) return;
@@ -52,38 +79,67 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             }
         });
 
+        const docSize = editor.state.doc.content.size;
+
         uniqueUsers.forEach(({ clientId, state }) => {
             try {
                 const anchor = state[`anchor_${field}`];
                 const head = state[`head_${field}`] ?? anchor;
+                
+                // Evitar crashes por posiciones desincronizadas u obsoletas
+                if (head < 0 || head > docSize) return;
+
                 const coords = editor.view.coordsAtPos(head);
+                if (!coords) return;
                 
                 const selectionRects: CursorState['selectionRects'] = [];
-                if (anchor !== head) {
+                if (anchor !== head && anchor >= 0 && anchor <= docSize) {
                     const from = Math.min(anchor, head);
                     const to = Math.max(anchor, head);
                     
-                    // Obtener rectángulos de selección reales del DOM para mayor precisión
-                    const range = editor.view.state.doc.slice(from, to);
-                    if (range) {
+                    try {
+                        // Obtener los rangos del DOM y rectángulos exactos por cada línea (Multilínea Perfecto)
+                        const start = editor.view.domAtPos(from);
+                        const end = editor.view.domAtPos(to);
+                        
+                        if (start && end) {
+                            const range = document.createRange();
+                            range.setStart(start.node, start.offset);
+                            range.setEnd(end.node, end.offset);
+                            
+                            const rects = range.getClientRects();
+                            for (let i = 0; i < rects.length; i++) {
+                                const rect = rects[i];
+                                if (rect.width > 0 && rect.height > 0) {
+                                    selectionRects.push({
+                                        x: rect.left - containerRect.left,
+                                        y: rect.top - containerRect.top,
+                                        width: rect.width,
+                                        height: rect.height
+                                    });
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Fallback básico si falla la selección por DOM Range
                         const startCoords = editor.view.coordsAtPos(from);
                         const endCoords = editor.view.coordsAtPos(to);
-
-                        if (startCoords.top === endCoords.top) {
-                            selectionRects.push({
-                                x: startCoords.left - containerRect.left,
-                                y: startCoords.top - containerRect.top,
-                                width: endCoords.left - startCoords.left,
-                                height: startCoords.bottom - startCoords.top
-                            });
-                        } else {
-                            // Multilínea simplificado para evitar flickering
-                            selectionRects.push({
-                                x: startCoords.left - containerRect.left,
-                                y: startCoords.top - containerRect.top,
-                                width: containerRect.width - (startCoords.left - containerRect.left) - 40,
-                                height: startCoords.bottom - startCoords.top
-                            });
+                        if (startCoords && endCoords) {
+                            if (startCoords.top === endCoords.top) {
+                                selectionRects.push({
+                                    x: startCoords.left - containerRect.left,
+                                    y: startCoords.top - containerRect.top,
+                                    width: endCoords.left - startCoords.left,
+                                    height: startCoords.bottom - startCoords.top
+                                });
+                            } else {
+                                selectionRects.push({
+                                    x: startCoords.left - containerRect.left,
+                                    y: startCoords.top - containerRect.top,
+                                    width: containerRect.width - (startCoords.left - containerRect.left) - 40,
+                                    height: startCoords.bottom - startCoords.top
+                                });
+                            }
                         }
                     }
                 }
@@ -91,31 +147,66 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                 nextCursors.push({
                     clientId,
                     user: state.user,
-                    anchor: state.anchor,
+                    anchor,
                     head,
                     x: coords.left - containerRect.left,
                     y: coords.top - containerRect.top,
                     height: coords.bottom - coords.top,
                     selectionRects
                 });
-            } catch (e) {}
+            } catch (e) {
+                // Silently catch errors for individual cursors to not crash others
+            }
         });
 
-        setCursors(nextCursors);
+        setCursors(prev => {
+            if (cursorsAreEqual(prev, nextCursors)) {
+                return prev;
+            }
+            return nextCursors;
+        });
     };
 
     useEffect(() => {
         if (!editor || !awareness) return;
-        const handleUpdate = () => updateCursors();
-        
+
+        const handleUpdate = () => {
+            if (rafIdRef.current) return;
+            rafIdRef.current = requestAnimationFrame(() => {
+                rafIdRef.current = null;
+                updateCursors();
+            });
+        };
+
+        // Escuchar actualizaciones del protocolo de awareness
         awareness.on('update', handleUpdate);
+        
+        // Escuchar redimensiones de la ventana
         window.addEventListener('resize', handleUpdate);
-        const interval = setInterval(handleUpdate, 80); // Mayor frecuencia para suavidad
+        
+        // Escuchar transacciones del editor local (escritura, scroll interno, layout)
+        editor.on('transaction', handleUpdate);
+
+        // Escuchar cambios de tamaño en el editor para cuando colapsan/expanden el sidebar
+        const resizeObserver = new ResizeObserver(() => {
+            handleUpdate();
+        });
+        
+        if (editor.view.dom.parentElement) {
+            resizeObserver.observe(editor.view.dom.parentElement);
+        }
+
+        // Ejecutar primer renderizado al montar
+        handleUpdate();
 
         return () => {
             awareness.off('update', handleUpdate);
             window.removeEventListener('resize', handleUpdate);
-            clearInterval(interval);
+            editor.off('transaction', handleUpdate);
+            resizeObserver.disconnect();
+            if (rafIdRef.current) {
+                cancelAnimationFrame(rafIdRef.current);
+            }
         };
     }, [editor, awareness, field]);
 
@@ -129,7 +220,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
                     {cursor.selectionRects.map((rect, i) => (
                         <div 
                             key={i}
-                            className="absolute opacity-20 transition-all duration-200 rounded-[2px]"
+                            className="absolute opacity-25 rounded-[2px] pointer-events-none"
                             style={{
                                 left: rect.x,
                                 top: rect.y,
