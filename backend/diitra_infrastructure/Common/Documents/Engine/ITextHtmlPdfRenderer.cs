@@ -182,7 +182,100 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             DocumentRenderingMetadata metadata, 
             string? customCss = null)
         {
+            int landscapeStartIndex = htmlContent.IndexOf("<div class=\"landscape-section\"", StringComparison.OrdinalIgnoreCase);
+            int bibliographyIndex = -1;
+            if (landscapeStartIndex != -1)
+            {
+                bibliographyIndex = htmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFÍA", StringComparison.OrdinalIgnoreCase);
+                if (bibliographyIndex == -1)
+                {
+                    bibliographyIndex = htmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFIA", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+
+            if (landscapeStartIndex != -1 && bibliographyIndex > landscapeStartIndex)
+            {
+                try
+                {
+                    Console.WriteLine("[DIITRA Renderer] Detected landscape section. Rendering in split mode.");
+                    
+                    // Split the HTML content
+                    string part1Html = htmlContent.Substring(0, landscapeStartIndex) + "</div>";
+                    string part2Html = htmlContent.Substring(landscapeStartIndex, bibliographyIndex - landscapeStartIndex);
+                    string part3Html = "<div class=\"doc-container\">" + htmlContent.Substring(bibliographyIndex);
+
+                    // Render Part 1 (Portrait)
+                    byte[] pdfBytes1 = await RenderPartAsync(part1Html, PageSize.A4, metadata, customCss, 0);
+                    int pageCount1 = GetPageCount(pdfBytes1);
+                    Console.WriteLine($"[DIITRA Renderer] Part 1 (Portrait) rendered: {pageCount1} pages");
+
+                    // Render Part 2 (Landscape)
+                    byte[] pdfBytes2 = await RenderPartAsync(part2Html, PageSize.A4.Rotate(), metadata, customCss, pageCount1);
+                    int pageCount2 = GetPageCount(pdfBytes2);
+                    Console.WriteLine($"[DIITRA Renderer] Part 2 (Landscape) rendered: {pageCount2} pages");
+
+                    // Render Part 3 (Portrait)
+                    byte[] pdfBytes3 = await RenderPartAsync(part3Html, PageSize.A4, metadata, customCss, pageCount1 + pageCount2);
+                    int pageCount3 = GetPageCount(pdfBytes3);
+                    Console.WriteLine($"[DIITRA Renderer] Part 3 (Portrait) rendered: {pageCount3} pages");
+
+                    // Merge PDFs
+                    var merger = new PdfMergerService();
+                    var mergedPdfBytes = await merger.MergeAsync(new[] { pdfBytes1, pdfBytes2, pdfBytes3 });
+                    
+                    Console.WriteLine($"[DIITRA Renderer] Successfully merged split PDFs. Total pages: {pageCount1 + pageCount2 + pageCount3}");
+                    return mergedPdfBytes;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DIITRA Renderer] Error in split rendering: {ex.Message}. Falling back to standard rendering.");
+                }
+            }
+
+            // --- FALLBACK (Original Standard Rendering) ---
             var fullHtml = WrapInFullHtmlDocument(htmlContent, customCss);
+
+            // ── NUEVO: Detección dinámica de página del cronograma (Dry-run) ──
+            int cronogramaPage = 5; // Valor por defecto / fallback
+            try
+            {
+                using (var tempStream = new MemoryStream())
+                {
+                    using (var tempWriter = new PdfWriter(tempStream))
+                    {
+                        using (var tempPdf = new PdfDocument(tempWriter))
+                        {
+                            tempPdf.SetDefaultPageSize(PageSize.A4);
+                            using (var tempDoc = HtmlConverter.ConvertToDocument(fullHtml, tempPdf, _converterProperties))
+                            {
+                                int numPages = tempPdf.GetNumberOfPages();
+                                for (int i = 1; i <= numPages; i++)
+                                {
+                                    var page = tempPdf.GetPage(i);
+                                    try
+                                    {
+                                        var text = iText.Kernel.Pdf.Canvas.Parser.PdfTextExtractor.GetTextFromPage(page);
+                                        if (text.Contains("7. CRONOGRAMA DE ACTIVIDADES") || text.Contains("CRONOGRAMA DE ACTIVIDADES"))
+                                        {
+                                            cronogramaPage = i;
+                                            Console.WriteLine($"[DIITRA Renderer] Cronograma detectado dinámicamente en la página: {cronogramaPage}");
+                                            break;
+                                        }
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine($"[DIITRA Renderer] Error al extraer texto de la página {i}: {ex.Message}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIITRA Renderer dry-run error]: {ex.Message}");
+            }
 
             using var outputStream = new MemoryStream();
             using var pdfWriter = new PdfWriter(outputStream);
@@ -195,7 +288,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 isDraft: metadata.IsDraft,
                 stationaryImageBase64: metadata.StationaryImageBase64,
                 stationaryImageData: metadata.StationaryImageData,
-                verificationBaseUrl: metadata.VerificationBaseUrl
+                verificationBaseUrl: metadata.VerificationBaseUrl,
+                cronogramaPage: cronogramaPage
             );
 
             try 
@@ -213,6 +307,56 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 Console.WriteLine($"[iText9 Renderer Error]: {ex.Message}");
                 Console.WriteLine(ex.StackTrace);
                 throw;
+            }
+        }
+
+        private async Task<byte[]> RenderPartAsync(
+            string htmlPart,
+            PageSize defaultPageSize,
+            DocumentRenderingMetadata metadata,
+            string? customCss,
+            int pageOffset)
+        {
+            var fullHtml = WrapInFullHtmlDocument(htmlPart, customCss);
+
+            using var outputStream = new MemoryStream();
+            using var pdfWriter = new PdfWriter(outputStream);
+            using var pdfDocument = new PdfDocument(pdfWriter);
+            pdfDocument.SetDefaultPageSize(defaultPageSize);
+
+            var handler = new DocumentEventHandler(
+                metadata.TraceabilityCode,
+                isDraft: metadata.IsDraft,
+                stationaryImageBase64: metadata.StationaryImageBase64,
+                stationaryImageData: metadata.StationaryImageData,
+                verificationBaseUrl: metadata.VerificationBaseUrl,
+                cronogramaPage: -999,
+                pageOffset: pageOffset
+            );
+
+            pdfDocument.AddEventHandler(PdfDocumentEvent.START_PAGE, handler);
+            pdfDocument.AddEventHandler(PdfDocumentEvent.END_PAGE, handler);
+
+            HtmlConverter.ConvertToPdf(fullHtml, pdfDocument, _converterProperties);
+
+            pdfDocument.Close();
+            return await Task.FromResult(outputStream.ToArray());
+        }
+
+        private int GetPageCount(byte[] pdfBytes)
+        {
+            if (pdfBytes == null || pdfBytes.Length == 0) return 0;
+            try
+            {
+                using var readerStream = new MemoryStream(pdfBytes);
+                using var reader = new PdfReader(readerStream);
+                using var pdf = new PdfDocument(reader);
+                return pdf.GetNumberOfPages();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIITRA Renderer] Error getting page count: {ex.Message}");
+                return 0;
             }
         }
 

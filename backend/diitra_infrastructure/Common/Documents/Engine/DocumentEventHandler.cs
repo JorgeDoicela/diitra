@@ -31,6 +31,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         private readonly Image? _stationaryImage;
         private readonly PdfFont? _watermarkFont;
         private readonly string _verificationBaseUrl;
+        private readonly int _cronogramaPage;
+        private readonly int _pageOffset;
 
         public DocumentEventHandler(
             string traceabilityCode, 
@@ -39,8 +41,11 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             bool isDraft = false,
             string? stationaryImageBase64 = null,
             ImageData? stationaryImageData = null,
-            string? verificationBaseUrl = null)
+            string? verificationBaseUrl = null,
+            int cronogramaPage = 5,
+            int pageOffset = 0)
         {
+            _pageOffset = pageOffset;
             _traceabilityCode = traceabilityCode;
             _institutionName = institutionName;
             _lopdpClause = lopdpClause;
@@ -48,6 +53,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             _verificationBaseUrl = string.IsNullOrWhiteSpace(verificationBaseUrl)
                 ? "https://diitra.ist.edu.ec"
                 : verificationBaseUrl.TrimEnd('/');
+            _cronogramaPage = cronogramaPage;
 
             if (stationaryImageData != null)
             {
@@ -92,17 +98,19 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             PdfDocument pdfDoc = docEvent.GetDocument();
             PdfPage page = docEvent.GetPage();
             int pageNumber = pdfDoc.GetPageNumber(page);
+            int logicalPageNumber = pageNumber + _pageOffset;
 
             // En iText 9 .NET, GetType() está sobreescrito para devolver el string del tipo de evento directamente
             string eventType = @event.GetType();
 
-            Console.WriteLine($"[DIITRA EVENT] Page: {pageNumber}, EventType: '{eventType}', MediaBox: {page.GetMediaBox()}");
+            Console.WriteLine($"[DIITRA EVENT] Page: {pageNumber} (Logical: {logicalPageNumber}), EventType: '{eventType}', MediaBox: {page.GetMediaBox()}");
 
             if (eventType == "StartPdfPage")
             {
-                if (pageNumber == 5)
+                if (logicalPageNumber == _cronogramaPage)
                 {
                     page.SetMediaBox(PageSize.A4.Rotate());
+                    page.SetCropBox(PageSize.A4.Rotate());
                 }
                 return;
             }
@@ -113,7 +121,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 Rectangle pageSize = page.GetPageSize();
                 
                 // 0.1 Fondo Institucional (Papel Membretado)
-                if (pageNumber > 1 && _stationaryImage != null)
+                if (logicalPageNumber > 1 && _stationaryImage != null)
                 {
                     try
                     {
@@ -133,7 +141,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 Canvas canvas = new Canvas(pdfCanvas, pageSize);
 
                 // 0. Omitir en la primera página (Portada)
-                if (pageNumber == 1)
+                if (logicalPageNumber == 1)
                 {
                     canvas.Close();
                     return;
@@ -160,7 +168,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 canvas.ShowTextAligned(new Paragraph(_lopdpClause), 
                     36, 25, TextAlignment.LEFT);
                 
-                canvas.ShowTextAligned(new Paragraph($"Página {pageNumber}"), 
+                canvas.ShowTextAligned(new Paragraph($"Página {logicalPageNumber}"), 
                     pageSize.GetRight() - 36, 25, TextAlignment.RIGHT);
 
                 // 4. QR de Verificación Nativo (Esquina inferior derecha)
