@@ -393,5 +393,43 @@ public class UnitTest1
         }
         Assert.Null(badRequest2);
     }
+
+    [Fact]
+    public async Task TestDiagnoseDuplication()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
+        var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
+        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        
+        using var context = new DiitraContext(optionsBuilder.Options);
+        var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid.StartsWith("0b0601fb"));
+        if (project != null)
+        {
+            Console.WriteLine("DIAG PROJECT:");
+            Console.WriteLine($"Uuid: {project.Uuid}");
+            Console.WriteLine($"Titulo: {project.Titulo}");
+            Console.WriteLine($"Metadata: {project.MetadataCacesJson}");
+
+            var instances = await context.DocumentInstances.Where(i => i.EntityUuid == project.Uuid).ToListAsync();
+            Console.WriteLine($"Found {instances.Count} DocumentInstances for project Uuid {project.Uuid}:");
+            foreach (var instance in instances)
+            {
+                Console.WriteLine($"- Instance Uuid: {instance.Uuid}, State: {instance.State}");
+                
+                var coworkDocs = await context.InvCoworkDocumentos.Where(d => d.Uuid.StartsWith(instance.Uuid)).ToListAsync();
+                Console.WriteLine($"  Found {coworkDocs.Count} CoWork docs starting with instance Uuid {instance.Uuid}:");
+                foreach (var coworkDoc in coworkDocs)
+                {
+                    Console.WriteLine($"  * CoWork Doc Uuid: {coworkDoc.Uuid}");
+                    Console.WriteLine($"    ContentHtml: {coworkDoc.ContentHtml}");
+                    Console.WriteLine($"    ContentJson: {coworkDoc.ContentJson}");
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine("DIAG: PROJECT NOT FOUND WITH 0b0601fb");
+        }
+    }
 }
 

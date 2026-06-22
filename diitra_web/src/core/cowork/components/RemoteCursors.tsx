@@ -47,11 +47,21 @@ const cursorsAreEqual = (a: CursorState[], b: CursorState[]) => {
 };
 
 export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness, field = 'default' }) => {
+    console.log(`[RemoteCursors:${field}] Component rendered: editor=${!!editor} awareness=${!!awareness}`);
     const [cursors, setCursors] = useState<CursorState[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
-    const rafIdRef = useRef<number | null>(null);
+    const lastUpdateRef = useRef<number>(0);
+    const timeoutRef = useRef<any>(null);
 
     const updateCursors = () => {
+        const hasContainer = !!containerRef.current;
+        const hasEditor = !!editor;
+        const hasView = !!editor?.view;
+        const hasAwareness = !!awareness;
+        const statesCount = awareness ? awareness.getStates().size : 0;
+        
+        console.log(`[RemoteCursors:${field}] updateCursors called: container=${hasContainer} editor=${hasEditor} view=${hasView} awareness=${hasAwareness} statesCount=${statesCount}`);
+
         if (!editor || !editor.view || !containerRef.current || !awareness) return;
 
         const states = awareness.getStates();
@@ -66,6 +76,8 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             if (clientId === awareness.clientID) return;
             
             const anchor = state[`anchor_${field}`];
+            console.log(`[RemoteCursors:${field}] client ${clientId} user=${state.user?.name} focusedField=${state.focusedField} anchor=${anchor} type=${typeof anchor}`);
+
             if (!state.user || typeof anchor !== 'number') return;
 
             // FILTRAR CURSOR: Dibujar el cursor únicamente si este campo es el enfocado por el usuario remoto
@@ -168,14 +180,36 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
     };
 
     useEffect(() => {
+        console.log(`[RemoteCursors:${field}] useEffect registering listeners: editor=${!!editor} awareness=${!!awareness}`);
         if (!editor || !awareness) return;
 
         const handleUpdate = () => {
-            if (rafIdRef.current) return;
-            rafIdRef.current = requestAnimationFrame(() => {
-                rafIdRef.current = null;
-                updateCursors();
-            });
+            const now = Date.now();
+            const remaining = 30 - (now - lastUpdateRef.current);
+            
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
+
+            if (remaining <= 0) {
+                lastUpdateRef.current = now;
+                try {
+                    updateCursors();
+                } catch (error: any) {
+                    console.error(`[RemoteCursors:${field}] Error inside updateCursors:`, error);
+                }
+            } else {
+                timeoutRef.current = setTimeout(() => {
+                    timeoutRef.current = null;
+                    lastUpdateRef.current = Date.now();
+                    try {
+                        updateCursors();
+                    } catch (error: any) {
+                        console.error(`[RemoteCursors:${field}] Error inside updateCursors:`, error);
+                    }
+                }, remaining);
+            }
         };
 
         // Escuchar actualizaciones del protocolo de awareness
@@ -192,7 +226,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             handleUpdate();
         });
         
-        if (editor.view.dom.parentElement) {
+        if (editor?.view?.dom?.parentElement) {
             resizeObserver.observe(editor.view.dom.parentElement);
         }
 
@@ -204,8 +238,9 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             window.removeEventListener('resize', handleUpdate);
             editor.off('transaction', handleUpdate);
             resizeObserver.disconnect();
-            if (rafIdRef.current) {
-                cancelAnimationFrame(rafIdRef.current);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
             }
         };
     }, [editor, awareness, field]);
