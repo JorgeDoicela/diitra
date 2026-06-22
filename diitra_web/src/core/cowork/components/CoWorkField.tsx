@@ -97,7 +97,39 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         };
 
         const currentYjsVal = readYjs();
-        if (currentYjsVal !== null) {
+        
+        let isDuplicate = false;
+        if (
+            currentYjsVal !== null &&
+            dbValue !== undefined &&
+            dbValue !== null &&
+            dbValue !== ''
+        ) {
+            const strVal = String(dbValue);
+            const yjsStr = String(currentYjsVal);
+            if (yjsStr !== strVal && yjsStr.length > 0 && yjsStr.length % strVal.length === 0) {
+                const repeatCount = yjsStr.length / strVal.length;
+                if (repeatCount >= 2 && strVal.repeat(repeatCount) === yjsStr) {
+                    isDuplicate = true;
+                }
+            }
+        }
+
+        if (isDuplicate) {
+            seededRef.current = true;
+            const isReadOnlyMode = readOnly || cowork.session.readOnly;
+            if (!isReadOnlyMode) {
+                coworkLog(`[CoWorkField:${name}] Cleaned duplicated seed: ${currentYjsVal} -> ${dbValue}`);
+                const stringVal = String(dbValue);
+                ydoc.transact(() => {
+                    ytext.delete(0, ytext.length);
+                    ytext.insert(0, stringVal);
+                }, 'local-dedup');
+                setDisplayValue(dbValue);
+            } else {
+                setDisplayValue(dbValue);
+            }
+        } else if (currentYjsVal !== null) {
             setDisplayValue(currentYjsVal);
         } else if (
             historyLoaded &&
@@ -109,12 +141,23 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             seededRef.current = true;
             const isReadOnlyMode = readOnly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
-                coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time):`, dbValue);
-                const stringVal = String(dbValue);
-                ydoc.transact(() => {
-                    ytext.delete(0, ytext.length);
-                    ytext.insert(0, stringVal);
-                }, 'local-seed');
+                const clientIds = cowork.awareness
+                    ? Array.from(cowork.awareness.getStates().keys()).sort((a, b) => a - b)
+                    : [];
+                const isLeader = clientIds.length === 0 || ydoc.clientID === clientIds[0];
+
+                if (isLeader) {
+                    coworkLog(`[CoWorkField:${name}] Seeding Yjs from DB (one-time, leader):`, dbValue);
+                    const stringVal = String(dbValue);
+                    ydoc.transact(() => {
+                        ytext.delete(0, ytext.length);
+                        ytext.insert(0, stringVal);
+                    }, 'local-seed');
+                } else {
+                    coworkLog(`[CoWorkField:${name}] Postponing seed, not leader (leader is client ${clientIds[0]})`);
+                    const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
+                    setDisplayValue(parsed);
+                }
             } else {
                 const parsed = type === 'checkbox' ? dbValue === 'true' || dbValue === true : dbValue;
                 setDisplayValue(parsed);
