@@ -520,7 +520,7 @@ namespace diitra_api.Controllers
             var userIdRef = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userIdRef)) return Unauthorized();
 
-            var isAdmin = User.FindFirst("es_admin")?.Value == "true";
+            var isAdmin = User.FindFirst("es_admin")?.Value == "true" || User.IsInRole("DIITRA_ADMIN");
             var stats = await _projectOrchestrator.GetDashboardStatsAsync(userIdRef, isAdmin);
             return Ok(stats);
         }

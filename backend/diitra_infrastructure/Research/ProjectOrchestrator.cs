@@ -1033,7 +1033,21 @@ namespace diitra_infrastructure.Research
             }
 
             // ── Actividad Reciente (últimos 10 eventos) ──
-            var ultimosProyectos = await _context.InvProyectos
+            var ultimosProyectosQuery = _context.InvProyectos.AsQueryable();
+            var ultimosInformesQuery = _context.InvInformesAvance.AsQueryable();
+
+            if (!isAdmin && userId != null)
+            {
+                var misIds = _context.InvProyectosProfesores
+                    .Where(pp => pp.IdUsuario == userId.Value).Select(pp => pp.IdProyecto)
+                    .Union(_context.InvProyectosAlumnos
+                    .Where(pa => pa.IdUsuario == userId.Value).Select(pa => pa.IdProyecto));
+
+                ultimosProyectosQuery = ultimosProyectosQuery.Where(p => misIds.Contains(p.IdProyecto));
+                ultimosInformesQuery = ultimosInformesQuery.Where(i => misIds.Contains(i.IdProyecto));
+            }
+
+            var ultimosProyectos = await ultimosProyectosQuery
                 .OrderByDescending(p => p.FechaModificacion ?? p.FechaRegistro)
                 .Take(5)
                 .Select(p => new ActividadRecienteDto
@@ -1046,7 +1060,7 @@ namespace diitra_infrastructure.Research
                 })
                 .ToListAsync();
 
-            var ultimosInformesDb = await _context.InvInformesAvance
+            var ultimosInformesDb = await ultimosInformesQuery
                 .Include(i => i.IdProyectoNavigation)
                 .OrderByDescending(i => i.IdInforme)
                 .Take(5)
