@@ -14,6 +14,76 @@ interface CoWorkFieldProps {
     onValueChange?: (value: any, meta?: { source?: 'local' | 'remote' }) => void;
     children?: React.ReactNode;
     readOnly?: boolean;
+    mask?: 'date';
+}
+
+function maskDate(value: string, deletedSlash: boolean = false): string {
+    // Mantener solo dígitos y barras diagonales
+    const cleaned = value.replace(/[^\d/]/g, '');
+    
+    // Si el usuario borró la barra diagonal, respetamos esa acción para que pueda seguir borrando hacia atrás
+    if (deletedSlash) {
+        return cleaned.slice(0, 10);
+    }
+    
+    let parts = cleaned.split('/');
+    
+    // Caso 1: Se ha escrito el año pegado al mes (ej: 24/122 -> 24/12/2)
+    if (parts.length === 2 && parts[1].length > 2) {
+        const day = parts[0];
+        const month = parts[1].slice(0, 2);
+        const year = parts[1].slice(2);
+        parts = [day, month, year];
+    }
+    
+    // Caso 2: Se ha escrito el mes pegado al día sin barras (ej: 241 -> 24/1)
+    if (parts.length === 1 && parts[0].length > 2) {
+        const day = parts[0].slice(0, 2);
+        const rest = parts[0].slice(2);
+        if (rest.length > 2) {
+            const month = rest.slice(0, 2);
+            const year = rest.slice(2);
+            parts = [day, month, year];
+        } else {
+            parts = [day, rest];
+        }
+    }
+    
+    // Validar límites de los segmentos
+    if (parts.length > 0 && parts[0]) {
+        // Limitar día a 2 dígitos y un valor coherente (máx 31, no 00)
+        parts[0] = parts[0].slice(0, 2);
+        if (parts[0].length === 2) {
+            const dayNum = parseInt(parts[0], 10);
+            if (dayNum > 31) parts[0] = '31';
+            if (dayNum === 0) parts[0] = '01';
+        }
+    }
+    if (parts.length > 1 && parts[1]) {
+        // Limitar mes a 2 dígitos y un valor coherente (máx 12, no 00)
+        parts[1] = parts[1].slice(0, 2);
+        if (parts[1].length === 2) {
+            const monthNum = parseInt(parts[1], 10);
+            if (monthNum > 12) parts[1] = '12';
+            if (monthNum === 0) parts[1] = '01';
+        }
+    }
+    if (parts.length > 2 && parts[2]) {
+        // Limitar año a 4 dígitos
+        parts[2] = parts[2].slice(0, 4);
+    }
+    
+    // Construir el resultado
+    let result = parts.slice(0, 3).join('/');
+    
+    // Si acaba de terminar de escribir los 2 dígitos de día o mes y no hay barra, auto-agregarla para facilitar la escritura
+    if (parts.length === 1 && parts[0].length === 2 && !value.endsWith('/')) {
+        result = `${parts[0]}/`;
+    } else if (parts.length === 2 && parts[1].length === 2 && !value.endsWith('/')) {
+        result = `${parts[0]}/${parts[1]}/`;
+    }
+    
+    return result.slice(0, 10);
 }
 
 function applyMinimalDiff(ytext: Y.Text, oldVal: string, newVal: string): void {
@@ -56,7 +126,8 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     type = 'text',
     onValueChange,
     children,
-    readOnly
+    readOnly,
+    mask
 }) => {
     const parentFormData = useContext(DocumentDataContext);
     const dbValue = parentFormData ? parentFormData[name] : undefined;
@@ -181,7 +252,12 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     }, [ydoc, name, type, historyLoaded, dbValue, readOnly, cowork.session.readOnly]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+        let newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+        if (mask === 'date' && typeof newValue === 'string') {
+            const isDelete = newValue.length < (displayValue || '').length;
+            const deletedSlash = isDelete && (displayValue || '').endsWith('/') && !newValue.endsWith('/');
+            newValue = maskDate(newValue, deletedSlash);
+        }
         setDisplayValue(newValue);
         onValueChange?.(newValue, { source: 'local' });
 

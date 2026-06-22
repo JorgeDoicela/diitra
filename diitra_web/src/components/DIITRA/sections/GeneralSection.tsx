@@ -411,6 +411,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                     placeholder="dd/mm/aaaa"
+                    mask="date"
                 />
                 <CoWorkField 
                     name="FechaInicio" 
@@ -419,6 +420,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                     placeholder="dd/mm/aaaa"
+                    mask="date"
                 />
                 <CoWorkField 
                     name="FechaFin" 
@@ -427,6 +429,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
                     placeholder="dd/mm/aaaa"
+                    mask="date"
                 />
             </div>
         </div>
