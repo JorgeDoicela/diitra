@@ -118,6 +118,76 @@ function applyMinimalDiff(ytext: Y.Text, oldVal: string, newVal: string): void {
  * The parent's DB value via DocumentDataContext is used ONLY as a one-time
  * seed when Yjs is empty and history has been fully loaded.
  */
+function resolveDbValue(parentFormData: any, name: string): any {
+    if (!parentFormData) return undefined;
+    
+    // Check if the name matches dot-separated path (e.g., HitosCompletados.0.Actividad)
+    if (name.includes('.')) {
+        const parts = name.split('.');
+        let current = parentFormData;
+        for (const part of parts) {
+            if (current == null) return undefined;
+            current = current[part];
+        }
+        return current;
+    }
+
+    // Map list prefixes to list name and field mapping
+    const prefixes = [
+        { key: 'Inv_', listName: 'Investigadores', fields: { nombre: 'Nombre', cedula: 'Cedula', email: 'Email', telefono: 'Telefono', nivel: 'NivelAcademico', rol: 'Rol', horas: 'HorasSemanales' } },
+        { key: 'Cron_', listName: 'Cronograma', fields: { act: 'Actividad', num: 'Numero', rec: 'RecursosNecesarios' } },
+        { key: 'RecDisp_', listName: 'RecursosDisponibles', fields: { desc: 'Descripcion', cant: 'Cantidad' } },
+        { key: 'RecNec_', listName: 'RecursosNecesarios', fields: { desc: 'Descripcion', cant: 'Cantidad', unit: 'CostoUnitario' } },
+        { key: 'Prod_', listName: 'ProductosEsperados', fields: { cant: 'cantidad' } }
+    ];
+
+    for (const prefix of prefixes) {
+        if (name.startsWith(prefix.key)) {
+            const parts = name.split('_');
+            if (parts.length >= 3) {
+                let fieldSuffix = parts[parts.length - 1];
+                let itemId = parts.slice(1, parts.length - 1).join('_');
+                
+                // Check if it's week selection (e.g. Cron_0_sem_5)
+                if (parts.length >= 4 && parts[parts.length - 2] === 'sem') {
+                    fieldSuffix = `sem_${parts[parts.length - 1]}`;
+                    itemId = parts.slice(1, parts.length - 2).join('_');
+                }
+                
+                const list = parentFormData[prefix.listName];
+                if (Array.isArray(list)) {
+                    const item = list.find((x: any, idx: number) => String(x.id) === itemId || String(idx) === itemId);
+                    if (item) {
+                        // Special handling for Cronograma weeks (sem_X)
+                        if (prefix.key === 'Cron_' && fieldSuffix.startsWith('sem_')) {
+                            const weekIdx = parseInt(fieldSuffix.substring(4), 10);
+                            if (Array.isArray(item.Semanas) && weekIdx >= 0 && weekIdx < item.Semanas.length) {
+                                return item.Semanas[weekIdx];
+                            }
+                            return false;
+                        }
+                        
+                        // Special handling for ProductosEsperados type selection (Prod_0_tipo)
+                        if (prefix.key === 'Prod_' && fieldSuffix === 'tipo') {
+                            return item.tipo ?? item.Tipo ?? '';
+                        }
+                        
+                        const targetField = (prefix.fields as any)[fieldSuffix] || fieldSuffix;
+                        if (item[targetField] !== undefined) {
+                            return item[targetField];
+                        }
+                        const capitalized = targetField.charAt(0).toUpperCase() + targetField.slice(1);
+                        const lowercased = targetField.charAt(0).toLowerCase() + targetField.slice(1);
+                        return item[capitalized] ?? item[lowercased];
+                    }
+                }
+            }
+        }
+    }
+
+    return parentFormData[name];
+}
+
 export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     name,
     cowork,
@@ -132,7 +202,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     uppercase
 }) => {
     const parentFormData = useContext(DocumentDataContext);
-    const dbValue = parentFormData ? parentFormData[name] : undefined;
+    const dbValue = parentFormData ? resolveDbValue(parentFormData, name) : undefined;
 
     const { ydoc } = cowork;
     const historyLoaded = cowork.session.lastSyncedAt !== null;

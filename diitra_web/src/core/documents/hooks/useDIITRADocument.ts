@@ -237,8 +237,66 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
             deduplicateYArray(yarray, ydoc, listName);
 
-            const currentArray = yarray.toArray();
-            if (currentArray.length > 0) {
+            const currentArray = yarray.toArray() as any[];
+            if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(initialData.Investigadores)) {
+                const targetArray = initialData.Investigadores.map((dbInv: any, idx: number) => {
+                    const yjsInv = currentArray.find((yInv: any) => 
+                        yInv && yInv.Cedula && dbInv.Cedula && 
+                        yInv.Cedula.trim().toLowerCase() === dbInv.Cedula.trim().toLowerCase()
+                    );
+                    return {
+                        Nombre: dbInv.Nombre ?? '',
+                        Cedula: dbInv.Cedula ?? '',
+                        Email: dbInv.Email ?? '',
+                        NivelAcademico: dbInv.NivelAcademico ?? '',
+                        Rol: dbInv.Rol ?? '',
+                        id: dbInv.id || yjsInv?.id || `db_${idx}`,
+                        Telefono: yjsInv?.Telefono !== undefined ? yjsInv.Telefono : (dbInv.Telefono ?? ''),
+                        HorasSemanales: yjsInv?.HorasSemanales !== undefined ? yjsInv.HorasSemanales : (dbInv.HorasSemanales ?? null),
+                    };
+                });
+
+                const areEqual = (arrA: any[], arrB: any[]) => {
+                    if (arrA.length !== arrB.length) return false;
+                    for (let i = 0; i < arrA.length; i++) {
+                        const a = arrA[i] || {};
+                        const b = arrB[i] || {};
+                        if (
+                            (a.Nombre ?? '') !== (b.Nombre ?? '') ||
+                            (a.Cedula ?? '') !== (b.Cedula ?? '') ||
+                            (a.Email ?? '') !== (b.Email ?? '') ||
+                            (a.NivelAcademico ?? '') !== (b.NivelAcademico ?? '') ||
+                            (a.Rol ?? '') !== (b.Rol ?? '') ||
+                            (a.id ?? '') !== (b.id ?? '') ||
+                            (a.Telefono ?? '') !== (b.Telefono ?? '') ||
+                            (a.HorasSemanales ?? null) !== (b.HorasSemanales ?? null)
+                        ) {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+
+                if (!areEqual(currentArray, targetArray)) {
+                    coworkLog(`[DIITRA] Force-updating Yjs list 'Investigadores' to match DB truth. DB count: ${targetArray.length}, Yjs count: ${currentArray.length}`);
+                    ydoc.transact(() => {
+                        yarray.delete(0, yarray.length);
+                        if (targetArray.length > 0) {
+                            yarray.push(targetArray);
+                        }
+                    }, 'local-hook-force-sync');
+
+                    setFormData(prev => {
+                        if (isEqualValue(prev[listName], targetArray)) return prev;
+                        return { ...prev, [listName]: targetArray };
+                    });
+                } else {
+                    setFormData(prev => {
+                        if (isEqualValue(prev[listName], targetArray)) return prev;
+                        return { ...prev, [listName]: targetArray };
+                    });
+                }
+            } else if (currentArray.length > 0) {
                 const enriched = currentArray.map((item: any, idx) => {
                     if (item && typeof item === 'object' && !item.id) {
                         return { ...item, id: `db_${idx}` };
