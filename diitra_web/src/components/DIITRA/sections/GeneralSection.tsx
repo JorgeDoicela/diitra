@@ -249,6 +249,7 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     label="TEMA / NOMBRE DEL PROYECTO (ESCRIBIR EN MAYÚSCULAS)" 
                     onValueChange={(v, meta) => onUpdate('Titulo', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-xl sm:rounded-2xl px-4 py-3 sm:px-6 sm:py-5 text-sm sm:text-lg font-black text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all uppercase" 
+                    uppercase={true}
                 />
             </div>
 

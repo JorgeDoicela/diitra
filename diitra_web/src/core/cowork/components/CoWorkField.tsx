@@ -15,6 +15,7 @@ interface CoWorkFieldProps {
     children?: React.ReactNode;
     readOnly?: boolean;
     mask?: 'date';
+    uppercase?: boolean;
 }
 
 function maskDate(value: string, deletedSlash: boolean = false): string {
@@ -127,7 +128,8 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     onValueChange,
     children,
     readOnly,
-    mask
+    mask,
+    uppercase
 }) => {
     const parentFormData = useContext(DocumentDataContext);
     const dbValue = parentFormData ? parentFormData[name] : undefined;
@@ -257,6 +259,9 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             const isDelete = newValue.length < (displayValue || '').length;
             const deletedSlash = isDelete && (displayValue || '').endsWith('/') && !newValue.endsWith('/');
             newValue = maskDate(newValue, deletedSlash);
+        }
+        if (uppercase && typeof newValue === 'string') {
+            newValue = newValue.toUpperCase();
         }
         setDisplayValue(newValue);
         onValueChange?.(newValue, { source: 'local' });
