@@ -31,8 +31,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // Helper: valor por defecto si la variable está vacía
             _handlebars.RegisterHelper("default", (output, context, arguments) =>
             {
-                var value = arguments.ElementAtOrDefault(0)?.ToString();
-                var fallback = arguments.ElementAtOrDefault(1)?.ToString() ?? "";
+                var firstArg = arguments.ElementAtOrDefault(0);
+                var secondArg = arguments.ElementAtOrDefault(1);
+
+                var value = (firstArg == null || firstArg.GetType().Name == "UndefinedBindingResult")
+                    ? null
+                    : firstArg.ToString();
+
+                var fallback = (secondArg == null || secondArg.GetType().Name == "UndefinedBindingResult")
+                    ? ""
+                    : secondArg.ToString();
+
                 output.WriteSafeString(string.IsNullOrWhiteSpace(value) ? fallback : value);
             });
 
@@ -42,7 +51,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 decimal total = 0;
                 foreach (var arg in arguments)
                 {
-                    if (decimal.TryParse(arg?.ToString(), out var val))
+                    if (arg != null && arg.GetType().Name != "UndefinedBindingResult" && decimal.TryParse(arg.ToString(), out var val))
                     {
                         total += val;
                     }
@@ -53,19 +62,25 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             // Helper: formatear fecha en español ecuatoriano
             _handlebars.RegisterHelper("fecha_larga", (output, context, arguments) =>
             {
-                if (DateTime.TryParse(arguments.ElementAtOrDefault(0)?.ToString(), out var date))
+                var arg = arguments.ElementAtOrDefault(0);
+                var isUndefined = arg == null || arg.GetType().Name == "UndefinedBindingResult";
+
+                if (!isUndefined && DateTime.TryParse(arg!.ToString(), out var date))
                     output.WriteSafeString(date.ToString("dd 'de' MMMM 'de' yyyy", new CultureInfo("es-EC")));
                 else
-                    output.WriteSafeString(arguments.ElementAtOrDefault(0)?.ToString() ?? "");
+                    output.WriteSafeString("");
             });
 
             // Helper: formatear moneda
             _handlebars.RegisterHelper("moneda", (output, context, arguments) =>
             {
-                if (decimal.TryParse(arguments.ElementAtOrDefault(0)?.ToString(), out var amount))
+                var arg = arguments.ElementAtOrDefault(0);
+                var isUndefined = arg == null || arg.GetType().Name == "UndefinedBindingResult";
+
+                if (!isUndefined && decimal.TryParse(arg!.ToString(), out var amount))
                     output.WriteSafeString($"${amount:N2}");
                 else
-                    output.WriteSafeString(arguments.ElementAtOrDefault(0)?.ToString() ?? "$0.00");
+                    output.WriteSafeString("$0.00");
             });
 
             // Helper: comparación de igualdad (útil para condicionales {{#if (eq a b)}})
