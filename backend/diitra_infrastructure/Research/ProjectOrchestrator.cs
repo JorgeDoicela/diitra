@@ -621,7 +621,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
                 .Include(p => p.InvBibliografiasProyecto)
                 .Include(p => p.InvImpactosProyecto)
-                .Include(p => p.InvProductos)
+                .Include(p => p.InvProductos).ThenInclude(pr => pr.IdTipoProductoNavigation)
                 .Include(p => p.MatrizMarcoLogico)
                 .Include(p => p.InvRecursosDisponibles)
                 .Include(p => p.InvGastos).ThenInclude(g => g.IdItemNavigation)
@@ -865,10 +865,31 @@ namespace diitra_infrastructure.Research
             dto.RecursosNecesarios = p.InvPresupuestoItems.Select(i => new RecursoNecesarioDto
             {
                 Descripcion = i.Detalle,
+                Cantidad = i.Cantidad.ToString(),
                 CostoUnitario = i.ValorUnitario,
                 IdPartida = i.IdPartida,
                 EsGastoCapital = i.EsGastoCapital
             }).ToList();
+            dto.RecursosDisponibles = p.InvRecursosDisponibles.Select(r => new RecursoDisponibleDto
+            {
+                Descripcion = r.Detalle,
+                Cantidad = r.Cantidad.ToString(),
+                Fuente = r.Fuente
+            }).ToList();
+            dto.ProductosEsperados = p.InvProductos.Select(pr => new ProductoEsperadoDto
+            {
+                Tipo = pr.IdTipoProductoNavigation != null ? pr.IdTipoProductoNavigation.Nombre : pr.Titulo,
+                Cantidad = pr.Cantidad.ToString()
+            }).ToList();
+            dto.Impacto = new ImpactoProyectoDto
+            {
+                Social = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 1)?.Descripcion,
+                Cientifico = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 2)?.Descripcion,
+                Economico = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 3)?.Descripcion,
+                Politico = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 4)?.Descripcion,
+                Ambiental = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 5)?.Descripcion,
+                Otro = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 6)?.Descripcion
+            };
             dto.Cronograma = p.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new ActividadCronogramaDto
             {
                 Numero = c.NumeroActividad,
