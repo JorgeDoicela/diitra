@@ -88,7 +88,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 var a = arguments.ElementAtOrDefault(0);
                 var b = arguments.ElementAtOrDefault(1);
-                return a?.ToString() == b?.ToString();
+                var aStr = (a == null || a.GetType().Name == "UndefinedBindingResult") ? string.Empty : a.ToString();
+                var bStr = (b == null || b.GetType().Name == "UndefinedBindingResult") ? string.Empty : b.ToString();
+                return aStr == bStr;
             });
 
             // Helper: negación

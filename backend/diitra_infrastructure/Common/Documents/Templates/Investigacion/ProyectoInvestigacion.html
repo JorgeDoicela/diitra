@@ -698,13 +698,13 @@
         </tr>
         <tr style="text-align: center;">
             <td style="padding: 6px; border: 1px solid #000000; font-weight: bold; font-size: 11pt; background: #ffffff; color: #000000;">
-                {{#if (or (eq fuente_financiamiento 'ISTPET') (and (not (eq fuente_financiamiento 'OTRAS_FUENTES')) (eq (default financiamiento_istpet false) true)))}}X{{else}}&nbsp;{{/if}}
+                {{#if (or (eq fuente_financiamiento 'ISTPET') (and (not (eq fuente_financiamiento 'OTRAS_FUENTES')) financiamiento_istpet))}}X{{else}}&nbsp;{{/if}}
             </td>
             <td style="padding: 6px; border: 1px solid #000000; font-weight: bold; font-size: 11pt; background: #ffffff; color: #000000;">
-                {{#if (or (eq fuente_financiamiento 'OTRAS_FUENTES') (eq (default financiamiento_otras_fuentes false) true))}}X{{else}}&nbsp;{{/if}}
+                {{#if (or (eq fuente_financiamiento 'OTRAS_FUENTES') financiamiento_otras_fuentes)}}X{{else}}&nbsp;{{/if}}
             </td>
             <td style="padding: 6px; border: 1px solid #000000; background: #ffffff; color: #000000;">
-                {{#if (or (eq fuente_financiamiento 'OTRAS_FUENTES') (eq (default financiamiento_otras_fuentes false) true))}}
+                {{#if (or (eq fuente_financiamiento 'OTRAS_FUENTES') financiamiento_otras_fuentes)}}
                     {{default nombre_otra_fuente (default nombres_otras_fuentes '')}}
                 {{else}}
                     &nbsp;
@@ -726,7 +726,7 @@
             </tr>
         </thead>
         <tbody>
-            {{#each (default productos_esperados productos)}}
+            {{#each productos_esperados}}
             <tr>
                 <td style="padding: 8px; border: 1px solid #000000; background: #ffffff; color: #000000;">{{this.tipo}}</td>
                 <td style="padding: 8px; border: 1px solid #000000; background: #ffffff; text-align: center; color: #000000;">{{this.cantidad}}</td>
