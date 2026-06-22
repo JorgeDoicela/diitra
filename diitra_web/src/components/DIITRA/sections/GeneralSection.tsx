@@ -76,6 +76,91 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
         return sublineas.filter((s: any) => (s.id_linea ?? s.idLinea) === lineId);
     }, [selectedLine, sublineas]);
 
+    // Validar fechas del proyecto en tiempo real (presentación, inicio, fin)
+    const dateErrors = React.useMemo(() => {
+        const errors: { FechaPresentacion?: string; FechaInicio?: string; FechaFin?: string } = {};
+        
+        // Obtener la fecha actual local a las 00:00:00
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const presVal = (formData && formData.FechaPresentacion) || '';
+        const inicioVal = (formData && formData.FechaInicio) || '';
+        const finVal = (formData && formData.FechaFin) || '';
+
+        // Función auxiliar para parsear formato dd/mm/aaaa a Date en hora local
+        const parseLocalDate = (dateStr: string): Date | null => {
+            if (!dateStr) return null;
+            const normalized = dateStr.replace(/-/g, '/');
+            const parts = normalized.split('/');
+            if (parts.length !== 3) return null;
+            
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+            if (year < 1000 || year > 9999) return null;
+            if (month < 1 || month > 12) return null;
+
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+                return null;
+            }
+            return date;
+        };
+
+        // 1. Validar Fecha de Presentación
+        if (presVal && presVal.trim() !== '') {
+            if (presVal.length === 10) {
+                const parsed = parseLocalDate(presVal);
+                if (!parsed) {
+                    errors.FechaPresentacion = 'Fecha inválida';
+                }
+            } else {
+                errors.FechaPresentacion = 'Fecha incompleta (dd/mm/aaaa)';
+            }
+        }
+
+        // 2. Validar Fecha de Inicio
+        let parsedInicio: Date | null = null;
+        if (inicioVal && inicioVal.trim() !== '') {
+            if (inicioVal.length === 10) {
+                parsedInicio = parseLocalDate(inicioVal);
+                if (!parsedInicio) {
+                    errors.FechaInicio = 'Fecha inválida';
+                } else if (parsedInicio < today) {
+                    errors.FechaInicio = 'La fecha de inicio no puede ser anterior a la fecha actual';
+                }
+            } else {
+                errors.FechaInicio = 'Fecha incompleta (dd/mm/aaaa)';
+            }
+        }
+
+        // 3. Validar Fecha de Fin
+        if (finVal && finVal.trim() !== '') {
+            if (finVal.length === 10) {
+                const parsedFin = parseLocalDate(finVal);
+                if (!parsedFin) {
+                    errors.FechaFin = 'Fecha inválida';
+                } else if (parsedInicio) {
+                    if (parsedFin <= parsedInicio) {
+                        errors.FechaFin = 'La fecha de fin debe ser posterior a la fecha de inicio';
+                    }
+                } else if (inicioVal && inicioVal.length === 10) {
+                    const backupInicio = parseLocalDate(inicioVal);
+                    if (backupInicio && parsedFin <= backupInicio) {
+                        errors.FechaFin = 'La fecha de fin debe ser posterior a la fecha de inicio';
+                    }
+                }
+            } else {
+                errors.FechaFin = 'Fecha incompleta (dd/mm/aaaa)';
+            }
+        }
+
+        return errors;
+    }, [formData?.FechaPresentacion, formData?.FechaInicio, formData?.FechaFin]);
+
     // Handler when the selected research group changes
     const handleGroupChange = (groupName: string, meta?: { source?: 'local' | 'remote' }) => {
         onUpdate('GrupoInvestigacionNombre', groupName, meta);
@@ -404,33 +489,66 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
 
             {/* Fila 7: Fechas Previstas */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="FechaPresentacion" 
-                    cowork={cowork} 
-                    label="Fecha Presentación (día/mes/año)" 
-                    onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                    placeholder="dd/mm/aaaa"
-                    mask="date"
-                />
-                <CoWorkField 
-                    name="FechaInicio" 
-                    cowork={cowork} 
-                    label="Fecha Prevista Inicio (día/mes/año)" 
-                    onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                    placeholder="dd/mm/aaaa"
-                    mask="date"
-                />
-                <CoWorkField 
-                    name="FechaFin" 
-                    cowork={cowork} 
-                    label="Fecha Prevista Fin (día/mes/año)" 
-                    onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
-                    placeholder="dd/mm/aaaa"
-                    mask="date"
-                />
+                <div>
+                    <CoWorkField 
+                        name="FechaPresentacion" 
+                        cowork={cowork} 
+                        label="Fecha Presentación (día/mes/año)" 
+                        onValueChange={(v, meta) => onUpdate('FechaPresentacion', v, meta)}
+                        className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
+                            dateErrors.FechaPresentacion 
+                                ? 'border-red-500/60 focus:border-red-500' 
+                                : 'border-border-thin'
+                        }`} 
+                        placeholder="dd/mm/aaaa"
+                        mask="date"
+                    />
+                    {dateErrors.FechaPresentacion && (
+                        <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                            {dateErrors.FechaPresentacion}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <CoWorkField 
+                        name="FechaInicio" 
+                        cowork={cowork} 
+                        label="Fecha Prevista Inicio (día/mes/año)" 
+                        onValueChange={(v, meta) => onUpdate('FechaInicio', v, meta)}
+                        className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
+                            dateErrors.FechaInicio 
+                                ? 'border-red-500/60 focus:border-red-500' 
+                                : 'border-border-thin'
+                        }`} 
+                        placeholder="dd/mm/aaaa"
+                        mask="date"
+                    />
+                    {dateErrors.FechaInicio && (
+                        <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                            {dateErrors.FechaInicio}
+                        </p>
+                    )}
+                </div>
+                <div>
+                    <CoWorkField 
+                        name="FechaFin" 
+                        cowork={cowork} 
+                        label="Fecha Prevista Fin (día/mes/año)" 
+                        onValueChange={(v, meta) => onUpdate('FechaFin', v, meta)}
+                        className={`w-full bg-bg-deep border rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main ${
+                            dateErrors.FechaFin 
+                                ? 'border-red-500/60 focus:border-red-500' 
+                                : 'border-border-thin'
+                        }`} 
+                        placeholder="dd/mm/aaaa"
+                        mask="date"
+                    />
+                    {dateErrors.FechaFin && (
+                        <p className="text-[9px] font-black text-red-500 uppercase tracking-wider mt-1.5 ml-2 animate-fade-in">
+                            {dateErrors.FechaFin}
+                        </p>
+                    )}
+                </div>
             </div>
         </div>
     );
