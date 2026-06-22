@@ -182,14 +182,22 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             DocumentRenderingMetadata metadata, 
             string? customCss = null)
         {
-            int landscapeStartIndex = htmlContent.IndexOf("<div class=\"landscape-section\"", StringComparison.OrdinalIgnoreCase);
+            var extractedStyles = new StringBuilder();
+            string cleanedHtmlContent = System.Text.RegularExpressions.Regex.Replace(htmlContent, @"<style[^>]*>(.*?)</style>", m => {
+                extractedStyles.AppendLine(m.Groups[1].Value);
+                return string.Empty;
+            }, System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            string mergedCss = (string.IsNullOrEmpty(customCss) ? "" : customCss + "\n") + extractedStyles.ToString();
+
+            int landscapeStartIndex = cleanedHtmlContent.IndexOf("<div class=\"landscape-section\"", StringComparison.OrdinalIgnoreCase);
             int bibliographyIndex = -1;
             if (landscapeStartIndex != -1)
             {
-                bibliographyIndex = htmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFÍA", StringComparison.OrdinalIgnoreCase);
+                bibliographyIndex = cleanedHtmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFÍA", StringComparison.OrdinalIgnoreCase);
                 if (bibliographyIndex == -1)
                 {
-                    bibliographyIndex = htmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFIA", StringComparison.OrdinalIgnoreCase);
+                    bibliographyIndex = cleanedHtmlContent.IndexOf("<div class=\"section-title\">8. BIBLIOGRAFIA", StringComparison.OrdinalIgnoreCase);
                 }
             }
 
@@ -200,22 +208,22 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     Console.WriteLine("[DIITRA Renderer] Detected landscape section. Rendering in split mode.");
                     
                     // Split the HTML content
-                    string part1Html = htmlContent.Substring(0, landscapeStartIndex) + "</div>";
-                    string part2Html = htmlContent.Substring(landscapeStartIndex, bibliographyIndex - landscapeStartIndex);
-                    string part3Html = "<div class=\"doc-container\">" + htmlContent.Substring(bibliographyIndex);
+                    string part1Html = cleanedHtmlContent.Substring(0, landscapeStartIndex) + "</div>";
+                    string part2Html = cleanedHtmlContent.Substring(landscapeStartIndex, bibliographyIndex - landscapeStartIndex);
+                    string part3Html = "<div class=\"doc-container\">" + cleanedHtmlContent.Substring(bibliographyIndex);
 
                     // Render Part 1 (Portrait)
-                    byte[] pdfBytes1 = await RenderPartAsync(part1Html, PageSize.A4, metadata, customCss, 0);
+                    byte[] pdfBytes1 = await RenderPartAsync(part1Html, PageSize.A4, metadata, mergedCss, 0);
                     int pageCount1 = GetPageCount(pdfBytes1);
                     Console.WriteLine($"[DIITRA Renderer] Part 1 (Portrait) rendered: {pageCount1} pages");
 
                     // Render Part 2 (Landscape)
-                    byte[] pdfBytes2 = await RenderPartAsync(part2Html, PageSize.A4.Rotate(), metadata, customCss, pageCount1);
+                    byte[] pdfBytes2 = await RenderPartAsync(part2Html, PageSize.A4.Rotate(), metadata, mergedCss, pageCount1);
                     int pageCount2 = GetPageCount(pdfBytes2);
                     Console.WriteLine($"[DIITRA Renderer] Part 2 (Landscape) rendered: {pageCount2} pages");
 
                     // Render Part 3 (Portrait)
-                    byte[] pdfBytes3 = await RenderPartAsync(part3Html, PageSize.A4, metadata, customCss, pageCount1 + pageCount2);
+                    byte[] pdfBytes3 = await RenderPartAsync(part3Html, PageSize.A4, metadata, mergedCss, pageCount1 + pageCount2);
                     int pageCount3 = GetPageCount(pdfBytes3);
                     Console.WriteLine($"[DIITRA Renderer] Part 3 (Portrait) rendered: {pageCount3} pages");
 
@@ -233,7 +241,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             }
 
             // --- FALLBACK (Original Standard Rendering) ---
-            var fullHtml = WrapInFullHtmlDocument(htmlContent, customCss);
+            var fullHtml = WrapInFullHtmlDocument(cleanedHtmlContent, mergedCss);
 
             // ── NUEVO: Detección dinámica de página del cronograma (Dry-run) ──
             int cronogramaPage = 5; // Valor por defecto / fallback

@@ -204,12 +204,17 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
 
                 var sb = new System.Text.StringBuilder();
+                string[] ganttColors = { "#9ad3de", "#f9cb9c", "#ea9999", "#4f81bd", "#0f243e", "#595959", "#ffc000", "#7030a0" };
+                string activeColor = ganttColors[rowIndex % 8];
+
                 for (int w = 0; w < 48; w++)
                 {
                     bool active = w < semanas.Count && semanas[w];
                     if (active)
                     {
-                        sb.Append("<td class=\"bg-gantt-").Append(rowIndex % 8).Append("\" style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                        sb.Append("<td class=\"bg-gantt-").Append(rowIndex % 8)
+                          .Append("\" style=\"background-color: ").Append(activeColor)
+                          .Append("; border: 1px solid #000000; padding: 0;\"></td>");
                     }
                     else
                     {
@@ -259,7 +264,11 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
 
                         if (active)
                         {
-                            sb.Append("<td class=\"bg-gantt-").Append(r).Append("\" style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                            string[] ganttColors = { "#9ad3de", "#f9cb9c", "#ea9999", "#4f81bd", "#0f243e", "#595959", "#ffc000", "#7030a0" };
+                            string activeColor = ganttColors[r % 8];
+                            sb.Append("<td class=\"bg-gantt-").Append(r)
+                              .Append("\" style=\"background-color: ").Append(activeColor)
+                              .Append("; border: 1px solid #000000; padding: 0;\"></td>");
                         }
                         else
                         {
