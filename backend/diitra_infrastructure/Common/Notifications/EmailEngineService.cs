@@ -804,6 +804,7 @@ namespace diitra_infrastructure.Common.Notifications
                             {
                                 Nombre = pp.IdUsuarioNavigation?.Nombre,
                                 Cedula = pp.IdUsuarioNavigation?.IdSigafi,
+                                Email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "",
                                 Rol = pp.Rol,
                                 NivelAcademico = pp.NivelAcademico,
                                 Telefono = pp.Telefono,
@@ -811,7 +812,8 @@ namespace diitra_infrastructure.Common.Notifications
                                 FechaInicio = pp.FechaInicio,
                                 FechaFin = pp.FechaFin,
                                 MotivoCambio = pp.MotivoCambio,
-                                HorasSemanales = pp.HorasSemanales
+                                HorasSemanales = pp.HorasSemanales,
+                                EsDirector = pp.EsDirector
                             }).ToList();
 
                             project.MetadataCacesJson = JsonSerializer.Serialize(dto);
