@@ -1,13 +1,11 @@
 import React from 'react';
-import { Users, Plus, Trash2 } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 
 interface TeamSectionProps {
     investigadores: any[];
     cowork: CoWorkHandle;
-    onAdd: () => void;
-    onRemove: (index: number) => void;
     onUpdate: (index: number, field: string, value: any) => void;
     formData?: any;
     readOnly?: boolean;
@@ -16,8 +14,6 @@ interface TeamSectionProps {
 export const TeamSection: React.FC<TeamSectionProps> = ({
     investigadores,
     cowork,
-    onAdd,
-    onRemove,
     onUpdate,
     formData,
     readOnly = false

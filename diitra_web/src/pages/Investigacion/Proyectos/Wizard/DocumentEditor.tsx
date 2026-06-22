@@ -132,7 +132,21 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                 const snapshotStr = instanceResult.data.data_snapshot_json || instanceResult.data.dataSnapshotJson || instanceResult.data.DataSnapshotJson;
                 if (snapshotStr) {
                     try {
-                        setDocInstanceData(JSON.parse(snapshotStr));
+                        const parsed = JSON.parse(snapshotStr);
+                        if (parsed) {
+                            if (parsed.Impacto === "[object Object]" || typeof parsed.Impacto === 'string') {
+                                parsed.Impacto = { social: '', cientifico: '', economico: '', politico: '', ambiental: '', otro: '' };
+                            }
+                            if (parsed.FirmasResponsabilidad === "[object Object]" || typeof parsed.FirmasResponsabilidad === 'string') {
+                                parsed.FirmasResponsabilidad = {
+                                    DirectorNombre: '',
+                                    DirectorCargo: 'Director del Proyecto',
+                                    CoordinadorNombre: '',
+                                    CoordinadorCargo: 'Coordinador de Carrera'
+                                };
+                            }
+                        }
+                        setDocInstanceData(parsed);
                     } catch (e) {
                         console.error('[DIITRA] Error parsing dataSnapshotJson:', e);
                         setDocInstanceData({});

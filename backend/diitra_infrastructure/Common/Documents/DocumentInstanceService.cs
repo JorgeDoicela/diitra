@@ -183,6 +183,18 @@ namespace Diitra.Infrastructure.Common.Documents
         public async Task<DocumentInstance> UpdateMetadataAsync(string uuid, string metadataJson, CancellationToken ct = default)
         {
             Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Iniciando para Uuid: {uuid}");
+
+            // Sanitizar la entrada entrante inmediatamente para curar el bug "[object Object]"
+            if (!string.IsNullOrEmpty(metadataJson))
+            {
+                metadataJson = System.Text.RegularExpressions.Regex.Replace(
+                    metadataJson, 
+                    @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""", 
+                    "\"$1\":null",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                );
+            }
+
             var instance = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
             
             if (instance == null)
@@ -223,7 +235,13 @@ namespace Diitra.Infrastructure.Common.Documents
                     {
                         PropertyNameCaseInsensitive = true
                     };
-                    var existingObj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(instance.DataSnapshotJson, options);
+                    string sanitizedSnapshot = System.Text.RegularExpressions.Regex.Replace(
+                        instance.DataSnapshotJson, 
+                        @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""", 
+                        "\"$1\":null",
+                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                    );
+                    var existingObj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(sanitizedSnapshot, options);
                     var incomingObj = !string.IsNullOrEmpty(metadataJson)
                         ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(metadataJson, options)
                         : null;

@@ -119,6 +119,21 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             {
                 // Lógica para el evento END_PAGE
                 Rectangle pageSize = page.GetPageSize();
+                var width = pageSize.GetWidth();
+                var height = pageSize.GetHeight();
+                var rotation = page.GetRotation();
+                
+                // Determinar si la página es landscape considerando CropBox/MediaBox y rotación
+                bool isLandscape = (rotation == 90 || rotation == 270) 
+                    ? (height > width) 
+                    : (width > height);
+                
+                if (page.GetMediaBox() != null && page.GetMediaBox().GetWidth() > page.GetMediaBox().GetHeight())
+                {
+                    isLandscape = true;
+                }
+
+                Console.WriteLine($"[DIITRA EVENT DEBUG] Page: {pageNumber} (Logical: {logicalPageNumber}), Width: {width}, Height: {height}, Rotation: {rotation}, IsLandscape: {isLandscape}");
                 
                 // 0.1 Fondo Institucional (Papel Membretado)
                 if (logicalPageNumber > 1 && _stationaryImage != null)

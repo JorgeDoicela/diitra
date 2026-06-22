@@ -53,10 +53,10 @@
 
     @page landscape-page {
         size: A4 landscape;
-        margin-top: 2cm;
-        margin-bottom: 2cm;
-        margin-left: 2cm;
-        margin-right: 2cm;
+        margin-top: 1.8cm;
+        margin-bottom: 1.5cm;
+        margin-left: 1.2cm;
+        margin-right: 1.2cm;
     }
     
     .landscape-section {
@@ -985,15 +985,7 @@
     <div class="section-title">8. BIBLIOGRAFÍA</div>
     <div style="font-size:11pt; color:#000000; margin-top:5px; margin-bottom:20px; font-family:'Calibri', sans-serif; text-align:left;">
         {{#if bibliografia}}
-            {{#if bibliografia.length}}
-                <ol style="margin:0; padding-left:20px; line-height:1.4;">
-                    {{#each bibliografia}}
-                    <li style="margin-bottom:6px;">{{this}}</li>
-                    {{/each}}
-                </ol>
-            {{else}}
-                <div style="white-space: pre-wrap; line-height:1.4;">{{bibliografia}}</div>
-            {{/if}}
+            {{{bibliografia}}}
         {{else}}
             [El proyecto debe tener mínimo 10 y máximo 15 fuentes bibliográficas]
         {{/if}}

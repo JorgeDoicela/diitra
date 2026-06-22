@@ -232,6 +232,8 @@ namespace Diitra.Application.Research.Dtos
     public class RecursoDisponibleDto
     {
         public string? Descripcion { get; set; }
+
+        [System.Text.Json.Serialization.JsonConverter(typeof(StringOrNumberConverter))]
         public string? Cantidad { get; set; }
         public string? Fuente { get; set; }
     }
@@ -239,6 +241,8 @@ namespace Diitra.Application.Research.Dtos
     public class RecursoNecesarioDto
     {
         public string? Descripcion { get; set; }
+
+        [System.Text.Json.Serialization.JsonConverter(typeof(StringOrNumberConverter))]
         public string? Cantidad { get; set; }
         public decimal CostoUnitario { get; set; }
         public decimal CostoTotal { get; set; }
@@ -249,6 +253,8 @@ namespace Diitra.Application.Research.Dtos
     public class ProductoEsperadoDto
     {
         public string? Tipo { get; set; }
+
+        [System.Text.Json.Serialization.JsonConverter(typeof(StringOrNumberConverter))]
         public string? Cantidad { get; set; }
     }
 
@@ -317,5 +323,31 @@ namespace Diitra.Application.Research.Dtos
         public string? DirectorCargo { get; set; }
         public string? CoordinadorNombre { get; set; }
         public string? CoordinadorCargo { get; set; }
+    }
+
+    public class StringOrNumberConverter : System.Text.Json.Serialization.JsonConverter<string>
+    {
+        public override string? Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+        {
+            if (reader.TokenType == System.Text.Json.JsonTokenType.Number)
+            {
+                using (var doc = System.Text.Json.JsonDocument.ParseValue(ref reader))
+                {
+                    return doc.RootElement.GetRawText();
+                }
+            }
+            if (reader.TokenType == System.Text.Json.JsonTokenType.Null)
+            {
+                return null;
+            }
+            if (reader.TokenType == System.Text.Json.JsonTokenType.True) return "true";
+            if (reader.TokenType == System.Text.Json.JsonTokenType.False) return "false";
+            return reader.GetString();
+        }
+
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, string value, System.Text.Json.JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value);
+        }
     }
 }

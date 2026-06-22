@@ -477,11 +477,16 @@ namespace diitra_api.Controllers
                 {
                     try
                     {
-                        var options = new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        };
-                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(instance.DataSnapshotJson ?? metadataJson, options);
+                        string jsonToDeserialize = instance.DataSnapshotJson ?? metadataJson;
+                        jsonToDeserialize = System.Text.RegularExpressions.Regex.Replace(
+                            jsonToDeserialize, 
+                            @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""", 
+                            "\"$1\":null",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase
+                        );
+
+                        var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                        var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(jsonToDeserialize, options);
                         if (dto != null)
                         {
                             // Si el EntityUuid es "GLOBAL", significa que es una nueva postulación y no un proyecto existente.
