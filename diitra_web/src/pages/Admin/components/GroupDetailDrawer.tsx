@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import api from '../../../api/axios_config';
 import { AudioBubblePlayer } from './AudioBubblePlayer';
+import { coworkLog } from '../../../core/cowork/utils/log';
+
 
 interface GroupMember {
     id_grupo_miembro: number;
@@ -197,7 +199,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                     newConnection.stop();
                     return;
                 }
-                console.log('[GroupsPage] Conexión de colaboración en tiempo real establecida');
+                coworkLog('[GroupsPage] Conexión de colaboración en tiempo real establecida');
 
                 const userName = user?.nombre_completo || 'Usuario';
                 const userUuid = user?.id_referencia || '0';
@@ -211,7 +213,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
                         userUuid,
                         userRole
                     );
-                    console.log('[GroupsPage] Unido a la sala de colaboración:', detailGroup.uuid);
+                    coworkLog('[GroupsPage] Unido a la sala de colaboración:', detailGroup.uuid);
                 } catch (err) {
                     console.error('[GroupsPage] Error al unirse a la sala:', err);
                 }

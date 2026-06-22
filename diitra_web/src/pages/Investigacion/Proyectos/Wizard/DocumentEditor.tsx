@@ -8,6 +8,8 @@ import { useAuth } from '../../../../api/AuthContext';
 
 // ── DIITRA CoWork — importar SOLO desde el índice público ────────
 import { useCoWork, coworkUserFromAuth } from '../../../../core/cowork';
+import { coworkLog } from '../../../../core/cowork/utils/log';
+
 
 // ── DIITRA Documents ─────────────────────────────────────────────
 import { useDIITRADocument } from '../../../../core/documents/hooks/useDIITRADocument';
@@ -122,7 +124,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
             if (instanceResult.data) {
                 const realUuid = instanceResult.data.uuid || instanceResult.data.Uuid;
                 if (realUuid) {
-                    console.log(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
+                    coworkLog(`[DIITRA] DocumentEditor resolved real document instance Uuid: ${realUuid}`);
                     setResolvedUuid(realUuid);
                 }
                 // FALLBACK PATTERN: Se tolera cualquier casing del backend (snake_case, camelCase, PascalCase)
@@ -257,7 +259,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
     // Log para depuración en caliente
     useEffect(() => {
-        console.log(`[DIITRA] DocumentEditorCore cargado para la plantilla: ${templateCode}, ID: ${initialData?.Uuid || 'NUEVO'}, readOnly: ${readOnly}`);
+        coworkLog(`[DIITRA] DocumentEditorCore cargado para la plantilla: ${templateCode}, ID: ${initialData?.Uuid || 'NUEVO'}, readOnly: ${readOnly}`);
     }, [templateCode, initialData?.Uuid, readOnly]);
 
     // ── Merge estable del esquema + datos iniciales (uuid, título, etc.) ──

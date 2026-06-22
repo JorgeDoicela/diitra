@@ -12,6 +12,8 @@ import {
 import type { CoWorkHandle } from '../../core/cowork/types';
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
+import { coworkLog } from '../../core/cowork/utils/log';
+
 
 interface CollaborationSidebarProps {
     instanceUuid: string;
@@ -66,9 +68,9 @@ const CollaborationSidebar: React.FC<CollaborationSidebarProps> = ({
             setIsLoadingPulse(true);
             try {
                 const normalizedUuid = instanceUuid?.toLowerCase().trim();
-                console.log('[TeamPulse] Fetching pulse for:', normalizedUuid);
+                coworkLog('[TeamPulse] Fetching pulse for:', normalizedUuid);
                 const res = await api.get(`/collaboration/${normalizedUuid}/pulse`);
-                console.log('[TeamPulse] Response activities:', res.data.activities?.length, res.data.activities);
+                coworkLog('[TeamPulse] Response activities:', res.data.activities?.length, res.data.activities);
                 if (res.data.comments) {
                     const mappedComments = res.data.comments.map((c: any) => ({
                         idComentario: c.idComentario ?? c.id_comentario ?? c.idComentario,
