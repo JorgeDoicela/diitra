@@ -478,12 +478,7 @@ namespace diitra_api.Controllers
                     try
                     {
                         string jsonToDeserialize = instance.DataSnapshotJson ?? metadataJson;
-                        jsonToDeserialize = System.Text.RegularExpressions.Regex.Replace(
-                            jsonToDeserialize, 
-                            @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""", 
-                            "\"$1\":null",
-                            System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                        );
+                        jsonToDeserialize = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(jsonToDeserialize);
 
                         var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                         var dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(jsonToDeserialize, options);

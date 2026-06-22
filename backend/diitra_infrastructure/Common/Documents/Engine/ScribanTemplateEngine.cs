@@ -308,6 +308,60 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             return await Task.FromResult(rendered);
         }
 
+        public static string CleanAndNormalizeJson(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return json;
+
+            // 1. Sanear errores comunes de "[object Object]"
+            json = System.Text.RegularExpressions.Regex.Replace(
+                json,
+                @"\""([a-zA-Z0-9_]+)\""\s*:\s*\""\[object Object\]\""",
+                "\"$1\":null",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase
+            );
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                {
+                    return json;
+                }
+
+                var dict = new Dictionary<string, object>();
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    var val = prop.Value;
+                    if (val.ValueKind == JsonValueKind.String)
+                    {
+                        var strVal = val.GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(strVal) &&
+                            ((strVal.StartsWith("[") && strVal.EndsWith("]")) ||
+                             (strVal.StartsWith("{") && strVal.EndsWith("}"))))
+                        {
+                            try
+                            {
+                                using var nestedDoc = JsonDocument.Parse(strVal);
+                                dict[prop.Name] = nestedDoc.RootElement.Clone();
+                                continue;
+                            }
+                            catch
+                            {
+                                // Si falla, dejamos el string original
+                            }
+                        }
+                    }
+                    dict[prop.Name] = val.Clone();
+                }
+
+                return JsonSerializer.Serialize(dict);
+            }
+            catch
+            {
+                return json;
+            }
+        }
+
         private Dictionary<string, object?> BuildContext(
             object data,
             Dictionary<string, object?>? extraVariables,
@@ -315,6 +369,9 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
         {
             // 1. Serializar el DTO a JSON
             var json = JsonSerializer.Serialize(data, _jsonOptions);
+            
+            // Clean Yjs stringified nested values in the main JSON
+            json = CleanAndNormalizeJson(json);
             
             // 2. Parsear a JsonDocument para navegar recursivamente
             using var doc = JsonDocument.Parse(json);
@@ -363,10 +420,24 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             dict["pais"] = "Ecuador";
             dict["institucion"] = "DIITRA - Departamento de Investigación e Innovación Traversari";
 
-            // Variables extra pasadas por el controlador/servicio
+            // Variables extra pasadas por el controlador/servicio (normalizadas a snake_case)
             if (extraVariables != null)
+            {
                 foreach (var kv in extraVariables)
-                    dict[kv.Key] = kv.Value;
+                {
+                    if (kv.Value != null)
+                    {
+                        var extraJson = JsonSerializer.Serialize(kv.Value, _jsonOptions);
+                        var normalizedExtraJson = CleanAndNormalizeJson(extraJson);
+                        using var extraDoc = JsonDocument.Parse(normalizedExtraJson);
+                        dict[kv.Key] = ToNativeType(extraDoc.RootElement);
+                    }
+                    else
+                    {
+                        dict[kv.Key] = null;
+                    }
+                }
+            }
 
             return dict;
         }
