@@ -5,6 +5,8 @@ import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
 import { DocumentDataContext } from '../../core/documents/context/DocumentDataContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { coworkLog } from '../../core/cowork/utils/log';
+
 
 /**
  * DIITRA BUILDER CORE — SHELL UNIVERSAL DE DOCUMENTACIÓN v2.0
@@ -489,11 +491,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     const saveDirtyData = useCallback(async (isUnmounting = false) => {
         if (readOnly) {
-            console.log("[DIITRA] saveDirtyData: Documento es sólo lectura, omitiendo guardado.");
+            coworkLog("[DIITRA] saveDirtyData: Documento es sólo lectura, omitiendo guardado.");
             return;
         }
         if (isSavingRef.current) {
-            console.log("[DIITRA] saveDirtyData: Guardado ya en curso, omitiendo.");
+            coworkLog("[DIITRA] saveDirtyData: Guardado ya en curso, omitiendo.");
             return;
         }
         const data = formDataRef.current;
@@ -505,11 +507,11 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
         const currentSnap = snapshotForm(data);
         if (currentSnap === lastSavedSnapshotRef.current) {
-            console.log("[DIITRA] saveDirtyData: Sin cambios que guardar.");
+            coworkLog("[DIITRA] saveDirtyData: Sin cambios que guardar.");
             return;
         }
         if (!data.Uuid && !data.Titulo && !data.Nombre) {
-            console.log("[DIITRA] saveDirtyData: Formulario vacío, omitiendo guardado.");
+            coworkLog("[DIITRA] saveDirtyData: Formulario vacío, omitiendo guardado.");
             return;
         }
 
@@ -527,10 +529,10 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
             setIsSaving(true);
         }
         try {
-            console.log(`[DIITRA] saveDirtyData: Iniciando guardado. isUnmounting=${isUnmounting}. Payload:`, data);
+            coworkLog(`[DIITRA] saveDirtyData: Iniciando guardado. isUnmounting=${isUnmounting}. Payload:`, data);
             await saveFn(data);
             lastSavedSnapshotRef.current = currentSnap;
-            console.log("[DIITRA] saveDirtyData: Guardado exitoso.");
+            coworkLog("[DIITRA] saveDirtyData: Guardado exitoso.");
             if (!isUnmounting) {
                 setLastSaved(new Date().toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
                 addAudit('Sincronización de estado exitosa', 'success');
@@ -550,7 +552,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     const handleSave = useCallback(async () => {
         if (saveTimeoutRef.current) {
-            console.log("[DIITRA] handleSave: Cancelando autoguardado programado por guardado manual inmediato.");
+            coworkLog("[DIITRA] handleSave: Cancelando autoguardado programado por guardado manual inmediato.");
             clearTimeout(saveTimeoutRef.current);
             saveTimeoutRef.current = null;
         }
@@ -561,27 +563,27 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         if (readOnly) return;
         const currentSnap = snapshotForm(formDataRef.current);
         if (currentSnap === lastSavedSnapshotRef.current) {
-            console.log("[DIITRA] useEffect AutoSave: Formulario sin cambios.");
+            coworkLog("[DIITRA] useEffect AutoSave: Formulario sin cambios.");
             return;
         }
         if (!formDataRef.current.Uuid && !formDataRef.current.Titulo && !formDataRef.current.Nombre) {
-            console.log("[DIITRA] useEffect AutoSave: Formulario vacío.");
+            coworkLog("[DIITRA] useEffect AutoSave: Formulario vacío.");
             return;
         }
 
-        console.log("[DIITRA] useEffect AutoSave: Cambios detectados. Programando autoguardado en 3s...");
+        coworkLog("[DIITRA] useEffect AutoSave: Cambios detectados. Programando autoguardado en 3s...");
         if (saveTimeoutRef.current) {
-            console.log("[DIITRA] useEffect AutoSave: Limpiando timeout anterior.");
+            coworkLog("[DIITRA] useEffect AutoSave: Limpiando timeout anterior.");
             clearTimeout(saveTimeoutRef.current);
         }
         saveTimeoutRef.current = setTimeout(() => {
-            console.log("[DIITRA] useEffect AutoSave: Ejecutando autoguardado...");
+            coworkLog("[DIITRA] useEffect AutoSave: Ejecutando autoguardado...");
             handleSave();
         }, 3000);
 
         return () => {
             if (saveTimeoutRef.current) {
-                console.log("[DIITRA] useEffect AutoSave Cleanup: Cancelando autoguardado pendiente.");
+                coworkLog("[DIITRA] useEffect AutoSave Cleanup: Cancelando autoguardado pendiente.");
                 clearTimeout(saveTimeoutRef.current);
             }
         };
@@ -595,14 +597,14 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     useEffect(() => {
         return () => {
-            console.log("[DIITRA] DIITRABuilderShell desmontándose (unmount cleanup)...");
+            coworkLog("[DIITRA] DIITRABuilderShell desmontándose (unmount cleanup)...");
             const data = formDataRef.current;
             const currentSnap = snapshotForm(data);
             if (currentSnap !== lastSavedSnapshotRef.current && (data.Uuid || data.Titulo || data.Nombre)) {
-                console.log("[DIITRA] Guardado forzado al desmontar (unmount).");
+                coworkLog("[DIITRA] Guardado forzado al desmontar (unmount).");
                 saveDirtyDataRef.current(true);
             } else {
-                console.log("[DIITRA] No se requiere guardado al desmontar.");
+                coworkLog("[DIITRA] No se requiere guardado al desmontar.");
             }
         };
     }, []);
@@ -642,7 +644,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     };
 
     const handleRedirectToSettings = async () => {
-        console.log("[DIITRA] handleRedirectToSettings: Guardando y redirigiendo a configuración.");
+        coworkLog("[DIITRA] handleRedirectToSettings: Guardando y redirigiendo a configuración.");
         if (!readOnly && saveTimeoutRef.current) {
             clearTimeout(saveTimeoutRef.current);
             await handleSave();
@@ -652,9 +654,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     };
 
     const handleClose = async () => {
-        console.log("[DIITRA] handleClose: Iniciando cierre.");
+        coworkLog("[DIITRA] handleClose: Iniciando cierre.");
         if (!readOnly && saveTimeoutRef.current) {
-            console.log("[DIITRA] handleClose: Limpiando timeout y forzando handleSave.");
+            coworkLog("[DIITRA] handleClose: Limpiando timeout y forzando handleSave.");
             clearTimeout(saveTimeoutRef.current);
             await handleSave();
         }

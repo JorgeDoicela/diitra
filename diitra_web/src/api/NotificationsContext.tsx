@@ -157,7 +157,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
                     newConnection.stop();
                     return;
                 }
-                console.log('Global Notification Connection established');
+                if (import.meta.env.DEV) console.log('Global Notification Connection established');
                 setIsConnected(true);
                 newConnection.on('ReceiveNotification', (payload?: any) => {
                     fetchNotifications();

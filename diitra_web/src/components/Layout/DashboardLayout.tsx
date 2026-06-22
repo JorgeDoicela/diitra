@@ -53,7 +53,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
 
         const initWebPush = async () => {
             if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-                console.log('Este navegador no soporta notificaciones Web Push.');
+                if (import.meta.env.DEV) console.log('Este navegador no soporta notificaciones Web Push.');
                 localStorage.setItem('web_push_active', 'false');
                 return;
             }
@@ -69,12 +69,12 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                 if (Notification.permission === 'default') {
                     const permission = await Notification.requestPermission();
                     if (permission !== 'granted') {
-                        console.log('El usuario rechazó los permisos de notificación.');
+                        if (import.meta.env.DEV) console.log('El usuario rechazó los permisos de notificación.');
                         localStorage.setItem('web_push_active', 'false');
                         return;
                     }
                 } else if (Notification.permission === 'denied') {
-                    console.log('Permiso de notificación denegado previamente.');
+                    if (import.meta.env.DEV) console.log('Permiso de notificación denegado previamente.');
                     localStorage.setItem('web_push_active', 'false');
                     return;
                 }
@@ -104,7 +104,7 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                         userVisibleOnly: true,
                         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
                     });
-                    console.log('Nueva suscripción Web Push creada:', subscription);
+                    if (import.meta.env.DEV) console.log('Nueva suscripción Web Push creada:', subscription);
                 }
 
                 // 5. Condensar la suscripción para que quepa de forma segura en el límite de 512 caracteres de la BD
@@ -115,14 +115,16 @@ const DashboardLayout: React.FC<LayoutProps> = ({ children, theme, toggleTheme }
                     device_token: tokenString,
                     plataforma: 'web_push'
                 });
-                console.log('Suscripción Web Push sincronizada profesionalmente con el servidor.');
+                if (import.meta.env.DEV) console.log('Suscripción Web Push sincronizada profesionalmente con el servidor.');
                 localStorage.setItem('web_push_active', 'true');
             } catch (error) {
-                console.warn(
-                    'Aviso: No se pudieron activar las notificaciones del navegador en segundo plano (esto es común en Brave, Safari o navegación privada). ' +
-                    'Las notificaciones dentro de la aplicación seguirán funcionando con normalidad.',
-                    error
-                );
+                if (import.meta.env.DEV) {
+                    console.log(
+                        'Aviso: No se pudieron activar las notificaciones del navegador en segundo plano (esto es común en Brave, Safari o navegación privada). ' +
+                        'Las notificaciones dentro de la aplicación seguirán funcionando con normalidad.',
+                        error
+                    );
+                }
                 localStorage.setItem('web_push_active', 'false');
             }
         };

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Editor } from '@tiptap/react';
 import * as awarenessProtocol from 'y-protocols/awareness';
 import type { CoWorkUser } from '../types';
+import { coworkLog } from '../utils/log';
+
 
 interface RemoteCursorsProps {
     editor: Editor | null;
@@ -47,7 +49,7 @@ const cursorsAreEqual = (a: CursorState[], b: CursorState[]) => {
 };
 
 export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness, field = 'default' }) => {
-    console.log(`[RemoteCursors:${field}] Component rendered: editor=${!!editor} awareness=${!!awareness}`);
+    coworkLog(`[RemoteCursors:${field}] Component rendered: editor=${!!editor} awareness=${!!awareness}`);
     const [cursors, setCursors] = useState<CursorState[]>([]);
     const containerRef = useRef<HTMLDivElement>(null);
     const lastUpdateRef = useRef<number>(0);
@@ -60,7 +62,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
         const hasAwareness = !!awareness;
         const statesCount = awareness ? awareness.getStates().size : 0;
         
-        console.log(`[RemoteCursors:${field}] updateCursors called: container=${hasContainer} editor=${hasEditor} view=${hasView} awareness=${hasAwareness} statesCount=${statesCount}`);
+        coworkLog(`[RemoteCursors:${field}] updateCursors called: container=${hasContainer} editor=${hasEditor} view=${hasView} awareness=${hasAwareness} statesCount=${statesCount}`);
 
         if (!editor || !editor.view || !containerRef.current || !awareness) return;
 
@@ -76,7 +78,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
             if (clientId === awareness.clientID) return;
             
             const anchor = state[`anchor_${field}`];
-            console.log(`[RemoteCursors:${field}] client ${clientId} user=${state.user?.name} focusedField=${state.focusedField} anchor=${anchor} type=${typeof anchor}`);
+            coworkLog(`[RemoteCursors:${field}] client ${clientId} user=${state.user?.name} focusedField=${state.focusedField} anchor=${anchor} type=${typeof anchor}`);
 
             if (!state.user || typeof anchor !== 'number') return;
 
@@ -180,7 +182,7 @@ export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ editor, awareness,
     };
 
     useEffect(() => {
-        console.log(`[RemoteCursors:${field}] useEffect registering listeners: editor=${!!editor} awareness=${!!awareness}`);
+        coworkLog(`[RemoteCursors:${field}] useEffect registering listeners: editor=${!!editor} awareness=${!!awareness}`);
         if (!editor || !awareness) return;
 
         const handleUpdate = () => {
