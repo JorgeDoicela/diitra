@@ -12,18 +12,10 @@ interface BibliographySectionProps {
 }
 
 export const BibliographySection: React.FC<BibliographySectionProps> = ({
-    formData,
     cowork,
     onUpdate,
     readOnly = false
 }) => {
-    const signatures = formData?.FirmasResponsabilidad || {
-        DirectorNombre: '',
-        DirectorCargo: 'Director del Proyecto',
-        CoordinadorNombre: '',
-        CoordinadorCargo: 'Coordinador de Carrera'
-    };
-
     return (
         <div className="space-y-12">
             {/* 8. Bibliografía */}
@@ -47,7 +39,7 @@ export const BibliographySection: React.FC<BibliographySectionProps> = ({
                         onChange={(html, meta) => onUpdate('Bibliografia', html, meta)}
                         placeholder="1. Apellidos, A. A. (Año). Título del artículo. Título de la publicación, volumen(número), páginas.&#10;2. ..."
                         className="min-h-[400px] border-none" 
-                        readOnly={readOnly}
+                        readonly={readOnly}
                     />
                 </div>
             </div>
