@@ -134,16 +134,19 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ templateCode, initialDa
                     try {
                         const parsed = JSON.parse(snapshotStr);
                         if (parsed) {
-                            if (parsed.Impacto === "[object Object]" || typeof parsed.Impacto === 'string') {
+                            if (!parsed.Impacto || parsed.Impacto === "[object Object]" || typeof parsed.Impacto === 'string') {
                                 parsed.Impacto = { social: '', cientifico: '', economico: '', politico: '', ambiental: '', otro: '' };
                             }
-                            if (parsed.FirmasResponsabilidad === "[object Object]" || typeof parsed.FirmasResponsabilidad === 'string') {
+                            if (!parsed.FirmasResponsabilidad || parsed.FirmasResponsabilidad === "[object Object]" || typeof parsed.FirmasResponsabilidad === 'string') {
                                 parsed.FirmasResponsabilidad = {
                                     DirectorNombre: '',
                                     DirectorCargo: 'Director del Proyecto',
                                     CoordinadorNombre: '',
                                     CoordinadorCargo: 'Coordinador de Carrera'
                                 };
+                            }
+                            if (parsed.FirmasResponsabilidad && !parsed.FirmasResponsabilidad.DirectorNombre && parsed.DirectorProyecto) {
+                                parsed.FirmasResponsabilidad.DirectorNombre = parsed.DirectorProyecto;
                             }
                         }
                         setDocInstanceData(parsed);

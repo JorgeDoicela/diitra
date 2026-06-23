@@ -22,9 +22,9 @@ public class FirmaElectronicaService : IFirmaElectronicaService
     {
         try 
         {
-            using var ms = new MemoryStream(certificateData);
-            var pkcs12 = new Pkcs12StoreBuilder().Build();
-            pkcs12.Load(ms, password.ToCharArray());
+            // PERFORMANCE: Native .NET X509Certificate2 password validation is extremely fast (under 10ms)
+            // compared to BouncyCastle managed decryption loop which takes seconds.
+            using var cert = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificateData, password);
             return true;
         }
         catch

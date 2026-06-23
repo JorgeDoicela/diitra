@@ -1074,7 +1074,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             </div>
 
                                             <div className="border-t border-border-thin shrink-0" />
-
                                             {/* Sección 2: Firma Electrónica */}
                                             <div className="p-5 flex-1 flex flex-col gap-4 min-h-0 lg:overflow-y-auto custom-scrollbar">
                                                 <h4 className="text-[11px] font-bold uppercase tracking-widest text-text-dim flex items-center gap-2">
@@ -1083,7 +1082,21 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 <p className="text-xs text-text-dim leading-relaxed">Firma digital PAdES con validez legal.</p>
 
                                                 <div className="flex flex-col gap-4 mt-2">
-                                                    {!canSign ? (
+                                                    {projectStatus === 'Enviado' || projectStatus === 'Aprobado' || projectStatus === 'En Ejecución' ? (
+                                                        <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-center space-y-2.5">
+                                                            <div className="flex justify-center">
+                                                                <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-500">
+                                                                    <CheckCircle size={20} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                <p className="text-sm font-semibold text-text-main">Documento Firmado</p>
+                                                                <p className="text-xs text-text-dim leading-relaxed">
+                                                                    Este documento ya ha sido firmado y emitido oficialmente en estado <span className="text-green-500 font-bold">"{projectStatus}"</span>.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ) : !canSign ? (
                                                         <div className="p-4 bg-surface border border-border-thin rounded-xl text-center space-y-2.5">
                                                             <div className="flex justify-center">
                                                                 <div className="icon-circle icon-circle-warning !p-2">

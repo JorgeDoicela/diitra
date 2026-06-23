@@ -79,22 +79,34 @@ namespace diitra_infrastructure.Common.Notifications
             var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
             var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
 
-            using var client = new SmtpClient(host, port)
+            // PERFORMANCE OPTIMIZATION: Send email in the background to avoid blocking the main execution flow
+            // (especially during heavy workflows like document signing or status transitions).
+            _ = Task.Run(async () =>
             {
-                Credentials = new NetworkCredential(user, pass),
-                EnableSsl = true
-            };
+                try
+                {
+                    using var client = new SmtpClient(host, port)
+                    {
+                        Credentials = new NetworkCredential(user, pass),
+                        EnableSsl = true
+                    };
 
-            var mailMessage = new MailMessage
-            {
-                From = new MailAddress(fromEmail, fromName),
-                Subject = title
-            };
-            mailMessage.To.Add(recipient);
-            _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, htmlBody);
+                    using var mailMessage = new MailMessage
+                    {
+                        From = new MailAddress(fromEmail, fromName),
+                        Subject = title
+                    };
+                    mailMessage.To.Add(recipient);
+                    _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, htmlBody);
 
-            await client.SendMailAsync(mailMessage);
-            _logger.LogInformation("Email enviado con exito a {Recipient}", recipient);
+                    await client.SendMailAsync(mailMessage);
+                    _logger.LogInformation("Email enviado con éxito en segundo plano a {Recipient}", recipient);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error al enviar email en segundo plano a {Recipient}", recipient);
+                }
+            });
         }
     }
 }

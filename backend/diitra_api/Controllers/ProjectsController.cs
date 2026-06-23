@@ -157,6 +157,11 @@ namespace diitra_api.Controllers
                     return NotFound(new { error = "El proyecto de investigación especificado no existe." });
                 }
 
+                if (projectDto.Estado == "Enviado" || projectDto.Estado == "Aprobado" || projectDto.Estado == "En Ejecución")
+                {
+                    return BadRequest(new { error = "El proyecto ya ha sido firmado y enviado oficialmente." });
+                }
+
                 // ── CONTROL DE ACCESO: Solo Director de Proyecto o Administrador del Sistema pueden firmar ──
                 var isSystemAdmin = await _projectOrchestrator.IsSystemAdminAsync(idReferencia);
                 var isProjectDirector = await _projectOrchestrator.IsProjectDirectorAsync(projectUuid, idReferencia);
