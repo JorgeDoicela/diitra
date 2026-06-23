@@ -132,11 +132,23 @@ function resolveDbValue(parentFormData: any, name: string): any {
         return current;
     }
 
+    if (name.startsWith('Impacto_')) {
+        const tipo = name.substring(8).toLowerCase();
+        const impactoObj = parentFormData.Impacto ?? parentFormData.impacto;
+        return (impactoObj && typeof impactoObj === 'object') ? impactoObj[tipo] : undefined;
+    }
+
+    if (name.startsWith('Firmas_')) {
+        const fieldName = name.substring(7);
+        const firmasObj = parentFormData.FirmasResponsabilidad ?? parentFormData.firmasResponsabilidad;
+        return (firmasObj && typeof firmasObj === 'object') ? firmasObj[fieldName] : undefined;
+    }
+
     // Map list prefixes to list name and field mapping
     const prefixes = [
         { key: 'Inv_', listName: 'Investigadores', fields: { nombre: 'Nombre', cedula: 'Cedula', email: 'Email', telefono: 'Telefono', nivel: 'NivelAcademico', rol: 'Rol', horas: 'HorasSemanales' } },
         { key: 'Cron_', listName: 'Cronograma', fields: { act: 'Actividad', num: 'Numero', rec: 'RecursosNecesarios' } },
-        { key: 'RecDisp_', listName: 'RecursosDisponibles', fields: { desc: 'Descripcion', cant: 'Cantidad' } },
+        { key: 'RecDisp_', listName: 'RecursosDisponibles', fields: { desc: 'Descripcion', cant: 'Cantidad', fnt: 'Fuente' } },
         { key: 'RecNec_', listName: 'RecursosNecesarios', fields: { desc: 'Descripcion', cant: 'Cantidad', unit: 'CostoUnitario' } },
         { key: 'Prod_', listName: 'ProductosEsperados', fields: { cant: 'cantidad' } }
     ];

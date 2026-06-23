@@ -107,7 +107,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             name="Firmas_DirectorNombre" 
                             cowork={cowork} 
                             label="Título abreviado, Apellidos y Nombres Completos" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, DirectorNombre: v })}
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorNombre: v }))}
                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
                             placeholder="Ej: Mgs. Juan Pérez"
                         />
@@ -115,7 +115,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             name="Firmas_DirectorCargo" 
                             cowork={cowork} 
                             label="Cargo del Elaborador" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, DirectorCargo: v })}
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorCargo: v }))}
                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
                             placeholder="Director del Proyecto"
                         />
@@ -128,7 +128,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             name="Firmas_CoordinadorNombre" 
                             cowork={cowork} 
                             label="Título abreviado, Apellidos y Nombres Completos" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, CoordinadorNombre: v })}
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorNombre: v }))}
                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
                             placeholder="Ej: Mgs. Carlos Gómez"
                         />
@@ -136,7 +136,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             name="Firmas_CoordinadorCargo" 
                             cowork={cowork} 
                             label="Cargo del Aprobador" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', { ...formData.FirmasResponsabilidad, CoordinadorCargo: v })}
+                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorCargo: v }))}
                             className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
                             placeholder="Coordinador de Carrera"
                         />

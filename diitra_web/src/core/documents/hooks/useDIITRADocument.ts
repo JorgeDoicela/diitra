@@ -78,27 +78,30 @@ export function useDIITRADocument<T extends Record<string, any>>(
     const updateField = useCallback((name: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => {
         const source = meta?.source ?? 'local';
 
-        if (source !== 'remote' &&
-            ydoc &&
-            !options.lists?.includes(name) &&
-            !options.richTexts?.includes(name) &&
-            !options.nonCollaborative?.includes(name) &&
-            name.toLowerCase() !== 'uuid' &&
-            name.toLowerCase() !== 'entityuuid') {
-            const ytext = ydoc.getText(name);
-            const stringVal = typeof value === 'object' && value !== null ? JSON.stringify(value) : String(value);
-            if (ytext.toString() !== stringVal) {
-                ydoc.transact(() => {
-                    ytext.delete(0, ytext.length);
-                    ytext.insert(0, stringVal);
-                }, 'local-hook');
-            }
-        }
-
         setFormData(prev => {
-            if (isEqualValue(prev[name], value)) return prev;
-            return { ...prev, [name]: value };
+            const resolvedValue = typeof value === 'function' ? value(prev[name]) : value;
+            if (isEqualValue(prev[name], resolvedValue)) return prev;
+
+            if (source !== 'remote' &&
+                ydoc &&
+                !options.lists?.includes(name) &&
+                !options.richTexts?.includes(name) &&
+                !options.nonCollaborative?.includes(name) &&
+                name.toLowerCase() !== 'uuid' &&
+                name.toLowerCase() !== 'entityuuid') {
+                const ytext = ydoc.getText(name);
+                const stringVal = typeof resolvedValue === 'object' && resolvedValue !== null ? JSON.stringify(resolvedValue) : String(resolvedValue);
+                if (ytext.toString() !== stringVal) {
+                    ydoc.transact(() => {
+                        ytext.delete(0, ytext.length);
+                        ytext.insert(0, stringVal);
+                    }, 'local-hook');
+                }
+            }
+
+            return { ...prev, [name]: resolvedValue };
         });
+
         if (source !== 'remote' && source !== 'system') {
             setLocalChangeCount(c => c + 1);
         }
