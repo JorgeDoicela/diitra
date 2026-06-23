@@ -284,6 +284,7 @@ namespace diitra_infrastructure.Research
                         var alreadyAdded = dto.Investigadores.Any(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim() == user.IdSigafi.Trim());
                         if (!alreadyAdded)
                         {
+                            var phone = await GetUserPhoneFromCatalogAsync(user.IdSigafi, user.TablaSigafi);
                             dto.Investigadores.Add(new InvestigadorDto
                             {
                                 Nombre = user.Nombre,
@@ -291,7 +292,7 @@ namespace diitra_infrastructure.Research
                                 Email = user.EmailInstitucional ?? user.IdSigafi ?? "",
                                 Rol = member.Rol ?? "Co-Investigador",
                                 NivelAcademico = user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel",
-                                Telefono = "",
+                                Telefono = phone,
                                 Activo = true,
                                 FechaInicio = DateTime.Now,
                                 EsDirector = member.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true
@@ -320,6 +321,7 @@ namespace diitra_infrastructure.Research
                         
                         if (!isLinked)
                         {
+                            var phone = await GetUserPhoneFromCatalogAsync(internalUser.IdSigafi, internalUser.TablaSigafi);
                             if (internalUser.TablaSigafi == "alumno")
                             {
                                 _context.InvProyectosAlumnos.Add(new InvProyectoAlumno
@@ -328,7 +330,7 @@ namespace diitra_infrastructure.Research
                                     IdUsuario = internalUser.IdUsuario,
                                     Rol = "Semillerista",
                                     NivelAcademico = "Pregrado",
-                                    Telefono = ""
+                                    Telefono = phone
                                 });
                             }
                             else
@@ -339,7 +341,7 @@ namespace diitra_infrastructure.Research
                                     IdUsuario = internalUser.IdUsuario,
                                     Rol = "Director de Proyecto",
                                     NivelAcademico = "Tercer Nivel",
-                                    Telefono = "",
+                                    Telefono = phone,
                                     EsDirector = true
                                 });
                             }
@@ -695,6 +697,12 @@ namespace diitra_infrastructure.Research
 
             foreach (var pp in p.InvProyectosProfesores)
             {
+                var phone = await GetUserPhoneFromCatalogAsync(pp.IdUsuarioNavigation?.IdSigafi, pp.IdUsuarioNavigation?.TablaSigafi);
+                if (string.IsNullOrEmpty(phone)) phone = pp.Telefono ?? string.Empty;
+
+                var email = await GetUserEmailFromCatalogAsync(pp.IdUsuarioNavigation?.IdSigafi, pp.IdUsuarioNavigation?.TablaSigafi);
+                if (string.IsNullOrEmpty(email)) email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "";
+
                 var cedula = pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
                 var linkedCareers = profCareers
                     .Where(pc => pc.IdProfesor.Trim() == cedula && pc.IdCarreraNavigation != null)
@@ -710,10 +718,10 @@ namespace diitra_infrastructure.Research
                 {
                     Nombre = pp.IdUsuarioNavigation?.Nombre,
                     Cedula = pp.IdUsuarioNavigation?.IdSigafi,
-                    Email = pp.IdUsuarioNavigation?.EmailInstitucional ?? pp.IdUsuarioNavigation?.IdSigafi ?? "",
+                    Email = email,
                     Rol = pp.Rol,
                     NivelAcademico = pp.NivelAcademico,
-                    Telefono = pp.Telefono,
+                    Telefono = phone,
                     Activo = pp.Activo ?? true,
                     FechaInicio = pp.FechaInicio,
                     FechaFin = pp.FechaFin,
@@ -728,6 +736,12 @@ namespace diitra_infrastructure.Research
 
             foreach (var pa in p.InvProyectosAlumnos)
             {
+                var phone = await GetUserPhoneFromCatalogAsync(pa.IdUsuarioNavigation?.IdSigafi, pa.IdUsuarioNavigation?.TablaSigafi);
+                if (string.IsNullOrEmpty(phone)) phone = pa.Telefono ?? string.Empty;
+
+                var email = await GetUserEmailFromCatalogAsync(pa.IdUsuarioNavigation?.IdSigafi, pa.IdUsuarioNavigation?.TablaSigafi);
+                if (string.IsNullOrEmpty(email)) email = pa.IdUsuarioNavigation?.EmailInstitucional ?? pa.IdUsuarioNavigation?.IdSigafi ?? "";
+
                 var cedula = pa.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
                 var sCareerIds = alumCareers
                     .Where(ac => ac.IdAlumno.Trim() == cedula)
@@ -743,10 +757,10 @@ namespace diitra_infrastructure.Research
                 {
                     Nombre = pa.IdUsuarioNavigation?.Nombre,
                     Cedula = pa.IdUsuarioNavigation?.IdSigafi,
-                    Email = pa.IdUsuarioNavigation?.EmailInstitucional ?? pa.IdUsuarioNavigation?.IdSigafi ?? "",
+                    Email = email,
                     Rol = pa.Rol,
                     NivelAcademico = pa.NivelAcademico,
-                    Telefono = pa.Telefono,
+                    Telefono = phone,
                     Activo = pa.Activo ?? true,
                     FechaInicio = pa.FechaInicio,
                     FechaFin = pa.FechaFin,
@@ -1243,7 +1257,7 @@ namespace diitra_infrastructure.Research
                             IdUsuario = persona.IdUsuario,
                             Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
-                            Telefono = inv.Telefono,
+                            Telefono = !string.IsNullOrEmpty(inv.Telefono) ? inv.Telefono : await GetUserPhoneFromCatalogAsync(persona.IdSigafi, persona.TablaSigafi),
                             HorasSemanales = inv.HorasSemanales,
                             Activo = inv.Activo ?? true,
                             FechaInicio = DateTime.Now,
@@ -1319,7 +1333,7 @@ namespace diitra_infrastructure.Research
                             IdUsuario = persona.IdUsuario,
                             Rol = NormalizeRole(inv.Rol),
                             NivelAcademico = inv.NivelAcademico,
-                            Telefono = inv.Telefono,
+                            Telefono = !string.IsNullOrEmpty(inv.Telefono) ? inv.Telefono : await GetUserPhoneFromCatalogAsync(persona.IdSigafi, persona.TablaSigafi),
                             EsDirector = esDirector,
                             HorasSemanales = inv.HorasSemanales,
                             Activo = inv.Activo ?? true,
@@ -2005,13 +2019,14 @@ namespace diitra_infrastructure.Research
                 }
                 else
                 {
+                    var phone = await GetUserPhoneFromCatalogAsync(nuevoDirectorUser.IdSigafi, nuevoDirectorUser.TablaSigafi);
                     _context.InvProyectosProfesores.Add(new InvProyectoProfesor
                     {
                         IdProyecto = project.IdProyecto,
                         IdUsuario = nuevoDirectorUser.IdUsuario,
                         Rol = "Director de Proyecto",
                         NivelAcademico = "Tercer Nivel", // Valor inicial, actualizable por el usuario
-                        Telefono = "",
+                        Telefono = phone,
                         EsDirector = true,
                         Activo = true,
                         FechaInicio = DateTime.Now
@@ -2210,10 +2225,52 @@ namespace diitra_infrastructure.Research
                     g.Estado == "Aprobado");
             }
 
-            return await _context.InvGruposInvestigacion.FirstOrDefaultAsync(g =>
-                g.Uuid == normalized &&
+            return await _context.InvGruposInvestigacion
+                .FirstOrDefaultAsync(g => g.Uuid == normalized &&
                 g.Activo == true &&
                 g.Estado == "Aprobado");
+        }
+
+        private async Task<string> GetUserPhoneFromCatalogAsync(string? idSigafi, string? tablaSigafi)
+        {
+            if (string.IsNullOrEmpty(idSigafi)) return string.Empty;
+            var sigafiTrim = idSigafi.Trim();
+            string phone = string.Empty;
+            if (tablaSigafi == "profesor")
+            {
+                var prof = await _context.Profesores.FirstOrDefaultAsync(p => p.IdProfesor == sigafiTrim);
+                phone = prof != null ? (prof.Celular ?? prof.Telefono ?? string.Empty) : string.Empty;
+            }
+            else if (tablaSigafi == "alumno")
+            {
+                var alum = await _context.Alumnos.FirstOrDefaultAsync(a => a.IdAlumno == sigafiTrim);
+                phone = alum != null ? (alum.Celular ?? alum.Telefono ?? string.Empty) : string.Empty;
+            }
+
+            if (string.IsNullOrEmpty(phone)) return string.Empty;
+            phone = phone.Trim();
+            if (phone.Length == 9 && phone.StartsWith("9"))
+            {
+                phone = "0" + phone;
+            }
+            return phone;
+        }
+
+        private async Task<string> GetUserEmailFromCatalogAsync(string? idSigafi, string? tablaSigafi)
+        {
+            if (string.IsNullOrEmpty(idSigafi)) return string.Empty;
+            var sigafiTrim = idSigafi.Trim();
+            if (tablaSigafi == "profesor")
+            {
+                var prof = await _context.Profesores.FirstOrDefaultAsync(p => p.IdProfesor == sigafiTrim);
+                return prof != null ? (prof.EmailInstitucional ?? prof.Email ?? string.Empty) : string.Empty;
+            }
+            else if (tablaSigafi == "alumno")
+            {
+                var alum = await _context.Alumnos.FirstOrDefaultAsync(a => a.IdAlumno == sigafiTrim);
+                return alum != null ? (alum.EmailInstitucional ?? alum.Email ?? string.Empty) : string.Empty;
+            }
+            return string.Empty;
         }
 
         private async Task<List<InvestigadorDto>> BuildProjectInvestigadoresFromGroupAsync(int groupId, int projectId, List<InvestigadorDto>? incomingInvestigadores = null)
@@ -2277,7 +2334,7 @@ namespace diitra_infrastructure.Research
                     Email = user.EmailInstitucional ?? user.IdSigafi ?? "",
                     Rol = NormalizeRole(existing?.Rol ?? member.Rol ?? (user.TablaSigafi == "alumno" ? "Semillerista" : "Co-Investigador")),
                     NivelAcademico = existing?.NivelAcademico ?? (user.TablaSigafi == "alumno" ? "Pregrado" : "Tercer Nivel"),
-                    Telefono = existing?.Telefono ?? string.Empty,
+                    Telefono = !string.IsNullOrEmpty(existing?.Telefono) ? existing.Telefono : await GetUserPhoneFromCatalogAsync(user.IdSigafi, user.TablaSigafi),
                     Activo = true,
                     HorasSemanales = hours,
                     HorasDisponibles = existing?.HorasDisponibles,
@@ -2320,6 +2377,11 @@ namespace diitra_infrastructure.Research
             foreach (var p in profesores)
             {
                 p.Rol = NormalizeRole(p.Rol);
+                var phone = await GetUserPhoneFromCatalogAsync(p.Cedula, "profesor");
+                if (!string.IsNullOrEmpty(phone))
+                {
+                    p.Telefono = phone;
+                }
             }
 
             var alumnos = await _context.InvProyectosAlumnos
@@ -2345,6 +2407,11 @@ namespace diitra_infrastructure.Research
             foreach (var a in alumnos)
             {
                 a.Rol = NormalizeRole(a.Rol);
+                var phone = await GetUserPhoneFromCatalogAsync(a.Cedula, "alumno");
+                if (!string.IsNullOrEmpty(phone))
+                {
+                    a.Telefono = phone;
+                }
             }
 
             return profesores
