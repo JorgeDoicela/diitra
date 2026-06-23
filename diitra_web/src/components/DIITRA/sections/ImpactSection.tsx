@@ -21,8 +21,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
     onAddProducto,
     onRemoveProducto,
     onUpdateProducto,
-    onUpdateImpacto,
-    onUpdate
+    onUpdateImpacto
 }) => {
     return (
         <div className="space-y-12">

@@ -11,7 +11,6 @@ import {
     Book, 
     Settings, 
     ClipboardCheck, 
-    Library, 
     Info 
 } from 'lucide-react';
 
