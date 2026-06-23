@@ -60,6 +60,15 @@ export const BudgetSection: React.FC<BudgetSectionProps> = ({
                                         onValueChange={(v) => onUpdateDisponible(i, 'Descripcion', v)}
                                         className="flex-1 bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
                                     />
+                                    <div className="w-28">
+                                        <CoWorkField 
+                                            name={`RecDisp_${_r.id || i}_fnt`} 
+                                            cowork={cowork} 
+                                            placeholder="Fuente..."
+                                            onValueChange={(v) => onUpdateDisponible(i, 'Fuente', v)}
+                                            className="w-full bg-bg-deep border border-border-thin rounded-lg px-3 py-2 text-xs" 
+                                        />
+                                    </div>
                                     <div className="w-16">
                                         <CoWorkField 
                                             name={`RecDisp_${_r.id || i}_cant`} 

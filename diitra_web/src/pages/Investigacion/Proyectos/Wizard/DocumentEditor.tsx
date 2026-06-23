@@ -544,7 +544,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             onUpdateItem={(list: string, i: number, f: string, v: any) => updateItem(list, i, f, v)}
 
                             // Handlers específicos para retrocompatibilidad
-                            onAddDisponible={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: '1' })}
+                            onAddDisponible={() => addItem('RecursosDisponibles', { Descripcion: '', Cantidad: '1', Fuente: '' })}
                             onRemoveDisponible={(i: number) => removeItem('RecursosDisponibles', i)}
                             onUpdateDisponible={(i: number, f: string, v: any) => updateItem('RecursosDisponibles', i, f, v)}
                             onAddNecesario={() => addItem('RecursosNecesarios', { Descripcion: '', Cantidad: '1', CostoUnitario: 0, CostoTotal: 0 })}
@@ -553,7 +553,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                             onAddProducto={() => addItem('ProductosEsperados', { tipo: '', cantidad: '1' })}
                             onRemoveProducto={(i: number) => removeItem('ProductosEsperados', i)}
                             onUpdateProducto={(i: number, f: string, v: any) => updateItem('ProductosEsperados', i, f, v)}
-                            onUpdateImpacto={(t: string, v: any) => updateField('Impacto', { ...(formData?.Impacto || {}), [t.toLowerCase()]: v })}
+                            onUpdateImpacto={(t: string, v: any) => updateField('Impacto', (prev: any) => ({ ...(prev || {}), [t.toLowerCase()]: v }))}
 
                             {...listProps}
                         />
