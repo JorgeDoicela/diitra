@@ -9,7 +9,7 @@ import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
 import type { CoWorkHandle, CoWorkUser } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
-import { DocumentDataContext } from '../../documents/context/DocumentDataContext';
+import { DocumentDataContext, DocumentMetadataContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
 import { 
     CheckCircle2, 
@@ -79,6 +79,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
 }) => {
     const ydoc = cowork.ydoc!;
     const awareness = cowork.awareness!;
+    const { readOnlyReason } = useContext(DocumentMetadataContext);
 
     const onChangeRef = React.useRef(onChange);
     const coworkRef = React.useRef(cowork);
@@ -341,7 +342,17 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             {(readonly || session.readOnly) && !session.isOversightObserver && (
                 <div className="px-5 py-2.5 bg-indigo-500/10 border-b border-indigo-500/20 flex items-center gap-2 text-indigo-400 text-[10px] font-semibold tracking-wide uppercase select-none">
                     <Lock size={13} className="shrink-0 text-indigo-400" />
-                    <span>Documento bloqueado: ya fue firmado digitalmente y no puede modificarse.</span>
+                    <span>
+                        {readOnlyReason === 'state' ? (
+                            "Documento bloqueado: ya fue firmado digitalmente y no puede modificarse."
+                        ) : readOnlyReason === 'review' ? (
+                            "Modo lectura: estás visualizando este documento en modo de revisión."
+                        ) : readOnlyReason === 'membership' ? (
+                            "Modo lectura: no tienes permisos de escritura en este proyecto."
+                        ) : (
+                            "Documento en modo de solo lectura."
+                        )}
+                    </span>
                 </div>
             )}
 

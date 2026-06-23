@@ -3,7 +3,7 @@ import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSqu
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
-import { DocumentDataContext } from '../../core/documents/context/DocumentDataContext';
+import { DocumentDataContext, DocumentMetadataContext } from '../../core/documents/context/DocumentDataContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { coworkLog } from '../../core/cowork/utils/log';
 
@@ -758,6 +758,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     return (
         <DocumentDataContext.Provider value={formData}>
+            <DocumentMetadataContext.Provider value={{ readOnlyReason }}>
             <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
                 <div className="bg-surface w-full h-full flex flex-col shadow-2xl overflow-hidden animate-fade-in">
 
@@ -773,11 +774,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         DIITRA <span className="text-text-dim font-light hidden sm:inline">Editor de documentos</span>
                                     </h2>
                                     <p className="text-[8px] md:text-[10px] text-text-dim font-bold uppercase tracking-widest mt-1">v1.0.0</p>
-                                </div>
-                                <div className="h-6 md:h-8 w-[1px] bg-border-thin mx-1 md:mx-2" />
-                                <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-4 py-1 md:py-1.5 bg-green-500/10 border border-green-500/20 rounded-full">
-                                    <div className="w-1.5 md:w-2 h-1.5 md:h-2 rounded-full bg-green-500 animate-pulse" />
-                                    <span className="text-[7px] md:text-[9px] font-black text-green-500 uppercase tracking-widest">Activo</span>
                                 </div>
                             </div>
 
@@ -1259,6 +1255,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                     </div>
                 </div>
             </div>
+            </DocumentMetadataContext.Provider>
         </DocumentDataContext.Provider>
     );
 };

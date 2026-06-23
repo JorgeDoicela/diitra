@@ -1,6 +1,5 @@
 import React from 'react';
 import { Users } from 'lucide-react';
-import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 
 interface TeamSectionProps {
@@ -13,10 +12,7 @@ interface TeamSectionProps {
 
 export const TeamSection: React.FC<TeamSectionProps> = ({
     investigadores,
-    cowork,
-    onUpdate,
-    formData,
-    readOnly = false
+    formData
 }) => {
     const isAssociative = formData?.GrupoInvestigacionTipo === 'SI';
     return (

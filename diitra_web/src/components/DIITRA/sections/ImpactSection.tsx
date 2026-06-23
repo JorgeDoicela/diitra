@@ -11,7 +11,6 @@ interface ImpactSectionProps {
     onRemoveProducto: (index: number) => void;
     onUpdateProducto: (index: number, field: string, value: any) => void;
     onUpdateImpacto: (tipo: string, value: string) => void;
-    formData: any;
     onUpdate: (field: string, value: any) => void;
 }
 
@@ -23,7 +22,6 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
     onRemoveProducto,
     onUpdateProducto,
     onUpdateImpacto,
-    formData,
     onUpdate
 }) => {
     return (
