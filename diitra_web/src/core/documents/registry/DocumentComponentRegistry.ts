@@ -28,6 +28,7 @@ import { TeamSection }            from '../../../components/DIITRA/sections/Team
 import { BudgetSection }          from '../../../components/DIITRA/sections/BudgetSection';
 import { TimelineSection }        from '../../../components/DIITRA/sections/TimelineSection';
 import { ImpactSection }          from '../../../components/DIITRA/sections/ImpactSection';
+import { BibliographySection }    from '../../../components/DIITRA/sections/BibliographySection';
 import { ProgressReportSection }  from '../../../components/DIITRA/sections/ProgressReportSection';
 import { AgnosticSection }        from '../../../components/DIITRA/sections/AgnosticSection';
 
@@ -39,11 +40,12 @@ import { AgnosticSection }        from '../../../components/DIITRA/sections/Agno
 export const DocumentComponentRegistry: Record<string, React.ComponentType<any>> = {
     // ── PROTOCOLO DE INVESTIGACIÓN ─────────────────────────────────
     'identificacion': GeneralSection,
-    'tecnico':        TechnicalSection,
     'equipo':         TeamSection,
+    'tecnico':        TechnicalSection,
     'recursos':       BudgetSection,
-    'cronograma':     TimelineSection,
     'impactos':       ImpactSection,
+    'cronograma':     TimelineSection,
+    'bibliografia':   BibliographySection,
 
     // ── INFORME DE AVANCE ─────────────────────────────────────────
     'ejecucion':      ProgressReportSection,

@@ -27,15 +27,14 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
     const [activeSubTab, setActiveSubTab] = useState('antecedentes');
 
     const subTabs = [
-        { id: 'antecedentes', label: '1. Antecedentes', icon: BookOpen },
-        { id: 'descripcion', label: '2. Descripción', icon: FileText },
-        { id: 'justificacion', label: '3. Justificación', icon: CheckSquare },
-        { id: 'objetivos', label: '4. Objetivos', icon: Target },
-        { id: 'ods', label: '5. ODS (Alineación)', icon: Globe },
-        { id: 'marco_teorico', label: '6. Marco Teórico', icon: Book },
-        { id: 'metodologia', label: '7. Metodología', icon: Settings },
-        { id: 'evaluacion', label: '8. Evaluación', icon: ClipboardCheck },
-        { id: 'bibliografia', label: '8. Bibliografía', icon: Library }
+        { id: 'antecedentes', label: '3.1 Antecedentes', icon: BookOpen },
+        { id: 'descripcion', label: '3.2 Descripción', icon: FileText },
+        { id: 'justificacion', label: '3.3 Justificación', icon: CheckSquare },
+        { id: 'objetivos', label: '3.4 Objetivos', icon: Target },
+        { id: 'ods', label: '3.5 ODS (Alineación)', icon: Globe },
+        { id: 'marco_teorico', label: '3.6 Marco Teórico', icon: Book },
+        { id: 'metodologia', label: '3.7 Metodología', icon: Settings },
+        { id: 'evaluacion', label: '3.8 Evaluación', icon: ClipboardCheck }
     ];
 
     return (
@@ -299,32 +298,9 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                     </div>
                 )}
 
-                {/* 9. Bibliografía */}
-                {activeSubTab === 'bibliografia' && (
-                    <div className="space-y-6 animate-fade-in">
-                        <div className="space-y-1">
-                            <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
-                                <Library size={20} /> 8. Bibliografía
-                            </h3>
-                            <div className="flex gap-2.5 p-4 rounded-xl bg-bg-deep/50 border border-border-thin text-xs text-text-dim items-start">
-                                <Info size={16} className="text-text-main shrink-0 mt-0.5" />
-                                <p className="leading-relaxed font-medium">
-                                    Ingrese las fuentes bibliográficas de sustento científico del proyecto de investigación. <br />
-                                    <span className="text-text-main font-black">REQUISITO: EL PROYECTO DEBE TENER MÍNIMO 10 Y MÁXIMO 15 FUENTES BIBLIOGRÁFICAS EN FORMATO APA 7ª EDICIÓN.</span>
-                                </p>
-                            </div>
-                        </div>
-                        <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                            <CoWorkEditor 
-                                field="Bibliografia" 
-                                cowork={cowork} 
-                                onChange={(html, meta) => onUpdate('Bibliografia', html, meta)}
-                                placeholder="1. Apellidos, A. A. (Año). Título del artículo. Título de la publicación, volumen(número), páginas.&#10;2. ..."
-                                className="min-h-[400px] border-none" 
-                            />
-                        </div>
-                    </div>
-                )}
+
+
+
             </div>
         </div>
     );
