@@ -261,8 +261,8 @@ export function useDIITRADocument<T extends Record<string, any>>(
                         NivelAcademico: dbInv.NivelAcademico ?? '',
                         Rol: dbInv.Rol ?? '',
                         id: dbInv.id || yjsInv?.id || `db_${idx}`,
-                        Telefono: yjsInv?.Telefono !== undefined ? yjsInv.Telefono : (dbInv.Telefono ?? ''),
-                        HorasSemanales: yjsInv?.HorasSemanales !== undefined ? yjsInv.HorasSemanales : (dbInv.HorasSemanales ?? null),
+                        Telefono: dbInv.Telefono ?? '',
+                        HorasSemanales: dbInv.HorasSemanales ?? null,
                     };
                 });
 

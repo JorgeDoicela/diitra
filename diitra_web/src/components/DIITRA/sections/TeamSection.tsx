@@ -46,76 +46,81 @@ export const TeamSection: React.FC<TeamSectionProps> = ({
                     <div key={_inv.id || idx} className="p-8 bg-bg-deep border border-border-thin rounded-3xl shadow-sm animate-fade-in relative">
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
                             <div className="md:col-span-5">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_nombre`} 
-                                    cowork={cowork} 
-                                    label="Nombre y Apellidos"
-                                    onValueChange={(v) => onUpdate(idx, 'Nombre', v)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold"
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs font-bold text-text-main"
+                                    value={_inv.Nombre || ''}
                                     readOnly={true}
                                 />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Nombre y Apellidos
+                                </label>
                             </div>
                             <div className="md:col-span-3">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_cedula`} 
-                                    cowork={cowork} 
-                                    label="Cédula"
-                                    onValueChange={(v) => onUpdate(idx, 'Cedula', v)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    value={_inv.Cedula || ''}
                                     readOnly={true}
                                 />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Cédula
+                                </label>
                             </div>
                             <div className="md:col-span-4">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_email`} 
-                                    cowork={cowork} 
-                                    label="Email"
-                                    onValueChange={(v) => onUpdate(idx, 'Email', v)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    value={_inv.Email || ''}
                                     readOnly={true}
                                 />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Email
+                                </label>
                             </div>
                             <div className="md:col-span-3">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_telefono`} 
-                                    cowork={cowork} 
-                                    label="Teléfono"
-                                    onValueChange={(v) => onUpdate(idx, 'Telefono', v)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    readOnly={readOnly}
-                                />
-                            </div>
-                            <div className="md:col-span-3">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_nivel`} 
-                                    cowork={cowork} 
-                                    label="Nivel Académico"
-                                    onValueChange={(v) => onUpdate(idx, 'NivelAcademico', v)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    placeholder="Ej: Magíster en..."
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    value={_inv.Telefono || ''}
                                     readOnly={true}
                                 />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Teléfono
+                                </label>
                             </div>
                             <div className="md:col-span-3">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_rol`} 
-                                    cowork={cowork} 
-                                    label="Rol"
-                                    onValueChange={(v) => onUpdate(idx, 'Rol', v)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    value={_inv.NivelAcademico || ''}
                                     readOnly={true}
                                 />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Nivel Académico
+                                </label>
                             </div>
                             <div className="md:col-span-3">
-                                <CoWorkField 
-                                    name={`Inv_${_inv.id || idx}_horas`} 
-                                    cowork={cowork} 
-                                    label="Horas Semanales"
-                                    onValueChange={(v) => onUpdate(idx, 'HorasSemanales', v ? parseFloat(v) : null)}
-                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs"
-                                    placeholder="Ej: 12"
-                                    readOnly={readOnly}
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    value={_inv.Rol || ''}
+                                    readOnly={true}
                                 />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Rol
+                                </label>
+                            </div>
+                            <div className="md:col-span-3">
+                                <input 
+                                    type="text"
+                                    className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main"
+                                    value={_inv.HorasSemanales !== undefined && _inv.HorasSemanales !== null ? String(_inv.HorasSemanales) : ''}
+                                    readOnly={true}
+                                />
+                                <label className="text-[9px] font-black text-text-dim uppercase tracking-widest block mt-2 px-2">
+                                    Horas Semanales
+                                </label>
                             </div>
                         </div>
                     </div>
