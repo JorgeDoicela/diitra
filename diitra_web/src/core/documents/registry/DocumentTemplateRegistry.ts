@@ -118,11 +118,12 @@ export const DocumentTemplateRegistry: Record<string, DocumentSchema> = {
         lists: ['Investigadores', 'RecursosDisponibles', 'RecursosNecesarios', 'Cronograma', 'ProductosEsperados'],
         sections: [
             { id: 'identificacion', label: 'Identificación',          iconName: 'BookOpen'   },
-            { id: 'tecnico',        label: 'Plan Técnico',             iconName: 'FileText'   },
             { id: 'equipo',         label: 'Equipo Humano',            iconName: 'Users'      },
+            { id: 'tecnico',        label: 'Plan Técnico',             iconName: 'FileText'   },
             { id: 'recursos',       label: 'Recursos & Financiamiento', iconName: 'DollarSign' },
-            { id: 'cronograma',     label: 'Cronograma (Gantt)',        iconName: 'Calendar'   },
             { id: 'impactos',       label: 'Impacto & Productos',      iconName: 'Target'     },
+            { id: 'cronograma',     label: 'Cronograma (Gantt)',        iconName: 'Calendar'   },
+            { id: 'bibliografia',   label: 'Bibliografía & Firmas',    iconName: 'Library'    },
         ]
     },
 

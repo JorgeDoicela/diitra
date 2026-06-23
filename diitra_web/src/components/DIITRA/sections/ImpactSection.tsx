@@ -51,7 +51,7 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                                 >
                                     <option value="">Seleccione tipo...</option>
                                     {tiposProducto.map(t => (
-                                        <option key={t.idTipoProducto} value={t.nombre}>{t.nombre} ({t.categoria})</option>
+                                        <option key={t.id_tipo_producto || t.idTipoProducto || t.nombre} value={t.nombre}>{t.nombre} ({t.categoria})</option>
                                     ))}
                                 </select>
                             </div>
@@ -91,54 +91,6 @@ export const ImpactSection: React.FC<ImpactSectionProps> = ({
                             />
                         </div>
                     ))}
-                </div>
-            </div>
-
-            {/* 9. Firmas de Responsabilidad */}
-            <div className="p-6 bg-bg-deep border border-border-thin rounded-2xl space-y-6 shadow-sm">
-                <h4 className="text-xs font-black uppercase tracking-widest px-2">9. Firmas de Responsabilidad</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Director */}
-                    <div className="p-5 bg-bg-deep border border-border-thin rounded-xl space-y-4">
-                        <span className="text-[10px] font-black uppercase text-text-dim">Elaborado por: Director del Proyecto</span>
-                        <CoWorkField 
-                            name="Firmas_DirectorNombre" 
-                            cowork={cowork} 
-                            label="Título abreviado, Apellidos y Nombres Completos" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorNombre: v }))}
-                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
-                            placeholder="Ej: Mgs. Juan Pérez"
-                        />
-                        <CoWorkField 
-                            name="Firmas_DirectorCargo" 
-                            cowork={cowork} 
-                            label="Cargo del Elaborador" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), DirectorCargo: v }))}
-                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
-                            placeholder="Director del Proyecto"
-                        />
-                    </div>
-
-                    {/* Coordinador */}
-                    <div className="p-5 bg-bg-deep border border-border-thin rounded-xl space-y-4">
-                        <span className="text-[10px] font-black uppercase text-text-dim">Aprobado por: Coordinador de Carrera</span>
-                        <CoWorkField 
-                            name="Firmas_CoordinadorNombre" 
-                            cowork={cowork} 
-                            label="Título abreviado, Apellidos y Nombres Completos" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorNombre: v }))}
-                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-main font-bold" 
-                            placeholder="Ej: Mgs. Carlos Gómez"
-                        />
-                        <CoWorkField 
-                            name="Firmas_CoordinadorCargo" 
-                            cowork={cowork} 
-                            label="Cargo del Aprobador" 
-                            onValueChange={(v) => onUpdate('FirmasResponsabilidad', (prev: any) => ({ ...(prev || {}), CoordinadorCargo: v }))}
-                            className="w-full bg-bg-deep border border-border-thin rounded-xl px-4 py-3 text-xs text-text-dim" 
-                            placeholder="Coordinador de Carrera"
-                        />
-                    </div>
                 </div>
             </div>
         </div>

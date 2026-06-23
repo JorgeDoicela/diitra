@@ -116,11 +116,12 @@ namespace diitra_api.Controllers
                     sections = new[]
                     {
                         new { id = "identificacion", label = "Identificación", iconName = "BookOpen", config = (object?)null },
-                        new { id = "tecnico", label = "Plan Técnico", iconName = "FileText", config = (object?)null },
                         new { id = "equipo", label = "Equipo Humano", iconName = "Users", config = (object?)null },
+                        new { id = "tecnico", label = "Plan Técnico", iconName = "FileText", config = (object?)null },
                         new { id = "recursos", label = "Recursos & Financiamiento", iconName = "DollarSign", config = (object?)null },
+                        new { id = "impactos", label = "Impacto & Productos", iconName = "Target", config = (object?)null },
                         new { id = "cronograma", label = "Cronograma (Gantt)", iconName = "Calendar", config = (object?)null },
-                        new { id = "impactos", label = "Impacto & Productos", iconName = "Target", config = (object?)null }
+                        new { id = "bibliografia", label = "Bibliografía & Firmas", iconName = "Library", config = (object?)null }
                     }
                 });
             }

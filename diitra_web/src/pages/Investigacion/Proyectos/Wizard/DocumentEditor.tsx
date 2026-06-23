@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader } from 'lucide-react';
-import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart } from 'lucide-react';
+import { BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart, Library, Award, Shield } from 'lucide-react';
 
 import api from '../../../../api/axios_config';
 import { useAuth } from '../../../../api/AuthContext';
@@ -25,7 +25,7 @@ import { buildWorkspacePath, templateCodeToEditParam } from '../../../../core/do
  * módulos de React.
  */
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
-    BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart
+    BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart, Library, Award, Shield
 };
 
 // ─────────────────────────────────────────────────────────────────

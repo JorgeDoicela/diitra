@@ -253,15 +253,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 />
             </div>
 
-            {/* Fila 1: Director y Programa */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <CoWorkField 
-                    name="DirectorProyecto" 
-                    cowork={cowork} 
-                    label="Director del Proyecto (Título abreviado, Apellidos y Nombres)" 
-                    onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
-                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
-                />
+            {/* Fila 1: Programa */}
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <CoWorkField 
                     name="Programa" 
                     cowork={cowork} 
@@ -485,6 +478,17 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     label="Tiempo Estimado de Ejecución (Meses / Semanas)" 
                     onValueChange={(v, meta) => onUpdate('TiempoEjecucion', v, meta)}
                     className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main" 
+                />
+            </div>
+
+            {/* Fila 7.5: Director del Proyecto */}
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
+                <CoWorkField 
+                    name="DirectorProyecto" 
+                    cowork={cowork} 
+                    label="Director del Proyecto (Título abreviado, Apellidos y Nombres)" 
+                    onValueChange={(v, meta) => onUpdate('DirectorProyecto', v, meta)}
+                    className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm font-bold text-text-main placeholder:text-text-dim/30 focus:border-text-main outline-none transition-all" 
                 />
             </div>
 
