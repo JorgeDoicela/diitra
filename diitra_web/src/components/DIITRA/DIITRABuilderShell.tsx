@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle, ChevronLeft, X } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle, ChevronLeft, X, Lock, Unlock } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
-import { DocumentDataContext, DocumentMetadataContext } from '../../core/documents/context/DocumentDataContext';
+import { DocumentDataContext, DocumentMetadataContext, SectionLockContext } from '../../core/documents/context/DocumentDataContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { coworkLog } from '../../core/cowork/utils/log';
 
@@ -77,6 +77,7 @@ interface DIITRABuilderShellProps {
     entityUuid?: string;                                 // ← UUID real del proyecto
     children: (activeTab: string, cowork: CoWorkHandle) => React.ReactNode;
     canSign?: boolean;
+    onUpdateField?: (name: string, value: any) => void;
 }
 
 const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
@@ -94,7 +95,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     projectStatus,
     entityUuid,
     children,
-    canSign = true
+    canSign = true,
+    onUpdateField
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -102,6 +104,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
     const sectionParam = queryParams.get('section');
     const activeTab = sectionParam || sections[0]?.id || 'general';
+    const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
+    const isDirectorOrAdmin = !!canSign;
     const [leftSidebarWidth, setLeftSidebarWidth] = useState<number>(() => {
         const saved = localStorage.getItem('left_sidebar_width');
         return saved ? parseInt(saved, 10) : 320;
@@ -472,6 +476,22 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         setAuditLogs(prev => [{ msg, type }, ...prev].slice(0, 8));
     }, []);
 
+    const handleToggleSectionLock = useCallback((sectionId: string) => {
+        if (onUpdateField) {
+            const currentBlocked = formData?.BlockedSections || {};
+            const isBlocked = !!currentBlocked[sectionId];
+            const newBlocked = { ...currentBlocked, [sectionId]: !isBlocked };
+            onUpdateField('BlockedSections', newBlocked);
+            
+            addAudit(
+                isBlocked
+                    ? `Sección '${sectionId.toUpperCase()}' desbloqueada`
+                    : `Sección '${sectionId.toUpperCase()}' bloqueada para participantes`,
+                isBlocked ? 'info' : 'warning'
+            );
+        }
+    }, [formData?.BlockedSections, onUpdateField, addAudit]);
+
     const snapshotForm = (data: any): string => {
         try {
             const { Uuid, Titulo, Nombre, ...rest } = data;
@@ -759,6 +779,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     return (
         <DocumentDataContext.Provider value={formData}>
             <DocumentMetadataContext.Provider value={{ readOnlyReason }}>
+            <SectionLockContext.Provider value={{
+                formData,
+                readOnly,
+                isDirectorOrAdmin,
+                onUpdateField
+            }}>
             <div className="fixed inset-0 z-[100] bg-bg-deep flex justify-center items-center p-0 md:p-0 backdrop-blur-sm">
                 <div className="bg-surface w-full h-full flex flex-col shadow-2xl overflow-hidden animate-fade-in">
 
@@ -959,9 +985,14 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                             <button
                                                 key={section.id}
                                                 onClick={() => { setActiveTab(section.id); setShowMobileSections(false); }}
-                                                className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
+                                                className={`w-full flex items-center justify-between px-5 py-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${activeTab === section.id ? 'bg-text-main text-bg-deep shadow-xl lg:translate-x-2' : 'text-text-dim hover:bg-bg-deep hover:text-text-main'}`}
                                             >
-                                                {section.icon} {section.label}
+                                                <span className="flex items-center gap-4">
+                                                    {section.icon} {section.label}
+                                                </span>
+                                                {formData?.BlockedSections?.[section.id] && (
+                                                    <Lock size={12} className={activeTab === section.id ? 'text-bg-deep' : 'text-amber-500'} />
+                                                )}
                                             </button>
                                         ))}
                                         <button
@@ -1008,10 +1039,49 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                             {activeTab !== 'output' ? (
                                 <div className="flex-1 p-3 sm:p-6 md:p-12 overflow-y-auto custom-scrollbar">
                                     <div className="w-full mx-auto transition-all duration-300 max-w-[98%] sm:max-w-[94%]">
-                                        <div className="mb-6 md:mb-12">
-                                            <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
-                                            <p className="text-[8px] sm:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
-                                            <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-3 md:mt-6 rounded-full" />
+                                        <div className="mb-6 md:mb-12 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                            <div>
+                                                <h3 className="text-lg sm:text-2xl font-black text-text-main tracking-tighter uppercase">{title}</h3>
+                                                <p className="text-[8px] sm:text-xs text-text-dim font-bold uppercase tracking-[0.2em] mt-1">{subtitle}</p>
+                                                <div className="w-12 sm:w-20 h-1 md:h-1.5 bg-text-main mt-3 md:mt-6 rounded-full" />
+                                            </div>
+
+                                            {/* Compact Section Lock Control */}
+                                            {!readOnly && activeTab !== 'output' && (
+                                                <div className="flex items-center gap-2 bg-surface border border-border-thin px-3 py-1.5 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider self-start sm:self-center select-none">
+                                                    {isSectionBlocked ? (
+                                                        <>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Lock size={12} className="text-amber-500 animate-pulse" />
+                                                                <span className="text-amber-500">Sección Bloqueada</span>
+                                                            </div>
+                                                            {isDirectorOrAdmin && (
+                                                                <button
+                                                                    onClick={() => handleToggleSectionLock(activeTab)}
+                                                                    className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
+                                                                >
+                                                                    Desbloquear
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Unlock size={12} className="text-text-dim" />
+                                                                <span className="text-text-dim">Edición Abierta</span>
+                                                            </div>
+                                                            {isDirectorOrAdmin && (
+                                                                <button
+                                                                    onClick={() => handleToggleSectionLock(activeTab)}
+                                                                    className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
+                                                                >
+                                                                    Bloquear
+                                                                </button>
+                                                            )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {readOnly && (
@@ -1031,6 +1101,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                 </div>
                                             </div>
                                         )}
+
+
                                         {/* El cowork se pasa a los children para que los campos colaborativos lo consuman */}
                                         {children(activeTab, cowork)}
                                     </div>
@@ -1255,6 +1327,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                     </div>
                 </div>
             </div>
+            </SectionLockContext.Provider>
             </DocumentMetadataContext.Provider>
         </DocumentDataContext.Provider>
     );

@@ -38,7 +38,7 @@ export const WorkspaceTitle: React.FC<WorkspaceTitleProps> = ({
                     {currentProject.tieneGrupoInvestigacion && currentProject.grupoInvestigacion && (
                         <div className="flex items-center gap-1.5 mt-2">
                             <span className="badge-vercel bg-brand/5 border border-brand/20 text-brand text-[10px] font-semibold py-1 px-2.5 rounded-full flex items-center gap-1 animate-fade-in">
-                                👥 Grupo: {currentProject.grupoInvestigacion}
+                                Grupo: {currentProject.grupoInvestigacion}
                             </span>
                         </div>
                     )}
