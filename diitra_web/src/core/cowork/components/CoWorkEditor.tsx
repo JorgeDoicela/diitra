@@ -9,7 +9,7 @@ import { buildCoWorkExtensions } from '../extensions/coworkExtensions';
 import type { CoWorkHandle, CoWorkUser } from '../types';
 import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
-import { DocumentDataContext, DocumentMetadataContext } from '../../documents/context/DocumentDataContext';
+import { DocumentDataContext, DocumentMetadataContext, SectionGuardContext, SectionLockContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
 import { 
     CheckCircle2, 
@@ -18,7 +18,8 @@ import {
     Wifi, 
     WifiOff, 
     EyeOff, 
-    Lock 
+    Lock,
+    Unlock 
 } from 'lucide-react';
 
 interface CoWorkEditorProps {
@@ -37,6 +38,7 @@ interface InnerCoWorkEditorProps extends CoWorkEditorProps {
 
 export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
     const parentFormData = useContext(DocumentDataContext);
+    const guardContext = useContext(SectionGuardContext);
     const field = props.field || 'default';
     const dbValue = parentFormData ? parentFormData[field] : undefined;
 
@@ -50,7 +52,7 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
         );
     }
 
-    const isReadOnlyMode = props.readonly || props.cowork.session.readOnly;
+    const isReadOnlyMode = props.readonly || guardContext.readOnly || props.cowork.session.readOnly;
     const xmlFragment = props.cowork.ydoc.getXmlFragment(field);
     const hasYjsContent = xmlFragment.length > 0;
     const useCollaboration = !isReadOnlyMode || hasYjsContent;
@@ -80,6 +82,9 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
     const ydoc = cowork.ydoc!;
     const awareness = cowork.awareness!;
     const { readOnlyReason } = useContext(DocumentMetadataContext);
+    const guardContext = useContext(SectionGuardContext);
+    const lockContext = useContext(SectionLockContext);
+    const isDirectorOrAdmin = lockContext?.isDirectorOrAdmin === true;
 
     const onChangeRef = React.useRef(onChange);
     const coworkRef = React.useRef(cowork);
@@ -276,6 +281,47 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                         </>
                     )}
                 </div>
+
+                {/* Lock Status Pill */}
+                {guardContext?.id && (
+                    <div className="flex items-center gap-2 bg-surface/50 border border-border-thin px-3 py-1 rounded-full animate-fade-in text-[9px] font-bold uppercase tracking-wider select-none">
+                        {guardContext.isBlocked ? (
+                            <>
+                                <div className="flex items-center gap-1.5">
+                                    <Lock size={11} className="text-amber-500 animate-pulse" />
+                                    <span className="text-amber-500">
+                                        Bloqueado
+                                    </span>
+                                </div>
+                                {isDirectorOrAdmin && guardContext.handleToggleLock && (
+                                    <button
+                                        onClick={guardContext.handleToggleLock}
+                                        className="ml-1 px-2.5 py-0.5 bg-text-main hover:opacity-90 text-bg-deep transition-all rounded-full font-black text-[8px]"
+                                    >
+                                        Desbloquear
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center gap-1.5">
+                                    <Unlock size={11} className="text-text-dim" />
+                                    <span className="text-text-dim">
+                                        Abierto
+                                    </span>
+                                </div>
+                                {isDirectorOrAdmin && guardContext.handleToggleLock && (
+                                    <button
+                                        onClick={guardContext.handleToggleLock}
+                                        className="ml-1 px-2.5 py-0.5 border border-border-thin hover:border-text-main hover:text-text-main text-text-dim transition-all rounded-full font-black text-[8px]"
+                                    >
+                                        Bloquear
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
 
                 <div className="flex items-center gap-4">
                     {session.isSyncing && (

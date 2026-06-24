@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import * as Y from 'yjs';
 import type { CoWorkHandle } from '../types';
-import { DocumentDataContext } from '../../documents/context/DocumentDataContext';
+import { DocumentDataContext, SectionGuardContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
 
 interface CoWorkFieldProps {
@@ -214,6 +214,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
     uppercase
 }) => {
     const parentFormData = useContext(DocumentDataContext);
+    const guardContext = useContext(SectionGuardContext);
     const dbValue = parentFormData ? resolveDbValue(parentFormData, name) : undefined;
 
     const { ydoc } = cowork;
@@ -272,7 +273,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
 
         if (isDuplicate) {
             seededRef.current = true;
-            const isReadOnlyMode = readOnly || cowork.session.readOnly;
+            const isReadOnlyMode = readOnly || guardContext.readOnly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
                 coworkLog(`[CoWorkField:${name}] Cleaned duplicated seed: ${currentYjsVal} -> ${dbValue}`);
                 const stringVal = String(dbValue);
@@ -294,7 +295,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
             dbValue !== ''
         ) {
             seededRef.current = true;
-            const isReadOnlyMode = readOnly || cowork.session.readOnly;
+            const isReadOnlyMode = readOnly || guardContext.readOnly || cowork.session.readOnly;
             if (!isReadOnlyMode) {
                 const clientIds = cowork.awareness
                     ? Array.from(cowork.awareness.getStates().keys()).sort((a, b) => a - b)
@@ -333,7 +334,7 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         return () => {
             ytext.unobserve(observer);
         };
-    }, [ydoc, name, type, historyLoaded, dbValue, readOnly, cowork.session.readOnly]);
+    }, [ydoc, name, type, historyLoaded, dbValue, readOnly, guardContext.readOnly, cowork.session.readOnly]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         let newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
@@ -360,14 +361,15 @@ export const CoWorkField: React.FC<CoWorkFieldProps> = ({
         }
     };
 
+    const isFieldReadOnly = readOnly || guardContext.readOnly;
     const commonProps = {
         name,
         placeholder,
         className: type === 'checkbox'
             ? `w-5 h-5 rounded border-border-thin text-text-main focus:ring-text-main/20 cursor-pointer`
             : `${className} transition-all duration-200 focus:ring-2 focus:ring-text-main/20 outline-none`,
-        disabled: cowork.session.readOnly || readOnly,
-        readOnly
+        disabled: cowork.session.readOnly || isFieldReadOnly,
+        readOnly: isFieldReadOnly
     };
 
     return (

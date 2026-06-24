@@ -272,7 +272,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     canSign = true
 }) => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, isAdmin } = useAuth();
 
     // Log para depuración en caliente
     useEffect(() => {
@@ -493,6 +493,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             projectStatus={projectStatus}
             entityUuid={entityUuid}
             canSign={canSign}
+            onUpdateField={updateField}
         >
             {(activeTab, coworkHandle) => {
                 const activeSectionConfig = mappedSections.find((s: any) => s.id === activeTab);
@@ -543,13 +544,22 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                     };
                 }
 
+                // Determinar si esta sección específica está bloqueada por el director
+                const isSectionBlocked = formData?.BlockedSections?.[activeTab] === true;
+                const isDirectorOrAdmin = canSign || isAdmin;
+                
+                // Si la sección está bloqueada y el usuario NO es director/admin, forzar readOnly = true
+                const sectionReadOnly = readOnly || (isSectionBlocked && !isDirectorOrAdmin);
+
                 return (
                     <div className="pb-20">
                         <SectionComponent
-                            readOnly={readOnly}
+                            readOnly={sectionReadOnly}
                             formData={formData}
                             cowork={coworkHandle}
                             onUpdate={updateField}
+                            canSign={canSign}
+                            isAdmin={isAdmin}
                             activeTab={activeTab}
                             templateCode={templateCode}
                             carreras={carreras}
