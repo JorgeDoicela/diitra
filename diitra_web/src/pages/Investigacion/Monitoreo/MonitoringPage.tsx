@@ -272,13 +272,9 @@ export const MonitoringPage: React.FC = () => {
                                                     </span>
                                                 </td>
                                                 <td className="p-4">
-                                                    {/* Representación de 12 semanas para visualización simplificada */}
-                                                    <div className="flex gap-1.5">
-                                                        {Array.from({ length: 12 }).map((_, weekIdx) => {
-                                                            // Simular semanas de GANTT basadas en el índice
-                                                            const isPlanned = idx % 2 === 0 
-                                                                ? (weekIdx >= idx && weekIdx <= idx + 3)
-                                                                : (weekIdx >= idx - 1 && weekIdx <= idx + 1);
+                                                    {/* Representación de semanas del plan de trabajo */}
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {(act.semanas || Array(12).fill(false)).map((isPlanned: boolean, weekIdx: number) => {
                                                             return (
                                                                 <div 
                                                                     key={weekIdx} 

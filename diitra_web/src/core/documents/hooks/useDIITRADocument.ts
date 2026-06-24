@@ -164,6 +164,32 @@ export function useDIITRADocument<T extends Record<string, any>>(
         setLocalChangeCount(c => c + 1);
     }, [ydoc]);
 
+    const reorderItem = useCallback((listName: string, fromIndex: number, toIndex: number) => {
+        if (ydoc) {
+            const yarray = ydoc.getArray(listName);
+            if (fromIndex >= 0 && fromIndex < yarray.length && toIndex >= 0 && toIndex < yarray.length) {
+                const item = yarray.get(fromIndex);
+                ydoc.transact(() => {
+                    yarray.delete(fromIndex, 1);
+                    yarray.insert(toIndex, [item]);
+                }, 'local-hook');
+            }
+        }
+        setFormData(prev => {
+            const list = [...(prev as any)[listName]];
+            const [item] = list.splice(fromIndex, 1);
+            list.splice(toIndex, 0, item);
+            return {
+                ...prev,
+                [listName]: list.map((x: any, idx: number) => ({
+                    ...x,
+                    Numero: idx + 1
+                }))
+            };
+        });
+        setLocalChangeCount(c => c + 1);
+    }, [ydoc]);
+
     useEffect(() => {
         if (!ydoc) return;
 
@@ -363,6 +389,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
         addItem,
         removeItem,
         updateItem,
-        updateField
+        updateField,
+        reorderItem
     };
 }

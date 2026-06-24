@@ -865,93 +865,27 @@
 
         <table class="identificacion-table" style="margin-bottom: 20px; font-size: 8pt; width: 100%;">
             <colgroup>
-                <col style="width: 8%;" />
-                <col style="width: 3%;" />
-                <col style="width: 15%;" />
+                <col style="width: 6%;" />
+                <col style="width: 2%;" />
+                <col style="width: 14%;" />
                 <col style="width: 10%;" />
-                {{generar_columnas_col}}
+                <col style="width: 10%;" />
+                <col style="width: 10%;" />
+                {{generar_columnas_col cronograma 48.0}}
             </colgroup>
             <thead>
                 <tr style="background: #222c57; color: #ffffff; font-weight: bold; text-align: center;">
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Objetivos</th>
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">N°</th>
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Actividades</th>
+                    <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Responsable</th>
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Recursos Necesarios</th>
+                    <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Entregable / Evidencia</th>
                     
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Marzo</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Abril</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Mayo</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Junio</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Julio</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Agosto</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Sept</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Octubre</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Nov</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Dic</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Enero</th>
-                    <th colspan="4" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff;">Feb</th>
+                    {{generar_cabecera_meses fecha_inicio cronograma}}
                 </tr>
                 <tr style="background: #222c57; color: #ffffff; text-align: center; font-size: 6.5pt;">
-                    <!-- Marzo -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Abril -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Mayo -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Junio -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Julio -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Agosto -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Sept -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Octubre -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Nov -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Dic -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Enero -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
-                    <!-- Feb -->
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>1</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>2</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>3</th>
-                    <th style="border: 1px solid #000000; padding: 2px;">S<br/>4</th>
+                    {{generar_cabecera_semanas cronograma}}
                 </tr>
             </thead>
             <tbody>
@@ -968,7 +902,13 @@
                         {{this.actividad}}
                     </td>
                     <td style="border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;">
+                        {{default this.responsable '&nbsp;'}}
+                    </td>
+                    <td style="border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;">
                         {{default this.recursos_necesarios (default this.recursos '&nbsp;')}}
+                    </td>
+                    <td style="border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;">
+                        {{default this.entregable '&nbsp;'}}
                     </td>
                     {{columnas_gantt this.semanas @index}}
                 </tr>

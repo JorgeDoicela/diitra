@@ -271,11 +271,16 @@ namespace Diitra.Application.Research.Dtos
     public class ActividadCronogramaDto
     {
         public string? Objetivo { get; set; }
+        public int? IdObjetivo { get; set; }
         public int Numero { get; set; }
         public string? Actividad { get; set; }
         public string? RecursosNecesarios { get; set; }
+        public string? Responsable { get; set; }
+        public string? Entregable { get; set; }
         public decimal Ponderacion { get; set; }
         public bool? EsEntregableCaces { get; set; }
+        public string? FechaInicioPrevista { get; set; }
+        public string? FechaFinPrevista { get; set; }
 
         public List<bool>? Semanas { get; set; }
     }
