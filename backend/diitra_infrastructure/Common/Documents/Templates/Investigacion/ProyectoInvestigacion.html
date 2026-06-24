@@ -865,12 +865,10 @@
 
         <table class="identificacion-table" style="margin-bottom: 20px; font-size: 8pt; width: 100%;">
             <colgroup>
-                <col style="width: 6%;" />
-                <col style="width: 2%;" />
-                <col style="width: 14%;" />
-                <col style="width: 10%;" />
-                <col style="width: 10%;" />
-                <col style="width: 10%;" />
+                <col style="width: 12%;" />
+                <col style="width: 3%;" />
+                <col style="width: 21%;" />
+                <col style="width: 16%;" />
                 {{generar_columnas_col cronograma 48.0}}
             </colgroup>
             <thead>
@@ -878,9 +876,7 @@
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Objetivos</th>
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">N°</th>
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Actividades</th>
-                    <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Responsable</th>
                     <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Recursos Necesarios</th>
-                    <th rowspan="2" style="border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; vertical-align: middle;">Entregable / Evidencia</th>
                     
                     {{generar_cabecera_meses fecha_inicio cronograma}}
                 </tr>
@@ -902,13 +898,7 @@
                         {{this.actividad}}
                     </td>
                     <td style="border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;">
-                        {{default this.responsable '&nbsp;'}}
-                    </td>
-                    <td style="border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;">
                         {{default this.recursos_necesarios (default this.recursos '&nbsp;')}}
-                    </td>
-                    <td style="border: 1px solid #000000; padding: 4px; text-align: left; vertical-align: middle; color: #000000;">
-                        {{default this.entregable '&nbsp;'}}
                     </td>
                     {{columnas_gantt this.semanas @index}}
                 </tr>
