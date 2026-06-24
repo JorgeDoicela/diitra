@@ -50,7 +50,6 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<InvCatImpacto>         InvCatImpactos         { get; set; }
     public virtual DbSet<InvImpactoProyecto>    InvImpactosProyecto    { get; set; }
     public virtual DbSet<InvCronograma>         InvCronogramas         { get; set; }
-    public virtual DbSet<InvCronogramaSemana>   InvCronogramaSemanas   { get; set; }
     public virtual DbSet<InvBibliografiaProyecto> InvBibliografiasProyecto { get; set; }
     public virtual DbSet<InvInformeAvance>      InvInformesAvance      { get; set; }
     public virtual DbSet<InvEvidencia>          InvEvidencias          { get; set; }
@@ -1197,24 +1196,11 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.Ponderacion).HasColumnName("ponderacion").HasPrecision(5, 2).HasDefaultValueSql("'0.00'");
             entity.Property(e => e.EsEntregableCaces).HasColumnName("esEntregableCaces").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.IdActividadPadre).HasColumnName("idActividadPadre");
-            entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7).HasDefaultValueSql("'#3498db'");
+            entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7).HasDefaultValueSql("'#0070f3'");
 
             entity.HasOne(d => d.IdProyectoNavigation).WithMany(p => p.InvCronogramas).HasForeignKey(d => d.IdProyecto).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_cron_proyecto");
             entity.HasOne(d => d.IdObjetivoNavigation).WithMany(p => p.InvCronogramas).HasForeignKey(d => d.IdObjetivo).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_cron_objetivo");
             entity.HasOne(d => d.IdActividadPadreNavigation).WithMany(p => p.InverseIdActividadPadreNavigation).HasForeignKey(d => d.IdActividadPadre).OnDelete(DeleteBehavior.SetNull).HasConstraintName("fk_cron_padre");
-        });
-
-        modelBuilder.Entity<InvCronogramaSemana>(entity =>
-        {
-            entity.HasKey(e => e.IdSemana).HasName("PRIMARY");
-            entity.ToTable("inv_cronograma_semanas");
-            entity.Property(e => e.IdSemana).HasColumnName("idSemana");
-            entity.Property(e => e.IdActividad).HasColumnName("idActividad");
-            entity.Property(e => e.Mes).HasColumnName("mes").HasMaxLength(20).IsRequired();
-            entity.Property(e => e.Semana).HasColumnName("semana").HasColumnType("tinyint(1)").IsRequired();
-            entity.Property(e => e.Completada).HasColumnName("completada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
-
-            entity.HasOne(d => d.IdActividadNavigation).WithMany(p => p.InvCronogramaSemanas).HasForeignKey(d => d.IdActividad).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_sem_actividad");
         });
 
         modelBuilder.Entity<InvBibliografiaProyecto>(entity =>

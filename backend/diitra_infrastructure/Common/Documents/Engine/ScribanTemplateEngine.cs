@@ -135,13 +135,49 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 return false;
             });
 
-            // Helper: generar columnas de ancho col para el cronograma (48 semanas)
+            // Helper auxiliar para contar semanas
+            int GetWeeksCount(object? cronogramaObj)
+            {
+                if (cronogramaObj is System.Collections.IEnumerable enumerable)
+                {
+                    foreach (var item in enumerable)
+                    {
+                        if (item is Dictionary<string, object?> dict)
+                        {
+                            object? semanasVal = null;
+                            if (dict.TryGetValue("semanas", out var val)) semanasVal = val;
+                            else if (dict.TryGetValue("Semanas", out var val2)) semanasVal = val2;
+
+                            if (semanasVal is System.Collections.IEnumerable semanasList && !(semanasVal is string))
+                            {
+                                int count = 0;
+                                foreach (var _ in semanasList) count++;
+                                if (count > 0) return count;
+                            }
+                        }
+                    }
+                }
+                return 12; // Fallback
+            }
+
+            // Helper: generar columnas de ancho col para el cronograma (dinámico)
             _handlebars.RegisterHelper("generar_columnas_col", (output, context, arguments) =>
             {
-                var sb = new System.Text.StringBuilder();
-                for (int i = 0; i < 48; i++)
+                var cronograma = arguments.ElementAtOrDefault(0);
+                var totalWidthObj = arguments.ElementAtOrDefault(1);
+                
+                double totalWidth = 64.0;
+                if (totalWidthObj != null)
                 {
-                    sb.Append("<col style=\"width: 1.33%;\" />");
+                    double.TryParse(totalWidthObj.ToString(), out totalWidth);
+                }
+
+                int weeks = GetWeeksCount(cronograma);
+                double width = totalWidth / weeks;
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < weeks; i++)
+                {
+                    sb.Append("<col style=\"width: ").Append(width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)).Append("%;\" />");
                 }
                 output.WriteSafeString(sb.ToString());
             });
@@ -184,6 +220,62 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                 }
             });
 
+            // Helper: generar cabecera de meses de Gantt partiendo de la fecha de inicio del proyecto
+            _handlebars.RegisterHelper("generar_cabecera_meses", (output, context, arguments) =>
+            {
+                var startDateObj = arguments.ElementAtOrDefault(0);
+                var cronograma = arguments.ElementAtOrDefault(1);
+                int weeks = GetWeeksCount(cronograma);
+                int monthsCount = (int)Math.Ceiling(weeks / 4.0);
+
+                DateTime startDate = DateTime.Today;
+                if (startDateObj != null)
+                {
+                    string dateStr = startDateObj.ToString() ?? "";
+                    if (DateTime.TryParse(dateStr, out var parsedDate))
+                    {
+                        startDate = parsedDate;
+                    }
+                    else if (System.Text.RegularExpressions.Regex.IsMatch(dateStr, @"^\d{2}/\d{2}/\d{4}$"))
+                    {
+                        var parts = dateStr.Split('/');
+                        if (parts.Length == 3 && int.TryParse(parts[0], out int d) && int.TryParse(parts[1], out int m) && int.TryParse(parts[2], out int y))
+                        {
+                            try { startDate = new DateTime(y, m, d); } catch {}
+                        }
+                    }
+                }
+
+                var monthsNames = new string[] { "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" };
+                var sb = new System.Text.StringBuilder();
+
+                for (int i = 0; i < monthsCount; i++)
+                {
+                    DateTime currentMonthDate = startDate.AddMonths(i);
+                    string monthName = monthsNames[currentMonthDate.Month - 1] + " " + currentMonthDate.Year;
+                    sb.Append("<th colspan=\"4\" style=\"border: 1px solid #000000; padding: 4px; font-size: 8pt; background: #222c57; color: #ffffff; text-align: center; vertical-align: middle;\">")
+                      .Append(monthName)
+                      .Append("</th>");
+                }
+                output.WriteSafeString(sb.ToString());
+            });
+
+            // Helper: generar cabecera de sub-semanas S1, S2, S3, S4 (dinámico)
+            _handlebars.RegisterHelper("generar_cabecera_semanas", (output, context, arguments) =>
+            {
+                var cronograma = arguments.ElementAtOrDefault(0);
+                int weeks = GetWeeksCount(cronograma);
+                var sb = new System.Text.StringBuilder();
+                for (int i = 0; i < weeks; i++)
+                {
+                    int weekOfIndex = (i % 4) + 1;
+                    sb.Append("<th style=\"border: 1px solid #000000; padding: 2px; text-align: center; font-size: 6.5pt; color: #ffffff; background: #222c57;\">S<br/>")
+                      .Append(weekOfIndex)
+                      .Append("</th>");
+                }
+                output.WriteSafeString(sb.ToString());
+            });
+
             // Helper: generar las 48 columnas de la tabla de cronograma basadas en la lista de semanas activa
             _handlebars.RegisterHelper("columnas_gantt", (output, context, arguments) =>
             {
@@ -205,11 +297,13 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     }
                 }
 
+                int weeks = semanas.Count > 0 ? semanas.Count : 12;
+
                 var sb = new System.Text.StringBuilder();
                 string[] ganttColors = { "#9ad3de", "#f9cb9c", "#ea9999", "#4f81bd", "#0f243e", "#595959", "#ffc000", "#7030a0" };
                 string activeColor = ganttColors[rowIndex % 8];
 
-                for (int w = 0; w < 48; w++)
+                for (int w = 0; w < weeks; w++)
                 {
                     bool active = w < semanas.Count && semanas[w];
                     if (active)
@@ -220,7 +314,7 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     }
                     else
                     {
-                        sb.Append("<td style=\"border: 1px solid #000000; padding: 0;\"></td>");
+                        sb.Append("<td style=\"border: 1px solid #000000; padding: 0;\">&nbsp;</td>");
                     }
                 }
                 output.WriteSafeString(sb.ToString());

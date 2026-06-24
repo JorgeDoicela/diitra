@@ -43,7 +43,9 @@ public class UnitTest1
 
             "ALTER TABLE inv_grupos_investigacion ADD COLUMN estado VARCHAR(20) DEFAULT 'Aprobado';",
             "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDeadlines TINYINT(1) DEFAULT 0;",
-            "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDays INT DEFAULT 7;"
+            "ALTER TABLE inv_proyectos ADD COLUMN autoExtendDays INT DEFAULT 7;",
+            "ALTER TABLE inv_cronograma ADD COLUMN responsable VARCHAR(255) NULL;",
+            "ALTER TABLE inv_cronograma ADD COLUMN entregable TEXT NULL;"
         };
 
         foreach (var sql in statements)
@@ -298,7 +300,7 @@ public class UnitTest1
         
         using var context = new DiitraContext(optionsBuilder.Options);
         var project = await context.InvProyectos
-            .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
+            .Include(p => p.InvCronogramas)
             .FirstOrDefaultAsync(p => p.Uuid == "c4515615-d3a5-44e0-998a-14111b2c8ebf");
             
         if (project != null)
@@ -308,11 +310,6 @@ public class UnitTest1
             foreach (var act in project.InvCronogramas)
             {
                 Console.WriteLine($"- Activity: Id={act.IdActividad}, Uuid={act.Uuid}, Desc='{act.Descripcion}', Orden={act.NumeroActividad}");
-                Console.WriteLine($"  Weeks count: {act.InvCronogramaSemanas.Count}");
-                foreach (var sem in act.InvCronogramaSemanas)
-                {
-                    Console.WriteLine($"    * Week: Id={sem.IdSemana}, Mes='{sem.Mes}', Semana={sem.Semana}");
-                }
             }
         }
         else

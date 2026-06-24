@@ -357,7 +357,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         addItem,
         removeItem,
         updateItem,
-        updateField
+        updateField,
+        reorderItem
     } = useDIITRADocument(
         mergedInitial,
         cowork.ydoc,        // ← parámetro reactivo: React detecta cambios si SignalR reconecta
@@ -508,10 +509,37 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
                         onUpdate: (i: number, f: string, v: any) => updateItem('Investigadores', i, f, v)
                     };
                 } else if (activeTab === 'cronograma') {
+                    const getProjectWeeksCount = () => {
+                        if (formData?.FechaInicio && formData?.FechaFin) {
+                            try {
+                                const start = new Date(formData.FechaInicio);
+                                const end = new Date(formData.FechaFin);
+                                if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end > start) {
+                                    const diffMonths = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+                                    const months = Math.max(1, diffMonths + 1);
+                                    return months * 4;
+                                }
+                            } catch (e) {
+                                console.error("Error calculating project weeks:", e);
+                            }
+                        }
+                        return 12;
+                    };
                     listProps = {
-                        onAdd: () => addItem('Cronograma', { Actividad: '', Numero: 1, RecursosNecesarios: '', Semanas: Array(12).fill(false) }),
+                        onAdd: () => addItem('Cronograma', { 
+                            Actividad: '', 
+                            Numero: (formData.Cronograma?.length || 0) + 1, 
+                            RecursosNecesarios: '', 
+                            Responsable: '',
+                            Entregable: '',
+                            IdObjetivo: 0,
+                            FechaInicioPrevista: '',
+                            FechaFinPrevista: '',
+                            Semanas: Array(getProjectWeeksCount()).fill(false) 
+                        }),
                         onRemove: (i: number) => removeItem('Cronograma', i),
-                        onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v)
+                        onUpdate: (i: number, f: string, v: any) => updateItem('Cronograma', i, f, v),
+                        onReorder: (fromIdx: number, toIdx: number) => reorderItem('Cronograma', fromIdx, toIdx)
                     };
                 }
 

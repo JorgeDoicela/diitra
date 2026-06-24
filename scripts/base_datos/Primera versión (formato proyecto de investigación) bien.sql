@@ -52,7 +52,6 @@ DROP TABLE IF EXISTS
     inv_evidencias,
     inv_informes_avance,
     inv_bibliografia_proyecto,
-    inv_cronograma_semanas,
     inv_cronograma,
     inv_impactos_proyecto,
     inv_cat_impactos,
@@ -652,25 +651,19 @@ CREATE TABLE inv_cronograma (
     numeroActividad   INT           NOT NULL,
     descripcion       TEXT          NOT NULL,
     recursosNecesarios TEXT,
+    responsable       VARCHAR(255)  NULL COMMENT 'Nombre del investigador/estudiante responsable',
+    entregable        TEXT          NULL COMMENT 'Entregable o evidencia esperada para el CACES',
     fechaInicioPrevista DATE,
     fechaFinPrevista    DATE,
     progreso            DECIMAL(5,2)  DEFAULT 0.00,
     ponderacion         DECIMAL(5,2)  DEFAULT 0.00 COMMENT 'Peso porcentual en el proyecto',
     esEntregableCaces   TINYINT(1)    DEFAULT 0    COMMENT 'Marca actividad como evidencia de acreditación',
     idActividadPadre    INT           NULL,
-    colorHex            VARCHAR(7)    DEFAULT '#3498db',
+    colorHex            VARCHAR(7)    DEFAULT '#0070f3',
     FOREIGN KEY (idProyecto) REFERENCES inv_proyectos(idProyecto) ON DELETE CASCADE,
     FOREIGN KEY (idObjetivo) REFERENCES inv_objetivos_proyecto(idObjetivo) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE inv_cronograma_semanas (
-    idSemana    INT          AUTO_INCREMENT PRIMARY KEY,
-    idActividad INT          NOT NULL,
-    mes         VARCHAR(20)  NOT NULL,
-    semana      TINYINT(1)   NOT NULL,
-    completada  TINYINT(1)   DEFAULT 0,
-    FOREIGN KEY (idActividad) REFERENCES inv_cronograma(idActividad) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- #############################################################################
 -- SECCIÓN 8: BIBLIOGRAFÍA ESTRUCTURADA

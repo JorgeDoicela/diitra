@@ -14,7 +14,6 @@ TRUNCATE TABLE inv_gastos;
 TRUNCATE TABLE inv_objetivos_proyecto;
 TRUNCATE TABLE inv_proyectos_ods;
 TRUNCATE TABLE inv_proyectos_mml;
-TRUNCATE TABLE inv_cronograma_semanas;
 TRUNCATE TABLE inv_cronograma;
 TRUNCATE TABLE inv_trazabilidad_proyectos;
 TRUNCATE TABLE inv_proyecto_extensiones;
@@ -375,7 +374,11 @@ INSERT INTO inv_objetivos_proyecto (idObjetivo, idProyecto, esGeneral, descripci
 -- Proy 5
 (12, 5, 1, 'Diseñar un circuito de desconexión ultra rápido para laboratorios de electrónica basado en disparo analógico para mitigar cortocircuitos.', 1),
 (13, 5, 0, 'Configurar el hardware comparador de sobre-corrientes mediante simulación en Proteus y diseño en Altium.', 2),
-(14, 5, 0, 'Montar 5 prototipos físicos instalados en las mesas del Laboratorio de Electrónica para pruebas prácticas controladas.', 3);
+(14, 5, 0, 'Montar 5 prototipos físicos instalados en las mesas del Laboratorio de Electrónica para pruebas prácticas controladas.', 3),
+-- Proy 8 (Piloto CACES)
+(15, 8, 1, 'Implementar una metodología piloto y software de aseguramiento de calidad de evidencias bajo el nuevo modelo CACES para evaluar la pertinencia e impacto social de la investigación formativa en el IST Traversari.', 1),
+(16, 8, 0, 'Diseñar una matriz de indicadores y métricas de calidad alineadas a los criterios del CACES de fomento a la investigación.', 2),
+(17, 8, 0, 'Ejecutar auditorías y simular evaluaciones para validar el cumplimiento de los estándares del CACES con el personal docente y semilleristas.', 3);
 
 -- 9. Poblar ODS asociados a Proyectos
 INSERT INTO inv_proyectos_ods (idProyecto, idOds, objetivoEspecificoODS) VALUES
@@ -454,33 +457,24 @@ INSERT INTO inv_gastos (idGasto, uuid, idProyecto, idItem, monto, fechaGasto, nu
 (6, 'e2222222-4444-2222-2222-222222222222', 2, 7, 1000.00, '2025-08-12', 'FAC-001-4458', 'Estructuras de aluminio y cableado a Ferretería Kywi', 5);
 
 -- 15. Poblar Cronograma Gantt
-INSERT INTO inv_cronograma (idActividad, uuid, idProyecto, idObjetivo, numeroActividad, descripcion, recursosNecesarios, fechaInicioPrevista, fechaFinPrevista, progreso, ponderacion, esEntregableCaces, idActividadPadre, colorHex) VALUES
+INSERT INTO inv_cronograma (idActividad, uuid, idProyecto, idObjetivo, numeroActividad, descripcion, recursosNecesarios, responsable, entregable, fechaInicioPrevista, fechaFinPrevista, progreso, ponderacion, esEntregableCaces, idActividadPadre, colorHex) VALUES
 -- Proy 1 (En Ejecución)
-(1, UUID(), 1, 2, 1, 'Diseño de PCB de la placa sensora y pruebas de aislamiento eléctrico', 'Software Altium y materiales de prototipado rápido', '2025-07-01', '2025-08-15', 100.00, 20.00, 1, NULL, '#2ecc71'),
-(2, UUID(), 1, 3, 2, 'Recolección de firmas eléctricas y entrenamiento inicial de red LSTM', 'Servidor de base de datos local y GPU', '2025-08-16', '2025-10-31', 80.00, 40.00, 1, NULL, '#3498db'),
-(3, UUID(), 1, 4, 3, 'Integración backend/frontend de la plataforma y notificaciones push', 'IDE de programación y licencia web', '2025-11-01', '2025-12-31', 25.00, 40.00, 1, NULL, '#e67e22'),
+(1, UUID(), 1, 2, 1, 'Diseño de PCB de la placa sensora y pruebas de aislamiento eléctrico', 'Software Altium y materiales de prototipado rápido', 'Ing. Marcos Naranjo', 'Diseño circuital en Altium, esquemáticos y simulación de ruido aprobados', '2025-07-01', '2025-08-15', 100.00, 20.00, 1, NULL, '#00e054'),
+(2, UUID(), 1, 3, 2, 'Recolección de firmas eléctricas y entrenamiento inicial de red LSTM', 'Servidor de base de datos local y GPU', 'Dra. Elena Baño', 'Base de datos en formato CSV y modelo de red LSTM entrenado con precisión > 92%', '2025-08-16', '2025-10-31', 80.00, 40.00, 1, NULL, '#0070f3'),
+(3, UUID(), 1, 4, 3, 'Integración backend/frontend de la plataforma y notificaciones push', 'IDE de programación y licencia web', 'Ing. Marcos Naranjo', 'Repositorio Git con código del frontend/backend y manual de usuario', '2025-11-01', '2025-12-31', 25.00, 40.00, 1, NULL, '#f5a623'),
 
 -- Proy 2 (Finalizado - Todo al 100%)
-(4, UUID(), 2, 6, 1, 'Dimensionamiento técnico, cálculo de sombreado y planos del campus', 'Ingenieros asesores y computadoras CAD', '2025-07-05', '2025-08-15', 100.00, 25.00, 1, NULL, '#2ecc71'),
-(5, UUID(), 2, 7, 2, 'Montaje estructural de paneles y cableado de baterías en cuarto eléctrico', 'Paneles solares, baterías, inversores, andamios', '2025-08-16', '2025-10-31', 100.00, 50.00, 1, NULL, '#2ecc71'),
-(6, UUID(), 2, 8, 3, 'Programación del microcontrolador de conmutación inteligente y sensores', 'Instrumentos de medición y tarjetas lógicas', '2025-11-01', '2025-12-31', 100.00, 25.00, 1, NULL, '#2ecc71'),
+(4, UUID(), 2, 6, 1, 'Dimensionamiento técnico, cálculo de sombreado y planos del campus', 'Ingenieros asesores y computadoras CAD', 'Dr. Hugo Sánchez', 'Plano arquitectónico de radiación solar y memoria técnica de dimensionamiento', '2025-07-05', '2025-08-15', 100.00, 25.00, 1, NULL, '#00e054'),
+(5, UUID(), 2, 7, 2, 'Montaje estructural de paneles y cableado de baterías en cuarto eléctrico', 'Paneles solares, baterías, inversores, andamios', 'Ing. Marcos Naranjo', 'Sistema físico montado en soportes con cableado certificado y medido', '2025-08-16', '2025-10-31', 100.00, 50.00, 1, NULL, '#00e054'),
+(6, UUID(), 2, 8, 3, 'Programación del microcontrolador de conmutación inteligente y sensores', 'Instrumentos de medición y tarjetas lógicas', 'Dra. Elena Baño', 'Firmware en C++ para ESP32 subido a GitHub y funcionando', '2025-11-01', '2025-12-31', 100.00, 25.00, 1, NULL, '#00e054'),
 
 -- Proy 3 (Aprobado - Todo al 0%)
-(7, UUID(), 3, 10, 1, 'Formulación teórica del instrumento de encuesta y validación por juicio de expertos', 'Material bibliográfico e investigadores externos', '2025-07-10', '2025-09-10', 0.00, 40.00, 0, NULL, '#9b59b6'),
-(8, UUID(), 3, 11, 2, 'Aplicación digital del censo docente en institutos de Quito y depuración de base', 'Acceso a plataformas digitales de encuestas', '2025-09-11', '2025-12-10', 0.00, 60.00, 1, NULL, '#9b59b6');
+(7, UUID(), 3, 10, 1, 'Formulación teórica del instrumento de encuesta y validación por juicio de expertos', 'Material bibliográfico e investigadores externos', 'Dr. Hugo Sánchez', 'Formulario validado mediante Alfa de Cronbach > 0.8 y actas de expertos', '2025-07-10', '2025-09-10', 0.00, 40.00, 0, NULL, '#7928ca'),
+(8, UUID(), 3, 11, 2, 'Aplicación digital del censo docente en institutos de Quito y depuración de base', 'Acceso a plataformas digitales de encuestas', 'Dr. Hugo Sánchez', 'Base de datos con 150 encuestas docentes filtradas y depuradas', '2025-09-11', '2025-12-10', 0.00, 60.00, 1, NULL, '#7928ca'),
 
--- Semanas de Cronograma
-INSERT INTO inv_cronograma_semanas (idSemana, idActividad, mes, semana, completada) VALUES
-(1, 1, 'Julio', 1, 1),
-(2, 1, 'Julio', 2, 1),
-(3, 1, 'Julio', 3, 1),
-(4, 1, 'Julio', 4, 1),
-(5, 1, 'Agosto', 1, 1),
-(6, 1, 'Agosto', 2, 1),
-(7, 2, 'Agosto', 3, 1),
-(8, 2, 'Agosto', 4, 1),
-(9, 2, 'Septiembre', 1, 1),
-(10, 2, 'Septiembre', 2, 1);
+-- Proy 8 (Piloto CACES - En Acreditación)
+(9, UUID(), 8, 16, 1, 'Definición de rúbricas de evaluación del impacto de la investigación formativa según el modelo CACES', 'Guía metodológica del CACES y asesores de acreditación', 'Ing. Marcos Naranjo', 'Matriz de indicadores de calidad adaptada y validada por consejo directivo', '2026-07-01', '2026-08-31', 0.00, 50.00, 1, NULL, '#f5a623'),
+(10, UUID(), 8, 17, 2, 'Simulación de acreditación plenaria e inspección documental forense en plataforma piloto', 'Acceso a plataforma DIITRA y servidores de almacenamiento', 'Dra. Elena Baño', 'Expediente de evidencias simuladas y reporte de no conformidades del CACES', '2026-09-01', '2026-12-31', 0.00, 50.00, 1, NULL, '#7928ca');
 
 -- 16. Matriz de Marco Lógico (MML - Requisito SENESCYT)
 INSERT INTO inv_proyectos_mml (idMml, idProyecto, nivel, resumenNarrativo, indicadores, mediosVerificacion, supuestos) VALUES

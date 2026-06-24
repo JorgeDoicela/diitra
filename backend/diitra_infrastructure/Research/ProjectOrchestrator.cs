@@ -350,7 +350,8 @@ namespace diitra_infrastructure.Research
                 }
 
                 // 4. Sincronización de Objetivos
-                int defaultObjetivoId = await SyncObjetivosAsync(project.IdProyecto, dto.ObjetivoGeneral, dto.ObjetivosEspecificos);
+                var objetivosCreadosIds = await SyncObjetivosAsync(project.IdProyecto, dto.ObjetivoGeneral, dto.ObjetivosEspecificos);
+                int defaultObjetivoId = objetivosCreadosIds.FirstOrDefault();
 
                 // 5. Sincronización de Presupuesto
                 await SyncPresupuestoAsync(project.IdProyecto, dto.RecursosNecesarios);
@@ -365,7 +366,7 @@ namespace diitra_infrastructure.Research
                 await SyncProductosAsync(project.IdProyecto, dto.ProductosEsperados);
 
                 // 9. Sincronización de Cronograma
-                await SyncCronogramaAsync(project.IdProyecto, defaultObjetivoId, dto.Cronograma);
+                await SyncCronogramaAsync(project.IdProyecto, objetivosCreadosIds, dto.Cronograma);
 
                 // 10. Sincronización de Bibliografía
                 await SyncBibliografiaAsync(project.IdProyecto, dto.Bibliografia);
@@ -620,7 +621,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.InvProyectosAlumnos).ThenInclude(pa => pa.IdUsuarioNavigation)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
-                .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
+                .Include(p => p.InvCronogramas)
                 .Include(p => p.InvBibliografiasProyecto)
                 .Include(p => p.InvImpactosProyecto)
                 .Include(p => p.InvProductos).ThenInclude(pr => pr.IdTipoProductoNavigation)
@@ -904,13 +905,25 @@ namespace diitra_infrastructure.Research
                 Ambiental = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 5)?.Descripcion,
                 Otro = p.InvImpactosProyecto.FirstOrDefault(i => i.IdCatImpacto == 6)?.Descripcion
             };
-            dto.Cronograma = p.InvCronogramas.OrderBy(c => c.NumeroActividad).Select(c => new ActividadCronogramaDto
+            var specificObjetivoIds = p.InvObjetivosProyecto
+                .Where(o => !o.EsGeneral)
+                .OrderBy(o => o.Orden)
+                .Select(o => o.IdObjetivo)
+                .ToList();
+
+            dto.Cronograma = p.InvCronogramas.OrderBy(c => c.NumeroActividad).ToList().Select(c => new ActividadCronogramaDto
             {
+                IdObjetivo = c.IdObjetivo == 0 ? 0 : (specificObjetivoIds.Contains(c.IdObjetivo) ? specificObjetivoIds.IndexOf(c.IdObjetivo) + 1 : 0),
                 Numero = c.NumeroActividad,
                 Actividad = c.Descripcion,
+                RecursosNecesarios = c.RecursosNecesarios,
+                Responsable = c.Responsable,
+                Entregable = c.Entregable,
                 Ponderacion = c.Ponderacion,
                 EsEntregableCaces = c.EsEntregableCaces,
-                Semanas = c.InvCronogramaSemanas.OrderBy(s => s.IdSemana).Select(s => s.Semana).ToList()
+                FechaInicioPrevista = c.FechaInicioPrevista?.ToString("yyyy-MM-dd"),
+                FechaFinPrevista = c.FechaFinPrevista?.ToString("yyyy-MM-dd"),
+                Semanas = GetSemanasCalculadas(p.FechaInicio, p.FechaFin, c.FechaInicioPrevista, c.FechaFinPrevista)
             }).ToList();
             dto.Bibliografia = p.InvBibliografiasProyecto.Select(b => b.CitaApa).ToList();
             dto.MatrizMarcoLogico = p.MatrizMarcoLogico.Select(m => new MmlRowDto
@@ -1402,20 +1415,88 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        private async Task<int> SyncObjetivosAsync(int projectId, string? objetivoGeneral, System.Collections.Generic.List<string>? objetivos)
+        private List<string> ParseObjetivosHtml(System.Collections.Generic.List<string>? objetivos)
+        {
+            var result = new List<string>();
+            if (objetivos == null) return result;
+
+            foreach (var item in objetivos)
+            {
+                if (string.IsNullOrWhiteSpace(item)) continue;
+
+                // Si contiene tags HTML como <li> o <p>, intentamos extraer los elementos individuales
+                if (item.Contains("<li") || item.Contains("<p"))
+                {
+                    // Remover etiquetas <ul>, </ul>, <ol>, </ol>
+                    string cleaned = item.Replace("<ul>", "").Replace("</ul>", "").Replace("<ol>", "").Replace("</ol>", "");
+                    
+                    // Encontrar todos los bloques de <li>...</li> o <p>...</p>
+                    var matches = System.Text.RegularExpressions.Regex.Matches(cleaned, @"<(li|p)[^>]*>(.*?)<\/\1>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (matches.Count > 0)
+                    {
+                        foreach (System.Text.RegularExpressions.Match match in matches)
+                        {
+                            var text = System.Text.RegularExpressions.Regex.Replace(match.Groups[2].Value, @"<[^>]*>", "").Trim();
+                            // Decodificar entidades HTML comunes (usando WebUtility)
+                            text = System.Net.WebUtility.HtmlDecode(text);
+                            // Limpiar numeración inicial si existe (ej: "1. ", "1.- ", "a) ")
+                            text = System.Text.RegularExpressions.Regex.Replace(text, @"^[a-zA-Z0-9\-\.\)]+\s*[-–—]?\s*", "").Trim();
+                            
+                            if (!string.IsNullOrWhiteSpace(text))
+                            {
+                                result.Add(text);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Si no hay coincidencias de tags específicos pero tiene HTML, limpiamos todas las tags y lo agregamos
+                        var cleanText = System.Text.RegularExpressions.Regex.Replace(item, @"<[^>]*>", "").Trim();
+                        cleanText = System.Net.WebUtility.HtmlDecode(cleanText);
+                        cleanText = System.Text.RegularExpressions.Regex.Replace(cleanText, @"^[a-zA-Z0-9\-\.\)]+\s*[-–—]?\s*", "").Trim();
+                        if (!string.IsNullOrWhiteSpace(cleanText))
+                        {
+                            result.Add(cleanText);
+                        }
+                    }
+                }
+                else
+                {
+                    // Si es texto plano
+                    var text = System.Text.RegularExpressions.Regex.Replace(item, @"^[a-zA-Z0-9\-\.\)]+\s*[-–—]?\s*", "").Trim();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        result.Add(text);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private async Task<List<int>> SyncObjetivosAsync(int projectId, string? objetivoGeneral, System.Collections.Generic.List<string>? objetivos)
         {
             // Sincronizar Objetivo General
             var generalOpt = await _context.InvObjetivosProyecto.FirstOrDefaultAsync(o => o.IdProyecto == projectId && o.EsGeneral);
+            
+            // Si el objetivo general contiene HTML, lo limpiamos para tener texto plano en la columna
+            string descGeneral = !string.IsNullOrWhiteSpace(objetivoGeneral) ? objetivoGeneral : "Objetivo General por definir";
+            if (descGeneral.Contains("<"))
+            {
+                descGeneral = System.Text.RegularExpressions.Regex.Replace(descGeneral, @"<[^>]*>", "").Trim();
+                descGeneral = System.Net.WebUtility.HtmlDecode(descGeneral);
+            }
+
             if (generalOpt != null)
             {
-                generalOpt.Descripcion = !string.IsNullOrWhiteSpace(objetivoGeneral) ? objetivoGeneral : "Objetivo General por definir";
+                generalOpt.Descripcion = descGeneral;
             }
             else
             {
                 generalOpt = new InvObjetivoProyecto
                 {
                     IdProyecto = projectId,
-                    Descripcion = !string.IsNullOrWhiteSpace(objetivoGeneral) ? objetivoGeneral : "Objetivo General por definir",
+                    Descripcion = descGeneral,
                     EsGeneral = true,
                     Orden = 0
                 };
@@ -1424,16 +1505,18 @@ namespace diitra_infrastructure.Research
             await SaveChangesWithConcurrencyResolutionAsync();
             int generalId = generalOpt.IdObjetivo;
 
-            // Sincronizar Objetivos Específicos
-            if (objetivos != null)
+            var ids = new List<int> { generalId };
+
+            // Parsear y Sincronizar Objetivos Específicos
+            var parsedObjetivos = ParseObjetivosHtml(objetivos);
+            if (parsedObjetivos.Count > 0)
             {
                 var old = _context.InvObjetivosProyecto.Where(o => o.IdProyecto == projectId && !o.EsGeneral);
                 _context.InvObjetivosProyecto.RemoveRange(old);
 
                 int orden = 1;
-                foreach (var obj in objetivos)
+                foreach (var obj in parsedObjetivos)
                 {
-                    if (string.IsNullOrWhiteSpace(obj)) continue;
                     _context.InvObjetivosProyecto.Add(new InvObjetivoProyecto
                     {
                         IdProyecto = projectId,
@@ -1442,9 +1525,20 @@ namespace diitra_infrastructure.Research
                         Orden = orden++
                     });
                 }
+                
+                await SaveChangesWithConcurrencyResolutionAsync();
+
+                // Cargar los IDs reales creados
+                var creadosIds = await _context.InvObjetivosProyecto
+                    .Where(o => o.IdProyecto == projectId && !o.EsGeneral)
+                    .OrderBy(o => o.Orden)
+                    .Select(o => o.IdObjetivo)
+                    .ToListAsync();
+                
+                ids.AddRange(creadosIds);
             }
 
-            return generalId;
+            return ids;
         }
 
         private async Task SyncPresupuestoAsync(int projectId, System.Collections.Generic.List<RecursoNecesarioDto>? recursos)
@@ -1537,49 +1631,89 @@ namespace diitra_infrastructure.Research
             }
         }
 
-        private async Task SyncCronogramaAsync(int projectId, int defaultObjetivoId, System.Collections.Generic.List<ActividadCronogramaDto>? cronograma)
+        private async Task SyncCronogramaAsync(int projectId, List<int> objetivosCreadosIds, System.Collections.Generic.List<ActividadCronogramaDto>? cronograma)
         {
             if (cronograma == null) return;
             
-            // 1. Limpieza profunda (Carga Eager para evitar N+1 queries)
+            // 1. Limpieza de actividades antiguas
             var oldActivities = await _context.InvCronogramas
-                .Include(c => c.InvCronogramaSemanas)
                 .Where(c => c.IdProyecto == projectId)
                 .ToListAsync();
 
-            foreach(var old in oldActivities) {
-                _context.InvCronogramaSemanas.RemoveRange(old.InvCronogramaSemanas);
-            }
             _context.InvCronogramas.RemoveRange(oldActivities);
 
-            // 2. Inserción
+            int defaultObjetivoId = objetivosCreadosIds.FirstOrDefault();
+
+            // 2. Inserción (Modelo Orientado a Fechas: No insertamos registros semanales redundantes)
             foreach (var act in cronograma)
             {
                 if (string.IsNullOrWhiteSpace(act.Actividad)) continue;
 
+                // Resolver objetivo específico real si fue seleccionado
+                int dbObjetivoId = defaultObjetivoId;
+                if (act.IdObjetivo.HasValue && objetivosCreadosIds.Count > 0)
+                {
+                    int index = act.IdObjetivo.Value;
+                    if (index >= 0 && index < objetivosCreadosIds.Count)
+                    {
+                        dbObjetivoId = objetivosCreadosIds[index];
+                    }
+                }
+
                 var nuevaAct = new InvCronograma
                 {
                     IdProyecto = projectId,
-                    IdObjetivo = defaultObjetivoId, // Usar el ID del objetivo general real para mantener la FK
+                    IdObjetivo = dbObjetivoId,
                     NumeroActividad = act.Numero,
                     Descripcion = act.Actividad,
                     RecursosNecesarios = act.RecursosNecesarios,
+                    Responsable = act.Responsable,
+                    Entregable = act.Entregable,
                     Ponderacion = act.Ponderacion,
-                    EsEntregableCaces = act.EsEntregableCaces ?? false
+                    EsEntregableCaces = act.EsEntregableCaces ?? false,
+                    FechaInicioPrevista = ParseDateOnly(act.FechaInicioPrevista),
+                    FechaFinPrevista = ParseDateOnly(act.FechaFinPrevista)
                 };
 
-                var semanasList = act.Semanas ?? new System.Collections.Generic.List<bool>();
-                for (int i = 0; i < 12; i++)
-                {
-                    bool isMarked = i < semanasList.Count && semanasList[i];
-                    nuevaAct.InvCronogramaSemanas.Add(new InvCronogramaSemana
-                    {
-                        Mes = $"Mes {(i / 4) + 1}",
-                        Semana = isMarked
-                    });
-                }
                 _context.InvCronogramas.Add(nuevaAct);
             }
+        }
+
+        private static System.Collections.Generic.List<bool> GetSemanasCalculadas(DateOnly? pStart, DateOnly? pEnd, DateOnly? aStart, DateOnly? aEnd)
+        {
+            int totalWeeks = 12; // fallback por defecto
+            if (pStart.HasValue && pEnd.HasValue && pEnd.Value > pStart.Value)
+            {
+                int diffMonths = (pEnd.Value.Year - pStart.Value.Year) * 12 + (pEnd.Value.Month - pStart.Value.Month);
+                int monthsCount = Math.Max(1, diffMonths + 1);
+                totalWeeks = monthsCount * 4;
+            }
+
+            var list = new System.Collections.Generic.List<bool>();
+            if (!pStart.HasValue)
+            {
+                for (int i = 0; i < totalWeeks; i++) list.Add(false);
+                return list;
+            }
+
+            var projectStartDt = new DateTime(pStart.Value.Year, pStart.Value.Month, pStart.Value.Day);
+
+            for (int w = 0; w < totalWeeks; w++)
+            {
+                var weekStart = projectStartDt.AddDays(w * 7);
+                var weekEnd = weekStart.AddDays(6);
+
+                bool active = false;
+                if (aStart.HasValue && aEnd.HasValue)
+                {
+                    var actStartDt = new DateTime(aStart.Value.Year, aStart.Value.Month, aStart.Value.Day);
+                    var actEndDt = new DateTime(aEnd.Value.Year, aEnd.Value.Month, aEnd.Value.Day);
+                    active = actStartDt <= weekEnd && actEndDt >= weekStart;
+                }
+
+                list.Add(active);
+            }
+            return list;
         }
 
         private async Task SyncBibliografiaAsync(int projectId, System.Collections.Generic.List<string>? biblio)
@@ -1626,7 +1760,7 @@ namespace diitra_infrastructure.Research
                 .Include(p => p.InvProyectosAlumnos)
                 .Include(p => p.InvObjetivosProyecto)
                 .Include(p => p.InvPresupuestoItems)
-                .Include(p => p.InvCronogramas).ThenInclude(c => c.InvCronogramaSemanas)
+                .Include(p => p.InvCronogramas)
                 .Include(p => p.InvBibliografiasProyecto)
                 .Include(p => p.InvImpactosProyecto)
                 .Include(p => p.InvProductos)
@@ -1663,10 +1797,6 @@ namespace diitra_infrastructure.Research
                 _context.InvObjetivosProyecto.RemoveRange(project.InvObjetivosProyecto);
                 _context.InvPresupuestoItems.RemoveRange(project.InvPresupuestoItems);
                 
-                foreach (var crono in project.InvCronogramas)
-                {
-                    _context.InvCronogramaSemanas.RemoveRange(crono.InvCronogramaSemanas);
-                }
                 _context.InvCronogramas.RemoveRange(project.InvCronogramas);
                 _context.InvBibliografiasProyecto.RemoveRange(project.InvBibliografiasProyecto);
                 _context.InvImpactosProyecto.RemoveRange(project.InvImpactosProyecto);
