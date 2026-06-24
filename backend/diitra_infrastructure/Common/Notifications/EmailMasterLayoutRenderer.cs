@@ -115,8 +115,8 @@ namespace diitra_infrastructure.Common.Notifications
             var host = _configuration["Email:Host"];
             var isMock = string.IsNullOrEmpty(host);
 
-            var logoIstpetVal = $"{frontendUrl.TrimEnd('/')}/logo_istpet_negro.png";
-            var logoDiitraVal = $"{frontendUrl.TrimEnd('/')}/logo_negro.png";
+            var logoIstpetVal = "cid:logo_istpet";
+            var logoDiitraVal = "cid:logo_diitra";
 
             var bodyContent = ExtractInnerContent(innerBodyHtml);
 
@@ -168,12 +168,42 @@ namespace diitra_infrastructure.Common.Notifications
         }
 
         /// <summary>
-        /// Asigna el HTML al mensaje con imágenes referenciadas por URL absoluta.
+        /// Asigna el HTML al mensaje con imágenes incrustadas usando AlternateViews.
         /// </summary>
         public void SetHtmlBodyWithBranding(MailMessage mailMessage, string htmlBody)
         {
-            mailMessage.Body = htmlBody;
-            mailMessage.IsBodyHtml = true;
+            var htmlView = AlternateView.CreateAlternateViewFromString(htmlBody, System.Text.Encoding.UTF8, "text/html");
+
+            var logoIstpetPath = Path.Combine(TemplateDirectory, "logo_istpet_negro.png");
+            var logoDiitraPath = Path.Combine(TemplateDirectory, "logo_negro.png");
+
+            if (File.Exists(logoIstpetPath))
+            {
+                var logoIstpetResource = new LinkedResource(logoIstpetPath, "image/png")
+                {
+                    ContentId = "logo_istpet"
+                };
+                htmlView.LinkedResources.Add(logoIstpetResource);
+            }
+            else
+            {
+                _logger.LogWarning("Logo ISTPET no encontrado en {Path}", logoIstpetPath);
+            }
+
+            if (File.Exists(logoDiitraPath))
+            {
+                var logoDiitraResource = new LinkedResource(logoDiitraPath, "image/png")
+                {
+                    ContentId = "logo_diitra"
+                };
+                htmlView.LinkedResources.Add(logoDiitraResource);
+            }
+            else
+            {
+                _logger.LogWarning("Logo DIITRA no encontrado en {Path}", logoDiitraPath);
+            }
+
+            mailMessage.AlternateViews.Add(htmlView);
         }
     }
 }
