@@ -313,8 +313,11 @@ const ArbitrajePage: React.FC = () => {
                                 onClick={() => setFiltro(f.key)}
                             >
                                 {f.label}
-                                {f.key === 'Desempate' && stats && stats.casos_desempate > 0 && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-error inline-block" />
+                                {f.key !== 'todos' && proyectos.some(p => p.estado_arbitraje === f.key) && (
+                                    <span 
+                                        className="w-1.5 h-1.5 rounded-full inline-block shrink-0" 
+                                        style={{ backgroundColor: ESTADO_ARBITRAJE_CONFIG[f.key]?.color ?? '#888' }}
+                                    />
                                 )}
                                 {f.key === 'todos' && !loading && (
                                     <span className="text-[10px] font-mono bg-surface border border-border-thin rounded-full px-1.5 py-px text-text-dim ml-0.5">

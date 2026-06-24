@@ -552,6 +552,10 @@ public class PeerReviewService : IPeerReviewService
 
             decimal umbralProyecto = proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
             string estadoArbitraje = DeterminarEstadoArbitraje(revisiones, umbralProyecto);
+            if (proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado")
+            {
+                estadoArbitraje = "Completado";
+            }
 
             var revDtos = new List<PeerReviewDto>();
             foreach (var rev in revisiones)
@@ -605,6 +609,7 @@ public class PeerReviewService : IPeerReviewService
     {
         var todasRevisiones = await _context.Set<InvRevisionesPares>()
             .Include(r => r.Proyecto)
+                .ThenInclude(p => p.IdConvocatoriaNavigation)
             .Where(r => r.Proyecto.Estado == "En Revisión" || r.Proyecto.Estado == "Enviado" || 
                        r.Proyecto.Estado == "Aprobado" || r.Proyecto.Estado == "En Ejecución" || r.Proyecto.Estado == "Rechazado")
             .ToListAsync();
@@ -613,14 +618,22 @@ public class PeerReviewService : IPeerReviewService
         int completadas = todasRevisiones.Count(r => r.Estado == "Completada");
         int pendientes = todasRevisiones.Count(r => r.Estado == "Pendiente");
 
-        // Detectar desempates: proyectos donde un árbitro aprueba y otro rechaza
+        // Detectar desempates: solo proyectos activos en estado de Desempate (todas las revisiones completas y empatadas)
         var proyectosConDesempate = todasRevisiones
-            .Where(r => r.Estado == "Completada" && r.PuntajeTotal.HasValue)
+            .Where(r => r.Proyecto.Estado != "Aprobado" && r.Proyecto.Estado != "En Ejecución" && r.Proyecto.Estado != "Rechazado")
             .GroupBy(r => r.IdProyecto)
             .Count(g =>
             {
-                var scores = g.Select(r => r.PuntajeTotal!.Value).ToList();
-                return scores.Count >= 2 && scores.Any(s => s >= 70) && scores.Any(s => s < 70);
+                var list = g.ToList();
+                if (list.All(r => r.Estado == "Completada"))
+                {
+                    var scores = list.Where(r => r.PuntajeTotal.HasValue).Select(r => r.PuntajeTotal!.Value).ToList();
+                    var threshold = list.FirstOrDefault()?.Proyecto?.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m;
+                    var aprobadosCount = scores.Count(s => s >= threshold);
+                    var rechazadosCount = scores.Count(s => s < threshold);
+                    return aprobadosCount == rechazadosCount && scores.Count > 0;
+                }
+                return false;
             });
 
         decimal porcentaje = todasRevisiones.Count > 0
@@ -705,7 +718,9 @@ public class PeerReviewService : IPeerReviewService
             TotalArbitros = revisiones.Count,
             ArbitrosCompletados = completadas.Count,
             PuntajePromedio = promedio,
-            EstadoArbitraje = DeterminarEstadoArbitraje(revisiones, proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m),
+            EstadoArbitraje = (proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado")
+                ? "Completado"
+                : DeterminarEstadoArbitraje(revisiones, proyecto.IdConvocatoriaNavigation?.PuntajeMinimoAprobacion ?? 70m),
             ArbitrajeCerrado = proyecto.PuntajeEvaluacion.HasValue
                 || proyecto.Estado is "Aprobado" or "En Ejecución" or "Rechazado",
             AutoExtendDeadlines = proyecto.AutoExtendDeadlines,
