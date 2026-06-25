@@ -177,7 +177,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     height: currentTheme === 'dark' ? '650px' : '500px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
-                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.06), calc(-50% + var(--mouse-y, 0px) * 0.06)) scale(calc(1 + var(--dist, 0) * 0.04))',
+                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.20), calc(-50% + var(--mouse-y, 0px) * 0.20)) scale(calc(1 + var(--dist, 0) * 0.04))',
                                     background: currentTheme === 'dark'
                                         ? 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(200,220,255,0.015) 60%, transparent 85%)'
                                         : 'radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(240,245,255,0.60) 50%, transparent 80%)',
@@ -186,7 +186,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     opacity: isRainbow ? 0 : 1,
                                     transition: isRainbow
                                         ? 'opacity 0.6s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                        : 'opacity 0.6s ease, transform 0.7s cubic-bezier(0.1, 0.8, 0.2, 1)',
+                                        : 'opacity 0.6s ease, transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1)',
                                     zIndex: 0,
                                 }}
                             />
@@ -201,7 +201,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     height: currentTheme === 'dark' ? '450px' : '350px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
-                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.16), calc(-50% + var(--mouse-y, 0px) * 0.16)) scale(calc(1 + var(--dist, 0) * 0.08))',
+                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.45), calc(-50% + var(--mouse-y, 0px) * 0.45)) scale(calc(1 + var(--dist, 0) * 0.08))',
                                     background: currentTheme === 'dark'
                                         ? 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(220,235,255,0.04) 40%, transparent 75%)'
                                         : 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(245,250,255,0.80) 30%, transparent 70%)',
@@ -210,7 +210,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     opacity: isRainbow ? 0 : 1,
                                     transition: isRainbow
                                         ? 'opacity 0.5s ease, transform 0.7s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                        : 'opacity 0.5s ease, transform 0.55s cubic-bezier(0.15, 0.85, 0.3, 1)',
+                                        : 'opacity 0.5s ease, transform 0.3s cubic-bezier(0.15, 0.85, 0.3, 1)',
                                     zIndex: 0,
                                 }}
                             />
@@ -225,7 +225,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     height: currentTheme === 'dark' ? '280px' : '220px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
-                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.26), calc(-50% + var(--mouse-y, 0px) * 0.26)) scale(calc(1 + var(--dist, 0) * 0.12))',
+                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.75), calc(-50% + var(--mouse-y, 0px) * 0.75)) scale(calc(1 + var(--dist, 0) * 0.12))',
                                     background: currentTheme === 'dark'
                                         ? 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 30%, transparent 70%)'
                                         : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.90) 25%, transparent 60%)',
@@ -234,7 +234,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     opacity: isRainbow ? 0 : 1,
                                     transition: isRainbow
                                         ? 'opacity 0.4s ease, transform 0.6s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                        : 'opacity 0.4s ease, transform 0.45s cubic-bezier(0.2, 0.9, 0.4, 1)',
+                                        : 'opacity 0.4s ease, transform 0.25s cubic-bezier(0.2, 0.9, 0.4, 1)',
                                     zIndex: 0,
                                 }}
                             />
@@ -347,9 +347,8 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     style={{
                                         filter: isRainbow
                                             ? 'drop-shadow(calc(var(--norm-x, 0) * -6px) calc(var(--norm-y, 0) * -6px) 15px rgba(60, 120, 255, 0.35)) drop-shadow(calc(var(--norm-x, 0) * 6px) calc(var(--norm-y, 0) * 6px) 25px rgba(255, 80, 160, 0.35))'
-                                            : 'drop-shadow(calc(var(--norm-x, 0) * -16px) calc(var(--norm-y, 0) * -16px) 25px rgba(255, 255, 255, 0.85)) drop-shadow(calc(var(--norm-x, 0) * 16px) calc(var(--norm-y, 0) * 16px) 35px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.9))',
-                                        transform: 'perspective(1000px) rotateX(calc(var(--norm-y, 0) * -4deg)) rotateY(calc(var(--norm-x, 0) * 4deg)) scale(1.02)',
-                                        transition: 'transform 0.45s cubic-bezier(0.15, 0.85, 0.3, 1), filter 0.55s cubic-bezier(0.15, 0.85, 0.3, 1)'
+                                            : 'drop-shadow(calc(var(--norm-x, 0) * -48px) calc(var(--norm-y, 0) * -48px) 30px rgba(255, 255, 255, 0.85)) drop-shadow(calc(var(--norm-x, 0) * 48px) calc(var(--norm-y, 0) * 48px) 45px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.95))',
+                                        transition: 'filter 0.3s cubic-bezier(0.15, 0.85, 0.3, 1)'
                                     }}
                                 />
                             </button>
