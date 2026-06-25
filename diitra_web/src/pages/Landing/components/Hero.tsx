@@ -87,11 +87,75 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
         }
     ];
 
+    const institutionalLogos = [
+        {
+            name: 'SENESCYT',
+            icon: (
+                <svg className="w-6.5 h-6.5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                    <path d="M2 17l10 5 10-5" />
+                    <path d="M2 12l10 5 10-5" />
+                </svg>
+            ),
+            text: <span className="font-sans font-extrabold tracking-tight text-[16px]">SENESCYT</span>
+        },
+        {
+            name: 'CES',
+            icon: (
+                <svg className="w-5.5 h-5.5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M4 19h16M4 5h16M7 5v14M12 5v14M17 5v14" />
+                </svg>
+            ),
+            text: <span className="font-serif font-bold italic tracking-wide text-[18px]">CES</span>
+        },
+        {
+            name: 'CACES',
+            icon: (
+                <svg className="w-6 h-6 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14 9 11" />
+                </svg>
+            ),
+            text: <span className="font-mono font-bold tracking-tighter text-[13px]">CACES</span>
+        },
+        {
+            name: 'SENADI',
+            icon: (
+                <svg className="w-6.5 h-6.5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10zM2 12h20" />
+                </svg>
+            ),
+            text: <span className="font-sans font-light tracking-[0.10em] text-[16px]">SENA<strong className="font-bold">DI</strong></span>
+        },
+        {
+            name: 'FIRMA.EC',
+            icon: (
+                <svg className="w-6 h-6 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+            ),
+            text: <span className="font-sans font-black italic tracking-tighter text-[16px]">firma<span className="text-brand">.ec</span></span>
+        },
+        {
+            name: 'DSPACE',
+            icon: (
+                <svg className="w-6.5 h-6.5 text-current" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <path d="M3.27 6.96L12 12.01l8.73-5.05" />
+                    <path d="M12 22.08V12" />
+                </svg>
+            ),
+            text: <span className="font-sans font-bold tracking-tight text-[16px]">DSPACE</span>
+        }
+    ];
+
     const activeIndex = hoveredIndex !== null ? hoveredIndex : clickedIndex;
     const hasActive = activeIndex !== null;
 
     return (
-        <section className="min-h-[80vh] flex flex-col justify-between py-8 relative">
+        <section className="min-h-[85vh] flex flex-col justify-between pt-8 pb-2 relative">
 
             {/* El grid principal de 3 columnas */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center my-auto relative">
@@ -419,14 +483,15 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
             </div>
 
             {/* Ticker / Logos de Instituciones Integradas Centrados abajo, estilo Vercel */}
-            <div className="w-full pt-12 flex flex-wrap justify-center items-center gap-x-16 gap-y-6 text-[10px] font-mono tracking-[0.25em] text-text-dim/40 select-none border-t border-border-thin/40">
-                {['SENESCYT', 'CES', 'CACES', 'SENADI', 'FIRMA.EC', 'DSPACE'].map((org) => (
-                    <span
-                        key={org}
-                        className="hover:text-text-main transition-colors duration-300 cursor-pointer"
+            <div className="w-full lg:w-auto pt-12 pb-4 flex flex-wrap justify-center lg:justify-between items-center gap-x-8 lg:gap-x-0 gap-y-6 text-black dark:text-white select-none lg:-ml-24 lg:-mr-24">
+                {institutionalLogos.map((logo) => (
+                    <div
+                        key={logo.name}
+                        className="flex items-center gap-2.5 hover:text-brand transition-all duration-300 cursor-pointer opacity-90 hover:opacity-100 hover:scale-105"
                     >
-                        {org}
-                    </span>
+                        {logo.icon}
+                        {logo.text}
+                    </div>
                 ))}
             </div>
 
