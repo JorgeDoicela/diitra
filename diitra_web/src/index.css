@@ -1502,3 +1502,45 @@ tr:hover:has(.action-btn-exclude:hover) h4 {
 tr:hover:has(.action-btn-exclude:hover) button.group-hover\:text-brand {
     color: var(--text-dim) !important;
 }
+
+/* =================================================================================
+             Efectos de Brillo Conic Especiales (Estilo Vercel)
+================================================================================= */
+.conic-glow-rainbow {
+    background-image: conic-gradient(
+        from 0deg,
+        #ff0055 0%,
+        #0066ff 25%,
+        #00ffcc 50%,
+        #99ff00 75%,
+        #ffcc00 90%,
+        #ff0055 100%
+    );
+}
+
+.radial-glow-accent {
+    background-image: radial-gradient(
+        circle,
+        var(--brand) 0%,
+        rgba(0, 112, 243, 0.4) 40%,
+        transparent 70%
+    );
+}
+
+@keyframes conic-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-conic-spin-slow {
+    animation: conic-spin 25s linear infinite;
+}
+
+.animate-conic-spin-fast {
+    animation: conic-spin 6s linear infinite;
+}
+
