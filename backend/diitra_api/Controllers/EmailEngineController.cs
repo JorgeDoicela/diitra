@@ -85,6 +85,15 @@ namespace diitra_api.Controllers
                 });
             }
 
+            if (string.IsNullOrWhiteSpace(request.TemplateCodigo) && string.IsNullOrWhiteSpace(request.CustomBody))
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Debe proporcionar una plantilla (TemplateCodigo) o un cuerpo de mensaje personalizado (CustomBody)."
+                });
+            }
+
             var success = await _emailEngineService.SendTemplatedEmailAsync(request);
             if (success)
             {

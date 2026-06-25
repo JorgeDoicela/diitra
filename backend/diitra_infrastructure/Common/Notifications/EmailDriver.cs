@@ -59,7 +59,11 @@ namespace diitra_infrastructure.Common.Notifications
         public async Task SendAsync(string recipient, string title, string body, string? url = null, string? recipientName = null, Dictionary<string, string>? extraData = null)
         {
             var frontendUrl = _configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
-            var absoluteUrl = url != null ? (url.StartsWith("http") ? url : $"{frontendUrl}{url}") : null;
+            var absoluteUrl = url != null 
+                ? (url.StartsWith("http", StringComparison.OrdinalIgnoreCase) 
+                    ? url 
+                    : $"{frontendUrl.TrimEnd('/')}{(url.StartsWith("/") ? url : "/" + url)}") 
+                : null;
             var name = recipientName ?? "Investigador";
 
             var host = _configuration["Email:Host"];
@@ -79,34 +83,30 @@ namespace diitra_infrastructure.Common.Notifications
             var fromEmail = _configuration["Email:FromEmail"] ?? "no-reply@diitra.istpet.edu.ec";
             var fromName = _configuration["Email:FromName"] ?? "DIITRA Notificaciones";
 
-            // PERFORMANCE OPTIMIZATION: Send email in the background to avoid blocking the main execution flow
-            // (especially during heavy workflows like document signing or status transitions).
-            _ = Task.Run(async () =>
+            try
             {
-                try
+                using var client = new SmtpClient(host, port)
                 {
-                    using var client = new SmtpClient(host, port)
-                    {
-                        Credentials = new NetworkCredential(user, pass),
-                        EnableSsl = true
-                    };
+                    Credentials = new NetworkCredential(user, pass),
+                    EnableSsl = true
+                };
 
-                    using var mailMessage = new MailMessage
-                    {
-                        From = new MailAddress(fromEmail, fromName),
-                        Subject = title
-                    };
-                    mailMessage.To.Add(recipient);
-                    _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, htmlBody);
-
-                    await client.SendMailAsync(mailMessage);
-                    _logger.LogInformation("Email enviado con éxito en segundo plano a {Recipient}", recipient);
-                }
-                catch (Exception ex)
+                using var mailMessage = new MailMessage
                 {
-                    _logger.LogError(ex, "Error al enviar email en segundo plano a {Recipient}", recipient);
-                }
-            });
+                    From = new MailAddress(fromEmail, fromName),
+                    Subject = title
+                };
+                mailMessage.To.Add(recipient);
+                _layoutRenderer.SetHtmlBodyWithBranding(mailMessage, htmlBody);
+
+                await client.SendMailAsync(mailMessage);
+                _logger.LogInformation("Email enviado con éxito a {Recipient}", recipient);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error al enviar email a {Recipient}", recipient);
+                throw;
+            }
         }
     }
 }
