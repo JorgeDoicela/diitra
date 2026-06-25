@@ -200,16 +200,16 @@ const Caces: React.FC = () => {
                     )}
 
                     {/* Export block */}
-                    <div className="mt-6 pt-4 border-t border-border-thin flex justify-between items-center bg-surface/20 p-2.5 rounded border border-border-thin font-sans">
-                        <div className="flex items-center gap-2">
+                    <div className="mt-6 pt-4 border-t border-border-thin flex flex-col sm:flex-row gap-3 justify-between sm:items-center bg-surface/20 p-2.5 rounded border border-border-thin font-sans">
+                        <div className="flex items-center gap-2 justify-center sm:justify-start">
                             <FileText size={14} className="text-brand" />
-                            <span className="text-[10px] text-text-main font-semibold font-mono">Reporte_Evidencias_CACES.csv</span>
+                            <span className="text-[10px] text-text-main font-semibold font-mono truncate">Reporte_Evidencias_CACES.csv</span>
                         </div>
                         
                         <button 
                             onClick={handleExport}
                             disabled={exportState === 'loading'}
-                            className={`px-3 py-1.5 rounded font-bold text-[9px] uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 cursor-pointer ${
+                            className={`px-3 py-1.5 rounded font-bold text-[9px] uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto ${
                                 exportState === 'loading'
                                     ? 'bg-surface border border-border-thin text-text-dim'
                                     : exportState === 'success'

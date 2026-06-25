@@ -155,13 +155,13 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
     const hasActive = activeIndex !== null;
 
     return (
-        <section className="h-[calc(100vh-7.5rem)] min-h-[550px] flex flex-col justify-between pt-4 pb-2 relative">
+        <section className="min-h-[calc(100vh-7.5rem)] lg:h-[calc(100vh-7.5rem)] flex flex-col justify-between pt-4 pb-2 relative">
 
             {/* El grid principal de 3 columnas */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center my-auto relative">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center my-auto relative">
 
                 {/* Columna Izquierda: Mensaje y Call To Actions */}
-                <div className="lg:col-span-4 space-y-7 z-10 animate-fade-up lg:-ml-24">
+                <div className="lg:col-span-4 space-y-7 z-10 animate-fade-up lg:-ml-24 text-center lg:text-left">
                     <div className="text-[10px] font-mono text-text-dim uppercase tracking-widest">
                         <span>Tecnológico Traversari — ISTPET</span>
                     </div>
@@ -169,7 +169,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                         Investigación <br />
                         & Innovación.
                     </h1>
-                    <div className="pt-2 flex flex-col sm:flex-row gap-3">
+                    <div className="pt-2 flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
                         <button
                             onClick={() => navigate('/login')}
                             className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 cursor-pointer shadow-sm"
@@ -194,7 +194,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                     ref={containerRef}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={handleMouseLeave}
-                    className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[400px] lg:h-[400px] flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible logo-container z-20"
+                    className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[400px] lg:h-[400px] flex justify-center items-center relative py-8 lg:py-0 select-none min-h-[260px] lg:min-h-[400px] overflow-visible logo-container z-20"
                 >
                     {/* =========================================================================
                         [MODO 1: SIN COLORES] (isRainbow === false)
@@ -452,8 +452,21 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                     </button>
                 </div>
 
+                {/* Ticker de logos visible en móvil/tablet y oculto en PC */}
+                <div className="lg:hidden w-full pt-6 pb-2 flex flex-wrap justify-center items-center gap-x-8 gap-y-4 text-black dark:text-white select-none">
+                    {institutionalLogos.map((logo) => (
+                        <div
+                            key={logo.name}
+                            className="flex items-center gap-2.5 opacity-90"
+                        >
+                            {logo.icon}
+                            {logo.text}
+                        </div>
+                    ))}
+                </div>
+
                 {/* Columna Derecha: Bloque Técnico Monospace (Estilo Vercel) */}
-                <div className="lg:col-span-4 hidden lg:flex flex-col justify-center gap-8 text-left lg:pl-24 uppercase">
+                <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-col justify-center gap-6 sm:gap-8 text-center lg:text-left lg:pl-24 uppercase mt-8 lg:mt-0">
                     {rightColumnData.map((row, idx) => {
                         const isExpanded = hoveredIndex === idx || (hoveredIndex === null && clickedIndex === idx);
                         const isDimmed = hasActive && !isExpanded;
@@ -481,8 +494,8 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
 
             </div>
 
-            {/* Ticker / Logos de Instituciones Integradas Centrados abajo, estilo Vercel */}
-            <div className="w-full lg:w-auto pt-12 pb-4 flex flex-wrap justify-center lg:justify-between items-center gap-x-8 lg:gap-x-0 gap-y-6 text-black dark:text-white select-none lg:-ml-24 lg:-mr-24">
+            {/* Ticker / Logos de Instituciones Integradas visible solo en PC */}
+            <div className="hidden lg:flex w-full lg:w-auto pt-12 pb-4 flex-wrap justify-center lg:justify-between items-center gap-x-8 lg:gap-x-0 gap-y-6 text-black dark:text-white select-none lg:-ml-24 lg:-mr-24">
                 {institutionalLogos.map((logo) => (
                     <div
                         key={logo.name}

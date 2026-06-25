@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
@@ -10,6 +10,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -47,8 +48,24 @@ const Header: React.FC<HeaderProps> = ({ currentTheme, toggleTheme }) => {
                     >
                         Acceder
                     </button>
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="p-2 text-text-dim hover:text-text-main md:hidden transition-colors rounded-md hover:bg-surface-hover/30"
+                    >
+                        {isOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
+                    </button>
                 </div>
             </div>
+            
+            {/* Mobile menu drawer */}
+            {isOpen && (
+                <div className="md:hidden border-t border-border-thin bg-bg-deep px-6 py-4 flex flex-col gap-4 animate-fade-in">
+                    <a href="#workspace" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Workspace</a>
+                    <a href="#caces" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Acreditación</a>
+                    <a href="#modulos" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Módulos</a>
+                    <a href="#roles" onClick={() => setIsOpen(false)} className="text-[13px] font-medium text-text-dim hover:text-text-main transition-colors">Estructura</a>
+                </div>
+            )}
         </nav>
     );
 };
