@@ -3,7 +3,7 @@ import { FileSignature, Fingerprint, Cpu, MessageSquareCode } from 'lucide-react
 
 const TechFirma: React.FC = () => {
     return (
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:-ml-24 lg:-mr-24">
             <div className="bento-card static p-8 space-y-6">
                 <div className="flex items-center gap-3">
                     <div className="p-2 border border-border-thin rounded bg-bg-deep text-text-main">

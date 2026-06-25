@@ -3,7 +3,7 @@ import { Users, CheckCircle2 } from 'lucide-react';
 
 const Workspace: React.FC = () => {
     return (
-        <section id="workspace" className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 items-center">
+        <section id="workspace" className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 items-center lg:-ml-24 lg:-mr-24">
 
             {/* Izquierda: Título y descripción */}
             <div className="lg:col-span-5 space-y-6">

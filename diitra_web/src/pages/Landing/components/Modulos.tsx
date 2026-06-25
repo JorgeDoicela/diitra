@@ -3,7 +3,7 @@ import { FileSignature, Clock, Cpu, ShieldCheck, ChevronRight } from 'lucide-rea
 
 const Modulos: React.FC = () => {
     return (
-        <section id="modulos" className="space-y-12">
+        <section id="modulos" className="space-y-12 lg:-ml-24 lg:-mr-24">
             <div className="space-y-4">
                 <h2 className="text-3xl font-bold tracking-tighter text-text-main">Módulos de Automatización</h2>
                 <div className="h-[2px] w-12 bg-text-main" />

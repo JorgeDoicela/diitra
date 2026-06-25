@@ -486,7 +486,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                 {institutionalLogos.map((logo) => (
                     <div
                         key={logo.name}
-                        className="flex items-center gap-2.5 hover:text-brand transition-all duration-300 cursor-pointer opacity-90 hover:opacity-100 hover:scale-105"
+                        className="flex items-center gap-2.5 opacity-90"
                     >
                         {logo.icon}
                         {logo.text}

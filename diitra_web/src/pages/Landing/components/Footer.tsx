@@ -6,7 +6,7 @@ interface FooterProps {
 
 const Footer: React.FC<FooterProps> = ({ currentTheme }) => {
     return (
-        <footer className="max-w-7xl mx-auto px-6 py-20 border-t border-border-thin text-text-dim">
+        <footer className="max-w-7xl mx-auto px-6 py-20 border-t border-border-thin text-text-dim lg:-ml-24 lg:-mr-24">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-6">
                     <div className="flex items-center gap-3">

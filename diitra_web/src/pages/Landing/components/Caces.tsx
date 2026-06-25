@@ -3,7 +3,7 @@ import { CheckCircle2, FileText } from 'lucide-react';
 
 const Caces: React.FC = () => {
     return (
-        <section id="caces" className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 items-center">
+        <section id="caces" className="grid grid-cols-1 lg:grid-cols-12 gap-12 py-12 items-center lg:-ml-24 lg:-mr-24">
 
             {/* Izquierda: Mockup en HTML/CSS de Indicadores CACES */}
             <div className="lg:col-span-7 order-last lg:order-first border border-border-thin rounded-xl bg-surface/35 shadow-xl p-6 font-mono text-[11px] tracking-tight relative overflow-hidden backdrop-blur-sm group hover:border-border-hover transition-all duration-300">

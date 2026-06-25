@@ -3,7 +3,7 @@ import { Users, LayoutDashboard, Scale, ShieldCheck } from 'lucide-react';
 
 const Roles: React.FC = () => {
     return (
-        <section id="roles" className="py-24 border-y border-border-thin">
+        <section id="roles" className="py-24 border-y border-border-thin lg:-ml-24 lg:-mr-24">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-20">
                 <div className="space-y-6">
                     <h2 className="text-4xl font-bold tracking-tighter leading-tight text-text-main">
