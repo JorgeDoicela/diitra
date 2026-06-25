@@ -146,6 +146,32 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 opacity 0.4s ease !important;
                 }
 
+                /* Retorno de los haces cónicos al salir */
+                .glow-conic {
+                    transition: transform 1.0s cubic-bezier(0.16, 1, 0.3, 1), 
+                                filter 0.8s ease, 
+                                opacity 0.8s ease !important;
+                }
+                /* Seguimiento de los haces cónicos en hover */
+                .logo-container:hover .glow-conic {
+                    transition: transform 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                                filter 0.5s ease, 
+                                opacity 0.4s ease !important;
+                }
+
+                /* Modo Arcoíris - Capa 1 */
+                .rainbow-glow-1 {
+                    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                                transform 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+                                filter 0.8s ease !important;
+                }
+                /* Modo Arcoíris - Capa 2 */
+                .rainbow-glow-2 {
+                    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                                transform 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+                                filter 0.8s ease !important;
+                }
+
                 @keyframes glow-pulse {
                     0%, 100% {
                         transform: scale(0.85);
@@ -249,6 +275,8 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     className="absolute inset-0 pointer-events-none"
                                     style={{
                                         opacity: isRainbow ? 0 : 1,
+                                        transform: isRainbow ? 'scale(0.3) rotate(-10deg)' : 'scale(1) rotate(0deg)',
+                                        transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
                                         zIndex: 0
                                     }}
                                 >
@@ -317,7 +345,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
 
                             {/* Capa 2: Haces de luz monocromáticos (Haz concentrado que rota y sigue al cursor) */}
                             <div
-                                className="absolute pointer-events-none"
+                                className="absolute pointer-events-none glow-conic"
                                 style={{
                                     left: '50%',
                                     top: '50%',
@@ -387,7 +415,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
 
                             {/* Capa 1: Brillo de ambiente profundo (Paralaje lento y rotación invertida) */}
                             <div
-                                className="absolute pointer-events-none"
+                                className="absolute pointer-events-none rainbow-glow-1"
                                 style={{
                                     width: '800px',
                                     height: '800px',
@@ -428,7 +456,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
 
                             {/* Capa 2: Brillo de acento nítido (Seguimiento estándar y rotación normal) */}
                             <div
-                                className="absolute pointer-events-none"
+                                className="absolute pointer-events-none rainbow-glow-2"
                                 style={{
                                     width: '700px',
                                     height: '700px',
