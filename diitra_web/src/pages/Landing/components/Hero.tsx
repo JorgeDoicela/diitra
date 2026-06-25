@@ -172,14 +172,14 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                     <div className="pt-2 flex flex-col sm:flex-row justify-center lg:justify-start gap-3">
                         <button
                             onClick={() => navigate('/login')}
-                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 cursor-pointer shadow-sm"
+                            className="flex items-center justify-center gap-2 bg-text-main text-bg-deep px-6 py-3 rounded-md text-[11px] font-semibold uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 cursor-pointer shadow-sm"
                         >
                             Iniciar Gestión
                             <ArrowRight size={12} />
                         </button>
                         <a
                             href="#caces"
-                            className="flex items-center justify-center gap-2 bg-transparent text-text-main px-6 py-2.5 rounded-full border border-border-thin text-[10px] font-bold uppercase tracking-widest hover:bg-surface-hover/40 hover:border-border-hover transition-all cursor-pointer"
+                            className="flex items-center justify-center gap-2 bg-transparent text-text-main px-6 py-3 rounded-md border border-border-thin text-[11px] font-semibold uppercase tracking-widest hover:bg-surface-hover/40 hover:border-border-hover transition-all cursor-pointer"
                         >
                             Normativa IST
                         </a>
