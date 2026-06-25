@@ -14,16 +14,6 @@ interface LandingProps {
 const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
     const navigate = useNavigate();
     const [isRainbow, setIsRainbow] = useState(false);
-    const [cursorPos, setCursorPos] = useState({ x: 260, y: 200 });
-    const logoAreaRef = useRef<HTMLDivElement>(null);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        setCursorPos({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-        });
-    };
 
     return (
         <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg transition-all duration-500 overflow-x-hidden relative">
@@ -102,27 +92,24 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                         </div>
 
                         {/* Columna Central: Logo de DIITRA */}
-                        <div
-                            ref={logoAreaRef}
-                            className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible"
-                            onMouseMove={handleMouseMove}
-                        >
-                            {/* ── Glow que sigue el cursor (solo cuando !isRainbow) ── */}
+                        <div className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible">
+                            {/* ── Glow centrado en el logo (solo cuando !isRainbow) ── */}
+                            {/* Brillo de ambiente muy suave y amplio en el fondo */}
                             <div
                                 className="absolute pointer-events-none"
                                 style={{
-                                    left: cursorPos.x,
-                                    top: cursorPos.y,
-                                    width: '320px',
-                                    height: '320px',
+                                    left: '50%',
+                                    top: '50%',
+                                    width: currentTheme === 'dark' ? '600px' : '450px',
+                                    height: currentTheme === 'dark' ? '600px' : '450px',
                                     transform: 'translate(-50%, -50%)',
                                     background: currentTheme === 'dark'
-                                        ? 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(200,200,255,0.10) 40%, transparent 70%)'
-                                        : 'radial-gradient(circle, rgba(0,0,0,0.10) 0%, rgba(100,100,180,0.07) 40%, transparent 70%)',
-                                    filter: 'blur(30px)',
+                                        ? 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(200,220,255,0.02) 50%, transparent 80%)'
+                                        : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.90) 35%, rgba(255,255,255,0.40) 60%, transparent 75%)',
+                                    filter: currentTheme === 'dark' ? 'blur(80px)' : 'blur(35px)',
                                     borderRadius: '50%',
                                     opacity: isRainbow ? 0 : 1,
-                                    transition: 'opacity 0.4s ease',
+                                    transition: 'opacity 0.5s ease',
                                     zIndex: 0,
                                 }}
                             />
@@ -206,6 +193,13 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                                     alt="DIITRA Logo"
                                     className="h-44 md:h-[220px] w-auto object-contain select-none transition-all duration-500 group-hover:scale-105"
+                                    style={{
+                                        filter: !isRainbow
+                                            ? currentTheme === 'dark'
+                                                ? 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 35px rgba(200, 220, 255, 0.35))'
+                                                : 'drop-shadow(0 12px 24px rgba(0, 0, 0, 0.14)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08))'
+                                            : 'none'
+                                    }}
                                 />
                             </button>
                         </div>
