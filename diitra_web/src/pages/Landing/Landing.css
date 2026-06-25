@@ -1,0 +1,130 @@
+/* Transición suave de colores para cambio de tema */
+.theme-transition {
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-transition h1,
+.theme-transition h2,
+.theme-transition p,
+.theme-transition a,
+.theme-transition nav,
+.theme-transition span,
+.theme-transition button:not(.group) {
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enlaces con subrayado animado premium */
+.nav-link {
+    position: relative;
+    padding-bottom: 2px;
+}
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    transform: scaleX(0);
+    height: 1px;
+    bottom: 0;
+    left: 0;
+    background-color: var(--accent);
+    transform-origin: bottom right;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+}
+
+/* Retorno elástico de la imagen del logo al salir */
+.logo-img {
+    transition: filter 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+/* Seguimiento ultra-responsivo en hover */
+.logo-container:hover .logo-img {
+    transition: filter 0.2s ease-out, 
+                transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+/* Retorno suave de las luces de fondo al salir */
+.glow-bulb {
+    transition: transform 1.0s cubic-bezier(0.16, 1, 0.3, 1), 
+                filter 0.8s ease !important;
+}
+/* Seguimiento de las luces en hover */
+.logo-container:hover .glow-bulb {
+    transition: transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                filter 0.5s ease !important;
+}
+
+/* Retorno del brillo central al salir */
+.glow-core {
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), 
+                filter 0.8s ease, 
+                opacity 0.8s ease !important;
+}
+/* Seguimiento del brillo central en hover */
+.logo-container:hover .glow-core {
+    transition: transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                filter 0.4s ease, 
+                opacity 0.4s ease !important;
+}
+
+/* Retorno de los haces cónicos al salir */
+.glow-conic {
+    transition: transform 1.0s cubic-bezier(0.16, 1, 0.3, 1), 
+                filter 0.8s ease, 
+                opacity 0.8s ease !important;
+}
+/* Seguimiento de los haces cónicos en hover */
+.logo-container:hover .glow-conic {
+    transition: transform 0.24s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                filter 0.5s ease, 
+                opacity 0.4s ease !important;
+}
+
+/* Modo Arcoíris - Capa 1 */
+.rainbow-glow-1 {
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.9s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+                filter 0.8s ease !important;
+}
+/* Modo Arcoíris - Capa 2 */
+.rainbow-glow-2 {
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.85s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+                filter 0.8s ease !important;
+}
+
+@keyframes glow-pulse {
+    0%, 100% {
+        transform: scale(0.85);
+        opacity: 0.65;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
+/* Vercel-like expanding technical block */
+.technical-row {
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.grid-wrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                margin-top 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+.grid-wrapper.expanded {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
