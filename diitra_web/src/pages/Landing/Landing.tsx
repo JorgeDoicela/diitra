@@ -184,6 +184,52 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                             />
 
                             {/* ── Glow Vercel-style: haces de luz de colores que salen del centro ── */}
+                            
+                            {/* Capa 1: Brillo de ambiente profundo (Paralaje lento y rotación invertida) */}
+                            <div
+                                className="absolute pointer-events-none"
+                                style={{
+                                    width: '800px',
+                                    height: '800px',
+                                    left: '50%',
+                                    top: '50%',
+                                    transform: isRainbow
+                                        ? 'translate(calc(-50% + var(--mouse-x, 0px) * 0.015), calc(-50% + var(--mouse-y, 0px) * 0.015)) scale(calc(1.1 + var(--dist, 0) * 0.04)) rotate(calc(var(--angle, 0deg) * -0.06))'
+                                        : 'translate(-50%, -50%) scale(0.25)',
+                                    opacity: isRainbow ? 0.75 : 0,
+                                    filter: isRainbow
+                                        ? 'brightness(1.1) saturate(1.15) hue-rotate(calc(var(--angle, 0deg) * -0.1))'
+                                        : 'brightness(0.7) saturate(0.7) blur(15px)',
+                                    transition: isRainbow
+                                        ? 'opacity 1.0s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1), filter 1.0s ease'
+                                        : 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), filter 0.9s ease',
+                                    zIndex: 0,
+                                }}
+                            >
+                                <div
+                                    className="w-full h-full"
+                                    style={{
+                                        background: `conic-gradient(
+                                            from -15deg at 50% 50%,
+                                            rgba(60, 120, 255, 0.95) 35deg,
+                                            transparent 75deg,
+                                            rgba(40, 220, 180, 0.95) 125deg,
+                                            transparent 165deg,
+                                            rgba(200, 240, 80, 0.95) 215deg,
+                                            transparent 255deg,
+                                            rgba(255, 80, 160, 0.95) 305deg,
+                                            transparent 345deg,
+                                            rgba(60, 120, 255, 0.95) 395deg
+                                        )`,
+                                        filter: 'blur(55px)',
+                                        maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                        WebkitMaskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                        animation: isRainbow ? 'glow-pulse 8s ease-in-out infinite' : 'none',
+                                    }}
+                                />
+                            </div>
+
+                            {/* Capa 2: Brillo de acento nítido (Seguimiento estándar y rotación normal) */}
                             <div
                                 className="absolute pointer-events-none"
                                 style={{
@@ -239,11 +285,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     alt="DIITRA Logo"
                                     className="h-44 md:h-[220px] w-auto object-contain select-none transition-all duration-500 group-hover:scale-105"
                                     style={{
-                                        filter: !isRainbow
-                                            ? 'drop-shadow(0 0 15px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))'
-                                            : 'none',
+                                        filter: isRainbow
+                                            ? 'drop-shadow(calc(var(--norm-x, 0) * -6px) calc(var(--norm-y, 0) * -6px) 15px rgba(60, 120, 255, 0.35)) drop-shadow(calc(var(--norm-x, 0) * 6px) calc(var(--norm-y, 0) * 6px) 25px rgba(255, 80, 160, 0.35))'
+                                            : 'drop-shadow(0 0 15px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))',
                                         transform: isRainbow
-                                            ? 'perspective(1000px) rotateX(calc(var(--norm-y, 0) * -4deg)) rotateY(calc(var(--norm-x, 0) * 4deg))'
+                                            ? 'perspective(1000px) rotateX(calc(var(--norm-y, 0) * -4deg)) rotateY(calc(var(--norm-x, 0) * 4deg)) scale(1.02)'
                                             : 'none',
                                         transition: 'transform 0.4s cubic-bezier(0.15, 0.85, 0.3, 1), filter 0.5s ease'
                                     }}
