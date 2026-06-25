@@ -410,7 +410,6 @@ body {
     border-radius: var(--radius) !important;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.01) !important;
     cursor: default;
-    user-select: none;
 }
 
 /**
