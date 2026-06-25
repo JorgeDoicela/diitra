@@ -155,18 +155,17 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
     const hasActive = activeIndex !== null;
 
     return (
-        <section className="min-h-[85vh] flex flex-col justify-between pt-8 pb-2 relative">
+        <section className="h-[calc(100vh-7.5rem)] min-h-[550px] flex flex-col justify-between pt-4 pb-2 relative">
 
             {/* El grid principal de 3 columnas */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center my-auto relative">
 
                 {/* Columna Izquierda: Mensaje y Call To Actions */}
                 <div className="lg:col-span-4 space-y-7 z-10 animate-fade-up lg:-ml-24">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border-thin bg-surface-hover/20 text-[10px] font-mono text-text-dim uppercase tracking-widest">
-                        <Activity size={10} className="text-brand animate-pulse" />
+                    <div className="text-[10px] font-mono text-text-dim uppercase tracking-widest">
                         <span>Tecnológico Traversari — ISTPET</span>
                     </div>
-                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-bold text-text-main tracking-tighter leading-[0.85] lg:whitespace-nowrap">
+                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-normal text-text-main tracking-tighter leading-[0.85] lg:whitespace-nowrap">
                         Investigación <br />
                         & Innovación.
                     </h1>
