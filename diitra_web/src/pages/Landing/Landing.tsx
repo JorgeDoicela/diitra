@@ -114,7 +114,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 }}
                             />
 
-                            {/* ── Glow Vercel-style: intenso en centro, desvanece hacia afuera ── */}
+                            {/* ── Glow Vercel-style: haces de luz de colores que salen del centro ── */}
                             <div
                                 className="absolute pointer-events-none"
                                 style={{
@@ -124,63 +124,27 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     top: '50%',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(1)'
-                                        : 'translate(-50%, -50%) scale(0.85)',
-                                    opacity: isRainbow ? 1 : 0,
-                                    transition: 'opacity 0.7s ease, transform 0.7s ease',
+                                        : 'translate(-50%, -50%) scale(0.25)',
+                                    opacity: isRainbow ? 0.95 : 0,
+                                    background: `conic-gradient(
+                                        from -15deg at 50% 50%,
+                                        rgba(60, 120, 255, 0.95) 35deg,
+                                        transparent 75deg,
+                                        rgba(40, 220, 180, 0.95) 125deg,
+                                        transparent 165deg,
+                                        rgba(200, 240, 80, 0.95) 215deg,
+                                        transparent 255deg,
+                                        rgba(255, 80, 160, 0.95) 305deg,
+                                        transparent 345deg,
+                                        rgba(60, 120, 255, 0.95) 395deg
+                                    )`,
+                                    filter: 'blur(35px)',
+                                    maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                    WebkitMaskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                    transition: 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
                                     zIndex: 0,
                                 }}
-                            >
-                                {/* Rosa/Pink — arriba izquierda */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '210px', left: '270px',
-                                    width: '350px', height: '350px',
-                                    transform: 'translate(-50%, -50%)',
-                                    background: 'radial-gradient(circle, rgba(255, 80, 160, 0.90) 0%, rgba(255, 100, 180, 0.55) 25%, rgba(255, 140, 200, 0.20) 50%, transparent 72%)',
-                                    filter: 'blur(45px)',
-                                    borderRadius: '50%',
-                                }} />
-                                {/* Azul/Blue — arriba derecha */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '210px', left: '430px',
-                                    width: '340px', height: '340px',
-                                    transform: 'translate(-50%, -50%)',
-                                    background: 'radial-gradient(circle, rgba(60, 120, 255, 0.88) 0%, rgba(80, 140, 255, 0.50) 25%, rgba(120, 170, 255, 0.18) 50%, transparent 72%)',
-                                    filter: 'blur(45px)',
-                                    borderRadius: '50%',
-                                }} />
-                                {/* Verde/Cian — abajo derecha */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '440px', left: '430px',
-                                    width: '360px', height: '350px',
-                                    transform: 'translate(-50%, -50%)',
-                                    background: 'radial-gradient(circle, rgba(40, 220, 180, 0.88) 0%, rgba(60, 230, 190, 0.50) 25%, rgba(100, 240, 210, 0.18) 50%, transparent 72%)',
-                                    filter: 'blur(45px)',
-                                    borderRadius: '50%',
-                                }} />
-                                {/* Amarillo/Verde — abajo izquierda */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '440px', left: '270px',
-                                    width: '320px', height: '310px',
-                                    transform: 'translate(-50%, -50%)',
-                                    background: 'radial-gradient(circle, rgba(200, 240, 80, 0.75) 0%, rgba(180, 230, 100, 0.40) 25%, rgba(200, 240, 140, 0.15) 50%, transparent 70%)',
-                                    filter: 'blur(45px)',
-                                    borderRadius: '50%',
-                                }} />
-                                {/* Brillo blanco intenso — convergencia central */}
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '350px', left: '350px',
-                                    width: '240px', height: '240px',
-                                    transform: 'translate(-50%, -50%)',
-                                    background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.80) 20%, rgba(255,255,255,0.35) 45%, transparent 70%)',
-                                    filter: 'blur(18px)',
-                                    borderRadius: '50%',
-                                }} />
-                            </div>
+                            />
 
                             {/* Logo encima de todo */}
                             <button
@@ -195,9 +159,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     className="h-44 md:h-[220px] w-auto object-contain select-none transition-all duration-500 group-hover:scale-105"
                                     style={{
                                         filter: !isRainbow
-                                            ? currentTheme === 'dark'
-                                                ? 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 35px rgba(200, 220, 255, 0.35))'
-                                                : 'drop-shadow(0 12px 24px rgba(0, 0, 0, 0.14)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.08))'
+                                            ? 'drop-shadow(0 0 15px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))'
                                             : 'none'
                                     }}
                                 />
