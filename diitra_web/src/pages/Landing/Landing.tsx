@@ -173,15 +173,15 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 style={{
                                     left: '50%',
                                     top: '50%',
-                                    width: currentTheme === 'dark' ? '650px' : '500px',
-                                    height: currentTheme === 'dark' ? '650px' : '500px',
+                                    width: currentTheme === 'dark' ? '850px' : '700px',
+                                    height: currentTheme === 'dark' ? '850px' : '700px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
                                         : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.20), calc(-50% + var(--mouse-y, 0px) * 0.20)) scale(calc(1 + var(--dist, 0) * 0.04))',
                                     background: currentTheme === 'dark'
-                                        ? 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(200,220,255,0.015) 60%, transparent 85%)'
-                                        : 'radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(240,245,255,0.60) 50%, transparent 80%)',
-                                    filter: currentTheme === 'dark' ? 'blur(90px)' : 'blur(45px)',
+                                        ? 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, rgba(200,220,255,0.01) 60%, transparent 85%)'
+                                        : 'radial-gradient(circle, rgba(255,255,255,0.80) 0%, rgba(240,245,255,0.50) 55%, transparent 80%)',
+                                    filter: currentTheme === 'dark' ? 'blur(130px)' : 'blur(70px)',
                                     borderRadius: '50%',
                                     opacity: isRainbow ? 0 : 1,
                                     transition: isRainbow
@@ -191,29 +191,79 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 }}
                             />
 
-                            {/* Capa 2: Brillo intermedio (Parallax medio) */}
+                            {/* Capa 2: Haces de luz monocromáticos (Parallax medio y rotación interactiva) */}
                             <div
                                 className="absolute pointer-events-none"
                                 style={{
                                     left: '50%',
                                     top: '50%',
-                                    width: currentTheme === 'dark' ? '450px' : '350px',
-                                    height: currentTheme === 'dark' ? '450px' : '350px',
+                                    width: currentTheme === 'dark' ? '850px' : '700px',
+                                    height: currentTheme === 'dark' ? '850px' : '700px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
-                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.45), calc(-50% + var(--mouse-y, 0px) * 0.45)) scale(calc(1 + var(--dist, 0) * 0.08))',
-                                    background: currentTheme === 'dark'
-                                        ? 'radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(220,235,255,0.04) 40%, transparent 75%)'
-                                        : 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(245,250,255,0.80) 30%, transparent 70%)',
-                                    filter: currentTheme === 'dark' ? 'blur(50px)' : 'blur(30px)',
-                                    borderRadius: '50%',
-                                    opacity: isRainbow ? 0 : 1,
+                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.40), calc(-50% + var(--mouse-y, 0px) * 0.40)) scale(calc(1 + var(--dist, 0) * 0.08)) rotate(calc(var(--angle, 0deg) * 0.08))',
+                                    opacity: isRainbow ? 0 : 0.85,
                                     transition: isRainbow
                                         ? 'opacity 0.5s ease, transform 0.7s cubic-bezier(0.1, 0.8, 0.2, 1)'
                                         : 'opacity 0.5s ease, transform 0.3s cubic-bezier(0.15, 0.85, 0.3, 1)',
                                     zIndex: 0,
                                 }}
-                            />
+                            >
+                                <div
+                                    className="w-full h-full"
+                                    style={{
+                                        background: currentTheme === 'dark'
+                                            ? `conic-gradient(
+                                                from 0deg at 50% 50%,
+                                                transparent 0deg,
+                                                rgba(255, 255, 255, 0.16) 15deg,
+                                                transparent 30deg,
+                                                transparent 70deg,
+                                                rgba(255, 255, 255, 0.12) 85deg,
+                                                transparent 100deg,
+                                                transparent 130deg,
+                                                rgba(255, 255, 255, 0.18) 145deg,
+                                                transparent 160deg,
+                                                transparent 190deg,
+                                                rgba(255, 255, 255, 0.10) 205deg,
+                                                transparent 220deg,
+                                                transparent 250deg,
+                                                rgba(255, 255, 255, 0.14) 265deg,
+                                                transparent 280deg,
+                                                transparent 310deg,
+                                                rgba(255, 255, 255, 0.20) 325deg,
+                                                transparent 340deg,
+                                                transparent 360deg
+                                            )`
+                                            : `conic-gradient(
+                                                from 0deg at 50% 50%,
+                                                transparent 0deg,
+                                                rgba(255, 255, 255, 0.95) 15deg,
+                                                transparent 30deg,
+                                                transparent 70deg,
+                                                rgba(255, 255, 255, 0.90) 85deg,
+                                                transparent 100deg,
+                                                transparent 130deg,
+                                                rgba(255, 255, 255, 0.98) 145deg,
+                                                transparent 160deg,
+                                                transparent 190deg,
+                                                rgba(255, 255, 255, 0.90) 205deg,
+                                                transparent 220deg,
+                                                transparent 250deg,
+                                                rgba(255, 255, 255, 0.95) 265deg,
+                                                transparent 280deg,
+                                                transparent 310deg,
+                                                rgba(255, 255, 255, 0.98) 325deg,
+                                                transparent 340deg,
+                                                transparent 360deg
+                                            )`,
+                                        filter: currentTheme === 'dark' ? 'blur(45px)' : 'blur(25px)',
+                                        maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                        WebkitMaskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                        animation: isRainbow ? 'none' : 'glow-pulse 10s ease-in-out infinite',
+                                    }}
+                                />
+                            </div>
 
                             {/* Capa 3: Brillo central de alta intensidad (Parallax rápido y reactivo) */}
                             <div
@@ -221,15 +271,15 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 style={{
                                     left: '50%',
                                     top: '50%',
-                                    width: currentTheme === 'dark' ? '280px' : '220px',
-                                    height: currentTheme === 'dark' ? '280px' : '220px',
+                                    width: currentTheme === 'dark' ? '300px' : '240px',
+                                    height: currentTheme === 'dark' ? '300px' : '240px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
                                         : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.75), calc(-50% + var(--mouse-y, 0px) * 0.75)) scale(calc(1 + var(--dist, 0) * 0.12))',
                                     background: currentTheme === 'dark'
-                                        ? 'radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 30%, transparent 70%)'
+                                        ? 'radial-gradient(circle, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.06) 30%, transparent 70%)'
                                         : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.90) 25%, transparent 60%)',
-                                    filter: currentTheme === 'dark' ? 'blur(30px)' : 'blur(15px)',
+                                    filter: currentTheme === 'dark' ? 'blur(35px)' : 'blur(15px)',
                                     borderRadius: '50%',
                                     opacity: isRainbow ? 0 : 1,
                                     transition: isRainbow
@@ -347,7 +397,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     style={{
                                         filter: isRainbow
                                             ? 'drop-shadow(calc(var(--norm-x, 0) * -6px) calc(var(--norm-y, 0) * -6px) 15px rgba(60, 120, 255, 0.35)) drop-shadow(calc(var(--norm-x, 0) * 6px) calc(var(--norm-y, 0) * 6px) 25px rgba(255, 80, 160, 0.35))'
-                                            : 'drop-shadow(calc(var(--norm-x, 0) * -48px) calc(var(--norm-y, 0) * -48px) 30px rgba(255, 255, 255, 0.85)) drop-shadow(calc(var(--norm-x, 0) * 48px) calc(var(--norm-y, 0) * 48px) 45px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 12px rgba(255, 255, 255, 0.95))',
+                                            : 'drop-shadow(calc(var(--norm-x, 0) * -48px) calc(var(--norm-y, 0) * -48px) 50px rgba(255, 255, 255, 0.85)) drop-shadow(calc(var(--norm-x, 0) * 48px) calc(var(--norm-y, 0) * 48px) 75px rgba(255, 255, 255, 0.55)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.95))',
                                         transition: 'filter 0.3s cubic-bezier(0.15, 0.85, 0.3, 1)'
                                     }}
                                 />
