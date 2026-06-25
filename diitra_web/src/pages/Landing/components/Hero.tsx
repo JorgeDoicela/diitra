@@ -97,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center my-auto relative">
 
                 {/* Columna Izquierda: Mensaje y Call To Actions */}
-                <div className="lg:col-span-5 space-y-7 z-10 animate-fade-up">
+                <div className="lg:col-span-4 space-y-7 z-10 animate-fade-up lg:-ml-24">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border-thin bg-surface-hover/20 text-[10px] font-mono text-text-dim uppercase tracking-widest">
                         <Activity size={10} className="text-brand animate-pulse" />
                         <span>Tecnológico Traversari — ISTPET</span>
@@ -123,12 +123,15 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                     </div>
                 </div>
 
+                {/* Espaciador central para mantener la estructura del grid de 12 columnas en desktop */}
+                <div className="lg:col-span-4 hidden lg:block pointer-events-none h-[400px]" />
+
                 {/* Columna Central: Logo de DIITRA */}
                 <div
                     ref={containerRef}
                     onMouseMove={handleMouseMove}
                     onMouseLeave={handleMouseLeave}
-                    className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible logo-container"
+                    className="lg:absolute lg:left-1/2 lg:top-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 lg:w-[400px] lg:h-[400px] flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible logo-container z-20"
                 >
                     {/* =========================================================================
                         [MODO 1: SIN COLORES] (isRainbow === false)
@@ -137,7 +140,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                         ========================================================================= */}
                     {/* Capa 1: Brillo de fondo amplio y dinámico de colores */}
                     {currentTheme === 'dark' ? (
-                        <div 
+                        <div
                             className="absolute inset-0 pointer-events-none"
                             style={{
                                 opacity: isRainbow ? 0 : 1,
@@ -387,16 +390,15 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                 </div>
 
                 {/* Columna Derecha: Bloque Técnico Monospace (Estilo Vercel) */}
-                <div className="lg:col-span-3 hidden lg:flex flex-col justify-center gap-6 text-left uppercase">
+                <div className="lg:col-span-4 hidden lg:flex flex-col justify-center gap-8 text-left lg:pl-24 uppercase">
                     {rightColumnData.map((row, idx) => {
                         const isExpanded = hoveredIndex === idx || (hoveredIndex === null && clickedIndex === idx);
                         const isDimmed = hasActive && !isExpanded;
                         return (
                             <div
                                 key={idx}
-                                className={`space-y-1.5 cursor-pointer technical-row transition-all duration-500 ease-out select-none ${
-                                    isDimmed ? 'opacity-30 scale-[0.98]' : 'opacity-100 scale-100'
-                                }`}
+                                className={`space-y-1.5 cursor-pointer technical-row transition-all duration-500 ease-out select-none ${isDimmed ? 'opacity-30 scale-[0.98]' : 'opacity-100 scale-100'
+                                    }`}
                                 onMouseEnter={() => setHoveredIndex(idx)}
                                 onMouseLeave={() => setHoveredIndex(null)}
                                 onClick={() => setClickedIndex(clickedIndex === idx ? null : idx)}
