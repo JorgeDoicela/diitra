@@ -140,7 +140,7 @@ export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({
         fetchNotifications();
 
         const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
+        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || window.location.origin;
 
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(`${apiRoot}/hubs/notifications`, {

@@ -180,7 +180,7 @@ export const GroupDetailDrawer: React.FC<GroupDetailDrawerProps> = ({
         }
 
         const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
+        const apiRoot = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || window.location.origin;
         const hubUrl = `${apiRoot}/hubs/collaboration`;
         const newConnection = new signalR.HubConnectionBuilder()
             .withUrl(hubUrl, {

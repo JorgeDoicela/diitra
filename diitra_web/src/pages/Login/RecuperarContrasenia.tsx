@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2, CheckCircle, ArrowLeft, Sun, Moon } from 'lucide-react';
 
 const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
-const API_BASE = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
+const API_BASE = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || window.location.origin;
 
 interface RecuperarContraseniaProps {
     currentTheme?: 'dark' | 'light';
