@@ -31,6 +31,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
         
         const normX = x / (rect.width / 2);
         const normY = y / (rect.height / 2);
+        const dist = Math.min(Math.sqrt(normX * normX + normY * normY), 1.5);
         
         let angle = Math.atan2(y, x) * (180 / Math.PI);
         
@@ -51,6 +52,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
         el.style.setProperty('--norm-x', `${normX}`);
         el.style.setProperty('--norm-y', `${normY}`);
         el.style.setProperty('--angle', `${angle}deg`);
+        el.style.setProperty('--dist', `${dist}`);
     };
 
     const handleMouseLeave = () => {
@@ -62,6 +64,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
         el.style.setProperty('--norm-x', '0');
         el.style.setProperty('--norm-y', '0');
         el.style.setProperty('--angle', '0deg');
+        el.style.setProperty('--dist', '0');
     };
 
     return (
@@ -189,12 +192,15 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     left: '50%',
                                     top: '50%',
                                     transform: isRainbow
-                                        ? 'translate(calc(-50% + var(--mouse-x, 0px) * 0.03), calc(-50% + var(--mouse-y, 0px) * 0.03)) scale(1) rotate(calc(var(--angle, 0deg) * 0.35))'
+                                        ? 'translate(calc(-50% + var(--mouse-x, 0px) * 0.03), calc(-50% + var(--mouse-y, 0px) * 0.03)) scale(calc(1 + var(--dist, 0) * 0.08)) rotate(calc(var(--angle, 0deg) * 0.12))'
                                         : 'translate(-50%, -50%) scale(0.25)',
                                     opacity: isRainbow ? 0.95 : 0,
+                                    filter: isRainbow
+                                        ? 'brightness(1.15) saturate(1.25) hue-rotate(calc(var(--angle, 0deg) * 0.15))'
+                                        : 'brightness(0.8) saturate(0.8) blur(10px)',
                                     transition: isRainbow
-                                        ? 'opacity 0.8s ease, transform 0.6s cubic-bezier(0.15, 0.85, 0.3, 1)'
-                                        : 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+                                        ? 'opacity 0.8s ease, transform 0.6s cubic-bezier(0.15, 0.85, 0.3, 1), filter 0.8s ease'
+                                        : 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), filter 0.9s ease',
                                     zIndex: 0,
                                 }}
                             >
