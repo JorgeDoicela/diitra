@@ -22,19 +22,19 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!containerRef.current) return;
         const rect = containerRef.current.getBoundingClientRect();
-        
+
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
-        
+
         const x = e.clientX - centerX;
         const y = e.clientY - centerY;
-        
+
         const normX = x / (rect.width / 2);
         const normY = y / (rect.height / 2);
         const dist = Math.min(Math.sqrt(normX * normX + normY * normY), 1.5);
-        
+
         let angle = Math.atan2(y, x) * (180 / Math.PI);
-        
+
         if (!isHoveringRef.current) {
             isHoveringRef.current = true;
             lastAngleRef.current = angle;
@@ -45,7 +45,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
             angle = lastAngleRef.current + diff;
             lastAngleRef.current = angle;
         }
-        
+
         const el = containerRef.current;
         el.style.setProperty('--mouse-x', `${x}px`);
         el.style.setProperty('--mouse-y', `${y}px`);
@@ -156,14 +156,17 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                         </div>
 
                         {/* Columna Central: Logo de DIITRA */}
-                        <div 
+                        <div
                             ref={containerRef}
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
                             className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible"
                         >
-                            {/* ── Glow centrado en el logo (solo cuando !isRainbow) ── */}
-                            {/* Brillo de ambiente muy suave y amplio en el fondo */}
+                            {/* =========================================================================
+                                [MODO 1: SIN COLORES] (isRainbow === false)
+                                - Brillo de fondo monocromático/blanco centrado en el logo.
+                                - Sigue suavemente al cursor y reacciona al movimiento.
+                                ========================================================================= */}
                             <div
                                 className="absolute pointer-events-none"
                                 style={{
@@ -171,20 +174,28 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     top: '50%',
                                     width: currentTheme === 'dark' ? '600px' : '450px',
                                     height: currentTheme === 'dark' ? '600px' : '450px',
-                                    transform: 'translate(-50%, -50%)',
+                                    transform: isRainbow
+                                        ? 'translate(-50%, -50%) scale(0.25)'
+                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.035), calc(-50% + var(--mouse-y, 0px) * 0.035)) scale(calc(1 + var(--dist, 0) * 0.06))',
                                     background: currentTheme === 'dark'
                                         ? 'radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(200,220,255,0.02) 50%, transparent 80%)'
                                         : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.90) 35%, rgba(255,255,255,0.40) 60%, transparent 75%)',
                                     filter: currentTheme === 'dark' ? 'blur(80px)' : 'blur(35px)',
                                     borderRadius: '50%',
                                     opacity: isRainbow ? 0 : 1,
-                                    transition: 'opacity 0.5s ease',
+                                    transition: isRainbow
+                                        ? 'opacity 0.5s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1)'
+                                        : 'opacity 0.5s ease, transform 0.55s cubic-bezier(0.15, 0.85, 0.3, 1)',
                                     zIndex: 0,
                                 }}
                             />
 
-                            {/* ── Glow Vercel-style: haces de luz de colores que salen del centro ── */}
-                            
+                            {/* =========================================================================
+                                [MODO 2: CON COLORES - MODO INNOVACIÓN] (isRainbow === true)
+                                - Efectos de brillo de ambiente con gradientes cónicos y dinámicos (arcoíris).
+                                - Interactividad basada en la posición del mouse y efectos 3D.
+                                ========================================================================= */}
+
                             {/* Capa 1: Brillo de ambiente profundo (Paralaje lento y rotación invertida) */}
                             <div
                                 className="absolute pointer-events-none"
@@ -287,10 +298,8 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     style={{
                                         filter: isRainbow
                                             ? 'drop-shadow(calc(var(--norm-x, 0) * -6px) calc(var(--norm-y, 0) * -6px) 15px rgba(60, 120, 255, 0.35)) drop-shadow(calc(var(--norm-x, 0) * 6px) calc(var(--norm-y, 0) * 6px) 25px rgba(255, 80, 160, 0.35))'
-                                            : 'drop-shadow(0 0 15px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))',
-                                        transform: isRainbow
-                                            ? 'perspective(1000px) rotateX(calc(var(--norm-y, 0) * -4deg)) rotateY(calc(var(--norm-x, 0) * 4deg)) scale(1.02)'
-                                            : 'none',
+                                            : 'drop-shadow(calc(var(--norm-x, 0) * -5px) calc(var(--norm-y, 0) * -5px) 15px rgba(255, 255, 255, 0.8)) drop-shadow(calc(var(--norm-x, 0) * 5px) calc(var(--norm-y, 0) * 5px) 30px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.9))',
+                                        transform: 'perspective(1000px) rotateX(calc(var(--norm-y, 0) * -4deg)) rotateY(calc(var(--norm-x, 0) * 4deg)) scale(1.02)',
                                         transition: 'transform 0.4s cubic-bezier(0.15, 0.85, 0.3, 1), filter 0.5s ease'
                                     }}
                                 />
