@@ -68,8 +68,84 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
     };
 
     return (
-        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg transition-all duration-500 overflow-x-hidden relative">
+        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg theme-transition overflow-x-hidden relative">
             <style>{`
+                /* Transición suave de colores para cambio de tema */
+                .theme-transition {
+                    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                                color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                .theme-transition h1,
+                .theme-transition h2,
+                .theme-transition p,
+                .theme-transition a,
+                .theme-transition nav,
+                .theme-transition span,
+                .theme-transition button:not(.group) {
+                    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                                color 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+                                border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+
+                /* Enlaces con subrayado animado premium */
+                .nav-link {
+                    position: relative;
+                    padding-bottom: 2px;
+                }
+                .nav-link::after {
+                    content: '';
+                    position: absolute;
+                    width: 100%;
+                    transform: scaleX(0);
+                    height: 1px;
+                    bottom: 0;
+                    left: 0;
+                    background-color: var(--accent);
+                    transform-origin: bottom right;
+                    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                .nav-link:hover::after {
+                    transform: scaleX(1);
+                    transform-origin: bottom left;
+                }
+
+                /* Retorno elástico de la imagen del logo al salir */
+                .logo-img {
+                    transition: filter 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+                                transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+                }
+                /* Seguimiento ultra-responsivo en hover */
+                .logo-container:hover .logo-img {
+                    transition: filter 0.2s ease-out, 
+                                transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+                }
+
+                /* Retorno suave de las luces de fondo al salir */
+                .glow-bulb {
+                    transition: transform 1.0s cubic-bezier(0.16, 1, 0.3, 1), 
+                                filter 0.8s ease !important;
+                }
+                /* Seguimiento de las luces en hover */
+                .logo-container:hover .glow-bulb {
+                    transition: transform 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                                filter 0.5s ease !important;
+                }
+
+                /* Retorno del brillo central al salir */
+                .glow-core {
+                    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), 
+                                filter 0.8s ease, 
+                                opacity 0.8s ease !important;
+                }
+                /* Seguimiento del brillo central en hover */
+                .logo-container:hover .glow-core {
+                    transition: transform 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                                filter 0.4s ease, 
+                                opacity 0.4s ease !important;
+                }
+
                 @keyframes glow-pulse {
                     0%, 100% {
                         transform: scale(0.85);
@@ -96,10 +172,10 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                             className="h-7 w-auto object-contain"
                         />
                         <div className="hidden md:flex items-center gap-6 text-[11px] font-medium text-text-dim">
-                            <a href="#workspace" className="hover:text-text-main transition-colors">Workspace</a>
-                            <a href="#caces" className="hover:text-text-main transition-colors">Acreditación</a>
-                            <a href="#modulos" className="hover:text-text-main transition-colors">Módulos</a>
-                            <a href="#roles" className="hover:text-text-main transition-colors">Estructura</a>
+                            <a href="#workspace" className="nav-link hover:text-text-main transition-colors">Workspace</a>
+                            <a href="#caces" className="nav-link hover:text-text-main transition-colors">Acreditación</a>
+                            <a href="#modulos" className="nav-link hover:text-text-main transition-colors">Módulos</a>
+                            <a href="#roles" className="nav-link hover:text-text-main transition-colors">Estructura</a>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -160,7 +236,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                             ref={containerRef}
                             onMouseMove={handleMouseMove}
                             onMouseLeave={handleMouseLeave}
-                            className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible"
+                            className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible logo-container"
                         >
                             {/* =========================================================================
                                 [MODO 1: SIN COLORES] (isRainbow === false)
@@ -173,13 +249,12 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     className="absolute inset-0 pointer-events-none"
                                     style={{
                                         opacity: isRainbow ? 0 : 1,
-                                        transition: 'opacity 0.6s ease',
                                         zIndex: 0
                                     }}
                                 >
                                     {/* Luz Rosa (Arriba-Izquierda) - Aumenta al mover el mouse arriba-izquierda */}
                                     <div
-                                        className="absolute pointer-events-none"
+                                        className="absolute pointer-events-none glow-bulb"
                                         style={{
                                             left: '30%',
                                             top: '30%',
@@ -189,12 +264,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                             transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.15), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 - var(--norm-x, 0) * 0.60 - var(--norm-y, 0) * 0.60))',
                                             filter: 'blur(calc(90px - var(--dist, 0) * 15px))',
                                             borderRadius: '50%',
-                                            transition: 'transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease'
                                         }}
                                     />
                                     {/* Luz Cian (Abajo-Derecha) - Aumenta al mover el mouse abajo-derecha */}
                                     <div
-                                        className="absolute pointer-events-none"
+                                        className="absolute pointer-events-none glow-bulb"
                                         style={{
                                             left: '70%',
                                             top: '70%',
@@ -204,12 +278,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                             transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.15), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 + var(--norm-x, 0) * 0.60 + var(--norm-y, 0) * 0.60))',
                                             filter: 'blur(calc(90px - var(--dist, 0) * 15px))',
                                             borderRadius: '50%',
-                                            transition: 'transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease'
                                         }}
                                     />
                                     {/* Luz Verde (Abajo-Centro) - Aumenta al mover el mouse hacia abajo */}
                                     <div
-                                        className="absolute pointer-events-none"
+                                        className="absolute pointer-events-none glow-bulb"
                                         style={{
                                             left: '50%',
                                             top: '80%',
@@ -219,13 +292,12 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                             transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.10), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 + var(--norm-y, 0) * 0.70))',
                                             filter: 'blur(calc(80px - var(--dist, 0) * 15px))',
                                             borderRadius: '50%',
-                                            transition: 'transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease'
                                         }}
                                     />
                                 </div>
                             ) : (
                                 <div
-                                    className="absolute pointer-events-none"
+                                    className="absolute pointer-events-none glow-core"
                                     style={{
                                         left: '50%',
                                         top: '50%',
@@ -234,13 +306,10 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                         transform: isRainbow
                                             ? 'translate(-50%, -50%) scale(0.25)'
                                             : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.12), calc(-50% + var(--mouse-y, 0px) * 0.12)) scale(calc(1 + var(--dist, 0) * 0.06))',
-                                        background: 'radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(240,245,255,0.55) 55%, transparent 80%)',
+                                        background: 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, transparent 80%)',
                                         filter: 'blur(calc(70px - var(--dist, 0) * 10px))',
                                         borderRadius: '50%',
                                         opacity: isRainbow ? 0 : 1,
-                                        transition: isRainbow
-                                            ? 'opacity 0.6s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                            : 'opacity 0.6s ease, transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease',
                                         zIndex: 0,
                                     }}
                                 />
@@ -258,9 +327,6 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                         ? 'translate(-50%, -50%) scale(0.25)'
                                         : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.08), calc(-50% + var(--mouse-y, 0px) * 0.08)) scale(calc(1 + var(--dist, 0) * 0.06)) rotate(var(--angle, 0deg))',
                                     opacity: isRainbow ? 0 : 'calc(0.25 + var(--dist, 0) * 0.65)',
-                                    transition: isRainbow
-                                        ? 'opacity 0.5s ease, transform 0.7s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                        : 'opacity 0.5s ease, transform 0.28s cubic-bezier(0.1, 0.8, 0.15, 1), filter 0.4s ease',
                                     zIndex: 0,
                                 }}
                             >
@@ -294,7 +360,7 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
 
                             {/* Capa 3: Brillo central de alta intensidad (Parallax rápido y reactivo) */}
                             <div
-                                className="absolute pointer-events-none"
+                                className="absolute pointer-events-none glow-core"
                                 style={{
                                     left: '50%',
                                     top: '50%',
@@ -309,9 +375,6 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     filter: currentTheme === 'dark' ? 'blur(calc(24px - var(--dist, 0) * 8px))' : 'blur(calc(15px - var(--dist, 0) * 5px))',
                                     borderRadius: '50%',
                                     opacity: isRainbow ? 0 : 'calc(0.85 + var(--dist, 0) * 0.15)',
-                                    transition: isRainbow
-                                        ? 'opacity 0.4s ease, transform 0.6s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                        : 'opacity 0.4s ease, transform 0.22s cubic-bezier(0.1, 0.9, 0.3, 1), filter 0.4s ease',
                                     zIndex: 0,
                                 }}
                             />
@@ -337,9 +400,6 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     filter: isRainbow
                                         ? 'brightness(1.1) saturate(1.15) hue-rotate(calc(var(--angle, 0deg) * -0.1))'
                                         : 'brightness(0.7) saturate(0.7) blur(15px)',
-                                    transition: isRainbow
-                                        ? 'opacity 1.0s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1), filter 1.0s ease'
-                                        : 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), filter 0.9s ease',
                                     zIndex: 0,
                                 }}
                             >
@@ -381,9 +441,6 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     filter: isRainbow
                                         ? 'brightness(1.15) saturate(1.25) hue-rotate(calc(var(--angle, 0deg) * 0.15))'
                                         : 'brightness(0.8) saturate(0.8) blur(10px)',
-                                    transition: isRainbow
-                                        ? 'opacity 0.8s ease, transform 0.6s cubic-bezier(0.15, 0.85, 0.3, 1), filter 0.8s ease'
-                                        : 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), filter 0.9s ease',
                                     zIndex: 0,
                                 }}
                             >
@@ -415,12 +472,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 onClick={() => setIsRainbow(!isRainbow)}
                                 className="relative flex justify-center items-center group active:scale-95 transition-all duration-300 focus:outline-none cursor-pointer"
                                 style={{ zIndex: 1, perspective: '1000px', transformStyle: 'preserve-3d' }}
-                                title={isRainbow ? 'Haz clic para desactivar' : 'Haz clic para activar el modo de innovación'}
                             >
                                 <img
-                                    src={`${import.meta.env.BASE_URL}logo_blanco.png`}
+                                    src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                                     alt="DIITRA Logo"
-                                    className="h-44 md:h-[220px] w-auto object-contain select-none transition-all duration-500 group-hover:scale-105"
+                                    className="h-44 md:h-[220px] w-auto object-contain select-none logo-img"
                                     style={{
                                         filter: isRainbow
                                             ? 'drop-shadow(calc(var(--norm-x, 0) * -6px) calc(var(--norm-y, 0) * -6px) 15px rgba(60, 120, 255, 0.35)) drop-shadow(calc(var(--norm-x, 0) * 6px) calc(var(--norm-y, 0) * 6px) 25px rgba(255, 80, 160, 0.35))'
@@ -433,7 +489,6 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                                 ? 'rotateX(calc(var(--norm-y, 0) * -15deg)) rotateY(calc(var(--norm-x, 0) * 15deg)) translateZ(10px)'
                                                 : 'none',
                                         transformStyle: 'preserve-3d',
-                                        transition: 'filter 0.2s cubic-bezier(0.1, 0.8, 0.15, 1), transform 0.25s cubic-bezier(0.1, 0.8, 0.2, 1)'
                                     }}
                                 />
                             </button>
