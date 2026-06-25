@@ -15,8 +15,69 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
     const navigate = useNavigate();
     const [isRainbow, setIsRainbow] = useState(false);
 
+    const containerRef = useRef<HTMLDivElement>(null);
+    const isHoveringRef = useRef(false);
+    const lastAngleRef = useRef(0);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        const x = e.clientX - centerX;
+        const y = e.clientY - centerY;
+        
+        const normX = x / (rect.width / 2);
+        const normY = y / (rect.height / 2);
+        
+        let angle = Math.atan2(y, x) * (180 / Math.PI);
+        
+        if (!isHoveringRef.current) {
+            isHoveringRef.current = true;
+            lastAngleRef.current = angle;
+        } else {
+            let diff = angle - lastAngleRef.current;
+            while (diff < -180) diff += 360;
+            while (diff > 180) diff -= 360;
+            angle = lastAngleRef.current + diff;
+            lastAngleRef.current = angle;
+        }
+        
+        const el = containerRef.current;
+        el.style.setProperty('--mouse-x', `${x}px`);
+        el.style.setProperty('--mouse-y', `${y}px`);
+        el.style.setProperty('--norm-x', `${normX}`);
+        el.style.setProperty('--norm-y', `${normY}`);
+        el.style.setProperty('--angle', `${angle}deg`);
+    };
+
+    const handleMouseLeave = () => {
+        isHoveringRef.current = false;
+        if (!containerRef.current) return;
+        const el = containerRef.current;
+        el.style.setProperty('--mouse-x', '0px');
+        el.style.setProperty('--mouse-y', '0px');
+        el.style.setProperty('--norm-x', '0');
+        el.style.setProperty('--norm-y', '0');
+        el.style.setProperty('--angle', '0deg');
+    };
+
     return (
         <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg transition-all duration-500 overflow-x-hidden relative">
+            <style>{`
+                @keyframes glow-pulse {
+                    0%, 100% {
+                        transform: scale(0.85);
+                        opacity: 0.65;
+                    }
+                    50% {
+                        transform: scale(1.05);
+                        opacity: 1;
+                    }
+                }
+            `}</style>
 
             {/* Grid Overlay de fondo al estilo Vercel */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--grid-color)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-color)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none -z-20" />
@@ -92,7 +153,12 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                         </div>
 
                         {/* Columna Central: Logo de DIITRA */}
-                        <div className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible">
+                        <div 
+                            ref={containerRef}
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={handleMouseLeave}
+                            className="lg:col-span-4 flex justify-center items-center relative py-16 lg:py-0 select-none min-h-[400px] overflow-visible"
+                        >
                             {/* ── Glow centrado en el logo (solo cuando !isRainbow) ── */}
                             {/* Brillo de ambiente muy suave y amplio en el fondo */}
                             <div
@@ -123,28 +189,37 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     left: '50%',
                                     top: '50%',
                                     transform: isRainbow
-                                        ? 'translate(-50%, -50%) scale(1)'
+                                        ? 'translate(calc(-50% + var(--mouse-x, 0px) * 0.03), calc(-50% + var(--mouse-y, 0px) * 0.03)) scale(1) rotate(calc(var(--angle, 0deg) * 0.35))'
                                         : 'translate(-50%, -50%) scale(0.25)',
                                     opacity: isRainbow ? 0.95 : 0,
-                                    background: `conic-gradient(
-                                        from -15deg at 50% 50%,
-                                        rgba(60, 120, 255, 0.95) 35deg,
-                                        transparent 75deg,
-                                        rgba(40, 220, 180, 0.95) 125deg,
-                                        transparent 165deg,
-                                        rgba(200, 240, 80, 0.95) 215deg,
-                                        transparent 255deg,
-                                        rgba(255, 80, 160, 0.95) 305deg,
-                                        transparent 345deg,
-                                        rgba(60, 120, 255, 0.95) 395deg
-                                    )`,
-                                    filter: 'blur(35px)',
-                                    maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
-                                    WebkitMaskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
-                                    transition: 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
+                                    transition: isRainbow
+                                        ? 'opacity 0.8s ease, transform 0.6s cubic-bezier(0.15, 0.85, 0.3, 1)'
+                                        : 'opacity 0.8s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1)',
                                     zIndex: 0,
                                 }}
-                            />
+                            >
+                                <div
+                                    className="w-full h-full"
+                                    style={{
+                                        background: `conic-gradient(
+                                            from -15deg at 50% 50%,
+                                            rgba(60, 120, 255, 0.95) 35deg,
+                                            transparent 75deg,
+                                            rgba(40, 220, 180, 0.95) 125deg,
+                                            transparent 165deg,
+                                            rgba(200, 240, 80, 0.95) 215deg,
+                                            transparent 255deg,
+                                            rgba(255, 80, 160, 0.95) 305deg,
+                                            transparent 345deg,
+                                            rgba(60, 120, 255, 0.95) 395deg
+                                        )`,
+                                        filter: 'blur(35px)',
+                                        maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                        WebkitMaskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
+                                        animation: isRainbow ? 'glow-pulse 6s ease-in-out infinite' : 'none',
+                                    }}
+                                />
+                            </div>
 
                             {/* Logo encima de todo */}
                             <button
@@ -160,7 +235,11 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     style={{
                                         filter: !isRainbow
                                             ? 'drop-shadow(0 0 15px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))'
-                                            : 'none'
+                                            : 'none',
+                                        transform: isRainbow
+                                            ? 'perspective(1000px) rotateX(calc(var(--norm-y, 0) * -4deg)) rotateY(calc(var(--norm-x, 0) * 4deg))'
+                                            : 'none',
+                                        transition: 'transform 0.4s cubic-bezier(0.15, 0.85, 0.3, 1), filter 0.5s ease'
                                     }}
                                 />
                             </button>
