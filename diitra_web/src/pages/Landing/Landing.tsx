@@ -167,29 +167,84 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                 - Brillo de fondo monocromático/blanco centrado en el logo.
                                 - Sigue suavemente al cursor y reacciona al movimiento.
                                 ========================================================================= */}
-                            {/* Capa 1: Brillo de fondo amplio y sutil (Parallax lento) */}
-                            <div
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: '50%',
-                                    top: '50%',
-                                    width: currentTheme === 'dark' ? '850px' : '700px',
-                                    height: currentTheme === 'dark' ? '850px' : '700px',
-                                    transform: isRainbow
-                                        ? 'translate(-50%, -50%) scale(0.25)'
-                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.12), calc(-50% + var(--mouse-y, 0px) * 0.12)) scale(calc(1 + var(--dist, 0) * 0.06))',
-                                    background: currentTheme === 'dark'
-                                        ? 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, rgba(200,220,255,0.02) 65%, transparent 85%)'
-                                        : 'radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(240,245,255,0.55) 55%, transparent 80%)',
-                                    filter: currentTheme === 'dark' ? 'blur(calc(130px - var(--dist, 0) * 20px))' : 'blur(calc(70px - var(--dist, 0) * 10px))',
-                                    borderRadius: '50%',
-                                    opacity: isRainbow ? 0 : 1,
-                                    transition: isRainbow
-                                        ? 'opacity 0.6s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1)'
-                                        : 'opacity 0.6s ease, transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease',
-                                    zIndex: 0,
-                                }}
-                            />
+                            {/* Capa 1: Brillo de fondo amplio y dinámico de colores (Separado para respuesta interactiva del mouse) */}
+                            {currentTheme === 'dark' ? (
+                                <div 
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                        opacity: isRainbow ? 0 : 1,
+                                        transition: 'opacity 0.6s ease',
+                                        zIndex: 0
+                                    }}
+                                >
+                                    {/* Luz Rosa (Arriba-Izquierda) - Aumenta al mover el mouse arriba-izquierda */}
+                                    <div
+                                        className="absolute pointer-events-none"
+                                        style={{
+                                            left: '30%',
+                                            top: '30%',
+                                            width: '650px',
+                                            height: '650px',
+                                            background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
+                                            transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.15), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 - var(--norm-x, 0) * 0.60 - var(--norm-y, 0) * 0.60))',
+                                            filter: 'blur(calc(90px - var(--dist, 0) * 15px))',
+                                            borderRadius: '50%',
+                                            transition: 'transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease'
+                                        }}
+                                    />
+                                    {/* Luz Cian (Abajo-Derecha) - Aumenta al mover el mouse abajo-derecha */}
+                                    <div
+                                        className="absolute pointer-events-none"
+                                        style={{
+                                            left: '70%',
+                                            top: '70%',
+                                            width: '650px',
+                                            height: '650px',
+                                            background: 'radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, transparent 70%)',
+                                            transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.15), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 + var(--norm-x, 0) * 0.60 + var(--norm-y, 0) * 0.60))',
+                                            filter: 'blur(calc(90px - var(--dist, 0) * 15px))',
+                                            borderRadius: '50%',
+                                            transition: 'transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease'
+                                        }}
+                                    />
+                                    {/* Luz Verde (Abajo-Centro) - Aumenta al mover el mouse hacia abajo */}
+                                    <div
+                                        className="absolute pointer-events-none"
+                                        style={{
+                                            left: '50%',
+                                            top: '80%',
+                                            width: '550px',
+                                            height: '550px',
+                                            background: 'radial-gradient(circle, rgba(14, 116, 144, 0.08) 0%, transparent 70%)',
+                                            transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.10), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 + var(--norm-y, 0) * 0.70))',
+                                            filter: 'blur(calc(80px - var(--dist, 0) * 15px))',
+                                            borderRadius: '50%',
+                                            transition: 'transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease'
+                                        }}
+                                    />
+                                </div>
+                            ) : (
+                                <div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        left: '50%',
+                                        top: '50%',
+                                        width: '700px',
+                                        height: '700px',
+                                        transform: isRainbow
+                                            ? 'translate(-50%, -50%) scale(0.25)'
+                                            : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.12), calc(-50% + var(--mouse-y, 0px) * 0.12)) scale(calc(1 + var(--dist, 0) * 0.06))',
+                                        background: 'radial-gradient(circle, rgba(255,255,255,0.85) 0%, rgba(240,245,255,0.55) 55%, transparent 80%)',
+                                        filter: 'blur(calc(70px - var(--dist, 0) * 10px))',
+                                        borderRadius: '50%',
+                                        opacity: isRainbow ? 0 : 1,
+                                        transition: isRainbow
+                                            ? 'opacity 0.6s ease, transform 0.8s cubic-bezier(0.1, 0.8, 0.2, 1)'
+                                            : 'opacity 0.6s ease, transform 0.35s cubic-bezier(0.1, 0.8, 0.25, 1), filter 0.5s ease',
+                                        zIndex: 0,
+                                    }}
+                                />
+                            )}
 
                             {/* Capa 2: Haces de luz monocromáticos (Haz concentrado que rota y sigue al cursor) */}
                             <div
@@ -216,9 +271,9 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                             ? `conic-gradient(
                                                 from 0deg at 50% 50%,
                                                 transparent 15deg,
-                                                rgba(255, 255, 255, 0.12) 50deg,
-                                                rgba(255, 255, 255, 0.55) 90deg,
-                                                rgba(255, 255, 255, 0.12) 130deg,
+                                                rgba(139, 92, 246, 0.18) 50deg,
+                                                rgba(37, 99, 235, 0.50) 90deg,
+                                                rgba(14, 116, 144, 0.18) 130deg,
                                                 transparent 165deg
                                             )`
                                             : `conic-gradient(
@@ -229,9 +284,9 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                                 rgba(255, 255, 255, 0.70) 130deg,
                                                 transparent 165deg
                                             )`,
-                                        filter: currentTheme === 'dark' ? 'blur(calc(40px - var(--dist, 0) * 12px))' : 'blur(calc(24px - var(--dist, 0) * 6px))',
-                                        maskImage: 'radial-gradient(circle, black 15%, transparent 55%)',
-                                        WebkitMaskImage: 'radial-gradient(circle, black 15%, transparent 55%)',
+                                        filter: currentTheme === 'dark' ? 'blur(calc(30px - var(--dist, 0) * 10px))' : 'blur(calc(24px - var(--dist, 0) * 6px))',
+                                        maskImage: 'radial-gradient(circle, black 25%, transparent 60%)',
+                                        WebkitMaskImage: 'radial-gradient(circle, black 25%, transparent 60%)',
                                         animation: isRainbow ? 'none' : 'glow-pulse 10s ease-in-out infinite',
                                     }}
                                 />
@@ -247,13 +302,13 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                                     height: currentTheme === 'dark' ? '300px' : '240px',
                                     transform: isRainbow
                                         ? 'translate(-50%, -50%) scale(0.25)'
-                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.25), calc(-50% + var(--mouse-y, 0px) * 0.25)) scale(calc(1 + var(--dist, 0) * 0.12))',
+                                        : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.32), calc(-50% + var(--mouse-y, 0px) * 0.32)) scale(calc(1 + var(--dist, 0) * 0.15))',
                                     background: currentTheme === 'dark'
-                                        ? 'radial-gradient(circle, rgba(255,255,255,0.40) 0%, rgba(255,255,255,0.12) 35%, transparent 70%)'
+                                        ? 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(99, 102, 241, 0.35) 25%, rgba(37, 99, 235, 0.10) 55%, transparent 75%)'
                                         : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.90) 25%, transparent 60%)',
-                                    filter: currentTheme === 'dark' ? 'blur(calc(35px - var(--dist, 0) * 10px))' : 'blur(calc(15px - var(--dist, 0) * 5px))',
+                                    filter: currentTheme === 'dark' ? 'blur(calc(24px - var(--dist, 0) * 8px))' : 'blur(calc(15px - var(--dist, 0) * 5px))',
                                     borderRadius: '50%',
-                                    opacity: isRainbow ? 0 : 'calc(0.7 + var(--dist, 0) * 0.3)',
+                                    opacity: isRainbow ? 0 : 'calc(0.85 + var(--dist, 0) * 0.15)',
                                     transition: isRainbow
                                         ? 'opacity 0.4s ease, transform 0.6s cubic-bezier(0.1, 0.8, 0.2, 1)'
                                         : 'opacity 0.4s ease, transform 0.22s cubic-bezier(0.1, 0.9, 0.3, 1), filter 0.4s ease',
@@ -359,20 +414,26 @@ const Landing = ({ currentTheme, toggleTheme }: LandingProps) => {
                             <button
                                 onClick={() => setIsRainbow(!isRainbow)}
                                 className="relative flex justify-center items-center group active:scale-95 transition-all duration-300 focus:outline-none cursor-pointer"
-                                style={{ zIndex: 1 }}
+                                style={{ zIndex: 1, perspective: '1000px', transformStyle: 'preserve-3d' }}
                                 title={isRainbow ? 'Haz clic para desactivar' : 'Haz clic para activar el modo de innovación'}
                             >
                                 <img
-                                    src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
+                                    src={`${import.meta.env.BASE_URL}logo_blanco.png`}
                                     alt="DIITRA Logo"
                                     className="h-44 md:h-[220px] w-auto object-contain select-none transition-all duration-500 group-hover:scale-105"
                                     style={{
                                         filter: isRainbow
                                             ? 'drop-shadow(calc(var(--norm-x, 0) * -6px) calc(var(--norm-y, 0) * -6px) 15px rgba(60, 120, 255, 0.35)) drop-shadow(calc(var(--norm-x, 0) * 6px) calc(var(--norm-y, 0) * 6px) 25px rgba(255, 80, 160, 0.35))'
                                             : currentTheme === 'dark'
-                                                ? 'drop-shadow(calc(var(--norm-x, 0) * 16px) calc(var(--norm-y, 0) * 16px) calc(16px + var(--dist, 0) * 18px) rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(255, 255, 255, 0.50))'
+                                                ? 'drop-shadow(calc(var(--norm-x, 0) * -8px - 3px) calc(var(--norm-y, 0) * -8px - 3px) calc(6px + var(--dist, 0) * 4px) rgba(139, 92, 246, 0.50)) drop-shadow(calc(var(--norm-x, 0) * 8px + 3px) calc(var(--norm-y, 0) * 8px + 3px) calc(8px + var(--dist, 0) * 6px) rgba(37, 99, 235, 0.55)) drop-shadow(0px calc(var(--norm-y, 0) * 4px + 5px) calc(10px + var(--dist, 0) * 5px) rgba(14, 116, 144, 0.40)) drop-shadow(0 0 15px rgba(255, 255, 255, 0.15))'
                                                 : 'drop-shadow(calc(var(--norm-x, 0) * 12px) calc(var(--norm-y, 0) * 12px) calc(12px + var(--dist, 0) * 14px) rgba(0, 0, 0, 0.16)) drop-shadow(0 0 18px rgba(0, 0, 0, 0.08))',
-                                        transition: 'filter 0.2s cubic-bezier(0.1, 0.8, 0.15, 1)'
+                                        transform: isRainbow
+                                            ? 'none'
+                                            : currentTheme === 'dark'
+                                                ? 'rotateX(calc(var(--norm-y, 0) * -15deg)) rotateY(calc(var(--norm-x, 0) * 15deg)) translateZ(10px)'
+                                                : 'none',
+                                        transformStyle: 'preserve-3d',
+                                        transition: 'filter 0.2s cubic-bezier(0.1, 0.8, 0.15, 1), transform 0.25s cubic-bezier(0.1, 0.8, 0.2, 1)'
                                     }}
                                 />
                             </button>
