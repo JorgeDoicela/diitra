@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using diitra_application.Common.Notifications;
 using Diitra.Application.Research.Dtos;
 using diitra_infrastructure.data.models;
@@ -27,6 +28,7 @@ namespace diitra_infrastructure.Common.Notifications
         private readonly IProjectOrchestrator _projectOrchestrator;
         private readonly diitra_infrastructure.Security.IFirmaElectronicaService _firmaElectronicaService;
         private readonly EmailMasterLayoutRenderer _layoutRenderer;
+        private readonly IServiceScopeFactory _serviceScopeFactory;
 
         public EmailEngineService(
             DiitraContext context,
@@ -35,7 +37,8 @@ namespace diitra_infrastructure.Common.Notifications
             IDocumentEngine documentEngine,
             IProjectOrchestrator projectOrchestrator,
             diitra_infrastructure.Security.IFirmaElectronicaService firmaElectronicaService,
-            EmailMasterLayoutRenderer layoutRenderer)
+            EmailMasterLayoutRenderer layoutRenderer,
+            IServiceScopeFactory serviceScopeFactory)
         {
             _context = context;
             _configuration = configuration;
@@ -44,6 +47,7 @@ namespace diitra_infrastructure.Common.Notifications
             _projectOrchestrator = projectOrchestrator;
             _firmaElectronicaService = firmaElectronicaService;
             _layoutRenderer = layoutRenderer;
+            _serviceScopeFactory = serviceScopeFactory;
         }
 
         public async Task<IEnumerable<EmailTemplateDto>> GetTemplatesAsync()
@@ -145,13 +149,20 @@ namespace diitra_infrastructure.Common.Notifications
                 if (string.IsNullOrWhiteSpace(displayName))
                 {
                     var localPart = email.Split('@')[0];
-                    displayName = char.ToUpper(localPart[0]) + (localPart.Length > 1 ? localPart[1..] : "");
+                    if (!string.IsNullOrEmpty(localPart))
+                    {
+                        displayName = char.ToUpper(localPart[0]) + (localPart.Length > 1 ? localPart[1..] : "");
+                    }
+                    else
+                    {
+                        displayName = "Usuario";
+                    }
                 }
                 recipientEmails.Add((email, user?.IdUsuario, displayName));
             }
 
             // Destinatarios por IdUsuario (correo en usuario, profesor o alumno vinculado)
-            foreach (var userId in request.DestinatariosUserIds)
+            foreach (var userId in request.DestinatariosUserIds ?? Enumerable.Empty<int>())
             {
                 var user = await _context.Users.FindAsync(userId);
                 if (user == null) continue;
@@ -178,6 +189,7 @@ namespace diitra_infrastructure.Common.Notifications
 
                 if (request.TargetCarreraId.HasValue)
                 {
+                    // 1. Docentes asociados a proyectos de la carrera
                     var userIdsInCarrera = await _context.InvProyectosProfesores
                         .Include(pp => pp.IdProyectoNavigation)
                         .ThenInclude(p => p.InvProyectosCarreras)
@@ -186,7 +198,22 @@ namespace diitra_infrastructure.Common.Notifications
                         .Distinct()
                         .ToListAsync();
 
-                    usersQuery = usersQuery.Where(u => userIdsInCarrera.Contains(u.IdUsuario));
+                    // 2. Docentes asociados a la carrera directamente en SIGAFI
+                    var sigafiProfesorIds = await _context.ProfesoresCarrerasPeriodos
+                        .Where(pcp => pcp.IdCarrera == request.TargetCarreraId.Value && (pcp.EsActivo ?? 1) == 1)
+                        .Select(pcp => pcp.IdProfesor)
+                        .Distinct()
+                        .ToListAsync();
+
+                    var sigafiUserIds = await _context.Users
+                        .Where(u => u.Activo && u.TablaSigafi == "profesor" && sigafiProfesorIds.Contains(u.IdSigafi))
+                        .Select(u => u.IdUsuario)
+                        .ToListAsync();
+
+                    // Combinar destinatarios de proyectos y de carrera directamente
+                    var allTargetUserIds = userIdsInCarrera.Union(sigafiUserIds).Distinct().ToList();
+
+                    usersQuery = usersQuery.Where(u => allTargetUserIds.Contains(u.IdUsuario));
                 }
 
                 var list = await usersQuery.ToListAsync();
@@ -361,7 +388,7 @@ namespace diitra_infrastructure.Common.Notifications
                 var mailAttachments = new List<Attachment>();
                 var attachmentsMeta = new List<object>();
 
-                foreach (var adj in request.Attachments)
+                foreach (var adj in request.Attachments ?? Enumerable.Empty<EmailAttachmentDto>())
                 {
                     Attachment? mailAttachment = null;
 
@@ -523,6 +550,12 @@ namespace diitra_infrastructure.Common.Notifications
                     historyEntry.Estado = "Enviado";
                     _context.InvEmailHistorials.Add(historyEntry);
                     await _context.SaveChangesAsync();
+                    
+                    // Liberar los recursos de los adjuntos antes del continue para evitar Memory Leak
+                    foreach (var att in mailAttachments)
+                    {
+                        att.ContentStream?.Dispose();
+                    }
                     continue;
                 }
 
@@ -633,7 +666,7 @@ namespace diitra_infrastructure.Common.Notifications
                 .FirstOrDefaultAsync();
 
             trazabilidad.HashAnterior = ult?.HashActual;
-            string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion}";
+            string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion?.ToString("o", System.Globalization.CultureInfo.InvariantCulture)}";
             using (var sha256 = System.Security.Cryptography.SHA256.Create())
             {
                 byte[] bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataToHash));
@@ -684,7 +717,9 @@ namespace diitra_infrastructure.Common.Notifications
             _ = Task.Run(async () => {
                 try
                 {
-                    await SendTemplatedEmailAsync(sendRequest);
+                    using var scope = _serviceScopeFactory.CreateScope();
+                    var emailEngineService = scope.ServiceProvider.GetRequiredService<IEmailEngineService>();
+                    await emailEngineService.SendTemplatedEmailAsync(sendRequest);
                 }
                 catch (Exception e)
                 {
@@ -707,7 +742,11 @@ namespace diitra_infrastructure.Common.Notifications
             }
 
             var newDirectorUser = await _context.Users.FindAsync(newDirectorUserId);
-            if (newDirectorUser == null) return false;
+            if (newDirectorUser == null || newDirectorUser.TablaSigafi != "profesor") 
+            {
+                // Solo usuarios registrados como docentes en SIGAFI pueden adoptar y dirigir proyectos
+                return false;
+            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -776,7 +815,7 @@ namespace diitra_infrastructure.Common.Notifications
                     .FirstOrDefaultAsync();
 
                 trazabilidad.HashAnterior = ult?.HashActual;
-                string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion}";
+                string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion?.ToString("o", System.Globalization.CultureInfo.InvariantCulture)}";
                 using (var sha256 = System.Security.Cryptography.SHA256.Create())
                 {
                     byte[] bytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(dataToHash));
