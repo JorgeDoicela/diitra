@@ -42,6 +42,20 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
         }
     }, [location.state]);
 
+    useEffect(() => {
+        // Bloquear el scroll en html y body mientras el login esté montado para que sea estático en móvil
+        const originalBodyOverflow = document.body.style.overflow;
+        const originalHtmlOverflow = document.documentElement.style.overflow;
+        
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        
+        return () => {
+            document.body.style.overflow = originalBodyOverflow;
+            document.documentElement.style.overflow = originalHtmlOverflow;
+        };
+    }, []);
+
     const startLockoutCountdown = (seconds: number) => {
         setLockoutSeconds(seconds);
         if (lockoutRef.current) clearInterval(lockoutRef.current);
@@ -166,7 +180,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+        <div className="h-[100dvh] w-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
             {/* Theme Toggle Button */}
             {toggleTheme && (
                 <button

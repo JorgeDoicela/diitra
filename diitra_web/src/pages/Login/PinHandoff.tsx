@@ -33,6 +33,20 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     // Cleanup on unmount
     useEffect(() => () => { if (lockoutRef.current) clearInterval(lockoutRef.current); }, []);
 
+    useEffect(() => {
+        // Bloquear el scroll en html y body mientras esté montado para que sea estático en móvil
+        const originalBodyOverflow = document.body.style.overflow;
+        const originalHtmlOverflow = document.documentElement.style.overflow;
+        
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        
+        return () => {
+            document.body.style.overflow = originalBodyOverflow;
+            document.documentElement.style.overflow = originalHtmlOverflow;
+        };
+    }, []);
+
     const formatLockoutTime = (secs: number) => {
         const m = Math.floor(secs / 60);
         const s = secs % 60;
@@ -74,7 +88,7 @@ const PinHandoff = ({ currentTheme = 'dark', toggleTheme }: { currentTheme?: 'da
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+        <div className="h-[100dvh] w-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
             {/* Theme Toggle Button */}
             {toggleTheme && (
                 <button

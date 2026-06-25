@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, CheckCircle, ArrowLeft, Sun, Moon } from 'lucide-react';
 
@@ -16,6 +16,20 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [enviado, setEnviado] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        // Bloquear el scroll en html y body mientras esté montado para que sea estático en móvil
+        const originalBodyOverflow = document.body.style.overflow;
+        const originalHtmlOverflow = document.documentElement.style.overflow;
+        
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        
+        return () => {
+            document.body.style.overflow = originalBodyOverflow;
+            document.documentElement.style.overflow = originalHtmlOverflow;
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +51,7 @@ const RecuperarContrasenia = ({ currentTheme = 'dark', toggleTheme }: RecuperarC
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+        <div className="h-[100dvh] w-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
             {/* Theme Toggle Button */}
             {toggleTheme && (
                 <button
