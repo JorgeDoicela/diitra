@@ -169,7 +169,7 @@ const Modulos: React.FC = () => {
                                 </svg>
                             </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <button onClick={() => toggleBudget('equipos')} className={`p-2 border rounded text-left transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer ${budgetToggles.equipos ? 'bg-bg-deep border-brand/50 shadow-sm' : 'bg-surface/10 border-border-thin opacity-30'}`}>
                                 <p className="text-[7px] text-text-dim font-semibold font-mono">01/ EQUIPOS</p>
                                 <p className="text-text-main font-bold mt-0.5 font-sans">$2,100.00</p>
@@ -296,9 +296,9 @@ const Modulos: React.FC = () => {
                     </div>
 
                     <div className="border border-border-thin rounded bg-surface/50 p-4 font-mono text-[9px] text-text-dim space-y-3 mt-6">
-                        <div className="flex justify-between items-center border-b border-border-thin pb-2">
-                            <span className="flex items-center gap-1"><Terminal size={11} className="text-text-main" /> // CONSOLA DE AUDITORÍA CACES</span>
-                            <div className="flex gap-1.5 font-sans text-[7.5px]">
+                        <div className="flex flex-col sm:flex-row gap-2.5 justify-between sm:items-center border-b border-border-thin pb-2">
+                            <span className="flex items-center gap-1 justify-center sm:justify-start"><Terminal size={11} className="text-text-main" /> // CONSOLA DE AUDITORÍA CACES</span>
+                            <div className="flex justify-center gap-1.5 font-sans text-[7.5px]">
                                 <button 
                                     onClick={() => runCommand('sync')} 
                                     disabled={logRunning} 

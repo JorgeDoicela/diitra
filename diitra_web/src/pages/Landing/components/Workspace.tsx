@@ -120,9 +120,9 @@ const Workspace: React.FC = () => {
                     </div>
 
                     {/* Layout del mockup */}
-                    <div className="grid grid-cols-12 gap-6">
+                    <div className="flex flex-col md:grid md:grid-cols-12 gap-6">
                         {/* Panel Izquierdo (Estructura del Proyecto / Pestañas) */}
-                        <div className="col-span-4 border-r border-border-thin pr-4 space-y-2 text-[10px] text-text-dim">
+                        <div className="w-full md:col-span-4 border-b md:border-b-0 md:border-r border-border-thin pb-4 md:pb-0 md:pr-4 space-y-2 text-[10px] text-text-dim">
                             <p className="text-text-main font-semibold mb-2 font-mono">// ESTRUCTURA</p>
                             
                             <button
@@ -131,7 +131,7 @@ const Workspace: React.FC = () => {
                                     activeTab === 1 
                                         ? 'bg-surface border-border-thin text-text-main font-semibold shadow-sm' 
                                         : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface/30'
-                                }`}
+                                  }`}
                             >
                                 <span>1. Resumen</span>
                                 <CheckCircle2 size={10} className="text-success" />
@@ -143,7 +143,7 @@ const Workspace: React.FC = () => {
                                     activeTab === 2 
                                         ? 'bg-surface border-border-thin text-text-main font-semibold shadow-sm' 
                                         : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface/30'
-                                }`}
+                                  }`}
                             >
                                 <span>2. Metodología</span>
                                 <span className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
@@ -155,7 +155,7 @@ const Workspace: React.FC = () => {
                                     activeTab === 3 
                                         ? 'bg-surface border-border-thin text-text-main font-semibold shadow-sm' 
                                         : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface/30'
-                                }`}
+                                  }`}
                             >
                                 <span>3. Presupuesto</span>
                                 <DollarSign size={10} className="text-brand-light" />
@@ -167,7 +167,7 @@ const Workspace: React.FC = () => {
                                     activeTab === 4 
                                         ? 'bg-surface border-border-thin text-text-main font-semibold shadow-sm' 
                                         : 'border-transparent text-text-dim hover:text-text-main hover:bg-surface/30'
-                                }`}
+                                  }`}
                             >
                                 <span>4. Cronograma</span>
                                 <CalendarRange size={10} className="text-warning" />
@@ -175,7 +175,7 @@ const Workspace: React.FC = () => {
                         </div>
 
                         {/* Contenido del editor central dinamizado */}
-                        <div className="col-span-8 space-y-4 font-sans min-h-[220px] flex flex-col justify-between">
+                        <div className="w-full md:col-span-8 space-y-4 font-sans min-h-[220px] flex flex-col justify-between">
                             {activeTab === 1 && (
                                 <div className="space-y-3 animate-fade-up">
                                     <div className="space-y-1">
@@ -252,7 +252,7 @@ const Workspace: React.FC = () => {
                                         <span className="text-brand font-bold text-[10px] font-sans">Total: ${activeBudgetTotal.toLocaleString()}.00</span>
                                     </div>
                                     
-                                    <div className="grid grid-cols-3 gap-2">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                         {budgetItems.map((item) => (
                                             <button 
                                                 key={item.id}

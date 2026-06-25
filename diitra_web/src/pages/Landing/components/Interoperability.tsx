@@ -16,7 +16,7 @@ const Interoperability: React.FC = () => {
             </p>
 
             {/* Mock API Terminal Box */}
-            <div className="max-w-xl mx-auto border border-border-thin rounded-xl bg-surface/35 backdrop-blur-sm shadow-xl p-4 font-mono text-[11px] text-left relative overflow-hidden select-none">
+            <div className="max-w-xl mx-auto border border-border-thin rounded-xl bg-surface/35 backdrop-blur-sm shadow-xl p-4 font-mono text-[11px] text-left relative overflow-x-auto select-none">
                 <div className="flex items-center gap-1.5 border-b border-border-thin pb-2.5 mb-3">
                     <Terminal size={12} className="text-text-dim" />
                     <span className="text-[10px] text-text-dim font-bold">// API Sincronización ISTPET</span>

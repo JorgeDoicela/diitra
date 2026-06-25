@@ -178,45 +178,45 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                 </button>
             )}
 
-            <div className="w-full max-w-[350px] space-y-7 relative z-20 animate-fade-up">
+            <div className="w-full max-w-[350px] space-y-4 sm:space-y-7 relative z-20 animate-fade-up">
                 {/* Brand Logo & Header */}
-                <div className="flex flex-col items-center space-y-6">
+                <div className="flex flex-col items-center space-y-3 sm:space-y-6">
                     <img
                         src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
                         alt="DIITRA Logo"
-                        className="h-16 w-auto object-contain"
+                        className="h-12 sm:h-16 w-auto object-contain"
                     />
-                    <div className="text-center space-y-1">
-                        <h1 className="text-2xl font-semibold tracking-tighter text-text-main">Entrar a DIITRA</h1>
-                        <p className="text-[11px] text-text-dim font-medium tracking-tight">Departamento de Investigación e Innovación Traversari</p>
+                    <div className="text-center space-y-0.5 sm:space-y-1">
+                        <h1 className="text-xl sm:text-2xl font-semibold tracking-tighter text-text-main">Entrar a DIITRA</h1>
+                        <p className="text-[10px] sm:text-[11px] text-text-dim font-medium tracking-tight">Departamento de Investigación e Innovación Traversari</p>
                     </div>
                 </div>
 
                 {/* Login Form Card */}
-                <div className="space-y-6">
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1" htmlFor="username">
+                <div className="space-y-4 sm:space-y-6">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 sm:space-y-4">
+                        <div className="space-y-1 sm:space-y-2">
+                            <label className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-text-dim ml-1" htmlFor="username">
                                 Usuario
                             </label>
                             <input
                                 {...register('username')}
-                                className="input-vercel h-11"
+                                className="input-vercel h-10 sm:h-11 text-xs sm:text-sm"
                                 placeholder="Cédula de identidad o Correo"
                                 autoComplete="username"
                             />
                             {errors.username && <p className="text-[10px] text-error font-mono mt-1 ml-1">{(errors.username as any).message}</p>}
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-1 sm:space-y-2">
                             <div className="flex justify-between items-center px-1">
-                                <label className="text-[10px] font-semibold uppercase tracking-widest text-text-dim" htmlFor="password">
+                                <label className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-text-dim" htmlFor="password">
                                     Contraseña
                                 </label>
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium"
+                                    className="text-[9px] sm:text-[10px] text-text-dim hover:text-text-main transition-colors font-medium"
                                 >
                                     {showPassword ? 'Ocultar' : 'Mostrar'}
                                 </button>
@@ -224,14 +224,14 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                             <input
                                 type={showPassword ? 'text' : 'password'}
                                 {...register('password')}
-                                className="input-vercel h-11"
+                                className="input-vercel h-10 sm:h-11 text-xs sm:text-sm"
                                 placeholder="Contraseña de SIGAFI"
                                 autoComplete="current-password"
                             />
                             <div className="flex justify-end px-1">
                                 <Link
                                     to="/auth/recuperar-contrasenia"
-                                    className="text-[10px] text-text-dim hover:text-text-main transition-colors font-medium no-underline"
+                                    className="text-[9px] sm:text-[10px] text-text-dim hover:text-text-main transition-colors font-medium no-underline"
                                     tabIndex={-1}
                                 >
                                     ¿Olvidaste tu contraseña?
@@ -242,15 +242,15 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
                         {/* Error / Lockout display */}
                         {lockoutSeconds > 0 ? (
-                            <div className="p-4 rounded-lg bg-error/5 border border-error/30 space-y-2 animate-in fade-in">
+                            <div className="p-3 sm:p-4 rounded-lg bg-error/5 border border-error/30 space-y-1.5 sm:space-y-2 animate-in fade-in">
                                 <div className="flex items-center gap-2 text-error">
-                                    <Lock size={14} className="shrink-0" />
-                                    <span className="text-[10px] font-semibold uppercase tracking-wider">Cuenta bloqueada temporalmente</span>
+                                    <Lock size={13} className="shrink-0" />
+                                    <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider">Cuenta bloqueada temporalmente</span>
                                 </div>
-                                <p className="text-[9px] text-text-dim leading-relaxed">{error}</p>
+                                <p className="text-[8.5px] sm:text-[9px] text-text-dim leading-relaxed">{error}</p>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-[9px] text-text-dim uppercase tracking-widest">Tiempo restante:</span>
-                                    <span className="font-mono text-sm font-semibold text-error tabular-nums">
+                                    <span className="text-[8.5px] sm:text-[9px] text-text-dim uppercase tracking-widest">Tiempo restante:</span>
+                                    <span className="font-mono text-xs sm:text-sm font-semibold text-error tabular-nums">
                                         {formatLockoutTime(lockoutSeconds)}
                                     </span>
                                 </div>
@@ -262,19 +262,19 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 </div>
                             </div>
                         ) : error ? (
-                            <div className="p-3 rounded-md bg-error/5 border border-error/20 text-error text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
+                            <div className="p-2 sm:p-3 rounded-md bg-error/5 border border-error/20 text-error text-[9px] sm:text-[10px] font-mono leading-relaxed animate-in fade-in slide-in-from-top-1">
                                 {error}
                             </div>
                         ) : null}
 
-                        <div className="pt-3 space-y-5">
+                        <div className="pt-1.5 sm:pt-3 space-y-3.5 sm:space-y-5">
                             <button
                                 type="submit"
                                 disabled={isSubmitting || lockoutSeconds > 0}
-                                className="btn-vercel-primary w-full h-11 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="btn-vercel-primary w-full h-10 sm:h-11 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] sm:text-[11px] uppercase tracking-widest"
                             >
                                 {isSubmitting ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                                 ) : lockoutSeconds > 0 ? (
                                     <span className="font-mono">{formatLockoutTime(lockoutSeconds)}</span>
                                 ) : (
@@ -284,18 +284,18 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
                             <div className="flex items-center">
                                 <div className="flex-1 border-t border-border-thin"></div>
-                                <span className="px-3 text-[9px] font-mono text-text-dim uppercase tracking-wider">o</span>
+                                <span className="px-3 text-[8px] sm:text-[9px] font-mono text-text-dim uppercase tracking-wider">o</span>
                                 <div className="flex-1 border-t border-border-thin"></div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                                 {/* Microsoft Login Button */}
                                 <button
                                     type="button"
                                     onClick={handleMicrosoftLogin}
-                                    className="w-full h-11 flex items-center justify-center gap-2 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-semibold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
+                                    className="w-full h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-semibold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
                                 >
-                                    <svg className="w-4 h-4 shrink-0" viewBox="0 0 21 21">
+                                    <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" viewBox="0 0 21 21">
                                         <rect x="1" y="1" width="9" height="9" fill="#F25022" />
                                         <rect x="11" y="1" width="9" height="9" fill="#7FBA00" />
                                         <rect x="1" y="11" width="9" height="9" fill="#00A1F1" />
@@ -307,17 +307,17 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 {/* Acceso con PIN */}
                                 <Link
                                     to="/auth/pin"
-                                    className="w-full h-11 flex items-center justify-center gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
+                                    className="w-full h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
                                     title="Ingresar con código PIN de handoff"
                                 >
-                                    <Key size={13} className="shrink-0 text-text-dim" />
+                                    <Key size={11} className="shrink-0 text-text-dim" />
                                     <span>Tengo un PIN</span>
                                 </Link>
                             </div>
                         </div>
                     </form>
 
-                    <div className="text-center pt-2">
+                    <div className="text-center pt-1">
                         <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
                             <Link to="/" className="hover:text-text-main transition-colors no-underline">Inicio</Link>
                             <span>/</span>
