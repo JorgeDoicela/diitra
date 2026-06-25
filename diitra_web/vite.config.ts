@@ -18,6 +18,12 @@ export default defineConfig(({ command }) => {
           target: 'http://127.0.0.1:5175',
           changeOrigin: true,
           secure: false,
+        },
+        '/hubs': {
+          target: 'http://127.0.0.1:5175',
+          ws: true,
+          changeOrigin: true,
+          secure: false,
         }
       }
     },

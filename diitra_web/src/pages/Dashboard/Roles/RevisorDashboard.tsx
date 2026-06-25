@@ -86,11 +86,14 @@ export const RevisorDashboard: React.FC = () => {
                                     const title = r.es_doble_ciego
                                         ? `Propuesta #${String(r.id_proyecto).padStart(4, '0')}`
                                         : r.proyecto_titulo;
-                                    const limitDate = new Date(r.fecha_limite).toLocaleDateString('es-EC', { 
-                                        year: 'numeric', 
-                                        month: 'short', 
-                                        day: 'numeric' 
-                                    });
+                                    const parsedDate = r.fecha_limite ? new Date(r.fecha_limite) : null;
+                                    const limitDate = parsedDate && !isNaN(parsedDate.getTime())
+                                        ? parsedDate.toLocaleDateString('es-EC', { 
+                                            year: 'numeric', 
+                                            month: 'short', 
+                                            day: 'numeric' 
+                                        })
+                                        : 'No definida';
                                     return (
                                         <div 
                                             key={r.uuid}

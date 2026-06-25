@@ -216,7 +216,7 @@ export const DocenteDashboard: React.FC = () => {
                                                     {/* Col 5: Fecha */}
                                                     <div className="min-w-[75px] text-right ml-auto md:ml-0 flex items-center justify-end gap-1.5">
                                                         <span className="text-[10px] text-text-dim/80 font-mono">
-                                                            {new Date(item.fecha).toLocaleDateString('es-EC', { month: 'short', day: 'numeric' })}
+                                                            {item.fecha && !isNaN(new Date(item.fecha).getTime()) ? new Date(item.fecha).toLocaleDateString('es-EC', { month: 'short', day: 'numeric' }) : 'Reciente'}
                                                         </span>
                                                         <ExternalLink size={10} className="text-text-dim opacity-0 group-hover:opacity-100 group-hover:text-brand transition-all duration-150 shrink-0" />
                                                     </div>

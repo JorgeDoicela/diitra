@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || '/api';
-const BASE_URL = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || 'http://localhost:5175';
+const BASE_URL = (apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase) || window.location.origin;
 
 export const COWORK_CONFIG = {
     /** URL del Hub de SignalR para la colaboración */
