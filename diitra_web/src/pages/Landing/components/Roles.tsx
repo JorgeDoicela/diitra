@@ -55,7 +55,7 @@ const Roles: React.FC = () => {
     };
 
     return (
-        <section id="roles" className="py-20 lg:-ml-24 lg:-mr-24 space-y-12 select-none">
+        <section id="roles" className="py-20 lg:-ml-24 lg:-mr-24 space-y-12">
             <div className="space-y-4">
                 <h2 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tighter leading-[0.95] text-text-main max-w-3xl">
                     Estructura & Niveles de Acceso.

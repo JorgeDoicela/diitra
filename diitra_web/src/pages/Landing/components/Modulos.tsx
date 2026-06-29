@@ -131,7 +131,7 @@ const Modulos: React.FC = () => {
     };
 
     return (
-        <section id="modulos" className="py-20 lg:-ml-24 lg:-mr-24 space-y-16 select-none">
+        <section id="modulos" className="py-20 lg:-ml-24 lg:-mr-24 space-y-16">
             <h2 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tighter leading-[0.95] text-text-main max-w-3xl">
                 Módulos de Automatización.
             </h2>
@@ -139,7 +139,7 @@ const Modulos: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 
                 {/* Bento Card A: Postulación */}
-                <div className="lg:col-span-8 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative select-none">
+                <div className="lg:col-span-8 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative">
                     <div className="flex justify-between items-start">
                         <div className="p-2 border border-border-thin rounded bg-bg-deep">
                             <FileSignature size={18} strokeWidth={1.5} className="text-text-main" />
@@ -198,7 +198,7 @@ const Modulos: React.FC = () => {
                 </div>
 
                 {/* Bento Card B: Seguimiento */}
-                <div className="lg:col-span-4 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative select-none">
+                <div className="lg:col-span-4 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative">
                     <div className="flex justify-between items-start">
                         <div className="p-2 border border-border-thin rounded bg-bg-deep">
                             <Clock size={18} strokeWidth={1.5} className="text-text-main" />
@@ -253,7 +253,7 @@ const Modulos: React.FC = () => {
                 </div>
 
                 {/* Bento Card C: SENADI */}
-                <div className="lg:col-span-4 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative select-none">
+                <div className="lg:col-span-4 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative">
                     <div className="flex justify-between items-start">
                         <div className="p-2 border border-border-thin rounded bg-bg-deep">
                             <Cpu size={18} strokeWidth={1.5} className="text-text-main" />
@@ -287,7 +287,7 @@ const Modulos: React.FC = () => {
                 </div>
 
                 {/* Bento Card D: Acreditación */}
-                <div className="lg:col-span-8 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative select-none">
+                <div className="lg:col-span-8 bento-card-static p-6 flex flex-col justify-between overflow-hidden relative">
                     <div className="flex justify-between items-start">
                         <div className="p-2 border border-border-thin rounded bg-bg-deep">
                             <ShieldCheck size={18} strokeWidth={1.5} className="text-text-main" />
