@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, BarChart, FileSignature, CheckCircle2, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import api from '../../../../../api/axios_config';
+import React from 'react';
+import { Shield, BarChart, FileSignature, CheckCircle2 } from 'lucide-react';
 import WorkspaceActivityPanel from '../WorkspaceActivityPanel';
 
 interface WorkspaceSidebarProps {
@@ -24,22 +22,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
     setActiveDocument
 }) => {
     const isSigned = currentProject.status !== 'Borrador' && currentProject.status !== 'En Corrección';
-    const [hasSavedCert, setHasSavedCert] = useState<boolean>(false);
-    const [isLoadingCert, setIsLoadingCert] = useState<boolean>(true);
-
-    useEffect(() => {
-        const checkSavedCertificate = async () => {
-            try {
-                const res = await api.get('/lopdp/perfil');
-                setHasSavedCert(!!res.data?.has_p12_certificate);
-            } catch (err) {
-                console.error('[DIITRA] Error loading profile in sidebar:', err);
-            } finally {
-                setIsLoadingCert(false);
-            }
-        };
-        checkSavedCertificate();
-    }, []);
 
     return (
         <div className="flex flex-col gap-3">
@@ -91,48 +73,6 @@ export const WorkspaceSidebar: React.FC<WorkspaceSidebarProps> = ({
                             <FileSignature size={12} />
                             <span>Ir a Firmar Documento</span>
                         </button>
-                    )}
-
-                    {/* Línea divisoria y estado inteligente de la firma */}
-                    {!isSigned && (
-                        <>
-                            <hr className="border-border-thin my-4" />
-                            <div className="text-[10px] text-text-dim leading-relaxed">
-                                {isLoadingCert ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="animate-spin w-3 h-3 border border-text-dim border-t-transparent rounded-full" />
-                                        <span className="opacity-60">Comprobando certificado...</span>
-                                    </div>
-                                ) : hasSavedCert ? (
-                                    <div className="flex items-start gap-2.5 text-success animate-fade-in">
-                                        <CheckCircle2 size={13} className="text-success mt-0.5 shrink-0" />
-                                        <div>
-                                            <p className="font-semibold">Firma configurada y lista</p>
-                                            <p className="text-[9px] text-text-dim mt-0.5">
-                                                Puedes gestionarla en{' '}
-                                                <Link to="/configuracion" className="text-brand hover:underline font-bold">
-                                                    Mi Cuenta y Firma
-                                                </Link>
-                                            </p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-start gap-2.5 animate-fade-in">
-                                        <AlertCircle size={13} className="text-warning mt-0.5 shrink-0" />
-                                        <div>
-                                            <p className="font-semibold text-text-main">Firma no registrada</p>
-                                            <p className="text-[9px] text-text-dim mt-0.5">
-                                                ¿No tienes firma? Configúrala en{' '}
-                                                <Link to="/configuracion" className="text-brand hover:underline font-bold">
-                                                    Mi Cuenta y Firma
-                                                </Link>{' '}
-                                                para poder firmar.
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </>
                     )}
                 </div>
             </div>

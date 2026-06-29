@@ -87,7 +87,7 @@ const LopdpConsentPage: React.FC = () => {
                     <ul className="list-disc pl-5 space-y-1">
                         <li>Gestión, evaluación, monitoreo y archivo de proyectos de investigación científica, desarrollo experimental y transferencia tecnológica.</li>
                         <li>Registro y acreditación de la producción científica ante los organismos de control de la educación superior (SENESCYT, CACES).</li>
-                        <li>Habilitación y custodia segura de firmas electrónicas para la suscripción de actas de acreditación y reportes de avance.</li>
+                        <li>Habilitación y uso temporal de firmas electrónicas (sin almacenamiento ni custodia del certificado en el servidor) para la suscripción de actas de acreditación y reportes de avance.</li>
                         <li>Procesos de revisión por pares ciegos (evaluadores internos y externos).</li>
                         <li>Envío de notificaciones críticas de la plataforma y alertas sobre hitos y fechas límite.</li>
                     </ul>
@@ -101,8 +101,8 @@ const LopdpConsentPage: React.FC = () => {
                     </p>
 
                     <p>
-                        <strong>4. SEGURIDAD Y CUSTODIA DE LA INFORMACIÓN:</strong><br />
-                        Los datos personales son custodiados utilizando altos estándares de seguridad informática, incluyendo cifrado avanzado para contraseñas de certificados digitales y almacenamiento permanente de registros de auditoría de acceso a datos sensibles (conforme a normativa CACES 2026).
+                        <strong>4. SEGURIDAD Y PRIVACIDAD DE LA FIRMA:</strong><br />
+                        Los datos personales son custodiados utilizando altos estándares de seguridad informática. El certificado digital (.p12) y su contraseña ingresados para la firma electrónica se procesan de forma temporal en la memoria del servidor durante la firma y <strong>nunca se almacenan</strong> en bases de datos o discos del sistema.
                     </p>
 
                     <p>

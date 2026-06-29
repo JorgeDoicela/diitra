@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Users, Clock, Settings, Shield, X, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, X, Lock, Unlock } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -1171,35 +1171,8 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
+                                                                                        /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
                                                         <div className="flex flex-col gap-3">
-                                                            {/* Consentimiento LOPDP */}
-                                                            {!aceptoTerminos ? (
-                                                                <div className="p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-2">
-                                                                    <p className="text-xs font-semibold text-text-main">Consentimiento requerido</p>
-                                                                    <div className="flex items-start gap-2.5 select-none">
-                                                                        <input
-                                                                            type="checkbox"
-                                                                            id="lopdpSignConsent"
-                                                                            className="mt-0.5 cursor-pointer accent-text-main h-4 w-4 rounded border-border-thin text-text-main focus:ring-0"
-                                                                            checked={aceptoTerminos}
-                                                                            disabled={isSavingConsent}
-                                                                            onChange={handleConsentToggle}
-                                                                        />
-                                                                        <label htmlFor="lopdpSignConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer font-medium">
-                                                                            Acepto los términos de LOPDP y autorizo el uso temporal de mi certificado para firma académica.
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center gap-1.5 text-[10px] text-green-500 font-semibold">
-                                                                    <CheckCircle size={12} />
-                                                                    {fechaConsentimientoFirma
-                                                                        ? `Consentimiento LOPDP: ${new Date(fechaConsentimientoFirma).toLocaleDateString()}`
-                                                                        : 'Consentimiento LOPDP otorgado'}
-                                                                </div>
-                                                            )}
-
                                                             {/* Dropzone certificado .p12 */}
                                                             <div className="space-y-1">
                                                                 <label className="text-xs font-bold text-text-main block">Certificado .p12</label>
@@ -1246,9 +1219,9 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
                                                             <button
                                                                 onClick={handleSign}
-                                                                disabled={!pdfBlob || isSigning || !aceptoTerminos || !signatureCertFile}
+                                                                disabled={!pdfBlob || isSigning || !signatureCertFile}
                                                                 className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
-                                                                    (!pdfBlob || !aceptoTerminos || !signatureCertFile)
+                                                                    (!pdfBlob || !signatureCertFile)
                                                                         ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
                                                                         : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
                                                                 }`}
