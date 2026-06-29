@@ -17,7 +17,7 @@ interface LandingProps {
 
 const Landing: React.FC<LandingProps> = ({ currentTheme, toggleTheme }) => {
     return (
-        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg theme-transition overflow-x-hidden relative">
+        <div className="min-h-screen bg-bg-deep text-text-main font-sans selection:bg-selection-bg selection:text-selection-fg theme-transition overflow-x-clip relative">
 
             {/* Grid Overlay de fondo al estilo Vercel */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--grid-color)_1px,transparent_1px),linear-gradient(to_bottom,var(--grid-color)_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none -z-20" />
