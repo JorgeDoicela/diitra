@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Cpu, Loader2, Terminal, AlertCircle, Check } from 'lucide-react';
+import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Cpu, Loader2, Terminal } from 'lucide-react';
 
 const Roles: React.FC = () => {
     const [activeRole, setActiveRole] = useState<number>(0);
     
     // Estados internos para la consola interactiva
     const [invSigned, setInvSigned] = useState<boolean>(false);
+    const [isSigning, setIsSigning] = useState<boolean>(false);
     const [assignState, setAssignState] = useState<'idle' | 'assigning' | 'assigned'>('idle');
     const [voteState, setVoteState] = useState<'idle' | 'approved' | 'rejected'>('idle');
+    const [isVoting, setIsVoting] = useState<boolean>(false);
     const [apiTesting, setApiTesting] = useState<boolean>(false);
     const [apiResult, setApiResult] = useState<string>('');
 
@@ -28,6 +30,9 @@ const Roles: React.FC = () => {
     const [selectedApi, setSelectedApi] = useState<'siies' | 'dspace' | 'senadi'>('siies');
     const [syncProgress, setSyncProgress] = useState<number>(0);
     const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'completed'>('idle');
+
+    // Estado de interacción de la Cascada (Tooltip al pasar el mouse, null por defecto)
+    const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
     const rolesData = [
         { 
@@ -72,6 +77,22 @@ const Roles: React.FC = () => {
         }, 400);
     };
 
+    const handleSignProposal = () => {
+        setIsSigning(true);
+        setTimeout(() => {
+            setIsSigning(false);
+            setInvSigned(true);
+        }, 900);
+    };
+
+    const handleCastVote = (approved: boolean) => {
+        setIsVoting(true);
+        setTimeout(() => {
+            setIsVoting(false);
+            setVoteState(approved ? 'approved' : 'rejected');
+        }, 800);
+    };
+
     const runApiTest = () => {
         if (apiTesting) return;
         setApiTesting(true);
@@ -107,21 +128,24 @@ const Roles: React.FC = () => {
     const getWaterfallSteps = (roleIdx: number) => {
         switch (roleIdx) {
             case 0:
-                // El tercer paso (Cargar evidencias) responde dinámicamente al progreso del hito
                 return [
                     { 
                         name: 'Crear propuesta de proyecto', 
                         duration: '2d', 
                         startPercent: '0%', 
                         widthPercent: '30%', 
-                        colorClass: 'bg-success/10 border-l-2 border-success text-success shadow-[inset_1px_0_0_rgba(0,224,84,0.1)]' 
+                        permission: 'PROYECTOS:CREAR',
+                        desc: 'Creación del borrador inicial de la propuesta de investigación.',
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success shadow-[inset_1px_0_0_rgba(0,224,84,0.1)] hover:bg-success/20 cursor-pointer' 
                     },
                     { 
                         name: 'Planificar presupuesto e hitos', 
                         duration: '3d', 
                         startPercent: '30%', 
                         widthPercent: '50%', 
-                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand shadow-[inset_1px_0_0_rgba(0,112,243,0.1)]' 
+                        permission: 'PROYECTOS:GESTIONAR',
+                        desc: 'Desglose financiero de equipos, materiales y cronograma de hitos.',
+                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand shadow-[inset_1px_0_0_rgba(0,112,243,0.1)] hover:bg-brand/20 cursor-pointer' 
                     },
                     { 
                         name: hitoProgress === 100 
@@ -130,27 +154,32 @@ const Roles: React.FC = () => {
                         duration: '1d', 
                         startPercent: '80%', 
                         widthPercent: `${(hitoProgress / 100) * 20}%`, 
+                        permission: 'PROYECTOS:EDITAR',
+                        desc: 'Carga de entregables semanales firmados digitalmente para validación.',
                         colorClass: hitoProgress === 100
-                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
-                            : 'bg-warning/10 border-l-2 border-warning text-warning transition-all duration-300' 
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300 hover:bg-success/20 cursor-pointer'
+                            : 'bg-warning/10 border-l-2 border-warning text-warning transition-all duration-300 hover:bg-warning/20 cursor-pointer' 
                     }
                 ];
             case 1:
-                // El tercer paso (Asignar evaluadores) reacciona al estado de asignación
                 return [
                     { 
                         name: 'Apertura de convocatorias', 
                         duration: '3d', 
                         startPercent: '0%', 
                         widthPercent: '42%', 
-                        colorClass: 'bg-success/10 border-l-2 border-success text-success' 
+                        permission: 'CONVOCATORIAS:CREAR',
+                        desc: 'Configuración y publicación de bases para nuevos proyectos.',
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success hover:bg-success/20 cursor-pointer' 
                     },
                     { 
                         name: 'Filtro y revisión de requisitos', 
                         duration: '2d', 
                         startPercent: '42%', 
                         widthPercent: '28%', 
-                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' 
+                        permission: 'CONFIGURACION:VER',
+                        desc: 'Validación horaria de distributivos docentes en SIGAFI.',
+                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand hover:bg-brand/20 cursor-pointer' 
                     },
                     { 
                         name: assignState === 'assigned'
@@ -161,29 +190,34 @@ const Roles: React.FC = () => {
                         duration: '2d', 
                         startPercent: '70%', 
                         widthPercent: assignState === 'assigned' ? '30%' : '15%', 
+                        permission: 'PROYECTOS:ASIGNAR',
+                        desc: 'Asignación anónima doble ciego por línea de investigación o carga.',
                         colorClass: assignState === 'assigned'
-                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300 hover:bg-success/20 cursor-pointer'
                             : assignState === 'assigning'
                                 ? 'bg-brand/10 border-l-2 border-brand text-brand animate-pulse transition-all duration-300'
-                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80 transition-all duration-300' 
+                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80 transition-all duration-300 hover:bg-warning/10 cursor-pointer' 
                     }
                 ];
             case 2:
-                // La resolución de ética cambia de color si es aprobada o rechazada en el dictamen
                 return [
                     { 
                         name: 'Evaluación anónima doble ciego', 
                         duration: '5d', 
                         startPercent: '0%', 
                         widthPercent: '60%', 
-                        colorClass: 'bg-success/10 border-l-2 border-success text-success' 
+                        permission: 'PROYECTOS:VER',
+                        desc: 'Revisión ciega del protocolo científico sin datos de autoría.',
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success hover:bg-success/20 cursor-pointer' 
                     },
                     { 
                         name: 'Emisión de acta de dictamen', 
                         duration: '2d', 
                         startPercent: '60%', 
                         widthPercent: '25%', 
-                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' 
+                        permission: 'PROYECTOS:APROBAR',
+                        desc: 'Calificación metodológica y registro de dictamen en el acta.',
+                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand hover:bg-brand/20 cursor-pointer' 
                     },
                     { 
                         name: voteState === 'approved'
@@ -194,22 +228,25 @@ const Roles: React.FC = () => {
                         duration: '1d', 
                         startPercent: '85%', 
                         widthPercent: '15%', 
+                        permission: 'PROYECTOS:APROBAR',
+                        desc: 'Sello digital del acta mediante firmas criptográficas .p12.',
                         colorClass: voteState === 'approved'
-                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300 hover:bg-success/20 cursor-pointer'
                             : voteState === 'rejected'
-                                ? 'bg-error/10 border-l-2 border-error text-error transition-all duration-300'
-                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80' 
+                                ? 'bg-error/10 border-l-2 border-error text-error transition-all duration-300 hover:bg-error/20 cursor-pointer'
+                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80 hover:bg-warning/10 cursor-pointer' 
                     }
                 ];
             case 3:
-                // Sincronizar repositorio reacciona a la barra de sincronización
                 return [
                     { 
                         name: 'Configurar período académico', 
                         duration: '1d', 
                         startPercent: '0%', 
                         widthPercent: '25%', 
-                        colorClass: 'bg-success/10 border-l-2 border-success text-success' 
+                        permission: 'CONFIGURACION:EDITAR',
+                        desc: 'Habilitación de fechas de postulación e indicadores CACES.',
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success hover:bg-success/20 cursor-pointer' 
                     },
                     { 
                         name: syncState === 'completed'
@@ -220,20 +257,24 @@ const Roles: React.FC = () => {
                         duration: '2d', 
                         startPercent: '25%', 
                         widthPercent: syncState === 'completed' ? '50%' : syncState === 'syncing' ? `${(syncProgress / 100) * 50}%` : '20%', 
+                        permission: 'CONFIGURACION:EDITAR',
+                        desc: 'Carga automática de metadatos del proyecto al repositorio.',
                         colorClass: syncState === 'completed'
-                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300 hover:bg-success/20 cursor-pointer'
                             : syncState === 'syncing'
                                 ? 'bg-brand/10 border-l-2 border-brand text-brand transition-all duration-150 animate-pulse'
-                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80'
+                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80 hover:bg-warning/10 cursor-pointer'
                     },
                     { 
                         name: 'Auditoría e informes generales', 
                         duration: '1d', 
                         startPercent: '75%', 
                         widthPercent: '25%', 
+                        permission: 'USUARIOS:VER',
+                        desc: 'Generación de reportes de cumplimiento de horas CACES.',
                         colorClass: syncState === 'completed'
-                            ? 'bg-success/10 border-l-2 border-success text-success'
-                            : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80' 
+                            ? 'bg-success/10 border-l-2 border-success text-success hover:bg-success/20 cursor-pointer'
+                            : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80 hover:bg-warning/10 cursor-pointer' 
                     }
                 ];
             default:
@@ -244,7 +285,7 @@ const Roles: React.FC = () => {
     return (
         <section id="roles" className="py-20 lg:-ml-24 lg:-mr-24 space-y-10">
             {/* Header Limpio */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border-thin">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-border-thin">
                 <div className="space-y-2">
                     <h2 className="text-3xl md:text-4xl lg:text-[44px] font-bold tracking-tighter leading-[0.95] text-text-main">
                         Estructura & Niveles de Acceso.
@@ -279,6 +320,7 @@ const Roles: React.FC = () => {
                                     setApiResult('');
                                     setSyncState('idle');
                                     setSyncProgress(0);
+                                    setHoveredStep(null);
                                 }}
                                 className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-200 cursor-pointer ${
                                     isSelected 
@@ -350,7 +392,12 @@ const Roles: React.FC = () => {
                         
                         <div className="border border-border-thin rounded-lg bg-bg-deep/30 p-3 space-y-2 font-mono text-[9px]">
                             {getWaterfallSteps(activeRole).map((step, idx) => (
-                                <div key={idx} className="relative h-6 flex items-center rounded border border-border-thin/40 px-2.5 overflow-hidden transition-all duration-300">
+                                <div 
+                                    key={idx} 
+                                    className="relative h-6 flex items-center rounded border border-border-thin/40 px-2.5 overflow-hidden transition-all duration-300 cursor-pointer"
+                                    onMouseEnter={() => setHoveredStep(idx)}
+                                    onMouseLeave={() => setHoveredStep(null)}
+                                >
                                     <div 
                                         className={`absolute inset-y-0 rounded-r transition-all duration-500 ease-out ${step.colorClass}`} 
                                         style={{ 
@@ -368,6 +415,23 @@ const Roles: React.FC = () => {
                                     </span>
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Detalle interactivo del paso actual (Altamente estable y libre de Layout Shift) */}
+                        <div className={`transition-all duration-300 rounded px-3 py-1.5 min-h-[34px] flex items-center justify-center border ${
+                            hoveredStep !== null 
+                                ? 'border-border-thin bg-surface/20 opacity-100' 
+                                : 'border-transparent bg-transparent opacity-0'
+                        }`}>
+                            {hoveredStep !== null && getWaterfallSteps(activeRole)[hoveredStep] && (
+                                <p className="text-[8.5px] text-text-dim leading-relaxed flex flex-wrap items-center gap-1.5 font-sans transition-opacity duration-300">
+                                    <span className="font-mono text-brand font-bold bg-brand-subtle border border-brand/20 px-1.5 py-0.5 rounded text-[7.5px] tracking-wider uppercase">
+                                        {getWaterfallSteps(activeRole)[hoveredStep].permission}
+                                    </span>
+                                    <span className="text-text-main font-semibold">{getWaterfallSteps(activeRole)[hoveredStep].name}:</span>
+                                    <span>{getWaterfallSteps(activeRole)[hoveredStep].desc}</span>
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -425,7 +489,12 @@ const Roles: React.FC = () => {
 
                                         <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-2">
                                             <span className="text-[8px] text-text-dim uppercase block">Firma de entregable (.p12)</span>
-                                            {invSigned ? (
+                                            {isSigning ? (
+                                                <div className="w-full py-2 bg-brand-subtle border border-brand/20 text-brand rounded font-bold text-[8.5px] flex items-center justify-center gap-1.5 flex-1 animate-pulse">
+                                                    <Loader2 size={10} className="animate-spin" />
+                                                    Firmando...
+                                                </div>
+                                            ) : invSigned ? (
                                                 <div className="space-y-1.5 text-left font-mono text-[7.5px] leading-tight">
                                                     <div className="bg-success/15 border border-success/30 text-success text-[8.5px] py-0.5 rounded font-bold text-center">
                                                         ✓ FIRMADO CON EXITO
@@ -446,7 +515,7 @@ const Roles: React.FC = () => {
                                                 </div>
                                             ) : (
                                                 <button 
-                                                    onClick={() => setInvSigned(true)}
+                                                    onClick={handleSignProposal}
                                                     disabled={hitoProgress < 100}
                                                     className={`w-full py-1.5 rounded font-semibold text-[9px] uppercase tracking-wider cursor-pointer text-center transition-all ${
                                                         hitoProgress === 100 
@@ -509,8 +578,8 @@ const Roles: React.FC = () => {
                                                     <div className="flex gap-2 text-[8px] font-mono">
                                                         {assignmentCriteria === 'linea' && (
                                                             <>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par A: Dr. Anon_#184b</span>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par B: Dra. Anon_#92df</span>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dr. Anon_#184b</span>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dra. Anon_#92df</span>
                                                             </>
                                                         )}
                                                         {assignmentCriteria === 'carga' && (
@@ -572,7 +641,7 @@ const Roles: React.FC = () => {
                                                             : 'bg-error/15 border-error/35 text-error'
                                                     }`}
                                                 >
-                                                    {gradeEtica ? '✓ Cumple Normas de Ética' : '✗ Pendiente de Revisión Ética'}
+                                                    {gradeEtica ? '✓ Cumple Normas de Ética' : '✗ Pendiente de Dictamen Ético'}
                                                 </button>
                                             </div>
                                         </div>
@@ -603,19 +672,20 @@ const Roles: React.FC = () => {
                                             </div>
 
                                             <div className="flex gap-2">
-                                                <button 
-                                                    onClick={() => {
-                                                        if (gradeMetodologia >= 4 && gradeEtica) {
-                                                            setVoteState('approved');
-                                                        } else {
-                                                            setVoteState('rejected');
-                                                        }
-                                                    }}
-                                                    disabled={voteState !== 'idle'}
-                                                    className="flex-1 py-1.5 bg-text-main text-bg-deep rounded font-semibold text-[8.5px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50"
-                                                >
-                                                    Emitir Dictamen
-                                                </button>
+                                                {isVoting ? (
+                                                    <button disabled className="flex-1 py-1.5 bg-text-main/80 text-bg-deep rounded font-semibold text-[8.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
+                                                        <Loader2 size={10} className="animate-spin" />
+                                                        Emitiendo...
+                                                    </button>
+                                                ) : (
+                                                    <button 
+                                                        onClick={() => handleCastVote(gradeMetodologia >= 4 && gradeEtica)}
+                                                        disabled={voteState !== 'idle'}
+                                                        className="flex-1 py-1.5 bg-text-main text-bg-deep rounded font-semibold text-[8.5px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50"
+                                                    >
+                                                        Emitir Dictamen
+                                                    </button>
+                                                )}
                                                 {voteState !== 'idle' && (
                                                     <button 
                                                         onClick={() => setVoteState('idle')}
