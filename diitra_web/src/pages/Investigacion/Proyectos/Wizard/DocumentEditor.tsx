@@ -28,6 +28,24 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
     BookOpen, FileText, Users, DollarSign, Calendar, Target, CheckSquare, BarChart, Library, Award, Shield
 };
 
+/**
+ * Campos que son string? en ProyectoDto y deben enviarse siempre como cadena al backend.
+ * Yjs puede convertir textos numéricos (ej: "2025") a Number al leerlos del documento colaborativo,
+ * lo que rompería la deserialización de string? en C# con System.Text.Json.
+ */
+const PROTOCOLO_STRING_FIELDS: ReadonlyArray<string> = [
+    'Titulo', 'Estado', 'CodigoInstitucional', 'Programa', 'GrupoInvestigacion',
+    'GrupoInvestigacionUuid', 'GrupoInvestigacionTipo', 'GrupoInvestigacionNombre',
+    'Dominio', 'LineaInvestigacion', 'SublineaInvestigacion', 'TipoInvestigacion',
+    'CampoAmplio', 'CampoEspecifico', 'CampoDetallado', 'Carrera', 'PeriodoConvocatoria',
+    'TiempoEjecucion', 'DirectorProyecto', 'FechaPresentacion', 'FechaInicioEstimada',
+    'FechaFinEstimada', 'Periodo', 'FechaInicio', 'FechaFin', 'Antecedentes',
+    'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'Ods', 'MarcoTeorico',
+    'Metodologia', 'Evaluacion', 'FuenteFinanciamiento', 'NombreOtraFuente',
+    'NombreDirectorFirma', 'CargoDirectorFirma', 'NombreCoordinadorFirma',
+    'CargoCoordinadorFirma', 'IdDspaceHandle', 'MetadataCacesJson',
+] as const;
+
 // ─────────────────────────────────────────────────────────────────
 // DOCUMENT EDITOR — ARQUITECTURA DIITRA V1.0 (Workspace Colaborativo)
 // ─────────────────────────────────────────────────────────────────
@@ -423,21 +441,8 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         }
 
         // Garantizar que todos los campos string del ProyectoDto sean cadenas de texto.
-        // Yjs puede convertir valores que parecen numéricos (ej: "123") a Number al leerlos,
-        // lo que provoca un error 400 al deserializar string? en el backend C#.
-        const STRING_FIELDS = [
-            'Titulo', 'Estado', 'CodigoInstitucional', 'Programa', 'GrupoInvestigacion',
-            'GrupoInvestigacionUuid', 'GrupoInvestigacionTipo', 'GrupoInvestigacionNombre',
-            'Dominio', 'LineaInvestigacion', 'SublineaInvestigacion', 'TipoInvestigacion',
-            'CampoAmplio', 'CampoEspecifico', 'CampoDetallado', 'Carrera', 'PeriodoConvocatoria',
-            'TiempoEjecucion', 'DirectorProyecto', 'FechaPresentacion', 'FechaInicioEstimada',
-            'FechaFinEstimada', 'Periodo', 'FechaInicio', 'FechaFin', 'Antecedentes',
-            'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'Ods', 'MarcoTeorico',
-            'Metodologia', 'Evaluacion', 'FuenteFinanciamiento', 'NombreOtraFuente',
-            'NombreDirectorFirma', 'CargoDirectorFirma', 'NombreCoordinadorFirma',
-            'CargoCoordinadorFirma', 'IdDspaceHandle', 'MetadataCacesJson',
-        ];
-        STRING_FIELDS.forEach(field => {
+        // Yjs puede convertir valores numéricos a Number; esto los normaliza antes de enviar al backend.
+        PROTOCOLO_STRING_FIELDS.forEach(field => {
             if (cloned[field] !== undefined && cloned[field] !== null && typeof cloned[field] !== 'string') {
                 cloned[field] = String(cloned[field]);
             }

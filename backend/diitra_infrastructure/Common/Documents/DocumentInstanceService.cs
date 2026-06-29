@@ -56,38 +56,68 @@ namespace Diitra.Infrastructure.Common.Documents
 
         public async Task<DocumentInstance?> GetByUuidAsync(string uuid, CancellationToken ct = default)
         {
+            var instance = await ResolveEditableInstanceAsync(uuid, ct);
+
+            if (instance != null)
+                await SyncFromProjectAsync(instance, ct);
+
+            return instance;
+        }
+
+        /// <summary>
+        /// Resuelve la instancia editable (Draft o Review) para un UUID dado.
+        /// El UUID puede ser el de la instancia directamente, o el del proyecto (entityUuid).
+        /// Prioridad: Draft > Review > Signed (fallback). Si solo existe Signed, crea un Draft nuevo.
+        /// </summary>
+        private async Task<DocumentInstance?> ResolveEditableInstanceAsync(string uuid, CancellationToken ct)
+        {
+            // 1. Buscar por UUID exacto de instancia
             var instance = await _context.DocumentInstances
                 .FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
 
-            if (instance == null)
+            // 2. Si se encontró por UUID pero está sellada, intentar redirigir a su Draft más reciente
+            if (instance != null && IsImmutable(instance))
             {
-                // Fallback por EntityUuid: prioriza instancias editables (Draft/Review).
-                // Nunca devolver una instancia Signed como punto de edición.
-                instance = await _context.DocumentInstances
-                    .Where(i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION")
-                    .OrderBy(i => i.State == DocumentState.Draft ? 0 :
-                                 i.State == DocumentState.Review ? 1 : 2)
-                    .FirstOrDefaultAsync(ct);
+                var draft = await FindLatestEditableAsync(instance.EntityUuid, instance.TemplateCode, ct);
+                if (draft != null)
+                    instance = draft;
+                // Si no hay Draft disponible, se retorna la sellada (el caller decide cómo manejarlo)
             }
 
+            // 3. Fallback: el UUID puede corresponder al EntityUuid del proyecto
             if (instance == null)
             {
-                // Auto-creación resiliente si el UUID corresponde a un proyecto existente sin instancia
+                instance = await FindLatestEditableAsync(uuid, "PROTOCOLO_INVESTIGACION", ct)
+                        ?? await _context.DocumentInstances
+                               .Where(i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION")
+                               .OrderByDescending(i => i.CreatedAt)
+                               .FirstOrDefaultAsync(ct);
+            }
+
+            // 4. Auto-creación resiliente: si el proyecto existe pero no tiene instancia, crearla en caliente
+            if (instance == null)
+            {
                 var projectExists = await _context.InvProyectos.AnyAsync(p => p.Uuid == uuid, ct);
                 if (projectExists)
-                {
                     instance = await CreateAsync("PROTOCOLO_INVESTIGACION", uuid, "sistema", "Protocolo Oficial", "Proyecto", ct);
-                    await SyncFromProjectAsync(instance, ct);
-                }
-            }
-
-            if (instance != null)
-            {
-                await SyncFromProjectAsync(instance, ct);
             }
 
             return instance;
         }
+
+        /// <summary>Devuelve true si el documento está en un estado que impide modificaciones de contenido.</summary>
+        private static bool IsImmutable(DocumentInstance instance) =>
+            instance.State == DocumentState.Signed || instance.State == DocumentState.Archived;
+
+        /// <summary>Busca la instancia más reciente en estado editable (Draft o Review) para un EntityUuid y TemplateCode.</summary>
+        private async Task<DocumentInstance?> FindLatestEditableAsync(string entityUuid, string templateCode, CancellationToken ct) =>
+            await _context.DocumentInstances
+                .Where(i => i.EntityUuid == entityUuid
+                         && i.TemplateCode == templateCode
+                         && (i.State == DocumentState.Draft || i.State == DocumentState.Review))
+                .OrderByDescending(i => i.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+
 
         public async Task<IEnumerable<DocumentInstance>> GetByEntityAsync(string entityUuid, CancellationToken ct = default)
         {
@@ -188,163 +218,103 @@ namespace Diitra.Infrastructure.Common.Documents
         {
             Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Iniciando para Uuid: {uuid}");
 
-            // Sanitizar la entrada entrante inmediatamente para curar el bug "[object Object]"
-            if (!string.IsNullOrEmpty(metadataJson))
-            {
-                metadataJson = System.Text.RegularExpressions.Regex.Replace(
-                    metadataJson, 
-                    @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""", 
-                    "\"$1\":null",
-                    System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                );
-            }
+            // Sanitizar entrada para corregir valores corruptos "[object Object]"
+            metadataJson = SanitizeObjectObjectValues(metadataJson);
 
-            var instance = await _context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == uuid, ct);
-            
-            if (instance == null)
-            {
-                // Fallback: Tal vez nos pasaron el UUID del proyecto (entityUuid). Prioriza Draft/Review.
-                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Buscando fallback editable por EntityUuid: {uuid}");
-                instance = await _context.DocumentInstances
-                    .Where(i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION")
-                    .OrderBy(i => i.State == DocumentState.Draft ? 0 :
-                                 i.State == DocumentState.Review ? 1 : 2)
-                    .FirstOrDefaultAsync(ct);
-            }
+            // Resolver instancia editable (Draft/Review), con auto-creación si aplica
+            var instance = await ResolveEditableInstanceAsync(uuid, ct);
 
             if (instance == null)
             {
-                // Auto-creación resiliente: si el proyecto existe, creamos la instancia del protocolo principal
-                // en caliente para evitar fallos de inicialización o guardado.
-                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Buscando proyecto para auto-creación resiliente. Uuid: {uuid}");
-                var projectExists = await _context.InvProyectos.AnyAsync(p => p.Uuid == uuid, ct);
-                if (projectExists)
-                {
-                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Auto-creando PROTOCOLO_INVESTIGACION para proyecto Uuid: {uuid}");
-                    instance = await CreateAsync("PROTOCOLO_INVESTIGACION", uuid, "sistema", "Protocolo Oficial", "Proyecto", ct);
-                    await SyncFromProjectAsync(instance, ct);
-                }
-            }
-
-            if (instance == null)
-            {
-                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] ERROR: La instancia o proyecto '{uuid}' no existe.");
+                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] ERROR: No se encontró instancia ni proyecto para '{uuid}'.");
                 throw new KeyNotFoundException($"La instancia o proyecto '{uuid}' no existe.");
             }
 
-            // Si el documento está firmado o archivado, respetar la inmutabilidad del dominio.
-            // Primero busca si ya existe un Draft/Review editable para el mismo EntityUuid;
-            // si no existe, crea uno nuevo. Esto evita crear duplicados en cada autoguardado.
-            if (instance.State == DocumentState.Signed || instance.State == DocumentState.Archived)
+            // Si la instancia resuelta sigue siendo inmutable (solo-Signed sin Draft disponible),
+            // crear un nuevo Draft que herede el snapshot actual.
+            if (IsImmutable(instance))
             {
-                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Instancia '{uuid}' está sellada (Estado: {instance.State}). Buscando Draft existente.");
-                var draftInstance = await _context.DocumentInstances.FirstOrDefaultAsync(
-                    i => i.EntityUuid == instance.EntityUuid
-                      && i.TemplateCode == instance.TemplateCode
-                      && (i.State == DocumentState.Draft || i.State == DocumentState.Review), ct);
-
-                if (draftInstance != null)
-                {
-                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Reutilizando Draft existente: {draftInstance.Uuid}");
-                    instance = draftInstance;
-                }
-                else
-                {
-                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Creando nueva instancia Draft.");
-                    instance = DocumentInstance.Create(
-                        instance.TemplateCode,
-                        instance.TemplateVersion,
-                        instance.EntityUuid,
-                        "sistema",
-                        instance.Title,
-                        instance.EntityType,
-                        instance.DataSnapshotJson
-                    );
-                    _context.DocumentInstances.Add(instance);
-                    await _context.SaveChangesAsync(ct);
-                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Nueva instancia Draft creada: {instance.Uuid}");
-                }
+                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Instancia sellada. Creando nuevo Draft para '{instance.EntityUuid}'.");
+                instance = DocumentInstance.Create(
+                    instance.TemplateCode, instance.TemplateVersion,
+                    instance.EntityUuid, "sistema",
+                    instance.Title, instance.EntityType,
+                    instance.DataSnapshotJson);
+                _context.DocumentInstances.Add(instance);
+                await _context.SaveChangesAsync(ct);
+                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Nuevo Draft creado: {instance.Uuid}");
             }
 
-            // Fusionar inteligentemente metadatos si ya existe un snapshot previo
-            if (!string.IsNullOrEmpty(instance.DataSnapshotJson))
-            {
-                try
-                {
-                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Fusionando metadatos. Existente: {instance.DataSnapshotJson.Length} bytes, Entrante: {metadataJson?.Length ?? 0} bytes");
-                    var options = new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    };
-                    string sanitizedSnapshot = System.Text.RegularExpressions.Regex.Replace(
-                        instance.DataSnapshotJson, 
-                        @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""", 
-                        "\"$1\":null",
-                        System.Text.RegularExpressions.RegexOptions.IgnoreCase
-                    );
-                    var existingObj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(sanitizedSnapshot, options);
-                    var incomingObj = !string.IsNullOrEmpty(metadataJson)
-                        ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(metadataJson, options)
-                        : null;
-                    
-                    if (existingObj != null && incomingObj != null)
-                    {
-                        var mergedObj = new Dictionary<string, object>();
-                        
-                        foreach (var kvp in existingObj)
-                        {
-                            mergedObj[kvp.Key] = kvp.Value;
-                        }
-                        
-                        foreach (var kvp in incomingObj)
-                        {
-                            var key = kvp.Key;
-                            var incomingVal = kvp.Value;
-                            
-                            bool isVolatileField = VolatileFields.Contains(key);
-
-                            if (isVolatileField)
-                            {
-                                bool isIncomingEmpty = incomingVal.ValueKind == JsonValueKind.Null ||
-                                                       incomingVal.ValueKind == JsonValueKind.Undefined ||
-                                                       (incomingVal.ValueKind == JsonValueKind.String && IsHtmlEmpty(incomingVal.GetString())) ||
-                                                       (incomingVal.ValueKind == JsonValueKind.Array && incomingVal.GetArrayLength() == 0);
-
-                                if (isIncomingEmpty)
-                                {
-                                    if (existingObj.TryGetValue(key, out var existingVal))
-                                    {
-                                        bool isExistingEmpty = existingVal.ValueKind == JsonValueKind.Null ||
-                                                               existingVal.ValueKind == JsonValueKind.Undefined ||
-                                                               (existingVal.ValueKind == JsonValueKind.String && IsHtmlEmpty(existingVal.GetString())) ||
-                                                               (existingVal.ValueKind == JsonValueKind.Array && existingVal.GetArrayLength() == 0);
-                                        
-                                        if (!isExistingEmpty)
-                                        {
-                                            Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Omitiendo sobreescritura de campo volátil '{key}' con valor entrante vacío.");
-                                            continue; // Conservar el existente
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            mergedObj[key] = incomingVal;
-                        }
-                        
-                        metadataJson = JsonSerializer.Serialize(mergedObj);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Error al fusionar instantánea de metadatos: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[DIITRA] Error merging metadata snapshot: {ex.Message}");
-                }
-            }
+            // Fusionar metadatos con snapshot existente respetando campos volátiles
+            metadataJson = MergeWithExistingSnapshot(instance, metadataJson);
 
             instance.UpdateDataSnapshot(metadataJson);
             await _context.SaveChangesAsync(ct);
-            Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Completado con éxito. Nuevo tamaño: {metadataJson?.Length ?? 0} bytes");
+            Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Guardado exitoso. Instancia: {instance.Uuid}, Tamaño: {metadataJson?.Length ?? 0} bytes");
             return instance;
+        }
+
+        private string SanitizeObjectObjectValues(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return json;
+            return System.Text.RegularExpressions.Regex.Replace(
+                json,
+                @"\""([Ii]mpacto|[Ff]irmasResponsabilidad)\""\s*:\s*\""\[object Object\]\""",
+                "\"$1\":null",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+
+        private string MergeWithExistingSnapshot(DocumentInstance instance, string incomingJson)
+        {
+            if (string.IsNullOrEmpty(instance.DataSnapshotJson))
+                return incomingJson;
+
+            try
+            {
+                Console.WriteLine($"[DIITRA] [MergeSnapshot] Fusionando {instance.DataSnapshotJson.Length} bytes existentes con {incomingJson?.Length ?? 0} bytes entrantes.");
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var existing = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
+                    SanitizeObjectObjectValues(instance.DataSnapshotJson), options);
+                var incoming = !string.IsNullOrEmpty(incomingJson)
+                    ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(incomingJson, options)
+                    : null;
+
+                if (existing == null || incoming == null)
+                    return incomingJson;
+
+                var merged = new Dictionary<string, object>(existing.ToDictionary(k => k.Key, v => (object)v.Value));
+
+                foreach (var (key, incomingVal) in incoming)
+                {
+                    if (VolatileFields.Contains(key))
+                    {
+                        bool incomingEmpty = incomingVal.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+                            || (incomingVal.ValueKind == JsonValueKind.String && IsHtmlEmpty(incomingVal.GetString()))
+                            || (incomingVal.ValueKind == JsonValueKind.Array && incomingVal.GetArrayLength() == 0);
+
+                        if (incomingEmpty && existing.TryGetValue(key, out var existingVal))
+                        {
+                            bool existingEmpty = existingVal.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined
+                                || (existingVal.ValueKind == JsonValueKind.String && IsHtmlEmpty(existingVal.GetString()))
+                                || (existingVal.ValueKind == JsonValueKind.Array && existingVal.GetArrayLength() == 0);
+
+                            if (!existingEmpty)
+                            {
+                                Console.WriteLine($"[DIITRA] [MergeSnapshot] Preservando campo volátil '{key}' (entrante vacío, existente con valor).");
+                                continue;
+                            }
+                        }
+                    }
+                    merged[key] = incomingVal;
+                }
+
+                return JsonSerializer.Serialize(merged);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DIITRA] [MergeSnapshot] Error al fusionar snapshot: {ex.Message}. Usando JSON entrante sin fusionar.");
+                return incomingJson;
+            }
         }
 
         public async Task<DocumentInstance> ResolveAsync(string templateCode, string entityUuid, string createdBy, string? title = null, string entityType = "Proyecto", CancellationToken ct = default)
