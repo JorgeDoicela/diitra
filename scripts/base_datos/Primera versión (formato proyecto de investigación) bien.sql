@@ -20,7 +20,6 @@ DROP TABLE IF EXISTS
     -- Grupo K (Seguridad y Notificaciones)
     inv_backup_logs,
     inv_lopdp_consentimientos,
-    inv_lopdp_derechos_arco,
     inv_lopdp_auditoria_datos,
     inv_notificaciones,
     inv_tokens_acceso,
@@ -930,19 +929,15 @@ CREATE TABLE inv_usuarios_metadata (
     researchGateUrl      VARCHAR(255) NULL,
     especialidad         TEXT         NULL,
     gradoAcademicoMaximo VARCHAR(100) NULL,
-    rutaFirmaP12         VARCHAR(255) NULL,
-    rutaFirmaImagen      VARCHAR(255) NULL,
-    firmaHabilitada      TINYINT(1)   DEFAULT 0,
-    aceptoTerminosFirma  TINYINT(1)   DEFAULT 0 COMMENT 'Consentimiento explícito para el almacenamiento de la firma (.p12 o imagen)',
+    aceptoTerminosFirma  TINYINT(1)   DEFAULT 0 COMMENT 'Consentimiento explícito para el uso de la firma digital en memoria RAM',
     fechaConsentimientoFirma TIMESTAMP NULL,
-    p12PasswordEncrypted VARCHAR(512) NULL COMMENT 'Contraseña cifrada para firma en lote si aplica',
     configuracion        JSON         NULL,
     fechaRegistro        TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
     fechaUltimoAcceso    TIMESTAMP    NULL,
     version              INT          DEFAULT 1,
     UNIQUE KEY uq_usermeta_uuid (uuid),
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Perfil CACES, SENESCYT y configuración de Firma Electrónica';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[SISTEMA] Perfil CACES y SENESCYT';
 
 CREATE TABLE inv_lopdp_consentimientos (
     idConsentimiento     INT          AUTO_INCREMENT PRIMARY KEY,
@@ -958,22 +953,6 @@ CREATE TABLE inv_lopdp_consentimientos (
     fechaRevocacion      TIMESTAMP    NULL,
     FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Registro histórico e irrevocable del consentimiento del titular';
-
-CREATE TABLE inv_lopdp_derechos_arco (
-    idSolicitudArco      INT          AUTO_INCREMENT PRIMARY KEY,
-    uuid                 VARCHAR(36)  NOT NULL UNIQUE,
-    idUsuario            INT(11)      NOT NULL,
-    tipoSolicitud        ENUM('Acceso', 'Rectificacion', 'Eliminacion', 'Oposicion', 'Portabilidad', 'Limitacion') NOT NULL,
-    detalleSolicitud     TEXT         NOT NULL COMMENT 'Descripción detallada de la solicitud de datos',
-    fechaSolicitud       TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
-    fechaLimiteResolucion DATE         NOT NULL COMMENT 'Fecha máxima de resolución legal (15 días)',
-    estado               ENUM('Recibido', 'En_Analisis', 'Aprobado', 'Rechazado') DEFAULT 'Recibido',
-    resolucionDetalle    TEXT         NULL COMMENT 'Justificación técnica/legal de la respuesta',
-    fechaResolucion      TIMESTAMP    NULL,
-    documentoResolucionPath VARCHAR(512) NULL COMMENT 'Ruta física de la respuesta formal firmada electrónicamente',
-    evidenciaPath           VARCHAR(512) NULL COMMENT 'Ruta física del archivo de evidencia adjunto',
-    FOREIGN KEY (idUsuario) REFERENCES usuarios(idUsuario) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='[LOPDP] Seguimiento de solicitudes de derechos ARCO del titular';
 
 CREATE TABLE inv_lopdp_auditoria_datos (
     idAuditoriaDatos     INT          AUTO_INCREMENT PRIMARY KEY,
@@ -1013,8 +992,6 @@ BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; E
 CREATE TRIGGER trg_proy_ext_uuid BEFORE INSERT ON inv_proyecto_extensiones FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_lopdp_consentimientos_uuid BEFORE INSERT ON inv_lopdp_consentimientos FOR EACH ROW
-BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
-CREATE TRIGGER trg_lopdp_arco_uuid BEFORE INSERT ON inv_lopdp_derechos_arco FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$
 CREATE TRIGGER trg_lopdp_auditoria_uuid BEFORE INSERT ON inv_lopdp_auditoria_datos FOR EACH ROW
 BEGIN IF NEW.uuid IS NULL OR NEW.uuid = '' THEN SET NEW.uuid = UUID(); END IF; END$$

@@ -32,7 +32,6 @@ TRUNCATE TABLE inv_tokens_acceso;
 TRUNCATE TABLE inv_dispositivos_tokens;
 TRUNCATE TABLE inv_magic_links;
 TRUNCATE TABLE inv_lopdp_consentimientos;
-TRUNCATE TABLE inv_lopdp_derechos_arco;
 TRUNCATE TABLE inv_lopdp_auditoria_datos;
 TRUNCATE TABLE inv_backup_logs;
 TRUNCATE TABLE inv_transferencias;

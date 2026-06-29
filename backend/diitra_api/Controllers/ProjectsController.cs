@@ -204,6 +204,17 @@ namespace diitra_api.Controllers
                     {
                         using var cert2 = new System.Security.Cryptography.X509Certificates.X509Certificate2(certificateBytes, finalPassword ?? "");
                         var parsedName = cert2.GetNameInfo(System.Security.Cryptography.X509Certificates.X509NameType.SimpleName, false);
+                        
+                        if (!skipCertificateValidation && !string.IsNullOrWhiteSpace(parsedName) && !string.IsNullOrWhiteSpace(dbUser.Nombre))
+                        {
+                            string normUser = NormalizeName(dbUser.Nombre);
+                            string normCert = NormalizeName(parsedName);
+                            if (!ValidateNameMatch(normUser, normCert))
+                            {
+                                return BadRequest(new { error = $"El certificado digital cargado pertenece a '{parsedName}', pero usted ha iniciado sesión como '{dbUser.Nombre}'. Por seguridad, solo puede firmar documentos usando su propio certificado personal." });
+                            }
+                        }
+
                         if (!string.IsNullOrWhiteSpace(parsedName))
                         {
                             signerName = parsedName;
@@ -216,6 +227,10 @@ namespace diitra_api.Controllers
                     }
                     catch (Exception ex)
                     {
+                        if (!skipCertificateValidation)
+                        {
+                            return BadRequest(new { error = "La contraseña del certificado no es válida o el archivo .p12 está corrupto." });
+                        }
                         logger.LogWarning(ex, "No se pudo extraer metadatos del certificado de firma. Se usará información de perfil.");
                     }
                 }
@@ -1005,6 +1020,33 @@ namespace diitra_api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { success = true });
+        }
+
+        private static string NormalizeName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "";
+            var normalized = name.ToLowerInvariant().Trim();
+            normalized = normalized.Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u").Replace("ñ", "n");
+            return normalized;
+        }
+
+        private static bool ValidateNameMatch(string userNormalized, string certNormalized)
+        {
+            if (string.IsNullOrEmpty(userNormalized) || string.IsNullOrEmpty(certNormalized)) return false;
+            if (userNormalized.Contains(certNormalized) || certNormalized.Contains(userNormalized)) return true;
+
+            var userWords = userNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var certWords = certNormalized.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            int matches = 0;
+            foreach (var uWord in userWords)
+            {
+                if (uWord.Length > 2 && certWords.Contains(uWord))
+                {
+                    matches++;
+                }
+            }
+            return matches >= 2;
         }
     }
 
