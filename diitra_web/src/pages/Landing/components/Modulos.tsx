@@ -49,18 +49,14 @@ const Modulos: React.FC = () => {
         }
     ];
 
-    // Lógica para cambiar de módulo con efecto de transición
+    // Lógica para cambiar de módulo de forma inmediata y fluida
     const handleModuleSelect = (id: number | null) => {
-        setTransitioning(true);
-        setTimeout(() => {
-            setActiveModule(id);
-            if (id !== null) {
-                setShowDetail(true);
-            } else {
-                setShowDetail(false);
-            }
-            setTransitioning(false);
-        }, 150);
+        setActiveModule(id);
+        if (id !== null) {
+            setShowDetail(true);
+        } else {
+            setShowDetail(false);
+        }
     };
 
     const handleNextModule = () => {
@@ -236,10 +232,9 @@ const Modulos: React.FC = () => {
                     border: 12px solid #0a0a0a;
                     border-bottom: 14px solid #0a0a0a;
                     border-radius: 18px 18px 0 0;
-                    box-shadow:
-                        inset 0 1px 1px rgba(255, 255, 255, 0.08),
-                        inset 0 -1px 1px rgba(0, 0, 0, 0.9),
-                        0 -4px 30px rgba(0, 0, 0, 0.6);
+                    box-shadow: 
+                        inset 0 1px 1px rgba(255, 255, 255, 0.08), 
+                        inset 0 -1px 1px rgba(0, 0, 0, 0.9);
                     position: relative;
                     transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
                     z-index: 2;
@@ -247,10 +242,9 @@ const Modulos: React.FC = () => {
                 [data-theme="light"] .laptop-lid {
                     background: #121212; /* Sigue siendo negra mate */
                     border-color: #121212;
-                    box-shadow:
-                        inset 0 1px 1px rgba(255, 255, 255, 0.1),
-                        inset 0 -1px 1px rgba(0, 0, 0, 0.85),
-                        0 -4px 25px rgba(0, 0, 0, 0.45);
+                    box-shadow: 
+                        inset 0 1px 1px rgba(255, 255, 255, 0.1), 
+                        inset 0 -1px 1px rgba(0, 0, 0, 0.85);
                 }
                 .laptop-screen-glass {
                     background: #000000;
@@ -323,16 +317,14 @@ const Modulos: React.FC = () => {
                     height: 14px;
                     background: linear-gradient(to bottom, #1f1f1f 0%, #121212 25%, #0a0a0a 70%, #050505 100%);
                     border-radius: 2px 2px 10px 10px;
-                    box-shadow:
-                        0 25px 50px rgba(0, 0, 0, 0.75),
+                    box-shadow: 
                         inset 0 1px 0 rgba(255, 255, 255, 0.1),
                         inset 0 -1px 2px rgba(0, 0, 0, 0.9);
                     position: relative;
                 }
                 [data-theme="light"] .laptop-base {
                     background: linear-gradient(to bottom, #2b2b2b 0%, #1c1c1c 25%, #141414 70%, #0d0d0d 100%);
-                    box-shadow:
-                        0 20px 40px rgba(0, 0, 0, 0.4),
+                    box-shadow: 
                         inset 0 1px 0 rgba(255, 255, 255, 0.15),
                         inset 0 -1px 2px rgba(0, 0, 0, 0.8);
                 }
@@ -350,24 +342,23 @@ const Modulos: React.FC = () => {
                     background: #0d0d0d;
                 }
                 .laptop-shadow {
-                    position: absolute;
-                    bottom: -22px;
-                    left: 5%;
-                    width: 90%;
-                    height: 24px;
-                    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 75%);
-                    z-index: 1;
-                    pointer-events: none;
+                    display: none;
                 }
                 [data-theme="light"] .laptop-shadow {
-                    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0) 75%);
+                    display: none;
                 }
                 .screen-transition {
-                    animation: screenFlicker 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                    animation: screenFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
                 }
-                @keyframes screenFlicker {
-                    0% { opacity: 0.65; filter: contrast(1.15) brightness(1.1); }
-                    100% { opacity: 1; filter: contrast(1) brightness(1); }
+                @keyframes screenFadeIn {
+                    from {
+                        opacity: 0.9;
+                        transform: scale(0.99);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
                 }
                 .custom-blur-panel {
                     backdrop-filter: blur(14px);
@@ -402,7 +393,7 @@ const Modulos: React.FC = () => {
                                     key={item.id}
                                     onClick={() => handleModuleSelect(isSelected ? null : item.id)}
                                     className={`flex items-center gap-3.5 px-4.5 py-3 rounded-full border text-xs font-mono uppercase tracking-wider text-left transition-all duration-300 shrink-0 cursor-pointer ${isSelected
-                                            ? 'bg-text-main text-bg-deep border-text-main shadow-md font-bold'
+                                            ? 'bg-text-main text-bg-deep border-text-main font-bold'
                                             : 'bg-surface border-border-thin text-text-main hover:bg-surface-hover hover:border-border-hover'
                                         }`}
                                 >
@@ -425,7 +416,7 @@ const Modulos: React.FC = () => {
                             : 'opacity-0 translate-y-4 scale-95 pointer-events-none h-0 overflow-hidden lg:h-auto lg:opacity-0'
                         }`}>
                         {activeModule !== null && (
-                            <div className="custom-blur-panel bg-surface/85 dark:bg-black/75 border border-border-thin rounded-2xl p-6.5 shadow-2xl relative space-y-4.5 animate-scale-up">
+                            <div className="custom-blur-panel bg-surface/85 dark:bg-black/75 border border-border-thin rounded-2xl p-6.5 relative space-y-4.5 animate-scale-up">
 
                                 {/* Botón de cierre superior derecho del panel */}
                                 <button
@@ -464,7 +455,7 @@ const Modulos: React.FC = () => {
                         {activeModule !== null && (
                             <button
                                 onClick={() => handleModuleSelect(null)}
-                                className="absolute -top-6 right-0 lg:-right-4 z-30 w-8 h-8 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface/95 dark:bg-black/90 hover:scale-105 active:scale-95 transition-all shadow-lg cursor-pointer flex items-center justify-center"
+                                className="absolute -top-6 right-0 lg:-right-4 z-30 w-8 h-8 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface/95 dark:bg-black/90 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center"
                                 title="Cerrar detalle"
                             >
                                 <X size={14} className="stroke-[2.5]" />
@@ -482,16 +473,16 @@ const Modulos: React.FC = () => {
                                 <div className="laptop-screen-glare" />
 
                                 {/* PANTALLA ACTIVA */}
-                                <div className={`laptop-display p-4 flex flex-col justify-between select-none ${transitioning ? 'opacity-40' : 'screen-transition'}`}>
+                                <div className={`laptop-display p-4 flex flex-col justify-between select-none screen-transition`} key={activeModule ?? 'dashboard'}>
 
                                     {/* PANTALLA: WIDGETS INTERACTIVOS */}
 
                                     {/* 0. VISTA GENERAL (Dashboard consolidado de 4 cuadrantes) */}
                                     {activeModule === null && (
-                                        <div className="h-full flex flex-col justify-between">
+                                        <div className="h-full flex flex-col gap-3">
 
                                             {/* Cabecera del Dashboard */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 mb-2 text-[9px] font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
                                                 <span className="flex items-center gap-1.5 font-semibold">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
                                                     DIITRA AUTOMATION HUB
@@ -577,17 +568,12 @@ const Modulos: React.FC = () => {
 
                                             </div>
 
-                                            {/* Footer de bienvenida general */}
-                                            <div className="text-center text-[8.5px] font-mono text-text-dim pt-2 border-t border-border-thin/30">
-                                                SELECCIONA UN CUADRANTE O BOTÓN PARA PROFUNDIZAR
-                                            </div>
-
                                         </div>
                                     )}
 
                                     {/* 1. MÓDULO ACTIVO: POSTULACIÓN (Presupuesto) */}
                                     {activeModule === 1 && (
-                                        <div className="h-full flex flex-col justify-between animate-fade-in">
+                                        <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
                                             <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
@@ -596,7 +582,7 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Contenido principal del Presupuesto */}
-                                            <div className="flex-1 flex flex-col justify-center gap-3.5 my-2.5">
+                                            <div className="flex-1 flex flex-col justify-center gap-3">
 
                                                 {/* Encabezado presupuestario */}
                                                 <div className="flex justify-between items-center bg-surface/30 p-2.5 rounded border border-border-thin/40">
@@ -645,17 +631,12 @@ const Modulos: React.FC = () => {
 
                                             </div>
 
-                                            {/* Nota al pie interactiva */}
-                                            <div className="text-[7.5px] font-mono text-text-dim text-center leading-none">
-                                                HAZ CLIC EN LAS TARJETAS PARA SIMULAR EL FLUJO DE CAJA
-                                            </div>
-
                                         </div>
                                     )}
 
                                     {/* 2. MÓDULO ACTIVO: SEGUIMIENTO (Hitos) */}
                                     {activeModule === 2 && (
-                                        <div className="h-full flex flex-col justify-between animate-fade-in">
+                                        <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
                                             <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
@@ -664,7 +645,7 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Contenido principal de hitos */}
-                                            <div className="flex-1 flex flex-col justify-center gap-3 my-2">
+                                            <div className="flex-1 flex flex-col justify-center gap-3">
 
                                                 {/* Lista de hitos interactivos */}
                                                 <div className="space-y-1.5">
@@ -695,7 +676,7 @@ const Modulos: React.FC = () => {
                                                 {/* Mapa de avance de docente (MC) interactivo */}
                                                 <div className="bg-surface/30 p-2.5 rounded border border-border-thin/30 space-y-1">
                                                     <span className="text-[7px] text-text-dim block uppercase font-mono tracking-wider">
-                                                            // AVANCE DOCENTE EN VIVO: J. DOICELA
+                                                        // AVANCE DOCENTE EN VIVO: J. DOICELA
                                                     </span>
                                                     <div className="relative h-4.5 mt-1 flex items-center">
                                                         <div className="absolute w-full bg-border-thin h-1 rounded-full" />
@@ -714,17 +695,12 @@ const Modulos: React.FC = () => {
 
                                             </div>
 
-                                            {/* Nota al pie */}
-                                            <div className="text-[7.5px] font-mono text-text-dim text-center leading-none">
-                                                HAZ CLIC EN LOS HITOS PARA ALTERNAR EL ESTADO DE REVISIÓN
-                                            </div>
-
                                         </div>
                                     )}
 
                                     {/* 3. MÓDULO ACTIVO: SENADI */}
                                     {activeModule === 3 && (
-                                        <div className="h-full flex flex-col justify-between animate-fade-in">
+                                        <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
                                             <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
@@ -733,7 +709,7 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Descargas interactivas */}
-                                            <div className="flex-1 flex flex-col justify-center gap-3.5 my-3">
+                                            <div className="flex-1 flex flex-col justify-center gap-3">
 
                                                 {Object.keys(downloadStates).map((fileName) => {
                                                     const state = downloadStates[fileName];
@@ -760,17 +736,12 @@ const Modulos: React.FC = () => {
 
                                             </div>
 
-                                            {/* Nota al pie */}
-                                            <div className="text-[7.5px] font-mono text-text-dim text-center leading-none">
-                                                HAZ CLIC EN LOS ARCHIVOS PARA VERIFICAR FIRMAS DIGITALES
-                                            </div>
-
                                         </div>
                                     )}
 
                                     {/* 4. MÓDULO ACTIVO: ACREDITACIÓN (Terminal) */}
                                     {activeModule === 4 && (
-                                        <div className="h-full flex flex-col justify-between animate-fade-in">
+                                        <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
                                             <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
@@ -836,11 +807,6 @@ const Modulos: React.FC = () => {
                                                     </button>
                                                 </div>
 
-                                            </div>
-
-                                            {/* Nota al pie */}
-                                            <div className="text-[7.5px] font-mono text-text-dim text-center leading-none">
-                                                EJECUTA ACCIONES DE CONSOLA PARA CONTRAPARTES EXTERNAS
                                             </div>
 
                                         </div>
