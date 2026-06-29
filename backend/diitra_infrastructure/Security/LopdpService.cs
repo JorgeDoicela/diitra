@@ -41,16 +41,26 @@ public class LopdpService : ILopdpService
 
             _context.InvLopdpConsentimientos.Add(consentimiento);
 
-            // Si es consentimiento para firma electrónica, actualizamos la tabla de metadata del usuario
-            if (versionPolitica.Equals("FIRMA_ELECTRONICA", StringComparison.OrdinalIgnoreCase) ||
+            // Si es consentimiento para LOPDP general o firma electrónica, actualizamos la tabla de metadata del usuario
+            if (versionPolitica.Equals("LOPDP_GENERAL", StringComparison.OrdinalIgnoreCase) ||
+                versionPolitica.Equals("FIRMA_ELECTRONICA", StringComparison.OrdinalIgnoreCase) ||
                 versionPolitica.Equals("FIRMA", StringComparison.OrdinalIgnoreCase))
             {
                 var metadata = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
-                if (metadata != null)
+                if (metadata == null)
                 {
-                    metadata.AceptoTerminosFirma = true;
-                    metadata.FechaConsentimientoFirma = DateTime.Now;
+                    metadata = new InvUsuarioMetadata
+                    {
+                        IdUsuario = idUsuario,
+                        Uuid = Guid.NewGuid(),
+                        Version = 1
+                    };
+                    _context.InvUsuariosMetadata.Add(metadata);
                 }
+
+                metadata.AceptoTerminosFirma = true;
+                metadata.FechaConsentimientoFirma = DateTime.Now;
+                metadata.Version++;
             }
 
             await _context.SaveChangesAsync();
