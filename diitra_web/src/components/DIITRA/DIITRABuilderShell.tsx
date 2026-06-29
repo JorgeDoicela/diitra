@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, AlertCircle, ChevronLeft, X, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, FileText, Users, Clock, Settings, Shield, X, Lock, Unlock } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -448,12 +448,12 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [isDraftMode, setIsDraftMode] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [signaturePassword, setSignaturePassword] = useState('');
+    const [signatureCertFile, setSignatureCertFile] = useState<File | null>(null);
     const [isSigning, setIsSigning] = useState(false);
     const [auditLogs, setAuditLogs] = useState<{ msg: string, type: string }[]>([]);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
 
-    const [hasSavedCert, setHasSavedCert] = useState(false);
     const [aceptoTerminos, setAceptoTerminos] = useState(false);
     const [fechaConsentimientoFirma, setFechaConsentimientoFirma] = useState<string | null>(null);
     const [isSavingConsent, setIsSavingConsent] = useState(false);
@@ -630,21 +630,16 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     }, []);
 
     useEffect(() => {
-        const checkSavedCertificate = async () => {
+        const checkConsent = async () => {
             try {
                 const res = await api.get('/lopdp/perfil');
-                if (res.data?.has_p12_certificate) {
-                    setHasSavedCert(true);
-                } else {
-                    setHasSavedCert(false);
-                }
                 setAceptoTerminos(!!res.data?.acepto_terminos_firma);
                 setFechaConsentimientoFirma(res.data?.fecha_consentimiento_firma ?? null);
             } catch (err) {
-                console.error('[DIITRA] Error checking saved certificate:', err);
+                console.error('[DIITRA] Error checking signature consent:', err);
             }
         };
-        checkSavedCertificate();
+        checkConsent();
     }, []);
 
     const handleConsentToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -702,17 +697,19 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         }
     };
 
-    // ── Firma Electrónica PAdES ──
+    // ── Firma Electrónica PAdES — Upload-on-Demand ──
     const handleSign = async () => {
-        // MODO PRODUCCIÓN: descomentar para exigir contraseña
-        // if (!signaturePassword) return alert('Ingresa la clave de tu firma (.p12)');
+        if (!signatureCertFile) {
+            addAudit('Debe adjuntar su archivo de firma digital (.p12) para continuar.', 'warning');
+            return;
+        }
 
         setIsSigning(true);
         addAudit('Iniciando proceso de firma electrónica...');
         try {
             const formDataObj = new FormData();
+            formDataObj.append('certificate', signatureCertFile);
             formDataObj.append('password', signaturePassword || '');
-            // MODO PRODUCCIÓN: formDataObj.append('password', signaturePassword);
             formDataObj.append('projectUuid', entityUuid || formData.EntityUuid || formData.entityUuid || formData.Uuid || '');
 
             const response = await api.post(
@@ -730,17 +727,13 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 }
             );
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
-            addAudit(
-                import.meta.env.DEV
-                    ? 'Firma electrónica aplicada (modo pruebas: sello de verificación puede estar omitido)'
-                    : 'Firma electrónica aplicada e integrada',
-                'success'
-            );
-            // MODO PRODUCCIÓN: addAudit('Firma digital aplicada e integrada', 'success');
+            // Limpiar certificado de memoria tras firma exitosa
+            setSignatureCertFile(null);
+            setSignaturePassword('');
+            addAudit('Firma electrónica PAdES aplicada exitosamente.', 'success');
         } catch (err: any) {
             console.error('[DIITRA] Error signing document:', err);
 
-            // Intentar extraer el mensaje real del servidor (la respuesta es blob por responseType)
             let serverMessage = '';
             try {
                 if (err?.response?.data instanceof Blob) {
@@ -754,7 +747,6 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                 // silenciar errores de parseo
             }
 
-            // Detectar la barrera de consentimiento LOPDP
             const isLopdpGate = serverMessage.toLowerCase().includes('términos') ||
                 serverMessage.toLowerCase().includes('lopdp') ||
                 serverMessage.toLowerCase().includes('consentimiento');
@@ -1178,44 +1170,74 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                                                 </p>
                                                             </div>
                                                         </div>
-                                                    ) : hasSavedCert ? (
-                                                        <div className="flex flex-col gap-4">
-                                                            <div className={`p-3.5 border rounded-xl flex items-start gap-3 ${aceptoTerminos ? 'bg-green-500/5 border-green-500/10' : 'bg-surface border-border-thin'}`}>
-                                                                <CheckCircle className="text-green-500 shrink-0 mt-0.5" size={18} />
-                                                                <div className="flex-1 min-w-0 space-y-2">
-                                                                    <div>
-                                                                        <p className="text-sm font-semibold text-text-main">Certificado listo</p>
-                                                                        <p className="text-xs text-text-dim mt-0.5">Archivo .p12 cargado en tu cuenta.</p>
+                                                    ) : (
+                                                        /* Upload-on-demand: el certificado se adjunta en el momento de firmar */
+                                                        <div className="flex flex-col gap-3">
+                                                            {/* Consentimiento LOPDP */}
+                                                            {!aceptoTerminos ? (
+                                                                <div className="p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl space-y-2">
+                                                                    <p className="text-xs font-semibold text-text-main">Consentimiento requerido</p>
+                                                                    <div className="flex items-start gap-2.5 select-none">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            id="lopdpSignConsent"
+                                                                            className="mt-0.5 cursor-pointer accent-text-main h-4 w-4 rounded border-border-thin text-text-main focus:ring-0"
+                                                                            checked={aceptoTerminos}
+                                                                            disabled={isSavingConsent}
+                                                                            onChange={handleConsentToggle}
+                                                                        />
+                                                                        <label htmlFor="lopdpSignConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer font-medium">
+                                                                            Acepto los términos de LOPDP y autorizo el uso temporal de mi certificado para firma académica.
+                                                                        </label>
                                                                     </div>
-                                                                    {aceptoTerminos ? (
-                                                                        <p className="text-xs text-green-500 select-none">
-                                                                            {fechaConsentimientoFirma
-                                                                                ? `Consentimiento LOPDP otorgado el ${new Date(fechaConsentimientoFirma).toLocaleDateString()}`
-                                                                                : 'Consentimiento LOPDP otorgado'}
-                                                                        </p>
-                                                                    ) : (
-                                                                        <div className="flex items-start gap-2.5 pt-1 select-none">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                id="lopdpSignConsent"
-                                                                                className="mt-0.5 cursor-pointer accent-text-main h-4 w-4 rounded border-border-thin text-text-main focus:ring-0"
-                                                                                checked={aceptoTerminos}
-                                                                                disabled={isSavingConsent}
-                                                                                onChange={handleConsentToggle}
-                                                                            />
-                                                                            <label htmlFor="lopdpSignConsent" className="text-xs text-text-dim leading-relaxed cursor-pointer font-medium">
-                                                                                Acepto los términos de LOPDP y autorizo la custodia de mi firma para documentos académicos.
-                                                                            </label>
-                                                                        </div>
-                                                                    )}
                                                                 </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-1.5 text-[10px] text-green-500 font-semibold">
+                                                                    <CheckCircle size={12} />
+                                                                    {fechaConsentimientoFirma
+                                                                        ? `Consentimiento LOPDP: ${new Date(fechaConsentimientoFirma).toLocaleDateString()}`
+                                                                        : 'Consentimiento LOPDP otorgado'}
+                                                                </div>
+                                                            )}
+
+                                                            {/* Dropzone certificado .p12 */}
+                                                            <div className="space-y-1">
+                                                                <label className="text-xs font-bold text-text-main block">Certificado .p12</label>
+                                                                <label
+                                                                    className={`flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-4 cursor-pointer transition-all gap-1.5 ${
+                                                                        signatureCertFile
+                                                                            ? 'border-green-500/40 bg-green-500/5'
+                                                                            : 'border-border-thin hover:border-text-main/30 bg-surface'
+                                                                    }`}
+                                                                >
+                                                                    <input
+                                                                        type="file"
+                                                                        accept=".p12,.pfx"
+                                                                        className="sr-only"
+                                                                        onChange={(e) => setSignatureCertFile(e.target.files?.[0] || null)}
+                                                                    />
+                                                                    {signatureCertFile ? (
+                                                                        <>
+                                                                            <CheckCircle size={18} className="text-green-500" />
+                                                                            <span className="text-xs font-semibold text-text-main truncate max-w-[160px]">{signatureCertFile.name}</span>
+                                                                            <span className="text-[10px] text-text-dim">Clic para cambiar</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Shield size={18} className="text-text-dim" />
+                                                                            <span className="text-xs font-semibold text-text-main">Seleccionar .p12 / .pfx</span>
+                                                                            <span className="text-[10px] text-text-dim">No se guarda en el servidor</span>
+                                                                        </>
+                                                                    )}
+                                                                </label>
                                                             </div>
 
-                                                            <div className="space-y-1.5">
-                                                                <label className="text-xs font-bold text-text-main block">Contraseña</label>
+                                                            {/* Contraseña */}
+                                                            <div className="space-y-1">
+                                                                <label className="text-xs font-bold text-text-main block">Contraseña del certificado</label>
                                                                 <input
                                                                     type="password"
-                                                                    placeholder="Contraseña (opcional)"
+                                                                    placeholder="Contraseña del .p12"
                                                                     value={signaturePassword}
                                                                     onChange={(e) => setSignaturePassword(e.target.value)}
                                                                     className="w-full bg-surface border border-border-thin rounded-xl px-3.5 py-2.5 text-sm focus:border-text-main outline-none transition-all placeholder:text-text-dim/50"
@@ -1224,28 +1246,14 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
 
                                                             <button
                                                                 onClick={handleSign}
-                                                                disabled={!pdfBlob || isSigning || !aceptoTerminos}
-                                                                className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${(!pdfBlob || !aceptoTerminos) ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed' : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'}`}
+                                                                disabled={!pdfBlob || isSigning || !aceptoTerminos || !signatureCertFile}
+                                                                className={`w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                                                                    (!pdfBlob || !aceptoTerminos || !signatureCertFile)
+                                                                        ? 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                                        : 'bg-text-main text-bg-deep hover:bg-text-main/90 shadow-sm'
+                                                                }`}
                                                             >
                                                                 {isSigning ? <><Clock size={15} className="animate-spin" /> Firmando...</> : <><Shield size={15} /> Aplicar firma electrónica</>}
-                                                            </button>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="p-4 bg-surface border border-border-thin rounded-xl space-y-3.5 text-center flex flex-col items-center justify-center">
-                                                            <div className="text-red-500 shrink-0">
-                                                                <AlertCircle size={24} />
-                                                            </div>
-                                                            <div className="space-y-1">
-                                                                <p className="text-sm font-semibold text-text-main">Firma no configurada</p>
-                                                                <p className="text-xs text-text-dim leading-relaxed">
-                                                                    Configura tu certificado (.p12) en los ajustes para firmar.
-                                                                </p>
-                                                            </div>
-                                                            <button
-                                                                onClick={handleRedirectToSettings}
-                                                                className="w-full bg-text-main hover:bg-text-main/90 text-bg-deep px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm"
-                                                            >
-                                                                Configurar firma
                                                             </button>
                                                         </div>
                                                     )}
