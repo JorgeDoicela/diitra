@@ -496,7 +496,7 @@ const Workspace: React.FC = () => {
                 {/* Derecha (col-span-4): Párrafo descriptivo y menú de características / Scroll items (Estilo Vercel.com Monocromático) */}
                 <div className="lg:col-span-4 z-10">
                     {isDesktop ? (
-                        <div className="space-y-[6vh] lg:pb-[15vh]">
+                        <div className="space-y-[6vh] lg:pb-[50vh]">
                             {features.map((item, idx) => {
                                 const getHeadingText = (tabId: number) => {
                                     switch (tabId) {
