@@ -226,7 +226,7 @@ const Workspace: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 items-start relative">
                 {/* Izquierda (col-span-8): Mockup Interactivo */}
-                <div className="lg:col-span-8 lg:sticky lg:top-[32vh] border border-border-thin rounded-xl bg-surface shadow-md p-7 font-mono text-xs tracking-tight relative overflow-hidden select-none">
+                <div className="lg:col-span-8 lg:sticky lg:top-[32vh] border border-border-thin rounded-xl bg-surface shadow-md p-7 font-mono text-xs tracking-tight relative overflow-hidden">
                     {/* Decoraciones del editor */}
                     <div className="flex items-center justify-between border-b border-border-thin pb-3.5 mb-5.5">
                         <div className="flex items-center gap-2">
