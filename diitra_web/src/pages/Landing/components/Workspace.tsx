@@ -147,10 +147,30 @@ const Workspace: React.FC = () => {
     };
 
     const features = [
-        { tabId: 1, title: 'Edición en tiempo real', desc: 'Protocolos colaborativos sin bloqueos ni conflictos.' },
-        { tabId: 2, title: 'Doble ciego automático', desc: 'Evaluaciones anónimas y transparentes del comité.' },
-        { tabId: 3, title: 'Presupuesto modular', desc: 'Control e indicadores de gastos en tiempo real.' },
-        { tabId: 4, title: 'Control de distributivo', desc: 'Validación en tiempo real de horas de investigación.' }
+        { 
+            tabId: 1, 
+            title: 'Edición en tiempo real', 
+            desc: 'Protocolos colaborativos sin bloqueos ni conflictos.',
+            items: ['CO-EDICIÓN EN TIEMPO REAL', 'CONTROL DE VERSIONES', 'COMENTARIOS HILADOS', 'FIRMA DIGITAL INTEGRADA']
+        },
+        { 
+            tabId: 2, 
+            title: 'Doble ciego automático', 
+            desc: 'Evaluaciones anónimas y transparentes del comité.',
+            items: ['DOBLE CIEGO AUTOMÁTICO', 'ANONIMIZACIÓN DE DATOS', 'ASIGNACIÓN INTELIGENTE DE PARES', 'RÚBRICAS DE EVALUACIÓN']
+        },
+        { 
+            tabId: 3, 
+            title: 'Presupuesto modular', 
+            desc: 'Control e indicadores de gastos en tiempo real.',
+            items: ['PRESUPUESTO MODULAR', 'PARTIDAS DINÁMICAS', 'CÁLCULO AUTOMÁTICO DE RUBROS', 'INDICADORES DE GASTO EN VIVO']
+        },
+        { 
+            tabId: 4, 
+            title: 'Control de distributivo', 
+            desc: 'Validación en tiempo real de horas de investigación.',
+            items: ['CONTROL DE DISTRIBUTIVO', 'VALIDACIÓN DE HORAS', 'DISTRIMINACIÓN RE-ACTIVA', 'SEGUIMIENTO DE HITOS GANTT']
+        }
     ];
 
     const selectTabWithAnimation = (tabId: number) => {
@@ -544,32 +564,24 @@ const Workspace: React.FC = () => {
                                         }}
                                     >
                                         <div className="space-y-8 py-4">
-                                            {/* Large dynamic Vercel-style heading (font-medium for thinner text) */}
-                                            <h3 className="text-3xl font-medium tracking-tight leading-snug text-text-main">
+                                            {/* Large dynamic Vercel-style heading (font-[540] for balanced weight and width) */}
+                                            <h3 className="text-3xl font-[540] tracking-normal leading-snug text-text-main">
                                                 {getHeadingText(item.tabId)}
                                             </h3>
 
                                             {/* Monospace features list style matching Vercel's reference with correct system data and thinner weight */}
                                             <div className="space-y-4 pt-6 border-t border-border-thin">
-                                                <span className="font-mono text-xs text-text-dim/70 tracking-wider block">Características</span>
+                                                <span className="font-mono text-xs text-neutral-400 dark:text-neutral-500 tracking-wider block">Características</span>
 
-                                                <div className="flex flex-col gap-2 font-mono text-xs font-normal tracking-wider uppercase">
-                                                    <span className={`transition-colors duration-300 ${activeTab === 1 ? 'text-text-main font-medium' : 'text-text-dim/35'
-                                                        }`}>
-                                                        EDICIÓN EN TIEMPO REAL
-                                                    </span>
-                                                    <span className={`transition-colors duration-300 ${activeTab === 2 ? 'text-text-main font-medium' : 'text-text-dim/35'
-                                                        }`}>
-                                                        DOBLE CIEGO AUTOMÁTICO
-                                                    </span>
-                                                    <span className={`transition-colors duration-300 ${activeTab === 3 ? 'text-text-main font-medium' : 'text-text-dim/35'
-                                                        }`}>
-                                                        PRESUPUESTO MODULAR
-                                                    </span>
-                                                    <span className={`transition-colors duration-300 ${activeTab === 4 ? 'text-text-main font-medium' : 'text-text-dim/35'
-                                                        }`}>
-                                                        CONTROL DE DISTRIBUTIVO
-                                                    </span>
+                                                <div className="flex flex-col gap-2 font-mono text-[13px] font-medium text-text-main tracking-tight uppercase">
+                                                    {item.items.map((subItem, sIdx) => (
+                                                        <span
+                                                            key={sIdx}
+                                                            className="transition-colors duration-300"
+                                                        >
+                                                            {subItem}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
