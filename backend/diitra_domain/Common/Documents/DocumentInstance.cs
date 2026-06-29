@@ -84,10 +84,11 @@ namespace Diitra.Domain.Common.Documents
         {
             if (State == DocumentState.Signed || State == DocumentState.Archived)
                 throw new InvalidOperationException("No se puede modificar la data de un documento inmutable.");
-            
+
             DataSnapshotJson = json;
             UpdatedAt = DateTime.UtcNow;
         }
+
 
         public void SetEntityUuid(string entityUuid)
         {

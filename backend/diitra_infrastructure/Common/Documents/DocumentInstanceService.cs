@@ -61,9 +61,13 @@ namespace Diitra.Infrastructure.Common.Documents
 
             if (instance == null)
             {
-                // Fallback: Si no se encuentra por UUID de la instancia, podría ser el UUID del proyecto (entityUuid) para el protocolo principal
-                instance = await _context.DocumentInstances.FirstOrDefaultAsync(
-                    i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION", ct);
+                // Fallback por EntityUuid: prioriza instancias editables (Draft/Review).
+                // Nunca devolver una instancia Signed como punto de edición.
+                instance = await _context.DocumentInstances
+                    .Where(i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION")
+                    .OrderBy(i => i.State == DocumentState.Draft ? 0 :
+                                 i.State == DocumentState.Review ? 1 : 2)
+                    .FirstOrDefaultAsync(ct);
             }
 
             if (instance == null)
@@ -199,10 +203,13 @@ namespace Diitra.Infrastructure.Common.Documents
             
             if (instance == null)
             {
-                // Fallback: Tal vez nos pasaron el UUID del proyecto (entityUuid) para el protocolo principal.
-                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Buscando fallback por EntityUuid: {uuid}");
-                instance = await _context.DocumentInstances.FirstOrDefaultAsync(
-                    i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION", ct);
+                // Fallback: Tal vez nos pasaron el UUID del proyecto (entityUuid). Prioriza Draft/Review.
+                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Buscando fallback editable por EntityUuid: {uuid}");
+                instance = await _context.DocumentInstances
+                    .Where(i => i.EntityUuid == uuid && i.TemplateCode == "PROTOCOLO_INVESTIGACION")
+                    .OrderBy(i => i.State == DocumentState.Draft ? 0 :
+                                 i.State == DocumentState.Review ? 1 : 2)
+                    .FirstOrDefaultAsync(ct);
             }
 
             if (instance == null)
@@ -223,6 +230,40 @@ namespace Diitra.Infrastructure.Common.Documents
             {
                 Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] ERROR: La instancia o proyecto '{uuid}' no existe.");
                 throw new KeyNotFoundException($"La instancia o proyecto '{uuid}' no existe.");
+            }
+
+            // Si el documento está firmado o archivado, respetar la inmutabilidad del dominio.
+            // Primero busca si ya existe un Draft/Review editable para el mismo EntityUuid;
+            // si no existe, crea uno nuevo. Esto evita crear duplicados en cada autoguardado.
+            if (instance.State == DocumentState.Signed || instance.State == DocumentState.Archived)
+            {
+                Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Instancia '{uuid}' está sellada (Estado: {instance.State}). Buscando Draft existente.");
+                var draftInstance = await _context.DocumentInstances.FirstOrDefaultAsync(
+                    i => i.EntityUuid == instance.EntityUuid
+                      && i.TemplateCode == instance.TemplateCode
+                      && (i.State == DocumentState.Draft || i.State == DocumentState.Review), ct);
+
+                if (draftInstance != null)
+                {
+                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Reutilizando Draft existente: {draftInstance.Uuid}");
+                    instance = draftInstance;
+                }
+                else
+                {
+                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Creando nueva instancia Draft.");
+                    instance = DocumentInstance.Create(
+                        instance.TemplateCode,
+                        instance.TemplateVersion,
+                        instance.EntityUuid,
+                        "sistema",
+                        instance.Title,
+                        instance.EntityType,
+                        instance.DataSnapshotJson
+                    );
+                    _context.DocumentInstances.Add(instance);
+                    await _context.SaveChangesAsync(ct);
+                    Console.WriteLine($"[DIITRA] [UpdateMetadataAsync] Nueva instancia Draft creada: {instance.Uuid}");
+                }
             }
 
             // Fusionar inteligentemente metadatos si ya existe un snapshot previo

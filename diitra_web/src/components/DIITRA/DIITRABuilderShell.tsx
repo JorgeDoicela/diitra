@@ -454,9 +454,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [showMobileSections, setShowMobileSections] = useState(false);
 
-    const [aceptoTerminos, setAceptoTerminos] = useState(false);
-    const [fechaConsentimientoFirma, setFechaConsentimientoFirma] = useState<string | null>(null);
-    const [isSavingConsent, setIsSavingConsent] = useState(false);
+
 
     // ── Gestión de URL del PDF (revocación de ObjectURL para evitar memory leaks) ──
     // IMPORTANTE: revocar la URL ANTERIOR solo después de crear la nueva,
@@ -629,44 +627,7 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         };
     }, []);
 
-    useEffect(() => {
-        const checkConsent = async () => {
-            try {
-                const res = await api.get('/lopdp/perfil');
-                setAceptoTerminos(!!res.data?.acepto_terminos_firma);
-                setFechaConsentimientoFirma(res.data?.fecha_consentimiento_firma ?? null);
-            } catch (err) {
-                console.error('[DIITRA] Error checking signature consent:', err);
-            }
-        };
-        checkConsent();
-    }, []);
 
-    const handleConsentToggle = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const checked = e.target.checked;
-        setIsSavingConsent(true);
-        try {
-            await api.post('/lopdp/consentimiento', {
-                version_politica: 'FIRMA_ELECTRONICA'
-            });
-            setAceptoTerminos(checked);
-            setFechaConsentimientoFirma(checked ? new Date().toISOString() : null);
-        } catch (err) {
-            console.error('[DIITRA] Error saving signature consent:', err);
-        } finally {
-            setIsSavingConsent(false);
-        }
-    };
-
-    const handleRedirectToSettings = async () => {
-        coworkLog("[DIITRA] handleRedirectToSettings: Guardando y redirigiendo a configuración.");
-        if (!readOnly && saveTimeoutRef.current) {
-            clearTimeout(saveTimeoutRef.current);
-            await handleSave();
-        }
-        onClose();
-        navigate('/configuracion');
-    };
 
     const handleClose = async () => {
         coworkLog("[DIITRA] handleClose: Iniciando cierre.");

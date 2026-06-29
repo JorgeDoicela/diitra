@@ -144,8 +144,13 @@ namespace diitra_api.Controllers
                 var dbUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
                 if (dbUser == null) return Unauthorized();
 
+                var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+                var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+                var skipCertificateValidation = env.IsDevelopment()
+                    || config.GetValue<bool>("Firma:SkipCertificateValidation");
+
                 var userMeta = await context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == dbUser.IdUsuario);
-                if (userMeta == null || !userMeta.AceptoTerminosFirma)
+                if (!skipCertificateValidation && (userMeta == null || !userMeta.AceptoTerminosFirma))
                 {
                     return BadRequest(new { error = "Debe aceptar los términos y condiciones de firma electrónica (conforme a la LOPDP) en su perfil antes de proceder a la firma." });
                 }
@@ -169,11 +174,6 @@ namespace diitra_api.Controllers
                 {
                     return StatusCode(403, new { error = "Solo el director del proyecto o el administrador del sistema están autorizados para firmar digitalmente este protocolo." });
                 }
-
-                var config = HttpContext.RequestServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-                var env = HttpContext.RequestServices.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
-                var skipCertificateValidation = env.IsDevelopment()
-                    || config.GetValue<bool>("Firma:SkipCertificateValidation");
 
                 // 2. Cargar Firma (.p12 — upload-on-demand, nunca se guarda en servidor)
                 byte[]? certificateBytes = null;
@@ -327,7 +327,7 @@ namespace diitra_api.Controllers
                     dbUser.IdUsuario,
                     "inv_usuarios_metadata",
                     "certificadoDigital",
-                    "USO",
+                    "ESCRITURA",
                     $"Uso del certificado digital (upload-on-demand) para firma del proyecto {projectDto.Titulo}",
                     ip,
                     userAgent);

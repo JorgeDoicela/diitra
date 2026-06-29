@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Key, CheckCircle2, Loader2 } from 'lucide-react';
+import { User, Loader2 } from 'lucide-react';
 import api from '../../api/axios_config';
 import { useNotifications } from '../../api/NotificationsContext';
 
