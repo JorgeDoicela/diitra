@@ -20,6 +20,31 @@ const Modulos: React.FC = () => {
     const [activeModule, setActiveModule] = useState<number | null>(null);
     const [showDetail, setShowDetail] = useState<boolean>(false);
 
+    const laptopContainerRef = useRef<HTMLDivElement>(null);
+    const [laptopScale, setLaptopScale] = useState<number>(1);
+
+    useEffect(() => {
+        const updateScale = () => {
+            if (!laptopContainerRef.current) return;
+            const containerWidth = laptopContainerRef.current.getBoundingClientRect().width;
+            const baseWidth = 680; // Base layout width for the laptop mockup in CSS (max-width: 680px)
+            if (containerWidth < baseWidth && containerWidth > 0) {
+                setLaptopScale(containerWidth / baseWidth);
+            } else {
+                setLaptopScale(1);
+            }
+        };
+
+        updateScale();
+        const timer = setTimeout(updateScale, 100);
+
+        window.addEventListener('resize', updateScale);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', updateScale);
+        };
+    }, []);
+
     const modulesList = [
         {
             id: 1,
@@ -552,9 +577,20 @@ const Modulos: React.FC = () => {
                 </div>
 
                 {/* Columna Derecha (col-span-8): Laptop de CSS interactiva de gran tamaño */}
-                <div className="lg:col-span-8 flex flex-col items-center justify-center relative overflow-visible">
-
-                    <div className="relative w-full flex flex-col items-center justify-center overflow-visible">
+                <div 
+                    ref={laptopContainerRef}
+                    className="lg:col-span-8 flex flex-col items-center justify-center relative overflow-visible w-full"
+                    style={{ height: `${470 * laptopScale}px` }}
+                >
+                    <div 
+                        className="absolute top-0 flex flex-col items-center justify-center overflow-visible"
+                        style={{
+                            transform: `scale(${laptopScale})`,
+                            transformOrigin: 'top center',
+                            width: '680px',
+                            zIndex: 10
+                        }}
+                    >
 
                         {/* ÚNICO BOTÓN X flotante en la esquina superior derecha del contenedor de la laptop */}
                         {activeModule !== null && (

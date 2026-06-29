@@ -165,7 +165,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                     <div className="text-[10px] font-mono text-text-dim uppercase tracking-widest">
                         <span>Tecnológico Traversari — ISTPET</span>
                     </div>
-                    <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-normal text-text-main tracking-tighter leading-[0.85] lg:whitespace-nowrap">
+                    <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-[76px] font-normal text-text-main tracking-tighter leading-[0.85] lg:whitespace-nowrap">
                         Investigación <br />
                         & Innovación.
                     </h1>
@@ -178,7 +178,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                             <ArrowRight size={12} />
                         </button>
                         <a
-                            href="#caces"
+                            href="#"
                             className="flex items-center justify-center gap-2 bg-transparent text-text-main px-6 py-3 rounded-md border border-border-thin text-[11px] font-semibold uppercase tracking-widest hover:bg-surface-hover/40 hover:border-border-hover transition-all cursor-pointer"
                         >
                             Normativa IST

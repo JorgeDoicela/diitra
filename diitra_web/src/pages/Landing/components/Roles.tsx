@@ -405,9 +405,9 @@ const Roles: React.FC = () => {
                                             width: step.widthPercent 
                                         }} 
                                     />
-                                    <span className="text-text-main text-[9px] z-10 pl-3 relative flex items-center gap-1.5">
+                                    <span className="text-text-main text-[9px] z-10 pl-3 relative flex items-center gap-1.5 min-w-0 flex-1">
                                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-[1px] bg-border-thin" />
-                                        <span className="font-sans font-medium">{step.name}</span>
+                                        <span className="font-sans font-medium truncate pr-2">{step.name}</span>
                                     </span>
                                     
                                     <span className="ml-auto text-text-dim text-[8px] font-bold z-10 bg-bg-deep/70 px-1.5 py-0.5 rounded border border-border-thin/30">
