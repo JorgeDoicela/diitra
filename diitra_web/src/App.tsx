@@ -38,7 +38,6 @@ const ProjectAdoptionPage    = lazy(() => import('./pages/Investigacion/Proyecto
 const InformesAvancePage     = lazy(() => import('./pages/Investigacion/Proyectos/InformesAvancePage'));
 const SettingsPage           = lazy(() => import('./pages/Settings/SettingsPage'));
 const LopdpConsentPage       = lazy(() => import('./pages/Lopdp/LopdpConsentPage'));
-const ArcoPage               = lazy(() => import('./pages/Lopdp/ArcoPage'));
 const LopdpAdminPage         = lazy(() => import('./pages/Lopdp/LopdpAdminPage'));
 
 // ─── Fallback de carga ────────────────────────────────────────────────────────
@@ -259,7 +258,7 @@ function App() {
                             <Route path="/dashboard" element={<Dashboard />} />
                             <Route path="/configuracion" element={<SettingsPage />} />
                             <Route path="/settings" element={<RedirectPreserveSearch to="/configuracion" />} />
-                            <Route path="/derechos-arco" element={<ArcoPage />} />
+                            <Route path="/derechos-arco" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/admin/lopdp" element={<AdminRoute><LopdpAdminPage /></AdminRoute>} />
                             <Route path="/analiticas" element={<AdminRoute><AnalyticsPage /></AdminRoute>} />
                             <Route path="/notificaciones" element={<NotificationsPage />} />
@@ -275,7 +274,7 @@ function App() {
                             <Route path="/proyectos/:projectUuid" element={<NavigateToProjectDetail />} />
                             <Route path="/investigacion/proyectos" element={<NavigateToResearchProjects />} />
                             <Route path="/investigacion/proyectos/workspace/:documentUuid" element={<NavigateToWorkspaceDetail />} />
-                            <Route path="/lopdp/arco" element={<Navigate to="/derechos-arco" replace />} />
+                            <Route path="/lopdp/arco" element={<Navigate to="/dashboard" replace />} />
                             <Route path="/lopdp/admin" element={<Navigate to="/admin/lopdp" replace />} />
                             
                             {/* Supervision Context (Admin Only) */}

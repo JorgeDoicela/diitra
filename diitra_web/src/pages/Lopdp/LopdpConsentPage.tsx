@@ -105,11 +105,6 @@ const LopdpConsentPage: React.FC = () => {
                         Los datos personales son custodiados utilizando altos estándares de seguridad informática. El certificado digital (.p12) y su contraseña ingresados para la firma electrónica se procesan de forma temporal en la memoria del servidor durante la firma y <strong>nunca se almacenan</strong> en bases de datos o discos del sistema.
                     </p>
 
-                    <p>
-                        <strong>5. EJERCICIO DE DERECHOS ARCO:</strong><br />
-                        Como titular de los datos, usted puede ejercer en cualquier momento sus derechos de Acceso, Rectificación, Eliminación, Oposición, Portabilidad y Limitación del tratamiento (derechos ARCO) directamente a través de la sección de privacidad dentro de su perfil en la plataforma DIITRA.
-                    </p>
-
                     <p className="border-t border-border-thin/50 pt-3 text-center text-[10px] font-semibold text-text-main">
                         --- FIN DEL DOCUMENTO ---
                     </p>

@@ -8,10 +8,6 @@ namespace diitra_application.Security;
 public interface ILopdpService
 {
     Task RegistrarConsentimientoAsync(int idUsuario, string versionPolitica, string? ip, string? userAgent);
-    Task RegistrarSolicitudArcoAsync(int idUsuario, string tipoSolicitud, string detalleSolicitud, string? evidenciaPath);
-    Task ResolverSolicitudArcoAsync(int idSolicitudArco, string resolucionDetalle, string estado, string? documentPath);
-    Task<List<SolicitudArcoResponse>> GetMisSolicitudesArcoAsync(int idUsuario);
-    Task<List<SolicitudArcoResponse>> GetAllSolicitudesArcoAsync();
     Task<List<ConsentimientoResponse>> GetAllConsentimientosAsync();
     Task AuditoriaAccesoDatosAsync(int? idUsuarioActor, int idUsuarioAfectado, string tablaAfectada, string? columnaAfectada, string operacion, string? motivo, string? ip, string? userAgent);
     Task<PerfilLopdpDto?> GetPerfilAsync(int idUsuario);
