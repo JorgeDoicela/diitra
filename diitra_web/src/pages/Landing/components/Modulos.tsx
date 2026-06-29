@@ -5,7 +5,6 @@ import {
     Cpu,
     ShieldCheck,
     Check,
-    Terminal,
     Loader2,
     X,
     Plus,
@@ -20,7 +19,6 @@ const Modulos: React.FC = () => {
     // null representa la vista de "Dashboard General" de la laptop
     const [activeModule, setActiveModule] = useState<number | null>(null);
     const [showDetail, setShowDetail] = useState<boolean>(false);
-    const [transitioning, setTransitioning] = useState<boolean>(false);
 
     const modulesList = [
         {
