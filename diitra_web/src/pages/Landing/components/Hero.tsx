@@ -441,11 +441,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                                     : currentTheme === 'dark'
                                         ? 'drop-shadow(calc(var(--norm-x, 0) * -8px - 3px) calc(var(--norm-y, 0) * -8px - 3px) calc(6px + var(--dist, 0) * 4px) rgba(139, 92, 246, 0.50)) drop-shadow(calc(var(--norm-x, 0) * 8px + 3px) calc(var(--norm-y, 0) * 8px + 3px) calc(8px + var(--dist, 0) * 6px) rgba(37, 99, 235, 0.55)) drop-shadow(0px calc(var(--norm-y, 0) * 4px + 5px) calc(10px + var(--dist, 0) * 5px) rgba(14, 116, 144, 0.40)) drop-shadow(0 0 15px rgba(255, 255, 255, 0.15))'
                                         : 'drop-shadow(calc(var(--norm-x, 0) * 12px) calc(var(--norm-y, 0) * 12px) calc(12px + var(--dist, 0) * 14px) rgba(0, 0, 0, 0.16)) drop-shadow(0 0 18px rgba(0, 0, 0, 0.08))',
-                                transform: isRainbow
-                                    ? 'none'
-                                    : currentTheme === 'dark'
-                                        ? 'rotateX(calc(var(--norm-y, 0) * -15deg)) rotateY(calc(var(--norm-x, 0) * 15deg)) translateZ(10px)'
-                                        : 'none',
+                                transform: 'none',
                                 transformStyle: 'preserve-3d',
                             }}
                         />
