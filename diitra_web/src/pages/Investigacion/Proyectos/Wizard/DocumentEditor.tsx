@@ -422,6 +422,27 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
             cloned.GrupoInvestigacion = '';
         }
 
+        // Garantizar que todos los campos string del ProyectoDto sean cadenas de texto.
+        // Yjs puede convertir valores que parecen numéricos (ej: "123") a Number al leerlos,
+        // lo que provoca un error 400 al deserializar string? en el backend C#.
+        const STRING_FIELDS = [
+            'Titulo', 'Estado', 'CodigoInstitucional', 'Programa', 'GrupoInvestigacion',
+            'GrupoInvestigacionUuid', 'GrupoInvestigacionTipo', 'GrupoInvestigacionNombre',
+            'Dominio', 'LineaInvestigacion', 'SublineaInvestigacion', 'TipoInvestigacion',
+            'CampoAmplio', 'CampoEspecifico', 'CampoDetallado', 'Carrera', 'PeriodoConvocatoria',
+            'TiempoEjecucion', 'DirectorProyecto', 'FechaPresentacion', 'FechaInicioEstimada',
+            'FechaFinEstimada', 'Periodo', 'FechaInicio', 'FechaFin', 'Antecedentes',
+            'DescripcionProyecto', 'Justificacion', 'ObjetivoGeneral', 'Ods', 'MarcoTeorico',
+            'Metodologia', 'Evaluacion', 'FuenteFinanciamiento', 'NombreOtraFuente',
+            'NombreDirectorFirma', 'CargoDirectorFirma', 'NombreCoordinadorFirma',
+            'CargoCoordinadorFirma', 'IdDspaceHandle', 'MetadataCacesJson',
+        ];
+        STRING_FIELDS.forEach(field => {
+            if (cloned[field] !== undefined && cloned[field] !== null && typeof cloned[field] !== 'string') {
+                cloned[field] = String(cloned[field]);
+            }
+        });
+
         return cloned;
     };
 
@@ -429,7 +450,13 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         try {
             const cleanedData = cleanDocumentData(data);
             if (cleanedData.Uuid) {
-                await api.patch(`/documents/instances/${cleanedData.Uuid}/metadata`, cleanedData);
+                const response = await api.patch(`/documents/instances/${cleanedData.Uuid}/metadata`, cleanedData);
+                // El backend puede haber asignado un nuevo UUID (Draft creado por documento sellado).
+                // Actualizamos el estado local para que los siguientes autoguardados apunten al Draft correcto.
+                const returnedUuid = response.data?.uuid;
+                if (returnedUuid && returnedUuid !== cleanedData.Uuid) {
+                    setFormData((prev: any) => ({ ...prev, Uuid: returnedUuid }));
+                }
             } else {
                 const response = await api.post('/documents/instances', {
                     templateCode,
