@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Activity, Cpu, Loader2 } from 'lucide-react';
+import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Cpu, Loader2, Terminal } from 'lucide-react';
 
 const Roles: React.FC = () => {
     const [activeRole, setActiveRole] = useState<number>(0);
@@ -10,6 +10,24 @@ const Roles: React.FC = () => {
     const [voteState, setVoteState] = useState<'idle' | 'approved' | 'rejected'>('idle');
     const [apiTesting, setApiTesting] = useState<boolean>(false);
     const [apiResult, setApiResult] = useState<string>('');
+
+    // Estados dinámicos adicionales para la interacción avanzada
+    // Investigador
+    const [selectedProject, setSelectedProject] = useState<'riego' | 'robot' | 'plagas'>('riego');
+    const [hitoProgress, setHitoProgress] = useState<number>(50);
+
+    // Director
+    const [assignmentCriteria, setAssignmentCriteria] = useState<'linea' | 'carga' | 'aleatorio'>('linea');
+    const [assignLog, setAssignLog] = useState<string>('Esperando asignación de pares evaluadores...');
+
+    // Comité de Ética
+    const [gradeMetodologia, setGradeMetodologia] = useState<number>(3);
+    const [gradeEtica, setGradeEtica] = useState<boolean>(false);
+
+    // Administrador
+    const [selectedApi, setSelectedApi] = useState<'siies' | 'dspace' | 'senadi'>('siies');
+    const [syncProgress, setSyncProgress] = useState<number>(0);
+    const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'completed'>('idle');
 
     const rolesData = [
         { 
@@ -41,7 +59,17 @@ const Roles: React.FC = () => {
     const runAssignSimulation = () => {
         if (assignState !== 'idle') return;
         setAssignState('assigning');
-        setTimeout(() => setAssignState('assigned'), 1000);
+        setAssignLog('Filtrando investigadores afines a la línea científica...');
+        setTimeout(() => {
+            setAssignLog('Evaluando carga horaria y disponibilidad docente (SIGAFI)...');
+            setTimeout(() => {
+                setAssignLog('Verificando posibles conflictos de interés (doble ciego)...');
+                setTimeout(() => {
+                    setAssignState('assigned');
+                    setAssignLog('✓ Asignación completada con éxito.');
+                }, 400);
+            }, 400);
+        }, 400);
     };
 
     const runApiTest = () => {
@@ -50,260 +78,524 @@ const Roles: React.FC = () => {
         setApiResult('');
         setTimeout(() => {
             setApiTesting(false);
-            setApiResult('CONEXIONES DE RED ACTIVAS. PING SIIES: 24ms (200 OK) | PING DSPACE: 48ms (200 OK)');
-        }, 1200);
+            if (selectedApi === 'siies') {
+                setApiResult('SIIES API (Conectado) | Latencia: 24ms | Sincronización CACES: Correcta');
+            } else if (selectedApi === 'dspace') {
+                setApiResult('DSpace Repo (Conectado) | Latencia: 48ms | Repositorio científico: Listo');
+            } else {
+                setApiResult('SENADI Gateway (Conectado) | Latencia: 15ms | Propiedad intelectual: En regla');
+            }
+        }, 1000);
+    };
+
+    const runSyncSimulation = () => {
+        if (syncState === 'syncing') return;
+        setSyncState('syncing');
+        setSyncProgress(0);
+        const interval = setInterval(() => {
+            setSyncProgress((prev) => {
+                if (prev >= 100) {
+                    clearInterval(interval);
+                    setSyncState('completed');
+                    return 100;
+                }
+                return prev + 10;
+            });
+        }, 150);
+    };
+
+    const getWaterfallSteps = (roleIdx: number) => {
+        switch (roleIdx) {
+            case 0:
+                return [
+                    { name: 'Crear propuesta de proyecto', duration: '2d', startPercent: '0%', widthPercent: '30%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
+                    { name: 'Planificar presupuesto e hitos', duration: '3d', startPercent: '30%', widthPercent: '50%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
+                    { name: 'Cargar evidencias de avance', duration: '1d', startPercent: '80%', widthPercent: '20%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                ];
+            case 1:
+                return [
+                    { name: 'Apertura de convocatorias', duration: '3d', startPercent: '0%', widthPercent: '42%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
+                    { name: 'Filtro y revisión de requisitos', duration: '2d', startPercent: '42%', widthPercent: '28%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
+                    { name: 'Asignación de pares evaluadores', duration: '2d', startPercent: '70%', widthPercent: '30%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                ];
+            case 2:
+                return [
+                    { name: 'Evaluación anónima doble ciego', duration: '5d', startPercent: '0%', widthPercent: '60%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
+                    { name: 'Emisión de acta de dictamen', duration: '2d', startPercent: '60%', widthPercent: '25%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
+                    { name: 'Firma de resolución de ética', duration: '1d', startPercent: '85%', widthPercent: '15%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                ];
+            case 3:
+                return [
+                    { name: 'Configurar período académico', duration: '1d', startPercent: '0%', widthPercent: '25%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
+                    { name: 'Sincronizar repositorio DSpace', duration: '2d', startPercent: '25%', widthPercent: '50%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
+                    { name: 'Auditoría e informes generales', duration: '1d', startPercent: '75%', widthPercent: '25%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                ];
+            default:
+                return [];
+        }
     };
 
     return (
-        <section id="roles" className="py-20 lg:-ml-24 lg:-mr-24 space-y-12">
-            <div className="space-y-4">
-                <h2 className="text-4xl md:text-5xl lg:text-[56px] font-bold tracking-tighter leading-[0.95] text-text-main max-w-3xl">
-                    Estructura & Niveles de Acceso.
-                </h2>
-                <p className="text-xs text-text-dim max-w-lg leading-relaxed font-medium">
-                    Gestión de flujos institucionales con roles claramente definidos y segregación de funciones para asegurar la integridad de la producción científica. Clic en los roles para explorar sus permisos.
+        <section id="roles" className="py-20 lg:-ml-24 lg:-mr-24 space-y-10">
+            {/* Header Limpio */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-border-thin">
+                <div className="space-y-2">
+                    <h2 className="text-3xl md:text-4xl lg:text-[44px] font-bold tracking-tighter leading-[0.95] text-text-main">
+                        Estructura & Niveles de Acceso.
+                    </h2>
+                </div>
+                <p className="text-xs text-text-dim max-w-md leading-relaxed font-medium">
+                    Gestión de flujos institucionales con roles claramente definidos y segregación de funciones para asegurar la integridad de la producción científica. Explora el flujo simulado y nivel de acceso de cada rol.
                 </p>
             </div>
 
-            {/* Grid de Tarjetas de Roles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {rolesData.map((item, idx) => (
-                    <button
-                        key={idx}
-                        onClick={() => {
-                            setActiveRole(idx);
-                            // Resetear estados al cambiar de rol
-                            setInvSigned(false);
-                            setAssignState('idle');
-                            setVoteState('idle');
-                            setApiResult('');
-                        }}
-                        className={`p-6 flex flex-col justify-between text-left rounded-lg border transition-all duration-500 min-h-[220px] cursor-pointer ${
-                            activeRole === idx 
-                                ? 'bg-surface border-brand shadow-[0_4px_25px_rgba(0,112,243,0.15)] scale-[1.01]' 
-                                : 'bg-surface border-border-thin hover:border-border-hover'
-                        }`}
-                    >
-                        <div className="flex justify-between items-start w-full">
-                            <div className={`p-2 border rounded bg-bg-deep transition-colors ${activeRole === idx ? 'border-brand/40 text-brand' : 'border-border-thin text-text-main'}`}>
-                                <item.icon size={18} strokeWidth={1.5} />
-                            </div>
-                            <span className={`text-[9px] font-mono px-2 py-0.5 border rounded-full uppercase transition-colors ${
-                                activeRole === idx ? 'border-brand/30 bg-brand-subtle text-brand font-bold' : 'border-border-thin text-text-dim'
-                            }`}>Nivel_0{idx + 1}</span>
-                        </div>
-                        
-                        <div className="mt-6 space-y-2 w-full">
-                            <h4 className={`text-xs font-semibold tracking-tight uppercase font-mono transition-colors ${activeRole === idx ? 'text-brand' : 'text-text-main'}`}>
-                                {item.role}
-                            </h4>
-                            <p className="text-[11px] text-text-dim leading-relaxed">
-                                {item.desc}
-                            </p>
+            {/* Panel Principal Dashboard Rediseñado */}
+            <div className="border border-border-thin rounded-xl bg-surface/35 shadow-xl font-sans relative overflow-hidden backdrop-blur-sm flex flex-col md:flex-row min-h-[480px]">
+                
+                {/* Lateral: Selector de Roles */}
+                <div className="w-full md:w-60 border-b md:border-b-0 md:border-r border-border-thin bg-surface/50 p-3 flex flex-col gap-1.5 shrink-0">
+                    {rolesData.map((item, idx) => {
+                        const Icon = item.icon;
+                        const isSelected = activeRole === idx;
+                        return (
+                            <button
+                                key={idx}
+                                onClick={() => {
+                                    setActiveRole(idx);
+                                    // Resetear estados al cambiar de rol
+                                    setInvSigned(false);
+                                    setHitoProgress(50);
+                                    setAssignState('idle');
+                                    setAssignLog('Esperando asignación de pares evaluadores...');
+                                    setVoteState('idle');
+                                    setGradeMetodologia(3);
+                                    setGradeEtica(false);
+                                    setApiResult('');
+                                    setSyncState('idle');
+                                    setSyncProgress(0);
+                                }}
+                                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-200 cursor-pointer ${
+                                    isSelected 
+                                        ? 'bg-brand-subtle border border-brand/20 text-brand shadow-[0_2px_10px_rgba(0,112,243,0.04)] font-semibold' 
+                                        : 'hover:bg-surface-hover/60 border border-transparent text-text-dim hover:text-text-main'
+                                }`}
+                            >
+                                <div className={`p-1.5 rounded border transition-colors ${
+                                    isSelected ? 'bg-brand/10 border-brand/35 text-brand' : 'bg-bg-deep border-border-thin text-text-dim'
+                                }`}>
+                                    <Icon size={13} strokeWidth={1.5} />
+                                </div>
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-[11px] tracking-tight truncate leading-none">
+                                        {item.role}
+                                    </span>
+                                </div>
+                            </button>
+                        );
+                    })}
+                </div>
 
-                            {/* Detalle dinámico de permisos */}
-                            <div className={`pt-3 border-t border-border-thin/60 space-y-1.5 transition-all duration-500 overflow-hidden ${
-                                activeRole === idx ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
-                            }`}>
-                                <p className="text-[8px] font-mono text-text-dim uppercase tracking-wider">// ACCIONES PERMITIDAS</p>
-                                {item.permissions.map((perm, pIdx) => (
-                                    <div key={pIdx} className="flex items-center gap-1.5 text-[9px] text-text-main font-sans">
+                {/* Área de Trabajo Derecha */}
+                <div className="flex-1 p-6 flex flex-col justify-between gap-6 min-w-0">
+                    
+                    {/* Info de Rol & Badges de Permisos */}
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-sm font-semibold text-text-main">
+                                    {rolesData[activeRole].role}
+                                </h3>
+                                <span className="text-[9px] font-mono px-2 py-0.5 border border-brand/20 bg-brand-subtle text-brand rounded-full uppercase font-bold">
+                                    Nivel 0{activeRole + 1}
+                                </span>
+                            </div>
+                            <p className="text-xs text-text-dim leading-relaxed max-w-2xl">
+                                {rolesData[activeRole].desc}
+                            </p>
+                        </div>
+
+                        {/* Acciones/Permisos en formato Badges */}
+                        <div className="space-y-1.5">
+                            <div className="flex flex-wrap gap-2">
+                                {rolesData[activeRole].permissions.map((perm, pIdx) => (
+                                    <div key={pIdx} className="flex items-center gap-1.5 text-[9px] text-text-main font-sans border border-border-thin bg-surface/50 px-2.5 py-1 rounded">
                                         <CheckCircle2 size={10} className="text-brand shrink-0" />
                                         <span>{perm}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    </button>
-                ))}
-            </div>
+                    </div>
 
-            {/* Consola Interactiva Simulada de Vista Previa */}
-            <div className="border border-border-thin rounded-xl bg-surface/35 shadow-xl p-6 font-mono text-[10px] relative overflow-hidden backdrop-blur-sm">
-                <div className="flex items-center justify-between border-b border-border-thin pb-4 mb-4">
-                    <span className="text-[10px] font-semibold text-text-main font-mono flex items-center gap-1.5">
-                        <Activity size={12} className="text-brand animate-pulse" />
-                        CONSOLA DE SIMULACIÓN DIITRA: VISTA PREVIA DEL ACCESO
-                    </span>
-                    <span className="text-[9px] text-text-dim font-mono uppercase tracking-wider">
-                        ROL ACTIVO: {rolesData[activeRole].role}
-                    </span>
-                </div>
-
-                <div className="min-h-[100px] flex flex-col justify-between">
-                    {/* Consola: Investigador */}
-                    {activeRole === 0 && (
-                        <div className="space-y-4 animate-fade-in font-sans">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div className="border border-border-thin rounded p-3 bg-bg-deep/40 space-y-1">
-                                    <span className="text-[8px] text-text-dim font-mono uppercase">// MIS PROYECTOS</span>
-                                    <p className="text-text-main font-semibold text-[10.5px]">01/ Sistema de Riego IoT</p>
-                                    <span className="text-[9px] text-warning border border-warning/20 bg-warning-subtle px-1.5 py-0.5 rounded font-mono uppercase font-bold inline-block">Hito 2 en Proceso</span>
-                                </div>
-                                <div className="border border-border-thin rounded p-3 bg-bg-deep/40 space-y-1">
-                                    <span className="text-[8px] text-text-dim font-mono uppercase">// PRESUPUESTO ASIGNADO</span>
-                                    <p className="text-text-main font-bold text-sm">$4,500.00</p>
-                                    <span className="text-[8px] text-text-dim font-mono">Consumo actual: 66%</span>
-                                </div>
-                                <div className="border border-border-thin rounded p-3 bg-bg-deep/40 flex flex-col justify-between">
-                                    <span className="text-[8px] text-text-dim font-mono uppercase">// ACCIONES RÁPIDAS</span>
-                                    <button 
-                                        onClick={() => setInvSigned(true)}
-                                        disabled={invSigned}
-                                        className={`w-full py-1.5 rounded font-bold font-sans text-[9px] uppercase tracking-wider cursor-pointer text-center transition-all ${
-                                            invSigned 
-                                                ? 'bg-success/20 border border-success/30 text-success' 
-                                                : 'bg-brand text-white hover:opacity-90 active:scale-95'
-                                        }`}
-                                    >
-                                        {invSigned ? '✓ EVIDENCIAS DE HITO FIRMADAS' : 'FIRMAR ENTREGABLE SEMANAL'}
-                                    </button>
-                                </div>
-                            </div>
+                    {/* Flujo de Actividades */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[9px] font-mono text-text-dim/60 uppercase tracking-wider">
+                            <span>Secuencia del flujo de trabajo:</span>
+                            <span className="text-[8px] lowercase font-bold text-brand bg-brand-subtle border border-brand/20 px-1.5 rounded">
+                                {activeRole === 0 
+                                    ? `proceso_${selectedProject}()` 
+                                    : activeRole === 1 
+                                        ? `asignar_pares_criterio_${assignmentCriteria}()` 
+                                        : activeRole === 2 
+                                            ? 'evaluacion_doble_ciego()' 
+                                            : 'sincronizacion_sistemas()'}
+                            </span>
                         </div>
-                    )}
-
-                    {/* Consola: Director */}
-                    {activeRole === 1 && (
-                        <div className="space-y-4 animate-fade-in font-sans">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="border border-border-thin rounded p-4 bg-bg-deep/40 space-y-2.5">
-                                    <span className="text-[8px] text-text-dim font-mono uppercase">// PROYECTOS PENDIENTES DE REVISOR DOBLE CIEGO</span>
-                                    <div className="flex justify-between items-center text-[10px]">
-                                        <div>
-                                            <p className="text-text-main font-semibold">"Robot de Limpieza Solar"</p>
-                                            <p className="text-text-dim text-[8px] font-mono">LÍNEA: Software & Automatización</p>
-                                        </div>
-                                        <button 
-                                            onClick={runAssignSimulation}
-                                            disabled={assignState !== 'idle'}
-                                            className={`px-3 py-1.5 rounded font-bold text-[8.5px] uppercase tracking-wider cursor-pointer transition-all ${
-                                                assignState === 'assigning'
-                                                    ? 'bg-surface border border-border-thin text-text-dim'
-                                                    : assignState === 'assigned'
-                                                        ? 'bg-success/15 border border-success/30 text-success'
-                                                        : 'bg-text-main text-bg-deep hover:opacity-95'
-                                            }`}
-                                        >
-                                            {assignState === 'assigning' ? 'ASIGNANDO...' : assignState === 'assigned' ? 'ASIGNADOS ✓' : 'ASIGNAR PARES'}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="border border-border-thin rounded p-4 bg-bg-deep/40 space-y-2">
-                                    <span className="text-[8px] text-text-dim font-mono uppercase">// ESTADO REVISIÓN CIEGA</span>
-                                    {assignState === 'idle' && <p className="text-text-dim text-[9.5px]">Esperando asignación de pares evaluadores...</p>}
-                                    {assignState === 'assigning' && <p className="text-brand text-[9.5px] animate-pulse">Buscando algoritmos de coincidencia de perfil científico...</p>}
-                                    {assignState === 'assigned' && (
-                                        <div className="space-y-1.5 animate-fade-in">
-                                            <p className="text-success font-semibold text-[10px]">✓ PARES ASIGNADOS CORRECTAMENTE</p>
-                                            <div className="flex gap-2 text-[8.5px] font-mono">
-                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Evaluador A: Anon_#184b</span>
-                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Evaluador B: Anon_#92df</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Consola: Comité */}
-                    {activeRole === 2 && (
-                        <div className="space-y-4 animate-fade-in font-sans">
-                            <div className="border border-border-thin rounded p-4 bg-bg-deep/40 space-y-3">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <span className="text-[8px] text-text-dim font-mono uppercase">// PANEL DE REVISIÓN DOBLE CIEGO</span>
-                                        <h4 className="text-text-main font-semibold text-[10.5px] mt-0.5">Propuesta: "Detección de Plagas con Visión Artificial"</h4>
-                                        <p className="text-text-dim text-[8px] font-mono mt-0.5">AUTOR: ANÓNIMO (Oculto para evaluador) | ID: #92842</p>
-                                    </div>
-                                    <span className="text-[9px] font-mono px-2 py-0.5 border border-warning/30 bg-warning-subtle text-warning font-bold rounded">
-                                        Dictamen Pendiente
+                        
+                        <div className="border border-border-thin rounded-lg bg-bg-deep/30 p-3 space-y-2 font-mono text-[9px]">
+                            {getWaterfallSteps(activeRole).map((step, idx) => (
+                                <div key={idx} className="relative h-6 flex items-center rounded border border-border-thin/40 px-2.5 overflow-hidden">
+                                    <div 
+                                        className={`absolute inset-y-0 rounded-r transition-all duration-300 ${step.colorClass}`} 
+                                        style={{ 
+                                            left: step.startPercent, 
+                                            width: step.widthPercent 
+                                        }} 
+                                    />
+                                    <span className="text-text-main text-[9px] z-10 pl-3 relative flex items-center gap-1.5">
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-[1px] bg-border-thin" />
+                                        <span className="font-sans">{step.name}</span>
+                                    </span>
+                                    
+                                    <span className="ml-auto text-text-dim text-[8px] font-bold z-10 bg-bg-deep/70 px-1.5 py-0.5 rounded border border-border-thin/30">
+                                        {step.duration}
                                     </span>
                                 </div>
-
-                                <div className="flex gap-2 pt-1">
-                                    <button 
-                                        onClick={() => setVoteState('approved')}
-                                        className={`px-3 py-1.5 rounded font-bold text-[9px] uppercase tracking-wider cursor-pointer transition-all ${
-                                            voteState === 'approved' 
-                                                ? 'bg-success text-bg-deep' 
-                                                : 'bg-success/15 border border-success/30 text-success hover:bg-success/20'
-                                        }`}
-                                    >
-                                        Emitir Aprobado
-                                    </button>
-                                    <button 
-                                        onClick={() => setVoteState('rejected')}
-                                        className={`px-3 py-1.5 rounded font-bold text-[9px] uppercase tracking-wider cursor-pointer transition-all ${
-                                            voteState === 'rejected' 
-                                                ? 'bg-error text-bg-deep' 
-                                                : 'bg-error/15 border border-error/30 text-error hover:bg-error/20'
-                                        }`}
-                                    >
-                                        Emitir Rechazado
-                                    </button>
-                                    {voteState !== 'idle' && (
-                                        <button 
-                                            onClick={() => setVoteState('idle')}
-                                            className="text-text-dim hover:text-text-main text-[8.5px] font-mono ml-auto border border-border-thin px-2 py-0.5 rounded cursor-pointer"
-                                        >
-                                            REINICIAR VOTO
-                                        </button>
-                                    )}
-                                </div>
-
-                                {voteState === 'approved' && (
-                                    <p className="text-success font-semibold text-[9.5px] animate-fade-in">✓ VOTO EMITIDO: Propuesta aprobada metodológicamente. Acta FirmaEC en preparación.</p>
-                                )}
-                                {voteState === 'rejected' && (
-                                    <p className="text-error font-semibold text-[9.5px] animate-fade-in">✗ VOTO EMITIDO: Propuesta rechazada. Se enviarán correcciones al docente de forma anónima.</p>
-                                )}
-                            </div>
+                            ))}
                         </div>
-                    )}
+                    </div>
 
-                    {/* Consola: Administrador */}
-                    {activeRole === 3 && (
-                        <div className="space-y-4 animate-fade-in font-sans">
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-                                <div className="md:col-span-4 border border-border-thin rounded p-3 bg-bg-deep/40 space-y-1.5">
-                                    <span className="text-[8px] text-text-dim font-mono uppercase">// SISTEMA GENERAL</span>
-                                    <div className="space-y-1 text-[9px]">
-                                        <div className="flex justify-between text-text-main">
-                                            <span>Usuarios:</span>
-                                            <span className="font-mono font-bold">48 Activos</span>
+                    {/* Simulación interactiva */}
+                    <div className="border border-border-thin rounded-lg bg-surface/50 p-4 space-y-3">
+                        <div className="flex items-center gap-1.5 text-[9px] font-mono text-text-dim uppercase tracking-wider">
+                            <Terminal size={12} className="text-brand" />
+                            <span>Simulador de Acciones de Rol</span>
+                        </div>
+
+                        <div className="min-h-[70px] flex flex-col justify-center">
+                            {/* Consola: Investigador */}
+                            {activeRole === 0 && (
+                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-1">
+                                            <span className="text-[8px] text-text-dim uppercase block">Proyecto actual</span>
+                                            <select 
+                                                value={selectedProject} 
+                                                onChange={(e) => {
+                                                    setSelectedProject(e.target.value as any);
+                                                    setInvSigned(false);
+                                                    setHitoProgress(50);
+                                                }}
+                                                className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-0.5 cursor-pointer"
+                                            >
+                                                <option value="riego">01/ Riego IoT</option>
+                                                <option value="robot">02/ Limpieza Solar</option>
+                                                <option value="plagas">03/ Visión Artificial</option>
+                                            </select>
+                                            <span className="text-[8px] text-warning font-semibold block mt-0.5">Hito 2 en Proceso</span>
                                         </div>
-                                        <div className="flex justify-between text-text-main">
-                                            <span>Conexión SIIES:</span>
-                                            <span className="text-success font-semibold">Activa</span>
+                                        
+                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-1.5">
+                                            <span className="text-[8px] text-text-dim uppercase block">Progreso de actividades: {hitoProgress}%</span>
+                                            <div className="w-full bg-border-thin/50 h-1.5 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-brand transition-all duration-300 animate-pulse" 
+                                                    style={{ width: `${hitoProgress}%` }} 
+                                                />
+                                            </div>
+                                            <div className="flex gap-2 items-center justify-between mt-1">
+                                                <button 
+                                                    onClick={() => setHitoProgress(prev => Math.min(prev + 25, 100))}
+                                                    disabled={hitoProgress === 100 || invSigned}
+                                                    className="px-2 py-0.5 border border-border-thin rounded bg-surface hover:bg-surface-hover text-[8.5px] text-text-main cursor-pointer disabled:opacity-40"
+                                                >
+                                                    Avanzar (+25%)
+                                                </button>
+                                                {hitoProgress === 100 && (
+                                                    <span className="text-success text-[8.5px] font-sans font-semibold">✓ Listo</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-2">
+                                            <span className="text-[8px] text-text-dim uppercase block">Firma de entregable</span>
+                                            {invSigned ? (
+                                                <div className="space-y-1 text-center">
+                                                    <div className="bg-success/15 border border-success/30 text-success text-[8.5px] py-1 rounded font-bold">
+                                                        ✓ FIRMADO CON .P12
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setInvSigned(false);
+                                                            setHitoProgress(50);
+                                                        }}
+                                                        className="text-text-dim hover:text-text-main text-[8px] underline cursor-pointer inline-block"
+                                                    >
+                                                        Reiniciar
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button 
+                                                    onClick={() => setInvSigned(true)}
+                                                    disabled={hitoProgress < 100}
+                                                    className={`w-full py-1.5 rounded font-semibold text-[9px] uppercase tracking-wider cursor-pointer text-center transition-all ${
+                                                        hitoProgress === 100 
+                                                            ? 'bg-brand text-white hover:opacity-90 active:scale-95' 
+                                                            : 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
+                                                    }`}
+                                                    title={hitoProgress < 100 ? "Completa el hito al 100% para firmar" : ""}
+                                                >
+                                                    Firmar
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="md:col-span-8 border border-border-thin rounded p-3 bg-bg-deep/40 space-y-2 min-h-[75px] flex flex-col justify-between">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-[8px] text-text-dim font-mono uppercase">// DIAGNÓSTICO DE INTEGRACIONES API</span>
-                                        <button 
-                                            onClick={runApiTest}
-                                            disabled={apiTesting}
-                                            className="px-2.5 py-1 bg-text-main text-bg-deep rounded font-bold font-sans text-[8.5px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center gap-1 shrink-0"
-                                        >
-                                            {apiTesting && <Loader2 size={9} className="animate-spin" />}
-                                            {!apiTesting && <Cpu size={9} />}
-                                            Probar Gateway API
-                                        </button>
+                            )}
+
+                            {/* Consola: Director */}
+                            {activeRole === 1 && (
+                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-3">
+                                            <div>
+                                                <span className="text-[8px] text-text-dim uppercase block">Criterio de coincidencia científica</span>
+                                                <select 
+                                                    value={assignmentCriteria} 
+                                                    onChange={(e) => {
+                                                        setAssignmentCriteria(e.target.value as any);
+                                                        setAssignState('idle');
+                                                        setAssignLog('Esperando asignación de pares evaluadores...');
+                                                    }}
+                                                    className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-1 cursor-pointer"
+                                                >
+                                                    <option value="linea">Por Línea de Investigación</option>
+                                                    <option value="carga">Por Menor Carga Docente</option>
+                                                    <option value="aleatorio">Asignación Aleatoria</option>
+                                                </select>
+                                            </div>
+                                            <button 
+                                                onClick={runAssignSimulation}
+                                                disabled={assignState !== 'idle'}
+                                                className={`w-full py-1.5 rounded font-semibold text-[8.5px] uppercase tracking-wider cursor-pointer transition-all ${
+                                                    assignState === 'assigning'
+                                                        ? 'bg-surface border border-border-thin text-text-dim'
+                                                        : assignState === 'assigned'
+                                                            ? 'bg-success/15 border border-success/30 text-success'
+                                                            : 'bg-text-main text-bg-deep hover:opacity-95'
+                                                }`}
+                                            >
+                                                {assignState === 'assigning' ? 'Asignando...' : assignState === 'assigned' ? 'Pares Asignados ✓' : 'Asignar Pares'}
+                                            </button>
+                                        </div>
+                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-center min-h-[75px] space-y-1">
+                                            <span className="text-[8px] text-text-dim uppercase block">Registro de auditoría (Doble Ciego)</span>
+                                            <p className={`text-[8.5px] font-mono leading-tight ${assignState === 'assigning' ? 'text-brand animate-pulse' : assignState === 'assigned' ? 'text-success' : 'text-text-dim'}`}>
+                                                {assignLog}
+                                            </p>
+                                            {assignState === 'assigned' && (
+                                                <div className="flex gap-2 text-[8px] font-mono mt-1 animate-fade-in">
+                                                    {assignmentCriteria === 'linea' && (
+                                                        <>
+                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dr. Anon_#184b (Línea)</span>
+                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dra. Anon_#92df (Línea)</span>
+                                                        </>
+                                                    )}
+                                                    {assignmentCriteria === 'carga' && (
+                                                        <>
+                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Anon_#048f (Alta disp.)</span>
+                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Anon_#3382 (Alta disp.)</span>
+                                                        </>
+                                                    )}
+                                                    {assignmentCriteria === 'aleatorio' && (
+                                                        <>
+                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randA</span>
+                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randB</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    {apiTesting ? (
-                                        <p className="text-brand font-mono text-[8.5px] animate-pulse">Haciendo ping a servidores de SENESCYT, SIIES y repositorio DSpace...</p>
-                                    ) : apiResult ? (
-                                        <p className="text-success font-mono text-[8.5px] leading-tight animate-fade-in">{apiResult}</p>
-                                    ) : (
-                                        <p className="text-text-dim text-[9px]">Haz clic en probar para diagnosticar el estado del validador y las API externas.</p>
-                                    )}
                                 </div>
-                            </div>
+                            )}
+
+                            {/* Consola: Comité */}
+                            {activeRole === 2 && (
+                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                        <div className="sm:col-span-5 border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-2 text-left">
+                                            <div>
+                                                <span className="text-[8px] text-text-dim uppercase block">1. Calidad Metodológica (1-5)</span>
+                                                <div className="flex gap-1.5 mt-1">
+                                                    {[1, 2, 3, 4, 5].map((val) => (
+                                                        <button
+                                                            key={val}
+                                                            onClick={() => {
+                                                                setGradeMetodologia(val);
+                                                                setVoteState('idle');
+                                                            }}
+                                                            className={`w-6 h-6 rounded flex items-center justify-center font-bold text-[9px] cursor-pointer transition-all border ${
+                                                                gradeMetodologia === val 
+                                                                    ? 'bg-brand border-brand text-white shadow-sm' 
+                                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main'
+                                                            }`}
+                                                        >
+                                                            {val}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <span className="text-[8px] text-text-dim uppercase block">2. Aspectos Éticos & LOPDP</span>
+                                                <button
+                                                    onClick={() => {
+                                                        setGradeEtica(!gradeEtica);
+                                                        setVoteState('idle');
+                                                    }}
+                                                    className={`w-full py-1 mt-1 text-[9px] font-semibold border rounded cursor-pointer text-center transition-all ${
+                                                        gradeEtica 
+                                                            ? 'bg-success/15 border-success/35 text-success' 
+                                                            : 'bg-error/15 border-error/35 text-error'
+                                                    }`}
+                                                >
+                                                    {gradeEtica ? '✓ Cumple Normas de Ética' : '✗ Pendiente de Dictamen Ético'}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="sm:col-span-7 border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-3 text-left">
+                                            <div className="space-y-1">
+                                                <span className="text-[8px] text-text-dim uppercase block">Simulación de dictamen previo</span>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="text-[9px] text-text-dim font-sans">Puntos: {gradeMetodologia}/5</span>
+                                                    <span className="text-text-dim opacity-50">•</span>
+                                                    {gradeMetodologia >= 4 && gradeEtica ? (
+                                                        <span className="text-success font-bold text-[9px]">Aprobación recomendada</span>
+                                                    ) : gradeMetodologia < 4 && gradeEtica ? (
+                                                        <span className="text-warning font-bold text-[9px]">Requiere correcciones</span>
+                                                    ) : (
+                                                        <span className="text-error font-bold text-[9px]">Rechazo ético (Exclusión)</span>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={() => {
+                                                        if (gradeMetodologia >= 4 && gradeEtica) {
+                                                            setVoteState('approved');
+                                                        } else {
+                                                            setVoteState('rejected');
+                                                        }
+                                                    }}
+                                                    disabled={voteState !== 'idle'}
+                                                    className="flex-1 py-1.5 bg-text-main text-bg-deep rounded font-semibold text-[8.5px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50"
+                                                >
+                                                    Emitir Dictamen
+                                                </button>
+                                                {voteState !== 'idle' && (
+                                                    <button 
+                                                        onClick={() => setVoteState('idle')}
+                                                        className="px-2 py-1.5 border border-border-thin rounded text-text-dim hover:text-text-main text-[8px] font-mono cursor-pointer"
+                                                    >
+                                                        Reset
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {voteState === 'approved' && (
+                                                <p className="text-success text-[8.5px] leading-tight font-sans animate-fade-in">✓ DICTAMEN EMITIDO: Aprobado sin observaciones. Firma digital adjuntada.</p>
+                                            )}
+                                            {voteState === 'rejected' && (
+                                                <p className="text-error text-[8.5px] leading-tight font-sans animate-fade-in">
+                                                    {gradeEtica === false 
+                                                        ? '✗ DICTAMEN EMITIDO: Rechazo absoluto por faltas éticas o LOPDP.' 
+                                                        : '⚠ DICTAMEN EMITIDO: Devuelto al docente para correcciones metodológicas.'}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Consola: Administrador */}
+                            {activeRole === 3 && (
+                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
+                                        <div className="sm:col-span-5 border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-2.5 text-left">
+                                            <div>
+                                                <span className="text-[8px] text-text-dim uppercase block">Pasarela externa de sincronización</span>
+                                                <select 
+                                                    value={selectedApi} 
+                                                    onChange={(e) => {
+                                                        setSelectedApi(e.target.value as any);
+                                                        setApiResult('');
+                                                    }}
+                                                    className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-1 cursor-pointer"
+                                                >
+                                                    <option value="siies">SIIES API (Acreditación CACES)</option>
+                                                    <option value="dspace">DSpace (Repositorio Científico)</option>
+                                                    <option value="senadi">SENADI (Propiedad Intelectual)</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button 
+                                                    onClick={runApiTest}
+                                                    disabled={apiTesting}
+                                                    className="w-full py-1.5 bg-brand text-white rounded font-semibold text-[8px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1"
+                                                >
+                                                    {apiTesting && <Loader2 size={8} className="animate-spin" />}
+                                                    {!apiTesting && <Cpu size={8} />}
+                                                    Probar Conexión
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="sm:col-span-7 border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-3 min-h-[75px] text-left">
+                                            <div>
+                                                <span className="text-[8px] text-text-dim uppercase block">Respuesta de latencia de red</span>
+                                                <div className="min-h-[22px] flex items-center mt-1">
+                                                    {apiTesting ? (
+                                                        <p className="text-brand animate-pulse text-[8.5px] font-sans">Realizando diagnóstico...</p>
+                                                    ) : apiResult ? (
+                                                        <p className="text-success text-[8.5px] leading-tight font-sans">{apiResult}</p>
+                                                    ) : (
+                                                        <p className="text-text-dim text-[8.5px] font-sans">Haz clic en probar para conectarte al gateway.</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="border-t border-border-thin/20 pt-2 space-y-1.5">
+                                                <div className="flex justify-between items-center text-[8px] text-text-dim uppercase">
+                                                    <span>Sincronizar base de datos general</span>
+                                                    <span>{syncProgress}%</span>
+                                                </div>
+                                                <div className="flex gap-2 items-center">
+                                                    <div className="flex-1 bg-border-thin/50 h-1.5 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full bg-success transition-all duration-150" 
+                                                            style={{ width: `${syncProgress}%` }} 
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        onClick={runSyncSimulation}
+                                                        disabled={syncState === 'syncing'}
+                                                        className="px-2 py-0.5 bg-text-main text-bg-deep rounded font-semibold text-[8px] uppercase cursor-pointer hover:opacity-90 disabled:opacity-50"
+                                                    >
+                                                        {syncState === 'syncing' ? '...' : syncState === 'completed' ? '✓ Listo' : 'Sincronizar'}
+                                                    </button>
+                                                </div>
+                                                {syncState === 'completed' && (
+                                                    <p className="text-success text-[7.5px] font-sans leading-none">✓ Evidencias académicas y distributivos sincronizados con SIGAFI.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </section>
