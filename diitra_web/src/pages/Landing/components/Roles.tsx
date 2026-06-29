@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Cpu, Loader2, Terminal } from 'lucide-react';
+import { Users, LayoutDashboard, Scale, ShieldCheck, CheckCircle2, Cpu, Loader2, Terminal, AlertCircle, Check } from 'lucide-react';
 
 const Roles: React.FC = () => {
     const [activeRole, setActiveRole] = useState<number>(0);
@@ -61,12 +61,12 @@ const Roles: React.FC = () => {
         setAssignState('assigning');
         setAssignLog('Filtrando investigadores afines a la línea científica...');
         setTimeout(() => {
-            setAssignLog('Evaluando carga horaria y disponibilidad docente (SIGAFI)...');
+            setAssignLog('Evaluando carga horaria y disponibilidad docente (CACES Criterio B.1.1)...');
             setTimeout(() => {
                 setAssignLog('Verificando posibles conflictos de interés (doble ciego)...');
                 setTimeout(() => {
                     setAssignState('assigned');
-                    setAssignLog('✓ Asignación completada con éxito.');
+                    setAssignLog('✓ Asignación completada. Pares validados en distributivo SIGAFI.');
                 }, 400);
             }, 400);
         }, 400);
@@ -107,28 +107,134 @@ const Roles: React.FC = () => {
     const getWaterfallSteps = (roleIdx: number) => {
         switch (roleIdx) {
             case 0:
+                // El tercer paso (Cargar evidencias) responde dinámicamente al progreso del hito
                 return [
-                    { name: 'Crear propuesta de proyecto', duration: '2d', startPercent: '0%', widthPercent: '30%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
-                    { name: 'Planificar presupuesto e hitos', duration: '3d', startPercent: '30%', widthPercent: '50%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
-                    { name: 'Cargar evidencias de avance', duration: '1d', startPercent: '80%', widthPercent: '20%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                    { 
+                        name: 'Crear propuesta de proyecto', 
+                        duration: '2d', 
+                        startPercent: '0%', 
+                        widthPercent: '30%', 
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success shadow-[inset_1px_0_0_rgba(0,224,84,0.1)]' 
+                    },
+                    { 
+                        name: 'Planificar presupuesto e hitos', 
+                        duration: '3d', 
+                        startPercent: '30%', 
+                        widthPercent: '50%', 
+                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand shadow-[inset_1px_0_0_rgba(0,112,243,0.1)]' 
+                    },
+                    { 
+                        name: hitoProgress === 100 
+                            ? 'Cargar evidencias (Completado ✓)' 
+                            : `Cargar evidencias (${hitoProgress}%)`, 
+                        duration: '1d', 
+                        startPercent: '80%', 
+                        widthPercent: `${(hitoProgress / 100) * 20}%`, 
+                        colorClass: hitoProgress === 100
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            : 'bg-warning/10 border-l-2 border-warning text-warning transition-all duration-300' 
+                    }
                 ];
             case 1:
+                // El tercer paso (Asignar evaluadores) reacciona al estado de asignación
                 return [
-                    { name: 'Apertura de convocatorias', duration: '3d', startPercent: '0%', widthPercent: '42%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
-                    { name: 'Filtro y revisión de requisitos', duration: '2d', startPercent: '42%', widthPercent: '28%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
-                    { name: 'Asignación de pares evaluadores', duration: '2d', startPercent: '70%', widthPercent: '30%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                    { 
+                        name: 'Apertura de convocatorias', 
+                        duration: '3d', 
+                        startPercent: '0%', 
+                        widthPercent: '42%', 
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success' 
+                    },
+                    { 
+                        name: 'Filtro y revisión de requisitos', 
+                        duration: '2d', 
+                        startPercent: '42%', 
+                        widthPercent: '28%', 
+                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' 
+                    },
+                    { 
+                        name: assignState === 'assigned'
+                            ? `Asignación completada (${assignmentCriteria}) ✓`
+                            : assignState === 'assigning'
+                                ? 'Buscando revisores en SIGAFI...'
+                                : 'Esperando asignación de revisores', 
+                        duration: '2d', 
+                        startPercent: '70%', 
+                        widthPercent: assignState === 'assigned' ? '30%' : '15%', 
+                        colorClass: assignState === 'assigned'
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            : assignState === 'assigning'
+                                ? 'bg-brand/10 border-l-2 border-brand text-brand animate-pulse transition-all duration-300'
+                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80 transition-all duration-300' 
+                    }
                 ];
             case 2:
+                // La resolución de ética cambia de color si es aprobada o rechazada en el dictamen
                 return [
-                    { name: 'Evaluación anónima doble ciego', duration: '5d', startPercent: '0%', widthPercent: '60%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
-                    { name: 'Emisión de acta de dictamen', duration: '2d', startPercent: '60%', widthPercent: '25%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
-                    { name: 'Firma de resolución de ética', duration: '1d', startPercent: '85%', widthPercent: '15%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                    { 
+                        name: 'Evaluación anónima doble ciego', 
+                        duration: '5d', 
+                        startPercent: '0%', 
+                        widthPercent: '60%', 
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success' 
+                    },
+                    { 
+                        name: 'Emisión de acta de dictamen', 
+                        duration: '2d', 
+                        startPercent: '60%', 
+                        widthPercent: '25%', 
+                        colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' 
+                    },
+                    { 
+                        name: voteState === 'approved'
+                            ? 'Resolución de ética aprobada ✓'
+                            : voteState === 'rejected'
+                                ? 'Resolución de ética rechazada ✗'
+                                : 'Firma de resolución de ética', 
+                        duration: '1d', 
+                        startPercent: '85%', 
+                        widthPercent: '15%', 
+                        colorClass: voteState === 'approved'
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            : voteState === 'rejected'
+                                ? 'bg-error/10 border-l-2 border-error text-error transition-all duration-300'
+                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80' 
+                    }
                 ];
             case 3:
+                // Sincronizar repositorio reacciona a la barra de sincronización
                 return [
-                    { name: 'Configurar período académico', duration: '1d', startPercent: '0%', widthPercent: '25%', colorClass: 'bg-success/10 border-l-2 border-success text-success' },
-                    { name: 'Sincronizar repositorio DSpace', duration: '2d', startPercent: '25%', widthPercent: '50%', colorClass: 'bg-brand/10 border-l-2 border-brand text-brand' },
-                    { name: 'Auditoría e informes generales', duration: '1d', startPercent: '75%', widthPercent: '25%', colorClass: 'bg-warning/10 border-l-2 border-warning text-warning' }
+                    { 
+                        name: 'Configurar período académico', 
+                        duration: '1d', 
+                        startPercent: '0%', 
+                        widthPercent: '25%', 
+                        colorClass: 'bg-success/10 border-l-2 border-success text-success' 
+                    },
+                    { 
+                        name: syncState === 'completed'
+                            ? 'Sincronizar repositorio DSpace (100%) ✓'
+                            : syncState === 'syncing'
+                                ? `Sincronizando DSpace (${syncProgress}%)`
+                                : 'Sincronizar repositorio DSpace (Pendiente)', 
+                        duration: '2d', 
+                        startPercent: '25%', 
+                        widthPercent: syncState === 'completed' ? '50%' : syncState === 'syncing' ? `${(syncProgress / 100) * 50}%` : '20%', 
+                        colorClass: syncState === 'completed'
+                            ? 'bg-success/10 border-l-2 border-success text-success transition-all duration-300'
+                            : syncState === 'syncing'
+                                ? 'bg-brand/10 border-l-2 border-brand text-brand transition-all duration-150 animate-pulse'
+                                : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80'
+                    },
+                    { 
+                        name: 'Auditoría e informes generales', 
+                        duration: '1d', 
+                        startPercent: '75%', 
+                        widthPercent: '25%', 
+                        colorClass: syncState === 'completed'
+                            ? 'bg-success/10 border-l-2 border-success text-success'
+                            : 'bg-warning/5 border-l-2 border-warning/30 text-text-dim/80' 
+                    }
                 ];
             default:
                 return [];
@@ -176,8 +282,8 @@ const Roles: React.FC = () => {
                                 }}
                                 className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-200 cursor-pointer ${
                                     isSelected 
-                                        ? 'bg-brand-subtle border border-brand/20 text-brand shadow-[0_2px_10px_rgba(0,112,243,0.04)] font-semibold' 
-                                        : 'hover:bg-surface-hover/60 border border-transparent text-text-dim hover:text-text-main'
+                                        ? 'bg-brand-subtle border border-brand/20 text-brand shadow-[0_2px_10px_rgba(0,112,243,0.04)] font-semibold scale-[1.02]' 
+                                        : 'hover:bg-surface-hover/60 border border-transparent text-text-dim hover:text-text-main hover:translate-x-0.5'
                                 }`}
                             >
                                 <div className={`p-1.5 rounded border transition-colors ${
@@ -227,26 +333,26 @@ const Roles: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Flujo de Actividades */}
+                    {/* Flujo de Actividades (Waterfall) */}
                     <div className="space-y-2">
                         <div className="flex justify-between items-center text-[9px] font-mono text-text-dim/60 uppercase tracking-wider">
                             <span>Secuencia del flujo de trabajo:</span>
-                            <span className="text-[8px] lowercase font-bold text-brand bg-brand-subtle border border-brand/20 px-1.5 rounded">
+                            <span className="text-[8.5px] lowercase font-bold text-brand bg-brand-subtle border border-brand/20 px-1.5 rounded transition-all duration-300">
                                 {activeRole === 0 
-                                    ? `proceso_${selectedProject}()` 
+                                    ? `proceso_${selectedProject}_activo()` 
                                     : activeRole === 1 
                                         ? `asignar_pares_criterio_${assignmentCriteria}()` 
                                         : activeRole === 2 
-                                            ? 'evaluacion_doble_ciego()' 
-                                            : 'sincronizacion_sistemas()'}
+                                            ? `evaluacion_doble_ciego_${voteState === 'idle' ? 'pendiente' : voteState === 'approved' ? 'aprobada' : 'rechazada'}()` 
+                                            : `sincronizacion_modulo_${selectedApi}()`}
                             </span>
                         </div>
                         
                         <div className="border border-border-thin rounded-lg bg-bg-deep/30 p-3 space-y-2 font-mono text-[9px]">
                             {getWaterfallSteps(activeRole).map((step, idx) => (
-                                <div key={idx} className="relative h-6 flex items-center rounded border border-border-thin/40 px-2.5 overflow-hidden">
+                                <div key={idx} className="relative h-6 flex items-center rounded border border-border-thin/40 px-2.5 overflow-hidden transition-all duration-300">
                                     <div 
-                                        className={`absolute inset-y-0 rounded-r transition-all duration-300 ${step.colorClass}`} 
+                                        className={`absolute inset-y-0 rounded-r transition-all duration-500 ease-out ${step.colorClass}`} 
                                         style={{ 
                                             left: step.startPercent, 
                                             width: step.widthPercent 
@@ -254,7 +360,7 @@ const Roles: React.FC = () => {
                                     />
                                     <span className="text-text-main text-[9px] z-10 pl-3 relative flex items-center gap-1.5">
                                         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-[1px] bg-border-thin" />
-                                        <span className="font-sans">{step.name}</span>
+                                        <span className="font-sans font-medium">{step.name}</span>
                                     </span>
                                     
                                     <span className="ml-auto text-text-dim text-[8px] font-bold z-10 bg-bg-deep/70 px-1.5 py-0.5 rounded border border-border-thin/30">
@@ -296,10 +402,10 @@ const Roles: React.FC = () => {
                                         </div>
                                         
                                         <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-1.5">
-                                            <span className="text-[8px] text-text-dim uppercase block">Progreso de actividades: {hitoProgress}%</span>
+                                            <span className="text-[8px] text-text-dim uppercase block">Progreso de evidencias: {hitoProgress}%</span>
                                             <div className="w-full bg-border-thin/50 h-1.5 rounded-full overflow-hidden">
                                                 <div 
-                                                    className="h-full bg-brand transition-all duration-300 animate-pulse" 
+                                                    className="h-full bg-brand transition-all duration-300" 
                                                     style={{ width: `${hitoProgress}%` }} 
                                                 />
                                             </div>
@@ -318,18 +424,22 @@ const Roles: React.FC = () => {
                                         </div>
 
                                         <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-2">
-                                            <span className="text-[8px] text-text-dim uppercase block">Firma de entregable</span>
+                                            <span className="text-[8px] text-text-dim uppercase block">Firma de entregable (.p12)</span>
                                             {invSigned ? (
-                                                <div className="space-y-1 text-center">
-                                                    <div className="bg-success/15 border border-success/30 text-success text-[8.5px] py-1 rounded font-bold">
-                                                        ✓ FIRMADO CON .P12
+                                                <div className="space-y-1.5 text-left font-mono text-[7.5px] leading-tight">
+                                                    <div className="bg-success/15 border border-success/30 text-success text-[8.5px] py-0.5 rounded font-bold text-center">
+                                                        ✓ FIRMADO CON EXITO
+                                                    </div>
+                                                    <div className="text-text-dim space-y-0.5 bg-bg-deep/50 p-1 rounded border border-border-thin/50">
+                                                        <p>Autoridad: BCE Ecuador</p>
+                                                        <p className="truncate">Sello: ECDSA_256_FirmaEC</p>
                                                     </div>
                                                     <button 
                                                         onClick={() => {
                                                             setInvSigned(false);
                                                             setHitoProgress(50);
                                                         }}
-                                                        className="text-text-dim hover:text-text-main text-[8px] underline cursor-pointer inline-block"
+                                                        className="w-full text-center text-text-dim hover:text-text-main text-[8px] underline cursor-pointer inline-block"
                                                     >
                                                         Reiniciar
                                                     </button>
@@ -343,7 +453,7 @@ const Roles: React.FC = () => {
                                                             ? 'bg-brand text-white hover:opacity-90 active:scale-95' 
                                                             : 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
                                                     }`}
-                                                    title={hitoProgress < 100 ? "Completa el hito al 100% para firmar" : ""}
+                                                    title={hitoProgress < 100 ? "Completa el progreso antes de firmar" : ""}
                                                 >
                                                     Firmar
                                                 </button>
@@ -370,7 +480,7 @@ const Roles: React.FC = () => {
                                                     className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-1 cursor-pointer"
                                                 >
                                                     <option value="linea">Por Línea de Investigación</option>
-                                                    <option value="carga">Por Menor Carga Docente</option>
+                                                    <option value="carga">Por Menor Carga Docente (SIGAFI)</option>
                                                     <option value="aleatorio">Asignación Aleatoria</option>
                                                 </select>
                                             </div>
@@ -389,30 +499,33 @@ const Roles: React.FC = () => {
                                             </button>
                                         </div>
                                         <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-center min-h-[75px] space-y-1">
-                                            <span className="text-[8px] text-text-dim uppercase block">Registro de auditoría (Doble Ciego)</span>
-                                            <p className={`text-[8.5px] font-mono leading-tight ${assignState === 'assigning' ? 'text-brand animate-pulse' : assignState === 'assigned' ? 'text-success' : 'text-text-dim'}`}>
+                                            <span className="text-[8px] text-text-dim uppercase block">Registro de auditoría (CACES B.1.1)</span>
+                                            <p className={`text-[8.5px] font-mono leading-tight ${assignState === 'assigning' ? 'text-brand animate-pulse' : assignState === 'assigned' ? 'text-success font-semibold' : 'text-text-dim'}`}>
                                                 {assignLog}
                                             </p>
                                             {assignState === 'assigned' && (
-                                                <div className="flex gap-2 text-[8px] font-mono mt-1 animate-fade-in">
-                                                    {assignmentCriteria === 'linea' && (
-                                                        <>
-                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dr. Anon_#184b (Línea)</span>
-                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dra. Anon_#92df (Línea)</span>
-                                                        </>
-                                                    )}
-                                                    {assignmentCriteria === 'carga' && (
-                                                        <>
-                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Anon_#048f (Alta disp.)</span>
-                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Anon_#3382 (Alta disp.)</span>
-                                                        </>
-                                                    )}
-                                                    {assignmentCriteria === 'aleatorio' && (
-                                                        <>
-                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randA</span>
-                                                            <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randB</span>
-                                                        </>
-                                                    )}
+                                                <div className="space-y-1 mt-1 animate-fade-in">
+                                                    <p className="text-[8px] text-text-dim uppercase tracking-wider">// REVISORES DOBLE CIEGO ASIGNADOS</p>
+                                                    <div className="flex gap-2 text-[8px] font-mono">
+                                                        {assignmentCriteria === 'linea' && (
+                                                            <>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par A: Dr. Anon_#184b</span>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par B: Dra. Anon_#92df</span>
+                                                            </>
+                                                        )}
+                                                        {assignmentCriteria === 'carga' && (
+                                                            <>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par A: Anon_#048f (SIGAFI OK)</span>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par B: Anon_#3382 (SIGAFI OK)</span>
+                                                            </>
+                                                        )}
+                                                        {assignmentCriteria === 'aleatorio' && (
+                                                            <>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randA</span>
+                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randB</span>
+                                                            </>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
@@ -459,7 +572,7 @@ const Roles: React.FC = () => {
                                                             : 'bg-error/15 border-error/35 text-error'
                                                     }`}
                                                 >
-                                                    {gradeEtica ? '✓ Cumple Normas de Ética' : '✗ Pendiente de Dictamen Ético'}
+                                                    {gradeEtica ? '✓ Cumple Normas de Ética' : '✗ Pendiente de Revisión Ética'}
                                                 </button>
                                             </div>
                                         </div>
@@ -471,11 +584,20 @@ const Roles: React.FC = () => {
                                                     <span className="text-[9px] text-text-dim font-sans">Puntos: {gradeMetodologia}/5</span>
                                                     <span className="text-text-dim opacity-50">•</span>
                                                     {gradeMetodologia >= 4 && gradeEtica ? (
-                                                        <span className="text-success font-bold text-[9px]">Aprobación recomendada</span>
+                                                        <span className="text-success font-bold text-[9px] flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                                                            Aprobación viable
+                                                        </span>
                                                     ) : gradeMetodologia < 4 && gradeEtica ? (
-                                                        <span className="text-warning font-bold text-[9px]">Requiere correcciones</span>
+                                                        <span className="text-warning font-bold text-[9px] flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+                                                            Requiere correcciones
+                                                        </span>
                                                     ) : (
-                                                        <span className="text-error font-bold text-[9px]">Rechazo ético (Exclusión)</span>
+                                                        <span className="text-error font-bold text-[9px] flex items-center gap-1">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-error" />
+                                                            Rechazo ético inmediato
+                                                        </span>
                                                     )}
                                                 </div>
                                             </div>
@@ -505,14 +627,26 @@ const Roles: React.FC = () => {
                                             </div>
 
                                             {voteState === 'approved' && (
-                                                <p className="text-success text-[8.5px] leading-tight font-sans animate-fade-in">✓ DICTAMEN EMITIDO: Aprobado sin observaciones. Firma digital adjuntada.</p>
+                                                <div className="space-y-1 bg-success/10 border border-success/30 p-1.5 rounded text-success text-[8.5px] leading-tight font-sans animate-fade-in">
+                                                    <p className="font-bold">✓ DICTAMEN APROBADO EMITIDO</p>
+                                                    <p className="text-[7.5px] opacity-90">Resolución de ética firmada. Acta enviada a DSpace repositorio.</p>
+                                                </div>
                                             )}
                                             {voteState === 'rejected' && (
-                                                <p className="text-error text-[8.5px] leading-tight font-sans animate-fade-in">
-                                                    {gradeEtica === false 
-                                                        ? '✗ DICTAMEN EMITIDO: Rechazo absoluto por faltas éticas o LOPDP.' 
-                                                        : '⚠ DICTAMEN EMITIDO: Devuelto al docente para correcciones metodológicas.'}
-                                                </p>
+                                                <div className={`space-y-1 p-1.5 rounded text-[8.5px] leading-tight font-sans animate-fade-in border ${
+                                                    gradeEtica === false 
+                                                        ? 'bg-error/10 border-error/30 text-error' 
+                                                        : 'bg-warning/10 border-warning/30 text-warning'
+                                                }`}>
+                                                    <p className="font-bold">
+                                                        {gradeEtica === false ? '✗ DICTAMEN DE RECHAZO EMITIDO' : '⚠ RETORNADO PARA CORRECCIONES'}
+                                                    </p>
+                                                    <p className="text-[7.5px] opacity-90">
+                                                        {gradeEtica === false 
+                                                            ? 'No cumple con criterios bioéticos mínimos o LOPDP.' 
+                                                            : 'Puntuación metodológica inferior a 4.0/5.0.'}
+                                                    </p>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
