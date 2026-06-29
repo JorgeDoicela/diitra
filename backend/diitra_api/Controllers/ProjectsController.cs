@@ -175,7 +175,7 @@ namespace diitra_api.Controllers
                 var skipCertificateValidation = env.IsDevelopment()
                     || config.GetValue<bool>("Firma:SkipCertificateValidation");
 
-                // 2. Cargar Firma (.p12 / BouncyCastle)
+                // 2. Cargar Firma (.p12 — upload-on-demand, nunca se guarda en servidor)
                 byte[]? certificateBytes = null;
                 string? finalPassword = password;
 
@@ -187,29 +187,10 @@ namespace diitra_api.Controllers
                         certificateBytes = ms.ToArray();
                     }
                 }
-                else if (userMeta != null && !string.IsNullOrEmpty(userMeta.RutaFirmaP12))
+                else if (!skipCertificateValidation)
                 {
-                    if (System.IO.File.Exists(userMeta.RutaFirmaP12))
-                    {
-                        try
-                        {
-                            certificateBytes = await System.IO.File.ReadAllBytesAsync(userMeta.RutaFirmaP12);
-                            if (!string.IsNullOrWhiteSpace(password))
-                            {
-                                finalPassword = password;
-                            }
-                            else
-                            {
-                                var encryptionKey = config["Security:EncryptionKey"] ?? "DIITRA_SECURE_AES256_KEY_FOR_P12_PASSWORDS_2026!";
-                                finalPassword = diitra_infrastructure.Security.CryptoHelper.Decrypt(userMeta.P12PasswordEncrypted!, encryptionKey);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.LogError(ex, "Error al cargar o descifrar la firma digital almacenada del usuario.");
-                            return BadRequest(new { error = "No se pudo cargar o descifrar la firma digital almacenada en su perfil." });
-                        }
-                    }
+                    // En producción, el certificado es obligatorio en cada solicitud de firma
+                    return BadRequest(new { error = "Debe adjuntar su archivo de firma digital (.p12) en cada solicitud de firma. El sistema no guarda certificados en el servidor." });
                 }
 
                 // Extraer metadatos del certificado de firma digital para inyección visual en el PDF
@@ -323,16 +304,16 @@ namespace diitra_api.Controllers
                 //     signedPdfBytes = genResult.PdfBytes;
                 // }
 
-                // ── LOPDP: Registrar auditoría de acceso a datos sensibles ──
+                // ── LOPDP: Registrar auditoría de uso de certificado ──
                 var ip = HttpContext.Connection?.RemoteIpAddress?.ToString();
                 var userAgent = Request.Headers["User-Agent"].ToString();
                 await lopdpService.AuditoriaAccesoDatosAsync(
                     dbUser.IdUsuario,
                     dbUser.IdUsuario,
                     "inv_usuarios_metadata",
-                    "rutaFirmaP12",
-                    "DESCARGA",
-                    $"Uso y validación del certificado digital para firma del proyecto {projectDto.Titulo}",
+                    "certificadoDigital",
+                    "USO",
+                    $"Uso del certificado digital (upload-on-demand) para firma del proyecto {projectDto.Titulo}",
                     ip,
                     userAgent);
 
