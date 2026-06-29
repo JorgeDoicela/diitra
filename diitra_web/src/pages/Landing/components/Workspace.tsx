@@ -35,7 +35,7 @@ const Workspace: React.FC = () => {
         const handleScroll = () => {
             const viewportHeight = window.innerHeight;
             const center = viewportHeight / 2;
-            const range = viewportHeight * 0.38; // Rango para desvanecerse (38% de la altura de pantalla)
+            const range = viewportHeight * 0.22; // Rango más estrecho para evitar solapamientos visuales de opacidad
 
             let closestIndex = 0;
             let closestDistance = Infinity;
@@ -81,7 +81,7 @@ const Workspace: React.FC = () => {
                 const smoothProgress = Math.sin(progress * Math.PI / 2); // Easing senoidal suave
 
                 return {
-                    opacity: smoothProgress,
+                    opacity: idx === closestIndex ? smoothProgress : 0,
                     translateY: dist > 0
                         ? (1 - smoothProgress) * 12
                         : -(1 - smoothProgress) * 12
@@ -537,10 +537,10 @@ const Workspace: React.FC = () => {
                                         onClick={() => handleCardClick(idx)}
                                         className="min-h-[45vh] flex flex-col justify-center cursor-pointer"
                                         style={{
-                                            opacity: cardStyles[idx]?.opacity ?? 0,
-                                            transform: `translateY(${cardStyles[idx]?.translateY ?? 0}px)`,
-                                            pointerEvents: (cardStyles[idx]?.opacity ?? 0) > 0.1 ? 'auto' : 'none',
-                                            transition: 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                                            opacity: activeTab === idx + 1 ? 1 : 0,
+                                            transform: `translateY(${activeTab === idx + 1 ? 0 : 12}px)`,
+                                            pointerEvents: activeTab === idx + 1 ? 'auto' : 'none',
+                                            transition: 'opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
                                         }}
                                     >
                                         <div className="space-y-8 py-4">
