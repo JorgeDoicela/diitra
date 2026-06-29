@@ -155,7 +155,7 @@ public class LopdpService : ILopdpService
                 GradoAcademicoMaximo = meta.GradoAcademicoMaximo,
                 AceptoTerminosFirma = meta.AceptoTerminosFirma,
                 FechaConsentimientoFirma = meta.FechaConsentimientoFirma,
-                HasP12Certificate = !string.IsNullOrEmpty(meta.RutaFirmaP12)
+                HasP12Certificate = false
             };
         }
         catch (Exception ex)
@@ -194,71 +194,6 @@ public class LopdpService : ILopdpService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al actualizar perfil LOPDP para Usuario={IdUsuario}", idUsuario);
-            throw;
-        }
-    }
-
-    public async Task GuardarFirmaElectronicaAsync(int idUsuario, string rutaArchivo, string passwordCifrada)
-    {
-        try
-        {
-            var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
-            if (meta == null)
-            {
-                meta = new InvUsuarioMetadata
-                {
-                    IdUsuario = idUsuario,
-                    Uuid = Guid.NewGuid(),
-                    Version = 1
-                };
-                _context.InvUsuariosMetadata.Add(meta);
-            }
-
-            meta.RutaFirmaP12 = rutaArchivo;
-            meta.P12PasswordEncrypted = passwordCifrada;
-            meta.FirmaHabilitada = true;
-            meta.Version++;
-
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al guardar firma electrónica para Usuario={IdUsuario}", idUsuario);
-            throw;
-        }
-    }
-
-    public async Task EliminarFirmaElectronicaAsync(int idUsuario)
-    {
-        try
-        {
-            var meta = await _context.InvUsuariosMetadata.FirstOrDefaultAsync(m => m.IdUsuario == idUsuario);
-            if (meta != null)
-            {
-                // Intentar eliminar el archivo físico
-                if (!string.IsNullOrEmpty(meta.RutaFirmaP12) && System.IO.File.Exists(meta.RutaFirmaP12))
-                {
-                    try
-                    {
-                        System.IO.File.Delete(meta.RutaFirmaP12);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error al eliminar archivo físico de firma para Usuario={IdUsuario} en ruta {Ruta}", idUsuario, meta.RutaFirmaP12);
-                    }
-                }
-
-                meta.RutaFirmaP12 = null;
-                meta.P12PasswordEncrypted = null;
-                meta.FirmaHabilitada = false;
-                meta.Version++;
-
-                await _context.SaveChangesAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error al eliminar firma electrónica para Usuario={IdUsuario}", idUsuario);
             throw;
         }
     }

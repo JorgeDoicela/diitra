@@ -22,12 +22,8 @@ public partial class InvUsuarioMetadata
     public string? GradoAcademicoMaximo { get; set; }
     
     // Configuración de Firma Electrónica (.p12)
-    public string? RutaFirmaP12 { get; set; }
-    public string? RutaFirmaImagen { get; set; } // Imagen de firma manuscrita
-    public bool FirmaHabilitada { get; set; } = false;
     public bool AceptoTerminosFirma { get; set; } = false;
     public DateTime? FechaConsentimientoFirma { get; set; }
-    public string? P12PasswordEncrypted { get; set; }
     
     // Preferencias y UI (JSON)
     public string? Configuracion { get; set; }

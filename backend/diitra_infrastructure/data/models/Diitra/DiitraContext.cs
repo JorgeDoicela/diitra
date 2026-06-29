@@ -74,7 +74,6 @@ public partial class DiitraContext : DbContext
     public virtual DbSet<AccessToken>           InvTokensAcceso        { get; set; }
     public virtual DbSet<InvUsuarioMetadata>    InvUsuariosMetadata    { get; set; }
     public virtual DbSet<InvLopdpConsentimiento> InvLopdpConsentimientos { get; set; }
-    public virtual DbSet<InvLopdpDerechoArco>    InvLopdpDerechosArco    { get; set; }
     public virtual DbSet<InvLopdpAuditoriaDatos> InvLopdpAuditoriaDatos  { get; set; }
     public virtual DbSet<InvAuditAdmin>       InvAuditAdmin          { get; set; }
     public virtual DbSet<InvDispositivoToken> InvDispositivosTokens   { get; set; }
@@ -1523,12 +1522,8 @@ public partial class DiitraContext : DbContext
             entity.Property(e => e.ResearchGateUrl).HasColumnName("researchGateUrl").HasMaxLength(255);
             entity.Property(e => e.Especialidad).HasColumnName("especialidad").HasColumnType("text");
             entity.Property(e => e.GradoAcademicoMaximo).HasColumnName("gradoAcademicoMaximo").HasMaxLength(100);
-            entity.Property(e => e.RutaFirmaP12).HasColumnName("rutaFirmaP12").HasMaxLength(255);
-            entity.Property(e => e.RutaFirmaImagen).HasColumnName("rutaFirmaImagen").HasMaxLength(255);
-            entity.Property(e => e.FirmaHabilitada).HasColumnName("firmaHabilitada").HasColumnType("tinyint(1)").HasDefaultValueSql("'0'").HasSentinel(false);
             entity.Property(e => e.AceptoTerminosFirma).HasColumnName("aceptoTerminosFirma").HasColumnType("tinyint(1)").HasDefaultValue(false);
             entity.Property(e => e.FechaConsentimientoFirma).HasColumnName("fechaConsentimientoFirma");
-            entity.Property(e => e.P12PasswordEncrypted).HasColumnName("p12PasswordEncrypted").HasMaxLength(512);
             entity.Property(e => e.Configuracion).HasColumnName("configuracion").HasColumnType("json");
             entity.Property(e => e.FechaRegistro).HasColumnName("fechaRegistro").HasDefaultValueSql("CURRENT_TIMESTAMP");
             entity.Property(e => e.FechaUltimoAcceso).HasColumnName("fechaUltimoAcceso");
@@ -1561,27 +1556,7 @@ public partial class DiitraContext : DbContext
                 .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_consentimiento_usuario");
         });
 
-        modelBuilder.Entity<InvLopdpDerechoArco>(entity =>
-        {
-            entity.HasKey(e => e.IdSolicitudArco).HasName("PRIMARY");
-            entity.ToTable("inv_lopdp_derechos_arco");
-            entity.Property(e => e.IdSolicitudArco).HasColumnName("idSolicitudArco");
-            entity.Property(e => e.Uuid).HasColumnName("uuid").HasMaxLength(36).IsRequired().HasConversion<string>();
-            entity.HasIndex(e => e.Uuid).IsUnique();
-            entity.Property(e => e.IdUsuario).HasColumnName("idUsuario");
-            entity.Property(e => e.TipoSolicitud).HasColumnName("tipoSolicitud").HasColumnType("enum('Acceso','Rectificacion','Eliminacion','Oposicion','Portabilidad','Limitacion')").IsRequired();
-            entity.Property(e => e.DetalleSolicitud).HasColumnName("detalleSolicitud").HasColumnType("text").IsRequired();
-            entity.Property(e => e.FechaSolicitud).HasColumnName("fechaSolicitud").HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.FechaLimiteResolucion).HasColumnName("fechaLimiteResolucion");
-            entity.Property(e => e.Estado).HasColumnName("estado").HasColumnType("enum('Recibido','En_Analisis','Aprobado','Rechazado')").HasDefaultValue("Recibido");
-            entity.Property(e => e.ResolucionDetalle).HasColumnName("resolucionDetalle").HasColumnType("text");
-            entity.Property(e => e.FechaResolucion).HasColumnName("fechaResolucion");
-            entity.Property(e => e.DocumentoResolucionPath).HasColumnName("documentoResolucionPath").HasMaxLength(512);
-            entity.Property(e => e.EvidenciaPath).HasColumnName("evidenciaPath").HasMaxLength(512);
 
-            entity.HasOne(d => d.User).WithMany()
-                .HasForeignKey(d => d.IdUsuario).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_arco_usuario");
-        });
 
         modelBuilder.Entity<InvLopdpAuditoriaDatos>(entity =>
         {

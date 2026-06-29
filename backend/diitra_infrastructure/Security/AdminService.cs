@@ -150,7 +150,7 @@ public class AdminService : IAdminService
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
-                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
+                    FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false,
                     Carrera = carreraNom ?? "No vinculada",
                     Nivel = nivelNom ?? "N/A"
                 };
@@ -228,7 +228,7 @@ public class AdminService : IAdminService
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
-                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false
+                    FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false
                 };
             }).ToList();
         }
@@ -348,7 +348,7 @@ public class AdminService : IAdminService
                     Roles = roleInfo.Select(ur => ur.Role.Nombre).ToList(),
                     RoleCodes = roleInfo.Select(ur => ur.Role.CodigoRol).ToList(),
                     OrcidId = userMeta?.OrcidId,
-                    FirmaHabilitada = userMeta?.FirmaHabilitada ?? false,
+                    FirmaHabilitada = userMeta?.AceptoTerminosFirma ?? false,
                     Carrera = carreraNom,
                     Nivel = "N/A",
                     HorasInvestigacion = hours,
