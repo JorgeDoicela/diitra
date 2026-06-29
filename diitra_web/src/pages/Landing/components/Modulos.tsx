@@ -8,7 +8,11 @@ import {
     Terminal,
     Loader2,
     X,
-    Plus
+    Plus,
+    ChevronUp,
+    ChevronDown,
+    Key,
+    RefreshCw
 } from 'lucide-react';
 
 const Modulos: React.FC = () => {
@@ -46,6 +50,13 @@ const Modulos: React.FC = () => {
             subtitle: "Acreditación & Reportes",
             icon: ShieldCheck,
             desc: "Prepara a tu institución para las auditorías externas. Conéctate automáticamente con la pasarela SIIES para sincronizar evidencias y audita el cumplimiento del indicador de investigación CACES desde una terminal interactiva."
+        },
+        {
+            id: 5,
+            title: "Firma Electrónica",
+            subtitle: "Firma Electrónica IST",
+            icon: Key,
+            desc: "Integración nativa con archivos .p12. Las rúbricas, actas de aprobación y reportes mensuales se firman digitalmente con validez jurídica completa, cumpliendo de forma estricta con la normativa vigente de firma electrónica en el Ecuador."
         }
     ];
 
@@ -63,18 +74,53 @@ const Modulos: React.FC = () => {
         if (activeModule === null) {
             handleModuleSelect(1);
         } else {
-            const next = activeModule === 4 ? 1 : activeModule + 1;
+            const next = activeModule === 5 ? 1 : activeModule + 1;
             handleModuleSelect(next);
         }
     };
 
     const handlePrevModule = () => {
         if (activeModule === null) {
-            handleModuleSelect(4);
+            handleModuleSelect(5);
         } else {
-            const prev = activeModule === 1 ? 4 : activeModule - 1;
+            const prev = activeModule === 1 ? 5 : activeModule - 1;
             handleModuleSelect(prev);
         }
+    };
+
+    // Estados para la firma electrónica interactiva
+    const [signState, setSignState] = useState<'idle' | 'scanning' | 'signed'>('idle');
+    const [signProgress, setSignProgress] = useState<number>(0);
+    const [signTimestamp, setSignTimestamp] = useState<string>('');
+
+    useEffect(() => {
+        let interval: any;
+        if (signState === 'scanning') {
+            setSignProgress(0);
+            interval = setInterval(() => {
+                setSignProgress((prev) => {
+                    if (prev >= 100) {
+                        clearInterval(interval);
+                        const now = new Date();
+                        setSignTimestamp(now.toLocaleString('es-EC', { timeZone: 'America/Guayaquil' }));
+                        setSignState('signed');
+                        return 100;
+                    }
+                    return prev + 5;
+                });
+            }, 80);
+        }
+        return () => clearInterval(interval);
+    }, [signState]);
+
+    const startSigning = () => {
+        if (signState !== 'idle') return;
+        setSignState('scanning');
+    };
+
+    const resetSignature = () => {
+        setSignState('idle');
+        setSignProgress(0);
     };
 
     // ==========================================
@@ -226,6 +272,13 @@ const Modulos: React.FC = () => {
                     width: 100%;
                     max-width: 680px; /* Laptop más grande */
                     margin: 0 auto;
+                    overflow: visible;
+                    transition: transform 0.3s ease;
+                }
+                @media (min-width: 1024px) {
+                    .laptop-container {
+                        transform: translateX(-24px); /* Desplazar levemente a la izquierda */
+                    }
                 }
                 .laptop-lid {
                     background: #0a0a0a; /* Negro profundo mate */
@@ -364,6 +417,20 @@ const Modulos: React.FC = () => {
                     backdrop-filter: blur(14px);
                     -webkit-backdrop-filter: blur(14px);
                 }
+                @keyframes scanLine {
+                    0% { top: 0%; opacity: 0.8; }
+                    50% { top: 100%; opacity: 0.8; }
+                    100% { top: 0%; opacity: 0.8; }
+                }
+                .animate-scan-line {
+                    position: absolute;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background: #0070f3;
+                    box-shadow: 0 0 10px #0070f3, 0 0 4px #0070f3;
+                    animation: scanLine 2s linear infinite;
+                }
             `}</style>
 
             {/* Header de la sección */}
@@ -447,9 +514,9 @@ const Modulos: React.FC = () => {
                 </div>
 
                 {/* Columna Derecha (col-span-8): Laptop de CSS interactiva de gran tamaño */}
-                <div className="lg:col-span-8 flex flex-col items-center justify-center relative">
+                <div className="lg:col-span-8 flex flex-col items-center justify-center relative overflow-visible">
 
-                    <div className="relative w-full flex flex-col items-center justify-center">
+                    <div className="relative w-full flex flex-col items-center justify-center overflow-visible">
 
                         {/* ÚNICO BOTÓN X flotante en la esquina superior derecha del contenedor de la laptop */}
                         {activeModule !== null && (
@@ -460,6 +527,26 @@ const Modulos: React.FC = () => {
                             >
                                 <X size={14} className="stroke-[2.5]" />
                             </button>
+                        )}
+
+                        {/* Botonera de navegación vertical (Subir / Bajar módulo) */}
+                        {activeModule !== null && (
+                            <div className="absolute -left-6 lg:-left-12 top-[56%] -translate-y-1/2 z-30 flex flex-col gap-2">
+                                <button
+                                    onClick={handlePrevModule}
+                                    className="w-8.5 h-8.5 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface dark:bg-black/95 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-md hover:border-border-hover"
+                                    title="Módulo Anterior"
+                                >
+                                    <ChevronUp size={14} className="stroke-[2.5]" />
+                                </button>
+                                <button
+                                    onClick={handleNextModule}
+                                    className="w-8.5 h-8.5 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface dark:bg-black/95 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-md hover:border-border-hover"
+                                    title="Módulo Siguiente"
+                                >
+                                    <ChevronDown size={14} className="stroke-[2.5]" />
+                                </button>
+                            </div>
                         )}
 
                         {/* TAPA/PANTALLA DE LA LAPTOP */}
@@ -490,13 +577,13 @@ const Modulos: React.FC = () => {
                                                 <span>MONITOR CENTRAL</span>
                                             </div>
 
-                                            {/* Rejilla 2x2 interactiva */}
-                                            <div className="grid grid-cols-2 gap-3.5 flex-1 pt-1 text-left">
+                                            {/* Rejilla interactiva para 5 módulos (4 en grid 2x2 + 1 abajo ancho completo) */}
+                                            <div className="grid grid-cols-6 gap-3 pt-1 text-left flex-1">
 
                                                 {/* Cuadrante 1: Postulación */}
                                                 <button
                                                     onClick={() => handleModuleSelect(1)}
-                                                    className="p-3.5 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-brand/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
+                                                    className="col-span-3 p-3 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-brand/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
                                                 >
                                                     <div className="flex justify-between items-start">
                                                         <span className="text-[7.5px] font-mono text-text-dim">01 // CONVOCATORIA</span>
@@ -514,7 +601,7 @@ const Modulos: React.FC = () => {
                                                 {/* Cuadrante 2: Seguimiento */}
                                                 <button
                                                     onClick={() => handleModuleSelect(2)}
-                                                    className="p-3.5 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-success/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
+                                                    className="col-span-3 p-3 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-success/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
                                                 >
                                                     <div className="flex justify-between items-start">
                                                         <span className="text-[7.5px] font-mono text-text-dim">02 // SEGUIMIENTO</span>
@@ -532,7 +619,7 @@ const Modulos: React.FC = () => {
                                                 {/* Cuadrante 3: Propiedad Intelectual */}
                                                 <button
                                                     onClick={() => handleModuleSelect(3)}
-                                                    className="p-3.5 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-warning/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
+                                                    className="col-span-3 p-3 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-warning/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
                                                 >
                                                     <div className="flex justify-between items-start">
                                                         <span className="text-[7.5px] font-mono text-text-dim">03 // PROPIEDAD INT.</span>
@@ -551,7 +638,7 @@ const Modulos: React.FC = () => {
                                                 {/* Cuadrante 4: Acreditación */}
                                                 <button
                                                     onClick={() => handleModuleSelect(4)}
-                                                    className="p-3.5 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-info/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
+                                                    className="col-span-3 p-3 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-info/40 transition-all duration-300 flex flex-col justify-between text-left group cursor-pointer"
                                                 >
                                                     <div className="flex justify-between items-start">
                                                         <span className="text-[7.5px] font-mono text-text-dim">04 // ACREDITACIÓN</span>
@@ -563,6 +650,24 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                     <div className="text-[7px] font-mono text-text-dim truncate">
                                                         guest@diitra:~$ status
+                                                    </div>
+                                                </button>
+
+                                                {/* Cuadrante 5: Firma Electrónica (Ancho completo abajo) */}
+                                                <button 
+                                                    onClick={() => handleModuleSelect(5)}
+                                                    className="col-span-6 p-3 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-brand/40 transition-all duration-300 flex items-center justify-between text-left group cursor-pointer"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <Key size={13} className="text-text-dim group-hover:text-brand transition-colors" />
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[7.5px] font-mono text-text-dim leading-none">05 // FIRMA ELECTRÓNICA</span>
+                                                            <span className="text-[9.5px] font-bold text-text-main mt-0.5 leading-none">INTEGRACIÓN FIRMAEC (.P12)</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-1.5 items-center">
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${signState === 'signed' ? 'bg-success animate-pulse' : 'bg-brand animate-pulse'}`} />
+                                                        <span className="text-[7.5px] font-mono text-text-dim uppercase">{signState === 'signed' ? 'FIRMADO' : 'LISTO'}</span>
                                                     </div>
                                                 </button>
 
@@ -807,6 +912,79 @@ const Modulos: React.FC = () => {
                                                     </button>
                                                 </div>
 
+                                            </div>
+
+                                        </div>
+                                    )}
+
+                                    {/* 5. MÓDULO ACTIVO: FIRMA ELECTRÓNICA */}
+                                    {activeModule === 5 && (
+                                        <div className="h-full flex flex-col gap-3">
+                                            
+                                            {/* Header del widget */}
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
+                                                <span className="font-semibold text-text-main">// FIRMA DIGITAL ACTA</span>
+                                                <span>MOD-05</span>
+                                            </div>
+
+                                            {/* Panel interactivo de firma */}
+                                            <div className="flex-1 flex flex-col justify-center font-mono text-[9px]">
+                                                {signState === 'idle' && (
+                                                    <div className="space-y-3">
+                                                        <p className="text-[8px] text-text-dim uppercase tracking-wider font-mono">// DISPOSITIVO DE FIRMA LISTO</p>
+                                                        <div className="p-3.5 border border-dashed border-border-thin rounded flex items-center justify-center bg-bg-deep/30">
+                                                            <span className="text-[8.5px] text-text-dim/80">Certificado digital p12 cargado.</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={startSigning}
+                                                            className="w-full py-3 bg-text-main text-bg-deep rounded font-bold font-sans text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                                                        >
+                                                            <Key size={12} />
+                                                            Firmar Acta de Aprobación
+                                                        </button>
+                                                    </div>
+                                                )}
+
+                                                {signState === 'scanning' && (
+                                                    <div className="space-y-3">
+                                                        <div className="relative h-20 border border-brand/20 bg-bg-deep rounded flex flex-col items-center justify-center overflow-hidden">
+                                                            <div className="animate-scan-line" />
+                                                            <Key size={28} className="text-brand/60 animate-pulse" />
+                                                            <span className="text-[8px] text-brand font-semibold mt-2 tracking-widest animate-pulse">GENERANDO FIRMA CRIPTOGRÁFICA...</span>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <div className="flex justify-between text-[8px] text-brand/80 font-mono">
+                                                                <span>APLICANDO SELLO CRIPTOGRÁFICO P12</span>
+                                                                <span>{signProgress}%</span>
+                                                            </div>
+                                                            <div className="w-full h-1 bg-border-thin rounded-full overflow-hidden">
+                                                                <div className="h-full bg-brand transition-all duration-75" style={{ width: `${signProgress}%` }} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {signState === 'signed' && (
+                                                    <div className="space-y-2.5 animate-fade-in text-left">
+                                                        <div className="flex justify-between items-center text-success font-sans font-semibold text-[10px]">
+                                                            <span className="flex items-center gap-1">
+                                                                <Check size={12} strokeWidth={3} className="animate-scale-up" />
+                                                                ACTA FIRMADA CON ÉXITO
+                                                            </span>
+                                                            <button 
+                                                                onClick={resetSignature}
+                                                                className="text-text-dim hover:text-text-main text-[8px] font-mono border border-border-thin px-1.5 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 bg-surface/30"
+                                                            >
+                                                                <RefreshCw size={8} /> REINICIAR
+                                                            </button>
+                                                        </div>
+                                                        <div className="text-[8px] text-text-dim space-y-0.5 border-t border-border-thin/40 pt-2">
+                                                            <p>Firmante: <span className="text-text-main font-semibold">Dr. Jorge Doicela (Director I+D)</span></p>
+                                                            <p>Fecha de Firma: <span className="text-text-main font-semibold">{signTimestamp}</span></p>
+                                                            <p className="font-mono text-brand truncate">Hash: 8f3b2a1c9e8d7f6c4b2a3e9c8a7b6c5d4e3f2a1b</p>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
 
                                         </div>
