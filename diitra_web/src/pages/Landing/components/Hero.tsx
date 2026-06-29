@@ -220,7 +220,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                                     top: '30%',
                                     width: '650px',
                                     height: '650px',
-                                    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%)',
+                                    background: 'radial-gradient(circle, rgba(139, 92, 246, 0.20) 0%, transparent 70%)',
                                     transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.15), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 - var(--norm-x, 0) * 0.60 - var(--norm-y, 0) * 0.60))',
                                     filter: 'blur(calc(90px - var(--dist, 0) * 15px))',
                                     borderRadius: '50%',
@@ -234,7 +234,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                                     top: '70%',
                                     width: '650px',
                                     height: '650px',
-                                    background: 'radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, transparent 70%)',
+                                    background: 'radial-gradient(circle, rgba(37, 99, 235, 0.22) 0%, transparent 70%)',
                                     transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.15), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 + var(--norm-x, 0) * 0.60 + var(--norm-y, 0) * 0.60))',
                                     filter: 'blur(calc(90px - var(--dist, 0) * 15px))',
                                     borderRadius: '50%',
@@ -248,7 +248,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                                     top: '80%',
                                     width: '550px',
                                     height: '550px',
-                                    background: 'radial-gradient(circle, rgba(14, 116, 144, 0.08) 0%, transparent 70%)',
+                                    background: 'radial-gradient(circle, rgba(14, 116, 144, 0.14) 0%, transparent 70%)',
                                     transform: 'translate(calc(-50% + var(--mouse-x, 0px) * 0.10), calc(-50% + var(--mouse-y, 0px) * 0.15)) scale(calc(1 + var(--norm-y, 0) * 0.70))',
                                     filter: 'blur(calc(80px - var(--dist, 0) * 15px))',
                                     borderRadius: '50%',
@@ -297,9 +297,9 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                                     ? `conic-gradient(
                                         from 0deg at 50% 50%,
                                         transparent 15deg,
-                                        rgba(139, 92, 246, 0.18) 50deg,
-                                        rgba(37, 99, 235, 0.50) 90deg,
-                                        rgba(14, 116, 144, 0.18) 130deg,
+                                        rgba(139, 92, 246, 0.28) 50deg,
+                                        rgba(37, 99, 235, 0.65) 90deg,
+                                        rgba(14, 116, 144, 0.28) 130deg,
                                         transparent 165deg
                                     )`
                                     : `conic-gradient(
@@ -330,7 +330,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                                 ? 'translate(-50%, -50%) scale(0.25)'
                                 : 'translate(calc(-50% + var(--mouse-x, 0px) * 0.32), calc(-50% + var(--mouse-y, 0px) * 0.32)) scale(calc(1 + var(--dist, 0) * 0.15))',
                             background: currentTheme === 'dark'
-                                ? 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(99, 102, 241, 0.35) 25%, rgba(37, 99, 235, 0.10) 55%, transparent 75%)'
+                                ? 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(99, 102, 241, 0.45) 25%, rgba(37, 99, 235, 0.20) 55%, transparent 75%)'
                                 : 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(255,255,255,0.90) 25%, transparent 60%)',
                             filter: currentTheme === 'dark' ? 'blur(calc(24px - var(--dist, 0) * 8px))' : 'blur(calc(15px - var(--dist, 0) * 5px))',
                             borderRadius: '50%',
@@ -354,7 +354,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                             transform: isRainbow
                                 ? 'translate(calc(-50% + var(--mouse-x, 0px) * 0.015), calc(-50% + var(--mouse-y, 0px) * 0.015)) scale(calc(1.1 + var(--dist, 0) * 0.04)) rotate(calc(var(--angle, 0deg) * -0.06))'
                                 : 'translate(-50%, -50%) scale(0.25)',
-                            opacity: isRainbow ? 0.75 : 0,
+                            opacity: isRainbow ? 0.85 : 0,
                             filter: isRainbow
                                 ? 'brightness(1.1) saturate(1.15) hue-rotate(calc(var(--angle, 0deg) * -0.1))'
                                 : 'brightness(0.7) saturate(0.7) blur(15px)',
@@ -366,15 +366,15 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                             style={{
                                 background: `conic-gradient(
                                     from -15deg at 50% 50%,
-                                    rgba(60, 120, 255, 0.95) 35deg,
+                                    rgba(40, 100, 255, 1) 35deg,
                                     transparent 75deg,
-                                    rgba(40, 220, 180, 0.95) 125deg,
+                                    rgba(20, 230, 180, 1) 125deg,
                                     transparent 165deg,
-                                    rgba(200, 240, 80, 0.95) 215deg,
+                                    rgba(210, 250, 50, 1) 215deg,
                                     transparent 255deg,
-                                    rgba(255, 80, 160, 0.95) 305deg,
+                                    rgba(255, 50, 150, 1) 305deg,
                                     transparent 345deg,
-                                    rgba(60, 120, 255, 0.95) 395deg
+                                    rgba(40, 100, 255, 1) 395deg
                                 )`,
                                 filter: 'blur(55px)',
                                 maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',
@@ -395,7 +395,7 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                             transform: isRainbow
                                 ? 'translate(calc(-50% + var(--mouse-x, 0px) * 0.03), calc(-50% + var(--mouse-y, 0px) * 0.03)) scale(calc(1 + var(--dist, 0) * 0.08)) rotate(calc(var(--angle, 0deg) * 0.12))'
                                 : 'translate(-50%, -50%) scale(0.25)',
-                            opacity: isRainbow ? 0.95 : 0,
+                            opacity: isRainbow ? 1 : 0,
                             filter: isRainbow
                                 ? 'brightness(1.15) saturate(1.25) hue-rotate(calc(var(--angle, 0deg) * 0.15))'
                                 : 'brightness(0.8) saturate(0.8) blur(10px)',
@@ -407,15 +407,15 @@ const Hero: React.FC<HeroProps> = ({ currentTheme }) => {
                             style={{
                                 background: `conic-gradient(
                                     from -15deg at 50% 50%,
-                                    rgba(60, 120, 255, 0.95) 35deg,
+                                    rgba(40, 100, 255, 1) 35deg,
                                     transparent 75deg,
-                                    rgba(40, 220, 180, 0.95) 125deg,
+                                    rgba(20, 230, 180, 1) 125deg,
                                     transparent 165deg,
-                                    rgba(200, 240, 80, 0.95) 215deg,
+                                    rgba(210, 250, 50, 1) 215deg,
                                     transparent 255deg,
-                                    rgba(255, 80, 160, 0.95) 305deg,
+                                    rgba(255, 50, 150, 1) 305deg,
                                     transparent 345deg,
-                                    rgba(60, 120, 255, 0.95) 395deg
+                                    rgba(40, 100, 255, 1) 395deg
                                 )`,
                                 filter: 'blur(35px)',
                                 maskImage: 'radial-gradient(circle, black 15%, transparent 70%)',

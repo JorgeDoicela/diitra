@@ -3,12 +3,6 @@ import { FileText, Loader2, Check } from 'lucide-react';
 
 const Caces: React.FC = () => {
     const [activeFeature, setActiveFeature] = useState<number>(1);
-    const [cardStyles, setCardStyles] = useState<{ opacity: number; translateY: number }[]>([
-        { opacity: 1, translateY: 0 },
-        { opacity: 0, translateY: 12 },
-        { opacity: 0, translateY: 12 },
-        { opacity: 0, translateY: 12 }
-    ]);
     const [exportState, setExportState] = useState<'idle' | 'loading' | 'success'>('idle');
     const [currentValStep, setCurrentValStep] = useState<number>(0);
     const [showToast, setShowToast] = useState<boolean>(false);
@@ -103,7 +97,6 @@ const Caces: React.FC = () => {
         const handleScroll = () => {
             const viewportHeight = window.innerHeight;
             const center = viewportHeight / 2;
-            const range = viewportHeight * 0.22; // Rango más estrecho para evitar solapamientos visuales de opacidad
 
             let closestIndex = 0;
             let closestDistance = Infinity;
@@ -123,40 +116,6 @@ const Caces: React.FC = () => {
             });
 
             setActiveFeature(closestIndex + 1);
-
-            // Calcular opacidad y traslación progresiva para cada tarjeta usando features para mapear
-            const newStyles = features.map((_, idx) => {
-                const ref = cardRefs.current[idx];
-                if (!ref) return { opacity: 0, translateY: 12 };
-                const rect = ref.getBoundingClientRect();
-                const cardCenter = rect.top + rect.height / 2;
-                const dist = cardCenter - center;
-
-                const plateau = 80; // Zona plana de 80px en el centro para facilitar la lectura
-                const effectiveDist = Math.max(0, Math.abs(dist) - plateau);
-                const effectiveRange = range - plateau;
-
-                // Fuera del rango de visibilidad
-                if (effectiveDist >= effectiveRange) {
-                    return {
-                        opacity: 0,
-                        translateY: dist > 0 ? 12 : -12
-                    };
-                }
-
-                // Cálculo progresivo de la animación (0 a 1)
-                const progress = 1 - effectiveDist / effectiveRange;
-                const smoothProgress = Math.sin(progress * Math.PI / 2); // Easing senoidal suave
-
-                return {
-                    opacity: idx === closestIndex ? smoothProgress : 0,
-                    translateY: dist > 0
-                        ? (1 - smoothProgress) * 12
-                        : -(1 - smoothProgress) * 12
-                };
-            });
-
-            setCardStyles(newStyles);
         };
 
         handleScroll();
@@ -234,7 +193,7 @@ const Caces: React.FC = () => {
                                 return (
                                     <div
                                         key={idx}
-                                        ref={el => cardRefs.current[idx] = el}
+                                        ref={el => { cardRefs.current[idx] = el; }}
                                         data-index={idx}
                                         onClick={() => handleCardClick(idx)}
                                         className="min-h-[45vh] flex flex-col justify-center cursor-pointer"
