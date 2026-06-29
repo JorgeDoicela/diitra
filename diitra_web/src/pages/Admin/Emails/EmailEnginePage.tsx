@@ -661,6 +661,7 @@ const EmailEnginePage: React.FC = () => {
     }, [templates, selectedTemplateId, applyTemplate]);
 
     // Load history when active
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (activeTab === 'history') {
             fetchHistory();
@@ -1489,7 +1490,7 @@ const EmailEnginePage: React.FC = () => {
                                                     </div>
 
                                                     <p className="text-[8px] text-text-dim/80 leading-relaxed italic">
-                                                        * Al cargar tu firma y clave, los PDFs autogenerados se sellarán digitalmente antes de enviarse. Usa la clave <strong className="font-mono text-brand">diitra2026</strong> para bypass / demo en servidor.
+                                                        * Al cargar tu firma y clave, los PDFs autogenerados se sellarán digitalmente antes de enviarse.
                                                     </p>
                                                 </div>
                                             )}
