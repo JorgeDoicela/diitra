@@ -3,6 +3,12 @@ import { Users, CheckCircle2, DollarSign, CalendarRange, BookOpen, PenTool } fro
 
 const Workspace: React.FC = () => {
     const [activeTab, setActiveTab] = useState<number>(1);
+    const [cardStyles, setCardStyles] = useState<{ opacity: number; translateY: number }[]>([
+        { opacity: 1, translateY: 0 },
+        { opacity: 0, translateY: 12 },
+        { opacity: 0, translateY: 12 },
+        { opacity: 0, translateY: 12 }
+    ]);
     const [isSaving, setIsSaving] = useState<boolean>(false);
 
     // Simulación de co-edición en tiempo real
@@ -29,11 +35,13 @@ const Workspace: React.FC = () => {
         const handleScroll = () => {
             const viewportHeight = window.innerHeight;
             const center = viewportHeight / 2;
+            const range = viewportHeight * 0.38; // Rango para desvanecerse (38% de la altura de pantalla)
 
             let closestIndex = 0;
             let closestDistance = Infinity;
 
-            cardRefs.current.forEach((ref, idx) => {
+            features.forEach((_, idx) => {
+                const ref = cardRefs.current[idx];
                 if (ref) {
                     const rect = ref.getBoundingClientRect();
                     const cardCenter = rect.top + rect.height / 2;
@@ -47,11 +55,47 @@ const Workspace: React.FC = () => {
             });
 
             setActiveTab(closestIndex + 1);
+
+            // Calcular opacidad y traslación progresiva para cada tarjeta usando features para mapear
+            const newStyles = features.map((_, idx) => {
+                const ref = cardRefs.current[idx];
+                if (!ref) return { opacity: 0, translateY: 12 };
+                const rect = ref.getBoundingClientRect();
+                const cardCenter = rect.top + rect.height / 2;
+                const dist = cardCenter - center;
+
+                const plateau = 80; // Zona plana de 80px en el centro para facilitar la lectura
+                const effectiveDist = Math.max(0, Math.abs(dist) - plateau);
+                const effectiveRange = range - plateau;
+
+                // Fuera del rango de visibilidad
+                if (effectiveDist >= effectiveRange) {
+                    return {
+                        opacity: 0,
+                        translateY: dist > 0 ? 12 : -12
+                    };
+                }
+
+                // Cálculo progresivo de la animación (0 a 1)
+                const progress = 1 - effectiveDist / effectiveRange;
+                const smoothProgress = Math.sin(progress * Math.PI / 2); // Easing senoidal suave
+
+                return {
+                    opacity: smoothProgress,
+                    translateY: dist > 0
+                        ? (1 - smoothProgress) * 12
+                        : -(1 - smoothProgress) * 12
+                };
+            });
+
+            setCardStyles(newStyles);
         };
 
         handleScroll();
+        const timer = setTimeout(handleScroll, 100);
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => {
+            clearTimeout(timer);
             window.removeEventListener('scroll', handleScroll);
         };
     }, [isDesktop]);
@@ -162,7 +206,7 @@ const Workspace: React.FC = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 items-start relative">
                 {/* Izquierda (col-span-8): Mockup Interactivo */}
-                <div className="lg:col-span-8 lg:sticky lg:top-[24vh] border border-border-thin rounded-xl bg-surface shadow-md p-7 font-mono text-xs tracking-tight relative overflow-hidden select-none">
+                <div className="lg:col-span-8 lg:sticky lg:top-[32vh] border border-border-thin rounded-xl bg-surface shadow-md p-7 font-mono text-xs tracking-tight relative overflow-hidden select-none">
                     {/* Decoraciones del editor */}
                     <div className="flex items-center justify-between border-b border-border-thin pb-3.5 mb-5.5">
                         <div className="flex items-center gap-2">
@@ -454,8 +498,6 @@ const Workspace: React.FC = () => {
                     {isDesktop ? (
                         <div className="space-y-[6vh] lg:pb-[15vh]">
                             {features.map((item, idx) => {
-                                const isActive = activeTab === item.tabId;
-
                                 const getHeadingText = (tabId: number) => {
                                     switch (tabId) {
                                         case 1:
@@ -493,10 +535,13 @@ const Workspace: React.FC = () => {
                                         ref={el => cardRefs.current[idx] = el}
                                         data-index={idx}
                                         onClick={() => handleCardClick(idx)}
-                                        className={`min-h-[85vh] flex flex-col justify-center transition-all duration-700 ease-in-out cursor-pointer ${isActive
-                                            ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
-                                            : 'opacity-0 scale-[0.98] translate-y-8 pointer-events-none'
-                                            }`}
+                                        className="min-h-[45vh] flex flex-col justify-center cursor-pointer"
+                                        style={{
+                                            opacity: cardStyles[idx]?.opacity ?? 0,
+                                            transform: `translateY(${cardStyles[idx]?.translateY ?? 0}px)`,
+                                            pointerEvents: (cardStyles[idx]?.opacity ?? 0) > 0.1 ? 'auto' : 'none',
+                                            transition: 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+                                        }}
                                     >
                                         <div className="space-y-8 py-4">
                                             {/* Large dynamic Vercel-style heading (font-medium for thinner text) */}
