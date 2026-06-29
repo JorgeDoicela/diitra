@@ -721,7 +721,7 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// PRESUPUESTO MODULAR</span>
                                                 <span>MOD-01</span>
                                             </div>
@@ -832,7 +832,7 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// MONITOREO Y HITOS</span>
                                                 <span>MOD-02</span>
                                             </div>
@@ -852,14 +852,14 @@ const Modulos: React.FC = () => {
                                                                 strokeDashoffset={2 * Math.PI * 22 - (2 * Math.PI * 22 * (hitosCompletedCount / hitosTotalCount))}
                                                             />
                                                         </svg>
-                                                        <div className="absolute font-bold text-[9.5px] text-text-main flex flex-col items-center">
+                                                        <div className="absolute font-bold text-[12px] text-text-main flex flex-col items-center">
                                                             <span>{Math.round((hitosCompletedCount / hitosTotalCount) * 100)}%</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Feed de Auditoría de Carga */}
-                                                    <div className="col-span-7 flex flex-col justify-center text-[7.5px] border-l border-border-thin/20 pl-3 gap-1 min-h-[56px]">
-                                                        <div className="text-[6.5px] text-text-dim uppercase font-mono tracking-wider mb-0.5">// AUDITORÍA DOCENTE</div>
+                                                    <div className="col-span-7 flex flex-col justify-center text-[9.5px] border-l border-border-thin/20 pl-3 gap-1 min-h-[56px]">
+                                                        <div className="text-[8px] text-text-dim uppercase font-mono tracking-wider mb-0.5">// AUDITORÍA DOCENTE</div>
                                                         <div className="space-y-0.5">
                                                             <p className={`${hitos[0].completed ? 'text-success' : 'text-text-dim/50'} transition-all`}>
                                                                 {hitos[0].completed ? '[OK] Cargo marco_teorico.pdf' : '[-] Falta Marco Teórico'}
@@ -937,7 +937,7 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// PROPIEDAD INTELECTUAL</span>
                                                 <span>MOD-03</span>
                                             </div>
@@ -950,13 +950,13 @@ const Modulos: React.FC = () => {
                                                     
                                                     {/* Lista de commits */}
                                                     <div className="col-span-7 space-y-1">
-                                                        <div className="text-[6.5px] text-text-dim uppercase font-mono tracking-wider">// COMMITS REPOSITORIO</div>
+                                                        <div className="text-[9px] text-text-dim uppercase font-mono tracking-wider font-bold">// COMMITS REPOSITORIO</div>
                                                         <div className="space-y-0.5 max-h-[48px] overflow-hidden">
                                                             {commits.map((c, idx) => (
-                                                                <div key={c.hash + idx} className="flex justify-between items-center text-[7.5px] gap-1 animate-fade-in">
+                                                                <div key={c.hash + idx} className="flex justify-between items-center text-[9px] gap-1 animate-fade-in">
                                                                     <span className="text-brand font-bold">{c.hash}</span>
-                                                                    <span className="text-text-main truncate max-w-[70px]">{c.msg}</span>
-                                                                    <span className="text-[6px] text-text-dim whitespace-nowrap">{c.time}</span>
+                                                                    <span className="text-text-main truncate max-w-[100px]">{c.msg}</span>
+                                                                    <span className="text-[8px] text-text-dim whitespace-nowrap">{c.time}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -966,18 +966,18 @@ const Modulos: React.FC = () => {
                                                     <div className="col-span-5 flex flex-col items-center justify-center border-l border-border-thin/20 pl-3">
                                                         <button 
                                                             onClick={handlePushCommit}
-                                                            className="w-full py-1.5 px-2 bg-text-main text-bg-deep rounded font-bold font-sans text-[7.5px] uppercase tracking-wider hover:opacity-90 active:scale-[0.97] transition-all cursor-pointer text-center"
+                                                            className="w-full py-1.5 px-2 bg-text-main text-bg-deep rounded font-bold font-sans text-[9.5px] uppercase tracking-wider hover:opacity-90 active:scale-[0.97] transition-all cursor-pointer text-center"
                                                         >
                                                             SIMULAR COMMIT
                                                         </button>
-                                                        <span className="text-[6px] text-text-dim/80 mt-1 block uppercase font-mono text-center">Branch: main</span>
+                                                        <span className="text-[8px] text-text-dim/80 mt-1 block uppercase font-mono text-center">Branch: main</span>
                                                     </div>
 
                                                 </div>
 
-                                                <div className="flex justify-between items-center text-[7.5px] font-mono text-text-dim border border-dashed border-border-thin bg-surface/20 p-2.5 rounded text-left">
+                                                <div className="flex justify-between items-center text-[10px] font-mono text-text-dim border border-dashed border-border-thin bg-surface/20 p-2.5 rounded text-left">
                                                     <span>REGISTRO SENADI ACTIVO:</span>
-                                                    <span className="text-success font-bold">REG-SENADI-2026-00459 (VIGENTE)</span>
+                                                    <span className="text-success font-bold text-[11px]">REG-SENADI-2026-00459 (VIGENTE)</span>
                                                 </div>
 
                                                 {Object.keys(downloadStates).map((fileName) => {
@@ -989,8 +989,8 @@ const Modulos: React.FC = () => {
                                                             className="p-2.5 border border-border-thin rounded bg-bg-deep flex flex-col gap-1 text-left w-full transition-all duration-300 hover:border-brand/40 cursor-pointer"
                                                         >
                                                             <div className="flex justify-between items-center font-sans">
-                                                                <span className="text-[10px] text-text-main font-bold font-mono">{fileName}</span>
-                                                                <span className="text-brand text-[8px] font-bold font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
+                                                                <span className="text-[12px] text-text-main font-bold font-mono">{fileName}</span>
+                                                                <span className="text-brand text-[10px] font-bold font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
                                                                     {state === 'idle' ? 'DESCARGAR' : state === 'success' ? 'COMPLETO' : `DESCARGANDO: ${state}%`}
                                                                 </span>
                                                             </div>
@@ -1015,13 +1015,13 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// CONSOLA DE AUDITORÍA</span>
                                                 <span>MOD-04</span>
                                             </div>
 
                                             {/* Monitor de Recursos del Servidor en Vivo */}
-                                            <div className="grid grid-cols-3 gap-2 bg-surface/20 p-2 rounded border border-border-thin/30 text-[7px] font-mono text-text-dim text-left">
+                                            <div className="grid grid-cols-3 gap-2 bg-surface/20 p-2 rounded border border-border-thin/30 text-[9.5px] font-mono text-text-dim text-left">
                                                 <div className="space-y-0.5">
                                                     <div className="flex justify-between">
                                                         <span>CPU LIMIT</span>
@@ -1120,49 +1120,38 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
                                             
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[9px] font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// FIRMA DIGITAL ACTA</span>
                                                 <span>MOD-05</span>
                                             </div>
 
                                             {/* Panel interactivo de firma */}
-                                            <div className="flex-1 flex flex-col justify-center font-mono text-[9px]">
+                                            <div className="flex-1 flex flex-col justify-center font-mono text-[11px]">
                                                 
                                                 {/* Folio del Documento Digital Interactivo */}
                                                 <div className="bg-surface/30 p-2 rounded border border-border-thin/30 text-left font-mono mb-2">
-                                                    <div className="flex justify-between items-center text-[7.5px] border-b border-border-thin/20 pb-1.5 mb-1.5">
+                                                    <div className="flex justify-between items-center text-[9.5px] border-b border-border-thin/20 pb-1.5 mb-1">
                                                         <span className="font-bold text-text-main">DOCUMENTO: acta_aprobacion_id.pdf</span>
-                                                        <span className={`text-[6.5px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${
+                                                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${
                                                             signState === 'signed' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning animate-pulse'
                                                         }`}>
-                                                            {signState === 'signed' ? 'FIRMADO DIGITALMENTE' : 'PENDIENTE FIRMA'}
+                                                            {signState === 'signed' ? 'FIRMADO' : 'PENDIENTE FIRMA'}
                                                         </span>
                                                     </div>
-                                                    <div className="space-y-1 opacity-65 text-[6.5px] text-text-dim">
+                                                    <div className="space-y-1 opacity-65 text-[8.5px] text-text-dim">
                                                         <p>PROYECTO: Automatización de Convocatorias Académicas (DIITRA-2026)</p>
-                                                        <div className="h-1 bg-border-thin/40 w-full rounded" />
-                                                        <div className="h-1 bg-border-thin/40 w-4/5 rounded" />
                                                     </div>
-                                                    {signState === 'signed' && (
-                                                        <div className="mt-2 p-1.5 bg-success/5 border border-success/20 rounded flex items-center justify-between text-[6.5px] text-success animate-fade-in">
-                                                            <div className="space-y-0.5">
-                                                                <p className="font-bold">FIRMA VALIDA (Banco Central Ecuador)</p>
-                                                                <p className="font-mono text-text-dim text-[5.5px] truncate max-w-[160px]">HASH: 8f3b2a1c9e8d7f6c4b2a3e9c8a7b6c5d4e3f2a1b</p>
-                                                            </div>
-                                                            <span className="text-[6.5px] font-sans font-bold bg-success text-bg-deep px-1.5 py-0.5 rounded">FIRMADO</span>
-                                                        </div>
-                                                    )}
                                                 </div>
 
                                                 {signState === 'idle' && (
                                                     <div className="space-y-3">
-                                                        <p className="text-[8px] text-text-dim uppercase tracking-wider font-mono">// DISPOSITIVO DE FIRMA LISTO</p>
+                                                        <p className="text-[10px] text-text-dim uppercase tracking-wider font-mono">// DISPOSITIVO DE FIRMA LISTO</p>
                                                         <div className="p-3.5 border border-dashed border-border-thin rounded flex items-center justify-center bg-bg-deep/30">
-                                                            <span className="text-[8.5px] text-text-dim/80">Certificado digital p12 cargado.</span>
+                                                            <span className="text-[10.5px] text-text-dim/80">Certificado digital p12 cargado.</span>
                                                         </div>
                                                         <button
                                                             onClick={startSigning}
-                                                            className="w-full py-3 bg-text-main text-bg-deep rounded font-bold font-sans text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                                                            className="w-full py-3 bg-text-main text-bg-deep rounded font-bold font-sans text-[12.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
                                                         >
                                                             <Key size={12} />
                                                             Firmar Acta de Aprobación
@@ -1175,10 +1164,10 @@ const Modulos: React.FC = () => {
                                                         <div className="relative h-20 border border-brand/20 bg-bg-deep rounded flex flex-col items-center justify-center overflow-hidden">
                                                             <div className="animate-scan-line" />
                                                             <Key size={28} className="text-brand/60 animate-pulse" />
-                                                            <span className="text-[8px] text-brand font-semibold mt-2 tracking-widest animate-pulse">GENERANDO FIRMA CRIPTOGRÁFICA...</span>
+                                                            <span className="text-[10.5px] text-brand font-semibold mt-2 tracking-widest animate-pulse">GENERANDO FIRMA CRIPTOGRÁFICA...</span>
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <div className="flex justify-between text-[8px] text-brand/80 font-mono">
+                                                            <div className="flex justify-between text-[10px] text-brand/80 font-mono">
                                                                 <span>APLICANDO SELLO CRIPTOGRÁFICO P12</span>
                                                                 <span>{signProgress}%</span>
                                                             </div>
@@ -1190,23 +1179,54 @@ const Modulos: React.FC = () => {
                                                 )}
 
                                                 {signState === 'signed' && (
-                                                    <div className="space-y-2.5 animate-fade-in text-left">
-                                                        <div className="flex justify-between items-center text-success font-sans font-semibold text-[10px]">
-                                                            <span className="flex items-center gap-1">
-                                                                <Check size={12} strokeWidth={3} className="animate-scale-up" />
-                                                                ACTA FIRMADA CON ÉXITO
-                                                            </span>
+                                                    <div className="space-y-3 animate-fade-in text-left">
+                                                        {/* Encabezado del Certificado Digital */}
+                                                        <div className="flex justify-between items-center bg-success/10 border border-success/30 p-2.5 rounded-lg">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-6 h-6 rounded-full bg-success/20 flex items-center justify-center text-success">
+                                                                    <Check size={12} strokeWidth={3} className="animate-scale-up" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="text-[11px] font-bold text-success font-sans leading-none">CERTIFICACIÓN VÁLIDA</p>
+                                                                    <p className="text-[8.5px] text-text-dim mt-0.5 font-mono">Banco Central del Ecuador</p>
+                                                                </div>
+                                                            </div>
                                                             <button 
                                                                 onClick={resetSignature}
-                                                                className="text-text-dim hover:text-text-main text-[8px] font-mono border border-border-thin px-1.5 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 bg-surface/30"
-                                                             >
-                                                                <RefreshCw size={8} /> REINICIAR
+                                                                className="text-text-dim hover:text-text-main text-[9.5px] font-mono border border-border-thin px-2 py-1 rounded cursor-pointer transition-all hover:bg-surface/50 active:scale-95 flex items-center gap-1.5 bg-surface/30"
+                                                            >
+                                                                <RefreshCw size={10} /> REINICIAR
                                                             </button>
                                                         </div>
-                                                        <div className="text-[8px] text-text-dim space-y-0.5 border-t border-border-thin/40 pt-2">
-                                                            <p>Firmante: <span className="text-text-main font-semibold">Dr. Jorge Doicela (Director I+D)</span></p>
-                                                            <p>Fecha de Firma: <span className="text-text-main font-semibold">{signTimestamp}</span></p>
-                                                            <p className="font-mono text-brand truncate">Hash: 8f3b2a1c9e8d7f6c4b2a3e9c8a7b6c5d4e3f2a1b</p>
+
+                                                        {/* Detalles del Firmante Oficial */}
+                                                        <div className="bg-surface/35 border border-border-thin/40 p-3 rounded-lg space-y-2 text-[10px] font-mono">
+                                                            <div className="grid grid-cols-2 gap-2 border-b border-border-thin/20 pb-2">
+                                                                <div>
+                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Firmante</span>
+                                                                    <span className="text-text-main font-semibold block mt-0.5">Dr. Jorge Doicela</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Cargo</span>
+                                                                    <span className="text-text-main font-semibold block mt-0.5">Director I+D</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2 pt-1">
+                                                                <div>
+                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Fecha de Firma</span>
+                                                                    <span className="text-text-main font-semibold block mt-0.5">{signTimestamp}</span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Entidad</span>
+                                                                    <span className="text-success font-semibold block mt-0.5">FirmaEC (IST)</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="border-t border-border-thin/20 pt-2 mt-1">
+                                                                <span className="text-[8px] text-text-dim block uppercase font-sans">Hash Criptográfico</span>
+                                                                <span className="text-brand font-bold text-[9px] block truncate font-mono mt-0.5">
+                                                                    8f3b2a1c9e8d7f6c4b2a3e9c8a7b6c5d4e3f2a1b
+                                                                </span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 )}
