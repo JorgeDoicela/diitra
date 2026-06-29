@@ -246,7 +246,7 @@ namespace Diitra.Infrastructure.Common.Documents
             }
 
             // Fusionar metadatos con snapshot existente respetando campos volátiles
-            metadataJson = MergeWithExistingSnapshot(instance, metadataJson);
+            metadataJson = MergeWithExistingSnapshot(instance, metadataJson) ?? metadataJson;
 
             instance.UpdateDataSnapshot(metadataJson);
             await _context.SaveChangesAsync(ct);
@@ -264,7 +264,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
         }
 
-        private string MergeWithExistingSnapshot(DocumentInstance instance, string incomingJson)
+        private string? MergeWithExistingSnapshot(DocumentInstance instance, string? incomingJson)
         {
             if (string.IsNullOrEmpty(instance.DataSnapshotJson))
                 return incomingJson;
