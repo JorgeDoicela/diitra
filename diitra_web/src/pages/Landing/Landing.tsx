@@ -5,7 +5,6 @@ import Workspace from './components/Workspace';
 import Caces from './components/Caces';
 import Modulos from './components/Modulos';
 import Roles from './components/Roles';
-import TechFirma from './components/TechFirma';
 import Interoperability from './components/Interoperability';
 import Footer from './components/Footer';
 import './Landing.css';
@@ -33,7 +32,6 @@ const Landing: React.FC<LandingProps> = ({ currentTheme, toggleTheme }) => {
                 <Caces />
                 <Modulos />
                 <Roles />
-                <TechFirma />
                 <Interoperability />
             </main>
 

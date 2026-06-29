@@ -571,7 +571,7 @@ const Modulos: React.FC = () => {
 
                         {/* Botonera de navegación vertical (Subir / Bajar módulo) */}
                         {activeModule !== null && (
-                            <div className="absolute -left-6 lg:-left-12 top-[50%] -translate-y-1/2 z-30 flex flex-col gap-2">
+                            <div className="absolute -left-6 lg:-left-12 top-[74%] -translate-y-1/2 z-30 flex flex-col gap-2">
                                 <button
                                     onClick={handlePrevModule}
                                     className="w-8.5 h-8.5 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface dark:bg-black/95 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-md hover:border-border-hover"
@@ -735,21 +735,21 @@ const Modulos: React.FC = () => {
                                                     {/* Desglose visual de columnas */}
                                                     <div className="col-span-6 flex items-end justify-around h-16 border-b border-border-thin/40 pb-1">
                                                         <div className="flex flex-col items-center w-8">
-                                                            <div className="w-4 bg-brand rounded-t transition-all duration-500 ease-out" style={{ height: budgetToggles.equipos ? '75%' : '0%' }} />
-                                                            <span className="text-[6px] text-text-dim mt-1">EQ</span>
+                                                            <div className="rounded-t transition-all duration-500 ease-out shadow-sm" style={{ width: '18px', height: budgetToggles.equipos ? '46px' : '0px', backgroundColor: '#0070f3' }} />
+                                                            <span className="text-[8px] text-text-dim mt-1">EQ</span>
                                                         </div>
                                                         <div className="flex flex-col items-center w-8">
-                                                            <div className="w-4 bg-success rounded-t transition-all duration-500 ease-out" style={{ height: budgetToggles.materiales ? '35%' : '0%' }} />
-                                                            <span className="text-[6px] text-text-dim mt-1">MAT</span>
+                                                            <div className="rounded-t transition-all duration-500 ease-out shadow-sm" style={{ width: '18px', height: budgetToggles.materiales ? '22px' : '0px', backgroundColor: '#10b981' }} />
+                                                            <span className="text-[8px] text-text-dim mt-1">MAT</span>
                                                         </div>
                                                         <div className="flex flex-col items-center w-8">
-                                                            <div className="w-4 bg-warning rounded-t transition-all duration-500 ease-out" style={{ height: budgetToggles.vinculacion ? '55%' : '0%' }} />
-                                                            <span className="text-[6px] text-text-dim mt-1">VINC</span>
+                                                            <div className="rounded-t transition-all duration-500 ease-out shadow-sm" style={{ width: '18px', height: budgetToggles.vinculacion ? '34px' : '0px', backgroundColor: '#f59e0b' }} />
+                                                            <span className="text-[8px] text-text-dim mt-1">VINC</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Métricas dinámicas en vivo */}
-                                                    <div className="col-span-6 flex flex-col justify-center text-[7.5px] border-l border-border-thin/20 pl-3 gap-1">
+                                                    <div className="col-span-6 flex flex-col justify-center text-[9.5px] border-l border-border-thin/20 pl-3 gap-1">
                                                         <div className="flex justify-between">
                                                             <span className="text-text-dim">Disponible:</span>
                                                             <span className="text-text-main font-bold">$4,500.00</span>
@@ -770,8 +770,8 @@ const Modulos: React.FC = () => {
 
                                                 {/* Encabezado presupuestario */}
                                                 <div className="flex justify-between items-center bg-surface/30 p-2.5 rounded border border-border-thin/40">
-                                                    <span className="text-[9px] font-mono text-text-dim uppercase">// PRESUPUESTO PROYECTO</span>
-                                                    <span className="text-brand font-bold text-xs font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
+                                                    <span className="text-[11px] font-mono text-text-dim uppercase">// PRESUPUESTO PROYECTO</span>
+                                                    <span className="text-brand font-bold text-sm font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
                                                         Total: ${currentBudgetTotal.toLocaleString()}.00
                                                     </span>
                                                 </div>
@@ -792,8 +792,8 @@ const Modulos: React.FC = () => {
                                                                         : 'bg-surface/10 border-border-thin opacity-35 hover:opacity-60'
                                                                     }`}
                                                             >
-                                                                <p className="text-[7.5px] text-text-dim font-bold font-mono">{label}</p>
-                                                                <p className="text-[11px] font-bold text-text-main mt-0.5 font-mono">${value.toLocaleString()}</p>
+                                                                <p className="text-[9px] text-text-dim font-bold font-mono">{label}</p>
+                                                                <p className="text-[13px] font-bold text-text-main mt-0.5 font-mono">${value.toLocaleString()}</p>
                                                             </button>
                                                         );
                                                     })}
@@ -801,7 +801,7 @@ const Modulos: React.FC = () => {
 
                                                 {/* Barra de progreso de ejecución y viabilidad */}
                                                 <div className="space-y-1.5 bg-surface/30 p-2.5 rounded border border-border-thin/30 text-left font-mono">
-                                                    <div className="flex justify-between text-[8px] text-text-dim">
+                                                    <div className="flex justify-between text-[9.5px] text-text-dim">
                                                         <span>Límite Institucional Ejecutado</span>
                                                         <span className="font-bold text-text-main">{budgetPct}%</span>
                                                     </div>
@@ -811,7 +811,7 @@ const Modulos: React.FC = () => {
                                                             style={{ width: `${budgetPct}%` }} 
                                                         />
                                                     </div>
-                                                    <div className="flex justify-between text-[7.5px] pt-1.5 border-t border-border-thin/10">
+                                                    <div className="flex justify-between text-[9px] pt-1.5 border-t border-border-thin/10">
                                                         <span>VIABILIDAD FINANCIERA:</span>
                                                         {currentBudgetTotal > 2500 ? (
                                                             <span className="text-warning font-bold">ALERTA DE COSTOS (REQUERIDO DECANO)</span>
@@ -821,10 +821,7 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Leyenda explicativa técnica */}
-                                                <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed">
-                                                    INFO: Simula el plan de adquisiciones institucional. Fondos vinculados con los presupuestos anuales de I+D homologados ante el CES.
-                                                </p>
+                                                {/* Leyenda removida */}
 
                                             </div>
                                         </div>
@@ -929,10 +926,7 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Leyenda explicativa técnica */}
-                                                <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed">
-                                                    TIP: Los hitos docentes controlan la liberación de distributivos de horas clase a investigación en el distributivo de la Facultad.
-                                                </p>
+                                                {/* Leyenda removida */}
 
                                             </div>
                                         </div>
@@ -1009,10 +1003,7 @@ const Modulos: React.FC = () => {
                                                     );
                                                 })}
                                                 
-                                                {/* Leyenda explicativa técnica */}
-                                                <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed mt-1.5">
-                                                    INFO: Integración directa mediante API REST con los repositorios nacionales del SENADI para registrar la propiedad de software.
-                                                </p>
+                                                {/* Leyenda removida */}
 
                                             </div>
 
@@ -1061,10 +1052,10 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Consola con logs e interactividad */}
-                                            <div className="flex-1 flex flex-col justify-between my-2 text-[8px] font-mono text-text-dim bg-bg-deep/70 p-2.5 rounded border border-border-thin/40 gap-2">
+                                            <div className="flex-1 flex flex-col justify-between my-2 text-[9.5px] font-mono text-text-dim bg-bg-deep/70 p-2.5 rounded border border-border-thin/40 gap-2">
 
                                                 {/* Caja de scroll de Logs */}
-                                                <div ref={terminalContainerRef} className="overflow-y-auto max-h-[85px] space-y-0.5 scrollbar-none pr-1">
+                                                <div ref={terminalContainerRef} className="overflow-y-auto flex-1 space-y-0.5 scrollbar-none pr-1 min-h-[140px] max-h-[220px]">
                                                     {terminalLogs.map((log, idx) => (
                                                         <p
                                                             key={idx}
@@ -1097,21 +1088,21 @@ const Modulos: React.FC = () => {
                                                     <button
                                                         onClick={() => runCommand('sync')}
                                                         disabled={logRunning}
-                                                        className="px-2 py-1 bg-brand text-white rounded font-bold font-mono text-[7.5px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                                                        className="px-2 py-1 bg-brand text-white rounded font-bold font-mono text-[9px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
                                                     >
                                                         SYNC SIIES
                                                     </button>
                                                     <button
                                                         onClick={() => runCommand('audit')}
                                                         disabled={logRunning}
-                                                        className="px-2 py-1 bg-success text-white rounded font-bold font-mono text-[7.5px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                                                        className="px-2 py-1 bg-success text-white rounded font-bold font-mono text-[9px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
                                                     >
                                                         AUDITAR
                                                     </button>
                                                     <button
                                                         onClick={() => runCommand('clear')}
                                                         disabled={logRunning}
-                                                        className="px-2 py-1 border border-border-thin text-text-dim rounded font-bold font-mono text-[7.5px] hover:text-text-main cursor-pointer"
+                                                        className="px-2 py-1 border border-border-thin text-text-dim rounded font-bold font-mono text-[9px] hover:text-text-main cursor-pointer"
                                                     >
                                                         CLEAR
                                                     </button>
@@ -1119,10 +1110,7 @@ const Modulos: React.FC = () => {
 
                                             </div>
 
-                                            {/* Leyenda explicativa técnica */}
-                                            <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed">
-                                                TIP: La consola simula el consumo seguro del API del CACES para evaluar la producción científica institucional y distributivos.
-                                            </p>
+                                            {/* Leyenda removida */}
 
                                         </div>
                                     )}
@@ -1224,10 +1212,7 @@ const Modulos: React.FC = () => {
                                                 )}
                                             </div>
 
-                                            {/* Leyenda explicativa técnica */}
-                                            <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed mt-1">
-                                                INFO: Firma de actas académicas en formato PDF mediante criptografía asimétrica estándar PKCS#12 compatible con FirmaEC de Ecuador.
-                                            </p>
+                                            {/* Leyenda removida */}
 
                                         </div>
                                     )}
