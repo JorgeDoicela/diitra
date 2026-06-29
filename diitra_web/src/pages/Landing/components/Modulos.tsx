@@ -123,6 +123,42 @@ const Modulos: React.FC = () => {
         setSignProgress(0);
     };
 
+    // Estadísticas del sistema fluctuantes en tiempo real para el Módulo 4
+    const [systemStats, setSystemStats] = useState({ cpu: 14, ram: 42, net: 5 });
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setSystemStats({
+                cpu: Math.floor(Math.random() * (28 - 8) + 8),
+                ram: Math.floor(Math.random() * (46 - 40) + 40),
+                net: Math.floor(Math.random() * (12 - 3) + 3)
+            });
+        }, 1500);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Commits del Repositorio simulados para el Módulo 3
+    const [commits, setCommits] = useState([
+        { hash: 'e8a3d9f', msg: 'feat: integracion senadi api', time: 'Hace 2 min' },
+        { hash: '4f1a2c9', msg: 'refactor: validacion p12', time: 'Hace 12 min' },
+        { hash: '9b8c2d1', msg: 'init: esqueleto del proyecto', time: 'Hace 1 hora' }
+    ]);
+
+    const handlePushCommit = () => {
+        const msgs = [
+            'fix: corregido buffer de firma criptografica',
+            'docs: actualizado manual de indicadores CACES',
+            'style: mejoras visuales en panel de monitoreo',
+            'perf: optimizada pasarela de sincronizacion SIIES'
+        ];
+        const newMsg = msgs[Math.floor(Math.random() * msgs.length)];
+        const newHash = Math.random().toString(36).substring(2, 9);
+        setCommits(prev => [
+            { hash: newHash, msg: newMsg, time: 'Ahora mismo' },
+            ...prev.slice(0, 2)
+        ]);
+    };
+
     // ==========================================
     // LÓGICA DE NEGOCIO ORIGINAL DE LOS WIDGETS
     // ==========================================
@@ -200,12 +236,12 @@ const Modulos: React.FC = () => {
         '[OK] [14:02:17] Sistema listo para auditoría CACES.'
     ]);
     const [logRunning, setLogRunning] = useState<boolean>(false);
-    const terminalEndRef = useRef<HTMLDivElement>(null);
+    const terminalContainerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll terminal
+    // Auto-scroll terminal local sin mover la pantalla global
     useEffect(() => {
-        if (terminalEndRef.current) {
-            terminalEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        if (terminalContainerRef.current) {
+            terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
         }
     }, [terminalLogs]);
 
@@ -535,7 +571,7 @@ const Modulos: React.FC = () => {
 
                         {/* Botonera de navegación vertical (Subir / Bajar módulo) */}
                         {activeModule !== null && (
-                            <div className="absolute -left-6 lg:-left-12 top-[78%] -translate-y-1/2 z-30 flex flex-col gap-2">
+                            <div className="absolute -left-6 lg:-left-12 top-[50%] -translate-y-1/2 z-30 flex flex-col gap-2">
                                 <button
                                     onClick={handlePrevModule}
                                     className="w-8.5 h-8.5 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface dark:bg-black/95 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-md hover:border-border-hover"
@@ -693,6 +729,45 @@ const Modulos: React.FC = () => {
                                             {/* Contenido principal del Presupuesto */}
                                             <div className="flex-1 flex flex-col justify-center gap-3">
 
+                                                {/* Gráfico Financiero de Barras Interactivo */}
+                                                <div className="grid grid-cols-12 gap-3 bg-surface/20 p-2.5 rounded border border-border-thin/30 text-left font-mono">
+                                                    
+                                                    {/* Desglose visual de columnas */}
+                                                    <div className="col-span-6 flex items-end justify-around h-16 border-b border-border-thin/40 pb-1">
+                                                        <div className="flex flex-col items-center w-8">
+                                                            <div className="w-4 bg-brand rounded-t transition-all duration-500 ease-out" style={{ height: budgetToggles.equipos ? '75%' : '0%' }} />
+                                                            <span className="text-[6px] text-text-dim mt-1">EQ</span>
+                                                        </div>
+                                                        <div className="flex flex-col items-center w-8">
+                                                            <div className="w-4 bg-success rounded-t transition-all duration-500 ease-out" style={{ height: budgetToggles.materiales ? '35%' : '0%' }} />
+                                                            <span className="text-[6px] text-text-dim mt-1">MAT</span>
+                                                        </div>
+                                                        <div className="flex flex-col items-center w-8">
+                                                            <div className="w-4 bg-warning rounded-t transition-all duration-500 ease-out" style={{ height: budgetToggles.vinculacion ? '55%' : '0%' }} />
+                                                            <span className="text-[6px] text-text-dim mt-1">VINC</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Métricas dinámicas en vivo */}
+                                                    <div className="col-span-6 flex flex-col justify-center text-[7.5px] border-l border-border-thin/20 pl-3 gap-1">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-text-dim">Disponible:</span>
+                                                            <span className="text-text-main font-bold">$4,500.00</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-text-dim">Utilizado:</span>
+                                                            <span className="text-brand font-bold">${currentBudgetTotal.toLocaleString()}.00</span>
+                                                        </div>
+                                                        <div className="flex justify-between border-t border-border-thin/10 pt-1">
+                                                            <span className="text-text-dim">Restante:</span>
+                                                            <span className={`${4500 - currentBudgetTotal > 1500 ? 'text-success' : 'text-warning'} font-bold`}>
+                                                                ${(4500 - currentBudgetTotal).toLocaleString()}.00
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
                                                 {/* Encabezado presupuestario */}
                                                 <div className="flex justify-between items-center bg-surface/30 p-2.5 rounded border border-border-thin/40">
                                                     <span className="text-[9px] font-mono text-text-dim uppercase">// PRESUPUESTO PROYECTO</span>
@@ -766,7 +841,42 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Contenido principal de hitos */}
-                                            <div className="flex-1 flex flex-col justify-center gap-3">
+                                            <div className="flex-1 flex flex-col justify-center gap-2.5">
+
+                                                {/* Panel de Auditoría y Progreso SVG en vivo */}
+                                                <div className="grid grid-cols-12 gap-3 bg-surface/20 p-2.5 rounded border border-border-thin/30 text-left font-mono">
+                                                    
+                                                    {/* SVG Circular de Progreso */}
+                                                    <div className="col-span-5 flex items-center justify-center relative">
+                                                        <svg className="w-14 h-14 transform -rotate-90">
+                                                            <circle cx="28" cy="28" r="22" className="stroke-border-thin" strokeWidth="2.5" fill="transparent" />
+                                                            <circle cx="28" cy="28" r="22" className="stroke-success transition-all duration-500 ease-out" strokeWidth="2.5" fill="transparent"
+                                                                strokeDasharray={2 * Math.PI * 22}
+                                                                strokeDashoffset={2 * Math.PI * 22 - (2 * Math.PI * 22 * (hitosCompletedCount / hitosTotalCount))}
+                                                            />
+                                                        </svg>
+                                                        <div className="absolute font-bold text-[9.5px] text-text-main flex flex-col items-center">
+                                                            <span>{Math.round((hitosCompletedCount / hitosTotalCount) * 100)}%</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Feed de Auditoría de Carga */}
+                                                    <div className="col-span-7 flex flex-col justify-center text-[7.5px] border-l border-border-thin/20 pl-3 gap-1 min-h-[56px]">
+                                                        <div className="text-[6.5px] text-text-dim uppercase font-mono tracking-wider mb-0.5">// AUDITORÍA DOCENTE</div>
+                                                        <div className="space-y-0.5">
+                                                            <p className={`${hitos[0].completed ? 'text-success' : 'text-text-dim/50'} transition-all`}>
+                                                                {hitos[0].completed ? '[OK] Cargo marco_teorico.pdf' : '[-] Falta Marco Teórico'}
+                                                            </p>
+                                                            <p className={`${hitos[1].completed ? 'text-success' : 'text-text-dim/50'} transition-all`}>
+                                                                {hitos[1].completed ? '[OK] Subio algoritmo_desglose.py' : '[-] Falta Diseño Algoritmo'}
+                                                            </p>
+                                                            <p className={`${hitos[2].completed ? 'text-success' : 'text-text-dim/50'} transition-all`}>
+                                                                {hitos[2].completed ? '[OK] Cargo evidencias_caces.docx' : '[-] Falta Evidencias y Pruebas'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
 
                                                 {/* Lista de hitos interactivos */}
                                                 <div className="space-y-1.5">
@@ -841,6 +951,36 @@ const Modulos: React.FC = () => {
                                             {/* Descargas interactivas */}
                                             <div className="flex-1 flex flex-col justify-center gap-2.5">
 
+                                                {/* Monitor de Commits Git de la Universidad Interactivo */}
+                                                <div className="grid grid-cols-12 gap-3 bg-surface/20 p-2.5 rounded border border-border-thin/30 text-left font-mono">
+                                                    
+                                                    {/* Lista de commits */}
+                                                    <div className="col-span-7 space-y-1">
+                                                        <div className="text-[6.5px] text-text-dim uppercase font-mono tracking-wider">// COMMITS REPOSITORIO</div>
+                                                        <div className="space-y-0.5 max-h-[48px] overflow-hidden">
+                                                            {commits.map((c, idx) => (
+                                                                <div key={c.hash + idx} className="flex justify-between items-center text-[7.5px] gap-1 animate-fade-in">
+                                                                    <span className="text-brand font-bold">{c.hash}</span>
+                                                                    <span className="text-text-main truncate max-w-[70px]">{c.msg}</span>
+                                                                    <span className="text-[6px] text-text-dim whitespace-nowrap">{c.time}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Acción de Simular Commit / Push */}
+                                                    <div className="col-span-5 flex flex-col items-center justify-center border-l border-border-thin/20 pl-3">
+                                                        <button 
+                                                            onClick={handlePushCommit}
+                                                            className="w-full py-1.5 px-2 bg-text-main text-bg-deep rounded font-bold font-sans text-[7.5px] uppercase tracking-wider hover:opacity-90 active:scale-[0.97] transition-all cursor-pointer text-center"
+                                                        >
+                                                            SIMULAR COMMIT
+                                                        </button>
+                                                        <span className="text-[6px] text-text-dim/80 mt-1 block uppercase font-mono text-center">Branch: main</span>
+                                                    </div>
+
+                                                </div>
+
                                                 <div className="flex justify-between items-center text-[7.5px] font-mono text-text-dim border border-dashed border-border-thin bg-surface/20 p-2.5 rounded text-left">
                                                     <span>REGISTRO SENADI ACTIVO:</span>
                                                     <span className="text-success font-bold">REG-SENADI-2026-00459 (VIGENTE)</span>
@@ -889,23 +1029,54 @@ const Modulos: React.FC = () => {
                                                 <span>MOD-04</span>
                                             </div>
 
+                                            {/* Monitor de Recursos del Servidor en Vivo */}
+                                            <div className="grid grid-cols-3 gap-2 bg-surface/20 p-2 rounded border border-border-thin/30 text-[7px] font-mono text-text-dim text-left">
+                                                <div className="space-y-0.5">
+                                                    <div className="flex justify-between">
+                                                        <span>CPU LIMIT</span>
+                                                        <span className="text-text-main font-bold">{systemStats.cpu}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-brand transition-all duration-500 ease-out" style={{ width: `${systemStats.cpu}%` }} />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-0.5 border-l border-border-thin/20 pl-2">
+                                                    <div className="flex justify-between">
+                                                        <span>RAM LIMIT</span>
+                                                        <span className="text-text-main font-bold">{systemStats.ram}%</span>
+                                                    </div>
+                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-success transition-all duration-500 ease-out" style={{ width: `${systemStats.ram}%` }} />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-0.5 border-l border-border-thin/20 pl-2">
+                                                    <div className="flex justify-between">
+                                                        <span>NET STATS</span>
+                                                        <span className="text-text-main font-bold">{systemStats.net} MB/s</span>
+                                                    </div>
+                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-warning transition-all duration-500 ease-out" style={{ width: `${(systemStats.net / 12) * 100}%` }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             {/* Consola con logs e interactividad */}
                                             <div className="flex-1 flex flex-col justify-between my-2 text-[8px] font-mono text-text-dim bg-bg-deep/70 p-2.5 rounded border border-border-thin/40 gap-2">
 
                                                 {/* Caja de scroll de Logs */}
-                                                <div className="overflow-y-auto max-h-[85px] space-y-0.5 scrollbar-none pr-1">
+                                                <div ref={terminalContainerRef} className="overflow-y-auto max-h-[85px] space-y-0.5 scrollbar-none pr-1">
                                                     {terminalLogs.map((log, idx) => (
                                                         <p
                                                             key={idx}
                                                             className={
-                                                                log.startsWith('[OK]')
+                                                                log && log.startsWith('[OK]')
                                                                     ? 'text-success'
-                                                                    : log.startsWith('[RUN]')
+                                                                    : log && log.startsWith('[RUN]')
                                                                         ? 'text-warning'
                                                                         : 'text-text-main'
                                                             }
                                                         >
-                                                            {log}
+                                                            {log || ''}
                                                         </p>
                                                     ))}
                                                     {logRunning && (
@@ -919,7 +1090,6 @@ const Modulos: React.FC = () => {
                                                             guest@diitra:~$ <span className="w-1.5 h-3 bg-brand inline-block animate-pulse align-middle" />
                                                         </p>
                                                     )}
-                                                    <div ref={terminalEndRef} />
                                                 </div>
 
                                                 {/* Botonera de comandos */}
@@ -969,6 +1139,33 @@ const Modulos: React.FC = () => {
 
                                             {/* Panel interactivo de firma */}
                                             <div className="flex-1 flex flex-col justify-center font-mono text-[9px]">
+                                                
+                                                {/* Folio del Documento Digital Interactivo */}
+                                                <div className="bg-surface/30 p-2 rounded border border-border-thin/30 text-left font-mono mb-2">
+                                                    <div className="flex justify-between items-center text-[7.5px] border-b border-border-thin/20 pb-1.5 mb-1.5">
+                                                        <span className="font-bold text-text-main">DOCUMENTO: acta_aprobacion_id.pdf</span>
+                                                        <span className={`text-[6.5px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${
+                                                            signState === 'signed' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning animate-pulse'
+                                                        }`}>
+                                                            {signState === 'signed' ? 'FIRMADO DIGITALMENTE' : 'PENDIENTE FIRMA'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="space-y-1 opacity-65 text-[6.5px] text-text-dim">
+                                                        <p>PROYECTO: Automatización de Convocatorias Académicas (DIITRA-2026)</p>
+                                                        <div className="h-1 bg-border-thin/40 w-full rounded" />
+                                                        <div className="h-1 bg-border-thin/40 w-4/5 rounded" />
+                                                    </div>
+                                                    {signState === 'signed' && (
+                                                        <div className="mt-2 p-1.5 bg-success/5 border border-success/20 rounded flex items-center justify-between text-[6.5px] text-success animate-fade-in">
+                                                            <div className="space-y-0.5">
+                                                                <p className="font-bold">FIRMA VALIDA (Banco Central Ecuador)</p>
+                                                                <p className="font-mono text-text-dim text-[5.5px] truncate max-w-[160px]">HASH: 8f3b2a1c9e8d7f6c4b2a3e9c8a7b6c5d4e3f2a1b</p>
+                                                            </div>
+                                                            <span className="text-[6.5px] font-sans font-bold bg-success text-bg-deep px-1.5 py-0.5 rounded">FIRMADO</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
                                                 {signState === 'idle' && (
                                                     <div className="space-y-3">
                                                         <p className="text-[8px] text-text-dim uppercase tracking-wider font-mono">// DISPOSITIVO DE FIRMA LISTO</p>
