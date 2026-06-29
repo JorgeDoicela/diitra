@@ -721,7 +721,7 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// PRESUPUESTO MODULAR</span>
                                                 <span>MOD-01</span>
                                             </div>
@@ -736,20 +736,20 @@ const Modulos: React.FC = () => {
                                                     <div className="col-span-6 flex items-end justify-around h-16 border-b border-border-thin/40 pb-1">
                                                         <div className="flex flex-col items-center w-8">
                                                             <div className="rounded-t transition-all duration-500 ease-out shadow-sm" style={{ width: '18px', height: budgetToggles.equipos ? '46px' : '0px', backgroundColor: '#0070f3' }} />
-                                                            <span className="text-[8px] text-text-dim mt-1">EQ</span>
+                                                            <span className="text-[7px] text-text-dim mt-1">EQ</span>
                                                         </div>
                                                         <div className="flex flex-col items-center w-8">
                                                             <div className="rounded-t transition-all duration-500 ease-out shadow-sm" style={{ width: '18px', height: budgetToggles.materiales ? '22px' : '0px', backgroundColor: '#10b981' }} />
-                                                            <span className="text-[8px] text-text-dim mt-1">MAT</span>
+                                                            <span className="text-[7px] text-text-dim mt-1">MAT</span>
                                                         </div>
                                                         <div className="flex flex-col items-center w-8">
                                                             <div className="rounded-t transition-all duration-500 ease-out shadow-sm" style={{ width: '18px', height: budgetToggles.vinculacion ? '34px' : '0px', backgroundColor: '#f59e0b' }} />
-                                                            <span className="text-[8px] text-text-dim mt-1">VINC</span>
+                                                            <span className="text-[7px] text-text-dim mt-1">VINC</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Métricas dinámicas en vivo */}
-                                                    <div className="col-span-6 flex flex-col justify-center text-[9.5px] border-l border-border-thin/20 pl-3 gap-1">
+                                                    <div className="col-span-6 flex flex-col justify-center text-[8.5px] border-l border-border-thin/20 pl-3 gap-1">
                                                         <div className="flex justify-between">
                                                             <span className="text-text-dim">Disponible:</span>
                                                             <span className="text-text-main font-bold">$4,500.00</span>
@@ -770,8 +770,8 @@ const Modulos: React.FC = () => {
 
                                                 {/* Encabezado presupuestario */}
                                                 <div className="flex justify-between items-center bg-surface/30 p-2.5 rounded border border-border-thin/40">
-                                                    <span className="text-[11px] font-mono text-text-dim uppercase">// PRESUPUESTO PROYECTO</span>
-                                                    <span className="text-brand font-bold text-sm font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
+                                                    <span className="text-[9.5px] font-mono text-text-dim uppercase">// PRESUPUESTO PROYECTO</span>
+                                                    <span className="text-brand font-bold text-xs font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
                                                         Total: ${currentBudgetTotal.toLocaleString()}.00
                                                     </span>
                                                 </div>
@@ -792,8 +792,8 @@ const Modulos: React.FC = () => {
                                                                         : 'bg-surface/10 border-border-thin opacity-35 hover:opacity-60'
                                                                     }`}
                                                             >
-                                                                <p className="text-[9px] text-text-dim font-bold font-mono">{label}</p>
-                                                                <p className="text-[13px] font-bold text-text-main mt-0.5 font-mono">${value.toLocaleString()}</p>
+                                                                <p className="text-[8px] text-text-dim font-bold font-mono">{label}</p>
+                                                                <p className="text-[11px] font-bold text-text-main mt-0.5 font-mono">${value.toLocaleString()}</p>
                                                             </button>
                                                         );
                                                     })}
@@ -801,7 +801,7 @@ const Modulos: React.FC = () => {
 
                                                 {/* Barra de progreso de ejecución y viabilidad */}
                                                 <div className="space-y-1.5 bg-surface/30 p-2.5 rounded border border-border-thin/30 text-left font-mono">
-                                                    <div className="flex justify-between text-[9.5px] text-text-dim">
+                                                    <div className="flex justify-between text-[8.5px] text-text-dim">
                                                         <span>Límite Institucional Ejecutado</span>
                                                         <span className="font-bold text-text-main">{budgetPct}%</span>
                                                     </div>
@@ -811,7 +811,7 @@ const Modulos: React.FC = () => {
                                                             style={{ width: `${budgetPct}%` }} 
                                                         />
                                                     </div>
-                                                    <div className="flex justify-between text-[9px] pt-1.5 border-t border-border-thin/10">
+                                                    <div className="flex justify-between text-[8px] pt-1.5 border-t border-border-thin/10">
                                                         <span>VIABILIDAD FINANCIERA:</span>
                                                         {currentBudgetTotal > 2500 ? (
                                                             <span className="text-warning font-bold">ALERTA DE COSTOS (REQUERIDO DECANO)</span>
@@ -832,7 +832,7 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// MONITOREO Y HITOS</span>
                                                 <span>MOD-02</span>
                                             </div>
@@ -852,14 +852,14 @@ const Modulos: React.FC = () => {
                                                                 strokeDashoffset={2 * Math.PI * 22 - (2 * Math.PI * 22 * (hitosCompletedCount / hitosTotalCount))}
                                                             />
                                                         </svg>
-                                                        <div className="absolute font-bold text-[12px] text-text-main flex flex-col items-center">
+                                                        <div className="absolute font-bold text-[10px] text-text-main flex flex-col items-center">
                                                             <span>{Math.round((hitosCompletedCount / hitosTotalCount) * 100)}%</span>
                                                         </div>
                                                     </div>
 
                                                     {/* Feed de Auditoría de Carga */}
-                                                    <div className="col-span-7 flex flex-col justify-center text-[9.5px] border-l border-border-thin/20 pl-3 gap-1 min-h-[56px]">
-                                                        <div className="text-[8px] text-text-dim uppercase font-mono tracking-wider mb-0.5">// AUDITORÍA DOCENTE</div>
+                                                    <div className="col-span-7 flex flex-col justify-center text-[8.5px] border-l border-border-thin/20 pl-3 gap-1 min-h-[56px]">
+                                                        <div className="text-[7.5px] text-text-dim uppercase font-mono tracking-wider mb-0.5">// AUDITORÍA DOCENTE</div>
                                                         <div className="space-y-0.5">
                                                             <p className={`${hitos[0].completed ? 'text-success' : 'text-text-dim/50'} transition-all`}>
                                                                 {hitos[0].completed ? '[OK] Cargo marco_teorico.pdf' : '[-] Falta Marco Teórico'}
@@ -894,7 +894,7 @@ const Modulos: React.FC = () => {
                                                                     {h.name}
                                                                 </span>
                                                             </div>
-                                                            <span className="text-[7.5px] font-mono text-text-dim">
+                                                            <span className="text-[8.5px] font-mono text-text-dim">
                                                                 {h.completed ? 'COMPLETADO' : 'PENDIENTE'}
                                                             </span>
                                                         </button>
@@ -903,12 +903,12 @@ const Modulos: React.FC = () => {
 
                                                 {/* Mapa de avance de docente (MC) interactivo */}
                                                 <div className="bg-surface/30 p-2.5 rounded border border-border-thin/30 space-y-1 text-left font-mono">
-                                                    <div className="flex justify-between items-center text-[7px] text-text-dim">
+                                                    <div className="flex justify-between items-center text-[8px] text-text-dim">
                                                         <span>// AVANCE DOCENTE EN VIVO: J. DOICELA</span>
                                                         {hitosCompletedCount === hitosTotalCount ? (
-                                                            <span className="text-success font-bold font-sans">PROYECTO AL DÍA</span>
+                                                            <span className="text-success font-bold font-sans text-[9.5px]">PROYECTO AL DÍA</span>
                                                         ) : (
-                                                            <span className="text-warning font-bold font-sans">EN EJECUCIÓN</span>
+                                                            <span className="text-warning font-bold font-sans text-[9.5px]">EN EJECUCIÓN</span>
                                                         )}
                                                     </div>
                                                     <div className="relative h-4.5 mt-1 flex items-center">
@@ -926,8 +926,6 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Leyenda removida */}
-
                                             </div>
                                         </div>
                                     )}
@@ -937,7 +935,7 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// PROPIEDAD INTELECTUAL</span>
                                                 <span>MOD-03</span>
                                             </div>
@@ -950,13 +948,13 @@ const Modulos: React.FC = () => {
                                                     
                                                     {/* Lista de commits */}
                                                     <div className="col-span-7 space-y-1">
-                                                        <div className="text-[9px] text-text-dim uppercase font-mono tracking-wider font-bold">// COMMITS REPOSITORIO</div>
+                                                        <div className="text-[8px] text-text-dim uppercase font-mono tracking-wider font-bold">// COMMITS REPOSITORIO</div>
                                                         <div className="space-y-0.5 max-h-[48px] overflow-hidden">
                                                             {commits.map((c, idx) => (
-                                                                <div key={c.hash + idx} className="flex justify-between items-center text-[9px] gap-1 animate-fade-in">
+                                                                <div key={c.hash + idx} className="flex justify-between items-center text-[8.5px] gap-1 animate-fade-in">
                                                                     <span className="text-brand font-bold">{c.hash}</span>
-                                                                    <span className="text-text-main truncate max-w-[100px]">{c.msg}</span>
-                                                                    <span className="text-[8px] text-text-dim whitespace-nowrap">{c.time}</span>
+                                                                    <span className="text-text-main truncate max-w-[85px]">{c.msg}</span>
+                                                                    <span className="text-[7px] text-text-dim whitespace-nowrap">{c.time}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -966,18 +964,18 @@ const Modulos: React.FC = () => {
                                                     <div className="col-span-5 flex flex-col items-center justify-center border-l border-border-thin/20 pl-3">
                                                         <button 
                                                             onClick={handlePushCommit}
-                                                            className="w-full py-1.5 px-2 bg-text-main text-bg-deep rounded font-bold font-sans text-[9.5px] uppercase tracking-wider hover:opacity-90 active:scale-[0.97] transition-all cursor-pointer text-center"
+                                                            className="w-full py-1.5 px-2 bg-text-main text-bg-deep rounded font-bold font-sans text-[8.5px] uppercase tracking-wider hover:opacity-90 active:scale-[0.97] transition-all cursor-pointer text-center"
                                                         >
                                                             SIMULAR COMMIT
                                                         </button>
-                                                        <span className="text-[8px] text-text-dim/80 mt-1 block uppercase font-mono text-center">Branch: main</span>
+                                                        <span className="text-[7px] text-text-dim/80 mt-1 block uppercase font-mono text-center">Branch: main</span>
                                                     </div>
 
                                                 </div>
 
-                                                <div className="flex justify-between items-center text-[10px] font-mono text-text-dim border border-dashed border-border-thin bg-surface/20 p-2.5 rounded text-left">
+                                                <div className="flex justify-between items-center text-[9px] font-mono text-text-dim border border-dashed border-border-thin bg-surface/20 p-2.5 rounded text-left">
                                                     <span>REGISTRO SENADI ACTIVO:</span>
-                                                    <span className="text-success font-bold text-[11px]">REG-SENADI-2026-00459 (VIGENTE)</span>
+                                                    <span className="text-success font-bold text-[9.5px]">REG-SENADI-2026-00459 (VIGENTE)</span>
                                                 </div>
 
                                                 {Object.keys(downloadStates).map((fileName) => {
@@ -989,8 +987,8 @@ const Modulos: React.FC = () => {
                                                             className="p-2.5 border border-border-thin rounded bg-bg-deep flex flex-col gap-1 text-left w-full transition-all duration-300 hover:border-brand/40 cursor-pointer"
                                                         >
                                                             <div className="flex justify-between items-center font-sans">
-                                                                <span className="text-[12px] text-text-main font-bold font-mono">{fileName}</span>
-                                                                <span className="text-brand text-[10px] font-bold font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
+                                                                <span className="text-[10px] text-text-main font-bold font-mono">{fileName}</span>
+                                                                <span className="text-brand text-[8.5px] font-bold font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
                                                                     {state === 'idle' ? 'DESCARGAR' : state === 'success' ? 'COMPLETO' : `DESCARGANDO: ${state}%`}
                                                                 </span>
                                                             </div>
@@ -1003,8 +1001,6 @@ const Modulos: React.FC = () => {
                                                     );
                                                 })}
                                                 
-                                                {/* Leyenda removida */}
-
                                             </div>
 
                                         </div>
@@ -1015,13 +1011,13 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
 
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// CONSOLA DE AUDITORÍA</span>
                                                 <span>MOD-04</span>
                                             </div>
 
                                             {/* Monitor de Recursos del Servidor en Vivo */}
-                                            <div className="grid grid-cols-3 gap-2 bg-surface/20 p-2 rounded border border-border-thin/30 text-[9.5px] font-mono text-text-dim text-left">
+                                            <div className="grid grid-cols-3 gap-2 bg-surface/20 p-2 rounded border border-border-thin/30 text-[8px] font-mono text-text-dim text-left">
                                                 <div className="space-y-0.5">
                                                     <div className="flex justify-between">
                                                         <span>CPU LIMIT</span>
@@ -1052,7 +1048,7 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Consola con logs e interactividad */}
-                                            <div className="flex-1 flex flex-col justify-between my-2 text-[9.5px] font-mono text-text-dim bg-bg-deep/70 p-2.5 rounded border border-border-thin/40 gap-2">
+                                            <div className="flex-1 flex flex-col justify-between my-2 text-[8.5px] font-mono text-text-dim bg-bg-deep/70 p-2.5 rounded border border-border-thin/40 gap-2">
 
                                                 {/* Caja de scroll de Logs */}
                                                 <div ref={terminalContainerRef} className="overflow-y-auto flex-1 space-y-0.5 scrollbar-none pr-1 min-h-[140px] max-h-[220px]">
@@ -1063,8 +1059,8 @@ const Modulos: React.FC = () => {
                                                                 log && log.startsWith('[OK]')
                                                                     ? 'text-success'
                                                                     : log && log.startsWith('[RUN]')
-                                                                        ? 'text-warning'
-                                                                        : 'text-text-main'
+                                                                         ? 'text-warning'
+                                                                         : 'text-text-main'
                                                             }
                                                         >
                                                             {log || ''}
@@ -1080,7 +1076,7 @@ const Modulos: React.FC = () => {
                                                         <p className="text-text-dim mt-0.5">
                                                             guest@diitra:~$ <span className="w-1.5 h-3 bg-brand inline-block animate-pulse align-middle" />
                                                         </p>
-                                                    )}
+                                                     )}
                                                 </div>
 
                                                 {/* Botonera de comandos */}
@@ -1088,29 +1084,26 @@ const Modulos: React.FC = () => {
                                                     <button
                                                         onClick={() => runCommand('sync')}
                                                         disabled={logRunning}
-                                                        className="px-2 py-1 bg-brand text-white rounded font-bold font-mono text-[9px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                                                        className="px-2 py-1 bg-brand text-white rounded font-bold font-mono text-[8px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
                                                     >
                                                         SYNC SIIES
                                                     </button>
                                                     <button
                                                         onClick={() => runCommand('audit')}
                                                         disabled={logRunning}
-                                                        className="px-2 py-1 bg-success text-white rounded font-bold font-mono text-[9px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
+                                                        className="px-2 py-1 bg-success text-white rounded font-bold font-mono text-[8px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
                                                     >
                                                         AUDITAR
                                                     </button>
                                                     <button
                                                         onClick={() => runCommand('clear')}
                                                         disabled={logRunning}
-                                                        className="px-2 py-1 border border-border-thin text-text-dim rounded font-bold font-mono text-[9px] hover:text-text-main cursor-pointer"
+                                                        className="px-2 py-1 border border-border-thin text-text-dim rounded font-bold font-mono text-[8px] hover:text-text-main cursor-pointer"
                                                     >
                                                         CLEAR
                                                     </button>
                                                 </div>
-
                                             </div>
-
-                                            {/* Leyenda removida */}
 
                                         </div>
                                     )}
@@ -1120,38 +1113,38 @@ const Modulos: React.FC = () => {
                                         <div className="h-full flex flex-col gap-3">
                                             
                                             {/* Header del widget */}
-                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-sm font-mono text-text-dim">
+                                            <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// FIRMA DIGITAL ACTA</span>
                                                 <span>MOD-05</span>
                                             </div>
 
                                             {/* Panel interactivo de firma */}
-                                            <div className="flex-1 flex flex-col justify-center font-mono text-[11px]">
+                                            <div className="flex-1 flex flex-col justify-center font-mono text-[9px]">
                                                 
                                                 {/* Folio del Documento Digital Interactivo */}
                                                 <div className="bg-surface/30 p-2 rounded border border-border-thin/30 text-left font-mono mb-2">
-                                                    <div className="flex justify-between items-center text-[9.5px] border-b border-border-thin/20 pb-1.5 mb-1">
+                                                    <div className="flex justify-between items-center text-[8.5px] border-b border-border-thin/20 pb-1.5 mb-1">
                                                         <span className="font-bold text-text-main">DOCUMENTO: acta_aprobacion_id.pdf</span>
-                                                        <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${
+                                                        <span className={`text-[7.5px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${
                                                             signState === 'signed' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning animate-pulse'
                                                         }`}>
                                                             {signState === 'signed' ? 'FIRMADO' : 'PENDIENTE FIRMA'}
                                                         </span>
                                                     </div>
-                                                    <div className="space-y-1 opacity-65 text-[8.5px] text-text-dim">
+                                                    <div className="space-y-1 opacity-65 text-[7.5px] text-text-dim">
                                                         <p>PROYECTO: Automatización de Convocatorias Académicas (DIITRA-2026)</p>
                                                     </div>
                                                 </div>
 
                                                 {signState === 'idle' && (
                                                     <div className="space-y-3">
-                                                        <p className="text-[10px] text-text-dim uppercase tracking-wider font-mono">// DISPOSITIVO DE FIRMA LISTO</p>
+                                                        <p className="text-[9px] text-text-dim uppercase tracking-wider font-mono">// DISPOSITIVO DE FIRMA LISTO</p>
                                                         <div className="p-3.5 border border-dashed border-border-thin rounded flex items-center justify-center bg-bg-deep/30">
-                                                            <span className="text-[10.5px] text-text-dim/80">Certificado digital p12 cargado.</span>
+                                                            <span className="text-[9px] text-text-dim/80">Certificado digital p12 cargado.</span>
                                                         </div>
                                                         <button
                                                             onClick={startSigning}
-                                                            className="w-full py-3 bg-text-main text-bg-deep rounded font-bold font-sans text-[12.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                                                            className="w-full py-3 bg-text-main text-bg-deep rounded font-bold font-sans text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
                                                         >
                                                             <Key size={12} />
                                                             Firmar Acta de Aprobación
@@ -1164,10 +1157,10 @@ const Modulos: React.FC = () => {
                                                         <div className="relative h-20 border border-brand/20 bg-bg-deep rounded flex flex-col items-center justify-center overflow-hidden">
                                                             <div className="animate-scan-line" />
                                                             <Key size={28} className="text-brand/60 animate-pulse" />
-                                                            <span className="text-[10.5px] text-brand font-semibold mt-2 tracking-widest animate-pulse">GENERANDO FIRMA CRIPTOGRÁFICA...</span>
+                                                            <span className="text-[9px] text-brand font-semibold mt-2 tracking-widest animate-pulse">GENERANDO FIRMA CRIPTOGRÁFICA...</span>
                                                         </div>
                                                         <div className="space-y-1">
-                                                            <div className="flex justify-between text-[10px] text-brand/80 font-mono">
+                                                            <div className="flex justify-between text-[9px] text-brand/80 font-mono">
                                                                 <span>APLICANDO SELLO CRIPTOGRÁFICO P12</span>
                                                                 <span>{signProgress}%</span>
                                                             </div>
@@ -1187,43 +1180,43 @@ const Modulos: React.FC = () => {
                                                                     <Check size={12} strokeWidth={3} className="animate-scale-up" />
                                                                 </div>
                                                                 <div>
-                                                                    <p className="text-[11px] font-bold text-success font-sans leading-none">CERTIFICACIÓN VÁLIDA</p>
-                                                                    <p className="text-[8.5px] text-text-dim mt-0.5 font-mono">Banco Central del Ecuador</p>
+                                                                    <p className="text-[9.5px] font-bold text-success font-sans leading-none">CERTIFICACIÓN VÁLIDA</p>
+                                                                    <p className="text-[8px] text-text-dim mt-0.5 font-mono">Banco Central del Ecuador</p>
                                                                 </div>
                                                             </div>
                                                             <button 
                                                                 onClick={resetSignature}
-                                                                className="text-text-dim hover:text-text-main text-[9.5px] font-mono border border-border-thin px-2 py-1 rounded cursor-pointer transition-all hover:bg-surface/50 active:scale-95 flex items-center gap-1.5 bg-surface/30"
+                                                                className="text-text-dim hover:text-text-main text-[8.5px] font-mono border border-border-thin px-2 py-1 rounded cursor-pointer transition-all hover:bg-surface/50 active:scale-95 flex items-center gap-1.5 bg-surface/30"
                                                             >
                                                                 <RefreshCw size={10} /> REINICIAR
                                                             </button>
                                                         </div>
 
                                                         {/* Detalles del Firmante Oficial */}
-                                                        <div className="bg-surface/35 border border-border-thin/40 p-3 rounded-lg space-y-2 text-[10px] font-mono">
+                                                        <div className="bg-surface/35 border border-border-thin/40 p-3 rounded-lg space-y-2 text-[9px] font-mono">
                                                             <div className="grid grid-cols-2 gap-2 border-b border-border-thin/20 pb-2">
                                                                 <div>
-                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Firmante</span>
+                                                                    <span className="text-[8px] text-text-dim block uppercase font-sans">Firmante</span>
                                                                     <span className="text-text-main font-semibold block mt-0.5">Dr. Jorge Doicela</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Cargo</span>
+                                                                    <span className="text-[8px] text-text-dim block uppercase font-sans">Cargo</span>
                                                                     <span className="text-text-main font-semibold block mt-0.5">Director I+D</span>
                                                                 </div>
                                                             </div>
                                                             <div className="grid grid-cols-2 gap-2 pt-1">
                                                                 <div>
-                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Fecha de Firma</span>
+                                                                    <span className="text-[8px] text-text-dim block uppercase font-sans">Fecha de Firma</span>
                                                                     <span className="text-text-main font-semibold block mt-0.5">{signTimestamp}</span>
                                                                 </div>
                                                                 <div>
-                                                                    <span className="text-[8.5px] text-text-dim block uppercase font-sans">Entidad</span>
+                                                                    <span className="text-[8px] text-text-dim block uppercase font-sans">Entidad</span>
                                                                     <span className="text-success font-semibold block mt-0.5">FirmaEC (IST)</span>
                                                                 </div>
                                                             </div>
                                                             <div className="border-t border-border-thin/20 pt-2 mt-1">
-                                                                <span className="text-[8px] text-text-dim block uppercase font-sans">Hash Criptográfico</span>
-                                                                <span className="text-brand font-bold text-[9px] block truncate font-mono mt-0.5">
+                                                                <span className="text-[7.5px] text-text-dim block uppercase font-sans">Hash Criptográfico</span>
+                                                                <span className="text-brand font-bold text-[8.5px] block truncate font-mono mt-0.5">
                                                                     8f3b2a1c9e8d7f6c4b2a3e9c8a7b6c5d4e3f2a1b
                                                                 </span>
                                                             </div>
