@@ -195,9 +195,9 @@ const Modulos: React.FC = () => {
     // Módulo 4: Terminal Logs (CACES)
     const [terminalLogs, setTerminalLogs] = useState<string[]>([
         'guest@diitra:~$ status',
-        '✓ [14:02:15] Validando Distributivo de Investigadores...',
-        '✓ [14:02:16] Evidencias compiladas de Proyectos (12/12)',
-        '✓ [14:02:17] Sistema listo para auditoría CACES.'
+        '[OK] [14:02:15] Validando Distributivo de Investigadores...',
+        '[OK] [14:02:16] Evidencias compiladas de Proyectos (12/12)',
+        '[OK] [14:02:17] Sistema listo para auditoría CACES.'
     ]);
     const [logRunning, setLogRunning] = useState<boolean>(false);
     const terminalEndRef = useRef<HTMLDivElement>(null);
@@ -225,10 +225,11 @@ const Modulos: React.FC = () => {
         if (commandType === 'sync') {
             setTerminalLogs(prev => [...prev, 'guest@diitra:~$ sync --siies']);
             const logs = [
-                '⟳ Conectando con pasarela SIIES...',
-                '✓ Autenticación de certificado digital firmaEC completada.',
-                '⟳ Transmitiendo lote de evidencias académicas...',
-                '✓ Carga finalizada con éxito. Código de respuesta: 200 (OK).'
+                '[RUN] Conectando con pasarela SIIES mediante WS-Security...',
+                '[OK] Autenticación de certificado digital firmaEC completada.',
+                '[RUN] Transmitiendo lote de evidencias académicas (12 proyectos registrados)...',
+                '[OK] Repositorio DSpace institucional sincronizado con éxito.',
+                '[OK] Carga finalizada con éxito. Código de respuesta: 200 (OK).'
             ];
             let idx = 0;
             const interval = setInterval(() => {
@@ -245,10 +246,12 @@ const Modulos: React.FC = () => {
         if (commandType === 'audit') {
             setTerminalLogs(prev => [...prev, 'guest@diitra:~$ audit --caces']);
             const logs = [
-                '⟳ Escaneando repositorios de evidencias...',
-                '✓ Indicador I+D+i verificado: 100% cumplimiento.',
-                '✓ Horas de distributivo académico sincronizadas (24 docentes).',
-                '✓ Auditoría local finalizada: DIITRA APTO PARA ACREDITACIÓN.'
+                '[RUN] Iniciando motor de auditoría interna de acreditación...',
+                '[RUN] Evaluando Criterio C1: Plan de Desarrollo Científico (WS-CACES)...',
+                '[OK] Indicador C1: CUMPLE (Publicaciones indexadas Scopus/SJR al 100%)',
+                '[RUN] Evaluando Criterio C2: Distributivo Docente de I+D...',
+                '[OK] Indicador C2: CUMPLE (Horas sincronizadas para 24 docentes de planta)',
+                '[OK] Auditoría local finalizada: DIITRA APTO PARA ACREDITACIÓN.'
             ];
             let idx = 0;
             const interval = setInterval(() => {
@@ -283,7 +286,7 @@ const Modulos: React.FC = () => {
                 .laptop-lid {
                     background: #0a0a0a; /* Negro profundo mate */
                     border: 12px solid #0a0a0a;
-                    border-bottom: 14px solid #0a0a0a;
+                    border-bottom: 2px solid #0a0a0a; /* Muy delgado para que la pantalla baje al máximo */
                     border-radius: 18px 18px 0 0;
                     box-shadow: 
                         inset 0 1px 1px rgba(255, 255, 255, 0.08), 
@@ -295,6 +298,7 @@ const Modulos: React.FC = () => {
                 [data-theme="light"] .laptop-lid {
                     background: #121212; /* Sigue siendo negra mate */
                     border-color: #121212;
+                    border-bottom-color: #121212;
                     box-shadow: 
                         inset 0 1px 1px rgba(255, 255, 255, 0.1), 
                         inset 0 -1px 1px rgba(0, 0, 0, 0.85);
@@ -531,7 +535,7 @@ const Modulos: React.FC = () => {
 
                         {/* Botonera de navegación vertical (Subir / Bajar módulo) */}
                         {activeModule !== null && (
-                            <div className="absolute -left-6 lg:-left-12 top-[56%] -translate-y-1/2 z-30 flex flex-col gap-2">
+                            <div className="absolute -left-6 lg:-left-12 top-[78%] -translate-y-1/2 z-30 flex flex-col gap-2">
                                 <button
                                     onClick={handlePrevModule}
                                     className="w-8.5 h-8.5 rounded-full border border-border-thin text-text-dim hover:text-text-main bg-surface dark:bg-black/95 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center shadow-md hover:border-border-hover"
@@ -646,7 +650,7 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                     <div className="space-y-0.5">
                                                         <span className="text-[9px] text-text-dim block leading-tight font-sans">Auditoría CACES</span>
-                                                        <span className="text-[8.5px] font-mono font-semibold text-success animate-pulse truncate block">✓ APTO ACREDITAR</span>
+                                                        <span className="text-[8.5px] font-mono font-semibold text-success animate-pulse truncate block">APTO ACREDITAR</span>
                                                     </div>
                                                     <div className="text-[7px] font-mono text-text-dim truncate">
                                                         guest@diitra:~$ status
@@ -720,22 +724,34 @@ const Modulos: React.FC = () => {
                                                     })}
                                                 </div>
 
-                                                {/* Barra de progreso de ejecución */}
-                                                <div className="space-y-1 bg-surface/30 p-2.5 rounded border border-border-thin/30">
-                                                    <div className="flex justify-between text-[8px] font-mono text-text-dim">
+                                                {/* Barra de progreso de ejecución y viabilidad */}
+                                                <div className="space-y-1.5 bg-surface/30 p-2.5 rounded border border-border-thin/30 text-left font-mono">
+                                                    <div className="flex justify-between text-[8px] text-text-dim">
                                                         <span>Límite Institucional Ejecutado</span>
                                                         <span className="font-bold text-text-main">{budgetPct}%</span>
                                                     </div>
-                                                    <div className="w-full bg-border-thin h-1.5 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-brand transition-all duration-500 ease-out"
-                                                            style={{ width: `${budgetPct}%` }}
+                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full bg-brand transition-all duration-500 ease-out" 
+                                                            style={{ width: `${budgetPct}%` }} 
                                                         />
+                                                    </div>
+                                                    <div className="flex justify-between text-[7.5px] pt-1.5 border-t border-border-thin/10">
+                                                        <span>VIABILIDAD FINANCIERA:</span>
+                                                        {currentBudgetTotal > 2500 ? (
+                                                            <span className="text-warning font-bold">ALERTA DE COSTOS (REQUERIDO DECANO)</span>
+                                                        ) : (
+                                                            <span className="text-success font-bold">FONDOS APROBADOS (VIABLE)</span>
+                                                        )}
                                                     </div>
                                                 </div>
 
-                                            </div>
+                                                {/* Leyenda explicativa técnica */}
+                                                <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed">
+                                                    INFO: Simula el plan de adquisiciones institucional. Fondos vinculados con los presupuestos anuales de I+D homologados ante el CES.
+                                                </p>
 
+                                            </div>
                                         </div>
                                     )}
 
@@ -779,10 +795,15 @@ const Modulos: React.FC = () => {
                                                 </div>
 
                                                 {/* Mapa de avance de docente (MC) interactivo */}
-                                                <div className="bg-surface/30 p-2.5 rounded border border-border-thin/30 space-y-1">
-                                                    <span className="text-[7px] text-text-dim block uppercase font-mono tracking-wider">
-                                                        // AVANCE DOCENTE EN VIVO: J. DOICELA
-                                                    </span>
+                                                <div className="bg-surface/30 p-2.5 rounded border border-border-thin/30 space-y-1 text-left font-mono">
+                                                    <div className="flex justify-between items-center text-[7px] text-text-dim">
+                                                        <span>// AVANCE DOCENTE EN VIVO: J. DOICELA</span>
+                                                        {hitosCompletedCount === hitosTotalCount ? (
+                                                            <span className="text-success font-bold font-sans">PROYECTO AL DÍA</span>
+                                                        ) : (
+                                                            <span className="text-warning font-bold font-sans">EN EJECUCIÓN</span>
+                                                        )}
+                                                    </div>
                                                     <div className="relative h-4.5 mt-1 flex items-center">
                                                         <div className="absolute w-full bg-border-thin h-1 rounded-full" />
                                                         <div
@@ -798,8 +819,12 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                            </div>
+                                                {/* Leyenda explicativa técnica */}
+                                                <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed">
+                                                    TIP: Los hitos docentes controlan la liberación de distributivos de horas clase a investigación en el distributivo de la Facultad.
+                                                </p>
 
+                                            </div>
                                         </div>
                                     )}
 
@@ -814,7 +839,12 @@ const Modulos: React.FC = () => {
                                             </div>
 
                                             {/* Descargas interactivas */}
-                                            <div className="flex-1 flex flex-col justify-center gap-3">
+                                            <div className="flex-1 flex flex-col justify-center gap-2.5">
+
+                                                <div className="flex justify-between items-center text-[7.5px] font-mono text-text-dim border border-dashed border-border-thin bg-surface/20 p-2.5 rounded text-left">
+                                                    <span>REGISTRO SENADI ACTIVO:</span>
+                                                    <span className="text-success font-bold">REG-SENADI-2026-00459 (VIGENTE)</span>
+                                                </div>
 
                                                 {Object.keys(downloadStates).map((fileName) => {
                                                     const state = downloadStates[fileName];
@@ -827,7 +857,7 @@ const Modulos: React.FC = () => {
                                                             <div className="flex justify-between items-center font-sans">
                                                                 <span className="text-[10px] text-text-main font-bold font-mono">{fileName}</span>
                                                                 <span className="text-brand text-[8px] font-bold font-mono bg-brand-subtle px-2 py-0.5 rounded border border-brand/20">
-                                                                    {state === 'idle' ? 'DESCARGAR' : state === 'success' ? 'COMPLETO ✓' : `DESCARGANDO: ${state}%`}
+                                                                    {state === 'idle' ? 'DESCARGAR' : state === 'success' ? 'COMPLETO' : `DESCARGANDO: ${state}%`}
                                                                 </span>
                                                             </div>
                                                             {typeof state === 'number' && (
@@ -838,13 +868,18 @@ const Modulos: React.FC = () => {
                                                         </button>
                                                     );
                                                 })}
+                                                
+                                                {/* Leyenda explicativa técnica */}
+                                                <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed mt-1.5">
+                                                    INFO: Integración directa mediante API REST con los repositorios nacionales del SENADI para registrar la propiedad de software.
+                                                </p>
 
                                             </div>
 
                                         </div>
                                     )}
 
-                                    {/* 4. MÓDULO ACTIVO: ACREDITACIÓN (Terminal) */}
+                                     {/* 4. MÓDULO ACTIVO: ACREDITACIÓN (Terminal) */}
                                     {activeModule === 4 && (
                                         <div className="h-full flex flex-col gap-3">
 
@@ -863,9 +898,9 @@ const Modulos: React.FC = () => {
                                                         <p
                                                             key={idx}
                                                             className={
-                                                                log.startsWith('✓')
+                                                                log.startsWith('[OK]')
                                                                     ? 'text-success'
-                                                                    : log.startsWith('⟳')
+                                                                    : log.startsWith('[RUN]')
                                                                         ? 'text-warning'
                                                                         : 'text-text-main'
                                                             }
@@ -913,6 +948,11 @@ const Modulos: React.FC = () => {
                                                 </div>
 
                                             </div>
+
+                                            {/* Leyenda explicativa técnica */}
+                                            <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed">
+                                                TIP: La consola simula el consumo seguro del API del CACES para evaluar la producción científica institucional y distributivos.
+                                            </p>
 
                                         </div>
                                     )}
@@ -974,7 +1014,7 @@ const Modulos: React.FC = () => {
                                                             <button 
                                                                 onClick={resetSignature}
                                                                 className="text-text-dim hover:text-text-main text-[8px] font-mono border border-border-thin px-1.5 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1 bg-surface/30"
-                                                            >
+                                                             >
                                                                 <RefreshCw size={8} /> REINICIAR
                                                             </button>
                                                         </div>
@@ -986,6 +1026,11 @@ const Modulos: React.FC = () => {
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* Leyenda explicativa técnica */}
+                                            <p className="text-[7.5px] font-mono text-text-dim text-left leading-relaxed mt-1">
+                                                INFO: Firma de actas académicas en formato PDF mediante criptografía asimétrica estándar PKCS#12 compatible con FirmaEC de Ecuador.
+                                            </p>
 
                                         </div>
                                     )}
