@@ -647,6 +647,30 @@ export const ProjectWorkspace: React.FC = () => {
                 return;
             }
 
+            // Consultar disponibilidad y horas asignadas en paralelo para cada miembro activo del grupo
+            const memberHoursMap: Record<string, { horasDisponibles: number, horasAsignadas: number }> = {};
+            const activeMembers = groupMembers.filter((m: any) => m.activo !== false && m.cedula?.trim());
+
+            if (activeMembers.length > 0) {
+                await Promise.all(activeMembers.map(async (m: any) => {
+                    const ced = m.cedula.trim();
+                    try {
+                        const searchRes = await api.get(`/catalogs/search-users`, {
+                            params: { q: ced }
+                        });
+                        const found = (searchRes.data || []).find((u: any) => u.cedula === ced);
+                        if (found) {
+                            memberHoursMap[ced] = {
+                                horasDisponibles: found.horasDisponibles ?? found.horas_disponibles ?? 0,
+                                horasAsignadas: found.horasAsignadas ?? found.horas_asignadas ?? 0
+                            };
+                        }
+                    } catch (e) {
+                        console.error("[DIITRA] Error al consultar capacidad de miembro: " + ced, e);
+                    }
+                }));
+            }
+
             let addedCount = 0;
             setInvestigadores(prev => {
                 const updatedMembers = [...prev];
@@ -671,6 +695,8 @@ export const ProjectWorkspace: React.FC = () => {
                             projectRol = "Co-Investigador";
                         }
 
+                        const hoursData = memberHoursMap[memberCedula] || { horasDisponibles: 0, horasAsignadas: 0 };
+
                         updatedMembers.push({
                             nombre: m.nombre_completo || m.nombreCompleto || "Desconocido",
                             cedula: memberCedula,
@@ -678,8 +704,8 @@ export const ProjectWorkspace: React.FC = () => {
                             nivelAcademico: "Tercer Nivel",
                             telefono: "",
                             horasSemanales: 0,
-                            horasDisponibles: 0,
-                            horasAsignadas: 0,
+                            horasDisponibles: hoursData.horasDisponibles,
+                            horasAsignadas: hoursData.horasAsignadas,
                             carrera: m.carrera || ""
                         });
                         addedCount++;

@@ -712,7 +712,7 @@ namespace diitra_infrastructure.Research
                     .ToList();
                 var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
 
-                var availableHours = researchHours.Where(pa => pa.IdProfesor == cedula).Sum(pa => pa.HorasSemana ?? 0);
+                var availableHours = researchHours.Where(pa => pa.IdProfesor.Trim() == cedula).Sum(pa => pa.HorasSemana ?? 0);
                 var assignedHours = otherAssignedHours.Where(o => o.IdUsuario == pp.IdUsuario).Sum(o => o.HorasSemanales ?? 0);
 
                 investigadoresList.Add(new InvestigadorDto
@@ -2276,7 +2276,7 @@ namespace diitra_infrastructure.Research
 
                 dto.Investigadores = updatedProfs.Select(pp => {
                     var cedula = pp.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
-                    var availableHours = researchHours.Where(pa => pa.IdProfesor == cedula).Sum(pa => pa.HorasSemana ?? 0);
+                    var availableHours = researchHours.Where(pa => pa.IdProfesor.Trim() == cedula).Sum(pa => pa.HorasSemana ?? 0);
                     var assignedHours = otherAssignedHours.Where(o => o.IdUsuario == pp.IdUsuario).Sum(o => o.HorasSemanales ?? 0);
                     return new InvestigadorDto
                     {
