@@ -31,9 +31,10 @@ public class AdminController : ControllerBase
         [FromQuery] string? search, 
         [FromQuery] string type = "DOCENTE",
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? carrera = null)
     {
-        var users = await _adminService.GetUsersAsync(search, type, page, pageSize);
+        var users = await _adminService.GetUsersAsync(search, type, page, pageSize, carrera);
         return Ok(users);
     }
 

@@ -20,7 +20,7 @@ public class AdminService : IAdminService
         _auditService = auditService;
     }
 
-    public async Task<PagedResult<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE", int page = 1, int pageSize = 10)
+    public async Task<PagedResult<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE", int page = 1, int pageSize = 10, string? carrera = null)
     {
         searchTerm = searchTerm?.ToLower() ?? "";
         if (page < 1) page = 1;
@@ -62,6 +62,22 @@ public class AdminService : IAdminService
                     m.IdPeriodo == periodId &&
                     (m.Retirado == null || m.Retirado == false) &&
                     (m.Valida == 1)));
+            }
+
+            if (!string.IsNullOrEmpty(carrera))
+            {
+                var carreraLower = carrera.ToLower();
+                var matchingCarreraIds = await _context.Carreras
+                    .Where(c => (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)))
+                    .Select(c => c.IdCarrera)
+                    .ToListAsync();
+
+                query = query.Where(a => _context.Matriculas.Any(m =>
+                    m.IdAlumno == a.IdAlumno &&
+                    m.IdPeriodo == periodId &&
+                    (m.Retirado == null || m.Retirado == false) &&
+                    m.Valida == 1 &&
+                    _context.Cursos.Any(c => c.IdNivel == m.IdNivel && matchingCarreraIds.Contains(c.IdCarrera))));
             }
 
             if (!string.IsNullOrEmpty(searchTerm))
@@ -236,13 +252,22 @@ public class AdminService : IAdminService
         {
             var query = _context.Profesores.Where(p => p.Activo == 1);
 
-            // Solo docentes que tengan actividades de investigación (idSubcategoria = researchSubcatId) en el periodo actual
-            if (!string.IsNullOrEmpty(periodId))
+
+
+            if (!string.IsNullOrEmpty(carrera))
             {
-                query = query.Where(p => _context.ProfesoresActividades.Any(pa =>
-                    pa.IdProfesor == p.IdProfesor &&
-                    pa.IdSubcategoria == researchSubcatId &&
-                    pa.IdPeriodo == periodId));
+                var carreraLower = carrera.ToLower();
+                var matchingCarreraIds = await _context.Carreras
+                    .Where(c => (c.Carrera1 != null && c.Carrera1.ToLower().Contains(carreraLower)) || (c.AliasCarrera != null && c.AliasCarrera.ToLower().Contains(carreraLower)))
+                    .Select(c => c.IdCarrera)
+                    .ToListAsync();
+
+                query = query.Where(p => _context.ProfesoresCarrerasPeriodos.Any(pc =>
+                    pc.IdProfesor == p.IdProfesor &&
+                    pc.IdPeriodo == periodId &&
+                    pc.EsActivo == 1 &&
+                    pc.IdCarrera != null &&
+                    matchingCarreraIds.Contains(pc.IdCarrera.Value)));
             }
 
             if (!string.IsNullOrEmpty(searchTerm))
