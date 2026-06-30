@@ -124,32 +124,22 @@ public class UnitTest1
         
         using var context = new DiitraContext(optionsBuilder.Options);
         
-        var mockAuth = new Mock<IAuthService>();
-        var mockAudit = new Mock<IAuditService>();
-        var mockNotification = new Mock<INotificationService>();
-        var mockLogger = new Mock<ILogger<ProjectOrchestrator>>();
-        
-        var orchestrator = new ProjectOrchestrator(
-            context,
-            mockAuth.Object,
-            mockAudit.Object,
-            mockNotification.Object,
-            mockLogger.Object
-        );
-
         var projectUuid = "a79989c8-7f22-4d74-b27f-a09401b8bebc";
-        var detail = await orchestrator.GetProjectDetailAsync(projectUuid);
-        if (detail == null)
+        var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+        if (project == null)
         {
-            Console.WriteLine($"[DIAG] Project detail not found for {projectUuid}");
+            Console.WriteLine($"[DIAG] Project NOT found in database: {projectUuid}");
         }
         else
         {
-            Console.WriteLine($"[DIAG] Project Title: {detail.Titulo}");
-            foreach (var inv in detail.Investigadores)
-            {
-                Console.WriteLine($"[DIAG] Member: Name={inv.Nombre}, Cedula={inv.Cedula}, Rol={inv.Rol}, AvailableHours={inv.HorasDisponibles}, Assigned={inv.HorasAsignadas}");
-            }
+            Console.WriteLine($"[DIAG] Raw Project: Id={project.IdProyecto}, Uuid={project.Uuid}, Titulo='{project.Titulo}', Estado='{project.Estado}', MetadataCacesJson='{project.MetadataCacesJson}'");
+        }
+
+        var instances = await context.DocumentInstances.Where(i => i.EntityUuid == projectUuid).ToListAsync();
+        Console.WriteLine($"[DIAG] DocumentInstances count for {projectUuid}: {instances.Count}");
+        foreach (var inst in instances)
+        {
+            Console.WriteLine($"[DIAG] Instance: Uuid={inst.Uuid}, EntityUuid={inst.EntityUuid}, TemplateCode={inst.TemplateCode}, Title='{inst.Title}', State={inst.State}, SnapshotLength={inst.DataSnapshotJson?.Length ?? 0}, Snapshot='{inst.DataSnapshotJson}'");
         }
     }
 
@@ -419,6 +409,20 @@ public class UnitTest1
         var result = compiled(data);
         Console.WriteLine($"RENDER RESULT FOR STRING: '{result}'");
     }
+
+    [Fact]
+    public void TestCleanAndNormalizeJson()
+    {
+        var dirtyJson = "{\"Titulo\":\"PRUEBA1\",\"titulo\":\"\",\"IdCarrera\":13,\"idCarrera\":0,\"Investigadores\":[{\"Nombre\":\"Erika\",\"nombre\":\"\"}]}";
+        var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(dirtyJson);
+        
+        Assert.Contains("\"Titulo\":\"PRUEBA1\"", cleanedJson);
+        Assert.DoesNotContain("\"titulo\"", cleanedJson);
+        
+        Assert.Contains("\"IdCarrera\":13", cleanedJson);
+        Assert.DoesNotContain("\"idCarrera\"", cleanedJson);
+        
+        Assert.Contains("\"Nombre\":\"Erika\"", cleanedJson);
+        Assert.DoesNotContain("\"nombre\"", cleanedJson);
+    }
 }
-
-

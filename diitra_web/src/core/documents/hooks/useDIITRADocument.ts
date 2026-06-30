@@ -400,7 +400,25 @@ export function useDIITRADocument<T extends Record<string, any>>(
 
         return () => cleanups.forEach(c => c());
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [ydoc, options.isHistoryLoaded]);
+    }, [ydoc, initialData, options.lists, options.richTexts, options.nonCollaborative, options.isHistoryLoaded]);
+
+    // Sincronizar initialData en formData cuando initialData cambie (ej: al terminar la carga de la API)
+    useEffect(() => {
+        if (!initialData) return;
+        setFormData(prev => {
+            let changed = false;
+            const updated: any = { ...prev };
+            Object.keys(initialData).forEach(key => {
+                if (prev[key] === undefined || prev[key] === null || prev[key] === '') {
+                    if (initialData[key] !== undefined && initialData[key] !== null && initialData[key] !== '') {
+                        updated[key] = initialData[key];
+                        changed = true;
+                    }
+                }
+            });
+            return changed ? updated : prev;
+        });
+    }, [initialData]);
 
     return {
         formData,

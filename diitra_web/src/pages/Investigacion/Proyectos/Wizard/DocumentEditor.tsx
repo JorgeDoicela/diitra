@@ -402,9 +402,36 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
     }, [formData?.RecursosNecesarios, formData?.CostoTotal, updateField, templateCode]);
 
     // ── 7. Persistencia en el backend ──
+    const removeDuplicateLowerKeys = (obj: any): any => {
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) {
+            return obj.map(removeDuplicateLowerKeys);
+        }
+        const keys = Object.keys(obj);
+        const cleaned: any = {};
+        
+        keys.forEach(k => {
+            cleaned[k] = removeDuplicateLowerKeys(obj[k]);
+        });
+        
+        keys.forEach(key => {
+            if (key && key[0] === key[0].toLowerCase()) {
+                const pascalKey = keys.find(
+                    k => k.toLowerCase() === key.toLowerCase() && k && k[0] === k[0].toUpperCase()
+                );
+                if (pascalKey) {
+                    delete cleaned[key];
+                }
+            }
+        });
+        
+        return cleaned;
+    };
+
     const cleanDocumentData = (data: any) => {
         if (!data) return data;
-        const cloned = JSON.parse(JSON.stringify(data));
+        const cleaned = removeDuplicateLowerKeys(data);
+        const cloned = JSON.parse(JSON.stringify(cleaned));
         if (Array.isArray(cloned.RecursosDisponibles)) {
             cloned.RecursosDisponibles.forEach((r: any) => {
                 if (r.Cantidad !== undefined && r.Cantidad !== null) {
