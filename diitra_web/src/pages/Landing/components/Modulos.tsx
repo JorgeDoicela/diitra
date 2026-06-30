@@ -195,19 +195,7 @@ const Modulos: React.FC = () => {
         setSignProgress(0);
     };
 
-    // Estadísticas del sistema fluctuantes en tiempo real para el Módulo 4
-    const [systemStats, setSystemStats] = useState({ cpu: 14, ram: 42, net: 5 });
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setSystemStats({
-                cpu: Math.floor(Math.random() * (28 - 8) + 8),
-                ram: Math.floor(Math.random() * (46 - 40) + 40),
-                net: Math.floor(Math.random() * (12 - 3) + 3)
-            });
-        }, 1500);
-        return () => clearInterval(interval);
-    }, []);
 
     // Commits del Repositorio simulados para el Módulo 3
     const [commits, setCommits] = useState([
@@ -300,79 +288,7 @@ const Modulos: React.FC = () => {
         }, 200);
     };
 
-    // Módulo 4: Terminal Logs (CACES)
-    const [terminalLogs, setTerminalLogs] = useState<string[]>([
-        'guest@diitra:~$ status',
-        '[OK] [14:02:15] Validando Distributivo de Investigadores...',
-        '[OK] [14:02:16] Evidencias compiladas de Proyectos (12/12)',
-        '[OK] [14:02:17] Sistema listo para auditoría CACES.'
-    ]);
-    const [logRunning, setLogRunning] = useState<boolean>(false);
-    const terminalContainerRef = useRef<HTMLDivElement>(null);
 
-    // Auto-scroll terminal local sin mover la pantalla global
-    useEffect(() => {
-        if (terminalContainerRef.current) {
-            terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
-        }
-    }, [terminalLogs]);
-
-    const runCommand = (commandType: 'clear' | 'sync' | 'audit') => {
-        if (logRunning) return;
-        setLogRunning(true);
-
-        if (commandType === 'clear') {
-            setTerminalLogs(['guest@diitra:~$ clear']);
-            setTimeout(() => {
-                setTerminalLogs(['guest@diitra:~$ ']);
-                setLogRunning(false);
-            }, 300);
-            return;
-        }
-
-        if (commandType === 'sync') {
-            setTerminalLogs(prev => [...prev, 'guest@diitra:~$ sync --siies']);
-            const logs = [
-                '[RUN] Conectando con pasarela SIIES mediante WS-Security...',
-                '[OK] Autenticación de certificado digital firmaEC completada.',
-                '[RUN] Transmitiendo lote de evidencias académicas (12 proyectos registrados)...',
-                '[OK] Repositorio DSpace institucional sincronizado con éxito.',
-                '[OK] Carga finalizada con éxito. Código de respuesta: 200 (OK).'
-            ];
-            let idx = 0;
-            const interval = setInterval(() => {
-                if (idx < logs.length) {
-                    setTerminalLogs(prev => [...prev, logs[idx]]);
-                    idx++;
-                } else {
-                    clearInterval(interval);
-                    setLogRunning(false);
-                }
-            }, 450);
-        }
-
-        if (commandType === 'audit') {
-            setTerminalLogs(prev => [...prev, 'guest@diitra:~$ audit --caces']);
-            const logs = [
-                '[RUN] Iniciando motor de auditoría interna de acreditación...',
-                '[RUN] Evaluando Criterio C1: Plan de Desarrollo Científico (WS-CACES)...',
-                '[OK] Indicador C1: CUMPLE (Publicaciones indexadas Scopus/SJR al 100%)',
-                '[RUN] Evaluando Criterio C2: Distributivo Docente de I+D...',
-                '[OK] Indicador C2: CUMPLE (Horas sincronizadas para 24 docentes de planta)',
-                '[OK] Auditoría local finalizada: DIITRA APTO PARA ACREDITACIÓN.'
-            ];
-            let idx = 0;
-            const interval = setInterval(() => {
-                if (idx < logs.length) {
-                    setTerminalLogs(prev => [...prev, logs[idx]]);
-                    idx++;
-                } else {
-                    clearInterval(interval);
-                    setLogRunning(false);
-                }
-            }, 450);
-        }
-    };
 
     return (
         <section id="modulos" className="py-24 relative lg:-ml-24 lg:-mr-24 px-6 overflow-hidden space-y-16">
