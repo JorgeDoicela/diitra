@@ -121,6 +121,7 @@ const GroupsPage = () => {
 
     // Detail drawer trigger
     const [detailGroup, setDetailGroup] = useState<Group | null>(null);
+    const [lastActiveGroupId, setLastActiveGroupId] = useState<string | null>(null);
 
     // Review states (Admin)
     const [reviewingGroup, setReviewingGroup] = useState<Group | null>(null);
@@ -204,6 +205,8 @@ const GroupsPage = () => {
             const target = groups.find(g => g.uuid === openUuid);
             if (target) {
                 setDetailGroup(target);
+                setSearch(target.nombre);
+                setLastActiveGroupId(null);
                 clearOpenParam();
                 return;
             }
@@ -211,6 +214,8 @@ const GroupsPage = () => {
             try {
                 const res = await api.get(`/Groups/${openUuid}`);
                 setDetailGroup(res.data);
+                setSearch(res.data.nombre);
+                setLastActiveGroupId(null);
                 clearOpenParam();
             } catch (err) {
                 console.error('No se pudo abrir el grupo desde el enlace:', openUuid, err);
@@ -219,6 +224,13 @@ const GroupsPage = () => {
 
         openFromDeepLink();
     }, [openUuid, groups, loading]);
+
+    const handleCloseGroupDetail = () => {
+        if (detailGroup) {
+            setLastActiveGroupId(detailGroup.uuid);
+        }
+        setDetailGroup(null);
+    };
 
     useEffect(() => {
         const metaStr = localStorage.getItem('groups_draft_metadata');
@@ -444,6 +456,14 @@ const GroupsPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto custom-scrollbar">
+            <style>{`
+                .row-last-active {
+                    border-left-color: var(--brand, #0070f3) !important;
+                    background-color: var(--brand-subtle, rgba(0, 112, 243, 0.06)) !important;
+                    border-left-width: 2px !important;
+                    transition: all 0.2s ease-in-out;
+                }
+            `}</style>
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="section-label text-text-main">
@@ -551,8 +571,14 @@ const GroupsPage = () => {
                                 ) : groups.map((g) => (
                                     <tr
                                         key={g.id_grupo}
-                                        onClick={() => setDetailGroup(g)}
-                                        className="hover:bg-surface/30 transition-colors group cursor-pointer"
+                                        onClick={() => { setDetailGroup(g); setLastActiveGroupId(null); }}
+                                        className={`transition-all duration-300 group cursor-pointer border-l-2 ${
+                                            detailGroup?.uuid === g.uuid 
+                                                ? 'bg-brand/10 border-brand' 
+                                                : (!detailGroup && lastActiveGroupId === g.uuid)
+                                                    ? 'row-last-active'
+                                                    : 'border-transparent hover:bg-surface/30'
+                                        }`}
                                     >
                                         <td className="p-4">
                                             <div className="space-y-1">
@@ -610,7 +636,7 @@ const GroupsPage = () => {
                                         <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex gap-2 justify-end">
                                                 <button
-                                                     onClick={() => setDetailGroup(g)}
+                                                     onClick={() => { setDetailGroup(g); setLastActiveGroupId(null); }}
                                                      className="p-1.5 rounded hover:bg-brand/10 text-text-dim group-hover:text-brand transition-all"
                                                      title="Ver Detalle"
                                                  >
@@ -949,7 +975,7 @@ const GroupsPage = () => {
 
             <GroupDetailDrawer
                 isOpen={!!detailGroup}
-                onClose={() => setDetailGroup(null)}
+                onClose={handleCloseGroupDetail}
                 detailGroup={detailGroup}
                 setDetailGroup={setDetailGroup}
                 isAdmin={isAdmin}

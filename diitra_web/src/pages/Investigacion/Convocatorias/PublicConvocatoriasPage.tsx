@@ -6,6 +6,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { CreateProjectModal } from '../../../components/DIITRA/CreateProjectModal';
 import { useAuth } from '../../../api/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 interface Convocatoria {
     id_convocatoria: number;
@@ -42,12 +43,28 @@ const isPastDeadline = (fechaCierre: string) => {
 
 const PublicConvocatoriasPage = () => {
     const { isAdmin } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const openUuid = searchParams.get('open');
     const [convocatorias, setConvocatorias] = useState<Convocatoria[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showNewProject, setShowNewProject] = useState(false);
     const [preselectedConvocatoriaId, setPreselectedConvocatoriaId] = useState<number | null>(null);
     const [selectedConvocatoria, setSelectedConvocatoria] = useState<Convocatoria | null>(null);
+
+    useEffect(() => {
+        if (openUuid && convocatorias.length > 0) {
+            const target = convocatorias.find(c => c.uuid === openUuid);
+            if (target) {
+                setSelectedConvocatoria(target);
+                setSearchParams(prev => {
+                    const next = new URLSearchParams(prev);
+                    next.delete('open');
+                    return next;
+                });
+            }
+        }
+    }, [openUuid, convocatorias, setSearchParams]);
 
     const handlePostular = (idConvocatoria: number) => {
         setPreselectedConvocatoriaId(idConvocatoria);
@@ -132,7 +149,11 @@ const PublicConvocatoriasPage = () => {
                         <div
                             key={c.uuid}
                             onClick={() => setSelectedConvocatoria(c)}
-                            className="bento-card p-6 group cursor-pointer overflow-hidden"
+                            className={`bento-card p-6 group cursor-pointer overflow-hidden border-l-2 ${
+                                selectedConvocatoria?.uuid === c.uuid 
+                                    ? 'bg-brand/10 border-brand' 
+                                    : 'border-transparent'
+                            }`}
                         >
                             <div className="space-y-6 relative z-10">
                                 <div className="flex justify-between items-start">
