@@ -21,27 +21,27 @@ const Caces: React.FC = () => {
     }, []);
 
     const features = [
-        { 
-            tabId: 1, 
-            title: 'Evidencias de avance', 
+        {
+            tabId: 1,
+            title: 'Evidencias de avance',
             desc: 'Consolidación de informes y bitácoras mensuales.',
             items: ['COMPILACIÓN MENSUAL', 'FIRMAS DIGITALES EC', 'BITÁCORAS DE DOCENTES', 'EVIDENCIAS ESTRUCTURADAS']
         },
-        { 
-            tabId: 2, 
-            title: 'Reporte unificado', 
+        {
+            tabId: 2,
+            title: 'Reporte unificado',
             desc: 'Convenios, ponencias y publicaciones integradas.',
             items: ['CONVENIOS VINCULADOS', 'PUBLICACIONES CIENTÍFICAS', 'PONENCIAS INTEGRADAS', 'REPORTE UNIFICADO CACES']
         },
-        { 
-            tabId: 3, 
-            title: 'Horas de distributivo', 
+        {
+            tabId: 3,
+            title: 'Horas de distributivo',
             desc: 'Control automático de carga horaria docente.',
             items: ['CONTROL DE DISTRIBUTIVO', 'CARGA HORARIA DOCENTE', 'HORAS DE INVESTIGACIÓN', 'ALERTA DE SOBRECARGA']
         },
-        { 
-            tabId: 4, 
-            title: 'Compatibilidad SIIES', 
+        {
+            tabId: 4,
+            title: 'Compatibilidad SIIES',
             desc: 'Exportación directa de datos sin reprocesos.',
             items: ['EXPORTACIÓN DIRECTA', 'COMPATIBILIDAD SIIES', 'VALIDACIÓN DE ESQUEMAS', 'SINCRONIZACIÓN API']
         }
@@ -243,22 +243,19 @@ const Caces: React.FC = () => {
                                         <button
                                             key={item.tabId}
                                             onClick={() => selectTabWithAnimation(item.tabId)}
-                                            className={`py-4 border-b border-border-thin flex justify-between items-center w-full text-left transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-1 cursor-pointer ${
-                                                activeFeature === item.tabId ? 'translate-x-2 text-brand font-semibold' : 'text-text-dim'
-                                            }`}
+                                            className={`py-4 border-b border-border-thin flex justify-between items-center w-full text-left transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-1 cursor-pointer ${activeFeature === item.tabId ? 'translate-x-2 text-brand font-semibold' : 'text-text-dim'
+                                                }`}
                                         >
                                             <div className="flex items-center gap-2">
                                                 {activeFeature === item.tabId && <span className="w-1.5 h-1.5 rounded-full bg-brand animate-ping shrink-0" />}
                                                 <div className="space-y-1">
-                                                    <span className={`font-mono text-[11px] font-bold tracking-wider uppercase block transition-colors ${
-                                                        activeFeature === item.tabId ? 'text-brand' : 'text-text-main'
-                                                    }`}>{item.title}</span>
+                                                    <span className={`font-mono text-[11px] font-bold tracking-wider uppercase block transition-colors ${activeFeature === item.tabId ? 'text-brand' : 'text-text-main'
+                                                        }`}>{item.title}</span>
                                                     <span className="text-[10px] text-text-dim block leading-none">{item.desc}</span>
                                                 </div>
                                             </div>
-                                            <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors ${
-                                                activeFeature === item.tabId ? 'text-brand font-bold' : 'text-text-dim'
-                                            }`}>0{idx + 1}</span>
+                                            <span className={`text-[10px] font-mono uppercase tracking-wider transition-colors ${activeFeature === item.tabId ? 'text-brand font-bold' : 'text-text-dim'
+                                                }`}>0{idx + 1}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -293,19 +290,17 @@ const Caces: React.FC = () => {
                                             ) : (
                                                 <span className="w-1.5 h-1.5 rounded-full bg-border-thin shrink-0" />
                                             )}
-                                            <span className={`transition-colors duration-300 ${
-                                                idx === currentValStep 
-                                                    ? 'text-text-main font-semibold' 
-                                                    : idx < currentValStep 
-                                                        ? 'text-text-dim/60 line-through' 
+                                            <span className={`transition-colors duration-300 ${idx === currentValStep
+                                                    ? 'text-text-main font-semibold'
+                                                    : idx < currentValStep
+                                                        ? 'text-text-dim/60 line-through'
                                                         : 'text-text-dim'
-                                            }`}>
+                                                }`}>
                                                 {step.name}
                                             </span>
                                         </div>
-                                        <span className={`text-[8px] font-mono font-bold uppercase transition-colors ${
-                                            idx === currentValStep ? 'text-brand' : idx < currentValStep ? 'text-success' : 'text-text-dim'
-                                        }`}>
+                                        <span className={`text-[8px] font-mono font-bold uppercase transition-colors ${idx === currentValStep ? 'text-brand' : idx < currentValStep ? 'text-success' : 'text-text-dim'
+                                            }`}>
                                             {idx < currentValStep ? 'OK' : idx === currentValStep ? 'SINC...' : 'WAIT'}
                                         </span>
                                     </div>
@@ -315,48 +310,45 @@ const Caces: React.FC = () => {
                     ) : (
                         <div className="space-y-4 font-sans min-h-[148px] flex flex-col justify-center">
                             {/* Indicador 1 */}
-                            <div className={`space-y-1.5 p-2 rounded border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                                activeFeature === 1 ? 'border-brand/35 bg-brand-subtle' : 'border-transparent'
-                            }`}>
+                            <div className={`space-y-1.5 p-2 rounded border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeFeature === 1 ? 'border-brand/35 bg-brand-subtle' : 'border-transparent'
+                                }`}>
                                 <div className="flex justify-between text-[10px] font-medium">
                                     <span className="text-text-main">I+D+i: Proyectos de Investigación Aplicada</span>
                                     <span className="text-success font-semibold font-mono text-[9px]">100% CUMPLIDO</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-border-thin rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-success transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
+                                    <div
+                                        className="h-full bg-success transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
                                         style={{ width: activeFeature === 1 ? '100%' : '30%' }}
                                     />
                                 </div>
                             </div>
 
                             {/* Indicador 2 */}
-                            <div className={`space-y-1.5 p-2 rounded border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                                activeFeature === 2 ? 'border-brand/35 bg-brand-subtle' : 'border-transparent'
-                            }`}>
+                            <div className={`space-y-1.5 p-2 rounded border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeFeature === 2 ? 'border-brand/35 bg-brand-subtle' : 'border-transparent'
+                                }`}>
                                 <div className="flex justify-between text-[10px] font-medium">
                                     <span className="text-text-main">Vinculación: Proyectos Sociales y Productivos</span>
                                     <span className="text-success font-semibold font-mono text-[9px]">85% EXCELENTE</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-border-thin rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-success transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
+                                    <div
+                                        className="h-full bg-success transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
                                         style={{ width: activeFeature === 2 ? '85%' : '20%' }}
                                     />
                                 </div>
                             </div>
 
                             {/* Indicador 3 */}
-                            <div className={`space-y-1.5 p-2 rounded border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                                activeFeature === 3 ? 'border-brand/35 bg-brand-subtle' : 'border-transparent'
-                            }`}>
+                            <div className={`space-y-1.5 p-2 rounded border transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeFeature === 3 ? 'border-brand/35 bg-brand-subtle' : 'border-transparent'
+                                }`}>
                                 <div className="flex justify-between text-[10px] font-medium">
                                     <span className="text-text-main">Propiedad Intelectual: Patentes y Registros SENADI</span>
                                     <span className="text-warning font-semibold font-mono text-[9px]">60% EN PROGRESO</span>
                                 </div>
                                 <div className="w-full h-1.5 bg-border-thin rounded-full overflow-hidden">
-                                    <div 
-                                        className="h-full bg-warning transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]" 
+                                    <div
+                                        className="h-full bg-warning transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
                                         style={{ width: activeFeature === 3 ? '60%' : '15%' }}
                                     />
                                 </div>
@@ -365,24 +357,22 @@ const Caces: React.FC = () => {
                     )}
 
                     {/* Export block */}
-                    <div className={`mt-6 pt-4 border-t flex flex-col sm:flex-row gap-3 justify-between sm:items-center p-2.5 rounded border font-sans transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                        activeFeature === 4 ? 'border-brand/35 bg-brand-subtle' : 'border-border-thin bg-surface/20'
-                    }`}>
+                    <div className={`mt-6 pt-4 border-t flex flex-col sm:flex-row gap-3 justify-between sm:items-center p-2.5 rounded border font-sans transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${activeFeature === 4 ? 'border-brand/35 bg-brand-subtle' : 'border-border-thin bg-surface/20'
+                        }`}>
                         <div className="flex items-center gap-2 justify-center sm:justify-start">
                             <FileText size={14} className="text-brand" />
                             <span className="text-[10px] text-text-main font-semibold font-mono truncate">Reporte_Evidencias_CACES.csv</span>
                         </div>
-                        
-                        <button 
+
+                        <button
                             onClick={handleExport}
                             disabled={exportState === 'loading'}
-                            className={`px-3 py-1.5 rounded font-bold text-[9px] uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto ${
-                                exportState === 'loading'
+                            className={`px-3 py-1.5 rounded font-bold text-[9px] uppercase tracking-wider transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer w-full sm:w-auto ${exportState === 'loading'
                                     ? 'bg-surface border border-border-thin text-text-dim'
                                     : exportState === 'success'
                                         ? 'bg-success/15 border border-success/30 text-success'
                                         : 'bg-text-main text-bg-deep hover:opacity-90 active:scale-95'
-                            }`}
+                                }`}
                         >
                             {exportState === 'loading' && <Loader2 size={10} className="animate-spin" />}
                             {exportState === 'success' && <Check size={10} />}
@@ -399,7 +389,7 @@ const Caces: React.FC = () => {
                         <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse shrink-0" />
                         <div className="flex-1 font-sans">
                             <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider font-mono">Exportación Sincronizada</h4>
-                            <p className="text-[10px] text-text-dim mt-0.5 leading-tight">Archivo CACES compilado y cargado en el validador SIIES con código de respuesta 200.</p>
+                            <p className="text-[10px] text-text-dim mt-0.5 leading-tight">Archivo CACES compilado y cargado en el validador SIIES.</p>
                         </div>
                     </div>
                 </div>

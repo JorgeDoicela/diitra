@@ -20,6 +20,55 @@ const Modulos: React.FC = () => {
     const [activeModule, setActiveModule] = useState<number | null>(null);
     const [showDetail, setShowDetail] = useState<boolean>(false);
 
+    // Estados para simulación de exportación CACES y notificaciones Toast
+    const [exportState, setExportState] = useState<'idle' | 'loading' | 'success'>('idle');
+    const [showToast, setShowToast] = useState<boolean>(false);
+    const [cacesProgress, setCacesProgress] = useState({ id: 0, vinc: 0, prop: 0 });
+
+    useEffect(() => {
+        if (activeModule === 4) {
+            setCacesProgress({ id: 0, vinc: 0, prop: 0 });
+
+            const duration = 800; // Animación de 800ms
+            const steps = 20;
+            const stepTime = duration / steps;
+            let currentStep = 0;
+
+            const interval = setInterval(() => {
+                currentStep++;
+                setCacesProgress({
+                    id: Math.min(100, Math.round((100 / steps) * currentStep)),
+                    vinc: Math.min(85, Math.round((85 / steps) * currentStep)),
+                    prop: Math.min(60, Math.round((60 / steps) * currentStep))
+                });
+
+                if (currentStep >= steps) {
+                    clearInterval(interval);
+                }
+            }, stepTime);
+
+            return () => clearInterval(interval);
+        }
+    }, [activeModule]);
+
+    const handleExportSiies = () => {
+        if (exportState !== 'idle') return;
+        setExportState('loading');
+
+        setTimeout(() => {
+            setExportState('success');
+            setShowToast(true);
+
+            setTimeout(() => {
+                setShowToast(false);
+            }, 4000);
+
+            setTimeout(() => {
+                setExportState('idle');
+            }, 5500);
+        }, 1500);
+    };
+
     const laptopContainerRef = useRef<HTMLDivElement>(null);
     const [laptopScale, setLaptopScale] = useState<number>(1);
 
@@ -27,7 +76,7 @@ const Modulos: React.FC = () => {
         const updateScale = () => {
             if (!laptopContainerRef.current) return;
             const containerWidth = laptopContainerRef.current.getBoundingClientRect().width;
-            const baseWidth = 680; // Base layout width for the laptop mockup in CSS (max-width: 680px)
+            const baseWidth = 740; // Base layout width for the laptop mockup in CSS (max-width: 740px)
             if (containerWidth < baseWidth && containerWidth > 0) {
                 setLaptopScale(containerWidth / baseWidth);
             } else {
@@ -332,7 +381,7 @@ const Modulos: React.FC = () => {
                 .laptop-container {
                     perspective: 1200px;
                     width: 100%;
-                    max-width: 680px; /* Laptop más grande */
+                    max-width: 740px; /* Laptop más grande */
                     margin: 0 auto;
                     overflow: visible;
                     transition: transform 0.3s ease;
@@ -347,8 +396,8 @@ const Modulos: React.FC = () => {
                     border: 12px solid #0a0a0a;
                     border-bottom: 2px solid #0a0a0a; /* Muy delgado para que la pantalla baje al máximo */
                     border-radius: 18px 18px 0 0;
-                    box-shadow: 
-                        inset 0 1px 1px rgba(255, 255, 255, 0.08), 
+                    box-shadow:
+                        inset 0 1px 1px rgba(255, 255, 255, 0.08),
                         inset 0 -1px 1px rgba(0, 0, 0, 0.9);
                     position: relative;
                     transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
@@ -358,8 +407,8 @@ const Modulos: React.FC = () => {
                     background: #121212; /* Sigue siendo negra mate */
                     border-color: #121212;
                     border-bottom-color: #121212;
-                    box-shadow: 
-                        inset 0 1px 1px rgba(255, 255, 255, 0.1), 
+                    box-shadow:
+                        inset 0 1px 1px rgba(255, 255, 255, 0.1),
                         inset 0 -1px 1px rgba(0, 0, 0, 0.85);
                 }
                 .laptop-screen-glass {
@@ -433,14 +482,14 @@ const Modulos: React.FC = () => {
                     height: 14px;
                     background: linear-gradient(to bottom, #1f1f1f 0%, #121212 25%, #0a0a0a 70%, #050505 100%);
                     border-radius: 2px 2px 10px 10px;
-                    box-shadow: 
+                    box-shadow:
                         inset 0 1px 0 rgba(255, 255, 255, 0.1),
                         inset 0 -1px 2px rgba(0, 0, 0, 0.9);
                     position: relative;
                 }
                 [data-theme="light"] .laptop-base {
                     background: linear-gradient(to bottom, #2b2b2b 0%, #1c1c1c 25%, #141414 70%, #0d0d0d 100%);
-                    box-shadow: 
+                    box-shadow:
                         inset 0 1px 0 rgba(255, 255, 255, 0.15),
                         inset 0 -1px 2px rgba(0, 0, 0, 0.8);
                 }
@@ -522,14 +571,14 @@ const Modulos: React.FC = () => {
                                 <button
                                     key={item.id}
                                     onClick={() => handleModuleSelect(isSelected ? null : item.id)}
-                                    className={`flex items-center gap-3.5 px-4.5 py-3 rounded-full border text-xs font-mono uppercase tracking-wider text-left transition-all duration-300 shrink-0 cursor-pointer ${isSelected
-                                            ? 'bg-text-main text-bg-deep border-text-main font-bold'
-                                            : 'bg-surface border-border-thin text-text-main hover:bg-surface-hover hover:border-border-hover'
+                                    className={`flex items-center gap-3 px-4 py-2.5 rounded-lg border text-xs font-mono uppercase tracking-wider text-left transition-all duration-300 shrink-0 cursor-pointer ${isSelected
+                                        ? 'bg-text-main text-bg-deep border-text-main font-bold'
+                                        : 'bg-surface border-border-thin text-text-main hover:bg-surface-hover hover:border-border-hover'
                                         }`}
                                 >
                                     <span className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all duration-300 ${isSelected
-                                            ? 'bg-bg-deep border-bg-deep text-text-main rotate-45'
-                                            : 'bg-bg-deep/50 border-border-thin text-text-dim'
+                                        ? 'bg-bg-deep border-bg-deep text-text-main rotate-45'
+                                        : 'bg-bg-deep/50 border-border-thin text-text-dim'
                                         }`}>
                                         <Plus size={9} className="stroke-[2.5]" />
                                     </span>
@@ -542,8 +591,8 @@ const Modulos: React.FC = () => {
 
                     {/* Tooltip explicativo estilo Apple "Mírala en detalle" (Glassmorphism de alta gama) */}
                     <div className={`transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${showDetail && activeModule !== null
-                            ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto h-auto'
-                            : 'opacity-0 translate-y-4 scale-95 pointer-events-none h-0 overflow-hidden lg:h-auto lg:opacity-0'
+                        ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto h-auto'
+                        : 'opacity-0 translate-y-4 scale-95 pointer-events-none h-0 overflow-hidden lg:h-auto lg:opacity-0'
                         }`}>
                         {activeModule !== null && (
                             <div className="custom-blur-panel bg-surface/85 dark:bg-black/75 border border-border-thin rounded-2xl p-6.5 relative space-y-4.5 animate-scale-up">
@@ -577,17 +626,17 @@ const Modulos: React.FC = () => {
                 </div>
 
                 {/* Columna Derecha (col-span-8): Laptop de CSS interactiva de gran tamaño */}
-                <div 
+                <div
                     ref={laptopContainerRef}
                     className="lg:col-span-8 flex flex-col items-center justify-center relative overflow-visible w-full"
-                    style={{ height: `${470 * laptopScale}px` }}
+                    style={{ height: `${512 * laptopScale}px` }}
                 >
-                    <div 
+                    <div
                         className="absolute top-0 flex flex-col items-center justify-center overflow-visible"
                         style={{
                             transform: `scale(${laptopScale})`,
                             transformOrigin: 'top center',
-                            width: '680px',
+                            width: '740px',
                             zIndex: 10
                         }}
                     >
@@ -728,7 +777,7 @@ const Modulos: React.FC = () => {
                                                 </button>
 
                                                 {/* Cuadrante 5: Firma Electrónica (Ancho completo abajo) */}
-                                                <button 
+                                                <button
                                                     onClick={() => handleModuleSelect(5)}
                                                     className="col-span-6 p-3 rounded border border-border-thin bg-surface/30 hover:bg-surface/90 hover:border-brand/40 transition-all duration-300 flex items-center justify-between text-left group cursor-pointer"
                                                 >
@@ -765,7 +814,7 @@ const Modulos: React.FC = () => {
 
                                                 {/* Gráfico Financiero de Barras Interactivo */}
                                                 <div className="grid grid-cols-12 gap-3 bg-surface/20 p-2.5 rounded border border-border-thin/30 text-left font-mono">
-                                                    
+
                                                     {/* Desglose visual de columnas */}
                                                     <div className="col-span-6 flex items-end justify-around h-16 border-b border-border-thin/40 pb-1">
                                                         <div className="flex flex-col items-center w-8">
@@ -822,8 +871,8 @@ const Modulos: React.FC = () => {
                                                                 key={key}
                                                                 onClick={() => toggleBudget(key)}
                                                                 className={`p-2 border rounded text-left transition-all duration-300 cursor-pointer ${active
-                                                                        ? 'bg-bg-deep border-brand/50 shadow-sm'
-                                                                        : 'bg-surface/10 border-border-thin opacity-35 hover:opacity-60'
+                                                                    ? 'bg-bg-deep border-brand/50 shadow-sm'
+                                                                    : 'bg-surface/10 border-border-thin opacity-35 hover:opacity-60'
                                                                     }`}
                                                             >
                                                                 <p className="text-[8px] text-text-dim font-bold font-mono">{label}</p>
@@ -840,9 +889,9 @@ const Modulos: React.FC = () => {
                                                         <span className="font-bold text-text-main">{budgetPct}%</span>
                                                     </div>
                                                     <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full bg-brand transition-all duration-500 ease-out" 
-                                                            style={{ width: `${budgetPct}%` }} 
+                                                        <div
+                                                            className="h-full bg-brand transition-all duration-500 ease-out"
+                                                            style={{ width: `${budgetPct}%` }}
                                                         />
                                                     </div>
                                                     <div className="flex justify-between text-[8px] pt-1.5 border-t border-border-thin/10">
@@ -876,7 +925,7 @@ const Modulos: React.FC = () => {
 
                                                 {/* Panel de Auditoría y Progreso SVG en vivo */}
                                                 <div className="grid grid-cols-12 gap-3 bg-surface/20 p-2.5 rounded border border-border-thin/30 text-left font-mono">
-                                                    
+
                                                     {/* SVG Circular de Progreso */}
                                                     <div className="col-span-5 flex items-center justify-center relative">
                                                         <svg className="w-14 h-14 transform -rotate-90">
@@ -919,8 +968,8 @@ const Modulos: React.FC = () => {
                                                         >
                                                             <div className="flex items-center gap-2">
                                                                 <span className={`w-3.5 h-3.5 border rounded flex items-center justify-center transition-all duration-300 ${h.completed
-                                                                        ? 'bg-success/15 border-success text-success'
-                                                                        : 'bg-surface/20 border-border-thin text-transparent'
+                                                                    ? 'bg-success/15 border-success text-success'
+                                                                    : 'bg-surface/20 border-border-thin text-transparent'
                                                                     }`}>
                                                                     <Check size={8} strokeWidth={3} />
                                                                 </span>
@@ -979,7 +1028,7 @@ const Modulos: React.FC = () => {
 
                                                 {/* Monitor de Commits Git de la Universidad Interactivo */}
                                                 <div className="grid grid-cols-12 gap-3 bg-surface/20 p-2.5 rounded border border-border-thin/30 text-left font-mono">
-                                                    
+
                                                     {/* Lista de commits */}
                                                     <div className="col-span-7 space-y-1">
                                                         <div className="text-[8px] text-text-dim uppercase font-mono tracking-wider font-bold">// COMMITS REPOSITORIO</div>
@@ -996,7 +1045,7 @@ const Modulos: React.FC = () => {
 
                                                     {/* Acción de Simular Commit / Push */}
                                                     <div className="col-span-5 flex flex-col items-center justify-center border-l border-border-thin/20 pl-3">
-                                                        <button 
+                                                        <button
                                                             onClick={handlePushCommit}
                                                             className="w-full py-1.5 px-2 bg-text-main text-bg-deep rounded font-bold font-sans text-[8.5px] uppercase tracking-wider hover:opacity-90 active:scale-[0.97] transition-all cursor-pointer text-center"
                                                         >
@@ -1034,118 +1083,87 @@ const Modulos: React.FC = () => {
                                                         </button>
                                                     );
                                                 })}
-                                                
+
                                             </div>
 
                                         </div>
                                     )}
 
-                                     {/* 4. MÓDULO ACTIVO: ACREDITACIÓN (Terminal) */}
+                                    {/* 4. MÓDULO ACTIVO: ACREDITACIÓN (SIIES / CACES Indicators Panel como en el screenshot) */}
                                     {activeModule === 4 && (
-                                        <div className="h-full flex flex-col gap-3">
-
-                                            {/* Header del widget */}
+                                        <div className="h-full flex flex-col justify-between gap-3 text-left">
+                                            {/* Header del widget adaptado a la foto */}
                                             <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
-                                                <span className="font-semibold text-text-main">// CONSOLA DE AUDITORÍA</span>
-                                                <span>MOD-04</span>
+                                                <span className="font-semibold text-text-main">// PANEL INDICADORES CACES (SIIES)</span>
+                                                <span>AÑO DE EVALUACIÓN: 2026</span>
                                             </div>
 
-                                            {/* Monitor de Recursos del Servidor en Vivo */}
-                                            <div className="grid grid-cols-3 gap-2 bg-surface/20 p-2 rounded border border-border-thin/30 text-[8px] font-mono text-text-dim text-left">
-                                                <div className="space-y-0.5">
-                                                    <div className="flex justify-between">
-                                                        <span>CPU LIMIT</span>
-                                                        <span className="text-text-main font-bold">{systemStats.cpu}%</span>
+                                            {/* Indicadores CACES */}
+                                            <div className="flex-1 flex flex-col justify-center gap-4 py-2">
+
+                                                {/* Indicador 1 */}
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between items-center text-[10px] font-sans">
+                                                        <span className="font-bold text-text-main leading-tight">I+D+i: Proyectos de Investigación Aplicada</span>
+                                                        <span className="text-success font-bold text-[9px] font-mono whitespace-nowrap">100% CUMPLIDO</span>
                                                     </div>
-                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-brand transition-all duration-500 ease-out" style={{ width: `${systemStats.cpu}%` }} />
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-0.5 border-l border-border-thin/20 pl-2">
-                                                    <div className="flex justify-between">
-                                                        <span>RAM LIMIT</span>
-                                                        <span className="text-text-main font-bold">{systemStats.ram}%</span>
-                                                    </div>
-                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-success transition-all duration-500 ease-out" style={{ width: `${systemStats.ram}%` }} />
+                                                    <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 rounded-sm overflow-hidden">
+                                                        <div className="h-full bg-success transition-all duration-500 ease-out" style={{ width: `${cacesProgress.id}%` }} />
                                                     </div>
                                                 </div>
-                                                <div className="space-y-0.5 border-l border-border-thin/20 pl-2">
-                                                    <div className="flex justify-between">
-                                                        <span>NET STATS</span>
-                                                        <span className="text-text-main font-bold">{systemStats.net} MB/s</span>
+
+                                                {/* Indicador 2 */}
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between items-center text-[10px] font-sans">
+                                                        <span className="font-bold text-text-main leading-tight">Vinculación: Proyectos Sociales y Productivos</span>
+                                                        <span className="text-success font-bold text-[9px] font-mono whitespace-nowrap">85% EXCELENTE</span>
                                                     </div>
-                                                    <div className="w-full bg-border-thin h-1 rounded-full overflow-hidden">
-                                                        <div className="h-full bg-warning transition-all duration-500 ease-out" style={{ width: `${(systemStats.net / 12) * 100}%` }} />
+                                                    <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 rounded-sm overflow-hidden">
+                                                        <div className="h-full bg-success transition-all duration-500 ease-out" style={{ width: `${cacesProgress.vinc}%` }} />
                                                     </div>
                                                 </div>
+
+                                                {/* Indicador 3 */}
+                                                <div className="space-y-1.5">
+                                                    <div className="flex justify-between items-center text-[10px] font-sans">
+                                                        <span className="font-bold text-text-main leading-tight">Propiedad Intelectual: Patentes y Registros SENADI</span>
+                                                        <span className="text-warning font-bold text-[9px] font-mono whitespace-nowrap">60% EN PROGRESO</span>
+                                                    </div>
+                                                    <div className="w-full bg-neutral-200 dark:bg-neutral-800 h-2 rounded-sm overflow-hidden">
+                                                        <div className="h-full bg-warning transition-all duration-500 ease-out" style={{ width: `${cacesProgress.prop}%` }} />
+                                                    </div>
+                                                </div>
+
+                                                {/* Tarjeta de descarga de evidencias */}
+                                                <div className="flex justify-between items-center p-3 rounded-lg border border-brand/20 bg-brand-subtle text-left mt-2">
+                                                    <div className="flex items-center gap-2 text-brand">
+                                                        <FileSignature size={14} className="opacity-90" />
+                                                        <span className="text-[10px] font-semibold font-mono truncate max-w-[190px]">Reporte_Evidencias_CACES.csv</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={handleExportSiies}
+                                                        disabled={exportState !== 'idle'}
+                                                        className={`px-3.5 py-1.5 rounded transition-all text-[9px] font-bold font-mono uppercase tracking-wider cursor-pointer flex items-center justify-center min-w-[110px] ${exportState === 'loading'
+                                                                ? 'bg-neutral-800 text-neutral-400 dark:bg-neutral-900 dark:text-neutral-500 cursor-not-allowed border border-neutral-750'
+                                                                : exportState === 'success'
+                                                                    ? 'bg-success text-white dark:bg-success dark:text-neutral-950 font-bold border border-success/30'
+                                                                    : 'bg-black text-white dark:bg-white dark:text-black hover:opacity-90 active:scale-95'
+                                                            }`}
+                                                    >
+                                                        {exportState === 'loading' && <Loader2 size={10} className="animate-spin mr-1.5" />}
+                                                        {exportState === 'success' && <Check size={10} className="mr-1" />}
+                                                        {exportState === 'loading' ? 'SINC... (CHECKLIST)' : exportState === 'success' ? 'SINCRONIZADO ✓' : 'EXPORTAR SIIES'}
+                                                    </button>
+                                                </div>
+
                                             </div>
-
-                                            {/* Consola con logs e interactividad */}
-                                            <div className="flex-1 flex flex-col justify-between my-2 text-[8.5px] font-mono text-text-dim bg-bg-deep/70 p-2.5 rounded border border-border-thin/40 gap-2">
-
-                                                {/* Caja de scroll de Logs */}
-                                                <div ref={terminalContainerRef} className="overflow-y-auto flex-1 space-y-0.5 scrollbar-none pr-1 min-h-[140px] max-h-[220px]">
-                                                    {terminalLogs.map((log, idx) => (
-                                                        <p
-                                                            key={idx}
-                                                            className={
-                                                                log && log.startsWith('[OK]')
-                                                                    ? 'text-success'
-                                                                    : log && log.startsWith('[RUN]')
-                                                                         ? 'text-warning'
-                                                                         : 'text-text-main'
-                                                            }
-                                                        >
-                                                            {log || ''}
-                                                        </p>
-                                                    ))}
-                                                    {logRunning && (
-                                                        <div className="text-brand flex items-center gap-1 mt-0.5">
-                                                            <Loader2 size={8} className="animate-spin" />
-                                                            <span>Ejecutando proceso...</span>
-                                                        </div>
-                                                    )}
-                                                    {!logRunning && (
-                                                        <p className="text-text-dim mt-0.5">
-                                                            guest@diitra:~$ <span className="w-1.5 h-3 bg-brand inline-block animate-pulse align-middle" />
-                                                        </p>
-                                                     )}
-                                                </div>
-
-                                                {/* Botonera de comandos */}
-                                                <div className="flex gap-1.5 font-sans justify-end pt-1.5 border-t border-border-thin/20">
-                                                    <button
-                                                        onClick={() => runCommand('sync')}
-                                                        disabled={logRunning}
-                                                        className="px-2 py-1 bg-brand text-white rounded font-bold font-mono text-[8px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
-                                                    >
-                                                        SYNC SIIES
-                                                    </button>
-                                                    <button
-                                                        onClick={() => runCommand('audit')}
-                                                        disabled={logRunning}
-                                                        className="px-2 py-1 bg-success text-white rounded font-bold font-mono text-[8px] hover:opacity-90 disabled:opacity-50 cursor-pointer"
-                                                    >
-                                                        AUDITAR
-                                                    </button>
-                                                    <button
-                                                        onClick={() => runCommand('clear')}
-                                                        disabled={logRunning}
-                                                        className="px-2 py-1 border border-border-thin text-text-dim rounded font-bold font-mono text-[8px] hover:text-text-main cursor-pointer"
-                                                    >
-                                                        CLEAR
-                                                    </button>
-                                                </div>
-                                            </div>
-
                                         </div>
                                     )}
 
                                     {/* 5. MÓDULO ACTIVO: FIRMA ELECTRÓNICA */}
                                     {activeModule === 5 && (
                                         <div className="h-full flex flex-col gap-3">
-                                            
+
                                             {/* Header del widget */}
                                             <div className="flex justify-between items-center border-b border-border-thin/40 pb-2 text-[10px] font-mono text-text-dim">
                                                 <span className="font-semibold text-text-main">// FIRMA DIGITAL ACTA</span>
@@ -1154,14 +1172,13 @@ const Modulos: React.FC = () => {
 
                                             {/* Panel interactivo de firma */}
                                             <div className="flex-1 flex flex-col justify-center font-mono text-[9px]">
-                                                
+
                                                 {/* Folio del Documento Digital Interactivo */}
                                                 <div className="bg-surface/30 p-2 rounded border border-border-thin/30 text-left font-mono mb-2">
                                                     <div className="flex justify-between items-center text-[8.5px] border-b border-border-thin/20 pb-1.5 mb-1">
                                                         <span className="font-bold text-text-main">DOCUMENTO: acta_aprobacion_id.pdf</span>
-                                                        <span className={`text-[7.5px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${
-                                                            signState === 'signed' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning animate-pulse'
-                                                        }`}>
+                                                        <span className={`text-[7.5px] px-1.5 py-0.5 rounded-full font-bold font-sans uppercase tracking-wider ${signState === 'signed' ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning animate-pulse'
+                                                            }`}>
                                                             {signState === 'signed' ? 'FIRMADO' : 'PENDIENTE FIRMA'}
                                                         </span>
                                                     </div>
@@ -1218,7 +1235,7 @@ const Modulos: React.FC = () => {
                                                                     <p className="text-[8px] text-text-dim mt-0.5 font-mono">Banco Central del Ecuador</p>
                                                                 </div>
                                                             </div>
-                                                            <button 
+                                                            <button
                                                                 onClick={resetSignature}
                                                                 className="text-text-dim hover:text-text-main text-[8.5px] font-mono border border-border-thin px-2 py-1 rounded cursor-pointer transition-all hover:bg-surface/50 active:scale-95 flex items-center gap-1.5 bg-surface/30"
                                                             >
@@ -1282,6 +1299,19 @@ const Modulos: React.FC = () => {
                 </div>
 
             </div>
+
+            {/* Vercel Toast Notification simulation */}
+            {showToast && (
+                <div className="toast-container-vercel select-none animate-fade-up">
+                    <div className="toast-vercel flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse shrink-0" />
+                        <div className="flex-1 font-sans">
+                            <h4 className="text-[10px] font-bold text-text-main uppercase tracking-wider font-mono">Exportación Sincronizada</h4>
+                            <p className="text-[10px] text-text-dim mt-0.5 leading-tight">Archivo CACES compilado y cargado en el validador SIIES.</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </section>
     );
