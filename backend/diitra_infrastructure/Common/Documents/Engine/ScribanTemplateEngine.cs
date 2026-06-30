@@ -404,6 +404,64 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
             return await Task.FromResult(rendered);
         }
 
+        private static object? CleanElement(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                var dict = new Dictionary<string, object?>();
+                var keys = element.EnumerateObject().Select(p => p.Name).ToList();
+                foreach (var prop in element.EnumerateObject())
+                {
+                    var name = prop.Name;
+                    if (name.Length > 0 && char.IsLower(name[0]))
+                    {
+                        var hasPascal = keys.Any(k => k != name && string.Equals(k, name, StringComparison.OrdinalIgnoreCase) && k.Length > 0 && char.IsUpper(k[0]));
+                        if (hasPascal)
+                        {
+                            continue;
+                        }
+                    }
+
+                    var val = prop.Value;
+                    if (val.ValueKind == JsonValueKind.String)
+                    {
+                        var strVal = val.GetString()?.Trim();
+                        if (!string.IsNullOrEmpty(strVal) &&
+                            ((strVal.StartsWith("[") && strVal.EndsWith("]")) ||
+                             (strVal.StartsWith("{") && strVal.EndsWith("}"))))
+                        {
+                            try
+                            {
+                                using var nestedDoc = JsonDocument.Parse(strVal);
+                                dict[name] = CleanElement(nestedDoc.RootElement);
+                                continue;
+                            }
+                            catch
+                            {
+                                // Dejar el string original si falla
+                            }
+                        }
+                    }
+
+                    dict[name] = CleanElement(val);
+                }
+                return dict;
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                var list = new List<object?>();
+                foreach (var item in element.EnumerateArray())
+                {
+                    list.Add(CleanElement(item));
+                }
+                return list;
+            }
+            else
+            {
+                return ToNativeType(element);
+            }
+        }
+
         public static string CleanAndNormalizeJson(string json)
         {
             if (string.IsNullOrEmpty(json)) return json;
@@ -424,33 +482,8 @@ namespace Diitra.Infrastructure.Common.Documents.Engine
                     return json;
                 }
 
-                var dict = new Dictionary<string, object>();
-                foreach (var prop in doc.RootElement.EnumerateObject())
-                {
-                    var val = prop.Value;
-                    if (val.ValueKind == JsonValueKind.String)
-                    {
-                        var strVal = val.GetString()?.Trim();
-                        if (!string.IsNullOrEmpty(strVal) &&
-                            ((strVal.StartsWith("[") && strVal.EndsWith("]")) ||
-                             (strVal.StartsWith("{") && strVal.EndsWith("}"))))
-                        {
-                            try
-                            {
-                                using var nestedDoc = JsonDocument.Parse(strVal);
-                                dict[prop.Name] = nestedDoc.RootElement.Clone();
-                                continue;
-                            }
-                            catch
-                            {
-                                // Si falla, dejamos el string original
-                            }
-                        }
-                    }
-                    dict[prop.Name] = val.Clone();
-                }
-
-                return JsonSerializer.Serialize(dict);
+                var cleaned = CleanElement(doc.RootElement);
+                return JsonSerializer.Serialize(cleaned);
             }
             catch
             {
