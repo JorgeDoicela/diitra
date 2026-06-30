@@ -41,6 +41,26 @@ function deduplicateYArray(yarray: Y.Array<any>, ydoc: Y.Doc, listName: string) 
     }
 }
 
+function generateRandomId(): string {
+    if (typeof window !== 'undefined' && window.crypto) {
+        if (typeof window.crypto.randomUUID === 'function') {
+            return window.crypto.randomUUID().replace(/-/g, '').substring(0, 10);
+        }
+        if (typeof window.crypto.getRandomValues === 'function') {
+            const buffer = new Uint8Array(5);
+            window.crypto.getRandomValues(buffer);
+            return Array.from(buffer)
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+    }
+    let result = '';
+    while (result.length < 10) {
+        result += Math.random().toString(36).substring(2);
+    }
+    return result.substring(0, 10);
+}
+
 export function useDIITRADocument<T extends Record<string, any>>(
     initialData: T,
     ydoc: Y.Doc | null,
@@ -111,7 +131,7 @@ export function useDIITRADocument<T extends Record<string, any>>(
     const addItem = useCallback((listName: string, template: any) => {
         const enrichedTemplate = {
             ...template,
-            id: template.id || `rand_${crypto.randomUUID().replace(/-/g, '').substring(0, 10)}`
+            id: template.id || `rand_${generateRandomId()}`
         };
         if (ydoc) {
             const yarray = ydoc.getArray(listName);
