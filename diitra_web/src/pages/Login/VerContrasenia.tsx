@@ -51,7 +51,7 @@ const VerContrasenia = ({ currentTheme = 'dark', toggleTheme }: VerContraseniaPr
 
             setNombre(data.nombre ?? '');
 
-            if (data.esHashInaccesible) {
+            if (data.esHashInaccesible ?? data.es_hash_inaccesible) {
                 setEstado('hash_inaccesible');
             } else {
                 setPassword(data.password ?? '');
