@@ -146,7 +146,9 @@ const mapApiUserToPerson = (u: Record<string, unknown>): SelectedPerson => ({
 });
 
 const personKey = (p: SelectedPerson) =>
-    p.email ? p.email.toLowerCase() : `id-${p.idUsuario ?? p.nombre}`;
+    p.idUsuario 
+        ? `usr-${p.idUsuario}-${p.tipo}` 
+        : `name-${p.nombre.toLowerCase().replace(/\s+/g, '-')}-${p.tipo}`;
 
 /** Puede enviarse si tiene correo visible o cuenta DIITRA (idUsuario). */
 const canSelectPerson = (p: SelectedPerson) =>
@@ -184,13 +186,14 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
         try {
             const typesToFetch = type ? [type] : (['DOCENTE', 'ESTUDIANTE', 'EXTERNO'] as const);
             const carreraLabel = carreraId
-                ? carreras.find(c => c.idCarrera.toString() === carreraId)?.carrera1?.toLowerCase()
+                ? carreras.find(c => c.idCarrera.toString() === carreraId)?.carrera1
                 : '';
 
             const batches = await Promise.all(
                 typesToFetch.map(async t => {
                     const params: Record<string, string> = { pageSize: '50', page: '1', type: t };
                     if (q.trim()) params.search = q.trim();
+                    if (carreraLabel) params.carrera = carreraLabel;
                     const res = await api.get('/Admin/users', { params });
                     const raw = res.data?.items ?? res.data ?? [];
                     return (Array.isArray(raw) ? raw : []).map((u: Record<string, unknown>) =>
@@ -200,7 +203,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
             );
 
             const seen = new Set<string>();
-            let merged: SelectedPerson[] = [];
+            const merged: SelectedPerson[] = [];
             for (const batch of batches) {
                 for (const p of batch) {
                     const key = personKey(p);
@@ -208,12 +211,6 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                     seen.add(key);
                     merged.push(p);
                 }
-            }
-
-            if (carreraLabel) {
-                merged = merged.filter(
-                    p => !p.carrera || p.carrera.toLowerCase().includes(carreraLabel)
-                );
             }
 
             merged.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));

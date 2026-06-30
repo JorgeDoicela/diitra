@@ -4,7 +4,7 @@ namespace diitra_application.Security;
 
 public interface IAdminService
 {
-    Task<PagedResult<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE", int page = 1, int pageSize = 10);
+    Task<PagedResult<UserManagementDto>> GetUsersAsync(string? searchTerm, string type = "DOCENTE", int page = 1, int pageSize = 10, string? carrera = null);
     Task<List<RoleDto>> GetAvailableRolesAsync();
     Task<UserMetadataDto?> GetUserMetadataAsync(string userUuid);
     Task<bool> UpdateUserMetadataAsync(string userUuid, UserMetadataDto dto);
