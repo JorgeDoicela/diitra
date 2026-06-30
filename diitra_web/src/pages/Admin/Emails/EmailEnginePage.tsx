@@ -253,7 +253,7 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
                 : 'ninguno';
 
     return (
-        <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+        <div className="space-y-3 p-4 bg-surface rounded-xl border border-border-thin shadow-sm">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <span className="text-[10px] font-semibold text-text-main uppercase tracking-widest flex items-center gap-1.5">
@@ -265,14 +265,14 @@ const RecipientPicker: React.FC<RecipientPickerProps> = ({
             </div>
 
             {/* Mode tabs */}
-            <div className="flex border border-border-thin rounded-lg p-0.5 bg-surface/30 gap-0.5">
+            <div className="flex border border-border-thin rounded-lg p-0.5 bg-bg-deep/50 gap-0.5">
                 {(['personas', 'difusion'] as const).map(m => (
                     <button
                         key={m}
                         type="button"
                         onClick={() => setMode(m)}
                         className={`flex-1 text-[9px] font-semibold uppercase tracking-wider py-1.5 rounded-md transition-all cursor-pointer ${mode === m
-                                ? 'bg-bg-deep border border-border-thin text-text-main shadow-sm'
+                                ? 'bg-surface border border-border-thin text-text-main shadow-sm'
                                 : 'text-text-dim hover:text-text-main'
                             }`}
                     >
@@ -1207,7 +1207,7 @@ const EmailEnginePage: React.FC = () => {
                                                 ))}
                                             </select>
                                             {selectedTemplate?.descripcion && (
-                                                <p className="text-[10px] text-text-dim leading-relaxed p-3 bg-brand/5 border border-brand/20 rounded-lg">
+                                                <p className="text-xs text-text-dim leading-relaxed mt-1.5 ml-0.5 font-medium">
                                                     {selectedTemplate.descripcion}
                                                 </p>
                                             )}
@@ -1225,7 +1225,7 @@ const EmailEnginePage: React.FC = () => {
                                         />
 
                                         {/* Dual System Context Selection */}
-                                        <div className="space-y-4 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                        <div className="space-y-4 p-4 bg-surface border border-border-thin rounded-xl shadow-sm">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[10px] font-black text-text-main uppercase tracking-widest">Vincular al sistema</span>
                                                 <span className="text-[9px] font-mono text-brand font-semibold flex items-center gap-1">
@@ -1295,7 +1295,7 @@ const EmailEnginePage: React.FC = () => {
                                         </div>
 
                                         {/* Asunto — variantes predefinidas */}
-                                        <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                        <div className="space-y-3 p-4 bg-surface border border-border-thin rounded-xl shadow-sm">
                                             <label className="text-[11px] font-bold text-text-dim uppercase tracking-wider">
                                                 Título del correo (asunto)
                                             </label>
@@ -1319,7 +1319,7 @@ const EmailEnginePage: React.FC = () => {
                                                     placeholder="Ej: DIITRA — Comunicado institucional"
                                                 />
                                             ) : (
-                                                <p className="text-[10px] text-text-main bg-surface/50 p-2 rounded-lg border border-border-thin leading-relaxed">
+                                                <p className="text-xs font-medium text-text-main leading-relaxed">
                                                     {parsedPreview.subject || '—'}
                                                 </p>
                                             )}
@@ -1341,9 +1341,9 @@ const EmailEnginePage: React.FC = () => {
 
                                         {/* Datos automáticos del sistema */}
                                         {autoFilledTokens.length > 0 && (
-                                            <div className="space-y-2 p-3 rounded-xl border border-border-thin bg-success-subtle/30">
-                                                <span className="text-[9px] font-black text-success uppercase tracking-widest flex items-center gap-1">
-                                                    <CheckCircle2 size={11} /> Se completan solos al enviar
+                                            <div className="space-y-2 p-4 rounded-xl border border-border-thin bg-surface shadow-sm">
+                                                <span className="text-[9px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
+                                                    <CheckCircle2 size={11} className="text-success" /> Autocompletados al enviar
                                                 </span>
                                                 <div className="flex flex-wrap gap-1.5">
                                                     {autoFilledTokens.map(tok => (
@@ -1357,11 +1357,11 @@ const EmailEnginePage: React.FC = () => {
 
                                         {/* Campos editables con etiquetas en español */}
                                         {userFacingTokens.length > 0 && (
-                                            <div className="space-y-4 p-4 bg-warning/5 border border-warning/20 rounded-xl">
+                                            <div className="space-y-4 p-4 bg-surface border border-border-thin rounded-xl shadow-sm">
                                                 <div className="flex items-center gap-2">
-                                                    <Layers size={14} className="text-warning" />
-                                                    <h5 className="text-[10px] font-black text-warning uppercase tracking-widest">
-                                                        Datos del mensaje ({userFacingTokens.length})
+                                                    <Layers size={14} className="text-brand" />
+                                                    <h5 className="text-[10px] font-black text-text-main uppercase tracking-widest">
+                                                        Variables del Mensaje ({userFacingTokens.length})
                                                     </h5>
                                                 </div>
                                                 <p className="text-[9px] text-text-dim leading-relaxed">
@@ -1381,7 +1381,7 @@ const EmailEnginePage: React.FC = () => {
                                                                 </span>
                                                                 <input
                                                                     type="text"
-                                                                    className="input-vercel !py-1.5 text-xs bg-bg-deep border-border-thin focus:border-warning font-sans"
+                                                                    className="input-vercel !py-1.5 text-xs bg-bg-deep border-border-thin focus:border-brand font-sans"
                                                                     value={tokenValues[tok] || ''}
                                                                     onChange={e => handleTokenValChange(tok, e.target.value)}
                                                                     placeholder={`Ingrese ${meta.label.toLowerCase()}`}
@@ -1394,7 +1394,7 @@ const EmailEnginePage: React.FC = () => {
                                         )}
 
                                         {/* Documentos del Sistema Checkboxes */}
-                                        <div className="space-y-3 p-4 bg-bg-deep/40 rounded-xl border border-border-thin">
+                                        <div className="space-y-3 p-4 bg-surface border border-border-thin rounded-xl shadow-sm">
                                             <div className="flex items-center justify-between border-b border-border-thin pb-2">
                                                 <span className="text-[10px] font-black text-text-main uppercase tracking-widest flex items-center gap-1.5">
                                                     <FileText size={12} className="text-brand" /> Documentos del Sistema (PDF Autogenerado)
@@ -1510,7 +1510,7 @@ const EmailEnginePage: React.FC = () => {
                                             </label>
 
                                             {attachments.length > 0 ? (
-                                                <div className="divide-y divide-border-thin border border-border-thin rounded-xl overflow-hidden bg-bg-deep/40">
+                                                <div className="divide-y divide-border-thin border border-border-thin rounded-xl overflow-hidden bg-surface shadow-sm">
                                                     {attachments.map((file, idx) => (
                                                         <div key={idx} className="flex items-center justify-between p-3 text-xs">
                                                             <div className="flex items-center gap-2.5 min-w-0">
@@ -1531,7 +1531,7 @@ const EmailEnginePage: React.FC = () => {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="text-center py-6 border border-dashed border-border-thin rounded-xl bg-bg-deep/10">
+                                                <div className="text-center py-6 border border-dashed border-border-thin rounded-xl bg-surface/50">
                                                     <Paperclip size={18} className="mx-auto text-text-dim/30 mb-1" />
                                                     <span className="text-[10px] text-text-dim uppercase font-bold tracking-wider">Sin archivos adjuntos</span>
                                                 </div>

@@ -167,7 +167,7 @@ export function applyTokenReplacements(
     result = result.replace(/\[\[([a-zA-Z0-9_]+)\]\]/g, (match) => {
         const label = getTokenLabel(match);
         if (mode === 'text') return `«${label}»`;
-        return `<span class="email-preview-pending" style="background:rgba(245,166,35,0.15);border:1px dashed #f5a623;padding:0 4px;border-radius:4px;color:#b87200;font-size:12px;">«${escapeHtml(label)}»</span>`;
+        return `<span class="email-preview-pending" style="background:rgba(0,120,215,0.05);border:1px solid rgba(0,120,215,0.25);padding:1px 6px;border-radius:4px;color:#0078d7;font-size:11px;font-family:monospace;font-weight:600;">${escapeHtml(label)}</span>`;
     });
 
     return result;
