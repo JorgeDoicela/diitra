@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ public class LopdpService : ILopdpService
     private readonly DiitraContext _context;
     private readonly ILogger<LopdpService> _logger;
     private readonly INotificationService _notificationService;
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
     public LopdpService(DiitraContext context, INotificationService notificationService, ILogger<LopdpService> logger)
     {
@@ -26,6 +28,7 @@ public class LopdpService : ILopdpService
 
     public async Task RegistrarConsentimientoAsync(int idUsuario, string versionPolitica, string? ip, string? userAgent)
     {
+        await _semaphore.WaitAsync();
         try
         {
             var consentimiento = new InvLopdpConsentimiento
@@ -69,6 +72,10 @@ public class LopdpService : ILopdpService
         {
             _logger.LogError(ex, "Error registrando consentimiento LOPDP para Usuario={IdUsuario}", idUsuario);
             throw;
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 

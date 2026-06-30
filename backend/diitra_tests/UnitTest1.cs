@@ -124,60 +124,32 @@ public class UnitTest1
         
         using var context = new DiitraContext(optionsBuilder.Options);
         
-        var erikaUser = await context.Users.FirstOrDefaultAsync(u => u.IdSigafi == "1722528286");
-        if (erikaUser == null)
+        var mockAuth = new Mock<IAuthService>();
+        var mockAudit = new Mock<IAuditService>();
+        var mockNotification = new Mock<INotificationService>();
+        var mockLogger = new Mock<ILogger<ProjectOrchestrator>>();
+        
+        var orchestrator = new ProjectOrchestrator(
+            context,
+            mockAuth.Object,
+            mockAudit.Object,
+            mockNotification.Object,
+            mockLogger.Object
+        );
+
+        var projectUuid = "a79989c8-7f22-4d74-b27f-a09401b8bebc";
+        var detail = await orchestrator.GetProjectDetailAsync(projectUuid);
+        if (detail == null)
         {
-            Console.WriteLine("[DIAG] Erika user not found!");
-            return;
-        }
-        Console.WriteLine($"[DIAG] Erika user: Id={erikaUser.IdUsuario}, Name='{erikaUser.Nombre}', Sigafi={erikaUser.IdSigafi}");
-
-        var targetUuid = "c540e284-de03-409c-8ebe-0bb2d576278b";
-        var project = await context.InvProyectos
-            .Include(p => p.IdGrupoNavigation)
-            .FirstOrDefaultAsync(p => p.Uuid == targetUuid);
-
-        if (project == null)
-        {
-            Console.WriteLine($"[DIAG] Project {targetUuid} not found!");
-            return;
-        }
-
-        Console.WriteLine($"[DIAG] Project: Id={project.IdProyecto}, Title='{project.Titulo}', TieneGrupo={project.TieneGrupo}, IdGrupo={project.IdGrupo}, GrupoNombre='{project.IdGrupoNavigation?.Nombre}', Estado='{project.Estado}'");
-
-        // Erika's project assignment
-        var assignment = await context.InvProyectosProfesores
-            .FirstOrDefaultAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == erikaUser.IdUsuario);
-
-        if (assignment != null)
-        {
-            Console.WriteLine($"[DIAG] Current Erika Assignment: Activo={assignment.Activo}, EsDirector={assignment.EsDirector}, Rol='{assignment.Rol}'");
-            
-            // Restore her access
-            assignment.Activo = true;
-            assignment.EsDirector = true;
-            assignment.Rol = "Director de Proyecto";
-            assignment.FechaFin = null;
-            assignment.MotivoCambio = null;
-            
-            await context.SaveChangesAsync();
-            Console.WriteLine("[DIAG] Erika's assignment restored and activated!");
+            Console.WriteLine($"[DIAG] Project detail not found for {projectUuid}");
         }
         else
         {
-            Console.WriteLine("[DIAG] Erika assignment not found, creating it!");
-            context.InvProyectosProfesores.Add(new InvProyectoProfesor
+            Console.WriteLine($"[DIAG] Project Title: {detail.Titulo}");
+            foreach (var inv in detail.Investigadores)
             {
-                IdProyecto = project.IdProyecto,
-                IdUsuario = erikaUser.IdUsuario,
-                EsDirector = true,
-                Rol = "Director de Proyecto",
-                Activo = true,
-                NivelAcademico = "Tercer Nivel",
-                Telefono = ""
-            });
-            await context.SaveChangesAsync();
-            Console.WriteLine("[DIAG] Erika assignment created and activated!");
+                Console.WriteLine($"[DIAG] Member: Name={inv.Nombre}, Cedula={inv.Cedula}, Rol={inv.Rol}, AvailableHours={inv.HorasDisponibles}, Assigned={inv.HorasAsignadas}");
+            }
         }
     }
 
