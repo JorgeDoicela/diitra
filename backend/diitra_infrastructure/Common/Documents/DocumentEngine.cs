@@ -117,15 +117,12 @@ namespace Diitra.Infrastructure.Common.Documents
 
                 if (!string.IsNullOrEmpty(documentInstanceUuid))
                 {
-                    _logger.LogInformation("DIITRA DocumentEngine: Buscando contenidos de CoWork en BD para UUID={Uuid}", documentInstanceUuid);
                     try
                     {
                         var coworkDocs = await _db.InvCoworkDocumentos
                             .AsNoTracking()
                             .Where(d => d.EntidadUuid == documentInstanceUuid)
                             .ToListAsync(cancellationToken);
-
-                        _logger.LogInformation("DIITRA DocumentEngine: Se encontraron {Count} registros de CoWork para UUID={Uuid}", coworkDocs.Count, documentInstanceUuid);
 
                         if (coworkDocs.Any())
                         {
@@ -140,12 +137,7 @@ namespace Diitra.Infrastructure.Common.Documents
                                 {
                                     if (!string.IsNullOrEmpty(doc.CampoNombre) && !string.IsNullOrEmpty(doc.ContentHtml))
                                     {
-                                        _logger.LogInformation("DIITRA DocumentEngine: Fusionando campo de CoWork: {Campo} (Longitud={Length})", doc.CampoNombre, doc.ContentHtml.Length);
                                         dataDict[doc.CampoNombre] = doc.ContentHtml;
-                                    }
-                                    else
-                                    {
-                                        _logger.LogWarning("DIITRA DocumentEngine: Registro de CoWork vacío para campo: {Campo}", doc.CampoNombre);
                                     }
                                 }
                                 renderData = dataDict;
