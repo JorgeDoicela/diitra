@@ -550,7 +550,7 @@ export const CommandPalette = () => {
         if (!item) return;
         if (item.path) navigate(item.path);
         else if (item.action) item.action();
-        setIsOpen(false);
+        setTimeout(() => setIsOpen(false), 50);
     };
 
     if (!isOpen) return null;
@@ -610,8 +610,8 @@ export const CommandPalette = () => {
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-start justify-center pt-[10vh] px-4 bg-black/70 backdrop-blur-[3px]"
-            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 z-[10000] flex items-start justify-center pt-[10vh] px-4 bg-black/70 backdrop-blur-[3px]"
+            onClick={() => setTimeout(() => setIsOpen(false), 0)}
         >
             <div
                 className="w-full max-w-[580px] bg-bg-deep border border-border-thin rounded-xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.7)] animate-in fade-in zoom-in-95 duration-150"

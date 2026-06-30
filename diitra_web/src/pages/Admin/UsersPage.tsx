@@ -79,6 +79,9 @@ const UsersPage = () => {
     const [search, setSearch] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const lastOpenedUuidRef = useRef<string | null>(null);
+    const openedAtRef = useRef<number>(0);
+    const isOverlayMouseDownRef = useRef(false);
     const typeParam = searchParams.get('type');
     const userType = (typeParam === 'DOCENTE' || typeParam === 'ESTUDIANTE' || typeParam === 'EXTERNO') ? typeParam : 'DOCENTE';
     const openUuid = searchParams.get('open'); // deep-link from CommandPalette
@@ -101,6 +104,7 @@ const UsersPage = () => {
     const [updating, setUpdating] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<ManagedUser | null>(null);
     const [detailUser, setDetailUser] = useState<ManagedUser | null>(null);
+    const [lastActiveUserId, setLastActiveUserId] = useState<string | null>(null);
     const [showExternalForm, setShowExternalForm] = useState(false);
     const [error, setError] = useState('');
 
@@ -164,11 +168,16 @@ const UsersPage = () => {
     // Makes a direct targeted API call to find and open that specific user's
     // detail panel, regardless of which pagination page they fall on.
     useEffect(() => {
-        if (!openUuid) return;
+        if (!openUuid) {
+            lastOpenedUuidRef.current = null;
+            return;
+        }
+        if (openUuid === lastOpenedUuidRef.current) return;
         let cancelled = false;
 
         const resolveOpenUser = async () => {
             try {
+                lastOpenedUuidRef.current = openUuid;
                 // Search directly by cedula (id_profesor) — the most reliable identifier
                 const res = await api.get(
                     `/Admin/users?search=${encodeURIComponent(openUuid)}&type=${userType}&page=1&pageSize=5`
@@ -183,14 +192,11 @@ const UsersPage = () => {
 
                 if (target) {
                     setDetailUser(target);
+                    setSearch(target.id_profesor || target.nombre_completo);
+                    setPage(1);
+                    openedAtRef.current = Date.now();
+                    setLastActiveUserId(null);
                 }
-
-                // Clear param from URL so refreshing doesn't reopen
-                setSearchParams(prev => {
-                    const next = new URLSearchParams(prev);
-                    next.delete('open');
-                    return next;
-                });
             } catch {
                 // Silently fail — user just lands on the list
             }
@@ -200,6 +206,22 @@ const UsersPage = () => {
         return () => { cancelled = true; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [openUuid]);
+
+    const handleCloseDetail = () => {
+        if (Date.now() - openedAtRef.current < 300) {
+            return;
+        }
+        if (detailUser) {
+            setLastActiveUserId(detailUser.id_profesor);
+        }
+        setDetailUser(null);
+        lastOpenedUuidRef.current = null;
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            next.delete('open');
+            return next;
+        }, { replace: true });
+    };
 
     const fetchRoles = async () => {
         try {
@@ -492,6 +514,14 @@ const UsersPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto transition-colors duration-300">
+            <style>{`
+                .row-last-active {
+                    border-left-color: var(--brand, #0070f3) !important;
+                    background-color: var(--brand-subtle, rgba(0, 112, 243, 0.06)) !important;
+                    border-left-width: 2px !important;
+                    transition: all 0.2s ease-in-out;
+                }
+            `}</style>
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-8 lg:mb-12 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
                     <div className="section-label text-text-main">
@@ -688,8 +718,15 @@ const UsersPage = () => {
                                     </td>
                                 </tr>
                             ) : users.map((u) => (
-                                <tr key={u.id_profesor} className="hover:bg-surface/30 transition-colors group cursor-pointer"
-                                    onClick={() => setDetailUser(u)}
+                                <tr key={u.id_profesor} 
+                                    className={`transition-all duration-300 group cursor-pointer border-l-2 ${
+                                        detailUser?.id_profesor === u.id_profesor 
+                                            ? 'bg-brand/10 border-brand' 
+                                            : (!detailUser && lastActiveUserId === u.id_profesor)
+                                                ? 'row-last-active'
+                                                : 'border-transparent hover:bg-surface/30'
+                                    }`}
+                                    onClick={() => { setDetailUser(u); openedAtRef.current = Date.now(); setLastActiveUserId(null); }}
                                 >
                                     <td className="p-4">
                                         <div className="flex items-center gap-4">
@@ -971,7 +1008,17 @@ const UsersPage = () => {
                 <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
-                        onClick={() => setDetailUser(null)}
+                        onMouseDown={(e) => {
+                            if (e.target === e.currentTarget) {
+                                isOverlayMouseDownRef.current = true;
+                            }
+                        }}
+                        onClick={(e) => {
+                            if (e.target === e.currentTarget && isOverlayMouseDownRef.current) {
+                                handleCloseDetail();
+                            }
+                            isOverlayMouseDownRef.current = false;
+                        }}
                     />
                     <div className="relative w-full max-w-xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right overflow-hidden">
                         <div className="modal-header">
@@ -986,7 +1033,7 @@ const UsersPage = () => {
                                     </p>
                                 </div>
                             </div>
-                            <button onClick={() => setDetailUser(null)} className="text-text-dim hover:text-text-main transition-colors">
+                            <button onClick={handleCloseDetail} className="text-text-dim hover:text-text-main transition-colors">
                                 <ChevronRight size={20} />
                             </button>
                         </div>
@@ -1119,9 +1166,9 @@ const UsersPage = () => {
                         </div>
 
                         <div className="modal-footer">
-                            <button onClick={() => setDetailUser(null)} className="btn-vercel-secondary">Cerrar</button>
+                            <button onClick={handleCloseDetail} className="btn-vercel-secondary">Cerrar</button>
                             <button
-                                onClick={() => { setSelectedUser(detailUser); setDetailUser(null); }}
+                                onClick={() => { setSelectedUser(detailUser); handleCloseDetail(); }}
                                 className="btn-vercel-primary flex items-center gap-2"
                             >
                                 <Settings2 size={14} /> Editar Perfil

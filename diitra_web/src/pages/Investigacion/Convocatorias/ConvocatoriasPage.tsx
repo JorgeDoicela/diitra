@@ -133,6 +133,7 @@ const ConvocatoriasPage = () => {
     const [rubricas, setRubricas] = useState<Catalogo[]>([]);
     const [lineas, setLineas] = useState<Catalogo[]>([]);
     const [selectedConvocatoria, setSelectedConvocatoria] = useState<Convocatoria | null>(null);
+    const [lastActiveUuid, setLastActiveUuid] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -186,6 +187,7 @@ const ConvocatoriasPage = () => {
                 const target = data.find(c => c.uuid === openUuid);
                 if (target) {
                     setSelectedConvocatoria(target);
+                    setLastActiveUuid(null);
                     setSearchParams(prev => {
                         const next = new URLSearchParams(prev);
                         next.delete('open');
@@ -767,6 +769,14 @@ const ConvocatoriasPage = () => {
 
     return (
         <main className="flex-1 bg-bg-deep p-4 md:p-10 overflow-y-auto">
+            <style>{`
+                .row-last-active {
+                    border-left-color: var(--brand, #0070f3) !important;
+                    background-color: var(--brand-subtle, rgba(0, 112, 243, 0.06)) !important;
+                    border-left-width: 2px !important;
+                    transition: all 0.2s ease-in-out;
+                }
+            `}</style>
             {/* Header */}
             <header className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 lg:mb-16 animate-fade-up gap-8 lg:gap-0">
                 <div className="space-y-2">
@@ -840,8 +850,14 @@ const ConvocatoriasPage = () => {
                     {convocatorias.map((conv) => (
                         <div
                             key={conv.uuid}
-                            onClick={() => setSelectedConvocatoria(conv)}
-                            className="bento-card px-5 py-6 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 md:gap-0 group cursor-pointer"
+                            onClick={() => { setSelectedConvocatoria(conv); setLastActiveUuid(null); }}
+                            className={`bento-card px-5 py-6 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 md:gap-0 group cursor-pointer border-l-2 ${
+                                selectedConvocatoria?.uuid === conv.uuid 
+                                    ? 'bg-brand/10 border-brand' 
+                                    : (!selectedConvocatoria && lastActiveUuid === conv.uuid)
+                                        ? 'row-last-active'
+                                        : 'border-transparent'
+                            }`}
                         >
                             <div className="flex items-start md:items-center gap-4 md:gap-6 flex-1 w-full">
                                 <div className="icon-circle-brand shrink-0 mt-0.5 md:mt-0">
@@ -1443,7 +1459,7 @@ const ConvocatoriasPage = () => {
                 <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
                         className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
-                        onClick={() => setSelectedConvocatoria(null)}
+                        onClick={() => { setLastActiveUuid(selectedConvocatoria.uuid); setSelectedConvocatoria(null); }}
                     />
 
                     <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
@@ -1460,7 +1476,7 @@ const ConvocatoriasPage = () => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => setSelectedConvocatoria(null)}
+                                onClick={() => { setLastActiveUuid(selectedConvocatoria.uuid); setSelectedConvocatoria(null); }}
                                 className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
                             >
                                 <X size={18} />
@@ -1560,6 +1576,7 @@ const ConvocatoriasPage = () => {
                                 <button
                                     onClick={() => {
                                         handleEdit(selectedConvocatoria);
+                                        setLastActiveUuid(null);
                                         setSelectedConvocatoria(null);
                                     }}
                                     className="btn-vercel-primary flex-1"
@@ -1571,6 +1588,7 @@ const ConvocatoriasPage = () => {
                                 <button
                                     onClick={() => {
                                         handleStatusChange(selectedConvocatoria.uuid, 'Abierta');
+                                        setLastActiveUuid(null);
                                         setSelectedConvocatoria(null);
                                     }}
                                     className="btn-brand flex-1"
