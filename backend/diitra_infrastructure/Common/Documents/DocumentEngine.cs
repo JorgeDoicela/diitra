@@ -17,6 +17,8 @@ using Diitra.Infrastructure.Common.Documents.Templates.Investigacion;
 using iText.IO.Image;
 using Microsoft.Extensions.Configuration;
 using Diitra.Application.Research.Dtos;
+using Microsoft.EntityFrameworkCore;
+using diitra_infrastructure.data.models;
 
 namespace Diitra.Infrastructure.Common.Documents
 {
@@ -51,6 +53,7 @@ namespace Diitra.Infrastructure.Common.Documents
         private readonly IConfiguration _configuration;
         private readonly TemplateFileLoader _templateFileLoader;
         private readonly ImageResourceLoader _imageLoader;
+        private readonly DiitraContext _db;
 
         // PERFORMANCE OPTIMIZATION: Heavy engines are shared across requests
         private static readonly ScribanTemplateEngine _scribanEngine = new();
@@ -63,7 +66,8 @@ namespace Diitra.Infrastructure.Common.Documents
             IDocumentAuditRepository auditRepository,
             ILogger<DocumentEngine> logger,
             IConfiguration configuration,
-            IHostEnvironment environment)
+            IHostEnvironment environment,
+            DiitraContext db)
         {
             _templateRepository = templateRepository;
             _auditRepository = auditRepository;
@@ -71,6 +75,7 @@ namespace Diitra.Infrastructure.Common.Documents
             _configuration = configuration;
             _templateFileLoader = new TemplateFileLoader(environment);
             _imageLoader = new ImageResourceLoader(environment);
+            _db = db;
         }
 
         public async Task<DocumentResult> GenerateAsync(
@@ -82,6 +87,76 @@ namespace Diitra.Infrastructure.Common.Documents
                 _logger.LogInformation(
                     "DIITRA DocumentEngine: Generando [{TemplateCode}] por [{User}] BlindMode={Blind}, DraftMode={Draft}",
                     request.TemplateCode, request.RequestedBy ?? "system", request.IsBlindMode, request.IsDraftMode);
+
+                object renderData = request.Data ?? new { };
+
+                // 0. Auto-completar campos colaborativos desde CoWork en BD (resiliencia ante ceguera de campos en Frontend)
+                string? documentInstanceUuid = null;
+                if (renderData != null)
+                {
+                    try
+                    {
+                        var rawText = renderData is System.Text.Json.JsonElement je 
+                            ? je.GetRawText() 
+                            : System.Text.Json.JsonSerializer.Serialize(renderData);
+
+                        using var doc = System.Text.Json.JsonDocument.Parse(rawText);
+                        if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object)
+                        {
+                            if (doc.RootElement.TryGetProperty("Uuid", out var uuidProp) ||
+                                doc.RootElement.TryGetProperty("uuid", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("EntityUuid", out uuidProp) ||
+                                doc.RootElement.TryGetProperty("entityUuid", out uuidProp))
+                            {
+                                documentInstanceUuid = uuidProp.GetString();
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                if (!string.IsNullOrEmpty(documentInstanceUuid))
+                {
+                    _logger.LogInformation("DIITRA DocumentEngine: Buscando contenidos de CoWork en BD para UUID={Uuid}", documentInstanceUuid);
+                    try
+                    {
+                        var coworkDocs = await _db.InvCoworkDocumentos
+                            .AsNoTracking()
+                            .Where(d => d.EntidadUuid == documentInstanceUuid)
+                            .ToListAsync(cancellationToken);
+
+                        _logger.LogInformation("DIITRA DocumentEngine: Se encontraron {Count} registros de CoWork para UUID={Uuid}", coworkDocs.Count, documentInstanceUuid);
+
+                        if (coworkDocs.Any())
+                        {
+                            var rawText = renderData is System.Text.Json.JsonElement je 
+                                ? je.GetRawText() 
+                                : System.Text.Json.JsonSerializer.Serialize(renderData);
+                            
+                            var dataDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object?>>(rawText);
+                            if (dataDict != null)
+                            {
+                                foreach (var doc in coworkDocs)
+                                {
+                                    if (!string.IsNullOrEmpty(doc.CampoNombre) && !string.IsNullOrEmpty(doc.ContentHtml))
+                                    {
+                                        _logger.LogInformation("DIITRA DocumentEngine: Fusionando campo de CoWork: {Campo} (Longitud={Length})", doc.CampoNombre, doc.ContentHtml.Length);
+                                        dataDict[doc.CampoNombre] = doc.ContentHtml;
+                                    }
+                                    else
+                                    {
+                                        _logger.LogWarning("DIITRA DocumentEngine: Registro de CoWork vacío para campo: {Campo}", doc.CampoNombre);
+                                    }
+                                }
+                                renderData = dataDict;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "DIITRA DocumentEngine: Error al intentar fusionar contenidos colaborativos de CoWork para {Uuid}", documentInstanceUuid);
+                    }
+                }
 
                 // 1. Obtener y Sincronizar Plantilla
                 var template = await _templateRepository.FindByCodeAsync(request.TemplateCode, cancellationToken);
@@ -172,14 +247,14 @@ namespace Diitra.Infrastructure.Common.Documents
                         extraImageVars["logo_base64"] = logoBase64;
                     }
 
-                    ProyectoDto? projectDto = request.Data as ProyectoDto;
-                    if (projectDto == null && request.Data != null)
+                    ProyectoDto? projectDto = renderData as ProyectoDto;
+                    if (projectDto == null && renderData != null)
                     {
                         try
                         {
-                            var rawText = request.Data is System.Text.Json.JsonElement je 
+                            var rawText = renderData is System.Text.Json.JsonElement je 
                                 ? je.GetRawText() 
-                                : System.Text.Json.JsonSerializer.Serialize(request.Data);
+                                : System.Text.Json.JsonSerializer.Serialize(renderData);
 
                             // Desempaquetar la envoltura "Data" / "data" si existe en el JSON
                             using var doc = System.Text.Json.JsonDocument.Parse(rawText);
@@ -232,7 +307,7 @@ namespace Diitra.Infrastructure.Common.Documents
                 }
 
                 // 5. Inyectar datos + imágenes con Handlebars
-                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender, request.Data ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
+                var renderedHtml = await _scribanEngine.RenderAsync(htmlToRender, renderData ?? new object(), extraImageVars.Count > 0 ? extraImageVars : null, request.IsBlindMode);
                 
                 // 5. Optimizar HTML (Inyectar estilos base y sanitizar imágenes)
                 var optimizedHtml = ProcessAndOptimizeHtml(renderedHtml);
@@ -286,9 +361,9 @@ namespace Diitra.Infrastructure.Common.Documents
                                             or DocumentCategory.InformeAvance 
                                             or DocumentCategory.InformeFinal;
 
-                    if (request.Data != null)
+                    if (renderData != null)
                     {
-                        snapshot = System.Text.Json.JsonSerializer.Serialize(request.Data);
+                        snapshot = System.Text.Json.JsonSerializer.Serialize(renderData);
                     }
                     else if (requiresSnapshot)
                     {
