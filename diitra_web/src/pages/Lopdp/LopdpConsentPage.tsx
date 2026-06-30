@@ -31,10 +31,12 @@ const LopdpConsentPage: React.FC = () => {
 
         setIsSubmitting(true);
         try {
-            await api.post('/lopdp/consentimiento', {
-                version_politica: 'LOPDP_GENERAL'
-            });
-            addToast('Consentimiento Registrado', 'Has aceptado la política de tratamiento de datos personales.', 'success');
+            // Se registran ambos consentimientos en paralelo para la auditoría forense LOPDP
+            await Promise.all([
+                api.post('/lopdp/consentimiento', { version_politica: 'LOPDP_GENERAL' }),
+                api.post('/lopdp/consentimiento', { version_politica: 'FIRMA_ELECTRONICA' })
+            ]);
+            addToast('Consentimientos Registrados', 'Ha aceptado la política de tratamiento de datos y los términos de uso de firma electrónica.', 'success');
             // Refresh user state so the guard lets the user proceed
             await refreshUser();
         } catch (err) {
@@ -131,7 +133,7 @@ const LopdpConsentPage: React.FC = () => {
                         htmlFor="lopdpAcceptanceCheckbox"
                         className={`text-[11px] leading-relaxed select-none ${hasRead ? 'text-text-main cursor-pointer' : 'text-text-dim cursor-not-allowed'}`}
                     >
-                        Declaro que he leído atentamente y otorgo mi consentimiento libre, específico, informado e inequívoco para el tratamiento de mis datos personales en DIITRA según los términos descritos.
+                        Declaro que he leído atentamente y otorgo mi consentimiento libre, específico, informado e inequívoco para el tratamiento de mis datos personales y autorizo el procesamiento temporal de mi firma electrónica en DIITRA según los términos descritos.
                     </label>
                 </div>
 
