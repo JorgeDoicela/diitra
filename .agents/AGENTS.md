@@ -1,15 +1,28 @@
-# Reglas del Proyecto (Respuestas Eficientes)
+# Reglas del Proyecto (DIITRA)
 
-Estas reglas aplican de forma obligatoria en todas las conversaciones y tareas de este proyecto para evitar el consumo excesivo de tokens y acelerar el tiempo de desarrollo.
+Este archivo define las directrices y estándares obligatorios de desarrollo para el proyecto DIITRA. Se carga automáticamente al inicio de cada conversación en este workspace.
 
-## Directrices de Búsqueda y Herramientas
-1. **Limitar Búsquedas al Mínimo**: Si el usuario especifica un archivo o ruta concreta, la búsqueda DEBE limitarse única y exclusivamente a ese archivo. Queda estrictamente prohibido usar herramientas de búsqueda (`grep_search`, `list_dir`) para buscar archivos cuya ubicación ya es conocida o deducible. Abre los archivos directamente usando `view_file`.
-2. **Evitar Uso Innecesario de Herramientas**: Si no es necesario leer archivos o ejecutar comandos para responder (preguntas teóricas o explicaciones conceptuales), responde directamente utilizando tu conocimiento interno sin recurrir a herramientas.
-3. **No hacer Diagnósticos ni Planes Redundantes**: No inicies planes de implementación complejos ni generes artefactos de planeación (`implementation_plan.md` o `task.md`) para tareas simples, medianas o directas, a menos que sea un cambio estructural masivo o el usuario lo solicite explícitamente. Procede directamente a editar y verificar.
-4. **Respuestas Concisas y Sin Duplicación**: Ve directo al grano en tus respuestas. Evita introducciones largas o resúmenes de acciones del agente. **Queda estrictamente prohibido duplicar o re-escribir código completo o bloques modificados en tu respuesta de chat** si estos ya se muestran en las salidas de las herramientas (como los `diff` de las ediciones).
-5. **No Ejecutar 'dotnet run'**: Queda prohibido ejecutar o proponer la ejecución de `dotnet run` para iniciar/reiniciar el backend de forma redundante.
-6. **Enfoque Exclusivo en el Archivo Objetivo**: En tareas de edición simples, no busques ni analices dependencias o archivos colaterales. Edita únicamente el archivo objetivo de manera aislada y directa.
-7. **Delegación y Colaboración Activa (Ahorro de Tokens)**: Si necesitas diagnosticar la base de datos, revisar logs, probar el navegador o verificar el estado del sistema, prefiere **pedirle directamente al usuario que lo revise, inspeccione o ejecute la acción**. No gastes tokens revisando o analizando demasiados archivos o cosas de forma exhaustiva si el usuario puede realizar esa verificación, darte el estado actual o facilitarte la información directamente. **Al delegar, dale al usuario una guía paso a paso sumamente clara y concisa de lo que debe hacer o revisar.**
-8. **Evitar Análisis en Cascada (Waterfall Checking)**: En lugar de analizar archivos en cadena o abrir preventivamente otros archivos para "entender el contexto general", ve directamente al archivo objetivo o formula una hipótesis simple y valídala con el usuario antes de continuar abriendo archivos.
-9. **Evitar Uso de Herramientas del Navegador (Browser Subagents)**: Queda prohibido lanzar subagentes de navegador (`browser_subagent`) a menos que el usuario lo solicite de forma explícitamente, ya que consumen una gran cantidad de tokens. Prefiere delegar las validaciones visuales o de navegación web al usuario.
-10. **Prohibición de Lecturas Preventivas o Redundantes**: Si tienes una sospecha clara sobre un archivo, no abras otros archivos preventivamente para "entender el contexto general". Ve directamente al archivo objetivo.
+## Stack Tecnológico del Proyecto
+* **Frontend:** React, Vite, TypeScript, Axios (cliente de API configurado en `api`), Yjs (colaboración en tiempo real con `CoWorkField`).
+  * *Estilos:* CSS Vanilla de alta calidad (premium, animaciones fluidas). Evitar TailwindCSS a menos que el usuario lo solicite.
+* **Backend:** ASP.NET Core (Web API, .NET 8), Entity Framework Core (ORM), Pomelo MySQL.
+* **Base de Datos:** MySQL (base de datos `sigafi_es`, puerto `3307`).
+
+---
+
+## Directrices de Comportamiento y Ahorro de Tokens
+1. **Limitar Búsquedas al Mínimo**: Si se especifica un archivo o ruta concreta, la búsqueda DEBE limitarse únicamente a ese archivo. Queda estrictamente prohibido usar `grep_search` o `list_dir` para buscar archivos cuya ubicación ya es conocida o deducible.
+2. **Evitar Uso Innecesario de Herramientas**: Responder directamente utilizando conocimiento interno para consultas teóricas o explicaciones conceptuales sin llamar a herramientas del sistema.
+3. **No hacer Diagnósticos ni Planes Redundantes**: No generar archivos de planificación (`implementation_plan.md` o `task.md`) para tareas simples o medianas a menos que el usuario lo solicite expresamente. Proceder directamente a la edición.
+4. **Respuestas Concisas y Sin Duplicación**: Ir al grano en las respuestas. Queda prohibido re-escribir bloques completos de código modificado en el chat si estos ya se muestran en las salidas de las herramientas (como los diff de las ediciones).
+5. **No Ejecutar 'dotnet run'**: Queda prohibido proponer o ejecutar `dotnet run` para iniciar/reiniciar el backend de forma redundante.
+6. **Enfoque Exclusivo en el Archivo Objetivo**: En tareas de edición simples, modificar únicamente el archivo objetivo de manera aislada y directa.
+7. **Delegación y Colaboración Activa**: Si es necesario diagnosticar la base de datos, revisar logs, probar el navegador o verificar el estado del sistema, **pedirle directamente al usuario que lo revise o ejecute la acción**, proporcionando una guía paso a paso sumamente clara y concisa de lo que debe hacer.
+8. **Evitar Análisis en Cascada**: Formular una hipótesis simple y validarla con el usuario antes de continuar abriendo archivos en cadena.
+9. **Evitar Uso de Herramientas del Navegador**: Queda prohibido lanzar subagentes de navegador (`browser_subagent`) a menos que el usuario lo solicite explícitamente.
+
+---
+
+## Enrutamiento de Habilidades (Skills)
+* Si la tarea actual corresponde al desarrollo o modificación de interfaces visuales, componentes React o estilos web, el agente debe activar y seguir las directrices de la skill local `/desarrollo-frontend`.
+* Si la tarea corresponde a controladores de API, servicios C#, modelos de base de datos o lógica de negocio, el agente debe activar y seguir las directrices de la skill local `/desarrollo-backend`.
