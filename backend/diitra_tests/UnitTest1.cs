@@ -67,7 +67,7 @@ public class UnitTest1
         if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         await EnsureDatabaseColumnsExistAsync(context);
@@ -122,7 +122,7 @@ public class UnitTest1
     {
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         
@@ -151,7 +151,7 @@ public class UnitTest1
         if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         await EnsureDatabaseColumnsExistAsync(context);
@@ -239,7 +239,7 @@ public class UnitTest1
         if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         var instance = await context.DocumentInstances.FirstOrDefaultAsync(i => i.Uuid == "307c9503-d112-4545-b3c3-b7ba8655ddac");
@@ -260,7 +260,7 @@ public class UnitTest1
         if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         var project = await context.InvProyectos
@@ -288,7 +288,7 @@ public class UnitTest1
         if (_skipTests) return;
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         await EnsureDatabaseColumnsExistAsync(context);
@@ -362,7 +362,7 @@ public class UnitTest1
     {
         var optionsBuilder = new DbContextOptionsBuilder<DiitraContext>();
         var serverVersion = new MySqlServerVersion(new Version(8, 0, 31));
-        optionsBuilder.UseMySql("Server=localhost;Port=3307;Database=sigafi_es;User=root;Password=12345;", serverVersion);
+        optionsBuilder.UseMySql("Server=localhost;Port=3306;Database=sigafi_es;User=root;Password=12345;", serverVersion);
         
         using var context = new DiitraContext(optionsBuilder.Options);
         var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid.StartsWith("0b0601fb"));
