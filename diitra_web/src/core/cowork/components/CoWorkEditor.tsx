@@ -11,15 +11,15 @@ import { RemoteCursors } from './RemoteCursors';
 import { CoWorkToolbar } from './CoWorkToolbar';
 import { DocumentDataContext, DocumentMetadataContext, SectionGuardContext, SectionLockContext } from '../../documents/context/DocumentDataContext';
 import { coworkLog } from '../utils/log';
-import { 
-    CheckCircle2, 
-    Loader2, 
-    Users, 
-    Wifi, 
-    WifiOff, 
-    EyeOff, 
+import {
+    CheckCircle2,
+    Loader2,
+    Users,
+    Wifi,
+    WifiOff,
+    EyeOff,
     Lock,
-    Unlock 
+    Unlock
 } from 'lucide-react';
 
 interface CoWorkEditorProps {
@@ -58,13 +58,13 @@ export const CoWorkEditor: React.FC<CoWorkEditorProps> = (props) => {
     const useCollaboration = !isReadOnlyMode || hasYjsContent;
 
     const editorKey = `${field}_collab_${useCollaboration}`;
-    
+
     return (
-        <InnerCoWorkEditor 
-            key={editorKey} 
-            useCollaboration={useCollaboration} 
-            dbValue={dbValue} 
-            {...props} 
+        <InnerCoWorkEditor
+            key={editorKey}
+            useCollaboration={useCollaboration}
+            dbValue={dbValue}
+            {...props}
         />
     );
 };
@@ -122,7 +122,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             handlePaste: (view, event) => {
                 const items = event.clipboardData?.items;
                 if (!items) return false;
-                
+
                 let handled = false;
                 for (const item of Array.from(items)) {
                     if (item.type.indexOf('image') === 0) {
@@ -131,7 +131,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                         if (file) {
                             const formData = new FormData();
                             formData.append('file', file);
-                            
+
                             api.post('/collaboration/upload', formData, {
                                 headers: { 'Content-Type': 'multipart/form-data' }
                             }).then(res => {
@@ -151,16 +151,16 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             handleDrop: (view, event) => {
                 const files = event.dataTransfer?.files;
                 if (!files || files.length === 0) return false;
-                
+
                 let handled = false;
                 for (const file of Array.from(files)) {
                     if (file.type.indexOf('image') === 0) {
                         handled = true;
                         const formData = new FormData();
                         formData.append('file', file);
-                        
+
                         event.preventDefault();
-                        
+
                         api.post('/collaboration/upload', formData, {
                             headers: { 'Content-Type': 'multipart/form-data' }
                         }).then(res => {
@@ -220,7 +220,7 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
             if (currentOnChange) {
                 setTimeout(() => currentOnChange(html, { source }), 0);
             }
-            
+
             if (source === 'local') {
                 const json = JSON.stringify(editor.getJSON());
                 coworkRef.current.submitFinalContent(html, json, fieldRef.current);
@@ -366,9 +366,9 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                 </div>
             </div>
 
-            <CoWorkToolbar 
-                editor={editor} 
-                readonly={readonly || session.readOnly} 
+            <CoWorkToolbar
+                editor={editor}
+                readonly={readonly || session.readOnly}
             />
 
             {session.isBlindMode && (
@@ -410,9 +410,9 @@ const InnerCoWorkEditor: React.FC<InnerCoWorkEditorProps> = ({
                                 editor={editor}
                                 className="cowork-editor-content"
                             />
-                            <RemoteCursors 
-                                editor={editor} 
-                                awareness={cowork.awareness} 
+                            <RemoteCursors
+                                editor={editor}
+                                awareness={cowork.awareness}
                                 field={field}
                             />
                         </>

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2, Lock, Sun, Moon, Key } from 'lucide-react';
+import { Loader2, Lock, Sun, Moon, Key, Home } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -331,12 +331,8 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                         </div>
                     </form>
 
-                    <div className="text-center pt-1">
-                        <div className="flex justify-center items-center gap-8 text-[9px] font-mono text-text-dim uppercase tracking-[0.2em]">
-                            <Link to="/" className="hover:text-text-main transition-colors no-underline">Inicio</Link>
-                            <span>/</span>
-                            <a href="#" className="hover:text-text-main transition-colors no-underline">Ayuda</a>
-                        </div>
+                    <div className="text-center -mt-1 sm:-mt-2">
+                        <Link to="/" className="hover:text-text-main transition-colors no-underline text-[12px] sm:text-[13px] text-text-dim font-medium tracking-tight">Inicio</Link>
                     </div>
                 </div>
             </div>
