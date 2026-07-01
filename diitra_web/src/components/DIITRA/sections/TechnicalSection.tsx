@@ -3,17 +3,18 @@ import { CoWorkEditor } from '../../../core/cowork/components/CoWorkEditor';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
 import { SectionBlockGuard } from '../../DIITRA/SectionBlockGuard';
-import { 
-    BookOpen, 
-    FileText, 
-    CheckSquare, 
-    Target, 
-    Globe, 
-    Book, 
-    Settings, 
-    ClipboardCheck, 
+import {
+    BookOpen,
+    FileText,
+    CheckSquare,
+    Target,
+    Globe,
+    Book,
+    Settings,
+    ClipboardCheck,
     Info,
-    Lock
+    Lock,
+    ArrowDown
 } from 'lucide-react';
 
 interface TechnicalSectionProps {
@@ -56,11 +57,10 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                         <button
                             key={tab.id}
                             onClick={() => setActiveSubTab(tab.id)}
-                            className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap md:whitespace-normal text-left ${
-                                isActive 
-                                    ? 'bg-text-main text-bg-deep shadow-md' 
+                            className={`flex items-center justify-between px-4 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap md:whitespace-normal text-left ${isActive
+                                    ? 'bg-text-main text-bg-deep shadow-md'
                                     : 'text-text-dim hover:text-text-main hover:bg-surface-hover'
-                            }`}
+                                }`}
                         >
                             <span className="flex items-center gap-3">
                                 <Icon size={16} />
@@ -93,12 +93,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 </div>
                             </div>
                             <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                <CoWorkEditor 
-                                    field="Antecedentes" 
-                                    cowork={cowork} 
+                                <CoWorkEditor
+                                    field="Antecedentes"
+                                    cowork={cowork}
                                     onChange={(html, meta) => onUpdate('Antecedentes', html, meta)}
                                     placeholder="Escriba los antecedentes del proyecto..."
-                                    className="min-h-[400px] border-none" 
+                                    className="min-h-[400px] border-none"
                                 />
                             </div>
                         </div>
@@ -122,12 +122,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 </div>
                             </div>
                             <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                <CoWorkEditor 
-                                    field="DescripcionProyecto" 
-                                    cowork={cowork} 
+                                <CoWorkEditor
+                                    field="DescripcionProyecto"
+                                    cowork={cowork}
                                     onChange={(html, meta) => onUpdate('DescripcionProyecto', html, meta)}
                                     placeholder="Describa el propósito y el alcance de la investigación..."
-                                    className="min-h-[400px] border-none" 
+                                    className="min-h-[400px] border-none"
                                 />
                             </div>
                         </div>
@@ -151,12 +151,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 </div>
                             </div>
                             <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                <CoWorkEditor 
-                                    field="Justificacion" 
-                                    cowork={cowork} 
+                                <CoWorkEditor
+                                    field="Justificacion"
+                                    cowork={cowork}
                                     onChange={(html, meta) => onUpdate('Justificacion', html, meta)}
                                     placeholder="Escriba la justificación del proyecto aquí..."
-                                    className="min-h-[400px] border-none" 
+                                    className="min-h-[400px] border-none"
                                 />
                             </div>
                         </div>
@@ -173,24 +173,39 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
                                         <Target size={20} /> Objetivo General
                                     </h3>
-                                    <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim">
-                                        <Info size={14} className="text-text-main shrink-0 mt-0.5" />
-                                        <span className="font-bold">FÓRMULA: VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?</span>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex gap-2.5 p-3 rounded-xl bg-bg-deep/50 border border-border-thin text-[11px] text-text-dim w-full sm:w-1/2">
+                                            <Info size={14} className="text-text-main shrink-0 mt-0.5" />
+                                            <span className="font-bold">FÓRMULA: VERBO EN INFINITIVO + ¿QUÉ? + ¿CÓMO? + ¿PARA QUÉ?</span>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                const el = document.getElementById('objetivos-especificos-section');
+                                                if (el) {
+                                                    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }
+                                            }}
+                                            className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-text-dim hover:text-text-main transition-colors select-none shrink-0 pr-2"
+                                        >
+                                            <span>Los objetivos específicos se encuentran abajo</span>
+                                            <ArrowDown size={12} className="animate-bounce" />
+                                        </button>
                                     </div>
                                 </div>
                                 <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                    <CoWorkEditor 
-                                        field="ObjetivoGeneral" 
-                                        cowork={cowork} 
+                                    <CoWorkEditor
+                                        field="ObjetivoGeneral"
+                                        cowork={cowork}
                                         onChange={(html, meta) => onUpdate('ObjetivoGeneral', html, meta)}
                                         placeholder="El objetivo general del proyecto de investigación consiste en..."
-                                        className="min-h-[180px] border-none" 
+                                        className="min-h-[180px] border-none"
                                     />
                                 </div>
                             </div>
 
                             {/* Objetivos Específicos */}
-                            <div className="space-y-4">
+                            <div id="objetivos-especificos-section" className="space-y-4 scroll-mt-6">
                                 <div className="space-y-1">
                                     <h3 className="text-base font-black text-text-main uppercase flex items-center gap-2">
                                         <Target size={20} /> Objetivos Específicos
@@ -201,12 +216,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     </div>
                                 </div>
                                 <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                    <CoWorkEditor 
-                                        field="ObjetivosEspecificos" 
-                                        cowork={cowork} 
+                                    <CoWorkEditor
+                                        field="ObjetivosEspecificos"
+                                        cowork={cowork}
                                         onChange={(html, meta) => onUpdate('ObjetivosEspecificos', html, meta)}
                                         placeholder="1. Desarrollar un modelo...&#10;2. Implementar técnicas de...&#10;3. Evaluar el impacto de..."
-                                        className="min-h-[220px] border-none" 
+                                        className="min-h-[220px] border-none"
                                     />
                                 </div>
                             </div>
@@ -229,12 +244,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                     </p>
                                 </div>
                             </div>
-                            <CoWorkField 
-                                name="ObjetivosDesarrolloSostenible" 
-                                cowork={cowork} 
-                                label="Ejes y ODS Vinculados (Ej: ODS 4, ODS 9)" 
+                            <CoWorkField
+                                name="ObjetivosDesarrolloSostenible"
+                                cowork={cowork}
+                                label="Ejes y ODS Vinculados (Ej: ODS 4, ODS 9)"
                                 onValueChange={(v) => onUpdate('ObjetivosDesarrolloSostenible', v)}
-                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold text-text-main" 
+                                className="w-full bg-bg-deep border border-border-thin rounded-xl px-5 py-4 text-sm font-bold text-text-main"
                             />
                         </div>
                     </SectionBlockGuard>
@@ -257,12 +272,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 </div>
                             </div>
                             <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                <CoWorkEditor 
-                                    field="MarcoTeorico" 
-                                    cowork={cowork} 
+                                <CoWorkEditor
+                                    field="MarcoTeorico"
+                                    cowork={cowork}
                                     onChange={(html, meta) => onUpdate('MarcoTeorico', html, meta)}
                                     placeholder="Escriba el fundamento teórico del proyecto..."
-                                    className="min-h-[400px] border-none" 
+                                    className="min-h-[400px] border-none"
                                 />
                             </div>
                         </div>
@@ -286,12 +301,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 </div>
                             </div>
                             <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                <CoWorkEditor 
-                                    field="Metodologia" 
-                                    cowork={cowork} 
+                                <CoWorkEditor
+                                    field="Metodologia"
+                                    cowork={cowork}
                                     onChange={(html, meta) => onUpdate('Metodologia', html, meta)}
                                     placeholder="Describa la metodología científica, fases del estudio e instrumentación técnica..."
-                                    className="min-h-[400px] border-none" 
+                                    className="min-h-[400px] border-none"
                                 />
                             </div>
                         </div>
@@ -315,12 +330,12 @@ export const TechnicalSection: React.FC<TechnicalSectionProps> = ({
                                 </div>
                             </div>
                             <div className="rounded-2xl overflow-hidden shadow-sm border border-border-thin bg-bg-deep">
-                                <CoWorkEditor 
-                                    field="Evaluacion" 
-                                    cowork={cowork} 
+                                <CoWorkEditor
+                                    field="Evaluacion"
+                                    cowork={cowork}
                                     onChange={(html, meta) => onUpdate('Evaluacion', html, meta)}
                                     placeholder="Escriba los criterios, métricas e instrumentos de evaluación..."
-                                    className="min-h-[400px] border-none" 
+                                    className="min-h-[400px] border-none"
                                 />
                             </div>
                         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, X, Lock, Unlock } from 'lucide-react';
+import { CheckCircle, FileText, Save, Users, Clock, Settings, Shield, MessageSquare, ChevronLeft, X, Lock, Unlock, Sun, Moon } from 'lucide-react';
 import api from '../../api/axios_config';
 import type { CoWorkHandle } from '../../core/cowork/types';
 import CollaborationSidebar from './CollaborationSidebar';
@@ -101,6 +101,17 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
     const navigate = useNavigate();
     const location = useLocation();
     const queryParams = React.useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+    const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+        return document.documentElement.getAttribute('data-theme') !== 'light';
+    });
+
+    const toggleTheme = () => {
+        const nextMode = !isDarkMode;
+        setIsDarkMode(nextMode);
+        document.documentElement.setAttribute('data-theme', nextMode ? 'dark' : 'light');
+        localStorage.setItem('theme', nextMode ? 'dark' : 'light');
+    };
 
     const sectionParam = queryParams.get('section');
     const activeTab = sectionParam || sections[0]?.id || 'general';
@@ -832,6 +843,14 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
                                         <Save size={12} /> <span className="hidden xs:inline">Guardar</span>
                                     </button>
                                 )}
+                                <button
+                                    onClick={toggleTheme}
+                                    className="p-2 md:p-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-md text-text-dim hover:text-text-main transition-colors flex items-center justify-center"
+                                    title={isDarkMode ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+                                    aria-label="Cambiar tema claro/oscuro"
+                                >
+                                    {isDarkMode ? <Sun size={14} className="text-warning" /> : <Moon size={14} className="text-indigo-400" />}
+                                </button>
                                 <button
                                     onClick={handleClose}
                                     className="hidden lg:flex px-6 py-2.5 bg-surface hover:bg-bg-deep border border-border-thin rounded-md text-[10px] font-bold uppercase tracking-widest text-text-main transition-colors"

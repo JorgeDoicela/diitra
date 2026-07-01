@@ -291,7 +291,7 @@ const Modulos: React.FC = () => {
 
 
     return (
-        <section id="modulos" className="py-24 relative lg:-ml-24 lg:-mr-24 px-6 overflow-hidden space-y-16">
+        <section id="modulos" className="py-24 relative lg:-ml-24 lg:-mr-24 overflow-hidden space-y-16">
             {/* Estilos Inline CSS para la Laptop Realista Matte Black de mayor tamaño */}
             <style>{`
                 .laptop-container {

@@ -300,7 +300,7 @@ const Roles: React.FC = () => {
             <div className="border border-border-thin rounded-xl bg-surface/35 shadow-xl font-sans relative overflow-hidden backdrop-blur-sm flex flex-col md:flex-row min-h-[480px]">
                 
                 {/* Lateral: Selector de Roles */}
-                <div className="w-full md:w-60 border-b md:border-b-0 md:border-r border-border-thin bg-surface/50 p-3 flex flex-col gap-1.5 shrink-0">
+                <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-border-thin bg-surface/50 p-2.5 flex flex-col gap-1.5 shrink-0">
                     {rolesData.map((item, idx) => {
                         const Icon = item.icon;
                         const isSelected = activeRole === idx;
@@ -322,19 +322,19 @@ const Roles: React.FC = () => {
                                     setSyncProgress(0);
                                     setHoveredStep(null);
                                 }}
-                                className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-200 cursor-pointer ${
+                                className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left transition-all duration-200 cursor-pointer ${
                                     isSelected 
-                                        ? 'bg-brand-subtle border border-brand/20 text-brand shadow-[0_2px_10px_rgba(0,112,243,0.04)] font-semibold scale-[1.02]' 
+                                        ? 'bg-brand-subtle border border-brand/20 text-brand shadow-[0_2px_10px_rgba(0,112,243,0.04)] font-semibold scale-[1.01]' 
                                         : 'hover:bg-surface-hover/60 border border-transparent text-text-dim hover:text-text-main hover:translate-x-0.5'
                                 }`}
                             >
-                                <div className={`p-1.5 rounded border transition-colors ${
+                                <div className={`p-1 rounded border transition-colors ${
                                     isSelected ? 'bg-brand/10 border-brand/35 text-brand' : 'bg-bg-deep border-border-thin text-text-dim'
                                 }`}>
                                     <Icon size={13} strokeWidth={1.5} />
                                 </div>
                                 <div className="flex flex-col min-w-0">
-                                    <span className="text-[11px] tracking-tight truncate leading-none">
+                                    <span className="text-[10.5px] md:text-[11.5px] tracking-tight truncate leading-none font-medium">
                                         {item.role}
                                     </span>
                                 </div>
@@ -344,29 +344,29 @@ const Roles: React.FC = () => {
                 </div>
 
                 {/* Área de Trabajo Derecha */}
-                <div className="flex-1 p-6 flex flex-col justify-between gap-6 min-w-0">
+                <div className="flex-1 p-5 flex flex-col justify-start gap-3.5 min-w-0">
                     
                     {/* Info de Rol & Badges de Permisos */}
-                    <div className="space-y-3">
-                        <div className="space-y-1.5">
+                    <div className="space-y-2.5">
+                        <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-semibold text-text-main">
+                                <h3 className="text-[13px] md:text-[14px] font-bold text-text-main">
                                     {rolesData[activeRole].role}
                                 </h3>
-                                <span className="text-[9px] font-mono px-2 py-0.5 border border-brand/20 bg-brand-subtle text-brand rounded-full uppercase font-bold">
+                                <span className="text-[8.5px] md:text-[9px] font-mono px-1.5 py-0.5 border border-brand/20 bg-brand-subtle text-brand rounded-full uppercase font-bold">
                                     Nivel 0{activeRole + 1}
                                 </span>
                             </div>
-                            <p className="text-xs text-text-dim leading-relaxed max-w-2xl">
+                            <p className="text-[11px] md:text-[11.5px] text-text-dim leading-relaxed max-w-2xl">
                                 {rolesData[activeRole].desc}
                             </p>
                         </div>
 
                         {/* Acciones/Permisos en formato Badges */}
-                        <div className="space-y-1.5">
-                            <div className="flex flex-wrap gap-2">
+                        <div className="space-y-1">
+                            <div className="flex flex-wrap gap-1.5">
                                 {rolesData[activeRole].permissions.map((perm, pIdx) => (
-                                    <div key={pIdx} className="flex items-center gap-1.5 text-[9px] text-text-main font-sans border border-border-thin bg-surface/50 px-2.5 py-1 rounded">
+                                    <div key={pIdx} className="flex items-center gap-1 text-[8px] md:text-[9px] text-text-main font-sans border border-border-thin bg-surface/50 px-2 py-0.5 rounded">
                                         <CheckCircle2 size={10} className="text-brand shrink-0" />
                                         <span>{perm}</span>
                                     </div>
@@ -376,10 +376,10 @@ const Roles: React.FC = () => {
                     </div>
 
                     {/* Flujo de Actividades (Waterfall) */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center text-[9px] font-mono text-text-dim/60 uppercase tracking-wider">
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[9px] md:text-[10px] font-mono text-text-dim/60 uppercase tracking-wider">
                             <span>Secuencia del flujo de trabajo:</span>
-                            <span className="text-[8.5px] lowercase font-bold text-brand bg-brand-subtle border border-brand/20 px-1.5 rounded transition-all duration-300">
+                            <span className="text-[8px] lowercase font-bold text-brand bg-brand-subtle border border-brand/20 px-1.5 rounded transition-all duration-300">
                                 {activeRole === 0 
                                     ? `proceso_${selectedProject}_activo()` 
                                     : activeRole === 1 
@@ -390,11 +390,11 @@ const Roles: React.FC = () => {
                             </span>
                         </div>
                         
-                        <div className="border border-border-thin rounded-lg bg-bg-deep/30 p-3 space-y-2 font-mono text-[9px]">
+                        <div className="border border-border-thin rounded-lg bg-bg-deep/30 p-2.5 space-y-1.5 font-mono text-[10px]">
                             {getWaterfallSteps(activeRole).map((step, idx) => (
                                 <div 
                                     key={idx} 
-                                    className="relative h-6 flex items-center rounded border border-border-thin/40 px-2.5 overflow-hidden transition-all duration-300 cursor-pointer"
+                                    className="relative h-5.5 flex items-center rounded border border-border-thin/40 px-2 overflow-hidden transition-all duration-300 cursor-pointer"
                                     onMouseEnter={() => setHoveredStep(idx)}
                                     onMouseLeave={() => setHoveredStep(null)}
                                 >
@@ -405,12 +405,12 @@ const Roles: React.FC = () => {
                                             width: step.widthPercent 
                                         }} 
                                     />
-                                    <span className="text-text-main text-[9px] z-10 pl-3 relative flex items-center gap-1.5 min-w-0 flex-1">
-                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-[1px] bg-border-thin" />
+                                    <span className="text-text-main text-[9px] md:text-[10px] z-10 pl-2 relative flex items-center gap-1.5 min-w-0 flex-1">
+                                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-[1px] bg-border-thin" />
                                         <span className="font-sans font-medium truncate pr-2">{step.name}</span>
                                     </span>
                                     
-                                    <span className="ml-auto text-text-dim text-[8px] font-bold z-10 bg-bg-deep/70 px-1.5 py-0.5 rounded border border-border-thin/30">
+                                    <span className="ml-auto text-text-dim text-[8px] md:text-[8.5px] font-bold z-10 bg-bg-deep/70 px-1.5 py-0.5 rounded border border-border-thin/30">
                                         {step.duration}
                                     </span>
                                 </div>
@@ -418,14 +418,14 @@ const Roles: React.FC = () => {
                         </div>
 
                         {/* Detalle interactivo del paso actual (Altamente estable y libre de Layout Shift) */}
-                        <div className={`transition-all duration-300 rounded px-3 py-1.5 min-h-[34px] flex items-center justify-center border ${
+                        <div className={`transition-all duration-300 rounded px-2.5 py-1 min-h-[30px] flex items-center justify-center border ${
                             hoveredStep !== null 
                                 ? 'border-border-thin bg-surface/20 opacity-100' 
                                 : 'border-transparent bg-transparent opacity-0'
                         }`}>
                             {hoveredStep !== null && getWaterfallSteps(activeRole)[hoveredStep] && (
-                                <p className="text-[8.5px] text-text-dim leading-relaxed flex flex-wrap items-center gap-1.5 font-sans transition-opacity duration-300">
-                                    <span className="font-mono text-brand font-bold bg-brand-subtle border border-brand/20 px-1.5 py-0.5 rounded text-[7.5px] tracking-wider uppercase">
+                                <p className="text-[8px] md:text-[9px] text-text-dim leading-relaxed flex flex-wrap items-center gap-1.5 font-sans transition-opacity duration-300">
+                                    <span className="font-mono text-brand font-bold bg-brand-subtle border border-brand/20 px-1 py-0.5 rounded text-[7.5px] tracking-wider uppercase">
                                         {getWaterfallSteps(activeRole)[hoveredStep].permission}
                                     </span>
                                     <span className="text-text-main font-semibold">{getWaterfallSteps(activeRole)[hoveredStep].name}:</span>
@@ -436,37 +436,47 @@ const Roles: React.FC = () => {
                     </div>
 
                     {/* Simulación interactiva */}
-                    <div className="border border-border-thin rounded-lg bg-surface/50 p-4 space-y-3">
-                        <div className="flex items-center gap-1.5 text-[9px] font-mono text-text-dim uppercase tracking-wider">
-                            <Terminal size={12} className="text-brand" />
+                    <div className="border border-border-thin rounded-lg bg-surface/50 p-3 space-y-2.5">
+                        <div className="flex items-center gap-1 text-[9px] md:text-[10px] font-mono text-text-dim uppercase tracking-wider">
+                            <Terminal size={11} className="text-brand" />
                             <span>Simulador de Acciones de Rol</span>
                         </div>
 
                         <div className="min-h-[70px] flex flex-col justify-center">
                             {/* Consola: Investigador */}
                             {activeRole === 0 && (
-                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-1">
-                                            <span className="text-[8px] text-text-dim uppercase block">Proyecto actual</span>
-                                            <select 
-                                                value={selectedProject} 
-                                                onChange={(e) => {
-                                                    setSelectedProject(e.target.value as any);
-                                                    setInvSigned(false);
-                                                    setHitoProgress(50);
-                                                }}
-                                                className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-0.5 cursor-pointer"
-                                            >
-                                                <option value="riego">01/ Riego IoT</option>
-                                                <option value="robot">02/ Limpieza Solar</option>
-                                                <option value="plagas">03/ Visión Artificial</option>
-                                            </select>
-                                            <span className="text-[8px] text-warning font-semibold block mt-0.5">Hito 2 en Proceso</span>
+                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 space-y-1.5">
+                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Proyecto actual</span>
+                                            <div className="flex flex-col gap-1.5 mt-1">
+                                                {[
+                                                    { value: 'riego', label: '01/ Riego IoT' },
+                                                    { value: 'robot', label: '02/ Limpieza Solar' },
+                                                    { value: 'plagas', label: '03/ Visión Artificial' }
+                                                ].map((proj) => (
+                                                    <button
+                                                        key={proj.value}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedProject(proj.value as any);
+                                                            setInvSigned(false);
+                                                            setHitoProgress(50);
+                                                        }}
+                                                        className={`text-left px-2.5 py-1.5 rounded text-[9.5px] md:text-[10px] font-sans font-medium transition-all border cursor-pointer ${
+                                                            selectedProject === proj.value
+                                                                ? 'bg-brand border-brand text-white shadow-sm font-semibold'
+                                                                : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                        }`}
+                                                    >
+                                                        {proj.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <span className="text-[8px] md:text-[8.5px] text-warning font-semibold block mt-0.5">Hito 2 en Proceso</span>
                                         </div>
-                                        
-                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-1.5">
-                                            <span className="text-[8px] text-text-dim uppercase block">Progreso de evidencias: {hitoProgress}%</span>
+                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 space-y-1.5">
+                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Progreso de evidencias: {hitoProgress}%</span>
                                             <div className="w-full bg-border-thin/50 h-1.5 rounded-full overflow-hidden">
                                                 <div 
                                                     className="h-full bg-brand transition-all duration-300" 
@@ -477,29 +487,29 @@ const Roles: React.FC = () => {
                                                 <button 
                                                     onClick={() => setHitoProgress(prev => Math.min(prev + 25, 100))}
                                                     disabled={hitoProgress === 100 || invSigned}
-                                                    className="px-2 py-0.5 border border-border-thin rounded bg-surface hover:bg-surface-hover text-[8.5px] text-text-main cursor-pointer disabled:opacity-40"
+                                                    className="px-1.5 py-0.5 border border-border-thin rounded bg-surface hover:bg-surface-hover text-[8.5px] md:text-[9px] text-text-main cursor-pointer disabled:opacity-40"
                                                 >
                                                     Avanzar (+25%)
                                                 </button>
                                                 {hitoProgress === 100 && (
-                                                    <span className="text-success text-[8.5px] font-sans font-semibold">✓ Listo</span>
+                                                    <span className="text-success text-[8.5px] md:text-[9px] font-sans font-semibold">✓ Listo</span>
                                                 )}
                                             </div>
                                         </div>
 
-                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-2">
-                                            <span className="text-[8px] text-text-dim uppercase block">Firma de entregable (.p12)</span>
+                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2">
+                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Firma de entregable (.p12)</span>
                                             {isSigning ? (
-                                                <div className="w-full py-2 bg-brand-subtle border border-brand/20 text-brand rounded font-bold text-[8.5px] flex items-center justify-center gap-1.5 flex-1 animate-pulse">
+                                                <div className="w-full py-1.5 bg-brand-subtle border border-brand/20 text-brand rounded font-bold text-[9.5px] md:text-[10px] flex items-center justify-center gap-1.5 flex-1 animate-pulse">
                                                     <Loader2 size={10} className="animate-spin" />
                                                     Firmando...
                                                 </div>
                                             ) : invSigned ? (
-                                                <div className="space-y-1.5 text-left font-mono text-[7.5px] leading-tight">
-                                                    <div className="bg-success/15 border border-success/30 text-success text-[8.5px] py-0.5 rounded font-bold text-center">
+                                                <div className="space-y-0.5 text-left font-mono text-[8px] md:text-[8.5px] leading-tight">
+                                                    <div className="bg-success/15 border border-success/30 text-success text-[8.5px] md:text-[9px] py-0.5 rounded font-bold text-center">
                                                         ✓ FIRMADO CON EXITO
                                                     </div>
-                                                    <div className="text-text-dim space-y-0.5 bg-bg-deep/50 p-1 rounded border border-border-thin/50">
+                                                    <div className="text-text-dim space-y-0.5 bg-bg-deep/50 p-1 rounded border border-border-thin/50 text-[7.5px] md:text-[8px]">
                                                         <p>Autoridad: BCE Ecuador</p>
                                                         <p className="truncate">Sello: ECDSA_256_FirmaEC</p>
                                                     </div>
@@ -508,7 +518,7 @@ const Roles: React.FC = () => {
                                                             setInvSigned(false);
                                                             setHitoProgress(50);
                                                         }}
-                                                        className="w-full text-center text-text-dim hover:text-text-main text-[8px] underline cursor-pointer inline-block"
+                                                        className="w-full text-center text-text-dim hover:text-text-main text-[8px] md:text-[8.5px] underline cursor-pointer inline-block"
                                                     >
                                                         Reiniciar
                                                     </button>
@@ -517,7 +527,7 @@ const Roles: React.FC = () => {
                                                 <button 
                                                     onClick={handleSignProposal}
                                                     disabled={hitoProgress < 100}
-                                                    className={`w-full py-1.5 rounded font-semibold text-[9px] uppercase tracking-wider cursor-pointer text-center transition-all ${
+                                                    className={`w-full py-1.5 rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer text-center transition-all ${
                                                         hitoProgress === 100 
                                                             ? 'bg-brand text-white hover:opacity-90 active:scale-95' 
                                                             : 'bg-surface border border-border-thin text-text-dim cursor-not-allowed'
@@ -534,29 +544,40 @@ const Roles: React.FC = () => {
 
                             {/* Consola: Director */}
                             {activeRole === 1 && (
-                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-3">
+                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5">
                                             <div>
-                                                <span className="text-[8px] text-text-dim uppercase block">Criterio de coincidencia científica</span>
-                                                <select 
-                                                    value={assignmentCriteria} 
-                                                    onChange={(e) => {
-                                                        setAssignmentCriteria(e.target.value as any);
-                                                        setAssignState('idle');
-                                                        setAssignLog('Esperando asignación de pares evaluadores...');
-                                                    }}
-                                                    className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-1 cursor-pointer"
-                                                >
-                                                    <option value="linea">Por Línea de Investigación</option>
-                                                    <option value="carga">Por Menor Carga Docente (SIGAFI)</option>
-                                                    <option value="aleatorio">Asignación Aleatoria</option>
-                                                </select>
+                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Criterio de coincidencia científica</span>
+                                                <div className="flex flex-col gap-1.5 mt-1.5">
+                                                    {[
+                                                        { value: 'linea', label: 'Por Línea de Investigación' },
+                                                        { value: 'carga', label: 'Por Menor Carga Docente (SIGAFI)' },
+                                                        { value: 'aleatorio', label: 'Asignación Aleatoria' }
+                                                    ].map((crit) => (
+                                                        <button
+                                                            key={crit.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setAssignmentCriteria(crit.value as any);
+                                                                setAssignState('idle');
+                                                                setAssignLog('Esperando asignación de pares evaluadores...');
+                                                            }}
+                                                            className={`text-left px-2.5 py-1.5 rounded text-[9.5px] md:text-[10px] font-sans font-medium transition-all border cursor-pointer ${
+                                                                assignmentCriteria === crit.value
+                                                                    ? 'bg-brand border-brand text-white shadow-sm font-semibold'
+                                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                            }`}
+                                                        >
+                                                            {crit.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                             <button 
                                                 onClick={runAssignSimulation}
                                                 disabled={assignState !== 'idle'}
-                                                className={`w-full py-1.5 rounded font-semibold text-[8.5px] uppercase tracking-wider cursor-pointer transition-all ${
+                                                className={`w-full py-1.5 rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer transition-all ${
                                                     assignState === 'assigning'
                                                         ? 'bg-surface border border-border-thin text-text-dim'
                                                         : assignState === 'assigned'
@@ -567,31 +588,31 @@ const Roles: React.FC = () => {
                                                 {assignState === 'assigning' ? 'Asignando...' : assignState === 'assigned' ? 'Pares Asignados ✓' : 'Asignar Pares'}
                                             </button>
                                         </div>
-                                        <div className="border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-center min-h-[75px] space-y-1">
-                                            <span className="text-[8px] text-text-dim uppercase block">Registro de auditoría (CACES B.1.1)</span>
-                                            <p className={`text-[8.5px] font-mono leading-tight ${assignState === 'assigning' ? 'text-brand animate-pulse' : assignState === 'assigned' ? 'text-success font-semibold' : 'text-text-dim'}`}>
+                                        <div className="border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-center min-h-[70px] space-y-1 text-[8.5px] md:text-[9px]">
+                                            <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Registro de auditoría (CACES B.1.1)</span>
+                                            <p className={`text-[8.5px] md:text-[9px] font-mono leading-tight ${assignState === 'assigning' ? 'text-brand animate-pulse' : assignState === 'assigned' ? 'text-success font-semibold' : 'text-text-dim'}`}>
                                                 {assignLog}
                                             </p>
                                             {assignState === 'assigned' && (
-                                                <div className="space-y-1 mt-1 animate-fade-in">
+                                                <div className="space-y-0.5 mt-0.5 animate-fade-in text-[8px] md:text-[8.5px]">
                                                     <p className="text-[8px] text-text-dim uppercase tracking-wider">// REVISORES DOBLE CIEGO ASIGNADOS</p>
-                                                    <div className="flex gap-2 text-[8px] font-mono">
+                                                    <div className="flex flex-wrap gap-1.5 font-mono text-[7.5px] md:text-[8px]">
                                                         {assignmentCriteria === 'linea' && (
                                                             <>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dr. Anon_#184b</span>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Dra. Anon_#92df</span>
+                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Dr. Anon_#184b</span>
+                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Dra. Anon_#92df</span>
                                                             </>
                                                         )}
                                                         {assignmentCriteria === 'carga' && (
                                                             <>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par A: Anon_#048f (SIGAFI OK)</span>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Par B: Anon_#3382 (SIGAFI OK)</span>
+                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Par A: Anon_#048f</span>
+                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Par B: Anon_#3382</span>
                                                             </>
                                                         )}
                                                         {assignmentCriteria === 'aleatorio' && (
                                                             <>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randA</span>
-                                                                <span className="border border-border-thin px-1.5 py-0.5 rounded bg-surface/50">Revisor Anon_#randB</span>
+                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Revisor Anon_#randA</span>
+                                                                <span className="border border-border-thin px-1 py-0.5 rounded bg-surface/50">Revisor Anon_#randB</span>
                                                             </>
                                                         )}
                                                     </div>
@@ -604,12 +625,12 @@ const Roles: React.FC = () => {
 
                             {/* Consola: Comité */}
                             {activeRole === 2 && (
-                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
-                                        <div className="sm:col-span-5 border border-border-thin rounded p-2.5 bg-bg-deep/40 space-y-2 text-left">
+                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                                        <div className="sm:col-span-5 border border-border-thin rounded p-2 bg-bg-deep/40 space-y-1.5 text-left">
                                             <div>
-                                                <span className="text-[8px] text-text-dim uppercase block">1. Calidad Metodológica (1-5)</span>
-                                                <div className="flex gap-1.5 mt-1">
+                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">1. Calidad Metodológica (1-5)</span>
+                                                <div className="flex gap-1.5 mt-1.5">
                                                     {[1, 2, 3, 4, 5].map((val) => (
                                                         <button
                                                             key={val}
@@ -617,7 +638,7 @@ const Roles: React.FC = () => {
                                                                 setGradeMetodologia(val);
                                                                 setVoteState('idle');
                                                             }}
-                                                            className={`w-6 h-6 rounded flex items-center justify-center font-bold text-[9px] cursor-pointer transition-all border ${
+                                                            className={`w-6.5 h-6.5 rounded flex items-center justify-center font-bold text-[10.5px] cursor-pointer transition-all border ${
                                                                 gradeMetodologia === val 
                                                                     ? 'bg-brand border-brand text-white shadow-sm' 
                                                                     : 'bg-surface border-border-thin text-text-dim hover:text-text-main'
@@ -629,13 +650,13 @@ const Roles: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div>
-                                                <span className="text-[8px] text-text-dim uppercase block">2. Aspectos Éticos & LOPDP</span>
+                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">2. Aspectos Éticos & LOPDP</span>
                                                 <button
                                                     onClick={() => {
                                                         setGradeEtica(!gradeEtica);
                                                         setVoteState('idle');
                                                     }}
-                                                    className={`w-full py-1 mt-1 text-[9px] font-semibold border rounded cursor-pointer text-center transition-all ${
+                                                    className={`w-full py-1.5 mt-1.5 text-[9.5px] md:text-[10px] font-semibold border rounded cursor-pointer text-center transition-all ${
                                                         gradeEtica 
                                                             ? 'bg-success/15 border-success/35 text-success' 
                                                             : 'bg-error/15 border-error/35 text-error'
@@ -646,25 +667,25 @@ const Roles: React.FC = () => {
                                             </div>
                                         </div>
 
-                                        <div className="sm:col-span-7 border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-3 text-left">
-                                            <div className="space-y-1">
-                                                <span className="text-[8px] text-text-dim uppercase block">Simulación de dictamen previo</span>
-                                                <div className="flex flex-wrap items-center gap-2">
-                                                    <span className="text-[9px] text-text-dim font-sans">Puntos: {gradeMetodologia}/5</span>
+                                        <div className="sm:col-span-7 border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5 text-left">
+                                            <div className="space-y-0.5">
+                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Simulación de dictamen previo</span>
+                                                <div className="flex flex-wrap items-center gap-1.5">
+                                                    <span className="text-[8.5px] md:text-[9px] text-text-main font-sans font-medium">Puntos: {gradeMetodologia}/5</span>
                                                     <span className="text-text-dim opacity-50">•</span>
                                                     {gradeMetodologia >= 4 && gradeEtica ? (
-                                                        <span className="text-success font-bold text-[9px] flex items-center gap-1">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                                                        <span className="text-success font-bold text-[8px] md:text-[9px] flex items-center gap-1">
+                                                            <span className="w-1 h-1 rounded-full bg-success" />
                                                             Aprobación viable
                                                         </span>
                                                     ) : gradeMetodologia < 4 && gradeEtica ? (
-                                                        <span className="text-warning font-bold text-[9px] flex items-center gap-1">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+                                                        <span className="text-warning font-bold text-[8px] md:text-[9px] flex items-center gap-1">
+                                                            <span className="w-1 h-1 rounded-full bg-warning" />
                                                             Requiere correcciones
                                                         </span>
                                                     ) : (
-                                                        <span className="text-error font-bold text-[9px] flex items-center gap-1">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-error" />
+                                                        <span className="text-error font-bold text-[8px] md:text-[9px] flex items-center gap-1">
+                                                            <span className="w-1 h-1 rounded-full bg-error" />
                                                             Rechazo ético inmediato
                                                         </span>
                                                     )}
@@ -673,7 +694,7 @@ const Roles: React.FC = () => {
 
                                             <div className="flex gap-2">
                                                 {isVoting ? (
-                                                    <button disabled className="flex-1 py-1.5 bg-text-main/80 text-bg-deep rounded font-semibold text-[8.5px] uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
+                                                    <button disabled className="flex-1 py-1.5 bg-text-main/80 text-bg-deep rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider flex items-center justify-center gap-1.5 animate-pulse">
                                                         <Loader2 size={10} className="animate-spin" />
                                                         Emitiendo...
                                                     </button>
@@ -681,7 +702,7 @@ const Roles: React.FC = () => {
                                                     <button 
                                                         onClick={() => handleCastVote(gradeMetodologia >= 4 && gradeEtica)}
                                                         disabled={voteState !== 'idle'}
-                                                        className="flex-1 py-1.5 bg-text-main text-bg-deep rounded font-semibold text-[8.5px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50"
+                                                        className="flex-1 py-1.5 bg-text-main text-bg-deep rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50"
                                                     >
                                                         Emitir Dictamen
                                                     </button>
@@ -689,7 +710,7 @@ const Roles: React.FC = () => {
                                                 {voteState !== 'idle' && (
                                                     <button 
                                                         onClick={() => setVoteState('idle')}
-                                                        className="px-2 py-1.5 border border-border-thin rounded text-text-dim hover:text-text-main text-[8px] font-mono cursor-pointer"
+                                                        className="px-1.5 py-1 border border-border-thin rounded text-text-dim hover:text-text-main text-[8px] md:text-[8.5px] font-mono cursor-pointer"
                                                     >
                                                         Reset
                                                     </button>
@@ -697,13 +718,13 @@ const Roles: React.FC = () => {
                                             </div>
 
                                             {voteState === 'approved' && (
-                                                <div className="space-y-1 bg-success/10 border border-success/30 p-1.5 rounded text-success text-[8.5px] leading-tight font-sans animate-fade-in">
+                                                <div className="space-y-0.5 bg-success/10 border border-success/30 p-1 rounded text-success text-[8.5px] md:text-[9px] leading-tight font-sans animate-fade-in">
                                                     <p className="font-bold">✓ DICTAMEN APROBADO EMITIDO</p>
-                                                    <p className="text-[7.5px] opacity-90">Resolución de ética firmada. Acta enviada a DSpace repositorio.</p>
+                                                    <p className="text-[7.5px] md:text-[8px] opacity-90">Resolución firmada y enviada a DSpace.</p>
                                                 </div>
                                             )}
                                             {voteState === 'rejected' && (
-                                                <div className={`space-y-1 p-1.5 rounded text-[8.5px] leading-tight font-sans animate-fade-in border ${
+                                                <div className={`space-y-0.5 p-1 rounded text-[8.5px] md:text-[9px] leading-tight font-sans animate-fade-in border ${
                                                     gradeEtica === false 
                                                         ? 'bg-error/10 border-error/30 text-error' 
                                                         : 'bg-warning/10 border-warning/30 text-warning'
@@ -711,7 +732,7 @@ const Roles: React.FC = () => {
                                                     <p className="font-bold">
                                                         {gradeEtica === false ? '✗ DICTAMEN DE RECHAZO EMITIDO' : '⚠ RETORNADO PARA CORRECCIONES'}
                                                     </p>
-                                                    <p className="text-[7.5px] opacity-90">
+                                                    <p className="text-[7.5px] md:text-[8px] opacity-90">
                                                         {gradeEtica === false 
                                                             ? 'No cumple con criterios bioéticos mínimos o LOPDP.' 
                                                             : 'Puntuación metodológica inferior a 4.0/5.0.'}
@@ -725,58 +746,69 @@ const Roles: React.FC = () => {
 
                             {/* Consola: Administrador */}
                             {activeRole === 3 && (
-                                <div className="space-y-3 animate-fade-in text-[10px] font-mono">
-                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-stretch">
-                                        <div className="sm:col-span-5 border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-2.5 text-left">
+                                <div className="space-y-2.5 animate-fade-in text-[9.5px] font-mono">
+                                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-stretch">
+                                        <div className="sm:col-span-5 border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5 text-left">
                                             <div>
-                                                <span className="text-[8px] text-text-dim uppercase block">Pasarela externa de sincronización</span>
-                                                <select 
-                                                    value={selectedApi} 
-                                                    onChange={(e) => {
-                                                        setSelectedApi(e.target.value as any);
-                                                        setApiResult('');
-                                                    }}
-                                                    className="bg-surface text-text-main text-[9.5px] rounded border border-border-thin px-1.5 py-0.5 outline-none w-full focus:border-brand mt-1 cursor-pointer"
-                                                >
-                                                    <option value="siies">SIIES API (Acreditación CACES)</option>
-                                                    <option value="dspace">DSpace (Repositorio Científico)</option>
-                                                    <option value="senadi">SENADI (Propiedad Intelectual)</option>
-                                                </select>
+                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Pasarela externa de sincronización</span>
+                                                <div className="flex flex-col gap-1.5 mt-1.5">
+                                                    {[
+                                                        { value: 'siies', label: 'SIIES API (CACES)' },
+                                                        { value: 'dspace', label: 'DSpace (Repositorio)' },
+                                                        { value: 'senadi', label: 'SENADI (Propiedad Int.)' }
+                                                    ].map((apiOpt) => (
+                                                        <button
+                                                            key={apiOpt.value}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setSelectedApi(apiOpt.value as any);
+                                                                setApiResult('');
+                                                            }}
+                                                            className={`text-left px-2.5 py-1.5 rounded text-[9.5px] md:text-[10px] font-sans font-medium transition-all border cursor-pointer ${
+                                                                selectedApi === apiOpt.value
+                                                                    ? 'bg-brand border-brand text-white shadow-sm font-semibold'
+                                                                    : 'bg-surface border-border-thin text-text-dim hover:text-text-main hover:bg-surface-hover'
+                                                            }`}
+                                                        >
+                                                            {apiOpt.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button 
                                                     onClick={runApiTest}
                                                     disabled={apiTesting}
-                                                    className="w-full py-1.5 bg-brand text-white rounded font-semibold text-[8px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1"
+                                                    className="w-full py-1.5 bg-brand text-white rounded font-semibold text-[9.5px] md:text-[10px] uppercase tracking-wider cursor-pointer hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-1.5"
                                                 >
-                                                    {apiTesting && <Loader2 size={8} className="animate-spin" />}
-                                                    {!apiTesting && <Cpu size={8} />}
+                                                    {apiTesting && <Loader2 size={10} className="animate-spin" />}
+                                                    {!apiTesting && <Cpu size={10} />}
                                                     Probar Conexión
                                                 </button>
                                             </div>
                                         </div>
 
-                                        <div className="sm:col-span-7 border border-border-thin rounded p-2.5 bg-bg-deep/40 flex flex-col justify-between gap-3 min-h-[75px] text-left">
+                                        <div className="sm:col-span-7 border border-border-thin rounded p-2 bg-bg-deep/40 flex flex-col justify-between gap-2.5 min-h-[70px] text-left">
                                             <div>
-                                                <span className="text-[8px] text-text-dim uppercase block">Respuesta de latencia de red</span>
-                                                <div className="min-h-[22px] flex items-center mt-1">
+                                                <span className="text-[8px] md:text-[8.5px] text-text-dim uppercase block">Respuesta de latencia de red</span>
+                                                <div className="min-h-[22px] flex items-center mt-0.5">
                                                     {apiTesting ? (
-                                                        <p className="text-brand animate-pulse text-[8.5px] font-sans">Realizando diagnóstico...</p>
+                                                        <p className="text-brand animate-pulse text-[8.5px] md:text-[9px] font-sans">Realizando diagnóstico...</p>
                                                     ) : apiResult ? (
-                                                        <p className="text-success text-[8.5px] leading-tight font-sans">{apiResult}</p>
+                                                        <p className="text-success text-[8.5px] md:text-[9px] leading-tight font-sans">{apiResult}</p>
                                                     ) : (
-                                                        <p className="text-text-dim text-[8.5px] font-sans">Haz clic en probar para conectarte al gateway.</p>
+                                                        <p className="text-text-dim text-[8.5px] md:text-[9px] font-sans">Haz clic en probar para conectarte al gateway.</p>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            <div className="border-t border-border-thin/20 pt-2 space-y-1.5">
-                                                <div className="flex justify-between items-center text-[8px] text-text-dim uppercase">
+                                            <div className="border-t border-border-thin/20 pt-1.5 space-y-1">
+                                                <div className="flex justify-between items-center text-[8px] md:text-[8.5px] text-text-dim uppercase">
                                                     <span>Sincronizar base de datos general</span>
                                                     <span>{syncProgress}%</span>
                                                 </div>
                                                 <div className="flex gap-2 items-center">
-                                                    <div className="flex-1 bg-border-thin/50 h-1.5 rounded-full overflow-hidden">
+                                                    <div className="flex-1 bg-border-thin/50 h-1 rounded-full overflow-hidden">
                                                         <div 
                                                             className="h-full bg-success transition-all duration-150" 
                                                             style={{ width: `${syncProgress}%` }} 
@@ -785,13 +817,13 @@ const Roles: React.FC = () => {
                                                     <button
                                                         onClick={runSyncSimulation}
                                                         disabled={syncState === 'syncing'}
-                                                        className="px-2 py-0.5 bg-text-main text-bg-deep rounded font-semibold text-[8px] uppercase cursor-pointer hover:opacity-90 disabled:opacity-50"
+                                                        className="px-1.5 py-0.5 bg-text-main text-bg-deep rounded font-semibold text-[8px] md:text-[8.5px] uppercase cursor-pointer hover:opacity-90 disabled:opacity-50"
                                                     >
-                                                        {syncState === 'syncing' ? '...' : syncState === 'completed' ? '✓ Listo' : 'Sincronizar'}
+                                                        {syncState === 'syncing' ? '...' : syncState === 'completed' ? '✓' : 'Sincronizar'}
                                                     </button>
                                                 </div>
                                                 {syncState === 'completed' && (
-                                                    <p className="text-success text-[7.5px] font-sans leading-none">✓ Evidencias académicas y distributivos sincronizados con SIGAFI.</p>
+                                                    <p className="text-success text-[7.5px] md:text-[8px] font-sans leading-none">✓ Evidencias y distributivos sincronizados con SIGAFI.</p>
                                                 )}
                                             </div>
                                         </div>
