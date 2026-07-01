@@ -264,11 +264,43 @@ export const TeamManagement: React.FC<TeamManagementProps> = ({
                                                     )}
                                                 </div>
                                                 <div className="text-[10px] text-text-dim flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                    {member.carrera && (
-                                                        <span className="text-[10px] text-brand-light font-semibold truncate max-w-[200px]" title={member.carrera}>
-                                                            {member.carrera}
-                                                        </span>
-                                                    )}
+                                                    {(() => {
+                                                        const rawCareers = member.carrerasDisponibles || member.carrera || '';
+                                                        const cleanOptions = rawCareers.split(',')
+                                                            .map((s: string) => s.trim())
+                                                            .filter((s: string) => s.length > 0 && s !== 'Docente' && s !== 'Estudiante');
+                                                        
+                                                        if (cleanOptions.length > 1) {
+                                                            const isAlreadySelected = cleanOptions.includes(member.carrera);
+                                                            const currentValue = isAlreadySelected ? member.carrera : '';
+                                                            
+                                                            return (
+                                                                <div className="flex items-center gap-2 mt-1">
+                                                                    <div className="flex flex-col gap-0.5">
+                                                                        <span className="text-[8px] font-bold text-warning uppercase tracking-wider flex items-center gap-1 animate-pulse">
+                                                                            ⚠️ Elegir Carrera de Asociación
+                                                                        </span>
+                                                                        <select
+                                                                            value={currentValue}
+                                                                            onChange={(e) => onUpdateMember(member.cedula, 'carrera', e.target.value)}
+                                                                            className="bg-bg-deep border border-warning/40 rounded px-2 py-0.5 text-[9px] text-text-main font-bold outline-none max-w-[220px]"
+                                                                        >
+                                                                            <option value="">Seleccione una carrera...</option>
+                                                                            {cleanOptions.map((opt: string) => (
+                                                                                <option key={opt} value={opt}>{opt}</option>
+                                                                            ))}
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        }
+                                                        
+                                                        return member.carrera ? (
+                                                            <span className="text-[10px] text-brand-light font-semibold truncate max-w-[200px]" title={member.carrera}>
+                                                                {member.carrera}
+                                                            </span>
+                                                        ) : null;
+                                                    })()}
                                                     <span className="font-mono">C.I. {member.cedula || 'N/A'}</span>
                                                 </div>
                                             </div>

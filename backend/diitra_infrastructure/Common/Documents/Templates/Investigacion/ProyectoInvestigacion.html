@@ -339,6 +339,16 @@
             <td class="label">CARRERA:</td>
             <td colspan="6">Tecnología Superior en {{default carrera '...'}}</td>
         </tr>
+        {{#if carreras_coejecutoras}}
+        <tr>
+            <td class="label">CARRERAS CO-EJECUTORAS (ASOCIATIVAS):</td>
+            <td colspan="6">
+                {{#each carreras_coejecutoras}}
+                    <span style="display: inline-block; padding: 2px 8px; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 8.5pt; font-weight: bold; margin-right: 4px; color: #334155;">{{this}}</span>
+                {{/each}}
+            </td>
+        </tr>
+        {{/if}}
         <tr>
             <td class="label">PERIODO ACADÉMICO DE CONVOCATORIA:</td>
             <td colspan="6">{{default periodo_convocatoria (default periodo '...')}}</td>

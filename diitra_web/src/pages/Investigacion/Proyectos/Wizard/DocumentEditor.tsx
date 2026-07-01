@@ -605,6 +605,7 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
 
                             // Props de listas para compatibilidad con secciones existentes
                             investigadores={formData?.Investigadores || []}
+                            investigadoresReales={initialData?.investigadores || initialData?.Investigadores || []}
                             recursosDisponibles={formData?.RecursosDisponibles || []}
                             recursosNecesarios={formData?.RecursosNecesarios || []}
                             costoTotal={formData?.CostoTotal || 0}

@@ -223,6 +223,7 @@ namespace Diitra.Application.Research.Dtos
         public DateTime? FechaFin { get; set; }
         public string? MotivoCambio { get; set; }
         public string? Carrera { get; set; }
+        public string? CarrerasDisponibles { get; set; }
         public decimal? HorasSemanales { get; set; }
         public decimal? HorasDisponibles { get; set; }
         public decimal? HorasAsignadas { get; set; }

@@ -278,7 +278,7 @@ namespace Diitra.Infrastructure.Common.Documents
 
                     if (projectDto != null)
                     {
-                        var director = projectDto.Investigadores?.FirstOrDefault(i => i.EsDirector == true)
+                         var director = projectDto.Investigadores?.FirstOrDefault(i => i.EsDirector == true)
                                        ?? projectDto.Investigadores?.FirstOrDefault(i => i.Rol?.Contains("Director", StringComparison.OrdinalIgnoreCase) == true);
                         
                         var docentes = projectDto.Investigadores?.Where(i => i != director && 
@@ -292,9 +292,33 @@ namespace Diitra.Infrastructure.Common.Documents
                              i.NivelAcademico == "Pregrado" || 
                              (docentes != null && !docentes.Contains(i)))).ToList();
 
+                        var principalCarrera = projectDto.Carrera?.Trim().ToLower();
+                        var coejecutorasSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        
+                        if (projectDto.Investigadores != null)
+                        {
+                            foreach (var inv in projectDto.Investigadores)
+                            {
+                                if (inv.Activo == false || string.IsNullOrWhiteSpace(inv.Carrera)) continue;
+                                var parts = inv.Carrera.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                                foreach (var part in parts)
+                                {
+                                    var cleanPart = part.Trim();
+                                    if (!string.IsNullOrEmpty(cleanPart) && 
+                                        !cleanPart.Equals(principalCarrera, StringComparison.OrdinalIgnoreCase) &&
+                                        !cleanPart.Equals("Docente", StringComparison.OrdinalIgnoreCase) &&
+                                        !cleanPart.Equals("Estudiante", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        coejecutorasSet.Add(cleanPart.ToUpper());
+                                    }
+                                }
+                            }
+                        }
+
                         extraImageVars["investigador_director"] = director;
                         extraImageVars["investigadores_docentes"] = docentes;
                         extraImageVars["investigadores_estudiantes"] = estudiantes;
+                        extraImageVars["carreras_coejecutoras"] = coejecutorasSet.ToList();
                     }
                 }
 
