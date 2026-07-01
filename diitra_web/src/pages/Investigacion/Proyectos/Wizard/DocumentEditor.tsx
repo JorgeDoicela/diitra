@@ -415,9 +415,9 @@ const DocumentEditorCore: React.FC<DocumentEditorCoreProps> = ({
         });
         
         keys.forEach(key => {
-            if (key && key[0] === key[0].toLowerCase()) {
+            if (key && key[0] !== key[0].toUpperCase()) {
                 const pascalKey = keys.find(
-                    k => k.toLowerCase() === key.toLowerCase() && k && k[0] === k[0].toUpperCase()
+                    k => k.toLowerCase() === key.toLowerCase() && k && k[0] !== k[0].toLowerCase()
                 );
                 if (pascalKey) {
                     delete cleaned[key];

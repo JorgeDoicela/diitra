@@ -776,7 +776,8 @@ namespace diitra_infrastructure.Research
             {
                 try
                 {
-                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(p.MetadataCacesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
+                    var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(p.MetadataCacesJson);
+                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
                 }
                 catch
                 {
@@ -1967,7 +1968,8 @@ namespace diitra_infrastructure.Research
                 {
                     try
                     {
-                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(project.MetadataCacesJson);
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     }
                     catch
                     {
@@ -2215,7 +2217,8 @@ namespace diitra_infrastructure.Research
                 {
                     try
                     {
-                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(project.MetadataCacesJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(project.MetadataCacesJson);
+                        dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                     }
                     catch { }
                 }
@@ -3028,7 +3031,8 @@ namespace diitra_infrastructure.Research
 
             try
             {
-                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(metadataJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
+                var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(metadataJson);
+                return System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
             }
             catch
             {
