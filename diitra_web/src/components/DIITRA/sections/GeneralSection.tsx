@@ -433,11 +433,17 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                 <div className="md:col-span-2 space-y-1.5 sm:space-y-3">
                     <label className="block text-[10px] font-black text-text-dim uppercase tracking-widest ml-2">Tipo de Investigación</label>
                     <select 
-                        value={formData.TipoInvestigacion || 'APLICADA'}
+                        value={(() => {
+                            const raw = formData.TipoInvestigacion || 'APLICADA';
+                            const upper = raw.trim().toUpperCase();
+                            if (upper === 'BÁSICA' || upper === 'BASICA') return 'BASICA';
+                            if (upper === 'APLICADA') return 'APLICADA';
+                            return 'DESARROLLO EXPERIMENTAL';
+                        })()}
                         onChange={(e) => onUpdate('TipoInvestigacion', e.target.value)}
                         className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
                     >
-                        <option value="BÁSICA">BÁSICA</option>
+                        <option value="BASICA">BÁSICA</option>
                         <option value="APLICADA">APLICADA</option>
                         <option value="DESARROLLO EXPERIMENTAL">DESARROLLO EXPERIMENTAL</option>
                     </select>

@@ -196,7 +196,18 @@ namespace diitra_infrastructure.Research
                 // Sincronización de Tipo de Investigación
                 if (!string.IsNullOrEmpty(dto.TipoInvestigacion))
                 {
-                    var tip = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => t.Nombre == dto.TipoInvestigacion && t.Activo == true);
+                    var searchName = dto.TipoInvestigacion.Trim().ToUpper()
+                        .Replace("Á", "A")
+                        .Replace("É", "E")
+                        .Replace("Í", "I")
+                        .Replace("Ó", "O")
+                        .Replace("Ú", "U");
+
+                    var tip = await _context.InvTiposInvestigacion.FirstOrDefaultAsync(t => 
+                        (t.Nombre.ToUpper() == searchName || 
+                         t.Nombre.ToUpper().Replace("Á", "A").Replace("É", "E").Replace("Í", "I").Replace("Ó", "O").Replace("Ú", "U") == searchName) && 
+                        t.Activo == true);
+
                     if (tip != null)
                     {
                         project.IdTipo = tip.IdTipo;

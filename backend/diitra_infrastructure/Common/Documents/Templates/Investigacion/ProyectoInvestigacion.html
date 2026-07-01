@@ -312,15 +312,15 @@
             <td class="label">TIPO DE INVESTIGACIÓN (x):</td>
             <td style="text-align: center; font-weight: bold;">BÁSICA</td>
             <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (eq tipo_investigacion 'BÁSICA')}}X{{else}}&nbsp;{{/if}}
+                {{#if (or (eq tipo_investigacion 'BÁSICA') (eq tipo_investigacion 'BASICA') (eq tipo_investigacion 'Básica') (eq tipo_investigacion 'basica'))}}X{{else}}&nbsp;{{/if}}
             </td>
             <td style="text-align: center; font-weight: bold;">APLICADA</td>
             <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (eq tipo_investigacion 'APLICADA')}}X{{else}}&nbsp;{{/if}}
+                {{#if (or (eq tipo_investigacion 'APLICADA') (eq tipo_investigacion 'Aplicada') (eq tipo_investigacion 'aplicada'))}}X{{else}}&nbsp;{{/if}}
             </td>
             <td style="text-align: center; font-weight: bold;">DESARROLLO EXPERIMENTAL</td>
             <td style="text-align: center; font-weight: bold; font-size: 9.5pt;">
-                {{#if (or (eq tipo_investigacion 'DESARROLLO EXPERIMENTAL') (eq tipo_investigacion 'DESARROLLO_EXPERIMENTAL'))}}X{{else}}&nbsp;{{/if}}
+                {{#if (or (eq tipo_investigacion 'DESARROLLO EXPERIMENTAL') (eq tipo_investigacion 'DESARROLLO_EXPERIMENTAL') (eq tipo_investigacion 'Desarrollo Experimental') (eq tipo_investigacion 'desarrollo experimental'))}}X{{else}}&nbsp;{{/if}}
             </td>
         </tr>
         <tr>
@@ -342,10 +342,8 @@
         {{#if carreras_coejecutoras}}
         <tr>
             <td class="label">CARRERAS CO-EJECUTORAS (ASOCIATIVAS):</td>
-            <td colspan="6">
-                {{#each carreras_coejecutoras}}
-                    <span style="display: inline-block; padding: 2px 8px; background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 8.5pt; font-weight: bold; margin-right: 4px; color: #334155;">{{this}}</span>
-                {{/each}}
+            <td colspan="6" style="font-weight: bold; text-transform: uppercase;">
+                {{#each carreras_coejecutoras}}{{#if @index}}, {{/if}}{{this}}{{/each}}
             </td>
         </tr>
         {{/if}}
