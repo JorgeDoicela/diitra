@@ -106,8 +106,8 @@ namespace diitra_infrastructure.Research
                 project.FechaFin = ParseDateOnly(dto.FechaFin ?? dto.FechaFinEstimada);
 
                 // Cumplimiento CACES: si es asociativo, la adscripción solo puede ser a un grupo aprobado y activo.
-                bool isAssociative = dto.TieneGrupoInvestigacion == true || 
-                                     dto.GrupoInvestigacionTipo == "SI" || 
+                bool isAssociative = dto.TieneGrupoInvestigacion == true ||
+                                     dto.GrupoInvestigacionTipo == "SI" ||
                                      dto.GrupoInvestigacionTipo == "si";
 
                 if (isAssociative)
@@ -250,18 +250,8 @@ namespace diitra_infrastructure.Research
                     }
                 }
 
-                // Sincronización de Carreras
-                if (dto.IdCarrera.HasValue && dto.IdCarrera.Value > 0)
-                {
-                    var oldCarreras = _context.InvProyectosCarreras.Where(pc => pc.IdProyecto == project.IdProyecto);
-                    _context.InvProyectosCarreras.RemoveRange(oldCarreras);
-                    
-                    _context.InvProyectosCarreras.Add(new InvProyectoCarrera
-                    {
-                        IdProyecto = project.IdProyecto,
-                        IdCarrera = dto.IdCarrera.Value
-                    });
-                }
+                // Sincronización de Carreras (Principal y Co-ejecutoras/Participantes)
+                await SyncProjectCarrerasAsync(project.IdProyecto, dto.IdCarrera, dto.Investigadores);
 
                 // Sincronización automática de miembros de grupo (CACES Requirement)
                 if (project.TieneGrupo == true && project.IdGrupo.HasValue)
@@ -318,7 +308,7 @@ namespace diitra_infrastructure.Research
                     {
                         var isLinked = await _context.InvProyectosProfesores.AnyAsync(pp => pp.IdProyecto == project.IdProyecto && pp.IdUsuario == internalUser.IdUsuario) ||
                                        await _context.InvProyectosAlumnos.AnyAsync(pa => pa.IdProyecto == project.IdProyecto && pa.IdUsuario == internalUser.IdUsuario);
-                        
+
                         if (!isLinked)
                         {
                             var phone = await GetUserPhoneFromCatalogAsync(internalUser.IdSigafi, internalUser.TablaSigafi);
@@ -401,9 +391,9 @@ namespace diitra_infrastructure.Research
                 string afterJson = System.Text.Json.JsonSerializer.Serialize(afterState);
 
                 await _auditService.LogActionAsync(
-                    null, 
-                    project.Estado == "Borrador" && dto.Uuid == null ? "CREAR_PROYECTO" : "ACTUALIZAR_PROYECTO", 
-                    $"Sincronización de datos del proyecto: {project.Titulo}", 
+                    null,
+                    project.Estado == "Borrador" && dto.Uuid == null ? "CREAR_PROYECTO" : "ACTUALIZAR_PROYECTO",
+                    $"Sincronización de datos del proyecto: {project.Titulo}",
                     "PROYECTOS",
                     beforeJson,
                     afterJson
@@ -463,7 +453,7 @@ namespace diitra_infrastructure.Research
                     DirectorNombre = p.InvProyectosProfesores
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
-                        .FirstOrDefault() 
+                        .FirstOrDefault()
                         ?? p.InvProyectosProfesores
                         .Where(pp => pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
@@ -550,7 +540,7 @@ namespace diitra_infrastructure.Research
                     DirectorNombre = p.InvProyectosProfesores
                         .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
-                        .FirstOrDefault() 
+                        .FirstOrDefault()
                         ?? p.InvProyectosProfesores
                         .Where(pp => pp.IdUsuarioNavigation != null)
                         .Select(pp => pp.IdUsuarioNavigation.Nombre)
@@ -632,6 +622,24 @@ namespace diitra_infrastructure.Research
 
             if (p == null) return null;
 
+            ProyectoDto dto;
+            if (!string.IsNullOrEmpty(p.MetadataCacesJson))
+            {
+                try
+                {
+                    var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(p.MetadataCacesJson);
+                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
+                }
+                catch
+                {
+                    dto = new ProyectoDto();
+                }
+            }
+            else
+            {
+                dto = new ProyectoDto();
+            }
+
             // Obtener periodo académico (Lógica Resiliente de Descubrimiento)
             var today = DateOnly.FromDateTime(DateTime.UtcNow);
             var currentPeriod = await _context.Periodos
@@ -660,19 +668,51 @@ namespace diitra_infrastructure.Research
             var profCareers = new List<ProfesoresCarrerasPeriodo>();
             if (profCedulas.Any() && !string.IsNullOrEmpty(periodId))
             {
-                profCareers = await _context.ProfesoresCarrerasPeriodos
+                var rawCareers = await _context.ProfesoresCarrerasPeriodos
                     .Include(pc => pc.IdCarreraNavigation)
-                    .Where(pc => profCedulas.Contains(pc.IdProfesor.Trim()) && pc.IdPeriodo == periodId && pc.EsActivo == 1)
+                    .Where(pc => pc.IdPeriodo == periodId && pc.EsActivo == 1)
                     .ToListAsync();
+
+                profCareers = rawCareers
+                    .Where(pc => pc.IdProfesor != null &&
+                                 profCedulas.Any(ced => pc.IdProfesor.Trim().Equals(ced, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
             }
 
             var alumCareers = new List<AlumnosCarrera>();
+            var students = new List<Alumno>();
+            var currentMatriculas = new List<Matricula>();
+            var relevantCursos = new List<Curso>();
+
             if (studentCedulas.Any())
             {
-                alumCareers = await _context.AlumnosCarreras
-                    .Where(ac => studentCedulas.Contains(ac.IdAlumno.Trim()))
+                var rawAlumCareers = await _context.AlumnosCarreras.ToListAsync();
+                alumCareers = rawAlumCareers
+                    .Where(ac => ac.IdAlumno != null &&
+                                 studentCedulas.Any(ced => ac.IdAlumno.Trim().Equals(ced, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+
+                students = await _context.Alumnos
+                    .Where(s => studentCedulas.Contains(s.IdAlumno.Trim()))
                     .ToListAsync();
+
+                if (!string.IsNullOrEmpty(periodId))
+                {
+                    currentMatriculas = await _context.Matriculas
+                        .Where(m => studentCedulas.Contains(m.IdAlumno.Trim()) && m.IdPeriodo == periodId)
+                        .ToListAsync();
+                }
+
+                var levelIds = currentMatriculas.Select(m => (int?)m.IdNivel)
+                    .Concat(students.Select(s => s.IdNivel))
+                    .Where(id => id.HasValue)
+                    .Select(id => id!.Value)
+                    .Distinct()
+                    .ToList();
+
+                relevantCursos = await _context.Cursos.Where(c => levelIds.Contains(c.IdNivel)).ToListAsync();
             }
+
             var allCarrerasList = await _context.Carreras.ToListAsync();
 
             var researchHours = new List<ProfesoresActividade>();
@@ -710,7 +750,18 @@ namespace diitra_infrastructure.Research
                     .Select(pc => pc.IdCarreraNavigation!.Carrera1)
                     .Distinct()
                     .ToList();
-                var carreraNom = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+                var carrerasDisponibles = linkedCareers.Any() ? string.Join(", ", linkedCareers) : "Docente";
+                var carreraNom = linkedCareers.FirstOrDefault() ?? "Docente";
+
+                var existingInvInJson = dto?.Investigadores?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim() == cedula);
+                if (existingInvInJson != null && !string.IsNullOrWhiteSpace(existingInvInJson.Carrera))
+                {
+                    var savedCarrera = existingInvInJson.Carrera.Trim();
+                    if (linkedCareers.Any(lc => lc != null && lc.Trim().Equals(savedCarrera, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        carreraNom = savedCarrera;
+                    }
+                }
 
                 var availableHours = researchHours.Where(pa => pa.IdProfesor.Trim() == cedula).Sum(pa => pa.HorasSemana ?? 0);
                 var assignedHours = otherAssignedHours.Where(o => o.IdUsuario == pp.IdUsuario).Sum(o => o.HorasSemanales ?? 0);
@@ -728,6 +779,7 @@ namespace diitra_infrastructure.Research
                     FechaFin = pp.FechaFin,
                     MotivoCambio = pp.MotivoCambio,
                     Carrera = carreraNom,
+                    CarrerasDisponibles = carrerasDisponibles,
                     HorasSemanales = pp.HorasSemanales,
                     HorasDisponibles = availableHours,
                     HorasAsignadas = assignedHours,
@@ -745,14 +797,43 @@ namespace diitra_infrastructure.Research
 
                 var cedula = pa.IdUsuarioNavigation?.IdSigafi?.Trim() ?? "";
                 var sCareerIds = alumCareers
-                    .Where(ac => ac.IdAlumno.Trim() == cedula)
+                    .Where(ac => ac.IdAlumno != null && ac.IdAlumno.Trim().Equals(cedula, StringComparison.OrdinalIgnoreCase))
                     .Select(ac => ac.IdCarrera)
                     .ToList();
                 var sCareers = allCarrerasList
                     .Where(c => sCareerIds.Contains(c.IdCarrera) && !string.IsNullOrEmpty(c.Carrera1))
                     .Select(c => c.Carrera1!)
                     .ToList();
-                var carreraNom = sCareers.Any() ? string.Join(", ", sCareers) : "Estudiante";
+
+                var studentObj = students.FirstOrDefault(s => s.IdAlumno != null && s.IdAlumno.Trim().Equals(cedula, StringComparison.OrdinalIgnoreCase));
+                var matricula = currentMatriculas.FirstOrDefault(m => m.IdAlumno != null && m.IdAlumno.Trim().Equals(cedula, StringComparison.OrdinalIgnoreCase));
+
+                var idNivelTarget = matricula?.IdNivel ?? studentObj?.IdNivel;
+                if (idNivelTarget.HasValue)
+                {
+                    var cursoInfo = relevantCursos.FirstOrDefault(c => c.IdNivel == idNivelTarget.Value);
+                    if (cursoInfo != null)
+                    {
+                        var resolvedCareer = allCarrerasList.FirstOrDefault(c => c.IdCarrera == cursoInfo.IdCarrera)?.Carrera1;
+                        if (!string.IsNullOrEmpty(resolvedCareer) && !sCareers.Any(sc => sc.Equals(resolvedCareer, StringComparison.OrdinalIgnoreCase)))
+                        {
+                            sCareers.Add(resolvedCareer);
+                        }
+                    }
+                }
+
+                var carrerasDisponibles = sCareers.Any() ? string.Join(", ", sCareers) : "Estudiante";
+                var carreraNom = sCareers.FirstOrDefault() ?? "Estudiante";
+
+                var existingInvInJson = dto?.Investigadores?.FirstOrDefault(i => !string.IsNullOrEmpty(i.Cedula) && i.Cedula.Trim().Equals(cedula, StringComparison.OrdinalIgnoreCase));
+                if (existingInvInJson != null && !string.IsNullOrWhiteSpace(existingInvInJson.Carrera))
+                {
+                    var savedCarrera = existingInvInJson.Carrera.Trim();
+                    if (sCareers.Any(sc => sc != null && sc.Trim().Equals(savedCarrera, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        carreraNom = savedCarrera;
+                    }
+                }
 
                 investigadoresList.Add(new InvestigadorDto
                 {
@@ -767,33 +848,16 @@ namespace diitra_infrastructure.Research
                     FechaFin = pa.FechaFin,
                     MotivoCambio = pa.MotivoCambio,
                     Carrera = carreraNom,
+                    CarrerasDisponibles = carrerasDisponibles,
                     HorasSemanales = pa.HorasSemanales
                 });
-            }
-
-            ProyectoDto dto;
-            if (!string.IsNullOrEmpty(p.MetadataCacesJson))
-            {
-                try
-                {
-                    var cleanedJson = Diitra.Infrastructure.Common.Documents.Engine.ScribanTemplateEngine.CleanAndNormalizeJson(p.MetadataCacesJson);
-                    dto = System.Text.Json.JsonSerializer.Deserialize<ProyectoDto>(cleanedJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new ProyectoDto();
-                }
-                catch
-                {
-                    dto = new ProyectoDto();
-                }
-            }
-            else
-            {
-                dto = new ProyectoDto();
             }
 
             dto.Uuid = p.Uuid;
             dto.CodigoInstitucional = p.CodigoInstitucional;
             dto.Estado = p.Estado;
             dto.IdConvocatoria = p.IdConvocatoria;
-            dto.IdCarrera = p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
+            dto.IdCarrera = p.InvProyectosCarreras.FirstOrDefault(pc => pc.Modalidad == "PRINCIPAL")?.IdCarrera ?? p.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
             if (dto.IdCarrera.HasValue)
             {
                 var carreraObj = allCarrerasList.FirstOrDefault(c => c.IdCarrera == dto.IdCarrera.Value);
@@ -815,17 +879,17 @@ namespace diitra_infrastructure.Research
             dto.TrlActual = (int?)p.TrlActual;
             dto.TrlMeta = (int?)p.TrlMeta;
             dto.PuntajeEvaluacion = p.PuntajeEvaluacion;
-            
-            dto.LineaInvestigacion = p.IdSublineaNavigation?.IdLineaNavigation != null 
-                                     ? p.IdSublineaNavigation.IdLineaNavigation.NombreLinea 
+
+            dto.LineaInvestigacion = p.IdSublineaNavigation?.IdLineaNavigation != null
+                                     ? p.IdSublineaNavigation.IdLineaNavigation.NombreLinea
                                      : dto.LineaInvestigacion;
-            dto.SublineaInvestigacion = p.IdSublineaNavigation != null 
-                                        ? p.IdSublineaNavigation.Nombre 
+            dto.SublineaInvestigacion = p.IdSublineaNavigation != null
+                                        ? p.IdSublineaNavigation.Nombre
                                         : dto.SublineaInvestigacion;
-            
+
             dto.Programa = p.IdProgramaNavigation?.Nombre ?? dto.Programa;
             dto.TipoInvestigacion = p.IdTipoNavigation?.Nombre ?? dto.TipoInvestigacion;
-            
+
             dto.DirectorProyecto = p.InvProyectosProfesores
                 .Where(pp => pp.EsDirector == true && pp.IdUsuarioNavigation != null)
                 .Select(pp => pp.IdUsuarioNavigation.Nombre)
@@ -865,13 +929,13 @@ namespace diitra_infrastructure.Research
             dto.FechaFin = p.FechaFin?.ToString("dd/MM/yyyy");
             dto.FechaInicioEstimada = p.FechaInicio?.ToString("dd/MM/yyyy");
             dto.FechaFinEstimada = p.FechaFin?.ToString("dd/MM/yyyy");
-            dto.Periodo = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle 
-                          ?? p.IdConvocatoriaNavigation?.IdPeriodo 
-                          ?? dto.Periodo 
+            dto.Periodo = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle
+                          ?? p.IdConvocatoriaNavigation?.IdPeriodo
+                          ?? dto.Periodo
                           ?? currentPeriod?.Detalle;
-            dto.PeriodoConvocatoria = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle 
-                                      ?? p.IdConvocatoriaNavigation?.IdPeriodo 
-                                      ?? dto.PeriodoConvocatoria 
+            dto.PeriodoConvocatoria = p.IdConvocatoriaNavigation?.IdPeriodoNavigation?.Detalle
+                                      ?? p.IdConvocatoriaNavigation?.IdPeriodo
+                                      ?? dto.PeriodoConvocatoria
                                       ?? dto.Periodo;
             dto.ObjetivosEspecificos = p.InvObjetivosProyecto
                 .Where(o => !o.EsGeneral)
@@ -1144,6 +1208,59 @@ namespace diitra_infrastructure.Research
                 .ToList();
 
             return stats;
+        }
+
+        private async Task SyncProjectCarrerasAsync(int projectId, int? idCarreraPrincipal, List<InvestigadorDto>? investigadores)
+        {
+            var currentCarreras = await _context.InvProyectosCarreras.Where(pc => pc.IdProyecto == projectId).ToListAsync();
+            _context.InvProyectosCarreras.RemoveRange(currentCarreras);
+
+            if (idCarreraPrincipal.HasValue && idCarreraPrincipal.Value > 0)
+            {
+                _context.InvProyectosCarreras.Add(new InvProyectoCarrera
+                {
+                    IdProyecto = projectId,
+                    IdCarrera = idCarreraPrincipal.Value,
+                    Modalidad = "PRINCIPAL"
+                });
+            }
+
+            if (investigadores != null && investigadores.Any())
+            {
+                var allCarreras = await _context.Carreras.AsNoTracking().ToListAsync();
+                var addedCarrerasIds = new HashSet<int>();
+                if (idCarreraPrincipal.HasValue)
+                {
+                    addedCarrerasIds.Add(idCarreraPrincipal.Value);
+                }
+
+                foreach (var inv in investigadores)
+                {
+                    if (inv.Activo == false) continue;
+                    if (string.IsNullOrWhiteSpace(inv.Carrera)) continue;
+
+                    var carreraNombres = inv.Carrera.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                                                   .Select(c => c.Trim().ToLower())
+                                                   .ToList();
+
+                    foreach (var cName in carreraNombres)
+                    {
+                        var matchedCarrera = allCarreras.FirstOrDefault(c =>
+                            c.Carrera1 != null && c.Carrera1.Trim().ToLower() == cName);
+
+                        if (matchedCarrera != null && !addedCarrerasIds.Contains(matchedCarrera.IdCarrera))
+                        {
+                            addedCarrerasIds.Add(matchedCarrera.IdCarrera);
+                            _context.InvProyectosCarreras.Add(new InvProyectoCarrera
+                            {
+                                IdProyecto = projectId,
+                                IdCarrera = matchedCarrera.IdCarrera,
+                                Modalidad = "PARTICIPANTE"
+                            });
+                        }
+                    }
+                }
+            }
         }
 
         private async Task SyncInvestigadoresAsync(int projectId, System.Collections.Generic.List<InvestigadorDto>? investigadores, bool isFromWizard = false)
@@ -1430,7 +1547,7 @@ namespace diitra_infrastructure.Research
                 {
                     // Remover etiquetas <ul>, </ul>, <ol>, </ol>
                     string cleaned = item.Replace("<ul>", "").Replace("</ul>", "").Replace("<ol>", "").Replace("</ol>", "");
-                    
+
                     // Encontrar todos los bloques de <li>...</li> o <p>...</p>
                     var matches = System.Text.RegularExpressions.Regex.Matches(cleaned, @"<(li|p)[^>]*>(.*?)<\/\1>", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                     if (matches.Count > 0)
@@ -1442,7 +1559,7 @@ namespace diitra_infrastructure.Research
                             text = System.Net.WebUtility.HtmlDecode(text);
                             // Limpiar numeración inicial si existe (ej: "1. ", "1.- ", "a) ")
                             text = System.Text.RegularExpressions.Regex.Replace(text, @"^[a-zA-Z0-9\-\.\)]+\s*[-–—]?\s*", "").Trim();
-                            
+
                             if (!string.IsNullOrWhiteSpace(text))
                             {
                                 result.Add(text);
@@ -1479,7 +1596,7 @@ namespace diitra_infrastructure.Research
         {
             // Sincronizar Objetivo General
             var generalOpt = await _context.InvObjetivosProyecto.FirstOrDefaultAsync(o => o.IdProyecto == projectId && o.EsGeneral);
-            
+
             // Si el objetivo general contiene HTML, lo limpiamos para tener texto plano en la columna
             string descGeneral = !string.IsNullOrWhiteSpace(objetivoGeneral) ? objetivoGeneral : "Objetivo General por definir";
             if (descGeneral.Contains("<"))
@@ -1526,7 +1643,7 @@ namespace diitra_infrastructure.Research
                         Orden = orden++
                     });
                 }
-                
+
                 await SaveChangesWithConcurrencyResolutionAsync();
 
                 // Cargar los IDs reales creados
@@ -1535,7 +1652,7 @@ namespace diitra_infrastructure.Research
                     .OrderBy(o => o.Orden)
                     .Select(o => o.IdObjetivo)
                     .ToListAsync();
-                
+
                 ids.AddRange(creadosIds);
             }
 
@@ -1618,10 +1735,10 @@ namespace diitra_infrastructure.Research
             foreach (var p in productos)
             {
                 if (string.IsNullOrWhiteSpace(p.Tipo)) continue;
-                
+
                 // Intentamos buscar el ID del tipo de producto por nombre o UUID si viniera
                 var cat = await _context.InvCatTipoProductos.FirstOrDefaultAsync(c => c.Nombre == p.Tipo);
-                
+
                 _context.InvProductos.Add(new InvProducto
                 {
                     IdProyecto = projectId,
@@ -1635,7 +1752,7 @@ namespace diitra_infrastructure.Research
         private async Task SyncCronogramaAsync(int projectId, List<int> objetivosCreadosIds, System.Collections.Generic.List<ActividadCronogramaDto>? cronograma)
         {
             if (cronograma == null) return;
-            
+
             // 1. Limpieza de actividades antiguas
             var oldActivities = await _context.InvCronogramas
                 .Where(c => c.IdProyecto == projectId)
@@ -1797,7 +1914,7 @@ namespace diitra_infrastructure.Research
                 _context.InvProyectosAlumnos.RemoveRange(project.InvProyectosAlumnos);
                 _context.InvObjetivosProyecto.RemoveRange(project.InvObjetivosProyecto);
                 _context.InvPresupuestoItems.RemoveRange(project.InvPresupuestoItems);
-                
+
                 _context.InvCronogramas.RemoveRange(project.InvCronogramas);
                 _context.InvBibliografiasProyecto.RemoveRange(project.InvBibliografiasProyecto);
                 _context.InvImpactosProyecto.RemoveRange(project.InvImpactosProyecto);
@@ -1832,7 +1949,9 @@ namespace diitra_infrastructure.Research
 
         public async Task<SyncResult> UpdateProjectTeamAsync(string uuid, List<InvestigadorDto> investigadores, string? grupoInvestigacion = null, bool? tieneGrupoInvestigacion = null)
         {
-            var project = await _context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == uuid);
+            var project = await _context.InvProyectos
+                .Include(p => p.InvProyectosCarreras)
+                .FirstOrDefaultAsync(p => p.Uuid == uuid);
             if (project == null)
             {
                 return new SyncResult { Success = false, Message = "Proyecto no encontrado." };
@@ -1926,7 +2045,7 @@ namespace diitra_infrastructure.Research
             foreach (var inv in effectiveInvestigadores)
             {
                 if (string.IsNullOrEmpty(inv.Cedula)) continue;
-                
+
                 var cedulaTrim = inv.Cedula.Trim();
                 var persona = await _authService.GetOrProvisionUserByCedulaAsync(cedulaTrim);
                 if (persona == null || persona.TablaSigafi == "alumno") continue;
@@ -1941,9 +2060,9 @@ namespace diitra_infrastructure.Research
                     .FirstOrDefaultAsync() ?? 0;
 
                 var otherProjectsHours = await _context.InvProyectosProfesores
-                    .Where(pp => pp.IdUsuario == persona.IdUsuario && 
-                                 pp.IdProyecto != project.IdProyecto && 
-                                 pp.Activo != false && 
+                    .Where(pp => pp.IdUsuario == persona.IdUsuario &&
+                                 pp.IdProyecto != project.IdProyecto &&
+                                 pp.Activo != false &&
                                  pp.IdProyectoNavigation.Activo != false &&
                                  estadosConCarga.Contains(pp.IdProyectoNavigation.Estado))
                     .SumAsync(pp => (decimal?)pp.HorasSemanales ?? 0);
@@ -1951,10 +2070,10 @@ namespace diitra_infrastructure.Research
                 var totalProposedHours = otherProjectsHours + proposedHours;
                 if (totalProposedHours > availableHours)
                 {
-                    return new SyncResult 
-                    { 
-                        Success = false, 
-                        Message = $"El docente {persona.Nombre} (C.I. {persona.IdSigafi}) excede el límite de carga horaria de investigación para el período académico activo. Horas disponibles en distributivo: {availableHours}h. Horas asignadas en otros proyectos: {otherProjectsHours}h. Horas propuestas en este proyecto: {proposedHours}h. Total: {totalProposedHours}h." 
+                    return new SyncResult
+                    {
+                        Success = false,
+                        Message = $"El docente {persona.Nombre} (C.I. {persona.IdSigafi}) excede el límite de carga horaria de investigación para el período académico activo. Horas disponibles en distributivo: {availableHours}h. Horas asignadas en otros proyectos: {otherProjectsHours}h. Horas propuestas en este proyecto: {proposedHours}h. Total: {totalProposedHours}h."
                     };
                 }
             }
@@ -2014,6 +2133,11 @@ namespace diitra_infrastructure.Research
 
                 // 2. Sincronizar en Tablas Relacionales (Profesores / Alumnos)
                 await SyncInvestigadoresAsync(project.IdProyecto, dto.Investigadores ?? new List<InvestigadorDto>(), isFromWizard: false);
+
+                // Sincronizar Carreras (Principal y Participantes) según los nuevos integrantes
+                var principalCarrera = project.InvProyectosCarreras.FirstOrDefault(pc => pc.Modalidad == "PRINCIPAL")?.IdCarrera
+                                       ?? project.InvProyectosCarreras.FirstOrDefault()?.IdCarrera;
+                await SyncProjectCarrerasAsync(project.IdProyecto, principalCarrera, dto.Investigadores);
 
                 project.MetadataCacesJson = System.Text.Json.JsonSerializer.Serialize(dto);
                 project.FechaModificacion = DateTime.Now;
@@ -2111,7 +2235,7 @@ namespace diitra_infrastructure.Research
                     currentDirector.FechaFin = DateTime.Now;
                     currentDirector.MotivoCambio = $"Relevado por: {request.Motivo}";
                     currentDirector.EsDirector = false; // Ya no es el director activo
-                    
+
                     // Notificar al director anterior
                     await _notificationService.NotifyUserAsync(
                         currentDirector.IdUsuario,
@@ -2186,18 +2310,18 @@ namespace diitra_infrastructure.Research
                 {
                     Uuid = Guid.NewGuid().ToString(),
                     IdProyecto = project.IdProyecto,
-                    IdUsuario = nuevoDirectorUser.IdUsuario, 
+                    IdUsuario = nuevoDirectorUser.IdUsuario,
                     EstadoAnterior = project.Estado,
-                    EstadoNuevo = project.Estado, 
+                    EstadoNuevo = project.Estado,
                     Observacion = $"Cambio de Dirección: {request.Motivo}. {request.Descripcion}",
                     FechaTransicion = DateTime.Now
                 };
-                
+
                 var ultimaTransicion = await _context.InvTrazabilidadProyectos
                     .Where(t => t.IdProyecto == project.IdProyecto)
                     .OrderByDescending(t => t.FechaTransicion)
                     .FirstOrDefaultAsync();
-                
+
                 trazabilidad.HashAnterior = ultimaTransicion?.HashActual;
                 string dataToHash = $"{trazabilidad.Uuid}|{trazabilidad.IdProyecto}|{trazabilidad.EstadoNuevo}|{trazabilidad.HashAnterior}|{trazabilidad.FechaTransicion}";
                 using (var sha256 = System.Security.Cryptography.SHA256.Create())
@@ -2239,7 +2363,7 @@ namespace diitra_infrastructure.Research
                     .Include(pp => pp.IdUsuarioNavigation)
                     .Where(pp => pp.IdProyecto == project.IdProyecto)
                     .ToListAsync();
-                
+
                 var updatedAlums = await _context.InvProyectosAlumnos
                     .Include(pa => pa.IdUsuarioNavigation)
                     .Where(pa => pa.IdProyecto == project.IdProyecto)
@@ -3146,10 +3270,10 @@ namespace diitra_infrastructure.Research
             var project = await _context.InvProyectos.AsNoTracking().FirstOrDefaultAsync(p => p.Uuid == canonicalUuid);
             if (project == null) return false;
 
-            return await _context.InvProyectosProfesores.AsNoTracking().AnyAsync(pp => 
-                pp.IdProyecto == project.IdProyecto && 
-                pp.IdUsuario == user.IdUsuario && 
-                pp.EsDirector == true && 
+            return await _context.InvProyectosProfesores.AsNoTracking().AnyAsync(pp =>
+                pp.IdProyecto == project.IdProyecto &&
+                pp.IdUsuario == user.IdUsuario &&
+                pp.EsDirector == true &&
                 pp.Activo != false);
         }
 
@@ -3338,7 +3462,7 @@ namespace diitra_infrastructure.Research
                     string textDesc = c.Contenido;
                     if (textDesc.Trim().StartsWith("{"))
                     {
-                        try 
+                        try
                         {
                             using var doc = System.Text.Json.JsonDocument.Parse(textDesc);
                             var root = doc.RootElement;
@@ -3477,7 +3601,7 @@ namespace diitra_infrastructure.Research
             var r = role.Trim().ToLowerInvariant();
             if (r.Contains("director") || r.Contains("principal")) return "Director de Proyecto";
             if (r.Contains("semillerista") || r.Contains("estudiante") || r.Contains("alumno")) return "Semillerista";
-            
+
             return "Co-Investigador";
         }
 

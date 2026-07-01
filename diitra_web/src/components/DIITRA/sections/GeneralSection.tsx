@@ -1,6 +1,7 @@
 import React from 'react';
 import { CoWorkField } from '../../../core/cowork/components/CoWorkField';
 import type { CoWorkHandle } from '../../../core/cowork/types';
+import api from '../../../api/axios_config';
 
 interface GeneralSectionProps {
     formData: any;
@@ -12,6 +13,7 @@ interface GeneralSectionProps {
     lineas?: any[];
     sublineas?: any[];
     onUpdate: (field: string, value: any, meta?: { source?: 'local' | 'remote' | 'system' }) => void;
+    isAdmin?: boolean;
 }
 
 const isPastDeadline = (fechaCierre: string) => {
@@ -36,8 +38,67 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
     dominios = [],
     lineas = [],
     sublineas = [],
-    onUpdate
+    onUpdate,
+    isAdmin = false
 }) => {
+    const [misCarreras, setMisCarreras] = React.useState<any[]>([]);
+    React.useEffect(() => {
+        if (!isAdmin) {
+            api.get('/catalogs/mi-carrera')
+                .then(res => setMisCarreras(res.data || []))
+                .catch(err => console.error("Error al cargar carreras del docente:", err));
+        }
+    }, [isAdmin]);
+
+    const filteredCarreras = React.useMemo(() => {
+        if (isAdmin) return carreras;
+        const currentId = Number(formData.IdCarrera) || 0;
+        const list = [...misCarreras];
+        if (currentId > 0 && !list.some(c => (c.id_carrera ?? c.idCarrera ?? 0) === currentId)) {
+            const currentCarreraObj = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === currentId);
+            if (currentCarreraObj) {
+                list.push(currentCarreraObj);
+            }
+        }
+        return list;
+    }, [isAdmin, carreras, misCarreras, formData.IdCarrera]);
+
+    React.useEffect(() => {
+        if (!isAdmin && misCarreras.length === 1) {
+            const unica = misCarreras[0];
+            const unicaId = unica.id_carrera ?? unica.idCarrera ?? 0;
+            if (Number(formData.IdCarrera) !== unicaId) {
+                onUpdate('IdCarrera', unicaId);
+                const cname = unica.nombre_carrera ?? unica.carrera1 ?? unica.carrera ?? '';
+                onUpdate('Carrera', cname, { source: 'system' });
+            }
+        }
+    }, [misCarreras, formData.IdCarrera, isAdmin, onUpdate]);
+
+    const coejecutoras = React.useMemo(() => {
+        if (!formData.Investigadores || !Array.isArray(formData.Investigadores)) return [];
+        const principalId = Number(formData.IdCarrera) || 0;
+        const principalCarreraObj = carreras.find(c => (c.id_carrera ?? c.idCarrera ?? 0) === principalId);
+        const principalName = (principalCarreraObj?.nombre_carrera 
+                              ?? principalCarreraObj?.carrera1 
+                              ?? principalCarreraObj?.carrera 
+                              ?? '').trim().toLowerCase();
+
+        const list = new Set<string>();
+        formData.Investigadores.forEach((inv: any) => {
+            if (inv.Activo === false) return;
+            if (!inv.Carrera) return;
+            const names = inv.Carrera.split(',').map((s: string) => s.trim());
+            names.forEach((name: string) => {
+                const lowerName = name.toLowerCase();
+                if (name && lowerName !== principalName && lowerName !== 'docente' && lowerName !== 'estudiante') {
+                    list.add(name.toUpperCase());
+                }
+            });
+        });
+        return Array.from(list);
+    }, [formData.Investigadores, formData.IdCarrera, carreras]);
+
     // Filter active and approved research groups
     const approvedGroups = React.useMemo(() => {
         return groups.filter((g: any) => g.activo && g.estado === 'Aprobado');
@@ -427,10 +488,11 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                                 onUpdate('Carrera', '', { source: 'system' });
                             }
                         }}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
+                        disabled={!isAdmin && filteredCarreras.length <= 1}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value={0}>Seleccione una carrera...</option>
-                        {carreras.map(c => {
+                        {filteredCarreras.map(c => {
                             const cid = c.id_carrera ?? c.idCarrera ?? 0;
                             const cname = c.nombre_carrera ?? c.carrera1 ?? c.carrera ?? 'Sin Nombre';
                             return (
@@ -438,6 +500,28 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                             );
                         })}
                     </select>
+
+                    {!isAdmin && misCarreras.length > 1 && (
+                        <div className="mt-2.5 ml-2 text-[10px] text-warning font-semibold flex items-center gap-1.5 animate-fade-in">
+                            <span>⚠️</span>
+                            <span>Perteneces a múltiples carreras. Por favor, selecciona una carrera principal para esta propuesta.</span>
+                        </div>
+                    )}
+
+                    {formData.GrupoInvestigacionTipo === 'SI' && coejecutoras.length > 0 && (
+                        <div className="mt-2.5 ml-2 animate-fade-in">
+                            <span className="text-[9px] font-black text-warning uppercase tracking-widest block mb-1.5">
+                                Carreras Co-ejecutoras (Asociativas)
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                                {coejecutoras.map((name, i) => (
+                                    <span key={i} className="px-2.5 py-1 text-[9px] font-extrabold bg-warning/10 border border-warning/20 text-warning uppercase rounded-md tracking-wider">
+                                        {name}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-1.5 sm:space-y-3">
@@ -445,7 +529,8 @@ export const GeneralSection: React.FC<GeneralSectionProps> = ({
                     <select 
                         value={formData.IdConvocatoria || 0}
                         onChange={(e) => onUpdate('IdConvocatoria', Number(e.target.value))}
-                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none"
+                        disabled={!!formData.IdConvocatoria}
+                        className="w-full bg-bg-deep border border-border-thin rounded-lg sm:rounded-xl px-3.5 py-3 sm:px-5 sm:py-4 text-xs sm:text-sm text-text-main font-bold outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value={0}>Seleccione una convocatoria...</option>
                         {convocatorias.map(c => {

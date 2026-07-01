@@ -297,21 +297,26 @@ export function useDIITRADocument<T extends Record<string, any>>(
             deduplicateYArray(yarray, ydoc, listName);
 
             const currentArray = yarray.toArray() as any[];
-            if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(initialData.Investigadores)) {
-                const targetArray = initialData.Investigadores.map((dbInv: any, idx: number) => {
-                    const yjsInv = currentArray.find((yInv: any) => 
-                        yInv && yInv.Cedula && dbInv.Cedula && 
-                        yInv.Cedula.trim().toLowerCase() === dbInv.Cedula.trim().toLowerCase()
-                    );
+            const dbInvestigadores = initialData.investigadores || initialData.Investigadores;
+            if (listName === 'Investigadores' && options.isHistoryLoaded && Array.isArray(dbInvestigadores)) {
+                const targetArray = dbInvestigadores.map((dbInv: any, idx: number) => {
+                    const dbCedula = dbInv.Cedula || dbInv.cedula;
+                    const yjsInv = currentArray.find((yInv: any) => {
+                        const yCedula = yInv?.Cedula || yInv?.cedula;
+                        return yCedula && dbCedula && 
+                               yCedula.trim().toLowerCase() === dbCedula.trim().toLowerCase();
+                    });
                     return {
-                        Nombre: dbInv.Nombre ?? '',
-                        Cedula: dbInv.Cedula ?? '',
-                        Email: dbInv.Email ?? '',
-                        NivelAcademico: dbInv.NivelAcademico ?? '',
-                        Rol: dbInv.Rol ?? '',
+                        Nombre: dbInv.Nombre || dbInv.nombre || '',
+                        Cedula: dbCedula || '',
+                        Email: dbInv.Email || dbInv.email || '',
+                        NivelAcademico: dbInv.NivelAcademico || dbInv.nivelAcademico || '',
+                        Rol: dbInv.Rol || dbInv.rol || '',
                         id: dbInv.id || yjsInv?.id || `db_${idx}`,
-                        Telefono: dbInv.Telefono ?? '',
-                        HorasSemanales: dbInv.HorasSemanales ?? null,
+                        Telefono: dbInv.Telefono || dbInv.telefono || '',
+                        HorasSemanales: dbInv.HorasSemanales !== undefined ? dbInv.HorasSemanales : (dbInv.horasSemanales !== undefined ? dbInv.horasSemanales : null),
+                        Carrera: dbInv.Carrera || dbInv.carrera || '',
+                        CarrerasDisponibles: dbInv.CarrerasDisponibles || dbInv.carrerasDisponibles || ''
                     };
                 });
 
@@ -320,15 +325,22 @@ export function useDIITRADocument<T extends Record<string, any>>(
                     for (let i = 0; i < arrA.length; i++) {
                         const a = arrA[i] || {};
                         const b = arrB[i] || {};
+                        const aCarrera = a.Carrera || a.carrera || '';
+                        const bCarrera = b.Carrera || b.carrera || '';
+                        const aDisponibles = a.CarrerasDisponibles || a.carrerasDisponibles || '';
+                        const bDisponibles = b.CarrerasDisponibles || b.carrerasDisponibles || '';
                         if (
-                            (a.Nombre ?? '') !== (b.Nombre ?? '') ||
-                            (a.Cedula ?? '') !== (b.Cedula ?? '') ||
-                            (a.Email ?? '') !== (b.Email ?? '') ||
-                            (a.NivelAcademico ?? '') !== (b.NivelAcademico ?? '') ||
-                            (a.Rol ?? '') !== (b.Rol ?? '') ||
+                            (a.Nombre || a.nombre || '') !== (b.Nombre || b.nombre || '') ||
+                            (a.Cedula || a.cedula || '') !== (b.Cedula || b.cedula || '') ||
+                            (a.Email || a.email || '') !== (b.Email || b.email || '') ||
+                            (a.NivelAcademico || a.nivelAcademico || '') !== (b.NivelAcademico || b.nivelAcademico || '') ||
+                            (a.Rol || a.rol || '') !== (b.Rol || b.rol || '') ||
                             (a.id ?? '') !== (b.id ?? '') ||
-                            (a.Telefono ?? '') !== (b.Telefono ?? '') ||
-                            (a.HorasSemanales ?? null) !== (b.HorasSemanales ?? null)
+                            (a.Telefono || a.telefono || '') !== (b.Telefono || b.telefono || '') ||
+                            (a.HorasSemanales !== undefined ? a.HorasSemanales : (a.horasSemanales !== undefined ? a.horasSemanales : null)) !== 
+                            (b.HorasSemanales !== undefined ? b.HorasSemanales : (b.horasSemanales !== undefined ? b.horasSemanales : null)) ||
+                            aCarrera !== bCarrera ||
+                            aDisponibles !== bDisponibles
                         ) {
                             return false;
                         }
