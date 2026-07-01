@@ -1,6 +1,6 @@
 ---
 name: respuesta-eficiente
-description: Activa esta skill cuando el usuario pida respuestas directas, limites de tokens, respuestas rápidas, o use frases restrictivas como "solo busca en X", "ve al grano", "no investigues en exceso" o "no uses herramientas complejas". Optimiza al máximo el consumo de tokens.
+description: Activa esta skill cuando el usuario pida respuestas directas, limite la búsqueda de archivos, pida evitar análisis del código, o use frases restrictivas como "Solo busca el archivo X", "Ve al grano", "No revises archivos", "No hagas análisis profundo" o "No ejecutes comandos". Evita búsquedas innecesarias de archivos para optimizar tokens.
 ---
 # Skill de Respuestas Eficientes y Restricción de Búsquedas
 
