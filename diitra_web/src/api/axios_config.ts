@@ -35,7 +35,8 @@ function addCamelCaseKeys(obj: any): any {
         newObj[key] = val;
 
         const camelKey = toCamelCase(key);
-        if (camelKey !== key && !(camelKey in newObj)) {
+        const shouldDuplicate = key && (key[0] !== key[0].toUpperCase() || key.includes('_') || key.includes('-'));
+        if (shouldDuplicate && camelKey !== key && !(camelKey in newObj)) {
             newObj[camelKey] = val;
         }
     }
@@ -67,7 +68,9 @@ const api = axios.create({
 // Interceptor de respuestas (Response) para deserializar a camelCase (manteniendo duplicados)
 api.interceptors.response.use(
     (response) => {
-        if (response.data) {
+        const url = response.config.url;
+        const isDocumentRoute = url && (url.includes('/documents/') || url.includes('/documents'));
+        if (response.data && !isDocumentRoute) {
             response.data = addCamelCaseKeys(response.data);
         }
         return response;

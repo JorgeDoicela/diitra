@@ -639,41 +639,14 @@ const DIITRABuilderShell: React.FC<DIITRABuilderShellProps> = ({
         onClose();
     };
 
-    const removeDuplicateLowerKeys = (obj: any): any => {
-        if (obj === null || typeof obj !== 'object') return obj;
-        if (Array.isArray(obj)) {
-            return obj.map(removeDuplicateLowerKeys);
-        }
-        const keys = Object.keys(obj);
-        const cleaned: any = {};
-        
-        keys.forEach(k => {
-            cleaned[k] = removeDuplicateLowerKeys(obj[k]);
-        });
-        
-        keys.forEach(key => {
-            if (key && key[0] !== key[0].toUpperCase()) {
-                const pascalKey = keys.find(
-                    k => k.toLowerCase() === key.toLowerCase() && k && k[0] !== k[0].toLowerCase()
-                );
-                if (pascalKey) {
-                    delete cleaned[key];
-                }
-            }
-        });
-        
-        return cleaned;
-    };
-
     // ── Generación de PDF ──
     const handleGeneratePdf = async (blind = false) => {
         setIsGenerating(true);
         addAudit(blind ? 'Generando vista previa sin identidades...' : 'Generando vista previa del documento...');
         try {
-            const cleanedPayload = removeDuplicateLowerKeys(formData);
             const response = await api.post(
                 `/documents/render?templateCode=${templateCode}&isDraft=${isDraftMode}&isBlind=${blind}`,
-                cleanedPayload,
+                formData,
                 { responseType: 'blob' }
             );
             setPdfBlob(new Blob([response.data], { type: 'application/pdf' }));
