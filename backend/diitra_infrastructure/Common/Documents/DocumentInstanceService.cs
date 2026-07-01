@@ -273,10 +273,11 @@ namespace Diitra.Infrastructure.Common.Documents
             {
                 Console.WriteLine($"[DIITRA] [MergeSnapshot] Fusionando {instance.DataSnapshotJson.Length} bytes existentes con {incomingJson?.Length ?? 0} bytes entrantes.");
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                var existing = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(
-                    SanitizeObjectObjectValues(instance.DataSnapshotJson), options);
-                var incoming = !string.IsNullOrEmpty(incomingJson)
-                    ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(incomingJson, options)
+                var cleanedExisting = Engine.ScribanTemplateEngine.CleanAndNormalizeJson(SanitizeObjectObjectValues(instance.DataSnapshotJson));
+                var existing = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedExisting, options);
+                var cleanedIncoming = !string.IsNullOrEmpty(incomingJson) ? Engine.ScribanTemplateEngine.CleanAndNormalizeJson(incomingJson) : incomingJson;
+                var incoming = !string.IsNullOrEmpty(cleanedIncoming)
+                    ? JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedIncoming, options)
                     : null;
 
                 if (existing == null || incoming == null)
@@ -360,7 +361,8 @@ namespace Diitra.Infrastructure.Common.Documents
                                 // Si ya existe, fusionamos campos clave del proyecto relacional (Título, Grupo, Integrantes)
                                 // para evitar que datos viejos del editor de documentos sobrescriban los del Workspace.
                                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                                var snapshot = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(instance.DataSnapshotJson, options);
+                                var cleanedSnapshotJson = Engine.ScribanTemplateEngine.CleanAndNormalizeJson(instance.DataSnapshotJson);
+                                var snapshot = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(cleanedSnapshotJson, options);
                                 if (snapshot != null)
                                 {
                                     var merged = new Dictionary<string, object>();
