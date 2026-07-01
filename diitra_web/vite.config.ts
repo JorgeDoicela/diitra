@@ -18,12 +18,48 @@ export default defineConfig(({ command }) => {
           target: 'http://127.0.0.1:5175',
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on('error', (err, _req, res) => {
+              if (err.message.includes('ECONNREFUSED')) {
+                if (res) {
+                  if ('writeHead' in res) {
+                    if (!res.headersSent) {
+                      res.writeHead(502, { 'Content-Type': 'text/plain' });
+                    }
+                    res.end('Backend offline (ECONNREFUSED)');
+                  } else if ('destroy' in res) {
+                    res.destroy();
+                  }
+                }
+                return;
+              }
+              console.error('Proxy API error:', err);
+            });
+          }
         },
         '/hubs': {
           target: 'http://127.0.0.1:5175',
           ws: true,
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on('error', (err, _req, res) => {
+              if (err.message.includes('ECONNREFUSED')) {
+                if (res) {
+                  if ('writeHead' in res) {
+                    if (!res.headersSent) {
+                      res.writeHead(502, { 'Content-Type': 'text/plain' });
+                    }
+                    res.end('Backend offline (ECONNREFUSED)');
+                  } else if ('destroy' in res) {
+                    res.destroy();
+                  }
+                }
+                return;
+              }
+              console.error('Proxy Hubs error:', err);
+            });
+          }
         }
       }
     },

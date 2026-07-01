@@ -113,6 +113,8 @@ public class UnitTest1
             Console.WriteLine($"SECOND SYNC FAILURE: {result2.Message}");
         }
         Assert.True(result2.Success, $"Second sync failed: {result2.Message}");
+
+        await CleanProjectAsync(context, "c4515615-d3a5-44e0-998a-14111b2c8ebf");
     }
 
     [Fact]
@@ -351,6 +353,8 @@ public class UnitTest1
             Console.WriteLine("SECOND CONTROLLER CALL SUCCEEDED");
         }
         Assert.Null(badRequest2);
+
+        await CleanProjectAsync(context, "c4515615-d3a5-44e0-998a-14111b2c8ebf");
     }
 
     [Fact]
@@ -424,5 +428,58 @@ public class UnitTest1
         
         Assert.Contains("\"Nombre\":\"Erika\"", cleanedJson);
         Assert.DoesNotContain("\"nombre\"", cleanedJson);
+    }
+
+    private async Task CleanProjectAsync(DiitraContext context, string projectUuid)
+    {
+        var project = await context.InvProyectos.FirstOrDefaultAsync(p => p.Uuid == projectUuid);
+        if (project != null)
+        {
+            var cronograma = context.Set<InvCronograma>().Where(c => c.IdProyecto == project.IdProyecto);
+            context.Set<InvCronograma>().RemoveRange(cronograma);
+
+            var dominios = context.Set<InvProyectoDominio>().Where(d => d.IdProyecto == project.IdProyecto);
+            context.Set<InvProyectoDominio>().RemoveRange(dominios);
+
+            var carreras = context.Set<InvProyectoCarrera>().Where(c => c.IdProyecto == project.IdProyecto);
+            context.Set<InvProyectoCarrera>().RemoveRange(carreras);
+
+            var profesores = context.Set<InvProyectoProfesor>().Where(p => p.IdProyecto == project.IdProyecto);
+            context.Set<InvProyectoProfesor>().RemoveRange(profesores);
+
+            var alumnos = context.Set<InvProyectoAlumno>().Where(a => a.IdProyecto == project.IdProyecto);
+            context.Set<InvProyectoAlumno>().RemoveRange(alumnos);
+
+            var objetivos = context.Set<InvObjetivoProyecto>().Where(o => o.IdProyecto == project.IdProyecto);
+            context.Set<InvObjetivoProyecto>().RemoveRange(objetivos);
+
+            var presupuesto = context.Set<InvPresupuestoItem>().Where(p => p.IdProyecto == project.IdProyecto);
+            context.Set<InvPresupuestoItem>().RemoveRange(presupuesto);
+
+            var mml = context.Set<InvProyectoMml>().Where(m => m.IdProyecto == project.IdProyecto);
+            context.Set<InvProyectoMml>().RemoveRange(mml);
+
+            var impactos = context.Set<InvImpactoProyecto>().Where(i => i.IdProyecto == project.IdProyecto);
+            context.Set<InvImpactoProyecto>().RemoveRange(impactos);
+
+            var productos = context.Set<InvProducto>().Where(p => p.IdProyecto == project.IdProyecto);
+            context.Set<InvProducto>().RemoveRange(productos);
+
+            var bibliografia = context.Set<InvBibliografiaProyecto>().Where(b => b.IdProyecto == project.IdProyecto);
+            context.Set<InvBibliografiaProyecto>().RemoveRange(bibliografia);
+
+            var recursos = context.Set<InvRecursoDisponible>().Where(r => r.IdProyecto == project.IdProyecto);
+            context.Set<InvRecursoDisponible>().RemoveRange(recursos);
+
+            context.InvProyectos.Remove(project);
+            await context.SaveChangesAsync();
+        }
+
+        var documentInstance = await context.DocumentInstances.FirstOrDefaultAsync(d => d.EntityUuid == projectUuid);
+        if (documentInstance != null)
+        {
+            context.DocumentInstances.Remove(documentInstance);
+            await context.SaveChangesAsync();
+        }
     }
 }
