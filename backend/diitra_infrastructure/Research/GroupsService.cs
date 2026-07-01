@@ -50,6 +50,7 @@ public class GroupsService : IGroupsService
     {
         var query = _context.InvGruposInvestigacion
             .Include(g => g.IdCoordinadorNavigation)
+            .Include(g => g.IdLineas)
             .Include(g => g.InvGruposMiembros)
                 .ThenInclude(m => m.IdUsuarioNavigation)
             .AsQueryable();
@@ -77,7 +78,12 @@ public class GroupsService : IGroupsService
 
         var groups = await query.ToListAsync();
 
-        return groups.Select(g => MapToDto(g)).ToList();
+        return groups.Select(g => 
+        {
+            var dto = MapToDto(g);
+            dto.LineasIds = g.IdLineas.Select(l => l.IdLinea).ToList();
+            return dto;
+        }).ToList();
     }
 
     public async Task<GroupDto?> GetByUuidAsync(string uuid)
