@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../api/AuthContext';
-import { Loader2, Lock, Sun, Moon, Key, Home } from 'lucide-react';
+import { Loader2, Lock, Sun, Moon, Key, ArrowLeft } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -46,10 +46,10 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
         // Bloquear el scroll en html y body mientras el login esté montado para que sea estático en móvil
         const originalBodyOverflow = document.body.style.overflow;
         const originalHtmlOverflow = document.documentElement.style.overflow;
-        
+
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
-        
+
         return () => {
             document.body.style.overflow = originalBodyOverflow;
             document.documentElement.style.overflow = originalHtmlOverflow;
@@ -181,25 +181,37 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
 
     return (
         <div className="h-[100dvh] w-screen flex items-center justify-center p-6 bg-bg-deep transition-colors duration-500 overflow-hidden relative">
+            {/* Back to Home Button */}
+            <Link
+                to="/"
+                className="absolute top-6 left-6 flex items-center justify-center h-9 px-3 gap-1.5 bg-transparent hover:bg-surface/30 text-text-dim hover:text-text-main border border-border-thin rounded-lg font-medium text-[10px] sm:text-[11px] uppercase tracking-wider transition-all duration-300 cursor-pointer shadow-none z-30"
+                title="Volver al Inicio"
+            >
+                <ArrowLeft size={13} strokeWidth={2} />
+                <span>Inicio</span>
+            </Link>
+
             {/* Theme Toggle Button */}
             {toggleTheme && (
                 <button
                     onClick={toggleTheme}
-                    className="absolute top-6 right-6 text-text-dim hover:text-text-main transition-all duration-300 z-30 cursor-pointer"
+                    className="absolute top-6 right-6 flex items-center justify-center h-9 w-9 bg-transparent hover:bg-surface/30 text-text-dim hover:text-text-main border border-border-thin rounded-lg transition-all duration-300 z-30 cursor-pointer shadow-none"
                     title={currentTheme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
                 >
-                    {currentTheme === 'dark' ? <Sun size={18} strokeWidth={1.5} /> : <Moon size={18} strokeWidth={1.5} />}
+                    {currentTheme === 'dark' ? <Sun size={15} strokeWidth={2} /> : <Moon size={15} strokeWidth={2} />}
                 </button>
             )}
 
             <div className="w-full max-w-[350px] space-y-4 sm:space-y-7 relative z-20 animate-fade-up">
                 {/* Brand Logo & Header */}
                 <div className="flex flex-col items-center space-y-3 sm:space-y-6">
-                    <img
-                        src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
-                        alt="DIITRA Logo"
-                        className="h-12 sm:h-16 w-auto object-contain"
-                    />
+                    <Link to="/" className="cursor-pointer transition-transform hover:scale-105 duration-300">
+                        <img
+                            src={currentTheme === 'dark' ? `${import.meta.env.BASE_URL}logo_blanco.png` : `${import.meta.env.BASE_URL}logo_negro.png`}
+                            alt="DIITRA Logo"
+                            className="h-12 sm:h-16 w-auto object-contain"
+                        />
+                    </Link>
                     <div className="text-center space-y-0.5 sm:space-y-1">
                         <h1 className="text-xl sm:text-2xl font-semibold tracking-tighter text-text-main">Entrar a DIITRA</h1>
                         <p className="text-[10px] sm:text-[11px] text-text-dim font-medium tracking-tight">Departamento de Investigación e Innovación Traversari</p>
@@ -307,7 +319,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 <button
                                     type="button"
                                     onClick={handleMicrosoftLogin}
-                                    className="w-full h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 bg-surface hover:bg-surface/80 text-text-main border border-border-thin rounded-lg font-semibold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow"
+                                    className="w-full h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-none"
                                 >
                                     <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" viewBox="0 0 21 21">
                                         <rect x="1" y="1" width="9" height="9" fill="#F25022" />
@@ -321,7 +333,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                                 {/* Acceso con PIN */}
                                 <Link
                                     to="/auth/pin"
-                                    className="w-full h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer shadow-sm hover:shadow no-underline"
+                                    className="w-full h-10 sm:h-11 flex items-center justify-center gap-1.5 sm:gap-2 bg-transparent hover:bg-surface/30 text-text-main border border-border-thin rounded-lg font-semibold text-[9px] sm:text-[10px] uppercase tracking-widest transition-all cursor-pointer no-underline shadow-none"
                                     title="Ingresar con código PIN de handoff"
                                 >
                                     <Key size={11} className="shrink-0 text-text-dim" />
@@ -331,9 +343,7 @@ const Login = ({ currentTheme = 'dark', toggleTheme }: LoginProps) => {
                         </div>
                     </form>
 
-                    <div className="text-center -mt-1 sm:-mt-2">
-                        <Link to="/" className="hover:text-text-main transition-colors no-underline text-[12px] sm:text-[13px] text-text-dim font-medium tracking-tight">Inicio</Link>
-                    </div>
+
                 </div>
             </div>
 

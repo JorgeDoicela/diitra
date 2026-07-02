@@ -633,7 +633,7 @@ namespace diitra_infrastructure.Research
 
             if (p == null) return null;
 
-            ProyectoDto dto;
+            ProyectoDto dto = new ProyectoDto();
             if (!string.IsNullOrEmpty(p.MetadataCacesJson))
             {
                 try
