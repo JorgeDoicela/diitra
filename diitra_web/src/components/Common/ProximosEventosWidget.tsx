@@ -29,8 +29,14 @@ export const ProximosEventosWidget: React.FC = () => {
         const dentroDe7Dias = new Date();
         dentroDe7Dias.setDate(hoy.getDate() + 7);
 
-        const desdeStr = hoy.toISOString().split('T')[0];
-        const hastaStr = dentroDe7Dias.toISOString().split('T')[0];
+        const formatLocal = (d: Date) => {
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+        const desdeStr = formatLocal(hoy);
+        const hastaStr = formatLocal(dentroDe7Dias);
 
         const response = await api.get('/calendario/eventos', {
           params: { desde: desdeStr, hasta: hastaStr }
@@ -48,7 +54,11 @@ export const ProximosEventosWidget: React.FC = () => {
 
   const handleEventoClick = (ev: Evento) => {
     if (ev.url_accion) {
-      navigate(ev.url_accion);
+      if (ev.url_accion.startsWith('http://') || ev.url_accion.startsWith('https://')) {
+        window.open(ev.url_accion, '_blank');
+      } else {
+        navigate(ev.url_accion);
+      }
     } else if (ev.categoria_global === 'Proyecto' && ev.uuid) {
       navigate(`/proyectos/${ev.uuid}`);
     } else {
@@ -74,7 +84,7 @@ export const ProximosEventosWidget: React.FC = () => {
   return (
     <div className="widget-proximos-eventos">
       <div className="widget-header">
-        <h3>📅 Próximos Eventos</h3>
+        <h3>Próximos Eventos</h3>
         <span className="badge-7d">7 días</span>
       </div>
 

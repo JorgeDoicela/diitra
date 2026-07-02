@@ -92,7 +92,7 @@ const ConfiguracionPage = () => {
     const confirm = useConfirm();
     
     const [detailItem, setDetailItem] = useState<{
-        type: 'linea' | 'periodo' | 'producto' | 'dominio' | 'indicador';
+        type: 'linea' | 'periodo' | 'producto' | 'dominio' | 'indicador' | 'calendario';
         data: any;
     } | null>(null);
 
@@ -676,7 +676,7 @@ const ConfiguracionPage = () => {
             message: `¿Está seguro de eliminar el hito normativo "${item.titulo}" del calendario?`,
             confirmText: "Eliminar",
             cancelText: "Cancelar",
-            variant: "danger"
+            variant: "destructive"
         })) return;
         try {
             await api.delete(`/calendario/normativos/${item.uuid}`);
@@ -1182,7 +1182,7 @@ const ConfiguracionPage = () => {
                                 </thead>
                                 <tbody className="divide-y divide-border-thin">
                                     {filteredCalendario.map((c) => (
-                                        <tr key={c.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'calendario' as any, data: c })}>
+                                        <tr key={c.uuid} className="hover:bg-surface/30 transition-colors group cursor-pointer" onClick={() => setDetailItem({ type: 'calendario', data: c })}>
                                             <td className="p-4">
                                                 <p className="text-sm font-semibold text-text-main uppercase tracking-tight">{c.titulo}</p>
                                                 {c.descripcion && <p className="text-[10px] text-text-dim truncate max-w-xs">{c.descripcion}</p>}
@@ -1769,14 +1769,16 @@ const ConfiguracionPage = () => {
                                     {detailItem.type === 'producto' && <Tag size={20} />}
                                     {detailItem.type === 'dominio' && <Globe size={20} />}
                                     {detailItem.type === 'indicador' && <BarChart2 size={20} />}
+                                    {detailItem.type === 'calendario' && <Calendar size={20} />}
                                 </div>
                                 <div>
                                     <h3 className="text-lg font-bold text-text-main uppercase tracking-tight">
                                         {detailItem.type === 'linea' && (detailItem.data as LineaInvestigacion).nombreLinea}
-                                        {detailItem.type === 'periodo' && (detailItem.data as PeriodoAcademico).detalle || (detailItem.data as PeriodoAcademico).idPeriodo}
+                                        {detailItem.type === 'periodo' && ((detailItem.data as PeriodoAcademico).detalle || (detailItem.data as PeriodoAcademico).idPeriodo)}
                                         {detailItem.type === 'producto' && (detailItem.data as TipoProducto).nombre}
                                         {detailItem.type === 'dominio' && (detailItem.data as DominioAcademico).nombre}
                                         {detailItem.type === 'indicador' && (detailItem.data as ConfigIndicador).nombreIndicador}
+                                        {detailItem.type === 'calendario' && (detailItem.data as EventoNormativo).titulo}
                                     </h3>
                                     <p className="section-label text-text-dim">
                                         {detailItem.type === 'linea' && 'Línea de Investigación'}
@@ -1784,6 +1786,7 @@ const ConfiguracionPage = () => {
                                         {detailItem.type === 'producto' && 'Tipo de Producto'}
                                         {detailItem.type === 'dominio' && 'Dominio Académico'}
                                         {detailItem.type === 'indicador' && 'Indicador CACES'}
+                                        {detailItem.type === 'calendario' && 'Hito Normativo'}
                                     </p>
                                 </div>
                             </div>
@@ -1950,48 +1953,49 @@ const ConfiguracionPage = () => {
                                                 <p className="text-sm text-text-main leading-relaxed">{i.descripcion}</p>
                                             </div>
                                         )}
-                                        {detailItem.type === 'calendario' && (() => {
-                                            const c = detailItem.data as EventoNormativo;
-                                            return (
-                                                <>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="bento-card static p-4">
-                                                            <label className="section-label text-text-dim mb-2">Hito Normativo</label>
-                                                            <p className="text-sm font-bold text-text-main">{c.titulo}</p>
-                                                        </div>
-                                                        <div className="bento-card static p-4">
-                                                            <label className="section-label text-text-dim mb-2">Estado</label>
-                                                            {c.activo ? (
-                                                                <span className="badge-vercel badge-vercel-success"><CheckCircle size={10} /> Activo</span>
-                                                            ) : (
-                                                                <span className="badge-vercel badge-vercel-error"><XCircle size={10} /> Inactivo</span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-3 gap-4">
-                                                        <div className="bento-card static p-4">
-                                                            <label className="section-label text-text-dim mb-2">Fecha Inicio</label>
-                                                            <p className="text-sm font-bold text-text-main font-mono">{c.fechaInicio}</p>
-                                                        </div>
-                                                        <div className="bento-card static p-4">
-                                                            <label className="section-label text-text-dim mb-2">Tipo</label>
-                                                            <span className="badge-vercel badge-vercel-brand">{c.tipoEvento}</span>
-                                                        </div>
-                                                        <div className="bento-card static p-4">
-                                                            <label className="section-label text-text-dim mb-2">Recurrente</label>
-                                                            <p className="text-sm font-bold text-text-main">{c.recurrenciaAnual ? 'Sí (Anual)' : 'No'}</p>
-                                                        </div>
-                                                    </div>
-                                                    {c.descripcion && (
-                                                        <div className="bento-card static p-4 space-y-3">
-                                                            <label className="section-label text-text-main"><Calendar size={12} /> Descripción</label>
-                                                            <div className="divider-vercel !my-0" />
-                                                            <p className="text-sm text-text-main leading-relaxed">{c.descripcion}</p>
-                                                        </div>
-                                                    )}
-                                                </>
-                                            );
-                                        })()}
+                                    </>
+                                );
+                            })()}
+
+                            {detailItem.type === 'calendario' && (() => {
+                                const c = detailItem.data as EventoNormativo;
+                                return (
+                                    <>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bento-card static p-4">
+                                                <label className="section-label text-text-dim mb-2">Hito Normativo</label>
+                                                <p className="text-sm font-bold text-text-main">{c.titulo}</p>
+                                            </div>
+                                            <div className="bento-card static p-4">
+                                                <label className="section-label text-text-dim mb-2">Estado</label>
+                                                {c.activo ? (
+                                                    <span className="badge-vercel badge-vercel-success"><CheckCircle size={10} /> Activo</span>
+                                                ) : (
+                                                    <span className="badge-vercel badge-vercel-error"><XCircle size={10} /> Inactivo</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-4">
+                                            <div className="bento-card static p-4">
+                                                <label className="section-label text-text-dim mb-2">Fecha Inicio</label>
+                                                <p className="text-sm font-bold text-text-main font-mono">{c.fechaInicio}</p>
+                                            </div>
+                                            <div className="bento-card static p-4">
+                                                <label className="section-label text-text-dim mb-2">Tipo</label>
+                                                <span className="badge-vercel badge-vercel-brand">{c.tipoEvento}</span>
+                                            </div>
+                                            <div className="bento-card static p-4">
+                                                <label className="section-label text-text-dim mb-2">Recurrente</label>
+                                                <p className="text-sm font-bold text-text-main">{c.recurrenciaAnual ? 'Sí (Anual)' : 'No'}</p>
+                                            </div>
+                                        </div>
+                                        {c.descripcion && (
+                                            <div className="bento-card static p-4 space-y-3">
+                                                <label className="section-label text-text-main"><Calendar size={12} /> Descripción</label>
+                                                <div className="divider-vercel !my-0" />
+                                                <p className="text-sm text-text-main leading-relaxed">{c.descripcion}</p>
+                                            </div>
+                                        )}
                                     </>
                                 );
                             })()}
@@ -2007,7 +2011,7 @@ const ConfiguracionPage = () => {
                                         if (detailItem.type === 'producto') handleOpenProductoModal(detailItem.data as TipoProducto);
                                         if (detailItem.type === 'dominio') handleOpenDominioModal(detailItem.data as DominioAcademico);
                                         if (detailItem.type === 'indicador') handleOpenIndicadorModal(detailItem.data as ConfigIndicador);
-                                        if (detailItem.type === 'calendario' as any) handleOpenCalendarioModal(detailItem.data as EventoNormativo);
+                                        if (detailItem.type === 'calendario') handleOpenCalendarioModal(detailItem.data as EventoNormativo);
                                         setDetailItem(null);
                                     }
                                 }}

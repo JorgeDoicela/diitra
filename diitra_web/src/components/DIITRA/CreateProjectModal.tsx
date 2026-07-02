@@ -5,7 +5,6 @@ import { X, Shield, BookOpen, Briefcase, Award, Loader, ChevronDown, Check, File
 import api from '../../api/axios_config';
 import { useAuth } from '../../api/AuthContext';
 import { DocumentTemplateRegistry } from '../../core/documents/registry/DocumentTemplateRegistry';
-import { buildWorkspacePath } from '../../core/documents/templateUrl';
 
 interface CreateProjectModalProps {
     preselectedConvocatoriaId?: number | null;

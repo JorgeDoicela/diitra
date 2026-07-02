@@ -3,7 +3,9 @@
   gap: 24px;
   padding: 24px;
   height: calc(100vh - 100px);
-  background: var(--bg-body, #f4f6f9);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
   box-sizing: border-box;
 }
 
@@ -16,25 +18,27 @@
 }
 
 .sidebar-section {
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #eaeaea);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .sidebar-section h3 {
   margin: 0 0 16px 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #333);
+  color: var(--fg);
+  font-family: var(--font-sans);
 }
 
 .sidebar-section h4 {
   margin: 0 0 8px 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--text-primary, #333);
+  color: var(--fg);
+  font-family: var(--font-sans);
 }
 
 .filtros-lista {
@@ -48,46 +52,52 @@
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  color: var(--text-secondary, #555);
+  color: var(--text-dim);
   cursor: pointer;
   user-select: none;
+  transition: color 0.2s;
+}
+
+.filtro-item:hover {
+  color: var(--fg);
 }
 
 .filtro-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
   border-radius: 4px;
-  border: 1px solid var(--border-color, #ccc);
+  border: 1px solid var(--border);
+  background: var(--bg);
   cursor: pointer;
+  accent-color: var(--brand);
 }
 
 .color-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background-color: var(--color, #6B7280);
+  background-color: var(--color, var(--text-dim));
   display: inline-block;
 }
 
 .info-section {
-  background: rgba(59, 130, 246, 0.05);
-  border-color: rgba(59, 130, 246, 0.1);
+  background: var(--brand-subtle);
+  border-color: var(--brand);
 }
 
 .info-section p {
   margin: 0;
   font-size: 12px;
-  color: var(--text-secondary, #555);
+  color: var(--text-dim);
   line-height: 1.5;
 }
 
 .calendario-main {
   flex: 1;
-  background: var(--bg-card, #ffffff);
-  border: 1px solid var(--border-color, #eaeaea);
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
@@ -98,8 +108,8 @@
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(59, 130, 246, 0.9);
-  color: white;
+  background: var(--brand);
+  color: #ffffff;
   text-align: center;
   font-size: 11px;
   padding: 3px 0;
@@ -112,9 +122,10 @@
   to { opacity: 1; }
 }
 
-/* Personalizaciones para react-big-calendar */
+/* Personalizaciones para react-big-calendar basadas en Vercel Geist */
 .rbc-calendar {
-  font-family: inherit;
+  font-family: var(--font-sans);
+  color: var(--fg);
 }
 
 .rbc-toolbar {
@@ -122,77 +133,181 @@
 }
 
 .rbc-toolbar button {
-  color: var(--text-secondary, #555);
-  border: 1px solid var(--border-color, #eaeaea) !important;
-  background: #fff;
+  color: var(--fg);
+  border: 1px solid var(--border) !important;
+  background: var(--surface);
   padding: 6px 12px;
   font-size: 13px;
   font-weight: 500;
   border-radius: 6px;
-  transition: all 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
   cursor: pointer;
+  font-family: var(--font-sans);
 }
 
 .rbc-toolbar button:hover {
-  background: var(--bg-hover, #f9fafb);
-  color: var(--text-primary, #333);
+  background: var(--surface-hover);
+  border-color: var(--border-hover) !important;
+  color: var(--fg);
 }
 
 .rbc-toolbar button.rbc-active {
-  background: #3b82f6 !important;
-  color: #fff !important;
-  border-color: #3b82f6 !important;
+  background: var(--fg) !important;
+  color: var(--bg) !important;
+  border-color: var(--fg) !important;
 }
 
 .rbc-toolbar-label {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary, #333);
+  color: var(--fg);
 }
 
 .rbc-header {
   padding: 10px 0;
   font-weight: 600;
-  font-size: 12px;
-  color: var(--text-secondary, #666);
-  border-bottom: 2px solid var(--border-color, #eaeaea) !important;
+  font-size: 11px;
+  color: var(--text-dim);
+  border-bottom: 2px solid var(--border) !important;
   text-transform: uppercase;
+  font-family: var(--font-sans);
 }
 
 .rbc-month-view, .rbc-time-view, .rbc-agenda-view {
-  border: 1px solid var(--border-color, #eaeaea) !important;
-  border-radius: 8px;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius);
   overflow: hidden;
+  background: var(--surface);
 }
 
 .rbc-day-bg {
-  border-left: 1px solid var(--border-color, #f0f0f0) !important;
+  border-left: 1px solid var(--border) !important;
+  background: transparent;
 }
 
 .rbc-day-bg + .rbc-day-bg {
-  border-left: 1px solid var(--border-color, #f0f0f0) !important;
+  border-left: 1px solid var(--border) !important;
 }
 
 .rbc-month-row {
-  border-top: 1px solid var(--border-color, #f0f0f0) !important;
+  border-top: 1px solid var(--border) !important;
 }
 
 .rbc-today {
-  background-color: rgba(59, 130, 246, 0.03) !important;
+  background-color: var(--brand-subtle) !important;
 }
 
 .rbc-event {
   outline: none;
+  font-family: var(--font-sans);
 }
 
 .rbc-event:hover {
-  filter: brightness(0.95);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .rbc-show-more {
   font-weight: 600;
   font-size: 11px;
-  color: #3b82f6;
+  color: var(--brand-light);
   background: none;
+  transition: color 0.2s;
+}
+
+.rbc-show-more:hover {
+  color: var(--brand);
+}
+
+/* Estilos adicionales para sección iCal */
+.ical-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ical-help-text {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.ical-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ical-input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 11px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  outline: none;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+.ical-input:focus {
+  border-color: var(--border-hover);
+}
+
+.ical-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.ical-btn {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  font-family: var(--font-sans);
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.ical-btn.primary {
+  background: var(--fg);
+  color: var(--bg);
+  border-color: var(--fg);
+}
+
+.ical-btn.primary:hover {
+  background: var(--accents-7);
+  border-color: var(--accents-7);
+}
+
+.ical-btn.secondary {
+  background: var(--surface);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.ical-btn.secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--fg);
+}
+
+.ical-btn.generate {
+  width: 100%;
+  background: var(--fg);
+  color: var(--bg);
+  border: 1px solid var(--fg);
+  padding: 8px 0;
+}
+
+.ical-btn.generate:hover {
+  background: var(--accents-7);
+  border-color: var(--accents-7);
 }

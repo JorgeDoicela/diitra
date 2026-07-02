@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using diitra_application.Research;
+using diitra_infrastructure.data.models;
 
 namespace diitra_api.Controllers;
 
@@ -11,10 +13,12 @@ namespace diitra_api.Controllers;
 public class CalendarioController : ControllerBase
 {
     private readonly ICalendarioService _calendarioService;
+    private readonly DiitraContext _context;
 
-    public CalendarioController(ICalendarioService calendarioService)
+    public CalendarioController(ICalendarioService calendarioService, DiitraContext context)
     {
         _calendarioService = calendarioService;
+        _context = context;
     }
 
     // ── GET /api/calendario/eventos?desde=2025-09-01&hasta=2025-09-30 ────────
@@ -26,11 +30,11 @@ public class CalendarioController : ControllerBase
         return Ok(eventos);
     }
 
-    // ── GET /api/calendario/feed/{token}/calendario.ics ─────────────────────
+    // ── GET /api/calendario/feed ────────────────────────────────────────────
     // Endpoint público (no requiere JWT). Valida el token iCal interno.
-    [HttpGet("feed/{token}/calendario.ics")]
+    [HttpGet("feed")]
     [AllowAnonymous]
-    public async Task<IActionResult> GetIcalFeed(string token)
+    public async Task<IActionResult> GetIcalFeed([FromQuery] string token)
     {
         var ics = await _calendarioService.GenerarIcalFeedAsync(token);
         if (ics == null) return Unauthorized(new { message = "Token iCal inválido o revocado." });
@@ -41,12 +45,14 @@ public class CalendarioController : ControllerBase
     [HttpPost("ical/token")]
     public async Task<IActionResult> GenerarTokenIcal()
     {
-        var idUsuarioClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(idUsuarioClaim, out var idUsuario))
-            return Unauthorized();
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
 
-        var token = await _calendarioService.GenerarORegenerarTokenIcalAsync(idUsuario);
-        var feedUrl = $"{Request.Scheme}://{Request.Host}/api/calendario/feed/{token}/calendario.ics";
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var token = await _calendarioService.GenerarORegenerarTokenIcalAsync(dbUser.IdUsuario);
+        var feedUrl = $"{Request.Scheme}://{Request.Host}/api/calendario/feed?token={token}";
         return Ok(new { token, feed_url = feedUrl });
     }
 
@@ -64,9 +70,13 @@ public class CalendarioController : ControllerBase
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> CreateNormativo([FromBody] EventoNormativoDto dto)
     {
-        var idUsuarioClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        int.TryParse(idUsuarioClaim, out var idAdmin);
-        var uuid = await _calendarioService.CreateNormativoAsync(dto, idAdmin);
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var uuid = await _calendarioService.CreateNormativoAsync(dto, dbUser.IdUsuario);
         return CreatedAtAction(nameof(GetNormativos), new { }, new { uuid });
     }
 

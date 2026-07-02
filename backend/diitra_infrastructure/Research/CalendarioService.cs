@@ -33,17 +33,17 @@ public class CalendarioService : ICalendarioService
     {
         var sql = @"
             SELECT
-                id_evento_calendario, uuid, titulo, descripcion,
-                categoria_global, subcategoria,
-                fecha_inicio, fecha_fin, es_todo_el_dia, color_hex,
-                id_entidad_origen, uuid_entidad_origen, tipo_entidad_origen,
-                url_accion, roles_visibles
+                idEventoCalendario, uuid, titulo, descripcion,
+                categoriaGlobal, subcategoria,
+                fechaInicio, fechaFin, esTodoElDia, colorHex,
+                idEntidadOrigen, uuidEntidadOrigen, tipoEntidadOrigen,
+                urlAccion, rolesVisibles
             FROM v_calendario_eventos
             WHERE activo = 1
-              AND fecha_inicio <= {1}
-              AND (fecha_fin IS NULL OR fecha_fin >= {0})
-              AND (roles_visibles IS NULL OR FIND_IN_SET({2}, roles_visibles) > 0)
-            ORDER BY fecha_inicio ASC";
+              AND fechaInicio <= {1}
+              AND (fechaFin IS NULL OR fechaFin >= {0})
+              AND (rolesVisibles IS NULL OR FIND_IN_SET({2}, rolesVisibles) > 0)
+            ORDER BY fechaInicio ASC";
 
         var eventos = await _context.Database
             .SqlQueryRaw<CalendarioEventoRaw>(sql,
@@ -62,7 +62,7 @@ public class CalendarioService : ICalendarioService
         foreach (var norm in normativos)
         {
             if (!string.IsNullOrEmpty(norm.RolesVisibles) &&
-                !norm.RolesVisibles.Split(',').Contains(rolUsuario)) continue;
+                !norm.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rolUsuario)) continue;
 
             // Proyectar la recurrencia en el rango solicitado
             int añoDesde = desde.Year;
@@ -108,7 +108,18 @@ public class CalendarioService : ICalendarioService
 
         // Obtener usuario para determinar su rol
         var usuario = await _context.Users.FindAsync(record.IdUsuario);
-        var rol = "DIITRA_DOCENTE"; // fallback; el feed público no puede verificar JWT
+        var rol = "DIITRA_DOCENTE"; // fallback
+        if (usuario != null)
+        {
+            var userRole = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .Where(ur => ur.IdUsuario == usuario.IdUsuario && (ur.EsActivo ?? true))
+                .FirstOrDefaultAsync();
+            if (userRole?.Role != null)
+            {
+                rol = userRole.Role.CodigoRol;
+            }
+        }
 
         var desde = DateOnly.FromDateTime(DateTime.Today.AddMonths(-1));
         var hasta = DateOnly.FromDateTime(DateTime.Today.AddMonths(6));
@@ -268,14 +279,19 @@ public class CalendarioService : ICalendarioService
 
         foreach (var usuario in usuarios)
         {
-            // Determinar rol del usuario (simplificado)
-            var rol = "DIITRA_DOCENTE";
+            // Determinar rol del usuario
+            var userRole = await _context.UserRoles
+                .Include(ur => ur.Role)
+                .Where(ur => ur.IdUsuario == usuario.IdUsuario && (ur.EsActivo ?? true))
+                .FirstOrDefaultAsync();
+            var rol = userRole?.Role?.CodigoRol ?? "DIITRA_DOCENTE";
+
             try
             {
                 foreach (var evento in normativos)
                 {
                     if (!string.IsNullOrEmpty(evento.RolesVisibles) &&
-                        !evento.RolesVisibles.Split(',').Contains(rol)) continue;
+                        !evento.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rol)) continue;
 
                     var fechaAlerta = evento.FechaInicio.AddDays(-(evento.AlertaDias ?? 7));
                     if (fechaAlerta != hoy) continue;
