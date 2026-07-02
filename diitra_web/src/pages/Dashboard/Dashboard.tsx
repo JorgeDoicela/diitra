@@ -21,7 +21,7 @@ const Dashboard: React.FC = () => {
     }, [isAdmin, isDocente, isEstudiante, isRevisor, isLoading]);
 
     return (
-        <main className="flex-1 bg-bg-deep overflow-y-auto selection:bg-selection-bg selection:text-selection-fg transition-colors duration-300">
+        <main className="flex-1 bg-bg-deep selection:bg-selection-bg selection:text-selection-fg transition-colors duration-300">
             <div className="max-w-[1600px] mx-auto p-4 md:p-10">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">

@@ -18,6 +18,9 @@ public partial class InvCalendarioEventoNormativo
     public string? ColorHex { get; set; } = "#6B7280";
     public int? AlertaDias { get; set; } = 7;
     public bool Activo { get; set; } = true;
+    public bool EsPrivado { get; set; } = true;
+    public string Prioridad { get; set; } = "Media";
+    public string Estado { get; set; } = "Pendiente";
     public int? CreadoPor { get; set; }
     public DateTime FechaRegistro { get; set; }
     public DateTime FechaModificacion { get; set; }

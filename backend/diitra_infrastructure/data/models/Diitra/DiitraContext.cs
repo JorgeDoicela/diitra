@@ -2009,13 +2009,16 @@ public partial class DiitraContext : DbContext
             entity.HasIndex(e => e.Uuid).IsUnique();
             entity.Property(e => e.Titulo).HasColumnName("titulo").HasMaxLength(255).IsRequired();
             entity.Property(e => e.Descripcion).HasColumnName("descripcion").HasColumnType("text");
-            entity.Property(e => e.TipoEvento).HasColumnName("tipoEvento").HasColumnType("enum('Normativo','Academico','Institucional','Feriado')").HasDefaultValueSql("'Normativo'");
+            entity.Property(e => e.TipoEvento).HasColumnName("tipoEvento").HasMaxLength(50).HasDefaultValue("Normativo");
             entity.Property(e => e.FechaInicio).HasColumnName("fechaInicio").IsRequired();
             entity.Property(e => e.FechaFin).HasColumnName("fechaFin");
             entity.Property(e => e.EsTodoElDia).HasColumnName("esTodoElDia").HasDefaultValue(true);
             entity.Property(e => e.RecurrenciaAnual).HasColumnName("recurrenciaAnual").HasDefaultValue(false);
             entity.Property(e => e.RecurrenciaHasta).HasColumnName("recurrenciaHasta");
             entity.Property(e => e.RolesVisibles).HasColumnName("rolesVisibles").HasMaxLength(255);
+            entity.Property(e => e.EsPrivado).HasColumnName("esPrivado").HasDefaultValue(true);
+            entity.Property(e => e.Prioridad).HasColumnName("prioridad").HasMaxLength(15).HasDefaultValue("Media");
+            entity.Property(e => e.Estado).HasColumnName("estado").HasMaxLength(20).HasDefaultValue("Pendiente");
             entity.Property(e => e.ModuloOrigen).HasColumnName("moduloOrigen").HasMaxLength(50);
             entity.Property(e => e.UrlAccion).HasColumnName("urlAccion").HasMaxLength(255);
             entity.Property(e => e.ColorHex).HasColumnName("colorHex").HasMaxLength(7).HasDefaultValue("#6B7280");

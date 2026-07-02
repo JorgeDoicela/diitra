@@ -5,8 +5,9 @@ import type { Event as BigCalendarEvent, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { X, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
+import { X, Calendar as CalendarIcon, ArrowRight, Plus, Trash2, Edit2, CheckCircle, Info } from 'lucide-react';
 import api from '../../api/axios_config';
+import { useAuth } from '../../api/AuthContext';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import './CalendarioPage.css';
 
@@ -34,6 +35,10 @@ interface Evento {
     es_todo_el_dia: boolean;
     color_hex: string | null;
     url_accion: string | null;
+    es_privado: boolean;
+    prioridad: string;
+    estado: string;
+    creado_por: number | null;
 }
 
 interface CalendarEventExtended extends BigCalendarEvent {
@@ -41,6 +46,7 @@ interface CalendarEventExtended extends BigCalendarEvent {
 }
 
 export const CalendarioPage: React.FC = () => {
+    const { user } = useAuth();
     const [eventos, setEventos] = useState<CalendarEventExtended[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -51,15 +57,153 @@ export const CalendarioPage: React.FC = () => {
         'Proyecto': true,
         'Monitoreo': true,
         'PeerReview': true,
+        'Personal': true,
     });
 
     const [selectedEvent, setSelectedEvent] = useState<Evento | null>(null);
-
     const navigate = useNavigate();
+
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editingUuid, setEditingUuid] = useState<string | null>(null);
+
+    // Campos del formulario
+    const [formTitulo, setFormTitulo] = useState('');
+    const [formDescripcion, setFormDescripcion] = useState('');
+    const [formTipo, setFormTipo] = useState('Personal');
+    const [formFechaInicio, setFormFechaInicio] = useState('');
+    const [formFechaFin, setFormFechaFin] = useState('');
+    const [formEsTodoElDia, setFormEsTodoElDia] = useState(true);
+    const [formColorHex, setFormColorHex] = useState('#3B82F6');
+    const [formEsPrivado, setFormEsPrivado] = useState(true);
+    const [formPrioridad, setFormPrioridad] = useState('Media');
+    const [formEstado, setFormEstado] = useState('Pendiente');
 
     const [icalUrl, setIcalUrl] = useState<string>('');
     const [generatingToken, setGeneratingToken] = useState(false);
     const [copied, setCopied] = useState(false);
+
+    const handleNewEventClick = () => {
+        setFormTitulo('');
+        setFormDescripcion('');
+        setFormTipo('Personal');
+        setFormFechaInicio(format(new Date(), 'yyyy-MM-dd'));
+        setFormFechaFin(format(new Date(), 'yyyy-MM-dd'));
+        setFormEsTodoElDia(true);
+        setFormColorHex('#3B82F6');
+        setFormEsPrivado(true);
+        setFormPrioridad('Media');
+        setFormEstado('Pendiente');
+        setIsEditing(false);
+        setEditingUuid(null);
+        setIsFormOpen(true);
+    };
+
+    const handleEditEventClick = (ev: Evento) => {
+        setFormTitulo(ev.titulo);
+        setFormDescripcion(ev.descripcion || '');
+        setFormTipo(ev.subcategoria || 'Personal');
+        setFormFechaInicio(ev.fecha_inicio);
+        setFormFechaFin(ev.fecha_fin || ev.fecha_inicio);
+        setFormEsTodoElDia(ev.es_todo_el_dia);
+        setFormColorHex(ev.color_hex || '#3B82F6');
+        setFormEsPrivado(ev.es_privado);
+        setFormPrioridad(ev.prioridad || 'Media');
+        setFormEstado(ev.estado || 'Pendiente');
+        setEditingUuid(ev.uuid);
+        setIsEditing(true);
+        setIsFormOpen(true);
+        setSelectedEvent(null);
+    };
+
+    const handleSaveEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!formTitulo.trim()) return;
+
+        // payload en snake_case
+        const payload = {
+            titulo: formTitulo,
+            descripcion: formDescripcion,
+            tipo_evento: formTipo,
+            fecha_inicio: formFechaInicio,
+            fecha_fin: formFechaFin || null,
+            es_todo_el_dia: formEsTodoElDia,
+            recurrencia_anual: false,
+            recurrencia_hasta: null,
+            roles_visibles: null,
+            modulo_origen: 'PERSONAL',
+            url_accion: null,
+            color_hex: formColorHex,
+            alerta_dias: null,
+            activo: true,
+            es_privado: formEsPrivado,
+            prioridad: formPrioridad,
+            estado: formEstado
+        };
+
+        try {
+            setLoading(true);
+            if (isEditing && editingUuid) {
+                await api.put(`/calendario/usuario/eventos/${editingUuid}`, payload);
+            } else {
+                await api.post('/calendario/usuario/eventos', payload);
+            }
+            setIsFormOpen(false);
+            fetchEventos(currentDate);
+        } catch (error) {
+            console.error('Error al guardar evento de usuario:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteEvent = async (uuid: string) => {
+        if (!window.confirm('¿Está seguro de que desea eliminar este evento/tarea?')) return;
+        try {
+            setLoading(true);
+            await api.delete(`/calendario/usuario/eventos/${uuid}`);
+            setSelectedEvent(null);
+            fetchEventos(currentDate);
+        } catch (error) {
+            console.error('Error al eliminar evento de usuario:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleQuickComplete = async (ev: Evento) => {
+        // payload en snake_case
+        const payload = {
+            titulo: ev.titulo,
+            descripcion: ev.descripcion,
+            tipo_evento: ev.subcategoria,
+            fecha_inicio: ev.fecha_inicio,
+            fecha_fin: ev.fecha_fin,
+            es_todo_el_dia: ev.es_todo_el_dia,
+            recurrencia_anual: false,
+            recurrencia_hasta: null,
+            roles_visibles: null,
+            modulo_origen: 'PERSONAL',
+            url_accion: ev.url_accion,
+            color_hex: ev.color_hex,
+            alerta_dias: null,
+            activo: true,
+            es_privado: ev.es_privado,
+            prioridad: ev.prioridad,
+            estado: 'Completado'
+        };
+
+        try {
+            setLoading(true);
+            await api.put(`/calendario/usuario/eventos/${ev.uuid}`, payload);
+            setSelectedEvent(null);
+            fetchEventos(currentDate);
+        } catch (error) {
+            console.error('Error al completar evento de usuario:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const savedUrl = localStorage.getItem('diitra_ical_url');
@@ -140,7 +284,7 @@ export const CalendarioPage: React.FC = () => {
                 params: { desde: desdeStr, hasta: hastaStr }
             });
 
-            const parsed: CalendarEventExtended[] = (response.data || []).map((ev: Evento) => {
+            const parsed: CalendarEventExtended[] = (response.data || []).map((ev: any) => {
                 const [yI, mI, dI] = ev.fecha_inicio.split('-').map(Number);
                 const start = new Date(yI, mI - 1, dI);
                 let end = start;
@@ -155,7 +299,23 @@ export const CalendarioPage: React.FC = () => {
                     start,
                     end,
                     allDay: ev.es_todo_el_dia,
-                    resource: ev,
+                    resource: {
+                        id_evento_calendario: ev.id_evento_calendario,
+                        uuid: ev.uuid,
+                        titulo: ev.titulo,
+                        descripcion: ev.descripcion,
+                        categoria_global: ev.categoria_global,
+                        subcategoria: ev.subcategoria,
+                        fecha_inicio: ev.fecha_inicio,
+                        fecha_fin: ev.fecha_fin,
+                        es_todo_el_dia: ev.es_todo_el_dia,
+                        color_hex: ev.color_hex,
+                        url_accion: ev.url_accion,
+                        es_privado: !!ev.es_privado,
+                        prioridad: ev.prioridad || 'Media',
+                        estado: ev.estado || 'Pendiente',
+                        creado_por: ev.creado_por
+                    },
                 };
             });
 
@@ -226,6 +386,14 @@ export const CalendarioPage: React.FC = () => {
     return (
         <div className="calendario-page-container">
             <div className="calendario-sidebar">
+                <button
+                    onClick={handleNewEventClick}
+                    className="w-full py-3 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 mb-2 shadow-sm"
+                >
+                    <Plus size={14} />
+                    Añadir Tarea / Evento
+                </button>
+
                 <div className="sidebar-section">
                     <h3>Filtros de Agenda</h3>
                     <div className="filtros-lista">
@@ -277,6 +445,16 @@ export const CalendarioPage: React.FC = () => {
                             />
                             <span className="color-dot"></span>
                             <span>Evaluaciones</span>
+                        </label>
+
+                        <label className="filtro-item" style={{ '--color': '#F59E0B' } as React.CSSProperties}>
+                            <input
+                                type="checkbox"
+                                checked={categoriasVisibles['Personal']}
+                                onChange={() => toggleCategoria('Personal')}
+                            />
+                            <span className="color-dot"></span>
+                            <span>Mis Tareas / Agenda</span>
                         </label>
                     </div>
                 </div>
@@ -345,26 +523,32 @@ export const CalendarioPage: React.FC = () => {
                 />
             </div>
 
+            {/* Detail Drawer deslizable derecho */}
             {selectedEvent && createPortal(
                 <div className="fixed inset-0 z-[9999] flex justify-end">
                     <div
-                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer animate-fade-in"
                         onClick={() => setSelectedEvent(null)}
                     />
 
-                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-fade-up">
+                    <div className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right">
                         <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
                             <div className="flex items-center gap-3">
                                 <span 
                                     className="px-2.5 py-1 text-[10px] font-mono uppercase rounded-md border text-white font-bold"
                                     style={{ backgroundColor: selectedEvent.color_hex || '#6B7280', borderColor: selectedEvent.color_hex || '#6B7280' }}
                                 >
-                                    {selectedEvent.categoria_global}
+                                    {selectedEvent.categoria_global === 'Personal' ? 'Mi Tarea' : selectedEvent.categoria_global}
                                 </span>
-                                {selectedEvent.subcategoria && (
+                                {selectedEvent.subcategoria && selectedEvent.categoria_global !== 'Personal' && (
                                     <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-brand">
                                         • {selectedEvent.subcategoria}
                                     </div>
+                                )}
+                                {selectedEvent.es_privado && (
+                                    <span className="px-2 py-0.5 bg-bg-deep text-text-dim border border-border-thin text-[9px] font-bold uppercase rounded">
+                                        Privado
+                                    </span>
                                 )}
                             </div>
                             <button
@@ -385,6 +569,7 @@ export const CalendarioPage: React.FC = () => {
                                 </p>
                             </div>
 
+                            {/* Bento Grid para Organización Profesional de Tareas */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="bento-card static p-5 space-y-1.5">
                                     <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
@@ -394,38 +579,291 @@ export const CalendarioPage: React.FC = () => {
                                         {selectedEvent.fecha_inicio}
                                     </div>
                                 </div>
-                                {selectedEvent.fecha_fin && selectedEvent.fecha_fin !== selectedEvent.fecha_inicio && (
+                                {selectedEvent.fecha_fin && selectedEvent.fecha_fin !== selectedEvent.fecha_inicio ? (
                                     <div className="bento-card static p-5 space-y-1.5">
                                         <div className="text-[10px] font-bold text-error uppercase tracking-widest flex items-center gap-1.5">
-                                            <CalendarIcon size={12} /> Fecha de Cierre (Límite)
+                                            <CalendarIcon size={12} /> Fecha de Finalización
                                         </div>
                                         <div className="text-sm font-bold text-error font-mono">
                                             {selectedEvent.fecha_fin}
                                         </div>
                                     </div>
+                                ) : (
+                                    <div className="bento-card static p-5 space-y-1.5">
+                                        <div className="text-[10px] font-bold text-text-dim uppercase tracking-widest flex items-center gap-1.5">
+                                            <Info size={12} /> Duración
+                                        </div>
+                                        <div className="text-sm font-bold text-text-main">
+                                            Todo el día
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Datos organizativos del evento personal */}
+                                {selectedEvent.categoria_global === 'Personal' && (
+                                    <>
+                                        <div className="bento-card static p-5 space-y-1.5">
+                                            <div className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5">
+                                                Prioridad
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
+                                                    selectedEvent.prioridad === 'Alta' ? 'bg-error-subtle text-error' :
+                                                    selectedEvent.prioridad === 'Baja' ? 'bg-success-subtle text-success' :
+                                                    'bg-warning-subtle text-warning'
+                                                }`}>
+                                                    {selectedEvent.prioridad}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="bento-card static p-5 space-y-1.5">
+                                            <div className="text-[10px] font-bold text-brand uppercase tracking-widest flex items-center gap-1.5">
+                                                Estado
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`px-2.5 py-0.5 text-xs font-bold rounded ${
+                                                    selectedEvent.estado === 'Completado' ? 'bg-success-subtle text-success' :
+                                                    selectedEvent.estado === 'EnProgreso' ? 'bg-info-subtle text-info' :
+                                                    selectedEvent.estado === 'Cancelado' ? 'bg-bg-deep text-text-dim' :
+                                                    'bg-warning-subtle text-warning'
+                                                }`}>
+                                                    {selectedEvent.estado === 'EnProgreso' ? 'En Progreso' : selectedEvent.estado}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </>
                                 )}
                             </div>
                         </div>
 
-                        <div className="p-6 border-t border-border-thin bg-surface shrink-0">
-                            {(selectedEvent.url_accion || (selectedEvent.categoria_global === 'Proyecto' && selectedEvent.uuid)) ? (
-                                <button
-                                    onClick={() => handleGoToEventAction(selectedEvent)}
-                                    className="w-full py-3.5 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
-                                >
-                                    Ver Detalle / Acción
-                                    <ArrowRight size={14} />
-                                </button>
+                        {/* Botones de acción del Drawer */}
+                        <div className="p-6 border-t border-border-thin bg-surface shrink-0 flex flex-col gap-3">
+                            {selectedEvent.categoria_global === 'Personal' ? (
+                                <div className="flex gap-3 w-full">
+                                    {selectedEvent.estado !== 'Completado' && (
+                                        <button
+                                            onClick={() => handleQuickComplete(selectedEvent)}
+                                            className="flex-1 py-3 bg-success text-white hover:bg-success/90 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                        >
+                                            <CheckCircle size={15} />
+                                            Completar
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleEditEventClick(selectedEvent)}
+                                        className="flex-1 py-3 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Edit2 size={15} />
+                                        Editar
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteEvent(selectedEvent.uuid)}
+                                        className="py-3 px-4 bg-error-subtle text-error hover:bg-error hover:text-white rounded-lg text-sm font-bold transition-all flex items-center justify-center"
+                                        title="Eliminar tarea"
+                                    >
+                                        <Trash2 size={15} />
+                                    </button>
+                                </div>
                             ) : (
-                                <button
-                                    onClick={() => setSelectedEvent(null)}
-                                    className="w-full py-3.5 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all"
-                                >
-                                    Cerrar Panel
-                                </button>
+                                <>
+                                    {(selectedEvent.url_accion || (selectedEvent.categoria_global === 'Proyecto' && selectedEvent.uuid)) ? (
+                                        <button
+                                            onClick={() => handleGoToEventAction(selectedEvent)}
+                                            className="w-full py-3.5 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2"
+                                        >
+                                            Ver Detalle / Acción
+                                            <ArrowRight size={14} />
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setSelectedEvent(null)}
+                                            className="w-full py-3.5 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all"
+                                        >
+                                            Cerrar Panel
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Form Drawer (Crear / Editar Tareas y Eventos de Usuario) */}
+            {isFormOpen && createPortal(
+                <div className="fixed inset-0 z-[9999] flex justify-end">
+                    <div
+                        className="absolute inset-0 bg-bg-deep/90 backdrop-blur-sm cursor-pointer"
+                        onClick={() => setIsFormOpen(false)}
+                    />
+
+                    <form
+                        onSubmit={handleSaveEvent}
+                        className="relative w-full max-w-2xl h-full bg-surface border-l border-border-thin flex flex-col z-10 animate-slide-in-right"
+                    >
+                        <div className="flex items-center justify-between px-8 py-6 border-b border-border-thin bg-surface">
+                            <h2 className="text-xl font-bold tracking-tight text-text-main font-sans">
+                                {isEditing ? 'Editar Tarea o Evento' : 'Nueva Tarea / Evento de Agenda'}
+                            </h2>
+                            <button
+                                type="button"
+                                onClick={() => setIsFormOpen(false)}
+                                className="p-2 rounded-lg text-text-dim hover:text-text-main hover:bg-surface-hover transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-8 space-y-6 bg-surface">
+                            {/* Título */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Título de la Tarea/Evento *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Ej: Reunión de Avance del Proyecto"
+                                    value={formTitulo}
+                                    onChange={(e) => setFormTitulo(e.target.value)}
+                                    className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                                />
+                            </div>
+
+                            {/* Descripción */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Descripción o Detalles</label>
+                                <textarea
+                                    rows={3}
+                                    placeholder="Ingresa notas o detalles sobre el evento..."
+                                    value={formDescripcion}
+                                    onChange={(e) => setFormDescripcion(e.target.value)}
+                                    className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand resize-none"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Tipo de Evento */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Categoría / Tipo</label>
+                                    <select
+                                        value={formTipo}
+                                        onChange={(e) => setFormTipo(e.target.value)}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    >
+                                        <option value="Personal">Personal / Nota</option>
+                                        <option value="Tarea">Tarea de Investigación</option>
+                                        <option value="Reunion">Reunión / Tutoría</option>
+                                        <option value="Hito">Hito de Proyecto</option>
+                                    </select>
+                                </div>
+
+                                {/* Color Hex */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Etiqueta Visual (Color)</label>
+                                    <select
+                                        value={formColorHex}
+                                        onChange={(e) => setFormColorHex(e.target.value)}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    >
+                                        <option value="#F59E0B">Naranja (Predeterminado)</option>
+                                        <option value="#3B82F6">Azul (Reuniones)</option>
+                                        <option value="#10B981">Verde (Hitos)</option>
+                                        <option value="#EC4899">Rosado (Revisiones)</option>
+                                        <option value="#8B5CF6">Morado (Monitoreo)</option>
+                                        <option value="#EF4444">Rojo (Urgente)</option>
+                                    </select>
+                                </div>
+
+                                {/* Fecha Inicio */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Fecha de Inicio *</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={formFechaInicio}
+                                        onChange={(e) => setFormFechaInicio(e.target.value)}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    />
+                                </div>
+
+                                {/* Fecha Fin */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Fecha de Fin</label>
+                                    <input
+                                        type="date"
+                                        value={formFechaFin}
+                                        onChange={(e) => setFormFechaFin(e.target.value)}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    />
+                                </div>
+
+                                {/* Prioridad */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Prioridad</label>
+                                    <select
+                                        value={formPrioridad}
+                                        onChange={(e) => setFormPrioridad(e.target.value)}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    >
+                                        <option value="Baja">Baja</option>
+                                        <option value="Media">Media</option>
+                                        <option value="Alta">Alta</option>
+                                    </select>
+                                </div>
+
+                                {/* Estado */}
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-text-dim uppercase tracking-wider">Estado inicial</label>
+                                    <select
+                                        value={formEstado}
+                                        onChange={(e) => setFormEstado(e.target.value)}
+                                        className="w-full px-4 py-3 bg-bg border border-border rounded-xl text-sm focus:border-brand focus:outline-none"
+                                    >
+                                        <option value="Pendiente">Pendiente</option>
+                                        <option value="EnProgreso">En Progreso</option>
+                                        <option value="Completado">Completado</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Es Privado Checkbox */}
+                            <div className="flex items-center gap-3 p-4 bg-bg border border-border rounded-xl mt-4">
+                                <input
+                                    type="checkbox"
+                                    id="es_privado"
+                                    checked={formEsPrivado}
+                                    onChange={(e) => setFormEsPrivado(e.target.checked)}
+                                    className="w-5 h-5 border border-border rounded accent-brand cursor-pointer"
+                                />
+                                <div className="flex flex-col">
+                                    <label htmlFor="es_privado" className="text-sm font-bold text-text-main cursor-pointer select-none">
+                                        Evento Privado / Personal
+                                    </label>
+                                    <span className="text-[11px] text-text-dim leading-snug">
+                                        Si está marcado, solo tú podrás ver este evento. Desmárcalo para compartirlo.
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6 border-t border-border-thin bg-surface shrink-0 flex gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setIsFormOpen(false)}
+                                className="flex-1 py-3 bg-surface text-fg border border-border hover:bg-surface-hover rounded-lg text-sm font-bold transition-all"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                className="flex-1 py-3 bg-fg text-bg border border-fg hover:bg-accents-7 hover:border-accents-7 rounded-lg text-sm font-bold transition-all"
+                            >
+                                {isEditing ? 'Actualizar Evento' : 'Guardar Evento'}
+                            </button>
+                        </div>
+                    </form>
                 </div>,
                 document.body
             )}

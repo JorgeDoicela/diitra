@@ -15,7 +15,11 @@ public record CalendarioEventoDto(
     string? UuidEntidadOrigen,
     string TipoEntidadOrigen,
     string? UrlAccion,
-    string? RolesVisibles
+    string? RolesVisibles,
+    bool EsPrivado,
+    string Prioridad,
+    string Estado,
+    int? CreadoPor
 );
 
 public record EventoNormativoDto(
@@ -33,13 +37,16 @@ public record EventoNormativoDto(
     string? UrlAccion,
     string? ColorHex,
     int? AlertaDias,
-    bool Activo
+    bool Activo,
+    bool EsPrivado,
+    string Prioridad,
+    string Estado
 );
 
 public interface ICalendarioService
 {
-    /// <summary>Obtiene todos los eventos del rango indicado, filtrados por rol del usuario.</summary>
-    Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(DateOnly desde, DateOnly hasta, string rolUsuario);
+    /// <summary>Obtiene todos los eventos del rango indicado, filtrados por rol y idUsuario (para eventos privados).</summary>
+    Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(DateOnly desde, DateOnly hasta, string rolUsuario, int idUsuario);
 
     /// <summary>Genera el feed .ics (iCalendar RFC 5545) para un token de suscripción dado.</summary>
     Task<string?> GenerarIcalFeedAsync(string token);
@@ -47,7 +54,7 @@ public interface ICalendarioService
     /// <summary>Genera o regenera el token iCal personal del usuario.</summary>
     Task<string> GenerarORegenerarTokenIcalAsync(int idUsuario);
 
-    // ── CRUD normativos (Admin) ──────────────────────────────────────────────
+    // ── CRUD normativos y personales ──────────────────────────────────────────────
     Task<IEnumerable<EventoNormativoDto>> GetNormativosAsync();
     Task<string> CreateNormativoAsync(EventoNormativoDto dto, int idUsuarioAdmin);
     Task<bool> UpdateNormativoAsync(string uuid, EventoNormativoDto dto);

@@ -25,8 +25,14 @@ public class CalendarioController : ControllerBase
     [HttpGet("eventos")]
     public async Task<IActionResult> GetEventos([FromQuery] DateOnly desde, [FromQuery] DateOnly hasta)
     {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
         var rol = User.FindFirst(ClaimTypes.Role)?.Value ?? "DIITRA_DOCENTE";
-        var eventos = await _calendarioService.GetEventosAsync(desde, hasta, rol);
+        var eventos = await _calendarioService.GetEventosAsync(desde, hasta, rol, dbUser.IdUsuario);
         return Ok(eventos);
     }
 
@@ -56,7 +62,68 @@ public class CalendarioController : ControllerBase
         return Ok(new { token, feed_url = feedUrl });
     }
 
-    // ── GET /api/calendario/normativos ───────────────────────────────────────
+    // ── CRUD Eventos de Usuario (Tareas y Eventos personales/compartidos) ──
+    
+    // Crear un evento personal de usuario
+    [HttpPost("usuario/eventos")]
+    public async Task<IActionResult> CreateUsuarioEvento([FromBody] EventoNormativoDto dto)
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        // Forzar a que sea del usuario
+        var usuarioDto = dto with { EsPrivado = dto.EsPrivado }; 
+
+        var uuid = await _calendarioService.CreateNormativoAsync(usuarioDto, dbUser.IdUsuario);
+        return Created("", new { uuid });
+    }
+
+    // Actualizar un evento de usuario
+    [HttpPut("usuario/eventos/{uuid}")]
+    public async Task<IActionResult> UpdateUsuarioEvento(string uuid, [FromBody] EventoNormativoDto dto)
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var existing = await _context.Set<InvCalendarioEventoNormativo>().FirstOrDefaultAsync(e => e.Uuid == uuid);
+        if (existing == null) return NotFound();
+
+        // Solo el creador puede editar su evento personal
+        if (existing.CreadoPor != dbUser.IdUsuario) return Forbid();
+
+        var result = await _calendarioService.UpdateNormativoAsync(uuid, dto);
+        if (!result) return NotFound();
+        return Ok(new { message = "Evento de usuario actualizado." });
+    }
+
+    // Eliminar un evento de usuario
+    [HttpDelete("usuario/eventos/{uuid}")]
+    public async Task<IActionResult> DeleteUsuarioEvento(string uuid)
+    {
+        var idReferencia = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(idReferencia)) return Unauthorized();
+
+        var dbUser = await _context.Users.FirstOrDefaultAsync(u => u.IdSigafi == idReferencia);
+        if (dbUser == null) return Unauthorized();
+
+        var existing = await _context.Set<InvCalendarioEventoNormativo>().FirstOrDefaultAsync(e => e.Uuid == uuid);
+        if (existing == null) return NotFound();
+
+        // Solo el creador puede eliminar su evento personal
+        if (existing.CreadoPor != dbUser.IdUsuario) return Forbid();
+
+        var result = await _calendarioService.DeleteNormativoAsync(uuid);
+        if (!result) return NotFound();
+        return Ok(new { message = "Evento de usuario eliminado." });
+    }
+
+    // ── CRUD Normativos (Solo Administradores) ──────────────────────────────
     [HttpGet("normativos")]
     [Authorize(Roles = "DIITRA_ADMIN")]
     public async Task<IActionResult> GetNormativos()

@@ -2073,32 +2073,25 @@ CREATE TABLE inv_calendario_eventos_normativos (
     uuid              VARCHAR(36)   NOT NULL UNIQUE,
     titulo            VARCHAR(255)  NOT NULL  COMMENT 'Nombre visible del evento (ej: Plazo subida SIIES)',
     descripcion       TEXT          NULL      COMMENT 'Detalle informativo para el usuario',
-    -- Tipo de evento (define color e ícono en el frontend)
-    tipoEvento        ENUM(
-        'Normativo',       -- Hito CACES/SENESCYT/CES (plazos regulatorios)
-        'Academico',       -- Fechas del calendario académico institucional
-        'Institucional',   -- Eventos internos del DIITRA
-        'Feriado'          -- Feriados nacionales o locales
-    ) NOT NULL DEFAULT 'Normativo',
+    -- Tipo de evento flexible: Normativo, Academico, Institucional, Feriado, Personal, Reunion, etc.
+    tipoEvento        VARCHAR(50)   NOT NULL DEFAULT 'Normativo',
     -- Fechas del evento
     fechaInicio       DATE          NOT NULL,
     fechaFin          DATE          NULL      COMMENT 'NULL si es evento de un solo día',
     esTodoElDia       TINYINT(1)    NOT NULL DEFAULT 1,
     -- ⏰ RECURRENCIA ANUAL
-    -- Permite que hitos cíclicos del CACES (autoevaluación, plazos SIIES) se
-    -- repitan cada año automáticamente sin que el Admin los vuelva a crear.
     recurrenciaAnual  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = el evento se repite cada año en la misma fecha',
     recurrenciaHasta  DATE          NULL     COMMENT 'Año hasta el que se repite (NULL = indefinidamente)',
-    -- Visibilidad por rol (NULL = visible para todos los roles autenticados)
-    -- Formato CSV: 'DIITRA_ADMIN,DIITRA_DOCENTE' | NULL = todos
+    -- Visibilidad y Privacidad (Organización Profesional)
     rolesVisibles     VARCHAR(255)  NULL      COMMENT 'Roles que pueden ver este evento. NULL = todos.',
-    -- Referencia a módulo del sistema (para deep linking desde el calendario)
-    moduloOrigen      VARCHAR(50)   NULL      COMMENT 'Módulo al que aplica: CONVOCATORIAS, PROYECTOS, SIIES, etc.',
+    esPrivado         TINYINT(1)    NOT NULL DEFAULT 1  COMMENT '1 = privado del creador, 0 = visible/compartido para otros',
+    prioridad         VARCHAR(15)   NOT NULL DEFAULT 'Media' COMMENT 'Baja, Media, Alta',
+    estado            VARCHAR(20)   NOT NULL DEFAULT 'Pendiente' COMMENT 'Pendiente, EnProgreso, Completado, Cancelado',
+    -- Referencia a módulo del sistema
+    moduloOrigen      VARCHAR(50)   NULL      COMMENT 'Módulo al que aplica: CONVOCATORIAS, PROYECTOS, SIIES, PERSONAL, etc.',
     urlAccion         VARCHAR(255)  NULL      COMMENT 'Ruta interna del sistema (ej: /convocatorias)',
     colorHex          VARCHAR(7)    NULL DEFAULT '#6B7280' COMMENT 'Color personalizado del evento en el calendario',
     -- 🔔 ALERTAS AUTOMÁTICAS por email
-    -- El job diario del backend consulta esta columna para disparar correos
-    -- usando el motor inv_email_historial que ya existe.
     alertaDias        INT           NULL DEFAULT 7 COMMENT 'Días antes del evento para enviar alerta. NULL = sin alerta.',
     -- Trazabilidad
     activo            TINYINT(1)    NOT NULL DEFAULT 1,
@@ -2176,13 +2169,13 @@ DELIMITER ;
 
 CREATE OR REPLACE VIEW v_calendario_eventos AS
 
--- 1. Hitos normativos CACES (editables por el admin)
+-- 1. Hitos normativos e individuales (inv_calendario_eventos_normativos)
 SELECT
     CONCAT('NORM-', idEvento)               AS idEventoCalendario,
     uuid,
     titulo,
     descripcion,
-    'Normativo'                             AS categoriaGlobal,
+    IF(tipoEvento IN ('Normativo','Academico','Institucional','Feriado'), 'Normativo', 'Personal') AS categoriaGlobal,
     tipoEvento                              AS subcategoria,
     fechaInicio,
     fechaFin,
@@ -2193,7 +2186,11 @@ SELECT
     'CALENDARIO_NORMATIVO'                  AS tipoEntidadOrigen,
     urlAccion,
     rolesVisibles,
-    activo
+    activo,
+    esPrivado,
+    prioridad,
+    estado,
+    creadoPor
 FROM inv_calendario_eventos_normativos
 
 UNION ALL
@@ -2209,7 +2206,11 @@ SELECT
     '#3B82F6',
     idConvocatoria, uuid, 'CONVOCATORIA',
     '/convocatorias', NULL,
-    IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0)
+    IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0),
+    0                                       AS esPrivado,
+    'Media'                                 AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_convocatorias
 
 UNION ALL
@@ -2225,7 +2226,11 @@ SELECT
     '#F97316',
     idConvocatoria, uuid, 'CONVOCATORIA',
     '/convocatorias', NULL,
-    IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0)
+    IF(estado IN ('Borrador','Abierta','Cerrada'), 1, 0),
+    0                                       AS esPrivado,
+    'Media'                                 AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_convocatorias
 
 UNION ALL
@@ -2241,7 +2246,11 @@ SELECT
     IF(h.esCritico, '#EF4444', '#F59E0B'),
     h.idConvocatoria, c.uuid, 'CONVOCATORIA',
     '/convocatorias', 'DIITRA_ADMIN',
-    1
+    1,
+    0                                       AS esPrivado,
+    IF(h.esCritico, 'Alta', 'Media')       AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_convocatorias_hitos h
 JOIN inv_convocatorias c ON c.idConvocatoria = h.idConvocatoria
 
@@ -2258,7 +2267,11 @@ SELECT
     '#10B981',
     idProyecto, uuid, 'PROYECTO',
     NULL, 'DIITRA_ADMIN',
-    IF(estado NOT IN ('Borrador','Anulado','Rechazado') AND activo = 1, 1, 0)
+    IF(estado NOT IN ('Borrador','Anulado','Rechazado') AND activo = 1, 1, 0),
+    0                                       AS esPrivado,
+    'Media'                                 AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_proyectos
 WHERE fechaInicio IS NOT NULL
 
@@ -2275,7 +2288,11 @@ SELECT
     '#EF4444',
     idProyecto, uuid, 'PROYECTO',
     NULL, NULL,
-    IF(estado IN ('En Ejecución','Aprobado') AND activo = 1, 1, 0)
+    IF(estado IN ('En Ejecución','Aprobado') AND activo = 1, 1, 0),
+    0                                       AS esPrivado,
+    'Alta'                                  AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_proyectos
 WHERE fechaFin IS NOT NULL
 
@@ -2292,7 +2309,11 @@ SELECT
     '#8B5CF6',
     ia.idProyecto, p.uuid, 'INFORME_AVANCE',
     NULL, NULL,
-    IF(ia.estado = 'Pendiente', 1, 0)
+    IF(ia.estado = 'Pendiente', 1, 0),
+    0                                       AS esPrivado,
+    'Media'                                 AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_informes_avance ia
 JOIN inv_proyectos p ON p.idProyecto = ia.idProyecto
 
@@ -2309,7 +2330,11 @@ SELECT
     '#EC4899',
     r.idProyecto, p.uuid, 'PEER_REVIEW',
     '/revisiones', 'DIITRA_ADMIN,DIITRA_REVISOR_EXTERNO',
-    IF(r.estado = 'Pendiente', 1, 0)
+    IF(r.estado = 'Pendiente', 1, 0),
+    0                                       AS esPrivado,
+    'Alta'                                  AS prioridad,
+    'Pendiente'                             AS estado,
+    NULL                                    AS creadoPor
 FROM inv_revisiones_pares r
 JOIN inv_proyectos p ON p.idProyecto = r.idProyecto;
 

@@ -29,7 +29,7 @@ public class CalendarioService : ICalendarioService
     // EVENTOS — Consulta la vista v_calendario_eventos
     // ─────────────────────────────────────────────────────────────────────────
     public async Task<IEnumerable<CalendarioEventoDto>> GetEventosAsync(
-        DateOnly desde, DateOnly hasta, string rolUsuario)
+        DateOnly desde, DateOnly hasta, string rolUsuario, int idUsuario)
     {
         var sql = @"
             SELECT
@@ -37,19 +37,21 @@ public class CalendarioService : ICalendarioService
                 categoriaGlobal, subcategoria,
                 fechaInicio, fechaFin, esTodoElDia, colorHex,
                 idEntidadOrigen, uuidEntidadOrigen, tipoEntidadOrigen,
-                urlAccion, rolesVisibles
+                urlAccion, rolesVisibles, esPrivado, prioridad, estado, creadoPor
             FROM v_calendario_eventos
             WHERE activo = 1
               AND fechaInicio <= {1}
               AND (fechaFin IS NULL OR fechaFin >= {0})
               AND (rolesVisibles IS NULL OR FIND_IN_SET({2}, rolesVisibles) > 0)
+              AND (esPrivado = 0 OR creadoPor = {3})
             ORDER BY fechaInicio ASC";
 
         var eventos = await _context.Database
             .SqlQueryRaw<CalendarioEventoRaw>(sql,
                 desde.ToString("yyyy-MM-dd"),
                 hasta.ToString("yyyy-MM-dd"),
-                rolUsuario)
+                rolUsuario,
+                idUsuario)
             .ToListAsync();
 
         // Expandir eventos con recurrencia anual de la tabla normativa
@@ -63,6 +65,9 @@ public class CalendarioService : ICalendarioService
         {
             if (!string.IsNullOrEmpty(norm.RolesVisibles) &&
                 !norm.RolesVisibles.Split(',').Select(r => r.Trim()).Contains(rolUsuario)) continue;
+
+            // Filtro de privacidad para eventos recurrentes
+            if (norm.EsPrivado && norm.CreadoPor != idUsuario) continue;
 
             // Proyectar la recurrencia en el rango solicitado
             int añoDesde = desde.Year;
@@ -85,7 +90,8 @@ public class CalendarioService : ICalendarioService
                         : null,
                     norm.EsTodoElDia, norm.ColorHex,
                     norm.IdEvento, norm.Uuid, "CALENDARIO_NORMATIVO",
-                    norm.UrlAccion, norm.RolesVisibles
+                    norm.UrlAccion, norm.RolesVisibles,
+                    norm.EsPrivado, norm.Prioridad, norm.Estado, norm.CreadoPor
                 ));
             }
         }
@@ -123,7 +129,7 @@ public class CalendarioService : ICalendarioService
 
         var desde = DateOnly.FromDateTime(DateTime.Today.AddMonths(-1));
         var hasta = DateOnly.FromDateTime(DateTime.Today.AddMonths(6));
-        var eventos = await GetEventosAsync(desde, hasta, rol);
+        var eventos = await GetEventosAsync(desde, hasta, rol, record.IdUsuario);
 
         var sb = new StringBuilder();
         sb.AppendLine("BEGIN:VCALENDAR");
@@ -216,6 +222,9 @@ public class CalendarioService : ICalendarioService
             ColorHex = dto.ColorHex ?? "#6B7280",
             AlertaDias = dto.AlertaDias,
             Activo = dto.Activo,
+            EsPrivado = dto.EsPrivado,
+            Prioridad = dto.Prioridad,
+            Estado = dto.Estado,
             CreadoPor = idUsuarioAdmin
         };
         _context.Set<InvCalendarioEventoNormativo>().Add(entity);
@@ -243,6 +252,9 @@ public class CalendarioService : ICalendarioService
         entity.ColorHex = dto.ColorHex ?? "#6B7280";
         entity.AlertaDias = dto.AlertaDias;
         entity.Activo = dto.Activo;
+        entity.EsPrivado = dto.EsPrivado;
+        entity.Prioridad = dto.Prioridad;
+        entity.Estado = dto.Estado;
 
         await _context.SaveChangesAsync();
         return true;
@@ -362,7 +374,8 @@ public class CalendarioService : ICalendarioService
         r.CategoriaGlobal, r.Subcategoria,
         r.FechaInicio, r.FechaFin, r.EsTodoElDia, r.ColorHex,
         r.IdEntidadOrigen, r.UuidEntidadOrigen, r.TipoEntidadOrigen,
-        r.UrlAccion, r.RolesVisibles
+        r.UrlAccion, r.RolesVisibles,
+        r.EsPrivado, r.Prioridad, r.Estado, r.CreadoPor
     );
 
     private static EventoNormativoDto ToDto(InvCalendarioEventoNormativo e) => new(
@@ -370,7 +383,8 @@ public class CalendarioService : ICalendarioService
         e.FechaInicio, e.FechaFin, e.EsTodoElDia,
         e.RecurrenciaAnual, e.RecurrenciaHasta,
         e.RolesVisibles, e.ModuloOrigen, e.UrlAccion,
-        e.ColorHex, e.AlertaDias, e.Activo
+        e.ColorHex, e.AlertaDias, e.Activo,
+        e.EsPrivado, e.Prioridad, e.Estado
     );
 
     private static string EscapeIcal(string s) =>
@@ -395,4 +409,8 @@ internal class CalendarioEventoRaw
     public string TipoEntidadOrigen { get; set; } = "";
     public string? UrlAccion { get; set; }
     public string? RolesVisibles { get; set; }
+    public bool EsPrivado { get; set; }
+    public string Prioridad { get; set; } = "Media";
+    public string Estado { get; set; } = "Pendiente";
+    public int? CreadoPor { get; set; }
 }
